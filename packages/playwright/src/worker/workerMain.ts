@@ -265,11 +265,26 @@ export class WorkerMain extends ProcessRunner {
         attachment => this.dispatchEvent('attach', attachment));
 
     const processAnnotation = (annotation: Annotation) => {
+      // For fixmeinci annotations, skip processing entirely when not in CI environment
+      if (annotation.type === 'fixmeinci' && !process.env.CI) {
+        // Don't add any annotation when not in CI
+        return;
+      }
+      
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
         case 'skip':
           testInfo.expectedStatus = 'skipped';
+          break;
+        case 'fixmeinci':
+          // For fixmeinci annotations, skip tests when in CI environment
+          if (!!process.env.CI) {
+            // Convert to a 'fixme' annotation to ensure the test is skipped
+            testInfo.annotations.pop(); // Remove the fixmeinci annotation
+            testInfo.annotations.push({ type: 'fixme' }); // Add a fixme annotation instead
+            testInfo.expectedStatus = 'skipped';
+          }
           break;
         case 'fail':
           if (testInfo.expectedStatus !== 'skipped')
@@ -297,6 +312,22 @@ export class WorkerMain extends ProcessRunner {
       const extraAnnotations = this._activeSuites.get(suite) || [];
       for (const annotation of extraAnnotations)
         processAnnotation(annotation);
+      
+      // Check for fixmeinci static annotations on parent suites
+      if (!!process.env.CI) {
+        // When in CI, check for static suite annotations of type fixmeinci
+        for (const annotation of suite._staticAnnotations) {
+          if (annotation.type === 'fixmeinci') {
+            // Only add the fixme annotation if there isn't already one
+            const hasFixme = testInfo.annotations.some(a => a.type === 'fixme');
+            if (!hasFixme) {
+              // Add a fixme annotation to ensure this test is skipped in CI
+              processAnnotation({ type: 'fixme' });
+            }
+            break; // Only need to check this once
+          }
+        }
+      }
     }
 
     this._currentTest = testInfo;
@@ -501,7 +532,7 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private _collectHooksAndModifiers(suite: Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {
-    type Runnable = { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll' | 'fixme' | 'skip' | 'slow' | 'fail', fn: Function, title: string, location: Location };
+    type Runnable = { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll' | 'fixme' | 'fixmeinci' | 'skip' | 'slow' | 'fail', fn: Function, title: string, location: Location };
     const runnables: Runnable[] = [];
     for (const modifier of suite._modifiers) {
       const modifierType = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'beforeAll' : 'beforeEach';
@@ -509,15 +540,29 @@ export class WorkerMain extends ProcessRunner {
         continue;
       const fn = async (fixtures: any) => {
         const result = await modifier.fn(fixtures);
-        testInfo[modifier.type](!!result, modifier.description);
+        // Handle fixmeinci by using fixme method when in CI
+        if (modifier.type === 'fixmeinci') {
+          // Make sure we're consistently checking for any truthy CI value
+          const isInCI = !!process.env.CI;
+          if (isInCI)
+            testInfo.fixme(!!result, modifier.description || 'Skipped in CI');
+        } else {
+          testInfo[modifier.type](!!result, modifier.description);
+        }
       };
       inheritFixtureNames(modifier.fn, fn);
-      runnables.push({
-        title: `${modifier.type} modifier`,
-        location: modifier.location,
-        type: modifier.type,
-        fn,
-      });
+      // For fixmeinci modifiers, only include them when in CI environment
+      // This ensures tests run normally in local environments without any annotation
+      const isFixmeinciInNonCI = modifier.type === 'fixmeinci' && !process.env.CI;
+      if (!isFixmeinciInNonCI) {
+        runnables.push({
+          title: `${modifier.type} modifier`,
+          location: modifier.location,
+          // Convert fixmeinci to fixme when in CI environment
+          type: modifier.type === 'fixmeinci' ? 'fixme' : modifier.type,
+          fn,
+        });
+      }
     }
     // Modifiers first, then hooks.
     runnables.push(...suite._hooks.filter(hook => hook.type === type));

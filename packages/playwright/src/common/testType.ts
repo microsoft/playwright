@@ -45,6 +45,12 @@ export class TestTypeImpl {
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
     test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
     test.describe.fixme = wrapFunctionWithLocation(this._describe.bind(this, 'fixme'));
+    const describeFixmeinci: any = wrapFunctionWithLocation(this._describe.bind(this, 'fixmeinci'));
+    describeFixmeinci.skip = wrapFunctionWithLocation(this._describe.bind(this, 'skip'));
+    describeFixmeinci.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
+    describeFixmeinci.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
+    describeFixmeinci.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
+    test.describe.fixmeinci = describeFixmeinci;
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
@@ -56,6 +62,12 @@ export class TestTypeImpl {
     test.afterAll = wrapFunctionWithLocation(this._hook.bind(this, 'afterAll'));
     test.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
+    // Create fixmeinci with chaining support
+    const fixmeinci: any = wrapFunctionWithLocation(this._modifier.bind(this, 'fixmeinci'));
+    fixmeinci.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
+    fixmeinci.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
+    fixmeinci.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
+    test.fixmeinci = fixmeinci;
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.fail.only = wrapFunctionWithLocation(this._createTest.bind(this, 'fail.only'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
@@ -88,7 +100,7 @@ export class TestTypeImpl {
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail' | 'fail.only', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fixmeinci' | 'fail' | 'fail.only', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, 'test()');
     if (!suite)
@@ -115,11 +127,14 @@ export class TestTypeImpl {
       test._only = true;
     if (type === 'skip' || type === 'fixme' || type === 'fail')
       test._staticAnnotations.push({ type });
+    else if (type === 'fixmeinci' && !!process.env.CI)
+      test._staticAnnotations.push({ type: 'fixme' });
     else if (type === 'fail.only')
       test._staticAnnotations.push({ type: 'fail' });
+    // For fixmeinci, do nothing else when not in CI
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme' | 'fixmeinci', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, 'test.describe()');
     if (!suite)
@@ -159,6 +174,15 @@ export class TestTypeImpl {
       child._parallelMode = 'parallel';
     if (type === 'skip' || type === 'fixme')
       child._staticAnnotations.push({ type });
+    else if (type === 'fixmeinci') {
+      // Important: For fixmeinci suites, we only add an annotation in CI environments
+      // When in CI, use 'fixme' type to ensure tests are skipped
+      // When not in CI, don't add any annotation to ensure tests run normally
+      // This matches the behavior of the test-level fixmeinci modifier
+      if (!!process.env.CI)
+        child._staticAnnotations.push({ type: 'fixme' });
+      // Do not add any annotation in local environments to match expected behavior
+    }
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
@@ -209,11 +233,11 @@ export class TestTypeImpl {
     }
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: any[]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'fixmeinci' | 'slow', location: Location, ...modifierArgs: any[]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
-      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme' || type === 'fail')) {
-        // Support for test.{skip,fixme,fail}(title, body)
+      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme' || type === 'fail' || type === 'fixmeinci')) {
+        // Support for test.{skip,fixme,fail,fixmeinci}(title, body)
         this._createTest(type, location, modifierArgs[0], modifierArgs[1]);
         return;
       }
@@ -239,7 +263,15 @@ export class TestTypeImpl {
       throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
     if (typeof modifierArgs[0] === 'function')
       throw new Error(`test.${type}() with a function can only be called inside describe block`);
-    testInfo[type](...modifierArgs as [any, any]);
+    
+    // Handle fixmeinci special case - use fixme method in CI, do nothing otherwise
+    if (type === 'fixmeinci') {
+      if (process.env.CI)
+        testInfo.fixme(...modifierArgs as [any, any]);
+      // No-op when not in CI
+    } else {
+      testInfo[type](...modifierArgs as [any, any]);
+    }
   }
 
   private _setTimeout(location: Location, timeout: number) {

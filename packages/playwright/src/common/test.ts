@@ -35,7 +35,7 @@ class Base {
 }
 
 export type Modifier = {
-  type: 'slow' | 'fixme' | 'skip' | 'fail',
+  type: 'slow' | 'fixme' | 'fixmeinci' | 'skip' | 'fail',
   fn: Function,
   location: Location,
   description: string | undefined
