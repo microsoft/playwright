@@ -1146,7 +1146,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   failOnFlakyTests: process.env.CI ? true : false,
+   *   failOnFlakyTests: !!process.env.CI,
    * });
    * ```
    *
