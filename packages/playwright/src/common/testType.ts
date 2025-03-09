@@ -172,9 +172,7 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
-    if (type === 'skip' || type === 'fixme')
-      child._staticAnnotations.push({ type });
-    else if (type === 'fixmeinci') {
+    if (type === 'skip' || type === 'fixme') {child._staticAnnotations.push({ type });} else if (type === 'fixmeinci') {
       // Important: For fixmeinci suites, we only add an annotation in CI environments
       // When in CI, use 'fixme' type to ensure tests are skipped
       // When not in CI, don't add any annotation to ensure tests run normally
@@ -263,7 +261,7 @@ export class TestTypeImpl {
       throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
     if (typeof modifierArgs[0] === 'function')
       throw new Error(`test.${type}() with a function can only be called inside describe block`);
-    
+
     // Handle fixmeinci special case - use fixme method in CI, do nothing otherwise
     if (type === 'fixmeinci') {
       if (process.env.CI)

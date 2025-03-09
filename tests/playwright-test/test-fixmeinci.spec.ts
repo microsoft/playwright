@@ -19,13 +19,13 @@ import { test, expect, expectTestHelper } from './playwright-test-fixtures';
 test('fixmeinci should skip tests in CI environments only', async ({ runInlineTest }) => {
   // Save original CI value
   const originalCI = process.env.CI;
-  
+
   try {
     // Test with CI=1 (in CI environment)
     // Set parent process CI variable to '1' - this doesn't affect child processes directly
     process.env.CI = '1';
     console.log('Setting parent process CI environment variable to:', process.env.CI);
-    
+
     // Explicitly pass CI environment to child process
     // We must explicitly pass the CI environment variable to the child process
     const resultInCI = await runInlineTest({
@@ -74,7 +74,7 @@ test('fixmeinci should skip tests in CI environments only', async ({ runInlineTe
 
     // Verify tests are skipped when in CI
     expect(resultInCI.exitCode).toBe(0);
-    
+
     const expectTestInCI = expectTestHelper(resultInCI);
     expectTestInCI('should run normally', 'passed', 'expected', []);
     expectTestInCI('should be skipped in CI', 'skipped', 'skipped', ['fixme']);
@@ -82,11 +82,11 @@ test('fixmeinci should skip tests in CI environments only', async ({ runInlineTe
     expectTestInCI('should be skipped with reason in CI', 'skipped', 'skipped', ['fixme']);
     expectTestInCI('should be skipped in CI in suite', 'skipped', 'skipped', ['fixme']);
     expectTestInCI('should be skipped in CI in fixmeinci suite', 'skipped', 'skipped', ['fixme']);
-    
+
     // Now test without CI (local environment)
     // Set parent process CI variable to empty - this doesn't affect child processes directly
     process.env.CI = '';
-    
+
     const resultLocal = await runInlineTest({
       'helper.ts': `
         import { test as base, expect } from '@playwright/test';
@@ -130,7 +130,7 @@ test('fixmeinci should skip tests in CI environments only', async ({ runInlineTe
 
     // Verify tests run normally when not in CI
     expect(resultLocal.exitCode).toBe(0);
-    
+
     const expectTestLocal = expectTestHelper(resultLocal);
     expectTestLocal('should run normally', 'passed', 'expected', []);
     expectTestLocal('should run locally', 'passed', 'expected', []);
@@ -138,7 +138,7 @@ test('fixmeinci should skip tests in CI environments only', async ({ runInlineTe
     expectTestLocal('should run with fixmeinci reason locally', 'passed', 'expected', []);
     expectTestLocal('should run locally in suite', 'passed', 'expected', []);
     expectTestLocal('should run locally in fixmeinci suite', 'passed', 'expected', []);
-    
+
   } finally {
     // Restore original CI value
     process.env.CI = originalCI;
@@ -148,11 +148,11 @@ test('fixmeinci should skip tests in CI environments only', async ({ runInlineTe
 test('fixmeinci should work alongside other modifiers', async ({ runInlineTest }) => {
   // Save original CI value
   const originalCI = process.env.CI;
-  
+
   try {
     // Test with CI=1
     process.env.CI = '1';
-    
+
     const result = await runInlineTest({
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
@@ -167,7 +167,7 @@ test('fixmeinci should work alongside other modifiers', async ({ runInlineTest }
         });
       `,
     }, { reporter: 'line' }, { CI: '1' });
-    
+
     const expectTest = expectTestHelper(result);
 
     expect(result.exitCode).toBe(0);
@@ -177,10 +177,10 @@ test('fixmeinci should work alongside other modifiers', async ({ runInlineTest }
     expectTest('fixmeinci inner', 'skipped', 'skipped', ['fixme']);
     expectTest('fixme wrap', 'skipped', 'skipped', ['fixme']);
     expectTest('fixmeinci and skip', 'skipped', 'skipped', ['skip']);
-    
+
     // Now test without CI
     process.env.CI = '';
-    
+
     const resultLocal = await runInlineTest({
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
@@ -195,7 +195,7 @@ test('fixmeinci should work alongside other modifiers', async ({ runInlineTest }
         });
       `,
     }, { reporter: 'line' }, { CI: '' });
-    
+
     const expectTestLocal = expectTestHelper(resultLocal);
 
     expect(resultLocal.exitCode).toBe(0);
@@ -205,7 +205,7 @@ test('fixmeinci should work alongside other modifiers', async ({ runInlineTest }
     expectTestLocal('fixmeinci inner', 'passed', 'expected', []);
     expectTestLocal('fixme wrap', 'skipped', 'skipped', ['fixme']);
     expectTestLocal('fixmeinci and skip', 'skipped', 'skipped', ['skip']);
-    
+
   } finally {
     // Restore original CI value
     process.env.CI = originalCI;

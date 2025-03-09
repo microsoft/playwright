@@ -270,7 +270,7 @@ export class WorkerMain extends ProcessRunner {
         // Don't add any annotation when not in CI
         return;
       }
-      
+
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
@@ -312,7 +312,7 @@ export class WorkerMain extends ProcessRunner {
       const extraAnnotations = this._activeSuites.get(suite) || [];
       for (const annotation of extraAnnotations)
         processAnnotation(annotation);
-      
+
       // Check for fixmeinci static annotations on parent suites
       if (!!process.env.CI) {
         // When in CI, check for static suite annotations of type fixmeinci
