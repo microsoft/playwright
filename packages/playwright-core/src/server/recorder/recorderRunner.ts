@@ -117,6 +117,17 @@ export async function performAction(pageAliases: Map<Page, string>, actionInCont
     return;
   }
 
+  if (action.name === 'assertCss') {
+    await mainFrame.expect(callMetadata, selector, {
+      selector,
+      expression: 'to.have.css',
+      expectedValue: action.css,
+      isNot: false,
+      timeout: kActionTimeout,
+    });
+    return;
+  }
+
   if (action.name === 'assertVisible') {
     await mainFrame.expect(callMetadata, selector, {
       selector,

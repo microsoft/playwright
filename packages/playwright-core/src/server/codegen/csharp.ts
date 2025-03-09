@@ -147,6 +147,12 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `ToHaveValueAsync(${quote(action.value)})` : `ToBeEmptyAsync()`;
         return `await Expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
+      case 'assertCss': {
+        const cssAssertions = Object.entries(action.css)
+        .map(([property, value]) => `await expect(${subject}.${this._asLocator(action.selector)}).ToHaveCssAsync(${quote(property)}, ${quote(value)});`)
+        .join('\n');
+        return `await Expect(${subject}.${this._asLocator(action.selector)}).${cssAssertions};`;
+      }
       case 'assertSnapshot':
         return `await Expect(${subject}.${this._asLocator(action.selector)}).ToMatchAriaSnapshotAsync(${quote(action.snapshot)});`;
     }

@@ -134,6 +134,12 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `hasValue(${quote(action.value)})` : `isEmpty()`;
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${assertion};`;
       }
+      case 'assertCss': {
+        const cssAssertions = Object.entries(action.css)
+          .map(([property, value]) => `(${subject}.${this._asLocator(action.selector, inFrameLocator)}).toHaveCSS(${quote(property)}, ${quote(value)});`)
+          .join('\n');
+        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${cssAssertions};`;
+      }
       case 'assertSnapshot':
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).matchesAriaSnapshot(${quote(action.snapshot)});`;
     }

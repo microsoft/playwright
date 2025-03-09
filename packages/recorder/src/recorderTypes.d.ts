@@ -28,6 +28,7 @@ export type Mode =
   | 'standby'
   | 'assertingVisibility'
   | 'assertingValue'
+  | 'assertingCss'
   | 'assertingSnapshot';
 
 export type ElementInfo = {

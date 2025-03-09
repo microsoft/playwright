@@ -127,6 +127,12 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `to_have_value(${quote(action.value)})` : `to_be_empty()`;
         return `expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
+      case 'assertCss': {
+        const assertion = Object.entries(action.css)
+          .map(([property, value]) => `expect(${subject}.${this._asLocator(action.selector)}).to_have_css(${quote(property)}, ${quote(value)});`)
+          .join('\n');
+        return `${assertion};`;
+      }
       case 'assertSnapshot':
         return `expect(${subject}.${this._asLocator(action.selector)}).to_match_aria_snapshot(${quote(action.snapshot)})`;
     }
