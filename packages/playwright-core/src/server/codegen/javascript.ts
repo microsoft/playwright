@@ -118,6 +118,12 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `toHaveValue(${quote(action.value)})` : `toBeEmpty()`;
         return `${this._isTest ? '' : '// '}await expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
+      case 'assertCss': {
+        const cssAssertions = Object.entries(action.css)
+          .map(([property, value]) => `await expect(${subject}.${this._asLocator(action.selector)}).toHaveCSS(${quote(property)}, ${quote(value)});`)
+          .join('\n');
+        return `${this._isTest ? '' : '// '}${cssAssertions}`;
+      }
       case 'assertSnapshot': {
         const commentIfNeeded = this._isTest ? '' : '// ';
         return `${commentIfNeeded}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.snapshot, `${commentIfNeeded}  `)});`;
