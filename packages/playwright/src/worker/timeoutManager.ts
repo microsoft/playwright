@@ -26,7 +26,7 @@ export type TimeSlot = {
   elapsed: number;
 };
 
-type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
+type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'fixmeinci' | 'teardown';
 
 export type RunnableDescription = {
   type: RunnableType;
