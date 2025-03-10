@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-import type playwright from 'playwright';
+import { Server } from './server';
+import { wait, pressKey } from '../tools/common';
+import { navigate, snapshot, click, hover, type } from '../tools/snapshot';
 
-export type JSONSchemaType = string | number | boolean | JSONSchemaObject | JSONSchemaArray | null;
-interface JSONSchemaObject { [key: string]: JSONSchemaType; }
-interface JSONSchemaArray extends Array<JSONSchemaType> {}
-
-export type ToolDeclaration = {
-  name: string;
-  description: string;
-  parameters: any;
-};
+const server = new Server({
+  name: 'Playwright snapshot-based browser server',
+  version: '0.0.1',
+  tools: [
+    navigate,
+    snapshot,
+    click,
+    hover,
+    type,
+    pressKey,
+    wait,
+  ]
+});
+server.start();

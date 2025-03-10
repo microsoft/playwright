@@ -174,7 +174,7 @@ const workspace = new Workspace(ROOT_PATH, [
   }),
   new PWPackage({
     name: '@playwright/experimental-tools',
-    path: path.join(ROOT_PATH, 'packages', 'playwright-tools'),
+    path: path.join(ROOT_PATH, 'packages', 'playwright-mcp'),
     files: LICENCE_FILES,
   }),
   new PWPackage({

@@ -1,0 +1,33 @@
+{
+  "name": "@playwright/mcp",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Playwright Tools for MCP",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    "./servers/server": "./lib/servers/server.js",
+    "./servers/screenshot": "./lib/servers/screenshot.js",
+    "./servers/snapshot": "./lib/servers/snapshot.js",
+    "./tools/common": "./lib/tools/common.js",
+    "./tools/screenshot": "./lib/tools/screenshot.js",
+    "./tools/snapshot": "./lib/tools/snapshot.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "playwright": "1.52.0-next"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1"
+  }
+}
