@@ -225,7 +225,6 @@ Playwright [Trace Viewer](/trace-viewer.md) is a GUI tool that lets you explore 
 
 <video width="100%" height="100%" controls muted>
   <source src="https://user-images.githubusercontent.com/13063165/219132713-17b9d75b-71e3-42c4-a43f-3f9e2e15f834.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
 </video>
 
 To learn more about how to record traces and use the Trace Viewer, check out the [Trace Viewer](/trace-viewer.md) guide.
