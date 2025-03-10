@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
 
-import { assert } from 'playwright-core/lib/utils';
+import { assert, timeOrigin } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { esmLoaderRegistered } from '../common/esmLoaderHost';
@@ -115,7 +115,8 @@ export class ProcessHost extends EventEmitter {
       return error;
 
     const processParams: ProcessInitParams = {
-      processName: this._processName
+      processName: this._processName,
+      timeOrigin: timeOrigin(),
     };
 
     this.send({
