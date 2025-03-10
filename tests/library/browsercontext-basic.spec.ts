@@ -342,3 +342,10 @@ it('default user agent', async ({ launchPersistent, browser, page, mode }) => {
   const { userAgent } = await (browser as any)._channel.defaultUserAgentForTest();
   expect(await page.evaluate(() => navigator.userAgent)).toBe(userAgent);
 });
+
+it('should create two pages in parallel', async ({ context }) => {
+  await Promise.all([
+    context.newPage(),
+    context.newPage(),
+  ]);
+});
