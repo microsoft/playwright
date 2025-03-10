@@ -79,7 +79,8 @@ it('should snapshot complex', async ({ page }) => {
   await checkAndMatchSnapshot(page.locator('body'), `
     - list:
       - listitem:
-        - link "link"
+        - link "link":
+          - /url: about:blank
   `);
 });
 
@@ -149,7 +150,8 @@ it('should snapshot integration', async ({ page }) => {
       - listitem:
         - group: Verified
       - listitem:
-        - link "Sponsor"
+        - link "Sponsor":
+          - /url: about:blank
   `);
 });
 
@@ -220,7 +222,8 @@ it('should include pseudo in text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - link "worldhello hellobye"
+    - link "worldhello hellobye":
+      - /url: about:blank
   `);
 });
 
@@ -243,7 +246,8 @@ it('should not include hidden pseudo in text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - link "hello hello"
+    - link "hello hello":
+      - /url: about:blank
   `);
 });
 
@@ -266,7 +270,8 @@ it('should include new line for block pseudo', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - link "world hello hello bye"
+    - link "world hello hello bye":
+      - /url: about:blank
   `);
 });
 
@@ -450,10 +455,12 @@ it('should respect aria-owns', async ({ page }) => {
   // - Disregarding these as aria-owns can't suggest multiple parts by spec.
   await checkAndMatchSnapshot(page.locator('body'), `
     - link "Link 1 Value Paragraph":
+      - /url: about:blank
       - region: Link 1
       - textbox: Value
       - paragraph: Paragraph
     - link "Link 2 Value Paragraph":
+      - /url: about:blank
       - region: Link 2
   `);
 });
@@ -467,6 +474,7 @@ it('should be ok with circular ownership', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - link "Hello":
+      - /url: about:blank
       - region: Hello
   `);
 });
@@ -488,22 +496,30 @@ it('should escape yaml text in text nodes', async ({ page }) => {
   await checkAndMatchSnapshot(page.locator('body'), `
     - group:
       - text: "one:"
-      - link "link1"
+      - link "link1":
+        - /url: "#"
       - text: "\\\"two"
-      - link "link2"
+      - link "link2":
+        - /url: "#"
       - text: "'three"
-      - link "link3"
+      - link "link3":
+        - /url: "#"
       - text: "\`four"
     - list:
-      - link "one"
+      - link "one":
+        - /url: "#"
       - text: ","
-      - link "two"
+      - link "two":
+        - /url: "#"
       - text: (
-      - link "three"
+      - link "three":
+        - /url: "#"
       - text: ") {"
-      - link "four"
+      - link "four":
+        - /url: "#"
       - text: "} ["
-      - link "five"
+      - link "five":
+        - /url: "#"
       - text: "]"
     - text: "[Select all]"
   `);
@@ -521,7 +537,8 @@ it('should normalize whitespace', async ({ page }) => {
   await checkAndMatchSnapshot(page.locator('body'), `
     - group:
       - text: one two
-      - link "link 1"
+      - link "link 1":
+        - /url: "#"
     - textbox: hello world
     - button "helloworld"
   `);
@@ -532,7 +549,8 @@ it('should normalize whitespace', async ({ page }) => {
       - text: |
           one
           two
-      - link "  link     1 "
+      - link "  link     1 ":
+        - /url: "#"
     - textbox:        hello  world
     - button "he\u00adlloworld\u200b"
   `);
@@ -548,6 +566,7 @@ it('should handle long strings', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - link:
+      - /url: about:blank
       - region: ${s}
   `);
 });
@@ -562,15 +581,20 @@ it('should escape special yaml characters', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - link "@hello"
+    - link "@hello":
+      - /url: "#"
     - text: "@hello"
-    - link "]hello"
+    - link "]hello":
+      - /url: "#"
     - text: "]hello"
-    - link "hello"
+    - link "hello":
+      - /url: "#"
     - text: hello
-    - link "hello"
+    - link "hello":
+      - /url: "#"
     - text: hello
-    - link "#hello"
+    - link "#hello":
+      - /url: "#"
     - text: "#hello"
   `);
 });
@@ -589,21 +613,29 @@ it('should escape special yaml values', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - link "true"
+    - link "true":
+      - /url: "#"
     - text: "False"
-    - link "NO"
+    - link "NO":
+      - /url: "#"
     - text: "yes"
-    - link "y"
+    - link "y":
+      - /url: "#"
     - text: "N"
-    - link "on"
+    - link "on":
+      - /url: "#"
     - text: "Off"
-    - link "null"
+    - link "null":
+      - /url: "#"
     - text: "NULL"
-    - link "123"
+    - link "123":
+      - /url: "#"
     - text: "123"
-    - link "-1.2"
+    - link "-1.2":
+      - /url: "#"
     - text: "-1.2"
-    - link "-"
+    - link "-":
+      - /url: "#"
     - text: "-"
     - textbox: "555"
   `);
