@@ -141,7 +141,7 @@ async function runAndCaptureSnapshot(context: ToolContext, callback: () => Promi
 }
 
 async function captureAriaSnapshot(page: playwright.Page): Promise<ToolResult> {
-  const snapshot = await page.locator('html').ariaSnapshot({ _id: true } as any);
+  const snapshot = await page.locator('html').ariaSnapshot({ ref: true });
   return {
     content: [{ type: 'text', text: `# Current page snapshot\n${snapshot}` }],
   };
