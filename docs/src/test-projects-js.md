@@ -159,7 +159,7 @@ Dependencies are a list of projects that need to run before the tests in another
 In this example the chromium, firefox and webkit projects depend on the setup project.
 
 ```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   projects: [
