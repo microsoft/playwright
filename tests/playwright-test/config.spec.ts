@@ -72,6 +72,25 @@ test('should prioritize command line timeout over project timeout', async ({ run
   expect(result.output).toContain('Test timeout of 500ms exceeded.');
 });
 
+test('should support failOnFlakyTests config option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          failOnFlakyTests: true,
+          retries: 1
+        };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { 'retries': 1 });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
 test('should read config from --config, resolve relative testDir', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'my.config.ts': `
