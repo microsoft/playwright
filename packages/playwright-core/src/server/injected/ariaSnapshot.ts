@@ -32,15 +32,17 @@ export type AriaNode = AriaProps & {
 export type AriaSnapshot = {
   root: AriaNode;
   elements: Map<number, Element>;
+  generation: number;
   ids: Map<Element, number>;
 };
 
-export function generateAriaTree(rootElement: Element): AriaSnapshot {
+export function generateAriaTree(rootElement: Element, generation: number): AriaSnapshot {
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement },
     elements: new Map<number, Element>(),
+    generation,
     ids: new Map<Element, number>(),
   };
 
@@ -223,19 +225,19 @@ export type MatcherReceived = {
 };
 
 export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
-  const root = generateAriaTree(rootElement).root;
-  const matches = matchesNodeDeep(root, template, false);
+  const snapshot = generateAriaTree(rootElement, 0);
+  const matches = matchesNodeDeep(snapshot.root, template, false);
   return {
     matches,
     received: {
-      raw: renderAriaTree(root, { mode: 'raw' }),
-      regex: renderAriaTree(root, { mode: 'regex' }),
+      raw: renderAriaTree(snapshot, { mode: 'raw' }),
+      regex: renderAriaTree(snapshot, { mode: 'regex' }),
     }
   };
 }
 
 export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(rootElement).root;
+  const root = generateAriaTree(rootElement, 0).root;
   const matches = matchesNodeDeep(root, template, true);
   return matches.map(n => n.element);
 }
@@ -307,7 +309,7 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
   return results;
 }
 
-export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex', ids?: Map<Element, number> }): string {
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'raw' | 'regex', ref?: boolean }): string {
   const lines: string[] = [];
   const includeText = options?.mode === 'regex' ? textContributesInfo : () => true;
   const renderString = options?.mode === 'regex' ? convertToBestGuessRegex : (str: string) => str;
@@ -346,10 +348,10 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.ids) {
-      const id = options?.ids.get(ariaNode.element);
+    if (options?.ref) {
+      const id = ariaSnapshot.ids.get(ariaNode.element);
       if (id)
-        key += ` [id=${id}]`;
+        key += ` [ref=s${ariaSnapshot.generation}e${id}]`;
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
@@ -368,6 +370,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
     }
   };
 
+  const ariaNode = ariaSnapshot.root;
   if (ariaNode.role === 'fragment') {
     // Render fragment.
     for (const child of ariaNode.children || [])

@@ -621,3 +621,27 @@ it('should not report textarea textContent', async ({ page }) => {
     - textbox: After
   `);
 });
+
+it('should generate refs', async ({ page }) => {
+  await page.setContent(`
+    <button>One</button>
+    <button>Two</button>
+    <button>Three</button>
+  `);
+
+  const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
+  expect(snapshot1).toContain('- button "One" [ref=s1e3]');
+  expect(snapshot1).toContain('- button "Two" [ref=s1e4]');
+  expect(snapshot1).toContain('- button "Three" [ref=s1e5]');
+
+  await expect(page.locator('aria-ref=s1e3')).toHaveText('One');
+  await expect(page.locator('aria-ref=s1e4')).toHaveText('Two');
+  await expect(page.locator('aria-ref=s1e5')).toHaveText('Three');
+
+  const snapshot2 = await page.locator('body').ariaSnapshot({ ref: true });
+  expect(snapshot2).toContain('- button "One" [ref=s2e3]');
+  await expect(page.locator('aria-ref=s2e3')).toHaveText('One');
+
+  const e = await expect(page.locator('aria-ref=s1e3')).toHaveText('One').catch(e => e);
+  expect(e.message).toContain('Error: Stale aria-ref, expected s2e{number}, got s1e3');
+});

@@ -33,7 +33,7 @@ import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 import { parseSelector, stringifySelector, visitAllSelectorParts } from '../../utils/isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
-import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
+import type { AriaSnapshot } from './ariaSnapshot';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
@@ -78,7 +78,7 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
-  private _ariaElementById: Map<number, Element> | undefined;
+  private _lastAriaSnapshot: AriaSnapshot | undefined;
 
   // Recorder must use any external dependencies through InjectedScript.
   // Otherwise it will end up with a copy of all modules it uses, and any
@@ -137,7 +137,7 @@ export class InjectedScript {
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
-    this._engines.set('internal:aria-id', this._createAriaIdEngine());
+    this._engines.set('aria-ref', this._createAriaIdEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -225,28 +225,16 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', id?: boolean }): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', ref?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    const ariaSnapshot = generateAriaTree(node as Element);
-    this._ariaElementById = ariaSnapshot.elements;
-    return renderAriaTree(ariaSnapshot.root, { ...options, ids: options?.id ? ariaSnapshot.ids : undefined });
-  }
-
-  ariaSnapshotAsObject(node: Node): AriaSnapshot {
-    return generateAriaTree(node as Element);
+    const generation = (this._lastAriaSnapshot?.generation || 0) + 1;
+    this._lastAriaSnapshot = generateAriaTree(node as Element, generation);
+    return renderAriaTree(this._lastAriaSnapshot, options);
   }
 
   ariaSnapshotElement(snapshot: AriaSnapshot, elementId: number): Element | null {
     return snapshot.elements.get(elementId) || null;
-  }
-
-  renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex', id?: boolean}): string {
-    return renderAriaTree(ariaNode, options);
-  }
-
-  renderAriaSnapshotWithIds(ariaSnapshot: AriaSnapshot): string {
-    return renderAriaTree(ariaSnapshot.root, { ids: ariaSnapshot.ids });
   }
 
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
@@ -620,8 +608,13 @@ export class InjectedScript {
 
   _createAriaIdEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      const ariaId = parseInt(selector, 10);
-      const result = this._ariaElementById?.get(ariaId);
+      const match = selector.match(/^s(\d+)e(\d+)$/);
+      if (!match)
+        throw this.createStacklessError('Invalid aria-ref selector, should be of form s<number>e<number>');
+      const [, generation, elementId] = match;
+      if (this._lastAriaSnapshot?.generation !== +generation)
+        throw this.createStacklessError(`Stale aria-ref, expected s${this._lastAriaSnapshot?.generation}e{number}, got ${selector}`);
+      const result = this._lastAriaSnapshot?.elements?.get(+elementId);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };
