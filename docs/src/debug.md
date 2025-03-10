@@ -223,10 +223,8 @@ By the time Playwright has paused on a click action, it has already performed [a
 
 Playwright [Trace Viewer](/trace-viewer.md) is a GUI tool that lets you explore recorded Playwright traces of your tests. You can go back and forward through each action on the left side, and visually see what was happening during the action. In the middle of the screen, you can see a DOM snapshot for the action. On the right side you can see action details, such as time, parameters, return value and log. You can also explore console messages, network requests and the source code.
 
-<video width="100%" height="100%" controls muted>
-  <source src="https://user-images.githubusercontent.com/13063165/219132713-17b9d75b-71e3-42c4-a43f-3f9e2e15f834.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
+<!--- A regression in Docusaurus has caused video fallbacks to not function unless this is in one line --->
+<video width="100%" height="100%" controls muted><source src="https://user-images.githubusercontent.com/13063165/219132713-17b9d75b-71e3-42c4-a43f-3f9e2e15f834.mp4" type="video/mp4" />Your browser does not support the video tag.</video>
 
 To learn more about how to record traces and use the Trace Viewer, check out the [Trace Viewer](/trace-viewer.md) guide.
 
