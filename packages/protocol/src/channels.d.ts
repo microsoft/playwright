@@ -2668,12 +2668,12 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameAriaSnapshotParams = {
   selector: string,
-  id?: boolean,
+  ref?: boolean,
   mode?: 'raw' | 'regex',
   timeout?: number,
 };
 export type FrameAriaSnapshotOptions = {
-  id?: boolean,
+  ref?: boolean,
   mode?: 'raw' | 'regex',
   timeout?: number,
 };

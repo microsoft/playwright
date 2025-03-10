@@ -1946,7 +1946,7 @@ Frame:
     ariaSnapshot:
       parameters:
         selector: string
-        id: boolean?
+        ref: boolean?
         mode:
           type: enum?
           literals:

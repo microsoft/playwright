@@ -206,6 +206,13 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
+### option: Locator.ariaSnapshot.ref
+* since: v1.52
+- `ref` <[boolean]>
+
+Generate symbolic reference for each element. One can use `aria-ref=<ref>` locator immediately after capturing the
+snapshot to perform actions on the element.
+
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.49
 
