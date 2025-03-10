@@ -242,7 +242,7 @@ test('should run by project', async ({ runUITest }) => {
   `);
 
   await page.getByText('Status:').click();
-  await page.getByLabel('bar').setChecked(true);
+  await page.getByRole('checkbox', { name: 'bar' }).setChecked(true);
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -797,4 +797,31 @@ test('should not leak websocket connections', {
   ]);
 
   await expect.poll(() => ws1.isClosed()).toBe(true);
+});
+
+test('should run selected from collapsed sidebar', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+  `);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ❌ a.test.ts
+        ✅ passes
+        ❌ fails <=
+      ► ❌ suite
+    ▼ ❌ b.test.ts
+        ✅ passes
+        ❌ fails
+    ▼ ✅ c.test.ts
+        ✅ passes
+        ⊘ skipped
+  `);
+
+  await page.getByTitle('Collapse sidebar').click();
+  await page.getByTitle('Run test').click();
+  await expect(page.locator('.workbench-run-status')).toHaveText(/Pending/);
+  await expect(page.locator('.workbench-run-status')).toHaveText(/Failed/);
 });
