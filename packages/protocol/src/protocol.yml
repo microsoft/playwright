@@ -705,6 +705,14 @@ LocalUtils:
       parameters:
         stacksId: string
 
+    globToRegex:
+      parameters:
+        glob: string
+        baseURL: string?
+        webSocketUrl: boolean?
+      returns:
+        regex: string
+
 Root:
   type: interface
 

@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { globToRegex, urlMatches } from '../../packages/playwright-core/lib/utils/isomorphic/urlMatch';
+import { globToRegexPattern, urlMatches } from '../../packages/playwright-core/lib/utils/isomorphic/urlMatch';
 import vm from 'vm';
 
 it('should work with navigation @smoke', async ({ page, server }) => {
@@ -71,6 +71,9 @@ it('should intercept after a service worker', async ({ page, server, browserName
 });
 
 it('should work with glob', async () => {
+  function globToRegex(glob: string): RegExp {
+    return new RegExp(globToRegexPattern(glob));
+  }
   expect(globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
   expect(globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
   expect(globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();
