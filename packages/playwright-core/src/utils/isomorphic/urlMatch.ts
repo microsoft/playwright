@@ -19,7 +19,7 @@ import { isString } from './stringUtils';
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
 const escapedChars = new Set(['$', '^', '+', '.', '*', '(', ')', '|', '\\', '?', '{', '}', '[', ']']);
 
-export function globToRegex(glob: string): RegExp {
+export function globToRegex(glob: string): string {
   const tokens = ['^'];
   let inGroup = false;
   for (let i = 0; i < glob.length; ++i) {
@@ -70,14 +70,15 @@ export function globToRegex(glob: string): RegExp {
     }
   }
   tokens.push('$');
-  return new RegExp(tokens.join(''));
+  return tokens.join('');
 }
 
 function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
 }
 
-export type URLMatch = string | RegExp | ((url: URL) => boolean);
+export type URLMatchResolved = RegExp | ((url: URL) => boolean);
+export type URLMatch = string | URLMatchResolved;
 
 export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   if (isRegExp(match1) && isRegExp(match2))
@@ -85,14 +86,43 @@ export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   return match1 === match2;
 }
 
-export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
+export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined, forWebSocket?: boolean): boolean {
   if (match === undefined || match === '')
     return true;
-  if (isString(match) && !match.startsWith('*')) {
-    // Allow http(s) baseURL to match ws(s) urls.
-    if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
-      baseURL = baseURL.replace(/^http/, 'ws');
+  if (isString(match))
+    match = new RegExp(globToRegexPattern(baseURL, match, forWebSocket));
+  if (isRegExp(match)) {
+    const r = match.test(urlString);
+    return r;
+  }
+  const url = parseURL(urlString);
+  if (!url)
+    return false;
+  if (typeof match !== 'function')
+    throw new Error('url parameter should be string, RegExp or function');
+  return match(url);
+}
 
+export function urlMatchesResolved(urlString: string, match: URLMatchResolved | undefined): boolean {
+  return urlMatches(undefined, urlString, match);
+}
+
+export function globToRegexPattern(baseURL: string | undefined, glob: string, forWebSocket?: boolean): string {
+  glob = resolveGlobBase(baseURL, glob, forWebSocket);
+  return globToRegex(glob);
+}
+
+function toWebSocketBaseUrl(baseURL: string | undefined) {
+  // Allow http(s) baseURL to match ws(s) urls.
+  if (baseURL && /^https?:\/\//.test(baseURL))
+    baseURL = baseURL.replace(/^http/, 'ws');
+  return baseURL;
+}
+
+function resolveGlobBase(baseURL: string | undefined, match: string, forWebSocket?: boolean): string {
+  if (!match.startsWith('*')) {
+    if (forWebSocket)
+      baseURL = toWebSocketBaseUrl(baseURL);
     const tokenMap = new Map<string, string>();
     function mapToken(original: string, replacement: string) {
       if (original.length === 0)
@@ -123,16 +153,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
       resolved = resolved.replace(token, original);
     match = resolved;
   }
-  if (isString(match))
-    match = globToRegex(match);
-  if (isRegExp(match))
-    return match.test(urlString);
-  const url = parseURL(urlString);
-  if (!url)
-    return false;
-  if (typeof match !== 'function')
-    throw new Error('url parameter should be string, RegExp or function');
-  return match(url);
+  return match;
 }
 
 function parseURL(url: string): URL | null {

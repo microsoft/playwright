@@ -148,7 +148,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
 function matchesPattern(dispatcher: PageDispatcher | BrowserContextDispatcher, baseURL: string | undefined, url: string) {
   for (const pattern of dispatcher._webSocketInterceptionPatterns || []) {
     const urlMatch = pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags) : pattern.glob;
-    if (urlMatches(baseURL, url, urlMatch))
+    if (urlMatches(baseURL, url, urlMatch, true))
       return true;
   }
   return false;

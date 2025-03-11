@@ -71,4 +71,9 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
   async addStackToTracingNoReply(params: channels.LocalUtilsAddStackToTracingNoReplyParams): Promise<void> {
     return await this._channel.addStackToTracingNoReply(params);
   }
+
+  async globToRegex(baseURL: string | undefined, glob: string, forWebSocket?: boolean): Promise<RegExp> {
+    const { regex } = await this._channel.globToRegex({ baseURL, glob, forWebSocket });
+    return new RegExp(regex);
+  }
 }

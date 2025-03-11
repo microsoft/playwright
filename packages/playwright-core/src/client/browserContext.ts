@@ -45,7 +45,7 @@ import type { BrowserType } from './browserType';
 import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { URLMatch, URLMatchResolved } from '../utils/isomorphic/urlMatch';
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 
@@ -338,13 +338,24 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._bindings.set(name, binding);
   }
 
+  async _resolveUrlMatcher(url: URLMatch, forWebSocket?: boolean): Promise<URLMatchResolved> {
+    if (!isString(url))
+      return url;
+    const localUtils = this._connection.localUtils();
+    if (!localUtils)
+      throw new Error('Route is not supported in thin clients');
+    return await localUtils.globToRegex(this._options.baseURL, url, forWebSocket);
+  }
+
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    this._routes.unshift(new network.RouteHandler(this._platform, this._options.baseURL, url, handler, options.times));
+    const resolved = await this._resolveUrlMatcher(url);
+    this._routes.unshift(new network.RouteHandler(this._platform, url, resolved, handler, options.times));
     await this._updateInterceptionPatterns();
   }
 
   async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<void> {
-    this._webSocketRoutes.unshift(new network.WebSocketRouteHandler(this._options.baseURL, url, handler));
+    const resolved = await this._resolveUrlMatcher(url, true);
+    this._webSocketRoutes.unshift(new network.WebSocketRouteHandler(url, resolved, handler));
     await this._updateWebSocketInterceptionPatterns();
   }
 

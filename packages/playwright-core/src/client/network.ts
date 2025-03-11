@@ -23,7 +23,7 @@ import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { assert } from '../utils/isomorphic/assert';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { urlMatches } from '../utils/isomorphic/urlMatch';
+import { urlMatchesResolved } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';
 import { MultiMap } from '../utils/isomorphic/multimap';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
@@ -36,7 +36,7 @@ import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from '
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../utils/isomorphic/types';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { URLMatch, URLMatchResolved } from '../utils/isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 import type { Platform, Zone } from './platform';
 
@@ -576,13 +576,13 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
 }
 
 export class WebSocketRouteHandler {
-  private readonly _baseURL: string | undefined;
   readonly url: URLMatch;
+  private _resolvedMatcher: URLMatchResolved;
   readonly handler: WebSocketRouteHandlerCallback;
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: WebSocketRouteHandlerCallback) {
-    this._baseURL = baseURL;
+  constructor(url: URLMatch, resolvedMatcher: URLMatchResolved, handler: WebSocketRouteHandlerCallback) {
     this.url = url;
+    this._resolvedMatcher = resolvedMatcher;
     this.handler = handler;
   }
 
@@ -603,7 +603,7 @@ export class WebSocketRouteHandler {
   }
 
   public matches(wsURL: string): boolean {
-    return urlMatches(this._baseURL, wsURL, this.url);
+    return urlMatchesResolved(wsURL, this._resolvedMatcher);
   }
 
   public async handle(webSocketRoute: WebSocketRoute) {
@@ -812,18 +812,18 @@ export function validateHeaders(headers: Headers) {
 
 export class RouteHandler {
   private handledCount = 0;
-  private readonly _baseURL: string | undefined;
   private readonly _times: number;
   readonly url: URLMatch;
+  private _resolvedMatcher: URLMatchResolved;
   readonly handler: RouteHandlerCallback;
   private _ignoreException: boolean = false;
   private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
   private _savedZone: Zone;
 
-  constructor(platform: Platform, baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
-    this._baseURL = baseURL;
+  constructor(platform: Platform, url: URLMatch, resolvedMatcher: URLMatchResolved, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._times = times;
     this.url = url;
+    this._resolvedMatcher = resolvedMatcher;
     this.handler = handler;
     this._savedZone = platform.zones.current().pop();
   }
@@ -845,7 +845,7 @@ export class RouteHandler {
   }
 
   public matches(requestURL: string): boolean {
-    return urlMatches(this._baseURL, requestURL, this.url);
+    return urlMatchesResolved(requestURL, this._resolvedMatcher);
   }
 
   public async handle(route: Route): Promise<boolean> {
