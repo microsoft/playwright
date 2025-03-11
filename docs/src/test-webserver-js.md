@@ -38,6 +38,7 @@ export default defineConfig({
 | `stderr` | Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`. |
 | `timeout` | How long to wait for the process to start up and be available in milliseconds. Defaults to 60000. |
 | `gracefulShutdown` | How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal: 'SIGTERM', timeout: 500 }`, the process group is sent a `SIGTERM` signal, followed by `SIGKILL` if it doesn't exit within 500ms. You can also use `SIGINT` as the signal instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGTERM` and `SIGINT` signals, so this option is ignored on Windows. Note that shutting down a Docker container requires `SIGTERM`. |
+| `name` | Specifies a custom name for the web server. This name will be prefixed to log messages. Defaults to `[WebServer]`. |
 
 ## Adding a server timeout
 
@@ -107,12 +108,14 @@ export default defineConfig({
     {
       command: 'npm run start',
       url: 'http://localhost:3000',
+      name: 'Frontend',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
       url: 'http://localhost:3333',
+      name: 'Backend',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }

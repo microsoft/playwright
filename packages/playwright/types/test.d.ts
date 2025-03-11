@@ -957,12 +957,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *     {
    *       command: 'npm run start',
    *       url: 'http://localhost:3000',
+   *       name: 'Frontend',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     },
    *     {
    *       command: 'npm run backend',
    *       url: 'http://localhost:3333',
+   *       name: 'Backend',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     }
@@ -9973,5 +9975,10 @@ interface TestConfigWebServer {
    * checked. Either `port` or `url` should be specified.
    */
   url?: string;
+
+  /**
+   * Specifies a custom name for the web server. This name will be prefixed to log messages. Defaults to `[WebServer]`.
+   */
+  name?: string;
 }
 
