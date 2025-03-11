@@ -1186,3 +1186,42 @@ test('custom asymmetric matchers should work with expect.extend', async ({ runIn
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain('should not run');
 });
+
+test('multiple custom asymmetric matchers should present the correct error', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35138' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      expect.extend({
+        isFoo(received: unknown, expected: string) {
+          return { pass: received === 'foo', message: () => '' };
+        }
+      });
+      test('example', () => {
+        expect([
+          {
+            a: 1,
+            b: 2,
+            c: expect.isFoo(),
+          },
+          {
+            a: 1,
+            b: 2,
+            h: 3,
+            c: expect.isFoo(),
+          },
+          {
+            a: 1,
+            b: 2,
+            c: expect.isFoo(),
+          },
+        ]).toContainEqual({
+          a: 1,
+          b: 2,
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('Expected value: {"a": 1, "b": 2}');
+});
