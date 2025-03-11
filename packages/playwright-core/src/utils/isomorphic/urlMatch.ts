@@ -19,7 +19,7 @@ import { isString } from './stringUtils';
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
 const escapedChars = new Set(['$', '^', '+', '.', '*', '(', ')', '|', '\\', '?', '{', '}', '[', ']']);
 
-export function globToRegex(glob: string): string {
+export function globToRegexPattern(glob: string): string {
   const tokens = ['^'];
   let inGroup = false;
   for (let i = 0; i < glob.length; ++i) {
@@ -77,8 +77,7 @@ function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
 }
 
-export type URLMatchResolved = RegExp | ((url: URL) => boolean);
-export type URLMatch = string | URLMatchResolved;
+export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
 export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   if (isRegExp(match1) && isRegExp(match2))
@@ -86,11 +85,11 @@ export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   return match1 === match2;
 }
 
-export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined, forWebSocket?: boolean): boolean {
+export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined, webSocketUrl?: boolean): boolean {
   if (match === undefined || match === '')
     return true;
   if (isString(match))
-    match = new RegExp(globToRegexPattern(baseURL, match, forWebSocket));
+    match = new RegExp(resolveGlobToRegexPattern(baseURL, match, webSocketUrl));
   if (isRegExp(match)) {
     const r = match.test(urlString);
     return r;
@@ -103,13 +102,11 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   return match(url);
 }
 
-export function urlMatchesResolved(urlString: string, match: URLMatchResolved | undefined): boolean {
-  return urlMatches(undefined, urlString, match);
-}
-
-export function globToRegexPattern(baseURL: string | undefined, glob: string, forWebSocket?: boolean): string {
-  glob = resolveGlobBase(baseURL, glob, forWebSocket);
-  return globToRegex(glob);
+export function resolveGlobToRegexPattern(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): string {
+  if (webSocketUrl)
+    baseURL = toWebSocketBaseUrl(baseURL);
+  glob = resolveGlobBase(baseURL, glob);
+  return globToRegexPattern(glob);
 }
 
 function toWebSocketBaseUrl(baseURL: string | undefined) {
@@ -119,10 +116,8 @@ function toWebSocketBaseUrl(baseURL: string | undefined) {
   return baseURL;
 }
 
-function resolveGlobBase(baseURL: string | undefined, match: string, forWebSocket?: boolean): string {
+function resolveGlobBase(baseURL: string | undefined, match: string): string {
   if (!match.startsWith('*')) {
-    if (forWebSocket)
-      baseURL = toWebSocketBaseUrl(baseURL);
     const tokenMap = new Map<string, string>();
     function mapToken(original: string, replacement: string) {
       if (original.length === 0)

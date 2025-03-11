@@ -709,7 +709,7 @@ LocalUtils:
       parameters:
         glob: string
         baseURL: string?
-        forWebSocket: boolean?
+        webSocketUrl: boolean?
       returns:
         regex: string
 

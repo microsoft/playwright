@@ -576,11 +576,11 @@ export type LocalUtilsTraceDiscardedResult = void;
 export type LocalUtilsGlobToRegexParams = {
   glob: string,
   baseURL?: string,
-  forWebSocket?: boolean,
+  webSocketUrl?: boolean,
 };
 export type LocalUtilsGlobToRegexOptions = {
   baseURL?: string,
-  forWebSocket?: boolean,
+  webSocketUrl?: boolean,
 };
 export type LocalUtilsGlobToRegexResult = {
   regex: string,

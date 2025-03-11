@@ -347,7 +347,7 @@ scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
 scheme.LocalUtilsGlobToRegexParams = tObject({
   glob: tString,
   baseURL: tOptional(tString),
-  forWebSocket: tOptional(tBoolean),
+  webSocketUrl: tOptional(tBoolean),
 });
 scheme.LocalUtilsGlobToRegexResult = tObject({
   regex: tString,

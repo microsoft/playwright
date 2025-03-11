@@ -24,7 +24,7 @@ import { Progress, ProgressController } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
 import { fetchData } from '../utils/network';
-import { globToRegexPattern } from '../../utils/isomorphic/urlMatch';
+import { resolveGlobToRegexPattern } from '../../utils/isomorphic/urlMatch';
 
 import type { HarBackend } from '../harBackend';
 import type { CallMetadata } from '../instrumentation';
@@ -123,7 +123,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 
   async globToRegex(params: channels.LocalUtilsGlobToRegexParams, metadata?: CallMetadata): Promise<channels.LocalUtilsGlobToRegexResult> {
-    const regex = globToRegexPattern(params.baseURL, params.glob, params.forWebSocket);
+    const regex = resolveGlobToRegexPattern(params.baseURL, params.glob, params.webSocketUrl);
     return { regex };
   }
 }

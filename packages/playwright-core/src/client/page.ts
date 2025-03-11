@@ -38,7 +38,7 @@ import { assert } from '../utils/isomorphic/assert';
 import { mkdirIfNeeded } from './fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { trimStringWithEllipsis  } from '../utils/isomorphic/stringUtils';
-import { urlMatchesEqual, urlMatchesResolved } from '../utils/isomorphic/urlMatch';
+import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '../utils/isomorphic/rtti';
 
@@ -52,7 +52,7 @@ import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOp
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import type { URLMatch, URLMatchResolved } from '../utils/isomorphic/urlMatch';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
@@ -266,9 +266,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.frames().find(f => {
       if (name)
         return f.name() === name;
-      if (isString(url))
-        return f.url() === url;
-      return urlMatchesResolved(f.url(), url);
+      return urlMatches(this._browserContext._options.baseURL, f.url(), url);
     }) || null;
   }
 
@@ -430,21 +428,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.waitForURL(url, options);
   }
 
-  private async _resolveUrlMatcher<T>(urlOrPredicate: string | RegExp | ((r: T) => boolean | Promise<boolean>)): Promise<RegExp | ((r: T) => boolean | Promise<boolean>)> {
-    if (!isString(urlOrPredicate))
-      return urlOrPredicate;
-    const localUtils = this._connection.localUtils();
-    if (!localUtils)
-      throw new Error('Route is not supported in thin clients');
-    return await localUtils.globToRegex(this._browserContext._options.baseURL, urlOrPredicate);
-  }
-
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
-    const resolved = await this._resolveUrlMatcher(urlOrPredicate);
     const predicate = async (request: Request) => {
-      if (isRegExp(resolved))
-        return resolved.test(request.url());
-      return await resolved(request);
+      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
+        return urlMatches(this._browserContext._options.baseURL, request.url(), urlOrPredicate);
+      return await urlOrPredicate(request);
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
     const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
@@ -452,11 +440,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
-    const resolved = await this._resolveUrlMatcher(urlOrPredicate);
     const predicate = async (response: Response) => {
-      if (isRegExp(resolved))
-        return resolved.test(response.url());
-      return await resolved(response);
+      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
+        return urlMatches(this._browserContext._options.baseURL, response.url(), urlOrPredicate);
+      return await urlOrPredicate(response);
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
     const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;
@@ -533,8 +520,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    const resolved = await this._browserContext._resolveUrlMatcher(url);
-    this._routes.unshift(new RouteHandler(this._platform, url, resolved, handler, options.times));
+    this._routes.unshift(new RouteHandler(this._platform, this._browserContext._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns();
   }
 
@@ -552,8 +538,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async routeWebSocket(url: URLMatch, handler: WebSocketRouteHandlerCallback): Promise<void> {
-    const resolved = await this._browserContext._resolveUrlMatcher(url, true);
-    this._webSocketRoutes.unshift(new WebSocketRouteHandler(url, resolved, handler));
+    this._webSocketRoutes.unshift(new WebSocketRouteHandler(this._browserContext._options.baseURL, url, handler));
     await this._updateWebSocketInterceptionPatterns();
   }
 

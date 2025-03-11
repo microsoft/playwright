@@ -27,8 +27,7 @@ import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
 import { assert } from '../utils/isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
-import { urlMatchesResolved } from '../utils/isomorphic/urlMatch';
-import { isString } from '../utils/isomorphic/rtti';
+import { urlMatches } from '../utils/isomorphic/urlMatch';
 
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
@@ -123,13 +122,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
 
-      const matcher = options.url ? await this._page!.context()._resolveUrlMatcher(options.url) : undefined;
       const navigatedEvent = await waiter.waitForEvent<channels.FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
         // Any failed navigation results in a rejection.
         if (event.error)
           return true;
         waiter.log(`  navigated to "${event.url}"`);
-        return urlMatchesResolved(event.url, matcher);
+        return urlMatches(this._page?.context()._options.baseURL, event.url, options.url);
       });
       if (navigatedEvent.error) {
         const e = new Error(navigatedEvent.error);
@@ -168,8 +166,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
-    const matcher = await this._page!.context()._resolveUrlMatcher(url);
-    if (urlMatchesResolved(this.url(), matcher))
+    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
       return await this.waitForLoadState(options.waitUntil, options);
 
     await this.waitForNavigation({ url, ...options });
