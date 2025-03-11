@@ -46,6 +46,7 @@ export type AriaTemplateRoleNode = AriaProps & {
   role: AriaRole | 'fragment';
   name?: AriaRegex | string;
   children?: AriaTemplateNode[];
+  props?: Record<string, string | AriaRegex>;
 };
 
 export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
@@ -148,6 +149,21 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
           kind: 'text',
           text: valueOrRegex(value.value)
         });
+        continue;
+      }
+
+      // - /url: "about:blank"
+      if (key.value.startsWith('/')) {
+        const valueIsString = value instanceof yaml.Scalar && typeof value.value === 'string';
+        if (!valueIsString) {
+          errors.push({
+            message: 'Property value should be a string',
+            range: convertRange(((entry.value as any).range || map.range)),
+          });
+          continue;
+        }
+        container.props = container.props ?? {};
+        container.props[key.value.slice(1)] = valueOrRegex(value.value);
         continue;
       }
 
