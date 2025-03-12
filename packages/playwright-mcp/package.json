@@ -1,7 +1,6 @@
 {
   "name": "@playwright/mcp",
-  "private": true,
-  "version": "0.0.1",
+  "version": "1.52.0-next",
   "description": "Playwright Tools for MCP",
   "repository": {
     "type": "git",
@@ -29,5 +28,8 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1"
+  },
+  "bin": {
+    "mcp": "cli.js"
   }
 }

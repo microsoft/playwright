@@ -19,8 +19,12 @@ import { waitForCompletion } from '../utils';
 import type * as playwright from 'playwright';
 import type { Tool, ToolContext, ToolResult } from './common';
 
-const elementRefProperty = {
-  elementRef: {
+const elementProperties = {
+  element: {
+    type: 'string',
+    description: 'Element label, description of any other text to describe the element',
+  },
+  ref: {
     type: 'string',
     description: 'Target element reference',
   }
@@ -68,14 +72,14 @@ export const click: Tool = {
     inputSchema: {
       type: 'object',
       properties: {
-        ...elementRefProperty,
+        ...elementProperties,
       },
-      required: ['elementRef'],
+      required: ['ref', 'element'],
     }
   },
 
   handle: async (context, params) => {
-    const locator = elementRefLocator(context.page, params!);
+    const locator = refLocator(context.page, params!);
     return runAndCaptureSnapshot(context, () => locator.click());
   }
 };
@@ -87,14 +91,14 @@ export const hover: Tool = {
     inputSchema: {
       type: 'object',
       properties: {
-        ...elementRefProperty,
+        ...elementProperties,
       },
-      required: ['elementRef'],
+      required: ['ref', 'element'],
     }
   },
 
   handle: async (context, params) => {
-    const locator = elementRefLocator(context.page, params!);
+    const locator = refLocator(context.page, params!);
     return runAndCaptureSnapshot(context, () => locator.hover());
   }
 };
@@ -106,7 +110,7 @@ export const type: Tool = {
     inputSchema: {
       type: 'object',
       properties: {
-        ...elementRefProperty,
+        ...elementProperties,
         text: {
           type: 'string',
           description: 'Text to enter',
@@ -116,12 +120,12 @@ export const type: Tool = {
           description: 'Whether to submit entered text (press Enter after)'
         }
       },
-      required: ['elementRef', 'text'],
+      required: ['ref', 'element', 'text'],
     }
   },
 
   handle: async (context, params) => {
-    const locator = elementRefLocator(context.page, params!);
+    const locator = refLocator(context.page, params!);
     return await runAndCaptureSnapshot(context, async () => {
       locator.fill(params!.text as string);
       if (params!.submit)
@@ -130,8 +134,8 @@ export const type: Tool = {
   }
 };
 
-function elementRefLocator(page: playwright.Page, params: Record<string, string>): playwright.Locator {
-  return page.locator(`internal:aria-ref=${params.elementRef}`);
+function refLocator(page: playwright.Page, params: Record<string, string>): playwright.Locator {
+  return page.locator(`aria-ref=${params.ref}`);
 }
 
 async function runAndCaptureSnapshot(context: ToolContext, callback: () => Promise<any>): Promise<ToolResult> {
