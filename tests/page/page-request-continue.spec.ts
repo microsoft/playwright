@@ -478,6 +478,7 @@ it('propagate headers same origin redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
 }, async ({ page, server }) => {
   await page.goto(server.PREFIX + '/empty.html');
@@ -489,7 +490,7 @@ it('propagate headers same origin redirect', {
         'Access-Control-Allow-Origin': server.PREFIX,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
-        'Access-Control-Allow-Headers': 'authorization,custom',
+        'Access-Control-Allow-Headers': 'authorization,cookie,custom',
       });
       response.end();
       return;
@@ -499,6 +500,7 @@ it('propagate headers same origin redirect', {
     response.end('done');
   });
   await server.setRedirect('/redirect', '/something');
+  await page.evaluate(() => document.cookie = 'a=b');
   const text = await page.evaluate(async url => {
     const data = await fetch(url, {
       headers: {
@@ -512,6 +514,7 @@ it('propagate headers same origin redirect', {
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
   expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  expect.soft(serverRequest.headers['cookie']).toBe('a=b');
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
@@ -562,6 +565,7 @@ it('propagate headers cross origin redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
 }, async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid, 'receives authorization:credentials header');
@@ -575,7 +579,7 @@ it('propagate headers cross origin redirect', {
         'Access-Control-Allow-Origin': server.PREFIX,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
-        'Access-Control-Allow-Headers': 'authorization,custom',
+        'Access-Control-Allow-Headers': 'authorization,cookie,custom',
       });
       response.end();
       return;
@@ -591,6 +595,7 @@ it('propagate headers cross origin redirect', {
     response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
     response.end();
   });
+  await page.evaluate(() => document.cookie = 'a=b');
   const text = await page.evaluate(async url => {
     const data = await fetch(url, {
       headers: {
@@ -605,6 +610,7 @@ it('propagate headers cross origin redirect', {
   const serverRequest = await serverRequestPromise;
   // Authorization header not propagated to cross-origin redirect.
   expect.soft(serverRequest.headers['authorization']).toBeFalsy();
+  expect.soft(serverRequest.headers['cookie']).toBeFalsy();
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
@@ -612,6 +618,7 @@ it('propagate headers cross origin redirect after interception', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
 }, async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/empty.html');
@@ -623,7 +630,7 @@ it('propagate headers cross origin redirect after interception', {
         'Access-Control-Allow-Origin': server.PREFIX,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
-        'Access-Control-Allow-Headers': 'authorization,custom',
+        'Access-Control-Allow-Headers': 'authorization,cookie,custom',
       });
       response.end();
       return;
@@ -639,6 +646,7 @@ it('propagate headers cross origin redirect after interception', {
     response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
     response.end();
   });
+  await page.evaluate(() => document.cookie = 'a=b');
   await page.route('**/redirect', async route => {
     await route.continue({
       headers: {
@@ -659,10 +667,13 @@ it('propagate headers cross origin redirect after interception', {
   }, server.PREFIX + '/redirect');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect.soft(serverRequest.headers['authorization']).toBeFalsy();
-  else
+    expect.soft(serverRequest.headers['cookie']).toBeFalsy();
+  } else {
     expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+    expect.soft(serverRequest.headers['cookie']).toBe('a=b');
+  }
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
