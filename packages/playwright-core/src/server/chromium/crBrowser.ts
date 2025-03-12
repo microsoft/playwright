@@ -373,27 +373,7 @@ export class CRBrowserContext extends BrowserContext {
 
   override async doCreateNewPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
-
-    const oldKeys = this._browser.isClank() ? new Set(this._browser._crPages.keys()) : undefined;
-
-    let { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
-
-    if (oldKeys) {
-      // Chrome for Android returns tab ids (1, 2, 3, 4, 5) instead of content target ids here, work around it via the
-      // heuristic assuming that there is only one page created at a time.
-      const newKeys = new Set(this._browser._crPages.keys());
-      // Remove old keys.
-      for (const key of oldKeys)
-        newKeys.delete(key);
-      // Remove potential concurrent popups.
-      for (const key of newKeys) {
-        const page = this._browser._crPages.get(key)!;
-        if (page._opener)
-          newKeys.delete(key);
-      }
-      assert(newKeys.size === 1);
-      [targetId] = [...newKeys];
-    }
+    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
     return this._browser._crPages.get(targetId)!._page;
   }
 
