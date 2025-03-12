@@ -20,7 +20,7 @@ import { waitForCompletion } from '../utils';
 const elementProperties = {
   element: {
     type: 'string',
-    description: 'Element label, description of any other text to describe the element',
+    description: 'Element label, description or any other text to describe the element',
   }
 };
 
