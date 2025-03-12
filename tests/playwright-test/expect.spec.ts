@@ -1186,3 +1186,104 @@ test('custom asymmetric matchers should work with expect.extend', async ({ runIn
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain('should not run');
 });
+
+test('custom asymmetric matchers should function', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35138' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      expect.extend({
+        isUndefined(received: unknown, expected: string) {
+          return { pass: received === undefined, message: () => '' };
+        }
+      });
+      test('example', () => {
+        expect(undefined).toEqual(expect.isUndefined());
+      });
+      test('example2', () => {
+        expect({
+          aProperty: undefined,
+          bProperty: 'foo',
+        }).toEqual({
+          aProperty: expect.isUndefined(),
+          bProperty: 'foo',
+          cProperty: expect.isUndefined(),
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('single custom asymmetric matcher should present the correct error', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35138' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      expect.extend({
+        isUndefined(received: unknown, expected: string) {
+          return { pass: received === undefined, message: () => '' };
+        }
+      });
+      test('example', () => {
+        expect({
+          aProperty: 'foo'
+        }).toEqual({
+          aProperty: expect.isUndefined()
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('-   \"aProperty\": isUndefined<>');
+  expect(result.output).toContain('+   \"aProperty\": \"foo\"');
+});
+
+test('multiple custom asymmetric matchers should present the correct error', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35138' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      expect.extend({
+        isUndefined(received: unknown, expected: string) {
+          return { pass: received === undefined, message: () => '' };
+        }
+      });
+      test('example', () => {
+        expect({
+          aProperty: undefined,
+          bProperty: 'foo',
+        }).toEqual({
+          aProperty: expect.isUndefined(),
+          bProperty: expect.isUndefined()
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('-   \"bProperty\": isUndefined<>');
+  expect(result.output).toContain('+   \"bProperty\": \"foo\"');
+});
+
+test('multiple custom asymmetric matchers in async expect should present the correct error', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35138' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      expect.extend({
+        isUndefined(received: unknown, expected: string) {
+          return { pass: received === undefined, message: () => '' };
+        }
+      });
+      test('example', async () => {
+        await expect.poll(() => ({ aProperty: 'foo', bProperty: undefined })).toEqual({
+          aProperty: expect.isUndefined(),
+          bProperty: expect.isUndefined(),
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('-   \"aProperty\": isUndefined<>');
+  expect(result.output).toContain('+   \"aProperty\": \"foo\"');
+});
