@@ -339,7 +339,8 @@ export class CRNetworkManager {
       // We do not support intercepting redirects.
       if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
         // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
-        headersOverride = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
+        headersOverride = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers?.
+            filter(header => header.name.toLowerCase() !== 'cookie');
         requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
       } else {
         route = new RouteImpl(requestPausedSessionInfo!.session, requestPausedEvent.requestId);
