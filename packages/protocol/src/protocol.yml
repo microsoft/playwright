@@ -762,6 +762,7 @@ Playwright:
               key: binary?
               passphrase: string?
               pfx: binary?
+        maxRedirects: number?
         httpCredentials:
           type: object?
           properties:

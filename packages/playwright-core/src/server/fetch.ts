@@ -56,6 +56,7 @@ type FetchRequestOptions = {
   proxy?: ProxySettings;
   timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
+  maxRedirects?: number;
   baseURL?: string;
   clientCertificates?: types.BrowserContextOptions['clientCertificates'];
 };
@@ -185,6 +186,8 @@ export abstract class APIRequestContext extends SdkObject {
     if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass))
       agent = createProxyAgent(proxy);
 
+    let maxRedirects = params.maxRedirects ?? (defaults.maxRedirects ?? 20);
+    maxRedirects = maxRedirects === 0 ? -1 : maxRedirects;
 
     const timeout = defaults.timeoutSettings.timeout(params);
     const deadline = timeout && (monotonicTime() + timeout);
@@ -193,7 +196,7 @@ export abstract class APIRequestContext extends SdkObject {
       method,
       headers,
       agent,
-      maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
+      maxRedirects,
       timeout,
       deadline,
       ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
@@ -371,7 +374,7 @@ export abstract class APIRequestContext extends SdkObject {
         }
 
         if (redirectStatus.includes(response.statusCode!) && options.maxRedirects >= 0) {
-          if (!options.maxRedirects) {
+          if (options.maxRedirects === 0) {
             reject(new Error('Max redirect count exceeded'));
             request.destroy();
             return;
@@ -662,6 +665,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       extraHTTPHeaders: options.extraHTTPHeaders,
       failOnStatusCode: !!options.failOnStatusCode,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
+      maxRedirects: options.maxRedirects,
       httpCredentials: options.httpCredentials,
       clientCertificates: options.clientCertificates,
       proxy,
