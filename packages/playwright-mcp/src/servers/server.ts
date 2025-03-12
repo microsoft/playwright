@@ -66,12 +66,13 @@ export class Server {
   }
 
   private async _createBrowser(): Promise<playwright.Browser> {
+    const headless = process.env.PLAYWRIGHT_HEADLESS === '1' || process.env.PLAYWRIGHT_HEADLESS === 'true';
     if (process.env.PLAYWRIGHT_WS_ENDPOINT) {
-      return await playwright.chromium.connect(
-          process.env.PLAYWRIGHT_WS_ENDPOINT
-      );
+      const url = new URL(process.env.PLAYWRIGHT_WS_ENDPOINT);
+      url.searchParams.set('launch-options', JSON.stringify({ headless }));
+      return await playwright.chromium.connect(String(url));
     }
-    return await playwright.chromium.launch({ headless: false });
+    return await playwright.chromium.launch({ headless });
   }
 
   private async _openPage(): Promise<playwright.Page> {

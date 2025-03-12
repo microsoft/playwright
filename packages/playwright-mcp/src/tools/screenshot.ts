@@ -17,6 +17,13 @@
 import { Tool } from './common';
 import { waitForCompletion } from '../utils';
 
+const elementProperties = {
+  element: {
+    type: 'string',
+    description: 'Element label, description or any other text to describe the element',
+  }
+};
+
 export const screenshot: Tool = {
   schema: {
     name: 'screenshot',
@@ -50,8 +57,9 @@ export const moveMouse: Tool = {
           type: 'number',
           description: 'Y coordinate',
         },
+        ...elementProperties,
       },
-      required: ['x', 'y'],
+      required: ['x', 'y', 'element'],
     }
   },
 
@@ -69,7 +77,10 @@ export const click: Tool = {
     description: 'Click left mouse button',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        ...elementProperties,
+      },
+      required: ['element'],
     }
   },
 
@@ -100,7 +111,8 @@ export const drag: Tool = {
           description: 'Y coordinate',
         },
       },
-      required: ['x', 'y'],
+      ...elementProperties,
+      required: ['x', 'y', 'element'],
     }
   },
 
