@@ -443,11 +443,24 @@ for (const params of [
     const context = await contextFactory({ viewport: { width: params.width, height: params.height } });
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
+
+    const rafRaf = () => page.evaluate(() => new Promise((f => window.builtinRequestAnimationFrame(() => requestAnimationFrame(f)))));
+    const produceFrames = async () => {
+      for (let i = 0; i < 10; ++i) {
+        // different color every time
+        const color = i % 2 === 0 ? 'pink' : 'yellow';
+        await page.setContent(`<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: ${color}; border: 50px solid blue"></body>`);
+        await rafRaf();
+      }
+    };
+    await produceFrames();
+    // This is the actual frame we are interested in.
     // Make sure we have a chance to paint.
-    for (let i = 0; i < 50; ++i) {
+    for (let i = 0; i < 10; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
-      await page.evaluate(() => new Promise((f => window.builtinRequestAnimationFrame(() => window.builtinRequestAnimationFrame(f)))));
+      await rafRaf();
     }
+    await produceFrames();
     await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
     const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
@@ -463,16 +476,17 @@ for (const params of [
       expect(image.height).toBe(previewHeight);
     }
 
-    console.log(`frames: ${frames.length}`);
-    const frame = frames[frames.length - 1]; // pick last frame.
-    const buffer = resources.get('resources/' + frame.sha1);
-    const image = jpegjs.decode(buffer);
-    expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
-    expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
-    expectBlue(image.data, previewWidth * 5 * 4 + previewWidth * 4 / 2); // top
-    expectBlue(image.data, previewWidth * (previewHeight - 5) * 4 + previewWidth * 4 / 2); // bottom
-    expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + 5 * 4); // left
-    expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + (previewWidth - 5) * 4); // right
+    const findMatchingFrame = frames.toReversed().find(frame => {
+      const buffer = resources.get('resources/' + frame.sha1);
+      const image = jpegjs.decode(buffer);
+      expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
+      expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
+      expectBlue(image.data, previewWidth * 5 * 4 + previewWidth * 4 / 2); // top
+      expectBlue(image.data, previewWidth * (previewHeight - 5) * 4 + previewWidth * 4 / 2); // bottom
+      expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + 5 * 4); // left
+      expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + (previewWidth - 5) * 4); // right
+    });
+    expect(findMatchingFrame, 'No matching frame').toBeTruthy();
   });
 }
 
