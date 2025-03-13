@@ -52,7 +52,7 @@ function build {
   cp ./output/api.json ./output/playwright-${SUFFIX}/package/
   cp ./output/protocol.yml ./output/playwright-${SUFFIX}/package/
   cd ./output/playwright-${SUFFIX}/package
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --production --ignore-scripts
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --omit=dev --ignore-scripts
   rm package-lock.json
 
   cd ..
@@ -71,3 +71,4 @@ build "node-v${NODE_VERSION}-darwin-arm64" "mac-arm64" "tar.gz"
 build "node-v${NODE_VERSION}-linux-x64" "linux" "tar.gz"
 build "node-v${NODE_VERSION}-linux-arm64" "linux-arm64" "tar.gz"
 build "node-v${NODE_VERSION}-win-x64" "win32_x64" "zip"
+build "node-v${NODE_VERSION}-win-arm64" "win32_arm64" "zip"
