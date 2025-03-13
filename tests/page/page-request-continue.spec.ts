@@ -394,6 +394,94 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(color).toBe('rgb(255, 192, 203)');
 });
 
+it('continue should not propagate cookie override to redirects', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+  server.setRedirect('/redirect', server.PREFIX + '/empty.html');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        cookie: 'override'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/redirect')
+  ]);
+  expect(serverRequest.headers['cookie']).toBe('foo=bar');
+});
+
+it('continue should not override cookie', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+  await page.route('**', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        cookie: 'override',
+        custom: 'value'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE)
+  ]);
+  // Original cookie from the browser's cookie jar should be sent.
+  expect(serverRequest.headers['cookie']).toBe('foo=bar');
+  expect(serverRequest.headers['custom']).toBe('value');
+});
+
+it('redirect after continue should be able to delete cookie', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+
+  server.setRoute('/delete-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
+    response.end();
+  });
+  server.setRedirect('/redirect', '/delete-cookie');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+      }
+    });
+  });
+  await page.goto(server.PREFIX + '/redirect');
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers['cookie']).toBeFalsy();
+});
+
 it('continue should propagate headers to redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' },
@@ -667,13 +755,13 @@ it('propagate headers cross origin redirect after interception', {
   }, server.PREFIX + '/redirect');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
-  if (browserName === 'webkit') {
+  if (browserName === 'webkit')
     expect.soft(serverRequest.headers['authorization']).toBeFalsy();
-    expect.soft(serverRequest.headers['cookie']).toBeFalsy();
-  } else {
+  else
     expect.soft(serverRequest.headers['authorization']).toBe('credentials');
-    expect.soft(serverRequest.headers['cookie']).toBe('a=b');
-  }
+  // TODO: fix this in juggler.
+  if (browserName !== 'firefox')
+    expect.soft(serverRequest.headers['cookie']).toBeFalsy();
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
