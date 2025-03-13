@@ -444,9 +444,9 @@ for (const params of [
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.
-    for (let i = 0; i < 10; ++i) {
+    for (let i = 0; i < 50; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
-      await page.evaluate(() => new Promise(window.builtinRequestAnimationFrame));
+      await page.evaluate(() => new Promise((f => window.builtinRequestAnimationFrame(() => window.builtinRequestAnimationFrame(f)))));
     }
     await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
