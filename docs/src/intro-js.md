@@ -20,6 +20,7 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 Get started by installing Playwright using npm, yarn or pnpm. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -83,6 +84,7 @@ The `tests` folder contains a basic example test to help you get started with te
 By default tests will be run on all 3 browsers, Chromium, Firefox and WebKit using 3 workers. This can be configured in the [playwright.config file](./test-configuration.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -116,7 +118,7 @@ pnpm exec playwright test
 
 </Tabs>
 
-![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628) 
+![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
 See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
 
 ## HTML Test Reports
@@ -124,6 +126,7 @@ See our doc on [Running Tests](./running-tests.md) to learn more about running t
 After your test completes, an [HTML Reporter](./test-reporters.md#html-reporter) will be generated, which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -164,6 +167,7 @@ pnpm exec playwright show-report
 Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -207,6 +211,7 @@ Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about 
 To update Playwright to the latest version run the following command:
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -250,6 +255,7 @@ pnpm exec playwright install --with-deps
 You can always check which version of Playwright you have by running the following command:
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
