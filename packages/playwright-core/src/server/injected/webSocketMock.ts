@@ -141,12 +141,13 @@ export function inject(globalThis: GlobalThis) {
     constructor(url: string | URL, protocols?: string | string[]) {
       super();
 
-      this.url = typeof url === 'string' ? url : url.href;
-      try {
-        this.url = new URL(url).href;
-        this._origin = new URL(url).origin;
-      } catch {
+      if (typeof url === 'string') {
+        const baseURL = globalThis.window.document.baseURI.replace(/^http/, 'ws');
+        this.url = new URL(url, baseURL).href;
+      } else {
+        this.url = url.href;
       }
+      this._origin = URL.parse(this.url)?.origin ?? '';
       this._protocols = protocols;
 
       this._id = generateId();
