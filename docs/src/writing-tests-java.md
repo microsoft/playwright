@@ -23,7 +23,7 @@ public class App {
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch();
             Page page = browser.newPage();
-            page.navigate("http://playwright.dev");
+            page.navigate("https://playwright.dev");
 
             // Expect a title "to contain" a substring.
             assertThat(page).hasTitle(Pattern.compile("Playwright"));

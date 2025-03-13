@@ -520,7 +520,7 @@ with sync_playwright() as p:
     # Channel can be "chrome", "msedge", "chrome-beta", "msedge-beta" or "msedge-dev".
     browser = p.chromium.launch(channel="msedge")
     page = browser.new_page()
-    page.goto("http://playwright.dev")
+    page.goto("https://playwright.dev")
     print(page.title())
     browser.close()
 ```
