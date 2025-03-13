@@ -444,21 +444,45 @@ for (const params of [
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
 
-    const rafRaf = () => page.evaluate(() => new Promise((f => window.builtinRequestAnimationFrame(() => requestAnimationFrame(f)))));
+    const rafraf = () => page.evaluate(() => new Promise((f => window.builtinRequestAnimationFrame(() => requestAnimationFrame(f)))));
     const produceFrames = async () => {
-      for (let i = 0; i < 10; ++i) {
-        // different color every time
-        const color = i % 2 === 0 ? 'pink' : 'yellow';
-        await page.setContent(`<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: ${color}; border: 50px solid blue"></body>`);
-        await rafRaf();
-      }
+      // setContent of something big which is rotating so that we can see the browser generating frames.yellow background and black cross
+      await page.setContent(`
+        <html>
+        <style>
+          body {
+            background: yellow;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+          }
+          
+          div {
+            font-size: 60px;
+            color: black;
+            animation: spin 4s linear infinite;
+          }
+          
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        </style>
+        <body>
+          <div>producing frames</div>
+        </body>
+        </html>
+        `);
+      for (let i = 0; i < 30; ++i)
+        await rafraf();
     };
     await produceFrames();
     // This is the actual frame we are interested in.
     // Make sure we have a chance to paint.
-    for (let i = 0; i < 10; ++i) {
+    for (let i = 0; i < 50; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
-      await rafRaf();
+      await rafraf();
     }
     await produceFrames();
     await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
@@ -476,17 +500,22 @@ for (const params of [
       expect(image.height).toBe(previewHeight);
     }
 
-    const findMatchingFrame = frames.toReversed().find(frame => {
+    const frame = frames.find(frame => {
       const buffer = resources.get('resources/' + frame.sha1);
       const image = jpegjs.decode(buffer);
-      expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
-      expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
-      expectBlue(image.data, previewWidth * 5 * 4 + previewWidth * 4 / 2); // top
-      expectBlue(image.data, previewWidth * (previewHeight - 5) * 4 + previewWidth * 4 / 2); // bottom
-      expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + 5 * 4); // left
-      expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + (previewWidth - 5) * 4); // right
+      try {
+        expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
+        expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
+        expectBlue(image.data, previewWidth * 5 * 4 + previewWidth * 4 / 2); // top
+        expectBlue(image.data, previewWidth * (previewHeight - 5) * 4 + previewWidth * 4 / 2); // bottom
+        expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + 5 * 4); // left
+        expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + (previewWidth - 5) * 4); // right
+        return true;
+      } catch (e) {
+        return false;
+      }
     });
-    expect(findMatchingFrame, 'No matching frame').toBeTruthy();
+    expect(frame, 'No matching frame').toBeTruthy();
   });
 }
 
