@@ -45,6 +45,7 @@ Adding Playwright Test to an existing project is easy. Below are the steps to en
 ### Step 1: Install Playwright Test for components for your respective framework
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -103,6 +104,7 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
 ### Step 2. Create a test file `src/App.spec.{ts,tsx}`
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
@@ -291,6 +293,7 @@ Playwright is using [Vite](https://vitejs.dev/) to create the components bundle 
 Provide props to a component when mounted.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
@@ -349,6 +352,7 @@ test('props', async ({ mount }) => {
 Provide callbacks/events to a component when mounted.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
@@ -407,6 +411,7 @@ test('event', async ({ mount }) => {
 Provide children/slots to a component when mounted.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
@@ -465,10 +470,11 @@ test('children', async ({ mount }) => {
 You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you set up things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture. This includes any config that needs to be run before or after mounting the component. An example of configuring a router is provided below:
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Vue3', value: 'vue3'},
+    {label: 'Vue', value: 'vue'},
   ]
 }>
   <TabItem value="react">
@@ -540,6 +546,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 Unmount the mounted component from the DOM. This is useful for testing the component's behavior upon unmounting. Use cases include testing an "Are you sure you want to leave?" modal or ensuring proper cleanup of event handlers to prevent memory leaks.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
@@ -601,6 +608,7 @@ test('unmount', async ({ mount }) => {
 Update props, slots/children, and/or events/callbacks of a mounted component. These component inputs can change at any time and are typically provided by the parent component, but sometimes it is necessary to ensure that your components behave appropriately to new inputs.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
@@ -720,6 +728,7 @@ test('…', async ({ mount, page, context }) => {
 `@playwright/experimental-ct-{react,svelte,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},

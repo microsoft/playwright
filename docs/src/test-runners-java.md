@@ -194,15 +194,16 @@ junit.jupiter.execution.parallel.config.dynamic.factor=0.5
 You can use a Gradle build configuration script, written in Groovy or Kotlin.
 
 <Tabs
-  defaultValue="gradle"
+  groupId="jvm-language"
+  defaultValue="groovy"
   values={[
-    {label: 'build.gradle', value: 'gradle'},
-    {label: 'build.gradle.kts', value: 'gradle-kotlin'}
+    {label: 'Groovy', value: 'groovy'},
+    {label: 'Kotlin', value: 'kotlin'}
   ]
 }>
-<TabItem value="gradle">
+<TabItem value="groovy">
 
-```groovy
+```groovy title="build.gradle"
 plugins {
   application
   id 'java'
@@ -232,9 +233,9 @@ test {
 ```
 
 </TabItem>
-<TabItem value="gradle-kotlin">
+<TabItem value="kotlin">
 
-```groovy
+```groovy title="build.gradle.kts"
 plugins {
   application
   id("java")
