@@ -463,6 +463,7 @@ for (const params of [
       expect(image.height).toBe(previewHeight);
     }
 
+    console.log(`frames: ${frames.length}`);
     const frame = frames[frames.length - 1]; // pick last frame.
     const buffer = resources.get('resources/' + frame.sha1);
     const image = jpegjs.decode(buffer);
