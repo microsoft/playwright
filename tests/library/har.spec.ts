@@ -295,7 +295,7 @@ it('should record request overrides', async ({ contextFactory, server }, testInf
   expect(request.url).toBe(server.EMPTY_PAGE);
   expect(request.method).toBe('POST');
   expect(request.headers).toContainEqual({ name: 'custom', value: 'value' });
-  expect(request.cookies).toContainEqual({ name: 'foo', value: 'bar' });
+  expect(request.cookies).toEqual([]);
   expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
 });
 
@@ -508,7 +508,7 @@ it('should record failed request overrides', async ({ contextFactory, server }, 
   expect(request.url).toBe(server.EMPTY_PAGE);
   expect(request.method).toBe('POST');
   expect(request.headers).toContainEqual({ name: 'custom', value: 'value' });
-  expect(request.cookies).toContainEqual({ name: 'foo', value: 'bar' });
+  expect(request.cookies).toEqual([]);
   expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
 });
 
