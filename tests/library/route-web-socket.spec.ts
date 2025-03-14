@@ -17,6 +17,7 @@
 import { attachFrame, detachFrame } from '../config/utils';
 import { contextTest as test, expect } from '../config/browserTest';
 import type { Frame, Page, WebSocketRoute } from '@playwright/test';
+import { TestServer } from '../config/testserver';
 
 declare global {
   interface Window {
@@ -33,11 +34,12 @@ function withResolvers<T = void>() {
   return { promise, resolve };
 }
 
-async function setupWS(target: Page | Frame, port: number, binaryType: 'blob' | 'arraybuffer', protocols?: string | string[]) {
-  await target.goto('about:blank');
-  await target.evaluate(({ port, binaryType, protocols }) => {
+async function setupWS(target: Page | Frame, server: TestServer, binaryType: 'blob' | 'arraybuffer', protocols?: string | string[], relativeURL?: boolean) {
+  await target.goto(server.EMPTY_PAGE);
+  const wsUrl = relativeURL ? '/ws' : 'ws://localhost:' + server.PORT + '/ws';
+  await target.evaluate(({ wsUrl, binaryType, protocols }) => {
     window.log = [];
-    window.ws = new WebSocket('ws://localhost:' + port + '/ws', protocols);
+    window.ws = new WebSocket(wsUrl, protocols);
     window.ws.binaryType = binaryType;
     window.ws.addEventListener('open', () => window.log.push('open'));
     window.ws.addEventListener('close', event => window.log.push(`close code=${event.code} reason=${event.reason} wasClean=${event.wasClean}`));
@@ -53,7 +55,7 @@ async function setupWS(target: Page | Frame, port: number, binaryType: 'blob' | 
       window.log.push(`message: data=${data} origin=${event.origin} lastEventId=${event.lastEventId}`);
     });
     window.wsOpened = new Promise(f => window.ws.addEventListener('open', () => f()));
-  }, { port, binaryType, protocols });
+  }, { wsUrl, binaryType, protocols });
 }
 
 for (const mock of ['no-mock', 'no-match', 'pass-through']) {
@@ -73,7 +75,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
     test('should work with text message', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       const upgradePromise = server.waitForUpgrade();
-      await setupWS(page, server.PORT, 'blob');
+      await setupWS(page, server, 'blob');
       expect(await page.evaluate(() => window.ws.readyState)).toBe(0);
       const { doUpgrade } = await upgradePromise;
       expect(await page.evaluate(() => window.ws.readyState)).toBe(0);
@@ -102,7 +104,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
 
     test('should work with binaryType=blob', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
-      await setupWS(page, server.PORT, 'blob');
+      await setupWS(page, server, 'blob');
       const ws = await wsPromise;
       ws.send(Buffer.from('hi'));
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([
@@ -116,7 +118,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
 
     test('should work with binaryType=arraybuffer', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
-      await setupWS(page, server.PORT, 'arraybuffer');
+      await setupWS(page, server, 'arraybuffer');
       const ws = await wsPromise;
       ws.send(Buffer.from('hi'));
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([
@@ -132,7 +134,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       test.skip(browserName === 'webkit', 'WebKit ignores the connection error and fires no events!');
 
       const upgradePromise = server.waitForUpgrade();
-      await setupWS(page, server.PORT, 'blob');
+      await setupWS(page, server, 'blob');
       const { socket } = await upgradePromise;
       expect(await page.evaluate(() => window.ws.readyState)).toBe(0);
       expect(await page.evaluate(() => window.log)).toEqual([]);
@@ -150,7 +152,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       test.skip(browserName === 'webkit' && isWindows, 'WebKit Windows does not close the websocket upon a bad frame');
 
       const upgradePromise = server.waitForUpgrade();
-      await setupWS(page, server.PORT, 'blob');
+      await setupWS(page, server, 'blob');
       const { socket, doUpgrade } = await upgradePromise;
       doUpgrade();
       await expect.poll(() => page.evaluate(() => window.ws.readyState)).toBe(1);
@@ -167,7 +169,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
     test('should work with client-side close', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       const upgradePromise = server.waitForUpgrade();
-      await setupWS(page, server.PORT, 'blob');
+      await setupWS(page, server, 'blob');
       expect(await page.evaluate(() => window.ws.readyState)).toBe(0);
       const { doUpgrade } = await upgradePromise;
       expect(await page.evaluate(() => window.ws.readyState)).toBe(0);
@@ -193,10 +195,24 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
     });
 
     test('should pass through the required protocol', async ({ page, server }) => {
-      await setupWS(page, server.PORT, 'blob', 'my-custom-protocol');
+      await setupWS(page, server, 'blob', 'my-custom-protocol');
       await page.evaluate(() => window.wsOpened);
       const protocol = await page.evaluate(() => window.ws.protocol);
       expect(protocol).toBe('my-custom-protocol');
+    });
+
+    test('should work with relative WebSocket URL', async ({ page, server }) => {
+      const wsPromise = server.waitForWebSocket();
+      await setupWS(page, server, 'blob', undefined, true);
+      const ws = await wsPromise;
+      ws.send(Buffer.from('hi'));
+      await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+        'open',
+        `message: data=blob:hi origin=ws://localhost:${server.PORT} lastEventId=`,
+      ]);
+      const messagePromise = new Promise(f => ws.once('message', data => f(data.toString())));
+      await page.evaluate(() => window.ws.send(new Blob([new Uint8Array(['h'.charCodeAt(0), 'i'.charCodeAt(0)])])));
+      expect(await messagePromise).toBe('hi');
     });
   });
 }
@@ -209,7 +225,7 @@ test('should work with ws.close', async ({ page, server }) => {
   });
 
   const wsPromise = server.waitForWebSocket();
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
   const ws = await wsPromise;
 
   const route = await promise;
@@ -303,7 +319,7 @@ test('should work with server', async ({ page, server }) => {
     ws.on('close', (code, reason) => log.push(`close: code=${code} reason=${reason.toString()}`));
   });
 
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
   const ws = await wsPromise;
   await expect.poll(() => log).toEqual(['message: fake']);
 
@@ -364,7 +380,7 @@ test('should work without server', async ({ page, server }) => {
     resolve(ws);
   });
 
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
 
   await page.evaluate(async () => {
     await window.wsOpened;
@@ -399,7 +415,7 @@ test('should emit close upon frame navigation', async ({ page, server }) => {
     resolve(ws);
   });
 
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
 
   const route = await promise;
   route.send('hello');
@@ -422,7 +438,7 @@ test('should emit close upon frame detach', async ({ page, server }) => {
   });
 
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
-  await setupWS(frame, server.PORT, 'blob');
+  await setupWS(frame, server, 'blob');
 
   const route = await promise;
   route.send('hello');
@@ -482,7 +498,7 @@ test('should not throw after page closure', async ({ page, server }) => {
     resolve(ws);
   });
 
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
 
   const route = await promise;
   await Promise.all([
@@ -493,7 +509,7 @@ test('should not throw after page closure', async ({ page, server }) => {
 
 test('should not throw with empty handler', async ({ page, server }) => {
   await page.routeWebSocket(/.*/, () => {});
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual(['open']);
   await page.evaluate(() => window.ws.send('hi'));
   await page.evaluate(() => window.ws.send('hi2'));
@@ -511,7 +527,7 @@ test('should throw when connecting twice', async ({ page, server }) => {
       resolve(e);
     }
   });
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
   const error = await promise;
   expect(error.message).toContain('Already connected to the server');
 });
@@ -550,7 +566,7 @@ test('should work with baseURL', async ({ contextFactory, server }) => {
     });
   });
 
-  await setupWS(page, server.PORT, 'blob');
+  await setupWS(page, server, 'blob');
 
   await page.evaluate(async () => {
     await window.wsOpened;
