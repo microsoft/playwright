@@ -141,12 +141,8 @@ export function inject(globalThis: GlobalThis) {
     constructor(url: string | URL, protocols?: string | string[]) {
       super();
 
-      if (typeof url === 'string') {
-        const baseURL = globalThis.window.document.baseURI.replace(/^http/, 'ws');
-        this.url = new URL(url, baseURL).href;
-      } else {
-        this.url = url.href;
-      }
+      // https://github.com/whatwg/websockets/issues/20
+      this.url = new URL(url, globalThis.window.document.baseURI).href.replace(/^http/, 'ws');
       this._origin = URL.parse(this.url)?.origin ?? '';
       this._protocols = protocols;
 
