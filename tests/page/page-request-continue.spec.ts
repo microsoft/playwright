@@ -394,6 +394,33 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(color).toBe('rgb(255, 192, 203)');
 });
 
+it('should respect set-cookie in redirect response', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' }
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'Firefox does not respect set-cookie in redirect response');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<a href="/set-cookie-redirect">Set cookie</a>');
+  server.setRoute('/set-cookie-redirect', (request, response) => {
+    response.writeHead(302, {
+      'set-cookie': 'foo=bar;  max-age=36000',
+      'location': '/empty.html'
+    });
+    response.end();
+  });
+  await page.route('**/set-cookie-redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers()
+      }
+    });
+  });
+  const serverRequestPromise = server.waitForRequest('/empty.html');
+  await page.goto(server.PREFIX + '/set-cookie-redirect');
+  const serverRequest = await serverRequestPromise;
+  expect.soft(serverRequest.headers['cookie']).toBe('foo=bar');
+  expect.soft(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+});
+
 it('continue should propagate headers to redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' },
