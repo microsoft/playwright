@@ -26,8 +26,10 @@ it('should work', async ({ page, server }) => {
 
 it('should amend HTTP headers', async ({ page, server }) => {
   await page.route('**/*', route => {
-    const headers = Object.assign({}, route.request().headers());
-    headers['FOO'] = 'bar';
+    const headers = {
+      ...route.request().headers(),
+      FOO: 'bar'
+    };
     void route.continue({ headers });
   });
   await page.goto(server.EMPTY_PAGE);
@@ -36,6 +38,30 @@ it('should amend HTTP headers', async ({ page, server }) => {
     page.evaluate(() => fetch('/sleep.zzz'))
   ]);
   expect(request.headers['foo']).toBe('bar');
+});
+
+it('should not allow to override unsafe HTTP headers', async ({ page, server, browserName }) => {
+  let resolve;
+  const routePromise = new Promise<Route>(f => resolve = f);
+  await page.route('**/*', route => resolve(route));
+  const serverRequestPromise = server.waitForRequest('/empty.html');
+  page.goto(server.EMPTY_PAGE).catch(() => {});
+  const route = await routePromise;
+  const error = await route.continue({
+    headers: {
+      ...route.request().headers(),
+      host: 'bar'
+    }
+  }).catch(e => e);
+  if (browserName === 'chromium') {
+    expect(error.message).toContain('Unsafe header: host');
+  } else {
+    expect(error).toBeFalsy();
+    // These lines just document current behavior in FF and WK,
+    // we don't necessarily want to maintain this behavior.
+    const serverRequest = await serverRequestPromise;
+    expect(serverRequest.headers['host']).toBe('bar');
+  }
 });
 
 it('should delete header with undefined value', async ({ page, server, browserName }) => {
