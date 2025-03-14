@@ -21,6 +21,7 @@ import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
+import type { Builtins } from '../isomorphic/builtins';
 
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment';
@@ -32,19 +33,19 @@ export type AriaNode = AriaProps & {
 
 export type AriaSnapshot = {
   root: AriaNode;
-  elements: Map<number, Element>;
+  elements: Builtins.Map<number, Element>;
   generation: number;
-  ids: Map<Element, number>;
+  ids: Builtins.Map<Element, number>;
 };
 
-export function generateAriaTree(rootElement: Element, generation: number): AriaSnapshot {
-  const visited = new Set<Node>();
+export function generateAriaTree(builtins: Builtins, rootElement: Element, generation: number): AriaSnapshot {
+  const visited = new builtins.Set<Node>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {} },
-    elements: new Map<number, Element>(),
+    elements: new builtins.Map<number, Element>(),
     generation,
-    ids: new Map<Element, number>(),
+    ids: new builtins.Map<Element, number>(),
   };
 
   const addElement = (element: Element) => {
@@ -86,7 +87,7 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
     }
 
     addElement(element);
-    const childAriaNode = toAriaNode(element);
+    const childAriaNode = toAriaNode(builtins, element);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
     processElement(childAriaNode || ariaNode, element, ariaChildren);
@@ -132,7 +133,7 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
     }
   }
 
-  roleUtils.beginAriaCaches();
+  roleUtils.beginAriaCaches(builtins);
   try {
     visit(snapshot.root, rootElement);
   } finally {
@@ -143,12 +144,12 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
   return snapshot;
 }
 
-function toAriaNode(element: Element): AriaNode | null {
+function toAriaNode(builtins: Builtins, element: Element): AriaNode | null {
   const role = roleUtils.getAriaRole(element);
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
-  const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(element, false) || '');
+  const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(builtins, element, false) || '');
   const result: AriaNode = { role, name, children: [], props: {}, element };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
@@ -230,8 +231,8 @@ export type MatcherReceived = {
   regex: string;
 };
 
-export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
-  const snapshot = generateAriaTree(rootElement, 0);
+export function matchesAriaTree(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
+  const snapshot = generateAriaTree(builtins, rootElement, 0);
   const matches = matchesNodeDeep(snapshot.root, template, false);
   return {
     matches,
@@ -242,8 +243,8 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
   };
 }
 
-export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(rootElement, 0).root;
+export function getAllByAria(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): Element[] {
+  const root = generateAriaTree(builtins, rootElement, 0).root;
   const matches = matchesNodeDeep(root, template, true);
   return matches.map(n => n.element);
 }

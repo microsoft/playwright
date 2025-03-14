@@ -57,7 +57,7 @@
         };
 
         if (interstitial.classList.contains('timeout'))
-          builtinSetTimeout(closeInterstitial, 3000);
+          window.builtins.setTimeout(closeInterstitial, 3000);
         else
           closeInterstitial();
       });
