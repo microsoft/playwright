@@ -13,43 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Markdown from 'markdown-to-jsx';
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
-import { useLLMConversation } from './llm';
+import { LLMMessage, useLLMChat, useLLMConversation } from './llm';
 
-export function AIConversation({ conversationId }: { conversationId: string }) {
+export function AIConversation({ conversationId, setConversationId }: { conversationId?: string, setConversationId(id: string): void; }) {
+  const chat = useLLMChat();
   const [history, conversation] = useLLMConversation(conversationId);
-  const [input, setInput] = useState('');
 
-  const onSubmit = useCallback(() => {
-    setInput(content => {
-      conversation.send(content);
-      return '';
-    });
-  }, [conversation]);
+  if (!conversation) {
+    return <AIConversationView
+      history={history}
+      apiName={chat.api.name}
+      onSend={content => {
+        const id = crypto.randomUUID();
+        const conversation = chat.startConversation(id, '');
+        conversation.send(content);
+        setConversationId(id);
+      }}
+    />;
+  }
 
   return (
-    <div className='chat-container'>
-      <p className='chat-disclaimer'>Chat based on {conversation.chat.api.name}. Check for mistakes.</p>
-      <hr/>
-      <div className='messages-container'>
-        {history.filter(({ role }) => role !== 'developer').map((message, index) => (
-          <div
-            key={'' + index}
-            className={clsx('message', message.role === 'user' && 'user-message')}
-          >
-            {message.role === 'assistant' && (
-              <div className='message-icon'>
-                <img src='playwright-logo.svg' />
+    <AIConversationView
+      history={history}
+      apiName={chat.api.name}
+      onSend={content => conversation.send(content)}
+      sending={conversation.isSending()}
+      onCancel={() => conversation.abortSending()}
+    />
+  );
+}
+
+export function AIConversationView({ history, onSend, sending, onCancel, apiName }: { history: LLMMessage[], onSend(message: string): void, sending?: boolean, onCancel?(): void; apiName: string; }) {
+  const [input, setInput] = useState('');
+  const onSubmit = () => {
+    setInput(content => {
+      onSend(content);
+      return '';
+    });
+  };
+
+  return (
+    <div className='chat-container' role='region' aria-label='Chat'>
+      <div className='chat-scroll'>
+        <p className='chat-disclaimer'>Chat based on {apiName}. Check for mistakes.<hr/></p>
+
+        <div className='messages-container'>
+          {history.filter(({ role }) => role !== 'developer').map((message, index) => (
+            <div
+              key={'' + index}
+              className={clsx('message', message.role === 'user' && 'user-message')}
+            >
+              {message.role === 'assistant' && (
+                <div className='message-icon'>
+                  <img src='playwright-logo.svg' />
+                </div>
+              )}
+              <div className='message-content'>
+                <Markdown options={{ disableParsingRawHTML: true }}>{message.displayContent ?? message.content}</Markdown>
               </div>
-            )}
-            <div className='message-content'>
-              <Markdown options={{ disableParsingRawHTML: true }}>{message.displayContent ?? message.content}</Markdown>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className='input-form'>
@@ -66,10 +94,10 @@ export function AIConversation({ conversationId }: { conversationId: string }) {
           placeholder='Ask a question...'
           className='message-input'
         />
-        {conversation.isSending() ? (
+        {sending ? (
           <button type='button' className='send-button' onClick={evt => {
             evt.preventDefault();
-            conversation.abortSending();
+            onCancel?.();
           }}>
             Cancel
           </button>

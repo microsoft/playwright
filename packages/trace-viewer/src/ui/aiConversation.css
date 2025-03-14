@@ -20,12 +20,14 @@
   flex-direction: column;
   justify-content: space-between;
   color: #e0e0e0;
+  height: 100%;
 }
 
 .chat-disclaimer {
+  flex: 1;
   text-align: center;
   color: var(--vscode-editorBracketMatch-border);
-  margin: 0px;
+  margin: 8px;
 }
 
 .chat-container hr {
@@ -34,25 +36,28 @@
   border-top: 1px solid var(--vscode-titleBar-inactiveBackground);
 }
 
-.messages-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-
+.chat-scroll {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.messages-container {
+  padding: 32px 16px;
   gap: 16px;
 }
 
 .message {
   gap: 12px;
-  max-width: 85%;
+  padding-bottom: 16px;
 }
 
 .user-message {
   flex-direction: row-reverse;
   margin-left: auto;
-  width: fit-content
+  width: fit-content;
+  max-width: 85%;
 }
 
 .message-icon {
@@ -82,8 +87,6 @@
 
 /* Input form styles */
 .input-form {
-  position: sticky;
-  bottom: 0;
   display: flex;
   height: 64px;
   gap: 8px;
@@ -125,4 +128,8 @@
 .send-button:disabled {
   background-color: var(--vscode-disabledForeground);
   cursor: not-allowed;
+}
+
+.chat-view {
+  width: 100%;
 }
