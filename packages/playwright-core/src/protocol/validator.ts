@@ -386,6 +386,7 @@ scheme.PlaywrightNewRequestParams = tObject({
     passphrase: tOptional(tString),
     pfx: tOptional(tBinary),
   }))),
+  maxRedirects: tOptional(tNumber),
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,

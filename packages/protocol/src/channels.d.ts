@@ -644,6 +644,7 @@ export type PlaywrightNewRequestParams = {
     passphrase?: string,
     pfx?: Binary,
   }[],
+  maxRedirects?: number,
   httpCredentials?: {
     username: string,
     password: string,
@@ -676,6 +677,7 @@ export type PlaywrightNewRequestOptions = {
     passphrase?: string,
     pfx?: Binary,
   }[],
+  maxRedirects?: number,
   httpCredentials?: {
     username: string,
     password: string,

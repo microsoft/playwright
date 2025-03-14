@@ -37,6 +37,13 @@ for all status codes.
 ### option: APIRequest.newContext.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 * since: v1.16
 
+### option: APIRequest.newContext.maxRedirects
+* since: v1.52
+- `maxRedirects` <[int]>
+
+Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
+Defaults to `20`. Pass `0` to not follow redirects. This can be overwritten for each request individually.
+
 ### option: APIRequest.newContext.timeout
 * since: v1.16
 - `timeout` <[float]>
