@@ -660,6 +660,8 @@ async function catchDisallowedErrors(callback: () => Promise<void>) {
   } catch (e) {
     if (isProtocolError(e) && e.message.includes('Invalid http status code or phrase'))
       throw e;
+    if (isProtocolError(e) && e.message.includes('Unsafe header'))
+      throw e;
   }
 }
 
