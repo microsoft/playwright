@@ -394,6 +394,94 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(color).toBe('rgb(255, 192, 203)');
 });
 
+it('continue should not propagate cookie override to redirects', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+  server.setRedirect('/redirect', server.PREFIX + '/empty.html');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        cookie: 'override'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/redirect')
+  ]);
+  expect(serverRequest.headers['cookie']).toBe('foo=bar');
+});
+
+it('continue should not override cookie', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+  await page.route('**', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        cookie: 'override',
+        custom: 'value'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE)
+  ]);
+  // Original cookie from the browser's cookie jar should be sent.
+  expect(serverRequest.headers['cookie']).toBe('foo=bar');
+  expect(serverRequest.headers['custom']).toBe('value');
+});
+
+it('redirect after continue should be able to delete cookie', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+
+  server.setRoute('/delete-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=bar; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
+    response.end();
+  });
+  server.setRedirect('/redirect', '/delete-cookie');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+      }
+    });
+  });
+  await page.goto(server.PREFIX + '/redirect');
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers['cookie']).toBeFalsy();
+});
+
 it('continue should propagate headers to redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' },
@@ -478,6 +566,7 @@ it('propagate headers same origin redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
 }, async ({ page, server }) => {
   await page.goto(server.PREFIX + '/empty.html');
@@ -489,7 +578,7 @@ it('propagate headers same origin redirect', {
         'Access-Control-Allow-Origin': server.PREFIX,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
-        'Access-Control-Allow-Headers': 'authorization,custom',
+        'Access-Control-Allow-Headers': 'authorization,cookie,custom',
       });
       response.end();
       return;
@@ -499,6 +588,7 @@ it('propagate headers same origin redirect', {
     response.end('done');
   });
   await server.setRedirect('/redirect', '/something');
+  await page.evaluate(() => document.cookie = 'a=b');
   const text = await page.evaluate(async url => {
     const data = await fetch(url, {
       headers: {
@@ -512,6 +602,7 @@ it('propagate headers same origin redirect', {
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
   expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  expect.soft(serverRequest.headers['cookie']).toBe('a=b');
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
@@ -562,6 +653,7 @@ it('propagate headers cross origin redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
 }, async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid, 'receives authorization:credentials header');
@@ -575,7 +667,7 @@ it('propagate headers cross origin redirect', {
         'Access-Control-Allow-Origin': server.PREFIX,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
-        'Access-Control-Allow-Headers': 'authorization,custom',
+        'Access-Control-Allow-Headers': 'authorization,cookie,custom',
       });
       response.end();
       return;
@@ -591,6 +683,7 @@ it('propagate headers cross origin redirect', {
     response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
     response.end();
   });
+  await page.evaluate(() => document.cookie = 'a=b');
   const text = await page.evaluate(async url => {
     const data = await fetch(url, {
       headers: {
@@ -605,6 +698,7 @@ it('propagate headers cross origin redirect', {
   const serverRequest = await serverRequestPromise;
   // Authorization header not propagated to cross-origin redirect.
   expect.soft(serverRequest.headers['authorization']).toBeFalsy();
+  expect.soft(serverRequest.headers['cookie']).toBeFalsy();
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
@@ -612,6 +706,7 @@ it('propagate headers cross origin redirect after interception', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
 }, async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/empty.html');
@@ -623,7 +718,7 @@ it('propagate headers cross origin redirect after interception', {
         'Access-Control-Allow-Origin': server.PREFIX,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
-        'Access-Control-Allow-Headers': 'authorization,custom',
+        'Access-Control-Allow-Headers': 'authorization,cookie,custom',
       });
       response.end();
       return;
@@ -639,6 +734,7 @@ it('propagate headers cross origin redirect after interception', {
     response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
     response.end();
   });
+  await page.evaluate(() => document.cookie = 'a=b');
   await page.route('**/redirect', async route => {
     await route.continue({
       headers: {
@@ -663,6 +759,9 @@ it('propagate headers cross origin redirect after interception', {
     expect.soft(serverRequest.headers['authorization']).toBeFalsy();
   else
     expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  // TODO: fix this in juggler.
+  if (browserName !== 'firefox')
+    expect.soft(serverRequest.headers['cookie']).toBeFalsy();
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
