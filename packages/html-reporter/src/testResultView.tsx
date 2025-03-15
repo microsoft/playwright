@@ -27,6 +27,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import { CodeSnippet, TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
+import { CheckBox } from './checkbox';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
@@ -71,6 +72,7 @@ export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
 }> = ({ test, result }) => {
+  const [showSnippets, setShowSnippets] = React.useState(true);
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -94,7 +96,8 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0}/>)}
+      <CheckBox checkBoxSettings={[{ value: showSnippets, set: setShowSnippets, name: 'Show Snippets' }]} />
+      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0} showSnippets={showSnippets}/>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -175,7 +178,8 @@ const StepTreeItem: React.FC<{
   result: TestResult;
   step: TestStep;
   depth: number,
-}> = ({ test, step, result, depth }) => {
+  showSnippets: boolean,
+}> = ({ test, step, result, depth, showSnippets }) => {
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {step.attachments.length > 0 && <a style={{ float: 'right' }} title={`reveal attachment`} href={testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
@@ -183,9 +187,9 @@ const StepTreeItem: React.FC<{
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
-  </span>} loadChildren={step.steps.length || step.snippet ? () => {
-    const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
-    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
+  </span>} loadChildren={step.steps.length || (step.snippet && showSnippets) ? () => {
+    const snippet = (step.snippet && showSnippets) ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
+    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} showSnippets={showSnippets}/>);
     return snippet.concat(steps);
   } : undefined} depth={depth}/>;
 };
