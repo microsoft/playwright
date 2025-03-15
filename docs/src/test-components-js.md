@@ -508,7 +508,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   </TabItem>
 
-  <TabItem value="vue3">
+  <TabItem value="vue">
 
   ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
