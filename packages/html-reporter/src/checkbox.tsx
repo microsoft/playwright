@@ -45,4 +45,3 @@ export const CheckBox: React.FunctionComponent<{
       </>
     );
   };
-  
