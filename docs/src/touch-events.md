@@ -11,7 +11,7 @@ Web applications that handle legacy [touch events](https://developer.mozilla.org
 
 In the example below, we emulate pan gesture that is expected to move the map. The app under test only uses `clientX/clientY` coordinates of the touch point, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
-```js
+```ts
 import { test, expect, devices, type Locator } from '@playwright/test';
 
 test.use({ ...devices['Pixel 7'] });
@@ -307,7 +307,7 @@ asyncio.run(main())
 
 In the example below, we emulate pinch gesture, i.e. two touch points moving closer to each other. It is expected to zoom out the map. The app under test only uses `clientX/clientY` coordinates of touch points, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
-```js
+```ts
 import { test, expect, devices, type Locator } from '@playwright/test';
 
 test.use({ ...devices['Pixel 7'] });

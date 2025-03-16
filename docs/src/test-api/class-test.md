@@ -950,7 +950,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts
+```ts tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
@@ -1004,7 +1004,7 @@ module.exports = defineConfig({
 });
 ```
 
-```js tab=js-ts title="playwright.config.ts"
+```ts tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import type { Options } from './my-test';
 

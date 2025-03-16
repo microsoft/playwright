@@ -35,7 +35,7 @@ class MyReporter {
 module.exports = MyReporter;
 ```
 
-```js tab=js-ts title="my-awesome-reporter.ts"
+```ts tab=js-ts title="my-awesome-reporter.ts"
 import type {
   Reporter, FullConfig, Suite, TestCase, TestResult, FullResult
 } from '@playwright/test/reporter';

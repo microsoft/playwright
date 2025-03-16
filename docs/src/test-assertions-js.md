@@ -256,7 +256,7 @@ You can extend Playwright assertions by providing custom matchers. These matcher
 
 In this example we add a custom `toHaveAmount` function. Custom matcher should return a `pass` flag indicating whether the assertion passed, and a `message` callback that's used when the assertion fails.
 
-```js title="fixtures.ts"
+```ts title="fixtures.ts"
 import { expect as baseExpect } from '@playwright/test';
 import type { Page, Locator } from '@playwright/test';
 

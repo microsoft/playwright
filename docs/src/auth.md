@@ -141,7 +141,7 @@ We will authenticate once per [worker process](./test-parallel.md#worker-process
 
 Create `playwright/fixtures.ts` file that will [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) to authenticate once per worker. Use [`property: TestInfo.parallelIndex`] to differentiate between workers.
 
-```js title="playwright/fixtures.ts"
+```ts title="playwright/fixtures.ts"
 import { test as baseTest, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
@@ -346,7 +346,7 @@ setup('authenticate', async ({ request }) => {
 
 Alternatively, in a [worker fixture](#moderate-one-account-per-parallel-worker):
 
-```js title="playwright/fixtures.ts"
+```ts title="playwright/fixtures.ts"
 import { test as baseTest, request } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
@@ -511,7 +511,7 @@ You can introduce fixtures that will provide a page authenticated as each role.
 
 Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created in the global setup.
 
-```js title="playwright/fixtures.ts"
+```ts title="playwright/fixtures.ts"
 import { test as base, type Page, type Locator } from '@playwright/test';
 
 // Page Object Model for the "admin" page.

@@ -100,7 +100,7 @@ fails, all subsequent tests are skipped. All tests in a group are retried togeth
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
-```js
+```ts
 import { test, type Page } from '@playwright/test';
 
 // Annotate entire file as serial.
@@ -172,7 +172,7 @@ Create `playwright/fixtures.ts` file that will [create `dbUserName` fixture](./t
 and initialize a new user in the test database. Use [`property: TestInfo.workerIndex`] to differentiate
 between workers.
 
-```js title="playwright/fixtures.ts"
+```ts title="playwright/fixtures.ts"
 import { test as baseTest, expect } from '@playwright/test';
 // Import project utils for managing users in the test database.
 import { createUserInTestDatabase, deleteUserFromTestDatabase } from './my-db-utils';
