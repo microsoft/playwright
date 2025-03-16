@@ -950,7 +950,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts"
+```js tab=js-ts
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 

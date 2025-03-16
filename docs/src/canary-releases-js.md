@@ -31,7 +31,7 @@ You can see on [npm](https://www.npmjs.com/package/@playwright/test?activeTab=ve
 
 ## Using a Canary Release
 
-```txt
+```bash
 npm install -D @playwright/test@next
 ```
 
