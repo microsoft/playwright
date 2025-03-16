@@ -1518,7 +1518,7 @@ Console.WriteLine(await page.EvaluateAsync<int>("1 + 2")); // prints "3"
 
 [ElementHandle] instances can be passed as an argument to the [`method: Page.evaluate`]:
 
-```ts
+```js
 const bodyHandle = await page.evaluate('document.body');
 const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
   body.innerHTML + suffix, [bodyHandle, 'hello']
