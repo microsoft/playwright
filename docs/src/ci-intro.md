@@ -69,11 +69,11 @@ jobs:
 The workflow performs these steps:
 
 1. Clone your repository
-2. Install Node.js
-3. Install NPM Dependencies
-4. Install Playwright Browsers
-5. Run Playwright tests
-6. Upload HTML report to the GitHub UI
+1. Install Node.js
+1. Install NPM Dependencies
+1. Install Playwright Browsers
+1. Run Playwright tests
+1. Upload HTML report to the GitHub UI
 
 To learn more about this, see ["Understanding GitHub Actions"](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions).
 
@@ -169,10 +169,10 @@ To learn more about this, see ["Understanding GitHub Actions"](https://docs.gith
 Looking at the list of steps in `jobs.test.steps`, you can see that the workflow performs these steps:
 
 1. Clone your repository
-2. Install language dependencies
-3. Install project dependencies and build
-4. Install Playwright Browsers
-5. Run tests
+1. Install language dependencies
+1. Install project dependencies and build
+1. Install Playwright Browsers
+1. Run tests
 
 ## Create a Repo and Push to GitHub
 
