@@ -313,6 +313,16 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         }
         element.removeAttribute('__playwright_popover_open_');
       }
+      for (const element of root.querySelectorAll(`[__playwright_dialog_open_]`)) {
+        try {
+          if (element.getAttribute('__playwright_dialog_open_') === 'modal')
+            (element as HTMLDialogElement).showModal();
+          else
+            (element as HTMLDialogElement).show();
+        } catch {
+        }
+        element.removeAttribute('__playwright_dialog_open_');
+      }
 
       for (const targetId of targetIds) {
         for (const target of root.querySelectorAll(`[__playwright_target__="${targetId}"]`)) {
