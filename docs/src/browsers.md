@@ -1121,3 +1121,41 @@ playwright uninstall --all
 ```bash csharp
 pwsh bin/Debug/netX/playwright.ps1 uninstall --all
 ```
+
+### List browsers
+
+This will list the browsers of the current Playwright installation:
+
+```bash js
+npx playwright list
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="list"
+```
+
+```bash python
+playwright list
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 list
+```
+
+To list browsers of other Playwright installations as well, pass `--all` flag:
+
+```bash js
+npx playwright list --all
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="list --all"
+```
+
+```bash python
+playwright list --all
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 list --all
+```

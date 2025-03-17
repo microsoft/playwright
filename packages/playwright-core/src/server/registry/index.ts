@@ -995,6 +995,21 @@ export class Registry {
       return await validateDependenciesWindows(sdkLanguage, windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));
   }
 
+  private async _validateMarkerFile(descriptor: BrowsersJSONDescriptor) {
+    const { revision, dir, name } = descriptor;
+
+    const browserRevision = parseInt(revision, 10);
+    // Old browser installations don't have marker file.
+    // We switched chromium from 999999 to 1000, 300000 is the new Y2K.
+    const shouldHaveMarkerFile = (name === 'chromium' && (browserRevision >= 786218 || browserRevision < 300000)) ||
+      (name === 'firefox' && browserRevision >= 1128) ||
+      (name === 'webkit' && browserRevision >= 1307) ||
+      // All new applications have a marker file right away.
+      (name !== 'firefox' && name !== 'chromium' && name !== 'webkit');
+
+    return !shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(dir)));
+  }
+
   async installDeps(executablesToInstallDeps: Executable[], dryRun: boolean) {
     const executables = this._dedupe(executablesToInstallDeps);
     const targets = new Set<DependencyGroup>();
@@ -1007,6 +1022,51 @@ export class Registry {
       return await installDependenciesWindows(targets, dryRun);
     if (os.platform() === 'linux')
       return await installDependenciesLinux(targets, dryRun);
+  }
+
+  async list(all?: boolean) {
+    const linksDir = path.join(registryDirectory, '.links');
+    const links = new Set<string>();
+    links.add(calculateSha1(PACKAGE_PATH));
+
+    if (all)
+      (await fs.promises.readdir(linksDir)).forEach(link => links.add(link));
+
+    const browsersInfo: { target: string;currentInstance: boolean; browsers: { name: string;  version: string; dir: string; installationCompleted: boolean}[] }[] = [];
+
+    for (const link of links) {
+      try {
+        const linkTarget = (await fs.promises.readFile(path.join(linksDir, link))).toString();
+        const browsersJSON = require(path.join(linkTarget, 'browsers.json'));
+        const descriptors = readDescriptors(browsersJSON);
+        const currentTargetBrowsers = [];
+
+        for (const  descriptor of descriptors) {
+          const { name, browserVersion, dir } = descriptor;
+          if (!isBrowserDirectory(dir))
+            continue;
+
+          const doesExist = await existsAsync(dir);
+          if (!doesExist)
+            continue;
+
+          currentTargetBrowsers.push({
+            name,
+            version: browserVersion || '',
+            dir,
+            installationCompleted: await this._validateMarkerFile(descriptor)
+          });
+        }
+        browsersInfo.push({
+          target: linkTarget,
+          browsers: currentTargetBrowsers,
+          currentInstance: linkTarget === PACKAGE_PATH,
+        });
+
+      } catch (e) {}
+    }
+
+    return browsersInfo;
   }
 
   async install(executablesToInstall: Executable[], forceReinstall: boolean) {
@@ -1257,15 +1317,8 @@ export class Registry {
           if (!descriptor)
             continue;
           const usedBrowserPath = descriptor.dir;
-          const browserRevision = parseInt(descriptor.revision, 10);
-          // Old browser installations don't have marker file.
-          // We switched chromium from 999999 to 1000, 300000 is the new Y2K.
-          const shouldHaveMarkerFile = (browserName === 'chromium' && (browserRevision >= 786218 || browserRevision < 300000)) ||
-              (browserName === 'firefox' && browserRevision >= 1128) ||
-              (browserName === 'webkit' && browserRevision >= 1307) ||
-              // All new applications have a marker file right away.
-              (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
-          if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath))))
+
+          if (await this._validateMarkerFile(descriptor))
             usedBrowserPaths.add(usedBrowserPath);
         }
       } catch (e) {
