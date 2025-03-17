@@ -40,7 +40,7 @@ it('should amend HTTP headers', async ({ page, server }) => {
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should not allow to override unsafe HTTP headers', async ({ page, server, browserName, isAndroid, isElectron}) => {
+it('should not allow to override unsafe HTTP headers', async ({ page, server, browserName, isAndroid, isElectron }) => {
   it.skip(isAndroid);
   let resolve;
   const routePromise = new Promise<Route>(f => resolve = f);
