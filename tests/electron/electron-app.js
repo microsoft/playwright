@@ -2,8 +2,8 @@ const assert = require('node:assert/strict');
 const { app, protocol } = require('electron');
 const path = require('path');
 
-assert(process.argv.length > 0, 'No arguments provided. First argument needs to be a userDataDir.');
-app.setPath('appData', process.argv[2]);
+assert(process.env.PWTEST_ELECTRON_USER_DATA_DIR, 'PWTEST_ELECTRON_USER_DATA_DIR env var is not set');
+app.setPath('appData', process.env.PWTEST_ELECTRON_USER_DATA_DIR);
 
 app.on('window-all-closed', e => e.preventDefault());
 

@@ -59,7 +59,14 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
     const apps: ElectronApplication[] = [];
     await use(async (appFile: string, args: string[] = [], options?: Parameters<Electron['launch']>[0]) => {
       const userDataDir = await createUserDataDir();
-      const app = await playwright._electron.launch({ ...options, args: [path.join(__dirname, appFile), userDataDir, ...args] });
+      const app = await playwright._electron.launch({
+        ...options,
+        args: [path.join(__dirname, appFile), ...args],
+        env: {
+          ...process.env,
+          PWTEST_ELECTRON_USER_DATA_DIR: userDataDir,
+        }
+      });
       apps.push(app);
       return app;
     });
