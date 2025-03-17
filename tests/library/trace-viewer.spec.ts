@@ -1694,6 +1694,30 @@ test('should show a popover', async ({ runAndTrace, page, server, platform, brow
   await expect.poll(() => popover.evaluate(e => e.matches(':popover-open'))).toBe(true);
 });
 
+test('should show a modal dialog', async ({ runAndTrace, page, platform, browserName, macVersion }) => {
+  test.skip(platform === 'darwin' && macVersion === 13 && browserName === 'webkit', 'WebKit on macOS 13.7 reliably fails on this test for some reason');
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <button>Show the dialog</button>
+      <dialog>
+        <p>This is a modal dialog</p>
+      </dialog>
+      <script>
+        document.querySelector('button').addEventListener('click', () => {
+          document.querySelector('dialog').showModal();
+        });
+      </script>
+    `);
+    await page.getByRole('button').click();
+    await expect(page.locator('p')).toBeVisible();
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('expect.toBeVisible');
+  const dialog = snapshot.locator('dialog');
+  await expect.poll(() => dialog.evaluate(e => e.matches(':open'))).toBe(true);
+  await expect.poll(() => dialog.evaluate(e => e.matches(':modal'))).toBe(true);
+});
+
 test('should open settings dialog', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('http://localhost');
