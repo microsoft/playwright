@@ -429,7 +429,7 @@ for (const params of [
     height: 768,
   }
 ]) {
-  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless, isHeadlessShell }, testInfo) => {
+  browserTest(`should produce screencast frames ${params.id}`, async ({ video, server, contextFactory, browserName, platform, headless, isHeadlessShell }, testInfo) => {
     browserTest.skip(browserName === 'chromium' && video === 'on', 'Same screencast resolution conflicts');
     browserTest.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium (but not headless-shell) screencast has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
@@ -444,9 +444,10 @@ for (const params of [
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.
-    for (let i = 0; i < 10; ++i) {
+    for (let i = 0; i < 50; ++i) {
+      await page.goto(server.EMPTY_PAGE);
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
-      await page.evaluate(() => new Promise(window.builtinRequestAnimationFrame));
+      await page.evaluate(() => new Promise(r => requestAnimationFrame(c => window.builtinRequestAnimationFrame(r))));
     }
     await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
