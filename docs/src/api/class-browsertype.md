@@ -324,11 +324,13 @@ this context will automatically close the browser.
 * since: v1.8
 - `userDataDir` <[path]>
 
-Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
+Path to a User Data Directory, which stores browser session data like cookies and local storage. Pass an empty string to create a temporary directory.
+
+More details for
 [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md#introduction) and
-[Firefox](https://wiki.mozilla.org/Firefox/CommandLineOptions#User_profile).
-Note that Chromium's user data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Pass an empty string to
-use a temporary directory instead.
+[Firefox](https://wiki.mozilla.org/Firefox/CommandLineOptions#User_profile). Chromium's user data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`.
+
+Note that browsers do not allow launching multiple instances with the same User Data Directory.
 
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-browser-options-list-v1.8-%%
 * since: v1.8
