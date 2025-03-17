@@ -14710,11 +14710,15 @@ export interface BrowserType<Unused = {}> {
    * Launches browser that uses persistent storage located at
    * [`userDataDir`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-user-data-dir)
    * and returns the only context. Closing this context will automatically close the browser.
-   * @param userDataDir Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
+   * @param userDataDir Path to a User Data Directory, which stores browser session data like cookies and local storage. Pass an empty
+   * string to create a temporary directory.
+   *
+   * More details for
    * [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md#introduction) and
-   * [Firefox](https://wiki.mozilla.org/Firefox/CommandLineOptions#User_profile). Note that Chromium's user data
-   * directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Pass an empty string to use
-   * a temporary directory instead.
+   * [Firefox](https://wiki.mozilla.org/Firefox/CommandLineOptions#User_profile). Chromium's user data directory is the
+   * **parent** directory of the "Profile Path" seen at `chrome://version`.
+   *
+   * Note that browsers do not allow launching multiple instances with the same User Data Directory.
    * @param options
    */
   launchPersistentContext(userDataDir: string, options?: {
