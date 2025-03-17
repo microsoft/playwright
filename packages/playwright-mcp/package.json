@@ -24,7 +24,9 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "playwright": "1.52.0-next"
+    "commander": "^13.1.0",
+    "playwright": "1.52.0-next",
+    "zod-to-json-schema": "^3.24.4"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1"

@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-import { Server } from './server';
-import { wait, pressKey } from '../tools/common';
-import { navigate, snapshot, click, hover, type } from '../tools/snapshot';
+import type { Resource } from './resource';
 
-const server = new Server({
-  name: 'Playwright snapshot-based browser server',
-  version: '0.0.1',
-  tools: [
-    navigate,
-    snapshot,
-    click,
-    hover,
-    type,
-    pressKey,
-    wait,
-  ]
-});
-server.start();
+export const pdf: Resource = {
+  schema: {
+    uri: 'file:///playwright/page.pdf',
+    name: 'Page as PDF',
+    description: 'Save current page as PDF',
+    mimeType: 'application/pdf',
+  },
+
+  read: async (context, uri) => {
+    const pdf = await context.page.pdf();
+    return {
+      uri,
+      mimeType: 'application/pdf',
+      blob: pdf.toString('base64'),
+    };
+  },
+};

@@ -15,4 +15,4 @@
  * limitations under the License.
  */
 
-require('./lib/servers/snapshot');
+require('./lib/program');

@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-import { Server } from './server';
-import { navigate, wait, pressKey } from '../tools/common';
-import { screenshot, moveMouse, click, drag, type } from '../tools/screenshot';
+import type * as playwright from 'playwright';
 
-const server = new Server({
-  name: 'Playwright screenshot-based browser server',
-  version: '0.0.1',
-  tools: [
-    navigate,
-    screenshot,
-    moveMouse,
-    click,
-    drag,
-    type,
-    pressKey,
-    wait,
-  ]
-});
-server.start();
+export type ResourceContext = {
+  page: playwright.Page;
+};
+
+export type ResourceSchema = {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+};
+
+export type ResourceResult = {
+  uri: string;
+  mimeType?: string;
+  text?: string;
+  blob?: string;
+};
+
+export type Resource = {
+  schema: ResourceSchema;
+  read: (context: ResourceContext, uri: string) => Promise<ResourceResult>;
+};
