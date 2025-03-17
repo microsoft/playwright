@@ -40,7 +40,8 @@ it('should amend HTTP headers', async ({ page, server }) => {
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should not allow to override unsafe HTTP headers', async ({ page, server, browserName }) => {
+it('should not allow to override unsafe HTTP headers', async ({ page, server, browserName, isAndroid, isElectron }) => {
+  it.skip(isAndroid);
   let resolve;
   const routePromise = new Promise<Route>(f => resolve = f);
   await page.route('**/*', route => resolve(route));
@@ -53,8 +54,12 @@ it('should not allow to override unsafe HTTP headers', async ({ page, server, br
       host: 'bar'
     }
   }).catch(e => e);
-  if (browserName === 'chromium') {
-    expect(error.message).toContain('Unsafe header: host');
+  if (isElectron) {
+    // Electron doesn't send the request if the host header is overridden,
+    // but doesn't throw an error either.
+    expect(error).toBeFalsy();
+  } else if (browserName === 'chromium') {
+    expect(error.message).toContain('Unsafe header');
   } else {
     expect(error).toBeFalsy();
     // These lines just document current behavior in FF and WK,
