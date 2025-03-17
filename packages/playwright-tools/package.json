@@ -27,7 +27,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "playwright": "1.51.0"
+    "playwright": "1.51.1"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
