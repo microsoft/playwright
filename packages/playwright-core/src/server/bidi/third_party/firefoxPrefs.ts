@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Copied from upstream: https://github.com/puppeteer/puppeteer/blob/main/packages/browsers/src/browser-data/firefox.ts
+
 import fs from 'fs';
 import path from 'path';
 
