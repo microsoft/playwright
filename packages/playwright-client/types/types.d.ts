@@ -17574,6 +17574,13 @@ export interface APIRequest {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects. This can be overwritten for each request
+     * individually.
+     */
+    maxRedirects?: number;
+
+    /**
      * Network proxy settings.
      */
     proxy?: {
