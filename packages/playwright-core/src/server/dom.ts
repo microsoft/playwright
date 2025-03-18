@@ -97,7 +97,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
         return new (module.exports.InjectedScript())(
           globalThis,
           ${isUnderTest()},
-          "${js.kBuiltinsProperty}",
           "${sdkLanguage}",
           ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
           ${this.frame._page._delegate.rafCountForStablePosition()},

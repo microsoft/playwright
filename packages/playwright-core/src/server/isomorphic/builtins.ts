@@ -43,29 +43,25 @@ export namespace Builtins {
   export type Date = OriginalDate;
 }
 
-export function createBuiltins(window: typeof globalThis): Builtins {
-  return {
-    setTimeout: window.setTimeout?.bind(window),
-    clearTimeout: window.clearTimeout?.bind(window),
-    setInterval: window.setInterval?.bind(window),
-    clearInterval: window.clearInterval?.bind(window),
-    requestAnimationFrame: window.requestAnimationFrame?.bind(window),
-    cancelAnimationFrame: window.cancelAnimationFrame?.bind(window),
-    requestIdleCallback: window.requestIdleCallback?.bind(window),
-    cancelIdleCallback: window.cancelIdleCallback?.bind(window),
-    performance: window.performance,
-    eval: window.eval?.bind(window),
-    Intl: window.Intl,
-    Date: window.Date,
-    Map: window.Map,
-    Set: window.Set,
-  };
-}
-
-export function createBuiltinsScript(builtinsProperty: string) {
-  return `Object.defineProperty(globalThis, "${builtinsProperty}", { value: (${createBuiltins.toString()})(globalThis), configurable: false, enumerable: false, writable: false });`;
-}
-
-export function retrieveBuiltinsScript(builtinsProperty: string) {
-  return `(globalThis['${builtinsProperty}'] || (${createBuiltins.toString()})(globalThis))`;
+export function ensureBuiltins(global: typeof globalThis): Builtins {
+  if (!(global as any)['__playwright_builtins__']) {
+    const builtins: Builtins = {
+      setTimeout: global.setTimeout?.bind(global),
+      clearTimeout: global.clearTimeout?.bind(global),
+      setInterval: global.setInterval?.bind(global),
+      clearInterval: global.clearInterval?.bind(global),
+      requestAnimationFrame: global.requestAnimationFrame?.bind(global),
+      cancelAnimationFrame: global.cancelAnimationFrame?.bind(global),
+      requestIdleCallback: global.requestIdleCallback?.bind(global),
+      cancelIdleCallback: global.cancelIdleCallback?.bind(global),
+      performance: global.performance,
+      eval: global.eval?.bind(global),
+      Intl: global.Intl,
+      Date: global.Date,
+      Map: global.Map,
+      Set: global.Set,
+    };
+    Object.defineProperty(global, '__playwright_builtins__', { value: builtins, configurable: false, enumerable: false, writable: false });
+  }
+  return (global as any)['__playwright_builtins__'];
 }

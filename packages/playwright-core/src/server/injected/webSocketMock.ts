@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { createBuiltins } from '../isomorphic/builtins';
-
-import type { Builtins } from '../isomorphic/builtins';
+import { ensureBuiltins } from '../isomorphic/builtins';
 
 export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
 export type WSData = { data: string, isBase64: boolean };
@@ -40,8 +38,8 @@ export type APIRequest = ConnectRequest | PassthroughRequest | EnsureOpenedReque
 // eslint-disable-next-line no-restricted-globals
 type GlobalThis = typeof globalThis;
 
-export function inject(globalThis: GlobalThis, builtinsProperty: string | undefined) {
-  const builtins: Builtins = (builtinsProperty ? (globalThis as any)[builtinsProperty] : undefined) || createBuiltins(globalThis);
+export function inject(globalThis: GlobalThis) {
+  const builtins = ensureBuiltins(globalThis);
 
   if ((globalThis as any).__pwWebSocketDispatch)
     return;
