@@ -159,6 +159,18 @@ it('should report console messages from content script', {
     ],
   };
   const context = await browserType.launchPersistentContext('', extensionOptions);
+
+  // Reload extension to force the disabled behavior.
+  // It's possible that other extension apis put the extension into a disabled state, but not sure which ones.
+  const extensionSettingsPage = await context.newPage();
+  await extensionSettingsPage.goto('chrome://extensions/');
+  await extensionSettingsPage.getByRole('button', { name: 'Reload' }).click();
+
+  // // Uncomment this section to make the test pass
+  // await extensionSettingsPage.getByLabel("Developer mode").click();
+  // // Ensure dev mode was turned on by checking "Load unpacked" button is visible before continuing
+  // await extensionSettingsPage.getByRole("button", { name: "Load unpacked" }).waitFor();
+
   const page = await context.newPage();
   const consolePromise = page.waitForEvent('console', e => e.text().includes('Test console log from a third-party execution context'));
   await page.goto(server.EMPTY_PAGE);
