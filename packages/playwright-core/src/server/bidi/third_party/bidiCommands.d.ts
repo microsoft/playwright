@@ -113,11 +113,6 @@ export interface Commands {
     returnType: Bidi.EmptyResult;
   };
 
-  'permissions.setPermission': {
-    params: Bidi.Permissions.SetPermissionParameters;
-    returnType: Bidi.EmptyResult;
-  };
-
   'session.end': {
     params: Bidi.EmptyParams;
     returnType: Bidi.EmptyResult;
