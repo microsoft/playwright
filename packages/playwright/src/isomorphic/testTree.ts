@@ -77,6 +77,16 @@ export class TestTree {
     };
     this._treeItemById.set(rootFolder, this.rootItem);
 
+    const isGroupItem = (item: TreeItem | undefined): item is GroupItem => {
+      return !!item && item.kind === 'group';
+    };
+
+    const updateParentDuration = (group: GroupItem, duration: number): void => {
+      group.duration += duration;
+      if (isGroupItem(group.parent))
+        updateParentDuration(group.parent, duration);
+    };
+
     const visitSuite = (project: reporterTypes.FullProject, parentSuite: reporterTypes.Suite, parentGroup: GroupItem) => {
       for (const suite of parentSuite.suites) {
         if (!suite.title) {
@@ -156,6 +166,7 @@ export class TestTree {
         this._addChild(testCaseItem, testItem);
         this._treeItemByTestId.set(test.id, testItem);
         testCaseItem.duration = (testCaseItem.children as TestItem[]).reduce((a, b) => a + b.duration, 0);
+        updateParentDuration(parentGroup, testCaseItem.duration);
       }
     };
 
