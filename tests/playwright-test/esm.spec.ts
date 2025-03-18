@@ -62,6 +62,21 @@ test('should support import attributes', async ({ runInlineTest }) => {
   expect(result.stdout).toContain('imported value (test): bar');
 });
 
+test('should import json without attributes in esm', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
+    'a.test.ts': `
+      import config from './package.json';
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        expect(config.foo).toBe('bar');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

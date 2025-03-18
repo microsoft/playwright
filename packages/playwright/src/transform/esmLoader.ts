@@ -24,7 +24,7 @@ import { fileIsModule } from '../util';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
-async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
+async function resolve(specifier: string, context: { parentURL?: string, importAttributes?: Object }, defaultResolve: Function) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
@@ -32,6 +32,11 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
       specifier = url.pathToFileURL(resolved).toString();
   }
   const result = await defaultResolve(specifier, context, defaultResolve);
+  const hasNoImportAttributes = !context.importAttributes || Object.keys(context.importAttributes).length === 0;
+  if (specifier.endsWith('.json') && hasNoImportAttributes) {
+    // Align with typescript's moduleResolution=bundler.
+    result.importAttributes = { type: 'json' };
+  }
   // Note: we collect dependencies here that will be sent to the main thread
   // (and optionally runner process) after the loading finishes.
   if (result?.url && result.url.startsWith('file://'))
