@@ -35,8 +35,8 @@ export const snapshot: Tool = {
 };
 
 const elementSchema = z.object({
-  element: z.string().describe('Element label, description of any other text to describe the element'),
-  ref: z.string().describe('Target element reference'),
+  element: z.string().describe('Human-readable element description used to obtain the permission to interact with the element'),
+  ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
 
 export const click: Tool = {
@@ -48,7 +48,31 @@ export const click: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = elementSchema.parse(params);
-    return runAndWait(context, page => refLocator(page, validatedParams).click(), true);
+    return runAndWait(context, page => refLocator(page, validatedParams.ref).click(), true);
+  },
+};
+
+const dragSchema = z.object({
+  startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
+  startRef: z.string().describe('Exact source element reference from the page snapshot'),
+  endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
+  endRef: z.string().describe('Exact target element reference from the page snapshot'),
+});
+
+export const drag: Tool = {
+  schema: {
+    name: 'browser_drag',
+    description: 'Perform drag and drop between two elements',
+    inputSchema: zodToJsonSchema(dragSchema),
+  },
+
+  handle: async (context, params) => {
+    const validatedParams = dragSchema.parse(params);
+    return runAndWait(context, async page => {
+      const startLocator = refLocator(page, validatedParams.startRef);
+      const endLocator = refLocator(page, validatedParams.endRef);
+      await startLocator.dragTo(endLocator);
+    }, true);
   },
 };
 
@@ -61,7 +85,7 @@ export const hover: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = elementSchema.parse(params);
-    return runAndWait(context, page => refLocator(page, validatedParams).hover(), true);
+    return runAndWait(context, page => refLocator(page, validatedParams.ref).hover(), true);
   },
 };
 
@@ -80,7 +104,7 @@ export const type: Tool = {
   handle: async (context, params) => {
     const validatedParams = typeSchema.parse(params);
     return await runAndWait(context, async page => {
-      const locator = refLocator(page, validatedParams);
+      const locator = refLocator(page, validatedParams.ref);
       await locator.fill(validatedParams.text);
       if (validatedParams.submit)
         await locator.press('Enter');
@@ -88,6 +112,6 @@ export const type: Tool = {
   },
 };
 
-function refLocator(page: playwright.Page, params: z.infer<typeof elementSchema>): playwright.Locator {
-  return page.locator(`aria-ref=${params.ref}`);
+function refLocator(page: playwright.Page, ref: string): playwright.Locator {
+  return page.locator(`aria-ref=${ref}`);
 }
