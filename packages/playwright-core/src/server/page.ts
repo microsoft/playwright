@@ -24,7 +24,7 @@ import * as frames from './frames';
 import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
-import { createBuiltinsScript } from './isomorphic/builtins';
+import { ensureBuiltins } from './isomorphic/builtins';
 import { createPageBindingScript, deliverBindingResult, takeBindingHandle } from './pageBinding';
 import * as js from './javascript';
 import { ProgressController } from './progress';
@@ -869,7 +869,7 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(createPageBindingScript(js.kBuiltinsProperty, PageBinding.kPlaywrightBinding, name, needsHandle), true /* internal */);
+    this.initScript = new InitScript(createPageBindingScript(PageBinding.kPlaywrightBinding, name, needsHandle), true /* internal */);
     this.needsHandle = needsHandle;
     this.internal = name.startsWith('__pw');
   }
@@ -918,7 +918,7 @@ export class InitScript {
   }
 }
 
-export const kBuiltinsScript = new InitScript(createBuiltinsScript(js.kBuiltinsProperty), true /* internal */);
+export const kBuiltinsScript = new InitScript(`(${ensureBuiltins})(globalThis)`, true /* internal */);
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];

@@ -16,7 +16,7 @@
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 
-import { createBuiltins } from '../isomorphic/builtins';
+import { ensureBuiltins } from '../isomorphic/builtins';
 import { generateAriaTree, getAllByAria, matchesAriaTree, renderAriaTree } from './ariaSnapshot';
 import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setBrowserName } from './domUtils';
 import { Highlight } from './highlight';
@@ -108,11 +108,11 @@ export class InjectedScript {
   private _allHitTargetInterceptorEvents: Builtins.Set<string>;
 
   // eslint-disable-next-line no-restricted-globals
-  constructor(window: Window & typeof globalThis, isUnderTest: boolean, builtinsProperty: string, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
+  constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.window = window;
     this.document = window.document;
     this.isUnderTest = isUnderTest;
-    this.builtins = (window as any)[builtinsProperty] || createBuiltins(window);
+    this.builtins = ensureBuiltins(window);
     this._sdkLanguage = sdkLanguage;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
     this._evaluator = new SelectorEvaluatorImpl(this.builtins);
@@ -1524,7 +1524,7 @@ export class InjectedScript {
     if (!['to.contain.text.array', 'to.have.text.array'].includes(expression))
       throw this.createStacklessError('Unknown expect matcher: ' + expression);
 
-    const received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
+    const received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new this.builtins.Map(), e).full);
     // "To match an array" is "to contain an array" + "equal length"
     const lengthShouldMatch = expression !== 'to.contain.text.array';
     const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;

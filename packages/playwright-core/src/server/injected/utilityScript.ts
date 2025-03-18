@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { createBuiltins } from '../isomorphic/builtins';
+import { ensureBuiltins } from '../isomorphic/builtins';
 import { source } from '../isomorphic/utilityScriptSerializers';
 
 import type { Builtins } from '../isomorphic/builtins';
 
 export class UtilityScript {
-  constructor(isUnderTest: boolean, builtinsProperty: string) {
+  constructor(isUnderTest: boolean) {
     // eslint-disable-next-line no-restricted-globals
-    this.builtins = (globalThis as any)[builtinsProperty] || createBuiltins(globalThis);
+    this.builtins = ensureBuiltins(globalThis);
     if (isUnderTest) {
       // eslint-disable-next-line no-restricted-globals
       (globalThis as any).builtins = this.builtins;
