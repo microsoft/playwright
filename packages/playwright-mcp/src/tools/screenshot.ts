@@ -38,7 +38,7 @@ export const screenshot: Tool = {
 };
 
 const elementSchema = z.object({
-  element: z.string().describe('Element label, description or any other text to describe the element'),
+  element: z.string().describe('Human-readable element description used to obtain the permission to interact with the element'),
 });
 
 const moveMouseSchema = elementSchema.extend({
@@ -63,15 +63,22 @@ export const moveMouse: Tool = {
   },
 };
 
+const clickSchema = elementSchema.extend({
+  x: z.number().describe('X coordinate'),
+  y: z.number().describe('Y coordinate'),
+});
+
 export const click: Tool = {
   schema: {
     name: 'browser_click',
     description: 'Click left mouse button',
-    inputSchema: zodToJsonSchema(elementSchema),
+    inputSchema: zodToJsonSchema(clickSchema),
   },
 
-  handle: async context => {
+  handle: async (context, params) => {
     await runAndWait(context, async page => {
+      const validatedParams = clickSchema.parse(params);
+      await page.mouse.move(validatedParams.x, validatedParams.y);
       await page.mouse.down();
       await page.mouse.up();
     });
@@ -82,8 +89,10 @@ export const click: Tool = {
 };
 
 const dragSchema = elementSchema.extend({
-  x: z.number().describe('X coordinate'),
-  y: z.number().describe('Y coordinate'),
+  startX: z.number().describe('Start X coordinate'),
+  startY: z.number().describe('Start Y coordinate'),
+  endX: z.number().describe('End X coordinate'),
+  endY: z.number().describe('End Y coordinate'),
 });
 
 export const drag: Tool = {
@@ -96,18 +105,20 @@ export const drag: Tool = {
   handle: async (context, params) => {
     const validatedParams = dragSchema.parse(params);
     await runAndWait(context, async page => {
+      await page.mouse.move(validatedParams.startX, validatedParams.startY);
       await page.mouse.down();
-      await page.mouse.move(validatedParams.x, validatedParams.y);
+      await page.mouse.move(validatedParams.endX, validatedParams.endY);
       await page.mouse.up();
     });
     return {
-      content: [{ type: 'text', text: `Dragged mouse to (${validatedParams.x}, ${validatedParams.y})` }],
+      content: [{ type: 'text', text: `Dragged mouse from (${validatedParams.startX}, ${validatedParams.startY}) to (${validatedParams.endX}, ${validatedParams.endY})` }],
     };
   },
 };
 
 const typeSchema = z.object({
-  text: z.string().describe('Text to type'),
+  text: z.string().describe('Text to type into the element'),
+  submit: z.boolean().describe('Whether to submit entered text (press Enter after)'),
 });
 
 export const type: Tool = {
@@ -121,7 +132,9 @@ export const type: Tool = {
     const validatedParams = typeSchema.parse(params);
     await runAndWait(context, async page => {
       await page.keyboard.type(validatedParams.text);
-    });
+      if (validatedParams.submit)
+        await page.keyboard.press('Enter');
+    }, true);
     return {
       content: [{ type: 'text', text: `Typed text "${validatedParams.text}"` }],
     };
