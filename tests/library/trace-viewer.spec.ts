@@ -478,9 +478,9 @@ test('should show copy button on snapshot url hover and copy to clipboard on cli
   await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await traceViewer.snapshotFrame('page.evaluate');
   await expect(traceViewer.page.locator('.browser-frame-address-bar')).toHaveText(server.EMPTY_PAGE);
-  const copySelector = '.browser-frame-address-bar > button[title="Copy"]'
+  const copySelector = '.browser-frame-address-bar > button[title="Copy"]';
   await expect(traceViewer.page.locator(copySelector)).toBeHidden();
-  await traceViewer.page.hover('.browser-frame-address-bar')
+  await traceViewer.page.hover('.browser-frame-address-bar');
   await expect(traceViewer.page.locator(copySelector)).toBeVisible();
   await traceViewer.page.locator(copySelector).click();
   expect(await traceViewer.page.evaluate(() => navigator.clipboard.readText())).toBe(server.EMPTY_PAGE);
