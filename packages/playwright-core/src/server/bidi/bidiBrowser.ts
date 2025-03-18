@@ -20,7 +20,7 @@ import { BrowserContext, assertBrowserContextIsNotOwned } from '../browserContex
 import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
-import { BidiPage } from './bidiPage';
+import { addMainBinding, BidiPage, kPlaywrightBindingChannel } from './bidiPage';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -203,6 +203,7 @@ export class BidiBrowser extends Browser {
 
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
+  private _initScriptIds: bidi.Script.PreloadScript[] = [];
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -211,6 +212,45 @@ export class BidiBrowserContext extends BrowserContext {
 
   private _bidiPages() {
     return [...this._browser._bidiPages.values()].filter(bidiPage => bidiPage._browserContext === this);
+  }
+
+  override async _initialize() {
+    const promises: Promise<any>[] = [
+      super._initialize(),
+      this._installMainBinding(),
+    ];
+    // FIXME: Persistent context doesn't have an id, so we can't set the command for it.
+    if (this._options.viewport && this._browserContextId) {
+      promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
+        viewport: {
+          width: this._options.viewport.width,
+          height: this._options.viewport.height
+        },
+        devicePixelRatio: this._options.deviceScaleFactor || 1,
+        userContexts: [this._browserContextId],
+      }));
+    }
+    await Promise.all(promises);
+  }
+
+  // TODO: consider calling this only when bindings are added.
+  private async _installMainBinding() {
+    // TODO: Cannot install main binding for persistent context as it doesn't have an id.
+    if (!this._browserContextId)
+      return;
+    const functionDeclaration = addMainBinding.toString();
+    const args: bidi.Script.ChannelValue[] = [{
+      type: 'channel',
+      value: {
+        channel: kPlaywrightBindingChannel,
+        ownership: bidi.Script.ResultOwnership.Root,
+      }
+    }];
+    await this._browser._browserSession.send('script.addPreloadScript', {
+      functionDeclaration,
+      arguments: args,
+      userContexts: [this._browserContextId],
+    });
   }
 
   override possiblyUninitializedPages(): Page[] {
@@ -293,10 +333,22 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doAddInitScript(initScript: InitScript) {
-    await Promise.all(this.pages().map(page => (page._delegate as BidiPage).addInitScript(initScript)));
+    // TODO: support persistent context.
+    if (!this._browserContextId)
+      return;
+    const { script } = await this._browser._browserSession.send('script.addPreloadScript', {
+      // TODO: remove function call from the source.
+      functionDeclaration: `() => { return ${initScript.source} }`,
+      userContexts: [this._browserContextId],
+    });
+    if (!initScript.internal)
+      this._initScriptIds.push(script);
   }
 
   async doRemoveNonInternalInitScripts() {
+    const promise = Promise.all(this._initScriptIds.map(script => this._browser._browserSession.send('script.removePreloadScript', { script })));
+    this._initScriptIds = [];
+    await promise;
   }
 
   async doUpdateRequestInterception(): Promise<void> {
