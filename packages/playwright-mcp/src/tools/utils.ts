@@ -15,7 +15,8 @@
  */
 
 import type * as playwright from 'playwright';
-import type { ToolContext, ToolResult } from './tool';
+import type { ToolResult } from './tool';
+import type { Context } from '../context';
 
 async function waitForCompletion<R>(page: playwright.Page, callback: () => Promise<R>): Promise<R> {
   const requests = new Set<playwright.Request>();
@@ -70,9 +71,9 @@ async function waitForCompletion<R>(page: playwright.Page, callback: () => Promi
   }
 }
 
-export async function runAndWait(context: ToolContext, callback: () => Promise<any>, snapshot: boolean = false): Promise<ToolResult> {
-  const page = context.page;
-  const result = await waitForCompletion(page, () => callback());
+export async function runAndWait(context: Context, callback: (page: playwright.Page) => Promise<any>, snapshot: boolean = false): Promise<ToolResult> {
+  const page = await context.ensurePage();
+  const result = await waitForCompletion(page, () => callback(page));
   return snapshot ? captureAriaSnapshot(page) : result;
 }
 

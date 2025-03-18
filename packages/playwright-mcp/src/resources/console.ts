@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-import type { Resource } from './resource';
+import type { Resource, ResourceResult } from './resource';
 
-export const pdf: Resource = {
+export const console: Resource = {
   schema: {
-    uri: 'file:///playwright/page.pdf',
-    name: 'Page as PDF',
-    description: 'Save current page as PDF',
-    mimeType: 'application/pdf',
+    uri: 'browser://console',
+    name: 'Page console',
+    mimeType: 'text/plain',
   },
 
   read: async (context, uri) => {
-    const pdf = await context.page.pdf();
-    return {
-      uri,
-      mimeType: 'application/pdf',
-      blob: pdf.toString('base64'),
-    };
+    const result: ResourceResult[] = [];
+    for (const message of await context.ensureConsole()) {
+      result.push({
+        uri,
+        mimeType: 'text/plain',
+        text: `[${message.type().toUpperCase()}] ${message.text()}`,
+      });
+    }
+    return result;
   },
 };

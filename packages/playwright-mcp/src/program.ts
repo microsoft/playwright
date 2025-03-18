@@ -20,7 +20,7 @@ import { Server } from './server';
 import * as snapshot from './tools/snapshot';
 import * as common from './tools/common';
 import * as screenshot from './tools/screenshot';
-import * as allResources from './resources/resources';
+import { console } from './resources/console';
 
 import type { LaunchOptions } from './server';
 import type { Tool } from './tools/tool';
@@ -62,6 +62,8 @@ function setupExitWatchdog(server: Server) {
 const commonTools: Tool[] = [
   common.pressKey,
   common.wait,
+  common.pdf,
+  common.close,
 ];
 
 const snapshotTools: Tool[] = [
@@ -88,7 +90,7 @@ const screenshotTools: Tool[] = [
 ];
 
 const resources: Resource[] = [
-  allResources.pdf,
+  console,
 ];
 
 program.parse(process.argv);

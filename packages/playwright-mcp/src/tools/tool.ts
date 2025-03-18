@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-import type * as playwright from 'playwright';
 import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types';
 import type { JsonSchema7Type } from 'zod-to-json-schema';
-
-export type ToolContext = {
-  page: playwright.Page;
-};
+import type { Context } from '../context';
 
 export type ToolSchema = {
   name: string;
@@ -35,7 +31,7 @@ export type ToolResult = {
 
 export type Tool = {
   schema: ToolSchema;
-  handle: (context: ToolContext, params?: Record<string, any>) => Promise<ToolResult>;
+  handle: (context: Context, params?: Record<string, any>) => Promise<ToolResult>;
 };
 
 export type ToolFactory = (snapshot: boolean) => Tool;

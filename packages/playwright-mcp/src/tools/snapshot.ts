@@ -24,13 +24,13 @@ import type { Tool } from './tool';
 
 export const snapshot: Tool = {
   schema: {
-    name: 'snapshot',
+    name: 'browser_snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
     inputSchema: zodToJsonSchema(z.object({})),
   },
 
   handle: async context => {
-    return await captureAriaSnapshot(context.page);
+    return await captureAriaSnapshot(await context.ensurePage());
   },
 };
 
@@ -41,29 +41,27 @@ const elementSchema = z.object({
 
 export const click: Tool = {
   schema: {
-    name: 'click',
+    name: 'browser_click',
     description: 'Perform click on a web page',
     inputSchema: zodToJsonSchema(elementSchema),
   },
 
   handle: async (context, params) => {
     const validatedParams = elementSchema.parse(params);
-    const locator = refLocator(context.page, validatedParams);
-    return runAndWait(context, () => locator.click(), true);
+    return runAndWait(context, page => refLocator(page, validatedParams).click(), true);
   },
 };
 
 export const hover: Tool = {
   schema: {
-    name: 'hover',
+    name: 'browser_hover',
     description: 'Hover over element on page',
     inputSchema: zodToJsonSchema(elementSchema),
   },
 
   handle: async (context, params) => {
     const validatedParams = elementSchema.parse(params);
-    const locator = refLocator(context.page, validatedParams);
-    return runAndWait(context, () => locator.hover(), true);
+    return runAndWait(context, page => refLocator(page, validatedParams).hover(), true);
   },
 };
 
@@ -74,15 +72,15 @@ const typeSchema = elementSchema.extend({
 
 export const type: Tool = {
   schema: {
-    name: 'type',
+    name: 'browser_type',
     description: 'Type text into editable element',
     inputSchema: zodToJsonSchema(typeSchema),
   },
 
   handle: async (context, params) => {
     const validatedParams = typeSchema.parse(params);
-    const locator = refLocator(context.page, validatedParams);
-    return await runAndWait(context, async () => {
+    return await runAndWait(context, async page => {
+      const locator = refLocator(page, validatedParams);
       await locator.fill(validatedParams.text);
       if (validatedParams.submit)
         await locator.press('Enter');

@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-import type * as playwright from 'playwright';
-
-export type ResourceContext = {
-  page: playwright.Page;
-};
+import type { Context } from '../context';
 
 export type ResourceSchema = {
   uri: string;
@@ -36,5 +32,5 @@ export type ResourceResult = {
 
 export type Resource = {
   schema: ResourceSchema;
-  read: (context: ResourceContext, uri: string) => Promise<ResourceResult>;
+  read: (context: Context, uri: string) => Promise<ResourceResult[]>;
 };
