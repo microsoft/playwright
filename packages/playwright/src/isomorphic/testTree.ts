@@ -77,13 +77,9 @@ export class TestTree {
     };
     this._treeItemById.set(rootFolder, this.rootItem);
 
-    const isGroupItem = (item: TreeItem | undefined): item is GroupItem => {
-      return !!item && item.kind === 'group';
-    };
-
     const updateParentDuration = (group: GroupItem, duration: number): void => {
       group.duration += duration;
-      if (isGroupItem(group.parent))
+      if (!!group.parent && group.parent.kind === 'group')
         updateParentDuration(group.parent, duration);
     };
 
