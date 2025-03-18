@@ -156,15 +156,15 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] setup.ts" [expanded]:
+      - treeitem /\\[icon-check\\] setup\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] setup/}
-      - treeitem "[icon-check] teardown.ts" [expanded]:
+          - treeitem /\\[icon-check\\] setup \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] teardown\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] teardown/}
-      - treeitem "[icon-check] test.ts" [expanded]:
+          - treeitem /\\[icon-check\\] teardown \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] test/}
+          - treeitem /\\[icon-check\\] test \\d+[hmsp]+/
   `);
 
   await page.getByTitle('Toggle output').click();
@@ -205,12 +205,12 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] teardown.ts" [expanded]:
+      - treeitem /\\[icon-check\\] teardown\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] teardown/}
-      - treeitem "[icon-check] test.ts" [expanded]:
+          - treeitem /\\[icon-check\\] teardown \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] test/}
+          - treeitem /\\[icon-check\\] test \\d+[hmsp]+/
   `);
 
   await page.getByTitle('Toggle output').click();
@@ -249,9 +249,9 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] test/}
+          - treeitem /\\[icon-check\\] test \\d+[hmsp]+/
   `);
 
   await page.getByTitle('Toggle output').click();
@@ -295,15 +295,15 @@ test('should run part of the setup only', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] setup.ts" [expanded] [selected]:
+      - treeitem /\\[icon-check\\] setup\\.ts \\d+[hmsp]+/ [expanded] [selected]:
         - button "Run"
         - button "Show source"
         - button "Watch"
         - group:
-          - treeitem ${/\[icon-check\] setup/}
-      - treeitem "[icon-check] teardown.ts" [expanded]:
+          - treeitem /\\[icon-check\\] setup \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] teardown\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] teardown/}
+          - treeitem /\\[icon-check\\] teardown \\d+[hmsp]+/
       - treeitem "[icon-circle-outline] test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-outline] test"
