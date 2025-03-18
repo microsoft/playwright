@@ -24,10 +24,6 @@ export const BrowserFrame: React.FunctionComponent<{
 }> = ({ url }): React.ReactElement => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const copyToClipboard = () => {
-    if (url) navigator.clipboard.writeText(url);
-  };
-
   return <div className='browser-frame-header'>
     <div style={{ whiteSpace: 'nowrap' }}>
       <span className='browser-frame-dot' style={{ backgroundColor: 'rgb(242, 95, 88)' }}></span>
