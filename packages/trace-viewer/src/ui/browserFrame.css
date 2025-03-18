@@ -57,10 +57,3 @@
 body.dark-mode .browser-frame-header {
   background: #444950;
 }
-
-.copy-button {
-  margin-left: 10px;
-  padding: 2px 5px;
-  font-size: 12px;
-  cursor: pointer;
-}
