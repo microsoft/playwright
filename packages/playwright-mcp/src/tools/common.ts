@@ -94,7 +94,7 @@ const waitSchema = z.object({
 export const wait: Tool = {
   schema: {
     name: 'wait',
-    description: 'Wait for a specified time in milliseconds',
+    description: 'Wait for a specified time in seconds',
     inputSchema: zodToJsonSchema(waitSchema),
   },
   handle: async (context, params) => {
