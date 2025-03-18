@@ -152,6 +152,7 @@ export default defineConfig({
   ],
 });
 ```
+
 ## Dependencies
 
 Dependencies are a list of projects that need to run before the tests in another project run. They can be useful for configuring the global setup actions so that one project depends on this running first. When using project dependencies, [test reporters](./test-reporters.md) will show the setup tests and the [trace viewer](/trace-viewer.md) will record traces of the setup. You can use the inspector to inspect the DOM snapshot of the trace of your setup tests and you can also use [fixtures](./test-fixtures.md) inside your setup.
@@ -185,6 +186,7 @@ export default defineConfig({
   ],
 });
 ```
+
 ### Running Sequence
 
 When working with tests that have a dependency, the dependency will always run first and once all tests from this project have passed, then the other projects will run in parallel.
@@ -216,7 +218,9 @@ You can also teardown your setup by adding a [`property: TestProject.teardown`] 
 
 ### Test filtering
 
-If `--grep/--grep-invert` or `--shard` [option](./test-cli.md#reference) is used, test file name filter is specified in [command line](./test-cli.md) or [test.only()](./api/class-test.md#test-only) is used, it will only apply to the tests from the deepest projects in the project dependency chain. In other words, if a matching test belongs to a project that has project dependencies, Playwright will run all the tests from the project dependencies ignoring the filters.
+All test filtering options, such as `--grep`/`--grep-invert`, `--shard`, filtering directly by location in the command line, or using [`test.only()`](./api/class-test.md#test-only), directly select the primary tests to be run. If those tests belong to a project with dependencies, all tests from those dependencies will also run.
+
+You can pass `--no-deps` command line option to ignore all dependencies and teardowns. Only your directly selected projects will run.
 
 ## Custom project parameters
 
