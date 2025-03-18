@@ -221,14 +221,14 @@ export class BidiBrowserContext extends BrowserContext {
     ];
     // FIXME: Persistent context doesn't have an id, so we can't set the command for it.
     if (this._options.viewport && this._browserContextId) {
-      await this._browser._browserSession.send('browsingContext.setViewport', {
+      promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
         viewport: {
           width: this._options.viewport.width,
           height: this._options.viewport.height
         },
         devicePixelRatio: this._options.deviceScaleFactor || 1,
         userContexts: [this._browserContextId],
-      });
+      }));
     }
     await Promise.all(promises);
   }
