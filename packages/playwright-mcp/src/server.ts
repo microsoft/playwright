@@ -16,23 +16,39 @@
 
 import { Server as MCPServer } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import * as playwright from 'playwright';
 
-import type { Tool } from '../tools/common';
+import type { Tool } from './tools/tool';
+import type { Resource } from './resources/resource';
+
+export type LaunchOptions = {
+  headless?: boolean;
+};
 
 export class Server {
   private _server: MCPServer;
   private _tools: Tool[];
   private _page: playwright.Page | undefined;
+  private _launchOptions: LaunchOptions;
 
-  constructor(options: { name: string, version: string, tools: Tool[] }) {
-    const { name, version, tools } = options;
-    this._server = new MCPServer({ name, version }, { capabilities: { tools: {} } });
+  constructor(options: { name: string, version: string, tools: Tool[], resources: Resource[] }, launchOptions: LaunchOptions) {
+    const { name, version, tools, resources } = options;
+    this._launchOptions = launchOptions;
+    this._server = new MCPServer({ name, version }, {
+      capabilities: {
+        tools: {},
+        resources: {},
+      }
+    });
     this._tools = tools;
 
     this._server.setRequestHandler(ListToolsRequestSchema, async () => {
       return { tools: tools.map(tool => tool.schema) };
+    });
+
+    this._server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return { resources: resources.map(resource => resource.schema) };
     });
 
     this._server.setRequestHandler(CallToolRequestSchema, async request => {
@@ -57,22 +73,37 @@ export class Server {
       }
     });
 
-    this._setupExitWatchdog();
+    this._server.setRequestHandler(ReadResourceRequestSchema, async request => {
+      const resource = resources.find(resource => resource.schema.uri === request.params.uri);
+      if (!resource) {
+        return {
+          content: [{ type: 'text', text: `Resource "${request.params.uri}" not found` }],
+          isError: true,
+        };
+      }
+
+      const result = await resource.read({ page: await this._openPage() }, request.params.uri);
+      return result;
+    });
   }
 
-  start() {
+  async start() {
     const transport = new StdioServerTransport();
-    void this._server.connect(transport);
+    await this._server.connect(transport);
+  }
+
+  async stop() {
+    await this._server.close();
+    await this._page?.context()?.browser()?.close();
   }
 
   private async _createBrowser(): Promise<playwright.Browser> {
-    const headless = process.env.PLAYWRIGHT_HEADLESS === '1' || process.env.PLAYWRIGHT_HEADLESS === 'true';
     if (process.env.PLAYWRIGHT_WS_ENDPOINT) {
       const url = new URL(process.env.PLAYWRIGHT_WS_ENDPOINT);
-      url.searchParams.set('launch-options', JSON.stringify({ headless }));
+      url.searchParams.set('launch-options', JSON.stringify(this._launchOptions));
       return await playwright.chromium.connect(String(url));
     }
-    return await playwright.chromium.launch({ headless });
+    return await playwright.chromium.launch(this._launchOptions);
   }
 
   private async _openPage(): Promise<playwright.Page> {
@@ -82,16 +113,5 @@ export class Server {
       this._page = await context.newPage();
     }
     return this._page;
-  }
-
-  private _setupExitWatchdog() {
-    process.stdin.on('close', async () => {
-      this._server.close();
-      // eslint-disable-next-line no-restricted-properties
-      setTimeout(() => process.exit(0), 15000);
-      await this._page?.context()?.browser()?.close();
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(0);
-    });
   }
 }

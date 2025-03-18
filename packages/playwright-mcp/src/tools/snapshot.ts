@@ -14,139 +14,82 @@
  * limitations under the License.
  */
 
-import { waitForCompletion } from '../utils';
+import { z } from 'zod';
+import zodToJsonSchema from 'zod-to-json-schema';
+
+import { captureAriaSnapshot, runAndWait } from './utils';
 
 import type * as playwright from 'playwright';
-import type { Tool, ToolContext, ToolResult } from './common';
-
-const elementProperties = {
-  element: {
-    type: 'string',
-    description: 'Element label, description of any other text to describe the element',
-  },
-  ref: {
-    type: 'string',
-    description: 'Target element reference',
-  }
-};
+import type { Tool } from './tool';
 
 export const snapshot: Tool = {
   schema: {
     name: 'snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-    }
+    inputSchema: zodToJsonSchema(z.object({})),
   },
 
   handle: async context => {
     return await captureAriaSnapshot(context.page);
-  }
-};
-
-export const navigate: Tool = {
-  schema: {
-    name: 'navigate',
-    description: 'Navigate to a URL',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        url: {
-          type: 'string',
-          description: 'URL to navigate to',
-        },
-      },
-    }
   },
-
-  handle: async (context, params) => {
-    return runAndCaptureSnapshot(context, () => context.page.goto(params!.url));
-  }
 };
+
+const elementSchema = z.object({
+  element: z.string().describe('Element label, description of any other text to describe the element'),
+  ref: z.string().describe('Target element reference'),
+});
 
 export const click: Tool = {
   schema: {
     name: 'click',
     description: 'Perform click on a web page',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ...elementProperties,
-      },
-      required: ['ref', 'element'],
-    }
+    inputSchema: zodToJsonSchema(elementSchema),
   },
 
   handle: async (context, params) => {
-    const locator = refLocator(context.page, params!);
-    return runAndCaptureSnapshot(context, () => locator.click());
-  }
+    const validatedParams = elementSchema.parse(params);
+    const locator = refLocator(context.page, validatedParams);
+    return runAndWait(context, () => locator.click(), true);
+  },
 };
 
 export const hover: Tool = {
   schema: {
     name: 'hover',
     description: 'Hover over element on page',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ...elementProperties,
-      },
-      required: ['ref', 'element'],
-    }
+    inputSchema: zodToJsonSchema(elementSchema),
   },
 
   handle: async (context, params) => {
-    const locator = refLocator(context.page, params!);
-    return runAndCaptureSnapshot(context, () => locator.hover());
-  }
+    const validatedParams = elementSchema.parse(params);
+    const locator = refLocator(context.page, validatedParams);
+    return runAndWait(context, () => locator.hover(), true);
+  },
 };
+
+const typeSchema = elementSchema.extend({
+  text: z.string().describe('Text to type into the element'),
+  submit: z.boolean().describe('Whether to submit entered text (press Enter after)'),
+});
 
 export const type: Tool = {
   schema: {
     name: 'type',
     description: 'Type text into editable element',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ...elementProperties,
-        text: {
-          type: 'string',
-          description: 'Text to enter',
-        },
-        submit: {
-          type: 'boolean',
-          description: 'Whether to submit entered text (press Enter after)'
-        }
-      },
-      required: ['ref', 'element', 'text'],
-    }
+    inputSchema: zodToJsonSchema(typeSchema),
   },
 
   handle: async (context, params) => {
-    const locator = refLocator(context.page, params!);
-    return await runAndCaptureSnapshot(context, async () => {
-      locator.fill(params!.text as string);
-      if (params!.submit)
+    const validatedParams = typeSchema.parse(params);
+    const locator = refLocator(context.page, validatedParams);
+    return await runAndWait(context, async () => {
+      await locator.fill(validatedParams.text);
+      if (validatedParams.submit)
         await locator.press('Enter');
-    });
-  }
+    }, true);
+  },
 };
 
-function refLocator(page: playwright.Page, params: Record<string, string>): playwright.Locator {
+function refLocator(page: playwright.Page, params: z.infer<typeof elementSchema>): playwright.Locator {
   return page.locator(`aria-ref=${params.ref}`);
-}
-
-async function runAndCaptureSnapshot(context: ToolContext, callback: () => Promise<any>): Promise<ToolResult> {
-  const page = context.page;
-  await waitForCompletion(page, () => callback());
-  return captureAriaSnapshot(page);
-}
-
-async function captureAriaSnapshot(page: playwright.Page): Promise<ToolResult> {
-  const snapshot = await page.locator('html').ariaSnapshot({ ref: true });
-  return {
-    content: [{ type: 'text', text: `# Current page snapshot\n${snapshot}` }],
-  };
 }
