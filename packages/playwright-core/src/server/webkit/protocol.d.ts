@@ -2207,23 +2207,6 @@ export module Protocol {
       width: number;
       height: number;
     }
-    /**
-     * Data to construct File object.
-     */
-    export interface FilePayload {
-      /**
-       * File name.
-       */
-      name: string;
-      /**
-       * File type.
-       */
-      type: string;
-      /**
-       * Base64-encoded file data.
-       */
-      data: string;
-    }
     
     /**
      * Fired when <code>Document</code> has been totally updated. Node ids are no longer valid.
@@ -3287,13 +3270,9 @@ might return multiple quads for inline nodes.
        */
       objectId: Runtime.RemoteObjectId;
       /**
-       * Files to set
-       */
-      files?: FilePayload[];
-      /**
        * File paths to set
        */
-      paths?: string[];
+      paths: string[];
     }
     export type setInputFilesReturnValue = {
     }
