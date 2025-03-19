@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Resource, ResourceResult } from './resource';
+import type { Resource } from './resource';
 
 export const console: Resource = {
   schema: {
@@ -24,14 +24,14 @@ export const console: Resource = {
   },
 
   read: async (context, uri) => {
-    const result: ResourceResult[] = [];
-    for (const message of await context.ensureConsole()) {
-      result.push({
+    const messages = await context.ensureConsole();
+    const log = messages.map(message => `[${message.type().toUpperCase()}] ${message.text()}`).join(`\n`);
+    return [
+      {
         uri,
         mimeType: 'text/plain',
-        text: `[${message.type().toUpperCase()}] ${message.text()}`,
-      });
-    }
-    return result;
+        text: log,
+      }
+    ];
   },
 };
