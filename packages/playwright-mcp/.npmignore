@@ -1,5 +1,5 @@
 **/*
 README.md
 LICENSE
-!lib/*
+!lib/**/*.js
 !cli.js
