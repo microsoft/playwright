@@ -252,17 +252,18 @@ export function toHaveClass(
   this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options?: { timeout?: number },
+  options?: { timeout?: number, partial: boolean },
 ) {
+  const partial = options?.partial;
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
-      return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
+      return await locator._expect('to.have.class.array', { expectedText, expressionArg: { partial }, isNot, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
-      return await locator._expect('to.have.class', { expectedText, isNot, timeout });
+      return await locator._expect('to.have.class', { expectedText, expressionArg: { partial }, isNot, timeout });
     }, expected, options);
   }
 }
