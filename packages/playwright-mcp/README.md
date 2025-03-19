@@ -109,27 +109,27 @@ The Playwright MCP provides a set of tools for browser automation. Here are all 
 - **browser_click**
   - Description: Perform click on a web page
   - Parameters:
-    - `element` (string): Human-readable element description used to obtain the permission to interact with the element
+    - `element` (string): Human-readable element description used to obtain permission to interact with the element
     - `ref` (string): Exact target element reference from the page snapshot
 
 - **browser_hover**
   - Description: Hover over element on page
   - Parameters:
-    - `element` (string): Human-readable element description used to obtain the permission to interact with the element
+    - `element` (string): Human-readable element description used to obtain permission to interact with the element
     - `ref` (string): Exact target element reference from the page snapshot
 
 - **browser_drag**
   - Description: Perform drag and drop between two elements
   - Parameters:
-    - `startElement` (string): Human-readable source element description used to obtain the permission to interact with the element
+    - `startElement` (string): Human-readable source element description used to obtain permission to interact with the element
     - `startRef` (string): Exact source element reference from the page snapshot
-    - `endElement` (string): Human-readable target element description used to obtain the permission to interact with the element
+    - `endElement` (string): Human-readable target element description used to obtain permission to interact with the element
     - `endRef` (string): Exact target element reference from the page snapshot
 
 - **browser_type**
   - Description: Type text into editable element
   - Parameters:
-    - `element` (string): Human-readable element description used to obtain the permission to interact with the element
+    - `element` (string): Human-readable element description used to obtain permission to interact with the element
     - `ref` (string): Exact target element reference from the page snapshot
     - `text` (string): Text to type into the element
     - `submit` (boolean): Whether to submit entered text (press Enter after)
