@@ -38,7 +38,7 @@ export const screenshot: Tool = {
 };
 
 const elementSchema = z.object({
-  element: z.string().describe('Human-readable element description used to obtain the permission to interact with the element'),
+  element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
 });
 
 const moveMouseSchema = elementSchema.extend({

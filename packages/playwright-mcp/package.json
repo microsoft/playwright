@@ -29,7 +29,8 @@
     "zod-to-json-schema": "^3.24.4"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.6.1"
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@types/node": "^22.13.10"
   },
   "bin": {
     "mcp": "cli.js"
