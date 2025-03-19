@@ -98,7 +98,12 @@ export class BidiBrowser extends Browser {
     });
 
     if (options.persistent) {
-      browser._defaultContext = new BidiBrowserContext(browser, undefined, options.persistent);
+      const { userContexts } = await browser._browserSession.send('browser.getUserContexts', {});
+      if (!userContexts.length)
+        throw new Error('Cannot dermine default context id, no contexts found.');
+      const context = new BidiBrowserContext(browser, undefined, options.persistent);
+      context._defaultUserContext = userContexts[0].userContext;
+      browser._defaultContext = context;
       await (browser._defaultContext as BidiBrowserContext)._initialize();
       // Create default page as we cannot get access to the existing one.
       const page = await browser._defaultContext.doCreateNewPage();
@@ -204,6 +209,7 @@ export class BidiBrowser extends Browser {
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _initScriptIds: bidi.Script.PreloadScript[] = [];
+  _defaultUserContext: bidi.Browser.UserContext | undefined;
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -219,15 +225,14 @@ export class BidiBrowserContext extends BrowserContext {
       super._initialize(),
       this._installMainBinding(),
     ];
-    // FIXME: Persistent context doesn't have an id, so we can't set the command for it.
-    if (this._options.viewport && this._browserContextId) {
+    if (this._options.viewport) {
       promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
         viewport: {
           width: this._options.viewport.width,
           height: this._options.viewport.height
         },
         devicePixelRatio: this._options.deviceScaleFactor || 1,
-        userContexts: [this._browserContextId],
+        userContexts: [this._userContextId()],
       }));
     }
     await Promise.all(promises);
@@ -235,9 +240,6 @@ export class BidiBrowserContext extends BrowserContext {
 
   // TODO: consider calling this only when bindings are added.
   private async _installMainBinding() {
-    // TODO: Cannot install main binding for persistent context as it doesn't have an id.
-    if (!this._browserContextId)
-      return;
     const functionDeclaration = addMainBinding.toString();
     const args: bidi.Script.ChannelValue[] = [{
       type: 'channel',
@@ -249,7 +251,7 @@ export class BidiBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('script.addPreloadScript', {
       functionDeclaration,
       arguments: args,
-      userContexts: [this._browserContextId],
+      userContexts: [this._userContextId()],
     });
   }
 
@@ -333,13 +335,10 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doAddInitScript(initScript: InitScript) {
-    // TODO: support persistent context.
-    if (!this._browserContextId)
-      return;
     const { script } = await this._browser._browserSession.send('script.addPreloadScript', {
       // TODO: remove function call from the source.
       functionDeclaration: `() => { return ${initScript.source} }`,
-      userContexts: [this._browserContextId],
+      userContexts: [this._browserContextId || 'default'],
     });
     if (!initScript.internal)
       this._initScriptIds.push(script);
@@ -372,6 +371,12 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async cancelDownload(uuid: string) {
+  }
+
+  private _userContextId(): bidi.Browser.UserContext {
+    if (this._browserContextId)
+      return this._browserContextId;
+    return this._defaultUserContext!;
   }
 }
 
