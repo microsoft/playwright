@@ -76,15 +76,12 @@ export const click: Tool = {
   },
 
   handle: async (context, params) => {
-    await runAndWait(context, async page => {
+    return await runAndWait(context, 'Clicked mouse', async page => {
       const validatedParams = clickSchema.parse(params);
       await page.mouse.move(validatedParams.x, validatedParams.y);
       await page.mouse.down();
       await page.mouse.up();
     });
-    return {
-      content: [{ type: 'text', text: 'Clicked mouse' }],
-    };
   },
 };
 
@@ -104,15 +101,12 @@ export const drag: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = dragSchema.parse(params);
-    await runAndWait(context, async page => {
+    return await runAndWait(context, `Dragged mouse from (${validatedParams.startX}, ${validatedParams.startY}) to (${validatedParams.endX}, ${validatedParams.endY})`, async page => {
       await page.mouse.move(validatedParams.startX, validatedParams.startY);
       await page.mouse.down();
       await page.mouse.move(validatedParams.endX, validatedParams.endY);
       await page.mouse.up();
     });
-    return {
-      content: [{ type: 'text', text: `Dragged mouse from (${validatedParams.startX}, ${validatedParams.startY}) to (${validatedParams.endX}, ${validatedParams.endY})` }],
-    };
   },
 };
 
@@ -130,13 +124,10 @@ export const type: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = typeSchema.parse(params);
-    await runAndWait(context, async page => {
+    return await runAndWait(context, `Typed text "${validatedParams.text}"`, async page => {
       await page.keyboard.type(validatedParams.text);
       if (validatedParams.submit)
         await page.keyboard.press('Enter');
-    }, true);
-    return {
-      content: [{ type: 'text', text: `Typed text "${validatedParams.text}"` }],
-    };
+    });
   },
 };

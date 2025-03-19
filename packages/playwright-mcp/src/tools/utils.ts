@@ -71,20 +71,25 @@ async function waitForCompletion<R>(page: playwright.Page, callback: () => Promi
   }
 }
 
-export async function runAndWait(context: Context, callback: (page: playwright.Page) => Promise<any>, snapshot: boolean = false): Promise<ToolResult> {
+export async function runAndWait(context: Context, status: string, callback: (page: playwright.Page) => Promise<any>, snapshot: boolean = false): Promise<ToolResult> {
   const page = await context.ensurePage();
-  const result = await waitForCompletion(page, () => callback(page));
-  return snapshot ? captureAriaSnapshot(page) : result;
+  await waitForCompletion(page, () => callback(page));
+  return snapshot ? captureAriaSnapshot(page, status) : {
+    content: [{ type: 'text', text: status }],
+  };
 }
 
-export async function captureAriaSnapshot(page: playwright.Page): Promise<ToolResult> {
+export async function captureAriaSnapshot(page: playwright.Page, status: string = ''): Promise<ToolResult> {
   const snapshot = await page.locator('html').ariaSnapshot({ ref: true });
   return {
-    content: [{ type: 'text', text: `
-# Page URL: ${page.url()}
-# Page Title: ${page.title()}
-# Page Snapshot
-${snapshot}`
+    content: [{ type: 'text', text: `${status ? `${status}\n` : ''}
+- Page URL: ${page.url()}
+- Page Title: ${await page.title()}
+- Page Snapshot
+\`\`\`yaml
+${snapshot}
+\`\`\`
+`
     }],
   };
 }

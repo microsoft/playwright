@@ -14,54 +14,9 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import { test, expect } from './fixtures';
 
-import { test, expect } from '@playwright/test';
-
-import { MCPServer } from './fixtures';
-
-async function startServer(): Promise<MCPServer> {
-  const server = new MCPServer('node', [path.join(__dirname, '../cli.js'), '--headless']);
-  const initialize = await server.send({
-    jsonrpc: '2.0',
-    id: 0,
-    method: 'initialize',
-    params: {
-      protocolVersion: '2024-11-05',
-      capabilities: {},
-      clientInfo: {
-        name: 'Playwright Test',
-        version: '0.0.0',
-      },
-    },
-  });
-
-  expect(initialize).toEqual(expect.objectContaining({
-    id: 0,
-    result: expect.objectContaining({
-      protocolVersion: '2024-11-05',
-      capabilities: {
-        tools: {},
-        resources: {},
-      },
-      serverInfo: expect.objectContaining({
-        name: 'Playwright',
-        version: expect.any(String),
-      }),
-    }),
-  }));
-
-  await server.sendNoReply({
-    jsonrpc: '2.0',
-    method: 'notifications/initialized',
-  });
-
-  return server;
-}
-
-test('test tool list', async ({}) => {
-  const server = await startServer();
-
+test('test tool list', async ({ server }) => {
   const list = await server.send({
     jsonrpc: '2.0',
     id: 1,
@@ -110,9 +65,7 @@ test('test tool list', async ({}) => {
   }));
 });
 
-test('test resources list', async ({}) => {
-  const server = await startServer();
-
+test('test resources list', async ({ server }) => {
   const list = await server.send({
     jsonrpc: '2.0',
     id: 2,
@@ -132,9 +85,7 @@ test('test resources list', async ({}) => {
   }));
 });
 
-test('test browser_navigate', async ({}) => {
-  const server = await startServer();
-
+test('test browser_navigate', async ({ server }) => {
   const response = await server.send({
     jsonrpc: '2.0',
     id: 2,
@@ -142,7 +93,7 @@ test('test browser_navigate', async ({}) => {
     params: {
       name: 'browser_navigate',
       arguments: {
-        url: 'https://example.com',
+        url: 'data:text/html,<html><title>Title</title><body>Hello, world!</body></html>',
       },
     },
   });
@@ -152,11 +103,60 @@ test('test browser_navigate', async ({}) => {
     result: {
       content: [{
         type: 'text',
-        text: expect.stringContaining(`
-# Page URL: https://example.com/
-# Page Title: [object Promise]
-# Page Snapshot
-- document`),
+        text: `
+- Page URL: data:text/html,<html><title>Title</title><body>Hello, world!</body></html>
+- Page Title: Title
+- Page Snapshot
+\`\`\`yaml
+- document [ref=s1e2]: Hello, world!
+\`\`\`
+`,
+      }],
+    },
+  }));
+});
+
+test('test browser_click', async ({ server }) => {
+  await server.send({
+    jsonrpc: '2.0',
+    id: 2,
+    method: 'tools/call',
+    params: {
+      name: 'browser_navigate',
+      arguments: {
+        url: 'data:text/html,<html><title>Title</title><button>Submit</button></html>',
+      },
+    },
+  });
+
+  const response = await server.send({
+    jsonrpc: '2.0',
+    id: 3,
+    method: 'tools/call',
+    params: {
+      name: 'browser_click',
+      arguments: {
+        element: 'Submit button',
+        ref: 's1e4',
+      },
+    },
+  });
+
+  expect(response).toEqual(expect.objectContaining({
+    id: 3,
+    result: {
+      content: [{
+        type: 'text',
+        text: `\"Submit button\" clicked
+
+- Page URL: data:text/html,<html><title>Title</title><button>Submit</button></html>
+- Page Title: Title
+- Page Snapshot
+\`\`\`yaml
+- document [ref=s2e2]:
+  - button \"Submit\" [ref=s2e4]
+\`\`\`
+`,
       }],
     },
   }));
