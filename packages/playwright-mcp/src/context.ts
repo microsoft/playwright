@@ -60,6 +60,6 @@ export class Context {
       url.searchParams.set('launch-options', JSON.stringify(this._launchOptions));
       return await playwright.chromium.connect(String(url));
     }
-    return await playwright.chromium.launch(this._launchOptions);
+    return await playwright.chromium.launch({ channel: 'chrome', ...this._launchOptions });
   }
 }
