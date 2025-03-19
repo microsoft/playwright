@@ -154,7 +154,7 @@ test('test browser_navigate', async ({}) => {
         type: 'text',
         text: expect.stringContaining(`
 # Page URL: https://example.com/
-# Page Title: [object Promise]
+# Page Title: Example Domain
 # Page Snapshot
 - document`),
       }],

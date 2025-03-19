@@ -82,7 +82,7 @@ export async function captureAriaSnapshot(page: playwright.Page): Promise<ToolRe
   return {
     content: [{ type: 'text', text: `
 # Page URL: ${page.url()}
-# Page Title: ${page.title()}
+# Page Title: ${await page.title()}
 # Page Snapshot
 ${snapshot}`
     }],
