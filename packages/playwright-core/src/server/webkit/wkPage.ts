@@ -1014,6 +1014,9 @@ export class WKPage implements PageDelegate {
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
+    // WebKit started dispatching network events for about:blank after https://commits.webkit.org/292206@main.
+    if (event.request.url.startsWith('about:'))
+      return;
 
     // We do not support intercepting redirects.
     if (this._page.needsRequestInterception() && !event.redirectResponse)
