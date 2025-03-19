@@ -59,10 +59,15 @@ jobs:
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
         git checkout -b "$BRANCH_NAME"
         git push origin $BRANCH_NAME
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
     - name: Create Pull Request
       uses: actions/github-script@v7
       with:
-        github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+        github-token: ${{ steps.app-token.outputs.token }}
         script: |
           const readableCommitHashesList = '${{ github.event.inputs.commit_hashes }}'.split(',').map(hash => `- ${hash}`).join('\n');
           const response = await github.rest.pulls.create({
