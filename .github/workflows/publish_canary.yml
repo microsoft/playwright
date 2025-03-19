@@ -77,7 +77,7 @@ jobs:
       with:
         app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
         private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
-        repositories: playwright.dev
+        repositories: trace.playwright.dev
     - name: Deploy Canary
       run: bash utils/build/deploy-trace-viewer.sh --canary
       if: contains(github.ref, 'main')
