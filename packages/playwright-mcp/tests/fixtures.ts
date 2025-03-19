@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { spawn } from 'child_process';
 import EventEmitter from 'events';
 
+import { test as baseTest, expect } from '@playwright/test';
+
 import type { ChildProcess } from 'child_process';
 
-export class MCPServer extends EventEmitter {
+export { expect } from '@playwright/test';
+
+class MCPServer extends EventEmitter {
   private _child: ChildProcess;
   private _messageQueue: any[] = [];
   private _messageResolvers: ((value: any) => void)[] = [];
@@ -102,3 +107,45 @@ export class MCPServer extends EventEmitter {
     });
   }
 }
+
+export const test = baseTest.extend<{ server: MCPServer }>({
+  server: async ({}, use) => {
+    const server = new MCPServer('node', [path.join(__dirname, '../cli.js'), '--headless']);
+    const initialize = await server.send({
+      jsonrpc: '2.0',
+      id: 0,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'Playwright Test',
+          version: '0.0.0',
+        },
+      },
+    });
+
+    expect(initialize).toEqual(expect.objectContaining({
+      id: 0,
+      result: expect.objectContaining({
+        protocolVersion: '2024-11-05',
+        capabilities: {
+          tools: {},
+          resources: {},
+        },
+        serverInfo: expect.objectContaining({
+          name: 'Playwright',
+          version: expect.any(String),
+        }),
+      }),
+    }));
+
+    await server.sendNoReply({
+      jsonrpc: '2.0',
+      method: 'notifications/initialized',
+    });
+
+    await use(server);
+    await server.close();
+  },
+});

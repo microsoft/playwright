@@ -60,15 +60,9 @@ export const goBack: ToolFactory = snapshot => ({
     inputSchema: zodToJsonSchema(goBackSchema),
   },
   handle: async context => {
-    return await runAndWait(context, async () => {
+    return await runAndWait(context, 'Navigated back', async () => {
       const page = await context.ensurePage();
       await page.goBack();
-      return {
-        content: [{
-          type: 'text',
-          text: `Navigated back`,
-        }],
-      };
     }, snapshot);
   },
 });
@@ -82,15 +76,9 @@ export const goForward: ToolFactory = snapshot => ({
     inputSchema: zodToJsonSchema(goForwardSchema),
   },
   handle: async context => {
-    return await runAndWait(context, async () => {
+    return await runAndWait(context, 'Navigated forward', async () => {
       const page = await context.ensurePage();
       await page.goForward();
-      return {
-        content: [{
-          type: 'text',
-          text: `Navigated forward`,
-        }],
-      };
     }, snapshot);
   },
 });
@@ -130,14 +118,8 @@ export const pressKey: Tool = {
   },
   handle: async (context, params) => {
     const validatedParams = pressKeySchema.parse(params);
-    return await runAndWait(context, async page => {
+    return await runAndWait(context, `Pressed key ${validatedParams.key}`, async page => {
       await page.keyboard.press(validatedParams.key);
-      return {
-        content: [{
-          type: 'text',
-          text: `Pressed key ${validatedParams.key}`,
-        }],
-      };
     });
   },
 };

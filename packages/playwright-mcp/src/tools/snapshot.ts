@@ -48,7 +48,7 @@ export const click: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = elementSchema.parse(params);
-    return runAndWait(context, page => refLocator(page, validatedParams.ref).click(), true);
+    return runAndWait(context, `"${validatedParams.element}" clicked`, page => refLocator(page, validatedParams.ref).click(), true);
   },
 };
 
@@ -68,7 +68,7 @@ export const drag: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = dragSchema.parse(params);
-    return runAndWait(context, async page => {
+    return runAndWait(context, `Dragged "${validatedParams.startElement}" to "${validatedParams.endElement}"`, async page => {
       const startLocator = refLocator(page, validatedParams.startRef);
       const endLocator = refLocator(page, validatedParams.endRef);
       await startLocator.dragTo(endLocator);
@@ -85,7 +85,7 @@ export const hover: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = elementSchema.parse(params);
-    return runAndWait(context, page => refLocator(page, validatedParams.ref).hover(), true);
+    return runAndWait(context, `Hovered over "${validatedParams.element}"`, page => refLocator(page, validatedParams.ref).hover(), true);
   },
 };
 
@@ -103,7 +103,7 @@ export const type: Tool = {
 
   handle: async (context, params) => {
     const validatedParams = typeSchema.parse(params);
-    return await runAndWait(context, async page => {
+    return await runAndWait(context, `Typed "${validatedParams.text}" into "${validatedParams.element}"`, async page => {
       const locator = refLocator(page, validatedParams.ref);
       await locator.fill(validatedParams.text);
       if (validatedParams.submit)
