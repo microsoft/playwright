@@ -74,11 +74,15 @@ export class CRBrowser extends Browser {
     // We don't trust the option as it may lie in case of connectOverCDP where remote browser
     // may have been launched with different options.
     browser.options.headful = !version.userAgent.includes('Headless');
-    if (!options.persistent) {
+    if (!options.persistent || !options.originalLaunchOptions.useDefaultContext) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
     }
-    browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
+    if (options.persistent) {
+      browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
+    } else {
+      browser._defaultContext = new CRBrowserContext(browser, undefined, options);
+    }
     await Promise.all([
       session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
         // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
@@ -111,6 +115,10 @@ export class CRBrowser extends Browser {
         proxyBypassList = proxy.bypass;
       else
         proxyBypassList = '<-loopback>' + (proxy.bypass ? `,${proxy.bypass}` : '');
+    }
+
+    if (this.options.originalLaunchOptions.useDefaultContext && this._defaultContext != null) {
+      return this._defaultContext;
     }
 
     const { browserContextId } = await this._session.send('Target.createBrowserContext', {
