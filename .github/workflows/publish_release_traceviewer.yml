@@ -23,4 +23,4 @@ jobs:
     - name: Deploy Stable
       run: bash utils/build/deploy-trace-viewer.sh --stable
       env:
-        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}

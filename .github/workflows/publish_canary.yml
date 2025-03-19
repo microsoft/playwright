@@ -82,9 +82,9 @@ jobs:
       run: bash utils/build/deploy-trace-viewer.sh --canary
       if: contains(github.ref, 'main')
       env:
-        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
     - name: Deploy BETA
       run: bash utils/build/deploy-trace-viewer.sh --beta
       if: contains(github.ref, 'release')
       env:
-        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
