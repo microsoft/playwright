@@ -310,7 +310,7 @@ export class WorkerMain extends ProcessRunner {
     if (isSkipped && nextTest && !hasAfterAllToRunBeforeNextTest) {
       // Fast path - this test is skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
-      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, test._staticAnnotations));
+      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, test));
       return;
     }
 
@@ -613,6 +613,7 @@ function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
 }
 
 function buildTestEndPayload(testInfo: TestInfoImpl, test: TestCase): TestEndPayload {
+  console.log(test)
   const staticAnnotations = test.staticAnnotations();
   return {
     testId: testInfo.testId,
