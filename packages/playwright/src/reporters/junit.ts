@@ -23,7 +23,7 @@ import { formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
-import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
+import type { FullConfig, FullResult, Suite, TestCase, TestError } from '../../types/testReporter';
 
 type JUnitOptions = {
   outputFile?: string,
@@ -102,6 +102,17 @@ class JUnitReporter implements ReporterV2 {
     }
   }
 
+  private _extractErrorAttributes(error: TestError) {
+    let message = '';
+    if (typeof error === 'string')
+      message = error;
+    else if (error.message)
+      message = error.message;
+    message = stripAnsiEscapes(message);
+
+    return { type: 'ERROR', message };
+  }
+
   private async _buildTestSuite(projectName: string, suite: Suite): Promise<XMLEntry> {
     let tests = 0;
     let skipped = 0;
@@ -144,64 +155,58 @@ class JUnitReporter implements ReporterV2 {
   }
 
   private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]) {
-    const entry = {
+    const baseTestCaseEntry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
         name: namePrefix + test.titlePath().slice(3).join(' › '),
         // filename
         classname: suiteName,
+        path: suiteName,
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
-
       },
       children: [] as XMLEntry[]
     };
-    entries.push(entry);
-
-    // Xray Test Management supports testcase level properties, where additional metadata may be provided
-    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
-    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
-    const properties: XMLEntry = {
-      name: 'properties',
-      children: [] as XMLEntry[]
-    };
-
-    for (const annotation of test.annotations) {
-      const property: XMLEntry = {
-        name: 'property',
-        attributes: {
-          name: annotation.type,
-          value: (annotation?.description ? annotation.description : '')
-        }
-      };
-      properties.children?.push(property);
-    }
-
-    if (properties.children?.length)
-      entry.children.push(properties);
 
     if (test.outcome() === 'skipped') {
-      entry.children.push({ name: 'skipped' });
+      const skippedEntry = { ...baseTestCaseEntry, children: [{ name: 'skipped' }] };
+      entries.push(skippedEntry);
       return;
     }
 
-    if (!test.ok()) {
-      entry.children.push({
-        name: 'failure',
-        attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
-          type: 'FAILURE',
-        },
-        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
-      });
-    }
+    // Collect all system outputs across all retries
+    const systemOut = [];
+    const systemErr = [];
 
-    const systemOut: string[] = [];
-    const systemErr: string[] = [];
-    for (const result of test.results) {
-      systemOut.push(...result.stdout.map(item => item.toString()));
-      systemErr.push(...result.stderr.map(item => item.toString()));
-      for (const attachment of result.attachments) {
+    // Create a testcase for each retry result
+    for (const currentResult of test.results) {
+      const testCaseEntry = {
+        ...baseTestCaseEntry,
+        attributes: {
+          ...baseTestCaseEntry.attributes,
+          time: currentResult.duration / 1000,
+        },
+      };
+
+      // Add failure if there is an error
+      if (currentResult.error) {
+        const errorAttributes = this._extractErrorAttributes(currentResult.error);
+        testCaseEntry.children.push({
+          name: 'failure',
+          attributes: { ...testCaseEntry.attributes, ...errorAttributes },
+          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        });
+      }
+
+      // Collect stdout/stderr from this retry
+      if (currentResult.stdout && currentResult.stdout.length)
+        systemOut.push(...currentResult.stdout.map(item => item.toString()));
+
+      if (currentResult.stderr && currentResult.stderr.length)
+        systemErr.push(...currentResult.stderr.map(item => item.toString()));
+
+
+      for (const attachment of currentResult.attachments) {
         if (!attachment.path)
           continue;
 
@@ -220,13 +225,39 @@ class JUnitReporter implements ReporterV2 {
           systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
         }
       }
+
+      entries.push(testCaseEntry);
     }
+
+    // Xray Test Management supports testcase level properties, where additional metadata may be provided
+    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
+    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
+    const annotationProperties: XMLEntry = {
+      name: 'properties',
+      children: [] as XMLEntry[]
+    };
+    for (const annotation of test.annotations) {
+      const property: XMLEntry = {
+        name: 'property',
+        attributes: {
+          name: annotation.type,
+          value: (annotation?.description ? annotation.description : '')
+        }
+      };
+      annotationProperties.children?.push(property);
+    }
+
+    const lastEntry = entries[entries.length - 1];
+
+    if (annotationProperties.children?.length)
+      lastEntry.children?.push(annotationProperties);
+
     // Note: it is important to only produce a single system-out/system-err entry
     // so that parsers in the wild understand it.
     if (systemOut.length)
-      entry.children.push({ name: 'system-out', text: systemOut.join('') });
+      lastEntry.children?.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
-      entry.children.push({ name: 'system-err', text: systemErr.join('') });
+      lastEntry.children?.push({ name: 'system-err', text: systemErr.join('') });
   }
 }
 
