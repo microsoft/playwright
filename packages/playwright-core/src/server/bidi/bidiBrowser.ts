@@ -371,7 +371,7 @@ export class BidiBrowserContext extends BrowserContext {
   private _userContextId(): bidi.Browser.UserContext {
     if (this._browserContextId)
       return this._browserContextId;
-    // Defuault context always has same id, see
+    // Default context always has same id, see
     // https://w3c.github.io/webdriver-bidi/#default-user-context
     return 'default';
   }
