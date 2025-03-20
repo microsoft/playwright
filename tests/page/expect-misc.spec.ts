@@ -234,6 +234,10 @@ test.describe('toHaveClass', () => {
     await expect(locator).toHaveClass('  bar   foo ', { partial: true });
     await expect(locator).not.toHaveClass('does-not-exist', { partial: true });
     await expect(locator).not.toHaveClass('  baz   foo ', { partial: true }); // Strip whitespace and match individual classes
+
+    await page.setContent('<div class="foo bar baz"></div>');
+    await expect(locator).toHaveClass('foo bar', { partial: true });
+    await expect(locator).toHaveClass('', { partial: true });
   });
 
   test('allow matching partial class names with array', async ({ page }) => {
