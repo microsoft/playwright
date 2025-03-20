@@ -62,6 +62,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['path']).toBe('a.test.js');
       const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
       expect(failure['$']['message']).toContain('a.test.js');
       expect(failure['$']['message']).toContain('one');
@@ -93,11 +95,32 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('one', async ({}, testInfo) => {
-            expect(testInfo.retry).toBe(3);
+            expect(testInfo.retry).toBe(2);
           });
         `,
-      }, { retries: 3, reporter: 'junit' });
-      expect(result.output).not.toContain('Retry #1');
+      }, { retries: 2, reporter: 'junit' });
+      const testSuite = parseXML(result.output)['testsuites']['testsuite'][0];
+      const firstRun = testSuite['testcase'][0];
+      expect(firstRun['$']['path']).toBe('a.test.js');
+      const firstRunFailure = firstRun['failure'][0];
+      expect(firstRunFailure['$']['message']).toContain('a.test.js');
+      expect(firstRunFailure['$']['type']).toBe('FAILURE');
+      expect(firstRunFailure['_']).toContain('expect(testInfo.retry).toBe(2)');
+
+      const firstRetry = testSuite['testcase'][1];
+      expect(firstRetry['$']['path']).toBe('a.test.js');
+      const firstRetryFailure = firstRetry['failure'][0];
+      expect(firstRetryFailure['$']['message']).toContain('a.test.js');
+      expect(firstRetryFailure['$']['type']).toBe('FAILURE');
+      expect(firstRetryFailure['_']).toContain('expect(testInfo.retry).toBe(2)');
+
+      const secondRetry = testSuite['testcase'][2];
+      expect(secondRetry['$']['path']).toBe('a.test.js');
+      const secondRetryFailure = secondRetry['failure'][0];
+      expect(secondRetryFailure['$']['message']).toContain('a.test.js');
+      expect(secondRetryFailure['$']['type']).toBe('FAILURE');
+      expect(secondRetryFailure['_']).toContain('expect(testInfo.retry).toBe(2)');
+
       expect(result.exitCode).toBe(0);
     });
 

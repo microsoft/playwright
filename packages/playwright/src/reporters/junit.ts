@@ -144,65 +144,53 @@ class JUnitReporter implements ReporterV2 {
   }
 
   private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]) {
-    const entry = {
+    const baseTestCaseEntry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
         name: namePrefix + test.titlePath().slice(3).join(' › '),
         // filename
         classname: suiteName,
+        path: suiteName,
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
-
       },
       children: [] as XMLEntry[]
     };
-    entries.push(entry);
-
-    // Xray Test Management supports testcase level properties, where additional metadata may be provided
-    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
-    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
-    const properties: XMLEntry = {
-      name: 'properties',
-      children: [] as XMLEntry[]
-    };
-
-    const annotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)];
-    for (const annotation of annotations) {
-      const property: XMLEntry = {
-        name: 'property',
-        attributes: {
-          name: annotation.type,
-          value: (annotation?.description ? annotation.description : '')
-        }
-      };
-      properties.children?.push(property);
-    }
-
-    if (properties.children?.length)
-      entry.children.push(properties);
 
     if (test.outcome() === 'skipped') {
-      entry.children.push({ name: 'skipped' });
+      const skippedEntry = { ...baseTestCaseEntry, children: [{ name: 'skipped' }] };
+      entries.push(skippedEntry);
       return;
     }
 
-    if (!test.ok()) {
-      entry.children.push({
-        name: 'failure',
-        attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
-          type: 'FAILURE',
-        },
-        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
-      });
-    }
+    // Collect across all retries
+    const systemOut = [];
+    const systemErr = [];
 
-    const systemOut: string[] = [];
-    const systemErr: string[] = [];
-    for (const result of test.results) {
-      systemOut.push(...result.stdout.map(item => item.toString()));
-      systemErr.push(...result.stderr.map(item => item.toString()));
-      for (const attachment of result.attachments) {
+    // Create a testcase per retry result
+    for (const currentResult of test.results) {
+      const testCaseEntry = {
+        ...baseTestCaseEntry,
+        attributes: {
+          ...baseTestCaseEntry.attributes,
+          time: currentResult.duration / 1000,
+        },
+      };
+      // Add failure per retry failure
+      if (currentResult.error) {
+        testCaseEntry.children.push({
+          name: 'failure',
+          attributes: {
+            message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+            type: 'FAILURE',
+          },
+          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        });
+      }
+
+      systemOut.push(...currentResult.stdout.map(item => item.toString()));
+      systemErr.push(...currentResult.stderr.map(item => item.toString()));
+      for (const attachment of currentResult.attachments) {
         if (!attachment.path)
           continue;
 
@@ -221,13 +209,37 @@ class JUnitReporter implements ReporterV2 {
           systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
         }
       }
+
+      entries.push(testCaseEntry);
     }
+    // Xray Test Management supports testcase level properties, where additional metadata may be provided
+    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
+    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
+    const annotationProperties: XMLEntry = {
+      name: 'properties',
+      children: [] as XMLEntry[]
+    };
+    const annotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)];
+    for (const annotation of annotations) {
+      const property: XMLEntry = {
+        name: 'property',
+        attributes: {
+          name: annotation.type,
+          value: (annotation?.description ? annotation.description : '')
+        }
+      };
+      annotationProperties.children?.push(property);
+    }
+
+    const lastEntry = entries[entries.length - 1];
+    if (annotationProperties.children?.length)
+      lastEntry.children?.push(annotationProperties);
     // Note: it is important to only produce a single system-out/system-err entry
     // so that parsers in the wild understand it.
     if (systemOut.length)
-      entry.children.push({ name: 'system-out', text: systemOut.join('') });
+      lastEntry.children?.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
-      entry.children.push({ name: 'system-err', text: systemErr.join('') });
+      lastEntry.children?.push({ name: 'system-err', text: systemErr.join('') });
   }
 }
 
