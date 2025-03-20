@@ -14,16 +14,27 @@
  * limitations under the License.
  */
 
-import { parseEvaluationResultValue, serializeAsCallArgument } from '../isomorphic/utilityScriptSerializers';
+import { ensureBuiltins } from '../isomorphic/builtins';
+import { source } from '../isomorphic/utilityScriptSerializers';
+
+import type { Builtins } from '../isomorphic/builtins';
 
 export class UtilityScript {
   constructor(isUnderTest: boolean) {
-    if (isUnderTest)
-      this._setBuiltins();
+    // eslint-disable-next-line no-restricted-globals
+    this.builtins = ensureBuiltins(globalThis);
+    if (isUnderTest) {
+      // eslint-disable-next-line no-restricted-globals
+      (globalThis as any).builtins = this.builtins;
+    }
+    const result = source(this.builtins);
+    this.serializeAsCallArgument = result.serializeAsCallArgument;
+    this.parseEvaluationResultValue = result.parseEvaluationResultValue;
   }
 
-  serializeAsCallArgument = serializeAsCallArgument;
-  parseEvaluationResultValue = parseEvaluationResultValue;
+  readonly builtins: Builtins;
+  readonly serializeAsCallArgument;
+  readonly parseEvaluationResultValue;
 
   evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
     const args = argsAndHandles.slice(0, argCount);
@@ -32,8 +43,7 @@ export class UtilityScript {
     for (let i = 0; i < args.length; i++)
       parameters[i] = this.parseEvaluationResultValue(args[i], handles);
 
-    // eslint-disable-next-line no-restricted-globals
-    let result = globalThis.eval(expression);
+    let result = this.builtins.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);
     } else if (isFunction === false) {
@@ -48,9 +58,9 @@ export class UtilityScript {
 
   jsonValue(returnByValue: true, value: any) {
     // Special handling of undefined to work-around multi-step returnByValue handling in WebKit.
-    if (Object.is(value, undefined))
+    if (value === undefined)
       return undefined;
-    return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
+    return this.serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
   }
 
   private _promiseAwareJsonValueNoThrow(value: any) {
@@ -73,48 +83,5 @@ export class UtilityScript {
       })();
     }
     return safeJson(value);
-  }
-
-  private _setBuiltins() {
-    // eslint-disable-next-line no-restricted-globals
-    const window = (globalThis as any);
-    window.builtinSetTimeout = (callback: Function, timeout: number) => {
-      if (window.__pwClock?.builtin)
-        return window.__pwClock.builtin.setTimeout(callback, timeout);
-      return setTimeout(callback, timeout);
-    };
-
-    window.builtinClearTimeout = (id: number) => {
-      if (window.__pwClock?.builtin)
-        return window.__pwClock.builtin.clearTimeout(id);
-      return clearTimeout(id);
-    };
-
-    window.builtinSetInterval = (callback: Function, timeout: number) => {
-      if (window.__pwClock?.builtin)
-        return window.__pwClock.builtin.setInterval(callback, timeout);
-      return setInterval(callback, timeout);
-    };
-
-    window.builtinClearInterval = (id: number) => {
-      if (window.__pwClock?.builtin)
-        return window.__pwClock.builtin.clearInterval(id);
-      return clearInterval(id);
-    };
-
-    window.builtinRequestAnimationFrame = (callback: FrameRequestCallback) => {
-      if (window.__pwClock?.builtin)
-        return window.__pwClock.builtin.requestAnimationFrame(callback);
-      return requestAnimationFrame(callback);
-    };
-
-    window.builtinCancelAnimationFrame = (id: number) => {
-      if (window.__pwClock?.builtin)
-        return window.__pwClock.builtin.cancelAnimationFrame(id);
-      return cancelAnimationFrame(id);
-    };
-
-    window.builtinDate = window.__pwClock?.builtin.Date || Date;
-    window.builtinPerformance = window.__pwClock?.builtin.performance || performance;
   }
 }

@@ -24,7 +24,8 @@ import * as frames from './frames';
 import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
-import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
+import { ensureBuiltins } from './isomorphic/builtins';
+import { createPageBindingScript, deliverBindingResult, takeBindingHandle } from './pageBinding';
 import * as js from './javascript';
 import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
@@ -41,7 +42,6 @@ import { compressCallLog } from './callLog';
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
 import type { CallMetadata } from './instrumentation';
-import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 import type * as network from './network';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
@@ -49,6 +49,7 @@ import type * as types from './types';
 import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
+import type { BindingPayload } from './pageBinding';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -771,7 +772,7 @@ export class Page extends SdkObject {
 
   allInitScripts() {
     const bindings = [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
-    return [...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
+    return [kBuiltinsScript, ...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
   }
 
   getBinding(name: string) {
@@ -856,12 +857,6 @@ export class Worker extends SdkObject {
   }
 }
 
-type BindingPayload = {
-  name: string;
-  seq: number;
-  serializedArgs?: SerializedValue[],
-};
-
 export class PageBinding {
   static kPlaywrightBinding = '__playwright__binding__';
 
@@ -874,7 +869,7 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(`(${addPageBinding.toString()})(${JSON.stringify(PageBinding.kPlaywrightBinding)}, ${JSON.stringify(name)}, ${needsHandle}, (${source})())`, true /* internal */);
+    this.initScript = new InitScript(createPageBindingScript(PageBinding.kPlaywrightBinding, name, needsHandle), true /* internal */);
     this.needsHandle = needsHandle;
     this.internal = name.startsWith('__pw');
   }
@@ -888,72 +883,19 @@ export class PageBinding {
         throw new Error(`Function "${name}" is not exposed`);
       let result: any;
       if (binding.needsHandle) {
-        const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
+        const handle = await context.evaluateHandle(takeBindingHandle, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
         if (!Array.isArray(serializedArgs))
           throw new Error(`serializedArgs is not an array. This can happen when Array.prototype.toJSON is defined incorrectly`);
-        const args = serializedArgs!.map(a => parseEvaluationResultValue(a));
+        const args = serializedArgs!.map(a => js.parseEvaluationResultValue(a));
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
-      context.evaluate(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
+      context.evaluate(deliverBindingResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
-      context.evaluate(deliverResult, { name, seq, error }).catch(e => debugLogger.log('error', e));
-    }
-
-    function takeHandle(arg: { name: string, seq: number }) {
-      const handle = (globalThis as any)[arg.name]['handles'].get(arg.seq);
-      (globalThis as any)[arg.name]['handles'].delete(arg.seq);
-      return handle;
-    }
-
-    function deliverResult(arg: { name: string, seq: number, result?: any, error?: any }) {
-      const callbacks = (globalThis as any)[arg.name]['callbacks'];
-      if ('error' in arg)
-        callbacks.get(arg.seq).reject(arg.error);
-      else
-        callbacks.get(arg.seq).resolve(arg.result);
-      callbacks.delete(arg.seq);
+      context.evaluate(deliverBindingResult, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
   }
-}
-
-function addPageBinding(playwrightBinding: string, bindingName: string, needsHandle: boolean, utilityScriptSerializers: ReturnType<typeof source>) {
-  const binding = (globalThis as any)[playwrightBinding];
-  (globalThis as any)[bindingName] = (...args: any[]) => {
-    const me = (globalThis as any)[bindingName];
-    if (needsHandle && args.slice(1).some(arg => arg !== undefined))
-      throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
-    let callbacks = me['callbacks'];
-    if (!callbacks) {
-      callbacks = new Map();
-      me['callbacks'] = callbacks;
-    }
-    const seq: number = (me['lastSeq'] || 0) + 1;
-    me['lastSeq'] = seq;
-    let handles = me['handles'];
-    if (!handles) {
-      handles = new Map();
-      me['handles'] = handles;
-    }
-    const promise = new Promise((resolve, reject) => callbacks.set(seq, { resolve, reject }));
-    let payload: BindingPayload;
-    if (needsHandle) {
-      handles.set(seq, args[0]);
-      payload = { name: bindingName, seq };
-    } else {
-      const serializedArgs = [];
-      for (let i = 0; i < args.length; i++) {
-        serializedArgs[i] = utilityScriptSerializers.serializeAsCallArgument(args[i], v => {
-          return { fallThrough: v };
-        });
-      }
-      payload = { name: bindingName, seq, serializedArgs };
-    }
-    binding(JSON.stringify(payload));
-    return promise;
-  };
-  (globalThis as any)[bindingName].__installed = true;
 }
 
 export class InitScript {
@@ -975,6 +917,8 @@ export class InitScript {
     this.name = name;
   }
 }
+
+export const kBuiltinsScript = new InitScript(`(${ensureBuiltins})(globalThis)`, true /* internal */);
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];

@@ -136,9 +136,9 @@ it('should use viewport size from window features', async function({ browser, se
     page.evaluate(async () => {
       const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=300,top=0,left=0');
       await new Promise<void>(resolve => {
-        const interval = window.builtinSetInterval(() => {
+        const interval = window.builtins.setInterval(() => {
           if (win.innerWidth === 600 && win.innerHeight === 300) {
-            window.builtinClearInterval(interval);
+            window.builtins.clearInterval(interval);
             resolve();
           }
         }, 10);
@@ -284,8 +284,8 @@ async function waitForRafs(page: Page, count: number): Promise<void> {
       if (!count)
         resolve();
       else
-        window.builtinRequestAnimationFrame(onRaf);
+        window.builtins.requestAnimationFrame(onRaf);
     };
-    window.builtinRequestAnimationFrame(onRaf);
+    window.builtins.requestAnimationFrame(onRaf);
   }), count);
 }

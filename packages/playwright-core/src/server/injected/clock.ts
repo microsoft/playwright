@@ -10,6 +10,10 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import { ensureBuiltins } from '../isomorphic/builtins';
+
+import type { Builtins } from '../isomorphic/builtins';
+
 export type ClockMethods = {
   Date: DateConstructor;
   setTimeout: Window['setTimeout'];
@@ -25,7 +29,7 @@ export type ClockMethods = {
 };
 
 export type ClockConfig = {
-  now?: number | Date;
+  now?: number | Builtins.Date;
 };
 
 export type InstallConfig = ClockConfig & {
@@ -74,7 +78,7 @@ type LogEntryType = 'fastForward' |'install' | 'pauseAt' | 'resume' | 'runFor' |
 export class ClockController {
   readonly _now: Time;
   private _duringTick = false;
-  private _timers = new Map<number, Timer>();
+  private _timers: Builtins.Map<number, Timer>;
   private _uniqueTimerId = idCounterStart;
   private _embedder: Embedder;
   readonly disposables: (() => void)[] = [];
@@ -82,7 +86,8 @@ export class ClockController {
   private _realTime: { startTicks: EmbedderTicks, lastSyncTicks: EmbedderTicks } | undefined;
   private _currentRealTimeTimer: { callAt: Ticks, dispose: () => void } | undefined;
 
-  constructor(embedder: Embedder) {
+  constructor(builtins: Builtins, embedder: Embedder) {
+    this._timers = new builtins.Map();
     this._now = { time: asWallTime(0), isFixedTime: false, ticks: 0 as Ticks, origin: asWallTime(-1) };
     this._embedder = embedder;
   }
@@ -416,7 +421,7 @@ export class ClockController {
   }
 }
 
-function mirrorDateProperties(target: any, source: typeof Date): DateConstructor & Date {
+function mirrorDateProperties(target: any, source: DateConstructor): DateConstructor & Builtins.Date {
   for (const prop in source) {
     if (source.hasOwnProperty(prop))
       target[prop] = (source as any)[prop];
@@ -430,8 +435,8 @@ function mirrorDateProperties(target: any, source: typeof Date): DateConstructor
   return target;
 }
 
-function createDate(clock: ClockController, NativeDate: typeof Date): DateConstructor & Date {
-  function ClockDate(this: typeof ClockDate, year: number, month: number, date: number, hour: number, minute: number, second: number, ms: number): Date | string {
+function createDate(clock: ClockController, NativeDate: DateConstructor): DateConstructor & Builtins.Date {
+  function ClockDate(this: typeof ClockDate, year: number, month: number, date: number, hour: number, minute: number, second: number, ms: number): Builtins.Date | string {
     // the Date constructor called as a function, ref Ecma-262 Edition 5.1, section 15.9.2.
     // This remains so in the 10th edition of 2019 as well.
     if (!(this instanceof ClockDate))
@@ -680,7 +685,8 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: C
     },
   };
 
-  const clock = new ClockController(embedder);
+  // TODO: unify ensureBuiltins and platformOriginals
+  const clock = new ClockController(ensureBuiltins(globalObject as any), embedder);
   const api = createApi(clock, originals.bound);
   return { clock, api, originals: originals.raw };
 }

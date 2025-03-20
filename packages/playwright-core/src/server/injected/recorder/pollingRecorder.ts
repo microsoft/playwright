@@ -54,10 +54,10 @@ export class PollingRecorder implements RecorderDelegate {
   private async _pollRecorderMode() {
     const pollPeriod = 1000;
     if (this._pollRecorderModeTimer)
-      clearTimeout(this._pollRecorderModeTimer);
+      this._recorder.injectedScript.builtins.clearTimeout(this._pollRecorderModeTimer);
     const state = await this._embedder.__pw_recorderState().catch(() => null);
     if (!state) {
-      this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
+      this._pollRecorderModeTimer = this._recorder.injectedScript.builtins.setTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
     }
 
@@ -73,7 +73,7 @@ export class PollingRecorder implements RecorderDelegate {
       this._recorder.setUIState(state, this);
     }
 
-    this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
+    this._pollRecorderModeTimer = this._recorder.injectedScript.builtins.setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
   async performAction(action: actions.PerformOnRecordAction) {

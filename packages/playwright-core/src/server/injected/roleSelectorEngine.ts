@@ -19,6 +19,7 @@ import { matchesAttributePart } from './selectorUtils';
 import { parseAttributeSelector   } from '../../utils/isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
+import type { Builtins } from '../isomorphic/builtins';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { AttributeSelectorOperator, AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
 
@@ -126,7 +127,7 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
   return options;
 }
 
-function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
+function queryRole(builtins: Builtins, scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
   const result: Element[] = [];
   const match = (element: Element) => {
     if (getAriaRole(element) !== options.role)
@@ -150,7 +151,7 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
     }
     if (options.name !== undefined) {
       // Always normalize whitespace in the accessible name.
-      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden));
+      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(builtins, element, !!options.includeHidden));
       if (typeof options.name === 'string')
         options.name = normalizeWhiteSpace(options.name);
       // internal:role assumes that [name="foo"i] also means substring.
@@ -178,7 +179,7 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
   return result;
 }
 
-export function createRoleEngine(internal: boolean): SelectorEngine {
+export function createRoleEngine(builtins: Builtins, internal: boolean): SelectorEngine {
   return {
     queryAll: (scope: SelectorRoot, selector: string): Element[] => {
       const parsed = parseAttributeSelector(selector, true);
@@ -186,9 +187,9 @@ export function createRoleEngine(internal: boolean): SelectorEngine {
       if (!role)
         throw new Error(`Role must not be empty`);
       const options = validateAttributes(parsed.attributes, role);
-      beginAriaCaches();
+      beginAriaCaches(builtins);
       try {
-        return queryRole(scope, options, internal);
+        return queryRole(builtins, scope, options, internal);
       } finally {
         endAriaCaches();
       }
