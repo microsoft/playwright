@@ -838,6 +838,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           import { test, expect } from '@playwright/test';
           test('annotated test', async ({}) => {
             test.info().annotations.push({ type: 'foo', description: 'retry #' + test.info().retry });
+            test.info().annotations.push({ type: 'bar', description: 'static value' });
             throw new Error('fail');
           });
         `,
@@ -851,6 +852,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await page.getByRole('tab', { name: 'Retry #3' }).click();
       await expect(page.getByTestId('test-case-annotations')).toContainText('foo: retry #3');
+
+      await expect(page.getByTestId('test-case-annotations').getByText('static value')).toHaveCount(1);
     });
 
     test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {

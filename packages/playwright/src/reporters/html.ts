@@ -395,9 +395,8 @@ class HtmlBuilder {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1).filter(path => path.length > 0);
-    const results = test.results.map(r => this._createTestResult(test, r));
-
     this._moveUpAnnotations(test);
+    const results = test.results.map(r => this._createTestResult(test, r));
 
     return {
       testCase: {
@@ -432,13 +431,19 @@ class HtmlBuilder {
   }
 
   private _moveUpAnnotations(test: api.TestCase) {
-    for (const annotation of test.results.flatMap(r => r.annotations)) {
-      const isStable = test.results.every(r => r.annotations.some(a2 => a2.type === annotation.type && a2.description === annotation.description));
-      if (!isStable)
+    if (test.results.length === 0)
+      return;
+
+    const isEqualAnnotation = (a: api.TestResult['annotations'][0], b: api.TestResult['annotations'][0]) => a.type === b.type && a.description === b.description;
+
+    for (const annotation of test.results[0].annotations) {
+      const isShared = test.results.every(r => r.annotations.some(a => isEqualAnnotation(a, annotation)));
+      if (!isShared)
         continue;
 
       for (const result of test.results) {
-        const index = result.annotations.indexOf(annotation);
+        const index = result.annotations.findIndex(a => isEqualAnnotation(a, annotation));
+        console.log({ index });
         if (index !== -1)
           result.annotations.splice(index, 1);
       }
