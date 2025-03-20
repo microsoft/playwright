@@ -492,7 +492,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = null;
     setCurrentTestInfo(null);
-    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, test._staticAnnotations));
+    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, test));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
@@ -612,7 +612,8 @@ function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
   };
 }
 
-function buildTestEndPayload(testInfo: TestInfoImpl, staticAnnotations: Annotation[]): TestEndPayload {
+function buildTestEndPayload(testInfo: TestInfoImpl, test: TestCase): TestEndPayload {
+  const staticAnnotations = test.staticAnnotations();
   return {
     testId: testInfo.testId,
     duration: testInfo.duration,

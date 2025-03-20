@@ -241,6 +241,10 @@ export class Suite extends Base {
   project(): FullProject | undefined {
     return this._fullProject?.project || this.parent?.project();
   }
+
+  staticAnnotations(): Annotation[] {
+    return this._staticAnnotations.concat(this.parent?.staticAnnotations() ?? []);
+  }
 }
 
 export class TestCase extends Base implements reporterTypes.TestCase {
@@ -363,5 +367,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     path.push(this.title);
     path.push(...this._tags);
     return path.join(' ');
+  }
+
+  staticAnnotations(): Annotation[] {
+    return this._staticAnnotations.concat(this.parent.staticAnnotations());
   }
 }
