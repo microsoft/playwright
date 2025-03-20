@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation, TestCaseSummary } from './types';
+import type { TestCase, TestAnnotation, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -86,7 +86,7 @@ export const TestCaseView: React.FC<{
   </div>;
 };
 
-function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>

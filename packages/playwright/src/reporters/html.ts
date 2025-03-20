@@ -31,7 +31,7 @@ import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import type { ReporterV2 } from './reporterV2';
 import type { Metadata } from '../../types/test';
 import type * as api from '../../types/testReporter';
-import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep, TestAnnotation } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
 
@@ -397,6 +397,8 @@ class HtmlBuilder {
     path = path.slice(1).filter(path => path.length > 0);
     const results = test.results.map(r => this._createTestResult(test, r));
 
+    this._moveUpAnnotations(test);
+
     return {
       testCase: {
         testId: test.id,
@@ -404,8 +406,7 @@ class HtmlBuilder {
         projectName,
         location,
         duration,
-        // Annotations can be pushed directly, with a wrong type.
-        annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        annotations: this._serializeAnnotations(test.annotations),
         tags: test.tags,
         outcome: test.outcome(),
         path,
@@ -418,8 +419,7 @@ class HtmlBuilder {
         projectName,
         location,
         duration,
-        // Annotations can be pushed directly, with a wrong type.
-        annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        annotations: this._serializeAnnotations(test.annotations),
         tags: test.tags,
         outcome: test.outcome(),
         path,
@@ -429,6 +429,22 @@ class HtmlBuilder {
         }),
       },
     };
+  }
+
+  private _moveUpAnnotations(test: api.TestCase) {
+    for (const annotation of test.results.flatMap(r => r.annotations)) {
+      const isStable = test.results.every(r => r.annotations.some(a2 => a2.type === annotation.type && a2.description === annotation.description));
+      if (!isStable)
+        continue;
+
+      for (const result of test.results) {
+        const index = result.annotations.indexOf(annotation);
+        if (index !== -1)
+          result.annotations.splice(index, 1);
+      }
+
+      test.annotations.push(annotation);
+    }
   }
 
   private _serializeAttachments(attachments: JsonAttachment[]) {
@@ -503,6 +519,11 @@ class HtmlBuilder {
     }).filter(Boolean) as TestAttachment[];
   }
 
+  private _serializeAnnotations(annotations: api.TestCase['annotations']): TestAnnotation[] {
+    // Annotations can be pushed directly, with a wrong type.
+    return annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description }));
+  }
+
   private _createTestResult(test: api.TestCase, result: api.TestResult): TestResult {
     return {
       duration: result.duration,
@@ -511,6 +532,7 @@ class HtmlBuilder {
       steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
       errors: formatResultFailure(internalScreen, test, result, '').map(error => error.message),
       status: result.status,
+      annotations: this._serializeAnnotations(result.annotations),
       attachments: this._serializeAttachments([
         ...result.attachments,
         ...result.stdout.map(m => stdioAttachment(m, 'stdout')),
