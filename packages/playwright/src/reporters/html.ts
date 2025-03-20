@@ -395,7 +395,6 @@ class HtmlBuilder {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1).filter(path => path.length > 0);
-    this._moveUpAnnotations(test);
     const results = test.results.map(r => this._createTestResult(test, r));
 
     return {
@@ -428,28 +427,6 @@ class HtmlBuilder {
         }),
       },
     };
-  }
-
-  private _moveUpAnnotations(test: api.TestCase) {
-    if (test.results.length === 0)
-      return;
-
-    const isEqualAnnotation = (a: api.TestResult['annotations'][0], b: api.TestResult['annotations'][0]) => a.type === b.type && a.description === b.description;
-
-    for (const annotation of test.results[0].annotations) {
-      const isShared = test.results.every(r => r.annotations.some(a => isEqualAnnotation(a, annotation)));
-      if (!isShared)
-        continue;
-
-      for (const result of test.results) {
-        const index = result.annotations.findIndex(a => isEqualAnnotation(a, annotation));
-        console.log({ index });
-        if (index !== -1)
-          result.annotations.splice(index, 1);
-      }
-
-      test.annotations.push(annotation);
-    }
   }
 
   private _serializeAttachments(attachments: JsonAttachment[]) {
