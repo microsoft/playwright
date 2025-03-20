@@ -406,8 +406,8 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
   await traceViewer.page.getByText('Font', { exact: true }).click();
   await expect(traceViewer.networkRequests).toHaveCount(1);
   await traceViewer.networkRequests.getByText('font.woff2').click();
-  await traceViewer.page.getByTestId('network-request-details').getByTitle('Response').click();
-  await expect(traceViewer.page.locator('.network-request-details-tab')).toContainText('ABCDEF');
+  await traceViewer.page.getByTestId('network-request-details').getByRole('tab', { name: 'Response' }).click();
+  await expect(traceViewer.page.getByRole('tabpanel', { name: 'Response' })).toContainText('ABCDEF');
 });
 
 test('should filter network requests by url', async ({ page, runAndTrace, server }) => {

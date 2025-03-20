@@ -71,12 +71,14 @@
       padding: 4px;
     }
 
-    .network-details-content {
-      display: grid;
-      grid-template-columns: 200px auto;
-      column-gap: 16px;
+    table {
       white-space: pre-wrap;
-      margin: 0 16px;
+      margin-left: 16px;
+      word-break: break-word;
+
+      td:first-of-type {
+        width: 200px;
+      }
     }
   }
 }

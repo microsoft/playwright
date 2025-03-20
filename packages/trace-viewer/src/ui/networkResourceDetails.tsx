@@ -29,7 +29,7 @@ import type { Entry, QueryParameter } from '@trace/har';
 
 
 type RequestBody = { text: string, mimeType?: string } | null;
-type ResponseBody = {  dataUrl?: string,  text?: string,  mimeType?: string,  font?: BufferSource} | null;
+type ResponseBody = { dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null;
 
 function statusClass(statusCode: number): string {
   if ((statusCode >= 100 && statusCode < 300) || statusCode === 304)
@@ -93,29 +93,33 @@ const CopyDropdown: React.FC<{
 
 const DetailsSection: React.FC<{
   title: string;
-  data?: Record<string, React.ReactNode>,
+  data?: { name: string, value: React.ReactNode }[],
   showCountWhenCollapsed?: boolean,
   children?: React.ReactElement
-}> = ({ title, data = {}, showCountWhenCollapsed, children }) => {
+}> = ({ title, data = [], showCountWhenCollapsed, children }) => {
   const [isOpen, setIsOpen] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
 
   return (
-    <details className='network-details' open={isOpen}>
+    <details className='network-details' open={isOpen} aria-label={title}>
       <summary onClick={event => {
         event.preventDefault();
         setIsOpen(!isOpen);
       }}>
         {title} {!isOpen && showCountWhenCollapsed && `(${Object.keys(data).length})`}
       </summary>
-      <div className='network-details-content'>
-        {Object.entries(data).map(([key, value]) => (
-          <React.Fragment key={key}>
-            <div>{key}:</div>
-            <div>{value}</div>
-          </React.Fragment>
-        ))}
-        {children}
-      </div>
+
+      <table>
+        <tbody>
+          {data.map(({ name, value }) => (
+            <tr key={name + value}>
+              <td>{name}:</td>
+              <td>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {children}
     </details>
   );
 };
@@ -125,19 +129,17 @@ const HeadersTab: React.FC<{
   startTimeOffset: number;
 }> = ({ resource, startTimeOffset }) => {
   return <div className='network-request-details-tab'>
-    <DetailsSection title='General' data={{
+    <DetailsSection title='General' data={Object.entries({
       'URL': resource.request.url,
       'Method': resource.request.method,
       'Status Code': resource.response.status !== -1 ? <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText} </span> : null,
       'Start': msToString(startTimeOffset),
       'Duration': msToString(resource.time)
-    }}/>
+    }).map(([name, value]) => ({ name, value }))}/>
 
-    <DetailsSection title='Request Headers' showCountWhenCollapsed
-      data={Object.fromEntries(resource.request.headers.map(({ name, value }) => [name, value]))}/>
+    <DetailsSection title='Request Headers' showCountWhenCollapsed data={resource.request.headers}/>
 
-    <DetailsSection title='Response Headers' showCountWhenCollapsed
-      data={Object.fromEntries(resource.response.headers.map(({ name, value }) => [name, value]))}/>
+    <DetailsSection title='Response Headers' showCountWhenCollapsed data={resource.response.headers}/>
   </div>;
 };
 
@@ -145,12 +147,10 @@ const PayloadTab: React.FC<{
   queryString: QueryParameter[];
   requestBody: RequestBody,
 }> = ({ queryString, requestBody }) => {
-  const queryData = Object.fromEntries(queryString.map(({ name, value }) => [name, value]));
-
   return <div className='network-request-details-tab'>
-    {!queryData.length && !requestBody && <em>No payload for this request</em>}
+    {!queryString.length && !requestBody && <em>No payload for this request</em>}
 
-    {queryData.length && <DetailsSection title='Query String Parameters' data={queryData}/>}
+    {!!queryString.length && <DetailsSection title='Query String Parameters' data={queryString} showCountWhenCollapsed/>}
 
     {requestBody && <DetailsSection title='Request Body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
@@ -195,9 +195,8 @@ const FontPreview: React.FC<{
 };
 
 const ResponseTab: React.FC<{
-  resource: ResourceSnapshot;
   responseBody: ResponseBody
-}> = ({ resource, responseBody }) => {
+}> = ({ responseBody }) => {
   return <div className='network-request-details-tab'>
     {!responseBody && <em>Response body is not available for this request</em>}
     {responseBody?.font && <FontPreview font={responseBody.font}/>}
@@ -206,7 +205,6 @@ const ResponseTab: React.FC<{
       <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };
-
 
 export const NetworkResourceDetails: React.FC<{
   resource: ResourceSnapshot;
@@ -289,7 +287,7 @@ export const NetworkResourceDetails: React.FC<{
       {
         id: 'response',
         title: 'Response',
-        render: () => <ResponseTab resource={resource} responseBody={responseBody} />,
+        render: () => <ResponseTab responseBody={responseBody}/>,
       },
     ]}
     selectedTab={selectedTab}
