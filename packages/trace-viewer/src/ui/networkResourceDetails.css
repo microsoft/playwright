@@ -14,53 +14,78 @@
   limitations under the License.
 */
 
+.tab-network {
+  .toolbar {
+    min-height: 30px !important;
+    background-color: initial !important;
+    border-bottom: 1px solid var(--vscode-panel-border);
+
+    &&:after {
+      box-shadow: none !important;
+    }
+  }
+
+  .tabbed-pane-tab.selected {
+    font-weight: bold;
+  }
+}
+
+.copy-request-dropdown {
+  .copy-request-dropdown-toggle {
+    margin-right: 14px;
+    width: 135px;
+  }
+
+  .copy-request-dropdown-menu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 135px;
+
+    button {
+      padding: 8px;
+      text-align: left;
+      z-index: 10;
+    }
+  }
+}
+
 .network-request-details-tab {
   width: 100%;
   height: 100%;
   user-select: text;
   line-height: 24px;
-  margin-left: 10px;
   overflow: auto;
-}
 
-.network-request-details-url {
-  white-space: normal;
-  word-wrap: break-word;
-  margin-left: 10px;
-}
+  em {
+    margin: 10px
+  }
 
-.network-request-details-headers {
-  white-space: pre;
-  overflow: hidden;
-  margin-left: 10px;
-}
+  .network-details {
+    margin-bottom: 8px;
 
-.network-request-details-header {
-  margin: 3px 0;
-  font-weight: bold;
-}
+    summary {
+      font-weight: bold;
+      cursor: pointer;
+      background-color: var(--vscode-sideBar-background);
+      padding: 4px;
+    }
 
-.network-request-details-general {
-  white-space: pre;
-  margin-left: 10px;
-}
-
-.network-request-details-tab .cm-wrapper {
-  overflow: hidden;
-}
-
-.network-request-details-copy {
-  display: flex;
-  margin: 8px 10px;
-  gap: 8px;
+    .network-details-content {
+      display: grid;
+      grid-template-columns: 200px auto;
+      column-gap: 16px;
+      white-space: pre-wrap;
+      margin: 0 16px;
+    }
+  }
 }
 
 .network-font-preview {
   font-family: font-preview;
   font-size: 30px;
   line-height: 40px;
-  padding: 16px;
-  padding-left: 6px;
+  padding: 16px 16px 16px 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
@@ -69,20 +94,6 @@
 .network-font-preview-error {
   margin-top: 8px;
   text-align: center;
-}
-
-.tab-network .toolbar {
-  min-height: 30px !important;
-  background-color: initial !important;
-  border-bottom: 1px solid var(--vscode-panel-border);
-}
-
-.tab-network .toolbar::after {
-  box-shadow: none !important;
-}
-
-.tab-network .tabbed-pane-tab.selected {
-  font-weight: bold;
 }
 
 .green-circle::before,
