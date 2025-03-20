@@ -306,7 +306,8 @@ export interface JSONReportTestResult {
     path?: string;
     body?: string;
     contentType: string;
-  }[];
+  }[];  
+  annotations: { type: string, description?: string }[];
   errorLocation?: Location;
 }
 
