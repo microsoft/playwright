@@ -42,6 +42,7 @@ const result: TestResult = {
     }],
     attachments: [],
   }],
+  annotations: [],
   attachments: [],
   status: 'passed',
 };
@@ -151,6 +152,7 @@ const resultWithAttachment: TestResult = {
     name: 'attachment with inline link https://github.com/microsoft/playwright/issues/31284',
     contentType: 'text/plain'
   }],
+  annotations: [],
   status: 'passed',
 };
 
