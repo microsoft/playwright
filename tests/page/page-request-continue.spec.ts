@@ -456,7 +456,8 @@ it('continue should not propagate cookie override to redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
-}, async ({ page, server }) => {
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'We currently clear all headers during interception in firefox');
   server.setRoute('/set-cookie', (request, response) => {
     response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
     response.end();
@@ -483,7 +484,8 @@ it('continue should not override cookie', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
-}, async ({ page, server }) => {
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'We currently clear all headers during interception in firefox');
   server.setRoute('/set-cookie', (request, response) => {
     response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
     response.end();
@@ -817,9 +819,7 @@ it('propagate headers cross origin redirect after interception', {
     expect.soft(serverRequest.headers['authorization']).toBeFalsy();
   else
     expect.soft(serverRequest.headers['authorization']).toBe('credentials');
-  // TODO: fix this in juggler.
-  if (browserName !== 'firefox')
-    expect.soft(serverRequest.headers['cookie']).toBeFalsy();
+  expect.soft(serverRequest.headers['cookie']).toBeFalsy();
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
