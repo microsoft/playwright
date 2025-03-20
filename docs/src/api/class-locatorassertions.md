@@ -1443,11 +1443,13 @@ Ensures the [Locator] points to an element with given CSS classes. When a string
 const locator = page.locator('#component');
 await expect(locator).toHaveClass('middle selected row');
 await expect(locator).toHaveClass('selected', { partial: true });
+await expect(locator).toHaveClass('middle row', { partial: true });
 ```
 
 ```java
 assertThat(page.locator("#component")).hasClass("middle selected row");
 assertThat(page.locator("#component")).hasClass("selected", new LocatorAssertions.HasClassOptions().setPartial(true));
+assertThat(page.locator("#component")).hasClass("middle row", new LocatorAssertions.HasClassOptions().setPartial(true));
 ```
 
 ```python async
@@ -1455,7 +1457,7 @@ from playwright.async_api import expect
 
 locator = page.locator("#component")
 await expect(locator).to_have_class("middle selected row")
-await expect(locator).to_have_class("selected", partial=True)
+await expect(locator).to_have_class("middle row", partial=True)
 ```
 
 ```python sync
@@ -1464,12 +1466,14 @@ from playwright.sync_api import expect
 locator = page.locator("#component")
 expect(locator).to_have_class("middle selected row")
 expect(locator).to_have_class("selected", partial=True)
+expect(locator).to_have_class("middle row", partial=True)
 ```
 
 ```csharp
 var locator = Page.Locator("#component");
 await Expect(locator).ToHaveClassAsync("middle selected row");
 await Expect(locator).ToHaveClassAsync("selected", new() { Partial = true });
+await Expect(locator).ToHaveClassAsync("middle row", new() { Partial = true });
 ```
 
 When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class values. Each element's class attribute is matched against the corresponding string or regular expression in the array:

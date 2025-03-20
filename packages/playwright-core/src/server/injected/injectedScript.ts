@@ -1398,9 +1398,11 @@ export class InjectedScript {
           return { received: null, matches: false };
         received = value;
       } else if (expression === 'to.have.class') {
+        if (!options.expectedText)
+          throw this.createStacklessError('Expected text is not provided for ' + expression);
         return {
           received: element.classList.toString(),
-          matches: new ExpectedTextMatcher(options.expectedText![0]).matchesClassList(element.classList, options.expressionArg.partial),
+          matches: new ExpectedTextMatcher(options.expectedText[0]).matchesClassList(this, element.classList, options.expressionArg.partial),
         };
       } else if (expression === 'to.have.css') {
         received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
@@ -1455,7 +1457,7 @@ export class InjectedScript {
       if (receivedClassLists.length !== options.expectedText.length)
         return { received, matches: false };
       const matches = this._matchSequentially(options.expectedText, receivedClassLists, (matcher, r) =>
-        matcher.matchesClassList(r, options.expressionArg.partial)
+        matcher.matchesClassList(this, r, options.expressionArg.partial)
       );
       return {
         received: received,
@@ -1647,10 +1649,10 @@ class ExpectedTextMatcher {
     return false;
   }
 
-  matchesClassList(classList: DOMTokenList, partial: boolean): boolean {
+  matchesClassList(injectedScript: InjectedScript, classList: DOMTokenList, partial: boolean): boolean {
     if (partial) {
       if (this._regex)
-        throw new Error('Partial matching does not support regular expressions. Please provide a string value.');
+        throw injectedScript.createStacklessError('Partial matching does not support regular expressions. Please provide a string value.');
       return this._string!.split(/\s+/g).filter(Boolean).every(className => classList.contains(className));
     }
     return this.matches(classList.toString());

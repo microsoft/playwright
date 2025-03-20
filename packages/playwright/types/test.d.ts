@@ -8410,6 +8410,7 @@ interface LocatorAssertions {
    * const locator = page.locator('#component');
    * await expect(locator).toHaveClass('middle selected row');
    * await expect(locator).toHaveClass('selected', { partial: true });
+   * await expect(locator).toHaveClass('middle row', { partial: true });
    * ```
    *
    * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
