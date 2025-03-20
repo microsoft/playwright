@@ -1431,7 +1431,7 @@ Attribute name.
 * langs:
   - alias-java: hasClass
 
-Ensures the [Locator] points to an element with given CSS classes. When a string is provided, it must fully match the element's `class` attribute. To match individual classes or perform partial matches, use a regular expression:
+Ensures the [Locator] points to an element with given CSS classes. When a string is provided, it must fully match the element's `class` attribute. To match individual classes or perform partial matches use [`option: LocatorAssertions.toHaveClass.partial`].
 
 **Usage**
 
@@ -1442,34 +1442,38 @@ Ensures the [Locator] points to an element with given CSS classes. When a string
 ```js
 const locator = page.locator('#component');
 await expect(locator).toHaveClass('middle selected row');
-await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
+await expect(locator).toHaveClass('selected', { partial: true });
+await expect(locator).toHaveClass('middle row', { partial: true });
 ```
 
 ```java
-assertThat(page.locator("#component")).hasClass(Pattern.compile("(^|\\s)selected(\\s|$)"));
 assertThat(page.locator("#component")).hasClass("middle selected row");
+assertThat(page.locator("#component")).hasClass("selected", new LocatorAssertions.HasClassOptions().setPartial(true));
+assertThat(page.locator("#component")).hasClass("middle row", new LocatorAssertions.HasClassOptions().setPartial(true));
 ```
 
 ```python async
 from playwright.async_api import expect
 
 locator = page.locator("#component")
-await expect(locator).to_have_class(re.compile(r"(^|\\s)selected(\\s|$)"))
 await expect(locator).to_have_class("middle selected row")
+await expect(locator).to_have_class("middle row", partial=True)
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
 locator = page.locator("#component")
-expect(locator).to_have_class(re.compile(r"(^|\\s)selected(\\s|$)"))
 expect(locator).to_have_class("middle selected row")
+expect(locator).to_have_class("selected", partial=True)
+expect(locator).to_have_class("middle row", partial=True)
 ```
 
 ```csharp
 var locator = Page.Locator("#component");
-await Expect(locator).ToHaveClassAsync(new Regex("(^|\\s)selected(\\s|$)"));
 await Expect(locator).ToHaveClassAsync("middle selected row");
+await Expect(locator).ToHaveClassAsync("selected", new() { Partial = true });
+await Expect(locator).ToHaveClassAsync("middle row", new() { Partial = true });
 ```
 
 When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class values. Each element's class attribute is matched against the corresponding string or regular expression in the array:
@@ -1522,6 +1526,12 @@ Expected class or RegExp or a list of those.
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected class or RegExp or a list of those.
+
+### option: LocatorAssertions.toHaveClass.partial
+* since: v1.52
+- `partial` <[boolean]>
+
+Whether to perform a partial match, defaults to `false`. In an exact match, which is the default, the `className` attribute must be exactly the same as the asserted value. In a partial match, all classes from the asserted value, separated by spaces, must be present in the [Element.classList](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList) in any order. Partial match does not support a regular expression.
 
 ### option: LocatorAssertions.toHaveClass.timeout = %%-js-assertions-timeout-%%
 * since: v1.18

@@ -1398,7 +1398,12 @@ export class InjectedScript {
           return { received: null, matches: false };
         received = value;
       } else if (expression === 'to.have.class') {
-        received = element.classList.toString();
+        if (!options.expectedText)
+          throw this.createStacklessError('Expected text is not provided for ' + expression);
+        return {
+          received: element.classList.toString(),
+          matches: new ExpectedTextMatcher(options.expectedText[0]).matchesClassList(this, element.classList, options.expressionArg.partial),
+        };
       } else if (expression === 'to.have.css') {
         received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
@@ -1442,31 +1447,52 @@ export class InjectedScript {
       return { received, matches };
     }
 
-    // List of values.
-    let received: string[] | undefined;
-    if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
-    else if (expression === 'to.have.class.array')
-      received = elements.map(e => e.classList.toString());
+    // Following matchers depend all on ExpectedTextValue.
+    if (!options.expectedText)
+      throw this.createStacklessError('Expected text is not provided for ' + expression);
 
-    if (received && options.expectedText) {
-      // "To match an array" is "to contain an array" + "equal length"
-      const lengthShouldMatch = expression !== 'to.contain.text.array';
-      const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
-      if (!matchesLength)
+    if (expression === 'to.have.class.array') {
+      const receivedClassLists = elements.map(e => e.classList);
+      const received = receivedClassLists.map(String);
+      if (receivedClassLists.length !== options.expectedText.length)
         return { received, matches: false };
-
-      // Each matcher should get a "received" that matches it, in order.
-      const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-      let mIndex = 0, rIndex = 0;
-      while (mIndex < matchers.length && rIndex < received.length) {
-        if (matchers[mIndex].matches(received[rIndex]))
-          ++mIndex;
-        ++rIndex;
-      }
-      return { received, matches: mIndex === matchers.length };
+      const matches = this._matchSequentially(options.expectedText, receivedClassLists, (matcher, r) =>
+        matcher.matchesClassList(this, r, options.expressionArg.partial)
+      );
+      return {
+        received: received,
+        matches,
+      };
     }
-    throw this.createStacklessError('Unknown expect matcher: ' + expression);
+
+    if (!['to.contain.text.array', 'to.have.text.array'].includes(expression))
+      throw this.createStacklessError('Unknown expect matcher: ' + expression);
+
+    const received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
+    // "To match an array" is "to contain an array" + "equal length"
+    const lengthShouldMatch = expression !== 'to.contain.text.array';
+    const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
+    if (!matchesLength)
+      return { received, matches: false };
+
+    const matches = this._matchSequentially(options.expectedText, received, (matcher, r) => matcher.matches(r));
+    return { received, matches };
+  }
+
+  private _matchSequentially<T>(
+    expectedText: channels.ExpectedTextValue[],
+    received: T[],
+    matchFn: (matcher: ExpectedTextMatcher, received: T) => boolean
+  ): boolean {
+    const matchers = expectedText.map(e => new ExpectedTextMatcher(e));
+    let mIndex = 0;
+    let rIndex = 0;
+    while (mIndex < matchers.length && rIndex < received.length) {
+      if (matchFn(matchers[mIndex], received[rIndex]))
+        ++mIndex;
+      ++rIndex;
+    }
+    return mIndex === matchers.length;
   }
 }
 
@@ -1621,6 +1647,15 @@ class ExpectedTextMatcher {
     if (this._regex)
       return !!this._regex.test(text);
     return false;
+  }
+
+  matchesClassList(injectedScript: InjectedScript, classList: DOMTokenList, partial: boolean): boolean {
+    if (partial) {
+      if (this._regex)
+        throw injectedScript.createStacklessError('Partial matching does not support regular expressions. Please provide a string value.');
+      return this._string!.split(/\s+/g).filter(Boolean).every(className => classList.contains(className));
+    }
+    return this.matches(classList.toString());
   }
 
   private normalize(s: string | undefined): string | undefined {
