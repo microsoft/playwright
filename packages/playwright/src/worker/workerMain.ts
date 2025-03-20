@@ -613,7 +613,6 @@ function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
 }
 
 function buildTestEndPayload(testInfo: TestInfoImpl, test: TestCase): TestEndPayload {
-  console.log(test)
   const staticAnnotations = test.staticAnnotations();
   return {
     testId: testInfo.testId,
