@@ -829,6 +829,30 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-annotation')).toHaveText('issue: I am not interested in this test');
     });
 
+    test('should render dynamic annotations at test result level', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { timeout: 1500, retries: 3 };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('annotated test', async ({}) => {
+            test.info().annotations.push({ type: 'foo', description: 'retry #' + test.info().retry });
+            throw new Error('fail');
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.failed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'annotated test' }).click();
+      await page.getByRole('tab', { name: 'Retry #1' }).click();
+      await expect(page.getByTestId('test-case-annotations')).toContainText('foo: retry #1');
+
+      await page.getByRole('tab', { name: 'Retry #3' }).click();
+      await expect(page.getByTestId('test-case-annotations')).toContainText('foo: retry #3');
+    });
+
     test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
