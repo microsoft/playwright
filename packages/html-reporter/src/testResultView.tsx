@@ -126,8 +126,8 @@ export const TestResultView: React.FC<{
     </AutoChip></Anchor>}
 
     {!!videos.length && <Anchor id='attachment-video'><AutoChip header='Videos' revealOnAnchorId='attachment-video'>
-      {videos.map((a, i) => <div key={`video-${i}`}>
-        <video key={a.path} controls> {/* key is required to ensure video is updated when the path changes */}
+      {videos.map(a => <div key={a.path}>
+        <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
         <AttachmentLink attachment={a} result={result}></AttachmentLink>
