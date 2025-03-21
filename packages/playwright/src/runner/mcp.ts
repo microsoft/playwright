@@ -15,12 +15,20 @@
  */
 
 import path from 'path';
+import { Writable } from 'stream';
 
 import { mcp, z } from '../utilsBundle';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerDispatcher } from './testServer';
 
 const packageJSON = require('../../package.json');
+
+const originalStdoutWrite = process.stdout.write;
+const originalStdout = new Writable({
+  write(chunk, encoding, callback) {
+    originalStdoutWrite.call(process.stdout, chunk, encoding, callback);
+  },
+});
 
 export async function startMcpServer(dispatcher: TestServerDispatcher) {
   const server = new mcp.McpServer({
@@ -62,5 +70,5 @@ export async function startMcpServer(dispatcher: TestServerDispatcher) {
     };
   });
 
-  await server.connect(new mcp.StdioServerTransport());
+  await server.connect(new mcp.StdioServerTransport(undefined, originalStdout));
 }
