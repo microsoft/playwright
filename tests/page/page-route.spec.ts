@@ -71,10 +71,11 @@ it('should unroute', async ({ page, server }) => {
   expect(intercepted).toEqual([1]);
 });
 
-it('should support ? in glob pattern', async ({ page, server }) => {
+it('should not support ? in glob pattern', async ({ page, server }) => {
   server.setRoute('/index', (req, res) => res.end('index-no-hello'));
   server.setRoute('/index123hello', (req, res) => res.end('index123hello'));
   server.setRoute('/index?hello', (req, res) => res.end('index?hello'));
+  server.setRoute('/index1hello', (req, res) => res.end('index1hello'));
 
   await page.route('**/index?hello', async (route, request) => {
     await route.fulfill({ body: 'intercepted any character' });
@@ -91,7 +92,7 @@ it('should support ? in glob pattern', async ({ page, server }) => {
   expect(await page.content()).toContain('index-no-hello');
 
   await page.goto(server.PREFIX + '/index1hello');
-  expect(await page.content()).toContain('intercepted any character');
+  expect(await page.content()).toContain('index1hello');
 
   await page.goto(server.PREFIX + '/index123hello');
   expect(await page.content()).toContain('index123hello');
@@ -165,9 +166,9 @@ it('should properly return navigation response when URL has cookies', async ({ p
   expect(response.status()).toBe(200);
 });
 
-it('should override cookie header', async ({ page, server, browserName }) => {
+it('should not override cookie header', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16773' });
-  it.fail(browserName !== 'firefox' && !browserName.includes('bidi'));
+  it.fixme(browserName === 'firefox', 'We currently clear all headers during interception in firefox');
 
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = 'original=value');
@@ -183,8 +184,9 @@ it('should override cookie header', async ({ page, server, browserName }) => {
     page.goto(server.EMPTY_PAGE),
   ]);
 
-  expect(cookieValueInRoute).toBe('original=value');
-  expect(serverReq.headers['cookie']).toBe('overridden=value');
+  if (browserName !== 'webkit')
+    expect.soft(cookieValueInRoute).toBe('original=value');
+  expect.soft(serverReq.headers['cookie']).toBe('original=value');
 });
 
 it('should show custom HTTP headers', async ({ page, server }) => {

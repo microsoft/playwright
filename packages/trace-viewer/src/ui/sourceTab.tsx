@@ -27,6 +27,47 @@ import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 
+function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sources: Map<string, SourceModel>, rootDir?: string, fallbackLocation?: SourceLocation) {
+  return useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
+    const actionLocation = stack?.[selectedFrame];
+    const location = actionLocation?.file ? actionLocation : fallbackLocation;
+    if (!location)
+      return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
+
+    const file = location.file;
+    let source = sources.get(file);
+    // Fallback location can fall outside the sources model.
+    if (!source) {
+      source = { errors: fallbackLocation?.source?.errors || [], content: fallbackLocation?.source?.content };
+      sources.set(file, source);
+    }
+
+    const targetLine = location?.line || source.errors[0]?.line || 0;
+    const fileName = rootDir && file.startsWith(rootDir) ? file.substring(rootDir.length + 1) : file;
+    const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.line, message: e.message }));
+    highlight.push({ line: targetLine, type: 'running' });
+
+    // After the source update, but before the test run, don't trust the cache.
+    if (fallbackLocation?.source?.content !== undefined) {
+      source.content = fallbackLocation.source.content;
+    } else if (source.content === undefined || (location === fallbackLocation)) {
+      const sha1 = await calculateSha1(file);
+      try {
+        let response = await fetch(`sha1/src@${sha1}.txt`);
+        if (response.status === 404)
+          response = await fetch(`file?path=${encodeURIComponent(file)}`);
+        if (response.status >= 400)
+          source.content = `<Unable to read "${file}">`;
+        else
+          source.content = await response.text();
+      } catch {
+        source.content = `<Unable to read "${file}">`;
+      }
+    }
+    return { source, highlight, targetLine, fileName, location };
+  }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
+}
+
 export const SourceTab: React.FunctionComponent<{
   stack?: StackFrame[],
   stackFrameLocation: 'bottom' | 'right',
@@ -45,45 +86,7 @@ export const SourceTab: React.FunctionComponent<{
     }
   }, [stack, lastStack, setLastStack, setSelectedFrame]);
 
-  const { source, highlight, targetLine, fileName, location } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
-    const actionLocation = stack?.[selectedFrame];
-    const shouldUseFallback = !actionLocation?.file;
-    if (shouldUseFallback && !fallbackLocation)
-      return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
-
-    const file = shouldUseFallback ? fallbackLocation!.file : actionLocation.file;
-    let source = sources.get(file);
-    // Fallback location can fall outside the sources model.
-    if (!source) {
-      source = { errors: fallbackLocation?.source?.errors || [], content: fallbackLocation?.source?.content };
-      sources.set(file, source);
-    }
-
-    const location = shouldUseFallback ? fallbackLocation! : actionLocation;
-    const targetLine = shouldUseFallback ? fallbackLocation?.line || source.errors[0]?.line || 0 : actionLocation.line;
-    const fileName = rootDir && file.startsWith(rootDir) ? file.substring(rootDir.length + 1) : file;
-    const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.line, message: e.message }));
-    highlight.push({ line: targetLine, type: 'running' });
-
-    // After the source update, but before the test run, don't trust the cache.
-    if (fallbackLocation?.source?.content !== undefined) {
-      source.content = fallbackLocation.source.content;
-    } else if (source.content === undefined || shouldUseFallback) {
-      const sha1 = await calculateSha1(file);
-      try {
-        let response = await fetch(`sha1/src@${sha1}.txt`);
-        if (response.status === 404)
-          response = await fetch(`file?path=${encodeURIComponent(file)}`);
-        if (response.status >= 400)
-          source.content = `<Unable to read "${file}">`;
-        else
-          source.content = await response.text();
-      } catch {
-        source.content = `<Unable to read "${file}">`;
-      }
-    }
-    return { source, highlight, targetLine, fileName, location };
-  }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
+  const { source, highlight, targetLine, fileName, location } = useSources(stack, selectedFrame, sources, rootDir, fallbackLocation);
 
   const openExternally = React.useCallback(() => {
     if (!location)

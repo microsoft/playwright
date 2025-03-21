@@ -21,30 +21,26 @@ import { spawnAsync } from 'playwright-core/lib/utils';
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { GitCommitInfo, CIInfo, UserMetadataWithCommitInfo } from '../isomorphic/types';
+import type { GitCommitInfo, CIInfo, MetadataWithCommitInfo } from '../isomorphic/types';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 3000;
 
 export const addGitCommitInfoPlugin = (fullConfig: FullConfigInternal) => {
-  fullConfig.plugins.push({ factory: gitCommitInfoPlugin });
+  fullConfig.plugins.push({ factory: gitCommitInfoPlugin.bind(null, fullConfig) });
 };
 
-type GitCommitInfoPluginOptions = {
-  directory?: string;
-};
-
-export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestRunnerPlugin => {
+const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
   return {
     name: 'playwright:git-commit-info',
 
     setup: async (config: FullConfig, configDir: string) => {
-      const metadata = config.metadata as UserMetadataWithCommitInfo;
+      const metadata = config.metadata as MetadataWithCommitInfo;
       const ci = await ciInfo();
       if (!metadata.ci && ci)
         metadata.ci = ci;
 
-      if ((ci && !metadata.gitCommit) || metadata.gitCommit === 'generate') {
-        const git = await gitCommitInfo(options?.directory || configDir).catch(e => {
+      if (fullConfig.captureGitInfo?.commit || (fullConfig.captureGitInfo?.commit === undefined && ci)) {
+        const git = await gitCommitInfo(configDir).catch(e => {
           // eslint-disable-next-line no-console
           console.error('Failed to get git commit info', e);
         });
@@ -52,8 +48,8 @@ export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestR
           metadata.gitCommit = git;
       }
 
-      if ((ci && !metadata.gitDiff) || metadata.gitDiff === 'generate') {
-        const diffResult = await gitDiff(options?.directory || configDir, ci).catch(e => {
+      if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
+        const diffResult = await gitDiff(configDir, ci).catch(e => {
           // eslint-disable-next-line no-console
           console.error('Failed to get git diff', e);
         });
@@ -66,31 +62,28 @@ export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestR
 
 async function ciInfo(): Promise<CIInfo | undefined> {
   if (process.env.GITHUB_ACTIONS) {
-    let pr: { title: string, number: number } | undefined;
+    let pr: { title: string, number: number, baseHash: string } | undefined;
     try {
       const json = JSON.parse(await fs.promises.readFile(process.env.GITHUB_EVENT_PATH!, 'utf8'));
-      pr = { title: json.pull_request.title, number: json.pull_request.number };
+      pr = { title: json.pull_request.title, number: json.pull_request.number, baseHash: json.pull_request.base.sha };
     } catch {
     }
 
     return {
       commitHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`,
-      prHref: pr ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pr.number}` : undefined,
-      prTitle: pr ? pr.title : undefined,
-      buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
       commitHash: process.env.GITHUB_SHA,
-      baseHash: process.env.GITHUB_BASE_REF,
-      branch: process.env.GITHUB_REF_NAME,
+      prHref: pr ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pr.number}` : undefined,
+      prTitle: pr?.title,
+      prBaseHash: pr?.baseHash,
+      buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
     };
   }
 
   if (process.env.GITLAB_CI) {
     return {
       commitHref: `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`,
-      prHref: process.env.CI_MERGE_REQUEST_IID ? `${process.env.CI_PROJECT_URL}/-/merge_requests/${process.env.CI_MERGE_REQUEST_IID}` : undefined,
-      buildHref: process.env.CI_JOB_URL,
       commitHash: process.env.CI_COMMIT_SHA,
-      baseHash: process.env.CI_COMMIT_BEFORE_SHA,
+      buildHref: process.env.CI_JOB_URL,
       branch: process.env.CI_COMMIT_REF_NAME,
     };
   }
@@ -99,7 +92,6 @@ async function ciInfo(): Promise<CIInfo | undefined> {
     return {
       commitHref: process.env.BUILD_URL,
       commitHash: process.env.GIT_COMMIT,
-      baseHash: process.env.GIT_PREVIOUS_COMMIT,
       branch: process.env.GIT_BRANCH,
     };
   }
@@ -122,14 +114,10 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
     '%ct', // committer date, UNIX timestamp
     '',    // branch
   ];
-  const commitInfoResult = await spawnAsync(
-      `git log -1 --pretty=format:"${tokens.join(separator)}" && git rev-parse --abbrev-ref HEAD`, [],
-      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
-  );
-  if (commitInfoResult.code)
+  const output = await runGit(`git log -1 --pretty=format:"${tokens.join(separator)}" && git rev-parse --abbrev-ref HEAD`, gitDir);
+  if (!output)
     return undefined;
-  const showOutput = commitInfoResult.stdout.trim();
-  const [hash, shortHash, subject, body, authorName, authorEmail, authorTime, committerName, committerEmail, committerTime, branch] = showOutput.split(separator);
+  const [hash, shortHash, subject, body, authorName, authorEmail, authorTime, committerName, committerEmail, committerTime, branch] = output.split(separator);
 
   return {
     shortHash,
@@ -152,13 +140,36 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
-  const baseHash = ci?.baseHash ?? 'HEAD~1';
+  if (ci?.prBaseHash) {
+    await runGit(`git fetch origin ${ci.prBaseHash}`, gitDir);
+    const diff = await runGit(`git diff ${ci.prBaseHash} HEAD`, gitDir);
+    if (diff)
+      return diff.substring(0, diffLimit);
+  }
 
-  const pullDiffResult = await spawnAsync(
-      'git',
-      ['diff', baseHash],
-      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+  // Do not attempt to diff on CI commit.
+  if (ci)
+    return;
+
+  // Check dirty state first.
+  const uncommitted = await runGit('git diff', gitDir);
+  if (uncommitted)
+    return uncommitted.substring(0, diffLimit);
+
+  // Assume non-shallow checkout on local.
+  const diff = await runGit('git diff HEAD~1', gitDir);
+  return diff?.substring(0, diffLimit);
+}
+
+async function runGit(command: string, cwd: string): Promise<string | undefined> {
+  const result = await spawnAsync(
+      command,
+      [],
+      { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
-  if (!pullDiffResult.code)
-    return pullDiffResult.stdout.substring(0, diffLimit);
+  if (process.env.DEBUG_GIT_COMMIT_INFO && result.code) {
+    // eslint-disable-next-line no-console
+    console.error(`Failed to run ${command}: ${result.stderr}`);
+  }
+  return result.code ? undefined : result.stdout.trim();
 }

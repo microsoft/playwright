@@ -593,6 +593,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
 export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
+  failOnFlakyTests: false,
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,
@@ -605,7 +606,7 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   preserveOutput: 'always',
   projects: [],
   reporter: [[process.env.CI ? 'dot' : 'list']],
-  reportSlowTests: { max: 5, threshold: 15000 },
+  reportSlowTests: { max: 5, threshold: 300_000 /* 5 minutes */ },
   configFile: '',
   rootDir: '',
   quiet: false,

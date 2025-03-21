@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import type { MultiTraceModel } from './modelUtil';
+import type { Attachment, MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
@@ -25,8 +25,6 @@ import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
-
-type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
@@ -97,14 +95,8 @@ export const AttachmentsTab: React.FunctionComponent<{
   revealedAttachment?: [AfterActionTraceEventAttachment, number],
 }> = ({ model, revealedAttachment }) => {
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
-    const attachments = new Set<Attachment>();
+    const attachments = new Set(model?.visibleAttachments ?? []);
     const screenshots = new Set<Attachment>();
-
-    for (const action of model?.actions || []) {
-      const traceUrl = action.context.traceUrl;
-      for (const attachment of action.attachments || [])
-        attachments.add({ ...attachment, traceUrl });
-    }
     const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined }>();
 
     for (const attachment of attachments) {

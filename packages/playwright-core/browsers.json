@@ -3,43 +3,43 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1160",
+      "revision": "1163",
       "installByDefault": true,
-      "browserVersion": "134.0.6998.23"
+      "browserVersion": "135.0.7049.17"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1160",
+      "revision": "1163",
       "installByDefault": true,
-      "browserVersion": "134.0.6998.23"
+      "browserVersion": "135.0.7049.17"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1304",
+      "revision": "1315",
       "installByDefault": false,
-      "browserVersion": "135.0.7021.0"
+      "browserVersion": "136.0.7079.0"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1304",
+      "revision": "1315",
       "installByDefault": false,
-      "browserVersion": "135.0.7021.0"
+      "browserVersion": "136.0.7079.0"
     },
     {
       "name": "firefox",
-      "revision": "1475",
+      "revision": "1477",
       "installByDefault": true,
-      "browserVersion": "135.0"
+      "browserVersion": "136.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1471",
+      "revision": "1473",
       "installByDefault": false,
-      "browserVersion": "136.0b4"
+      "browserVersion": "137.0b2"
     },
     {
       "name": "webkit",
-      "revision": "2140",
+      "revision": "2150",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
@@ -50,10 +50,12 @@
         "mac11-arm64": "1816",
         "mac12": "2009",
         "mac12-arm64": "2009",
+        "mac13": "2140",
+        "mac13-arm64": "2140",
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
-      "browserVersion": "18.2"
+      "browserVersion": "18.4"
     },
     {
       "name": "ffmpeg",

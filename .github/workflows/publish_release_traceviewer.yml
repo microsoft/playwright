@@ -14,7 +14,13 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        repositories: trace.playwright.dev
     - name: Deploy Stable
       run: bash utils/build/deploy-trace-viewer.sh --stable
       env:
-        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}

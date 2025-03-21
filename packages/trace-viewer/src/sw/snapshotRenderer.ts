@@ -15,6 +15,7 @@
  */
 
 import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
+
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
 import type { PageEntry } from '../types/entries';
 import type { LRUCache } from './lruCache';
@@ -311,6 +312,16 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         } catch {
         }
         element.removeAttribute('__playwright_popover_open_');
+      }
+      for (const element of root.querySelectorAll(`[__playwright_dialog_open_]`)) {
+        try {
+          if (element.getAttribute('__playwright_dialog_open_') === 'modal')
+            (element as HTMLDialogElement).showModal();
+          else
+            (element as HTMLDialogElement).show();
+        } catch {
+        }
+        element.removeAttribute('__playwright_dialog_open_');
       }
 
       for (const targetId of targetIds) {

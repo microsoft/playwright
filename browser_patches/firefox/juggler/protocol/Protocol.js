@@ -794,6 +794,11 @@ const Page = {
         viewportSize: t.Nullable(pageTypes.Size),
       },
     },
+    'setZoom': {
+      params: {
+        zoom: t.Number,
+      },
+    },
     'bringToFront': {
       params: {
       },

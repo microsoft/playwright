@@ -36,16 +36,10 @@ export type CIInfo = {
   commitHref: string;
   prHref?: string;
   prTitle?: string;
+  prBaseHash?: string;
   buildHref?: string;
   commitHash?: string;
-  baseHash?: string;
   branch?: string;
-};
-
-export type UserMetadataWithCommitInfo = {
-  ci?: CIInfo;
-  gitCommit?: GitCommitInfo | 'generate';
-  gitDiff?: string | 'generate';
 };
 
 export type MetadataWithCommitInfo = {

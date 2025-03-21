@@ -172,7 +172,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
-  config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
   config.cliLastFailed = !!opts.lastFailed;
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
@@ -294,6 +293,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     updateSnapshots = 'updateSnapshots' in options ? 'changed' : undefined;
 
   const overrides: ConfigCLIOverrides = {
+    failOnFlakyTests: options.failOnFlakyTests ? true : undefined,
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,

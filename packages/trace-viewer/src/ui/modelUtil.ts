@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { kTopLevelAttachmentPrefix } from '@testIsomorphic/util';
+
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
@@ -49,11 +51,14 @@ export type ActionTreeItem = {
   action?: ActionTraceEventInContext;
 };
 
-type ErrorDescription = {
+export type ErrorDescription = {
   action?: ActionTraceEventInContext;
   stack?: StackFrame[];
   message: string;
+  prompt?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
 };
+
+export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
 
 export class MultiTraceModel {
   readonly startTime: number;
@@ -66,6 +71,8 @@ export class MultiTraceModel {
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
   readonly actions: ActionTraceEventInContext[];
+  readonly attachments: Attachment[];
+  readonly visibleAttachments: Attachment[];
   readonly events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   readonly stdio: trace.StdioTraceEvent[];
   readonly errors: trace.ErrorTraceEvent[];
@@ -101,6 +108,8 @@ export class MultiTraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
+    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl: action.context.traceUrl })) ?? []);
+    this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
@@ -128,16 +137,11 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errors: ErrorDescription[] = [];
-    for (const error of this.errors || []) {
-      if (!error.message)
-        continue;
-      errors.push({
-        stack: error.stack,
-        message: error.message
-      });
-    }
-    return errors;
+    return this.errors.filter(e => !!e.message).map((error, i) => ({
+      stack: error.stack,
+      message: error.message,
+      prompt: this.attachments.find(a => a.name === `_prompt-${i}`),
+    }));
   }
 }
 
@@ -334,6 +338,8 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
 
   const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
   for (const item of itemMap.values()) {
+    if (item.action?.apiName.startsWith(kTopLevelAttachmentPrefix))
+      continue;
     const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
     parent.children.push(item);
     item.parent = parent;

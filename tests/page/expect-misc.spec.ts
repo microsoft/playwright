@@ -220,6 +220,38 @@ test.describe('toHaveClass', () => {
     const error = await expect(locator).toHaveClass(['foo', 'bar', /[a-z]az/], { timeout: 1000 }).catch(e => e);
     expect(error.message).toContain('expect.toHaveClass with timeout 1000ms');
   });
+
+  test('allow matching partial class names', async ({ page }) => {
+    await page.setContent('<div class="foo bar"></div>');
+    const locator = page.locator('div');
+    await expect(locator).toHaveClass('foo', { partial: true });
+    await expect(locator).toHaveClass('bar', { partial: true });
+    await expect(
+        expect(locator).toHaveClass(/f.o/, { partial: true })
+    ).rejects.toThrow('Partial matching does not support regular expressions. Please provide a string value.');
+    await expect(locator).not.toHaveClass('foo');
+    await expect(locator).not.toHaveClass('foo', { partial: false });
+    await expect(locator).toHaveClass('  bar   foo ', { partial: true });
+    await expect(locator).not.toHaveClass('does-not-exist', { partial: true });
+    await expect(locator).not.toHaveClass('  baz   foo ', { partial: true }); // Strip whitespace and match individual classes
+
+    await page.setContent('<div class="foo bar baz"></div>');
+    await expect(locator).toHaveClass('foo bar', { partial: true });
+    await expect(locator).toHaveClass('', { partial: true });
+  });
+
+  test('allow matching partial class names with array', async ({ page }) => {
+    await page.setContent('<div class="aaa"></div><div class="bbb b2b"></div><div class="ccc"></div>');
+    const locator = page.locator('div');
+    await expect(locator).toHaveClass(['aaa', 'b2b', 'ccc'], { partial: true });
+    await expect(locator).not.toHaveClass(['aaa', 'b2b', 'ccc']);
+    await expect(
+        expect(locator).toHaveClass([/b2?ar/, /b2?ar/, /b2?ar/], { partial: true })
+    ).rejects.toThrow('Partial matching does not support regular expressions. Please provide a string value.');
+    await expect(locator).not.toHaveClass(['aaa', 'b2b', 'ccc'], { partial: false });
+    await expect(locator).not.toHaveClass(['not-there', 'b2b', 'ccc'], { partial: true }); // Class not there
+    await expect(locator).not.toHaveClass(['aaa', 'b2b'], { partial: false }); // Length mismatch
+  });
 });
 
 test.describe('toHaveTitle', () => {
@@ -244,7 +276,7 @@ test.describe('toHaveURL', () => {
   test('fail string', async ({ page }) => {
     await page.goto('data:text/html,<div>A</div>');
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
+    expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(locator).toHaveURL(expected)');
     expect(stripVTControlCharacters(error.message)).toContain('Expected string: "wrong"\nReceived string: "data:text/html,<div>A</div>"');
   });
 
@@ -252,7 +284,7 @@ test.describe('toHaveURL', () => {
     await page.goto('data:text/html,<div>A</div>');
     // @ts-expect-error
     const error = await expect(page).toHaveURL({}).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected)\n\n\n\nMatcher error: expected value must be a string, regular expression, or predicate');
+    expect(stripVTControlCharacters(error.message)).toContain(`expect(locator(':root')).toHaveURL([object Object])`);
     expect(stripVTControlCharacters(error.message)).toContain('Expected has type:  object\nExpected has value: {}');
   });
 

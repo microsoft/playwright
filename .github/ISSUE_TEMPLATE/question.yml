@@ -23,5 +23,5 @@ body:
         > [!IMPORTANT]
         > This issue will be closed.
       options:
-        - label: I understand
+        - label: I understand that this issue will be closed
           required: true

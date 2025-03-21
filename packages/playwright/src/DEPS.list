@@ -8,7 +8,11 @@ common/
 
 [index.ts]
 @testIsomorphic/**
+./prompt.ts
 ./worker/testTracing.ts
 
 [internalsForTest.ts]
 **
+
+[prompt.ts]
+./transform/babelBundle.ts

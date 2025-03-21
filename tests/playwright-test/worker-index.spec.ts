@@ -239,3 +239,88 @@ test('should not spawn workers for statically skipped tests', async ({ runInline
   expect(result.output).toContain('workerIndex=0');
   expect(result.output).not.toContain('workerIndex=1');
 });
+
+test('should respect project.workers=1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        workers: 10,
+        projects: [
+          { name: 'project1', workers: 1 },
+          { name: 'project2', workers: 1 },
+        ],
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test('test1', async ({}, testInfo) => {
+        console.log('%%test1-begin:' + testInfo.project.name);
+        await new Promise(f => setTimeout(f, 1000 + (testInfo.project.name === 'project1' ? 2000 : 0)));
+        console.log('%%test1-end:' + testInfo.project.name);
+      });
+      test('test2', async ({}, testInfo) => {
+        console.log('%%test2:' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 10 });
+  expect(result.passed).toBe(4);
+  expect(result.exitCode).toBe(0);
+
+  // test1 from both projects start, test2 starts once test1 for that project finishes
+  expect(result.outputLines.slice(0, 2).sort()).toEqual([
+    'test1-begin:project1',
+    'test1-begin:project2',
+  ]);
+  expect(result.outputLines.slice(2, 6)).toEqual([
+    'test1-end:project2',
+    'test2:project2',
+    'test1-end:project1',
+    'test2:project1',
+  ]);
+});
+
+test('should respect project.workers>1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        workers: 10,
+        projects: [
+          { name: 'project', workers: 2 },
+        ],
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test('test1', async ({}, testInfo) => {
+        console.log('%%test1-begin');
+        await new Promise(f => setTimeout(f, 2000));
+        console.log('%%test1-end');
+      });
+      test('test2', async ({}, testInfo) => {
+        console.log('%%test2-begin');
+        await new Promise(f => setTimeout(f, 1000));
+        console.log('%%test2-end');
+      });
+      test('test3', async ({}, testInfo) => {
+        console.log('%%test3');
+      });
+    `,
+  }, { workers: 10 });
+  expect(result.passed).toBe(3);
+  expect(result.exitCode).toBe(0);
+
+  // 1+2 start, 1 finishes => 3 runs, 2 finishes
+  expect(result.outputLines.slice(0, 2).sort()).toEqual([
+    'test1-begin',
+    'test2-begin',
+  ]);
+  expect(result.outputLines.slice(2, 4)).toEqual([
+    'test2-end',
+    'test3',
+  ]);
+  expect(result.outputLines.slice(4, 5)).toEqual([
+    'test1-end',
+  ]);
+});

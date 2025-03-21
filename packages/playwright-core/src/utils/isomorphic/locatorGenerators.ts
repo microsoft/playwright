@@ -280,7 +280,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
       case 'last':
         return `last()`;
       case 'visible':
-        return `visible(${body === 'true' ? '' : '{ visible: false }'})`;
+        return `filter({ visible: ${body === 'true' ? 'true' : 'false'} })`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
@@ -376,7 +376,7 @@ export class PythonLocatorFactory implements LocatorFactory {
       case 'last':
         return `last`;
       case 'visible':
-        return `visible(${body === 'true' ? '' : 'visible=False'})`;
+        return `filter(visible=${body === 'true' ? 'True' : 'False'})`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
@@ -485,7 +485,7 @@ export class JavaLocatorFactory implements LocatorFactory {
       case 'last':
         return `last()`;
       case 'visible':
-        return `visible(${body === 'true' ? '' : `new ${clazz}.VisibleOptions().setVisible(false)`})`;
+        return `filter(new ${clazz}.FilterOptions().setVisible(${body === 'true' ? 'true' : 'false'}))`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
@@ -584,7 +584,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
       case 'last':
         return `Last`;
       case 'visible':
-        return `Visible(${body === 'true' ? '' : 'new() { Visible = false }'})`;
+        return `Filter(new() { Visible = ${body === 'true' ? 'true' : 'false'} })`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {

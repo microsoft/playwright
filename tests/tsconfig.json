@@ -12,6 +12,7 @@
         "baseUrl": "..",
         "paths": {
           "@isomorphic/*": ["packages/playwright-core/src/utils/isomorphic/*"],
+          "@testIsomorphic/*": ["packages/playwright/src/isomorphic/*"],
           "@protocol/*": ["packages/protocol/src/*"],
           "@recorder/*": ["packages/recorder/src/*"],
           "@trace/*": ["packages/trace/src/*"],

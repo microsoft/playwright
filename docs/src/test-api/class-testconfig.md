@@ -36,6 +36,38 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.captureGitInfo
+* since: v1.51
+- type: ?<[Object]>
+  - `commit` ?<boolean> Whether to capture commit and pull request information such as hash, author, timestamp.
+  - `diff` ?<boolean> Whether to capture commit diff.
+
+These settings control whether git information is captured and stored in the config [`property: TestConfig.metadata`].
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  captureGitInfo: { commit: true, diff: true }
+});
+```
+
+**Details**
+
+* Capturing `commit` information is useful when you'd like to see it in your HTML (or a third party) report.
+* Capturing `diff` information is useful to enrich the report with the actual source diff. This information can be used to provide intelligent advice on how to fix the test.
+
+:::note
+Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to obtain git information, the default value is `true`, `false` otherwise.
+:::
+
+:::note
+The structure of the git commit metadata is subject to change.
+:::
+
+
 ## property: TestConfig.expect
 * since: v1.10
 - type: ?<[Object]>
@@ -73,6 +105,24 @@ export default defineConfig({
       maxDiffPixels: 10,
     },
   },
+});
+```
+
+## property: TestConfig.failOnFlakyTests
+* since: v1.52
+- type: ?<[boolean]>
+
+Whether to exit with an error if any tests are marked as flaky. Useful on CI.
+
+Also available in the [command line](../test-cli.md) with the `--fail-on-flaky-tests` option.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  failOnFlakyTests: !!process.env.CI,
 });
 ```
 
@@ -238,11 +288,6 @@ export default defineConfig({
 - type: ?<[Metadata]>
 
 Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
-
-* Providing `gitCommit: 'generate'` property will populate it with the git commit details.
-* Providing `gitDiff: 'generate'` property will populate it with the git diff details.
-
-On selected CI providers, both will be generated automatically. Specifying values will prevent the automatic generation.
 
 **Usage**
 
@@ -429,7 +474,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
-  - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+  - `threshold` <[float]> Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
 
 Whether to report slow test files. Pass `null` to disable this feature.
 
@@ -631,15 +676,16 @@ export default defineConfig({
   - `command` <[string]> Shell command to start. For example `npm run start`..
   - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
   - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
-  - `ignoreHTTPSErrors` ?<[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
-  - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port` or `url` should be specified.
-  - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
-  - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
-  - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
-  - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `gracefulShutdown` ?<[Object]> How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal: 'SIGTERM', timeout: 500 }`, the process group is sent a `SIGTERM` signal, followed by `SIGKILL` if it doesn't exit within 500ms. You can also use `SIGINT` as the signal instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGTERM` and `SIGINT` signals, so this option is ignored on Windows. Note that shutting down a Docker container requires `SIGTERM`.
     - `signal` <["SIGINT"|"SIGTERM"]>
     - `timeout` <[int]>
+  - `ignoreHTTPSErrors` ?<[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
+  - `name` ?<[string]> Specifies a custom name for the web server. This name will be prefixed to log messages. Defaults to `[WebServer]`.
+  - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port` or `url` should be specified.
+  - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
+  - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
+  - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
+  - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 
 Launch a development web server (or multiple) during the tests.
@@ -693,12 +739,14 @@ export default defineConfig({
     {
       command: 'npm run start',
       url: 'http://localhost:3000',
+      name: 'Frontend',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
       url: 'http://localhost:3333',
+      name: 'Backend',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }

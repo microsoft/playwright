@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04, ubuntu-24.04]
+        os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -134,8 +134,6 @@ jobs:
         include:
           # We have different binaries per Ubuntu version for WebKit.
           - browser: webkit
-            os: ubuntu-20.04
-          - browser: webkit
             os: ubuntu-22.04
     runs-on: ${{ matrix.os }}
     steps:
@@ -156,7 +154,7 @@ jobs:
       fail-fast: false
       matrix:
         mode: [driver, service]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
@@ -182,7 +180,7 @@ jobs:
           - browser: webkit
           - browser: chromium
             channel: chromium-tip-of-tree
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
@@ -205,7 +203,7 @@ jobs:
       fail-fast: false
       matrix:
         channel: [chrome, chrome-beta, msedge, msedge-beta, msedge-dev]
-        runs-on: [ubuntu-20.04, macos-latest, windows-latest]
+        runs-on: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
@@ -226,8 +224,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-13, windows-latest]
+        os: [ubuntu-22.04, macos-13, windows-latest]
         headed: ['--headed', '']
+        exclude:
+          # Tested in tests_primary.yml already
+          - os: ubuntu-22.04
+            headed: ''
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
@@ -248,7 +250,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
@@ -269,7 +271,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-latest, macos-latest]
+        os: [ubuntu-22.04, windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test

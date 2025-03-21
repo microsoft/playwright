@@ -23,6 +23,7 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+  DEBUG_GIT_COMMIT_INFO: 1
 
 jobs:
   test_linux:
@@ -63,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -165,6 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PWTEST_BOT_NAME: "vscode-extension"
+      DEBUG_GIT_COMMIT_INFO: ""
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4

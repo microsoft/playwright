@@ -37,6 +37,13 @@ for all status codes.
 ### option: APIRequest.newContext.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 * since: v1.16
 
+### option: APIRequest.newContext.maxRedirects
+* since: v1.52
+- `maxRedirects` <[int]>
+
+Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
+Defaults to `20`. Pass `0` to not follow redirects. This can be overwritten for each request individually.
+
 ### option: APIRequest.newContext.timeout
 * since: v1.16
 - `timeout` <[float]>
@@ -71,7 +78,6 @@ Methods like [`method: APIRequestContext.get`] take the base URL into considerat
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` ?<[Array]<[unknown]>> indexedDB to set for context
 
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`] or [`method: APIRequestContext.storageState`]. Either a path to the

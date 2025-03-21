@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Copied from upstream: https://github.com/puppeteer/puppeteer/blob/main/packages/puppeteer-core/src/bidi/Input.ts
+
 /* eslint-disable curly */
 
 export const getBidiKeyValue = (keyName: string) => {

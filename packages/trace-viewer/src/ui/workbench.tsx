@@ -20,7 +20,6 @@ import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
-import type { ErrorDescription } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
@@ -58,7 +57,7 @@ export const Workbench: React.FunctionComponent<{
   revealSource?: boolean,
 }> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
-  const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
+  const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
   const [highlightedCallId, setHighlightedCallId] = React.useState<string | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
@@ -164,9 +163,6 @@ export const Workbench: React.FunctionComponent<{
   const consoleModel = useConsoleTabModel(model, selectedTime);
   const networkModel = useNetworkTabModel(model, selectedTime);
   const errorsModel = useErrorsTabModel(model);
-  const attachments = React.useMemo(() => {
-    return model?.actions.map(a => a.attachments || []).flat() || [];
-  }, [model]);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -199,7 +195,7 @@ export const Workbench: React.FunctionComponent<{
       else
         setRevealedError(error);
       selectPropertiesTab('source');
-    }} actions={model?.actions ?? []} wallTime={model?.wallTime ?? 0} />
+    }} wallTime={model?.wallTime ?? 0} />
   };
 
   // Fallback location w/o action stands for file / test.
@@ -242,7 +238,7 @@ export const Workbench: React.FunctionComponent<{
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
     title: 'Attachments',
-    count: attachments.length,
+    count: model?.visibleAttachments.length,
     render: () => <AttachmentsTab model={model} revealedAttachment={revealedAttachment} />
   };
 

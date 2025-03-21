@@ -296,7 +296,18 @@ Ensures the page is navigated to the given URL.
 **Usage**
 
 ```js
-await expect(page).toHaveURL(/.*checkout/);
+// Check for the page URL to be 'https://playwright.dev/docs/intro' (including query string)
+await expect(page).toHaveURL('https://playwright.dev/docs/intro');
+
+// Check for the page URL to contain 'doc', followed by an optional 's', followed by '/'
+await expect(page).toHaveURL(/docs?\//);
+
+// Check for the predicate to be satisfied
+// For example: verify query strings
+await expect(page).toHaveURL(url => {
+  const params = url.searchParams;
+  return params.has('search') && params.has('options') && params.get('id') === '5';
+});
 ```
 
 ```java
@@ -325,10 +336,18 @@ await Expect(Page).ToHaveURLAsync(new Regex(".*checkout"));
 
 ### param: PageAssertions.toHaveURL.url
 * since: v1.18
+* langs: js
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 Expected URL string, RegExp, or predicate receiving [URL] to match.
-When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+When [`option: Browser.newContext.baseURL`] is provided via the context options and the `url` argument is a string, the two values are merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor and used for the comparison against the current browser URL.
+
+### param: PageAssertions.toHaveURL.urlOrRegExp
+* since: v1.18
+* langs: csharp, python, java
+- `urlOrRegExp` <[string]|[RegExp]>
+
+Expected URL string or RegExp.
 
 ### option: PageAssertions.toHaveURL.ignoreCase
 * since: v1.44

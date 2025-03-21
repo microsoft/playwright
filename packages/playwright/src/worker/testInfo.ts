@@ -61,6 +61,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
   readonly _floatingPromiseScope: FloatingPromiseScope = new FloatingPromiseScope();
+  readonly _uniqueSymbol;
 
   _wasInterrupted = false;
   _lastStepId = 0;
@@ -148,6 +149,7 @@ export class TestInfoImpl implements TestInfo {
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
     this._requireFile = test?._requireFile ?? '';
+    this._uniqueSymbol = Symbol('testInfoUniqueSymbol');
 
     this.repeatEachIndex = workerParams.repeatEachIndex;
     this.retry = retry;
@@ -220,7 +222,7 @@ export class TestInfoImpl implements TestInfo {
       this._timeoutManager.slow();
     } else if (type === 'skip' || type === 'fixme') {
       this.expectedStatus = 'skipped';
-      throw new SkipError('Test is skipped: ' + (description || ''));
+      throw new TestSkipError('Test is skipped: ' + (description || ''));
     } else if (type === 'fail') {
       if (this.expectedStatus !== 'skipped')
         this.expectedStatus = 'failed';
@@ -363,7 +365,7 @@ export class TestInfoImpl implements TestInfo {
         try {
           await cb();
         } catch (e) {
-          if (this._allowSkips && (e instanceof SkipError)) {
+          if (this._allowSkips && (e instanceof TestSkipError)) {
             if (this.status === 'passed')
               this.status = 'skipped';
           } else {
@@ -414,14 +416,10 @@ export class TestInfoImpl implements TestInfo {
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    if (stepId) {
+    if (stepId)
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
-    } else {
-      // trace viewer has no means of representing attachments outside of a step, so we create an artificial action
-      const callId = `attach@${++this._lastStepId}`;
-      this._tracing.appendBeforeActionForStep(callId, this._findLastPredefinedStep(this._steps)?.stepId, 'attach', `attach "${attachment.name}"`, undefined, []);
-      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
-    }
+    else
+      this._tracing.appendTopLevelAttachment(attachment);
 
     this._onAttach({
       testId: this.testId,
@@ -523,7 +521,7 @@ export class TestStepInfoImpl implements TestStepInfo {
     try {
       return await body(this);
     } catch (e) {
-      if (e instanceof SkipError)
+      if (e instanceof StepSkipError)
         return undefined as T;
       throw e;
     }
@@ -544,11 +542,14 @@ export class TestStepInfoImpl implements TestStepInfo {
       return;
     const description = args[1] as (string|undefined);
     this.annotations.push({ type: 'skip', description });
-    throw new SkipError(description);
+    throw new StepSkipError(description);
   }
 }
 
-export class SkipError extends Error {
+export class TestSkipError extends Error {
+}
+
+export class StepSkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');

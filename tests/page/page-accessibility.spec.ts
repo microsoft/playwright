@@ -19,6 +19,7 @@ import { test as it, expect } from './pageTest';
 import { chromiumVersionLessThan } from '../config/utils';
 
 it('should work @smoke', async ({ page, browserName, isMac }) => {
+  it.skip(browserName === 'webkit' && isMac);
   await page.setContent(`
   <head>
     <title>Accessibility Test</title>

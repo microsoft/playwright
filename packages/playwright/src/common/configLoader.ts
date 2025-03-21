@@ -91,7 +91,7 @@ export const defineConfig = (...configs: any[]) => {
 export async function deserializeConfig(data: SerializedConfig): Promise<FullConfigInternal> {
   if (data.compilationCache)
     addToCompilationCache(data.compilationCache);
-  return await loadConfig(data.location, data.configCLIOverrides);
+  return await loadConfig(data.location, data.configCLIOverrides, undefined, data.metadata ? JSON.parse(data.metadata) : undefined);
 }
 
 async function loadUserConfig(location: ConfigLocation): Promise<Config> {
@@ -101,7 +101,7 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   return object as Config;
 }
 
-export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false): Promise<FullConfigInternal> {
+export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
   // 1. Setup tsconfig; configure ESM loader with tsconfig and compilation cache.
   setSingleTSConfig(overrides?.tsconfig);
   await configureESMLoader();
@@ -109,7 +109,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   // 2. Load and validate playwright config.
   const userConfig = await loadUserConfig(location);
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
-  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {});
+  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {}, metadata);
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
   if (ignoreProjectDependencies) {
     for (const project of fullConfig.projects) {
@@ -248,13 +248,6 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing" or "none"`);
   }
 
-  if ('workers' in config && config.workers !== undefined) {
-    if (typeof config.workers === 'number' && config.workers <= 0)
-      throw errorWithFile(file, `config.workers must be a positive number`);
-    else if (typeof config.workers === 'string' && !config.workers.endsWith('%'))
-      throw errorWithFile(file, `config.workers must be a number or percentage`);
-  }
-
   if ('tsconfig' in config && config.tsconfig !== undefined) {
     if (typeof config.tsconfig !== 'string')
       throw errorWithFile(file, `config.tsconfig must be a string`);
@@ -319,6 +312,13 @@ function validateProject(file: string, project: Project, title: string) {
   if ('ignoreSnapshots' in project && project.ignoreSnapshots !== undefined) {
     if (typeof project.ignoreSnapshots !== 'boolean')
       throw errorWithFile(file, `${title}.ignoreSnapshots must be a boolean`);
+  }
+
+  if ('workers' in project && project.workers !== undefined) {
+    if (typeof project.workers === 'number' && project.workers <= 0)
+      throw errorWithFile(file, `${title}.workers must be a positive number`);
+    else if (typeof project.workers === 'string' && !project.workers.endsWith('%'))
+      throw errorWithFile(file, `${title}.workers must be a number or percentage`);
   }
 }
 

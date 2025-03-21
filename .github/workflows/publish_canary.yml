@@ -72,13 +72,19 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        repositories: trace.playwright.dev
     - name: Deploy Canary
       run: bash utils/build/deploy-trace-viewer.sh --canary
       if: contains(github.ref, 'main')
       env:
-        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
     - name: Deploy BETA
       run: bash utils/build/deploy-trace-viewer.sh --beta
       if: contains(github.ref, 'release')
       env:
-        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}

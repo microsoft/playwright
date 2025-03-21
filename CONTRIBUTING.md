@@ -4,7 +4,7 @@
 
 Playwright **requires an issue** for every contribution, except for minor documentation updates. We strongly recommend to pick an issue labeled `open-to-a-pull-request` for your first contribution to the project.
 
-If you are passioned about a bug/feature, but cannot find an issue describing it, **file an issue first**. This will facilitate the discussion and you might get some early feedback from project maintainers before spending your time on creating a pull request.
+If you are passionate about a bug/feature, but cannot find an issue describing it, **file an issue first**. This will facilitate the discussion and you might get some early feedback from project maintainers before spending your time on creating a pull request.
 
 ## Make a change
 

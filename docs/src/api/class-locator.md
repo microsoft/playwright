@@ -206,6 +206,13 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
+### option: Locator.ariaSnapshot.ref
+* since: v1.52
+- `ref` <[boolean]>
+
+Generate symbolic reference for each element. One can use `aria-ref=<ref>` locator immediately after capturing the
+snapshot to perform actions on the element.
+
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.49
 
@@ -1089,6 +1096,9 @@ await rowLocator
 
 ### option: Locator.filter.hasNotText = %%-locator-option-has-not-text-%%
 * since: v1.33
+
+### option: Locator.filter.visible = %%-locator-option-visible-%%
+* since: v1.51
 
 ## method: Locator.first
 * since: v1.14
@@ -2477,18 +2487,6 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.uncheck.trial = %%-input-trial-%%
 * since: v1.14
-
-## method: Locator.visible
-* since: v1.51
-- returns: <[Locator]>
-
-Returns a locator that only matches [visible](../actionability.md#visible) elements.
-
-### option: Locator.visible.visible
-* since: v1.51
-- `visible` <[boolean]>
-
-Whether to match visible or invisible elements.
 
 ## async method: Locator.waitFor
 * since: v1.16

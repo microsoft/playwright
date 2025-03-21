@@ -603,7 +603,7 @@ export class WebSocketRouteHandler {
   }
 
   public matches(wsURL: string): boolean {
-    return urlMatches(this._baseURL, wsURL, this.url);
+    return urlMatches(this._baseURL, wsURL, this.url, true);
   }
 
   public async handle(webSocketRoute: WebSocketRoute) {

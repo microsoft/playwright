@@ -20,7 +20,7 @@ import { BrowserContext, assertBrowserContextIsNotOwned } from '../browserContex
 import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
-import { BidiPage } from './bidiPage';
+import { addMainBinding, BidiPage, kPlaywrightBindingChannel } from './bidiPage';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -98,8 +98,9 @@ export class BidiBrowser extends Browser {
     });
 
     if (options.persistent) {
-      browser._defaultContext = new BidiBrowserContext(browser, undefined, options.persistent);
-      await (browser._defaultContext as BidiBrowserContext)._initialize();
+      const context = new BidiBrowserContext(browser, undefined, options.persistent);
+      browser._defaultContext = context;
+      await context._initialize();
       // Create default page as we cannot get access to the existing one.
       const page = await browser._defaultContext.doCreateNewPage();
       await page.waitForInitializedOrError();
@@ -203,6 +204,7 @@ export class BidiBrowser extends Browser {
 
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
+  private _initScriptIds: bidi.Script.PreloadScript[] = [];
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -211,6 +213,41 @@ export class BidiBrowserContext extends BrowserContext {
 
   private _bidiPages() {
     return [...this._browser._bidiPages.values()].filter(bidiPage => bidiPage._browserContext === this);
+  }
+
+  override async _initialize() {
+    const promises: Promise<any>[] = [
+      super._initialize(),
+      this._installMainBinding(),
+    ];
+    if (this._options.viewport) {
+      promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
+        viewport: {
+          width: this._options.viewport.width,
+          height: this._options.viewport.height
+        },
+        devicePixelRatio: this._options.deviceScaleFactor || 1,
+        userContexts: [this._userContextId()],
+      }));
+    }
+    await Promise.all(promises);
+  }
+
+  // TODO: consider calling this only when bindings are added.
+  private async _installMainBinding() {
+    const functionDeclaration = addMainBinding.toString();
+    const args: bidi.Script.ChannelValue[] = [{
+      type: 'channel',
+      value: {
+        channel: kPlaywrightBindingChannel,
+        ownership: bidi.Script.ResultOwnership.Root,
+      }
+    }];
+    await this._browser._browserSession.send('script.addPreloadScript', {
+      functionDeclaration,
+      arguments: args,
+      userContexts: [this._userContextId()],
+    });
   }
 
   override possiblyUninitializedPages(): Page[] {
@@ -293,10 +330,19 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doAddInitScript(initScript: InitScript) {
-    await Promise.all(this.pages().map(page => (page._delegate as BidiPage).addInitScript(initScript)));
+    const { script } = await this._browser._browserSession.send('script.addPreloadScript', {
+      // TODO: remove function call from the source.
+      functionDeclaration: `() => { return ${initScript.source} }`,
+      userContexts: [this._browserContextId || 'default'],
+    });
+    if (!initScript.internal)
+      this._initScriptIds.push(script);
   }
 
   async doRemoveNonInternalInitScripts() {
+    const promise = Promise.all(this._initScriptIds.map(script => this._browser._browserSession.send('script.removePreloadScript', { script })));
+    this._initScriptIds = [];
+    await promise;
   }
 
   async doUpdateRequestInterception(): Promise<void> {
@@ -320,6 +366,14 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async cancelDownload(uuid: string) {
+  }
+
+  private _userContextId(): bidi.Browser.UserContext {
+    if (this._browserContextId)
+      return this._browserContextId;
+    // Default context always has same id, see
+    // https://w3c.github.io/webdriver-bidi/#default-user-context
+    return 'default';
   }
 }
 

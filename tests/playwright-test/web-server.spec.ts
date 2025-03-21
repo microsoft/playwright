@@ -808,3 +808,59 @@ test.describe('gracefulShutdown option', () => {
     expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGINT', 'webserver received SIGINT but stubbornly refuses to wind down']);
   });
 });
+
+test.describe('name option', () => {
+  test('should use custom prefix', async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex * 2 + 10500;
+    const name1 = 'CustomName1';
+    const name2 = 'CustomName2';
+    const defaultPrefix = 'WebServer';
+    const result = await runInlineTest({
+      'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+      'playwright.config.ts': `
+      module.exports = {
+        webServer: [
+          {
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+            port: ${port},
+            name: '${name1}',
+          },
+          {
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
+            port: ${port + 1},
+            name: '${name2}',
+          }
+        ],
+      };
+    `,
+    }, undefined);
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain(`[${name1}]`);
+    expect(result.output).toContain(`[${name2}]`);
+    expect(result.output).not.toContain(`[${defaultPrefix}]`);
+  });
+
+  test('should use default prefix when name option is not set', async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex * 2 + 10500;
+    const defaultPrefix = 'WebServer';
+    const result = await runInlineTest({
+      'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+      'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          port: ${port},
+        },
+      };
+    `,
+    }, undefined);
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain(`[${defaultPrefix}]`);
+  });
+});

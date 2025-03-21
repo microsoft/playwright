@@ -167,7 +167,7 @@ test('should print debug log when failed to connect', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('b-debug-log-string');
-  expect(result.results[0].attachments).toEqual([]);
+  expect(result.results[0].attachments).toEqual([expect.objectContaining({ name: '_prompt-0' })]);
 });
 
 test('should record trace', async ({ runInlineTest }) => {
@@ -221,9 +221,9 @@ test('should record trace', async ({ runInlineTest }) => {
     'browserContext.newPage',
     'expect.toBe',
     'After Hooks',
-    'locator.ariaSnapshot',
     'fixture: page',
     'fixture: context',
+    '_attach "_prompt-0"',
     'Worker Cleanup',
     'fixture: browser',
   ]);

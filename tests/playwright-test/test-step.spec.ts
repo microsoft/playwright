@@ -192,9 +192,6 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -580,9 +577,6 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -1236,9 +1230,6 @@ test('should report api step failure', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -1637,6 +1628,25 @@ hook      |After Hooks
 `);
 });
 
+test('should differentiate test.skip and step.skip', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ }) => {
+        await test.step('outer step', async () => {
+          await test.info().skip();
+        });
+      });
+      `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.report.stats.expected).toBe(0);
+  expect(result.report.stats.unexpected).toBe(0);
+  expect(result.report.stats.skipped).toBe(1);
+});
 
 test('show api calls inside expects', async ({ runInlineTest }) => {
   const result = await runInlineTest({

@@ -458,7 +458,6 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
       - treeitem /step/:
         - group:
           - treeitem /attach \\"foo-attach\\"/
-      - treeitem /attach \\"bar-push\\"/
       - treeitem /attach \\"bar-attach\\"/
   `);
   await page.getByRole('tab', { name: 'Attachments' }).click();
@@ -503,18 +502,27 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
 test('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('fails', async () => {
-        expect(1).toBe(2);
-      });
-    `,
+import { test, expect } from '@playwright/test';
+test('fails', async ({ page }) => {
+  await page.setContent('<button>Submit</button>');
+  expect(1).toBe(2);
+});
+    `.trim(),
   });
 
   await page.getByText('fails').dblclick();
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
-  await page.locator('.tab-errors').getByRole('button', { name: 'Copy as Prompt' }).click();
+  await page.locator('.tab-errors').getByRole('button', { name: 'Copy prompt' }).click();
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
+  expect(prompt.replaceAll('\r\n', '\n'), 'contains test sources').toContain(`
+  1 | import { test, expect } from '@playwright/test';
+  2 | test('fails', async ({ page }) => {
+  3 |   await page.setContent('<button>Submit</button>');
+> 4 |   expect(1).toBe(2);
+    |             ^ Error: expect(received).toBe(expected) // Object.is equality
+  5 | });
+    `.trim());
 });

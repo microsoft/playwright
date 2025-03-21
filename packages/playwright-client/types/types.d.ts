@@ -3974,9 +3974,9 @@ export interface Page {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a
-   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
-   * options was provided and the passed URL is a path, it gets merged via the
+   * @param url A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
+   * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
@@ -9068,9 +9068,9 @@ export interface BrowserContext {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a
-   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
-   * options was provided and the passed URL is a path, it gets merged via the
+   * @param url A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
+   * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
@@ -9271,8 +9271,9 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
-     * Set to `true` to include IndexedDB in the storage state snapshot. If your application uses IndexedDB to store
-     * authentication tokens, like Firebase Authentication, enable this.
+     * Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage
+     * state snapshot. If your application uses IndexedDB to store authentication tokens, like Firebase Authentication,
+     * enable this.
      */
     indexedDB?: boolean;
 
@@ -9313,8 +9314,6 @@ export interface BrowserContext {
 
         value: string;
       }>;
-
-      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -10081,11 +10080,6 @@ export interface Browser {
 
           value: string;
         }>;
-
-        /**
-         * indexedDB to set for context
-         */
-        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -12485,6 +12479,12 @@ export interface Locator {
    */
   ariaSnapshot(options?: {
     /**
+     * Generate symbolic reference for each element. One can use `aria-ref=<ref>` locator immediately after capturing the
+     * snapshot to perform actions on the element.
+     */
+    ref?: boolean;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -13126,6 +13126,11 @@ export interface Locator {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
+
+    /**
+     * Only matches visible or invisible elements.
+     */
+    visible?: boolean;
   }): Locator;
 
   /**
@@ -14518,17 +14523,6 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Returns a locator that only matches [visible](https://playwright.dev/docs/actionability#visible) elements.
-   * @param options
-   */
-  visible(options?: {
-    /**
-     * Whether to match visible or invisible elements.
-     */
-    visible?: boolean;
-  }): Locator;
-
-  /**
    * Returns when element specified by locator satisfies the
    * [`state`](https://playwright.dev/docs/api/class-locator#locator-wait-for-option-state) option.
    *
@@ -14713,11 +14707,15 @@ export interface BrowserType<Unused = {}> {
    * Launches browser that uses persistent storage located at
    * [`userDataDir`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-user-data-dir)
    * and returns the only context. Closing this context will automatically close the browser.
-   * @param userDataDir Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
+   * @param userDataDir Path to a User Data Directory, which stores browser session data like cookies and local storage. Pass an empty
+   * string to create a temporary directory.
+   *
+   * More details for
    * [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md#introduction) and
-   * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile). Note that Chromium's
-   * user data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Pass an empty
-   * string to use a temporary directory instead.
+   * [Firefox](https://wiki.mozilla.org/Firefox/CommandLineOptions#User_profile). Chromium's user data directory is the
+   * **parent** directory of the "Profile Path" seen at `chrome://version`.
+   *
+   * Note that browsers do not allow launching multiple instances with the same User Data Directory.
    * @param options
    */
   launchPersistentContext(userDataDir: string, options?: {
@@ -14936,7 +14934,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Whether to run browser in headless mode. More details for
      * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-     * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+     * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
      * [`devtools`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-devtools) option is
      * `true`.
      */
@@ -15330,7 +15328,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Whether to run browser in headless mode. More details for
      * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-     * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+     * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
      * [`devtools`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-devtools) option is
      * `true`.
      */
@@ -17573,6 +17571,13 @@ export interface APIRequest {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects. This can be overwritten for each request
+     * individually.
+     */
+    maxRedirects?: number;
+
+    /**
      * Network proxy settings.
      */
     proxy?: {
@@ -17640,11 +17645,6 @@ export interface APIRequest {
 
           value: string;
         }>;
-
-        /**
-         * indexedDB to set for context
-         */
-        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -18459,8 +18459,6 @@ export interface APIRequestContext {
 
         value: string;
       }>;
-
-      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -20785,6 +20783,11 @@ export interface Route {
    * request to the network, other matching handlers won't be invoked. Use
    * [route.fallback([options])](https://playwright.dev/docs/api/class-route#route-fallback) If you want next matching
    * handler in the chain to be invoked.
+   *
+   * **NOTE** The `Cookie` header cannot be overridden using this method. If a value is provided, it will be ignored,
+   * and the cookie will be loaded from the browser's cookie store. To set custom cookies, use
+   * [browserContext.addCookies(cookies)](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-cookies).
+   *
    * @param options
    */
   continue(options?: {
@@ -21712,7 +21715,7 @@ export interface LaunchOptions {
   /**
    * Whether to run browser in headless mode. More details for
    * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-   * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
    * [`devtools`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-devtools) option is
    * `true`.
    */
@@ -22308,11 +22311,6 @@ export interface BrowserContextOptions {
 
         value: string;
       }>;
-
-      /**
-       * indexedDB to set for context
-       */
-      indexedDB?: Array<unknown>;
     }>;
   };
 

@@ -23,8 +23,9 @@ import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import type { ParsedSelector } from '../../utils/isomorphic/selectorParser';
 
 
-type HighlightEntry = {
+type RenderedHighlightEntry = {
   targetElement: Element,
+  color: string,
   highlightElement: HTMLElement,
   tooltipElement?: HTMLElement,
   box?: DOMRect,
@@ -33,19 +34,16 @@ type HighlightEntry = {
   tooltipText?: string,
 };
 
-export type HighlightOptions = {
-  tooltipText?: string;
-  tooltipList?: string[];
-  tooltipFooter?: string;
-  tooltipListItemSelected?: (index: number | undefined) => void;
-  color?: string;
+export type HighlightEntry = {
+  element: Element,
+  color: string,
+  tooltipText?: string,
 };
 
 export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
-  private _highlightEntries: HighlightEntry[] = [];
-  private _highlightOptions: HighlightOptions = {};
+  private _renderedEntries: RenderedHighlightEntry[] = [];
   private _actionPointElement: HTMLElement;
   private _isUnderTest: boolean;
   private _injectedScript: InjectedScript;
@@ -70,8 +68,6 @@ export class Highlight {
       this._glassPaneElement.addEventListener(eventName, e => {
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if (e.type === 'click' && (e as MouseEvent).button === 0 && this._highlightOptions.tooltipListItemSelected)
-          this._highlightOptions.tooltipListItemSelected(undefined);
       });
     }
     this._actionPointElement = document.createElement('x-pw-action-point');
@@ -104,7 +100,13 @@ export class Highlight {
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
-    this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), { tooltipText: asLocator(this._language, stringifySelector(selector)) });
+    const elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
+    const locator = asLocator(this._language, stringifySelector(selector));
+    const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
+    this.updateHighlight(elements.map((element, index) => {
+      const suffix = elements.length > 1 ? ` [${index + 1} of ${elements.length}]` : '';
+      return { element, color, tooltipText: locator + suffix };
+    }));
     this._rafRequest = this._injectedScript.builtinRequestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
@@ -125,77 +127,47 @@ export class Highlight {
   }
 
   clearHighlight() {
-    for (const entry of this._highlightEntries) {
+    for (const entry of this._renderedEntries) {
       entry.highlightElement?.remove();
       entry.tooltipElement?.remove();
     }
-    this._highlightEntries = [];
-    this._highlightOptions = {};
-    this._glassPaneElement.style.pointerEvents = 'none';
-  }
-
-  updateHighlight(elements: Element[], options: HighlightOptions) {
-    this._innerUpdateHighlight(elements, options);
+    this._renderedEntries = [];
   }
 
   maskElements(elements: Element[], color: string) {
-    this._innerUpdateHighlight(elements, { color: color });
+    this.updateHighlight(elements.map(element => ({ element, color })));
   }
 
-  private _innerUpdateHighlight(elements: Element[], options: HighlightOptions) {
-    let color = options.color;
-    if (!color)
-      color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
-
+  updateHighlight(entries: HighlightEntry[]) {
     // Code below should trigger one layout and leave with the
     // destroyed layout.
 
-    if (this._highlightIsUpToDate(elements, options))
+    if (this._highlightIsUpToDate(entries))
       return;
 
     // 1. Destroy the layout
     this.clearHighlight();
-    this._highlightOptions = options;
-    this._glassPaneElement.style.pointerEvents = options.tooltipListItemSelected ? 'initial' : 'none';
 
-    for (let i = 0; i < elements.length; ++i) {
+    for (const entry of entries) {
       const highlightElement = this._createHighlightElement();
       this._glassPaneShadow.appendChild(highlightElement);
 
       let tooltipElement;
-      if (options.tooltipList || options.tooltipText || options.tooltipFooter) {
+      if (entry.tooltipText) {
         tooltipElement = this._injectedScript.document.createElement('x-pw-tooltip');
         this._glassPaneShadow.appendChild(tooltipElement);
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
-        let lines: string[] = [];
-        if (options.tooltipList) {
-          lines = options.tooltipList;
-        } else if (options.tooltipText) {
-          const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
-          lines = [options.tooltipText + suffix];
-        }
-        for (let index = 0; index < lines.length; index++) {
-          const element = this._injectedScript.document.createElement('x-pw-tooltip-line');
-          element.textContent = lines[index];
-          tooltipElement.appendChild(element);
-          if (options.tooltipListItemSelected) {
-            element.classList.add('selectable');
-            element.addEventListener('click', () => options.tooltipListItemSelected?.(index));
-          }
-        }
-        if (options.tooltipFooter) {
-          const footer = this._injectedScript.document.createElement('x-pw-tooltip-footer');
-          footer.textContent = options.tooltipFooter;
-          tooltipElement.appendChild(footer);
-        }
+        const lineElement = this._injectedScript.document.createElement('x-pw-tooltip-line');
+        lineElement.textContent = entry.tooltipText;
+        tooltipElement.appendChild(lineElement);
       }
-      this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement });
+      this._renderedEntries.push({ targetElement: entry.element, color: entry.color, tooltipElement, highlightElement });
     }
 
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
-    for (const entry of this._highlightEntries) {
+    for (const entry of this._renderedEntries) {
       entry.box = entry.targetElement.getBoundingClientRect();
       if (!entry.tooltipElement)
         continue;
@@ -207,15 +179,13 @@ export class Highlight {
     }
 
     // 3. Destroy the layout again.
-
-    // If there are more than 1 box - we are evaluating a non-unique (potentially bad) selector.
-    for (const entry of this._highlightEntries) {
+    for (const entry of this._renderedEntries) {
       if (entry.tooltipElement) {
         entry.tooltipElement.style.top = entry.tooltipTop + 'px';
         entry.tooltipElement.style.left = entry.tooltipLeft + 'px';
       }
       const box = entry.box!;
-      entry.highlightElement.style.backgroundColor = color;
+      entry.highlightElement.style.backgroundColor = entry.color;
       entry.highlightElement.style.left = box.x + 'px';
       entry.highlightElement.style.top = box.y + 'px';
       entry.highlightElement.style.width = box.width + 'px';
@@ -228,7 +198,7 @@ export class Highlight {
   }
 
   firstBox(): DOMRect | undefined {
-    return this._highlightEntries[0]?.box;
+    return this._renderedEntries[0]?.box;
   }
 
   tooltipPosition(box: DOMRect, tooltipElement: HTMLElement) {
@@ -253,36 +223,21 @@ export class Highlight {
     return { anchorLeft, anchorTop };
   }
 
-  private _highlightIsUpToDate(elements: Element[], options: HighlightOptions): boolean {
-    if (options.tooltipText !== this._highlightOptions.tooltipText)
+  private _highlightIsUpToDate(entries: HighlightEntry[]): boolean {
+    if (entries.length !== this._renderedEntries.length)
       return false;
-    if (options.tooltipListItemSelected !== this._highlightOptions.tooltipListItemSelected)
-      return false;
-    if (options.tooltipFooter !== this._highlightOptions.tooltipFooter)
-      return false;
-
-    if (options.tooltipList?.length !== this._highlightOptions.tooltipList?.length)
-      return false;
-    if (options.tooltipList && this._highlightOptions.tooltipList) {
-      for (let i = 0; i < options.tooltipList.length; i++) {
-        if (options.tooltipList[i] !== this._highlightOptions.tooltipList[i])
-          return false;
-      }
-    }
-
-    if (elements.length !== this._highlightEntries.length)
-      return false;
-    for (let i = 0; i < this._highlightEntries.length; ++i) {
-      if (elements[i] !== this._highlightEntries[i].targetElement)
+    for (let i = 0; i < this._renderedEntries.length; ++i) {
+      if (entries[i].element !== this._renderedEntries[i].targetElement)
         return false;
-      const oldBox = this._highlightEntries[i].box;
+      if (entries[i].color !== this._renderedEntries[i].color)
+        return false;
+      const oldBox = this._renderedEntries[i].box;
       if (!oldBox)
         return false;
-      const box = elements[i].getBoundingClientRect();
+      const box = entries[i].element.getBoundingClientRect();
       if (box.top !== oldBox.top || box.right !== oldBox.right || box.bottom !== oldBox.bottom || box.left !== oldBox.left)
         return false;
     }
-
     return true;
   }
 

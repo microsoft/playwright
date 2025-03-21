@@ -14,15 +14,4 @@
  * limitations under the License.
  */
 
-import type playwright from 'playwright';
-import { JSONSchemaType } from './types';
-
-export type ToolResult = {
-  output?: string;
-  error?: string;
-  base64_image?: string;
-};
-
-export type ToolCall = (page: playwright.Page, tool: string, parameters: { [key: string]: JSONSchemaType; }) => Promise<ToolResult>;
-
-export const call: ToolCall;
+export const kTopLevelAttachmentPrefix = '_attach';

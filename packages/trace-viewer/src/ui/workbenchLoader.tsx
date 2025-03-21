@@ -72,6 +72,23 @@ export const WorkbenchLoader: React.FunctionComponent<{
     document.addEventListener('paste', listener);
     return () => document.removeEventListener('paste', listener);
   });
+  React.useEffect(() => {
+    const listener = (e: MessageEvent) => {
+      const { method, params } = e.data;
+
+      if (method !== 'load' || !(params?.trace instanceof Blob))
+        return;
+
+      const traceFile = new File([params.trace], 'trace.zip', { type: 'application/zip' });
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(traceFile);
+
+      processTraceFiles(dataTransfer.files);
+    };
+    window.addEventListener('message', listener);
+    return () => window.removeEventListener('message', listener);
+  });
 
   const handleDropEvent = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();

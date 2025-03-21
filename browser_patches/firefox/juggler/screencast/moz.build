@@ -23,8 +23,8 @@ XPCOM_MANIFESTS += [
 LOCAL_INCLUDES += [
     '/dom/media/systemservices',
     '/media/libyuv/libyuv/include',
+    '/third_party/abseil-cpp',
     '/third_party/libwebrtc',
-    '/third_party/libwebrtc/third_party/abseil-cpp',
 ]
 
 LOCAL_INCLUDES += [

@@ -15,9 +15,11 @@
  */
 
 import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
-import type { ContextEntry } from '../types/entries';
+
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';
+
+import type { ContextEntry } from '../types/entries';
 
 export interface TraceModelBackend {
   entryNames(): Promise<string[]>;

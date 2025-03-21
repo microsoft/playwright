@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
-const { call } = require('./lib/tools/computer-20241022');
+import type { Resource, ResourceResult } from './resource';
 
-module.exports = { call };
+export const console: Resource = {
+  schema: {
+    uri: 'browser://console',
+    name: 'Page console',
+    mimeType: 'text/plain',
+  },
+
+  read: async (context, uri) => {
+    const result: ResourceResult[] = [];
+    for (const message of await context.ensureConsole()) {
+      result.push({
+        uri,
+        mimeType: 'text/plain',
+        text: `[${message.type().toUpperCase()}] ${message.text()}`,
+      });
+    }
+    return result;
+  },
+};

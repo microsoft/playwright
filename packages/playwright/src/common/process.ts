@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { serializeError } from '../util';
 import { registerESMLoader } from './esmLoaderHost';
@@ -69,6 +69,7 @@ process.on('message', async (message: any) => {
   if (message.method === '__init__') {
     const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
     void startProfiling();
+    setTimeOrigin(processParams.timeOrigin);
     const { create } = require(runnerScript);
     processRunner = create(runnerParams) as ProcessRunner;
     processName = processParams.processName;

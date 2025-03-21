@@ -256,7 +256,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
 --- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -17,6 +17,27 @@
+@@ -17,6 +17,30 @@
            <li>Item: 1</li>
            <li>Item {a: b}</li>
          </ul>\`);
@@ -265,11 +265,14 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 +          - list:
 +            - group:
 +              - text: "one:"
-+              - link "link1"
++              - link "link1":
++                - /url: "#"
 +              - text: "\\\\\"two"
-+              - link "link2"
++              - link "link2":
++                - /url: "#"
 +              - text: "'three"
-+              - link "link3"
++              - link "link3":
++                - /url: "#"
 +              - text: "\\\`four"
 +            - heading "heading \\\\"name\\\\" [level=1]" [level=1]
 +            - 'button "Click: me"'

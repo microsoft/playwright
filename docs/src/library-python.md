@@ -38,7 +38,7 @@ from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
     browser = p.chromium.launch()
     page = browser.new_page()
-    page.goto("http://playwright.dev")
+    page.goto("https://playwright.dev")
     print(page.title())
     browser.close()
 ```
@@ -53,7 +53,7 @@ async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
-        await page.goto("http://playwright.dev")
+        await page.goto("https://playwright.dev")
         print(await page.title())
         await browser.close()
 

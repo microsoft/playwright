@@ -265,7 +265,7 @@ export function resolveReporterOutputPath(defaultValue: string, configDir: strin
   return path.resolve(basePath, defaultValue);
 }
 
-export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }> {
+export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string; body?: Buffer; contentType: string; }> {
   if (options.path === undefined && options.body === undefined)
     return { name, contentType: 'text/plain' };
   if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
@@ -413,4 +413,9 @@ export async function removeDirAndLogToConsole(dir: string) {
     await fs.promises.rm(dir, { recursive: true, force: true });
   } catch {
   }
+}
+
+export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
+export function stripAnsiEscapes(str: string): string {
+  return str.replace(ansiRegex, '');
 }

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
 import { callLogText, expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
-import { toHaveURL as toHaveURLExternal } from './toHaveURL';
+import { toHaveURLWithPredicate } from './toHaveURL';
 import { toMatchText } from './toMatchText';
 import { takeFirst } from '../common/config';
 import { currentTestInfo } from '../common/globals';
@@ -252,17 +252,18 @@ export function toHaveClass(
   this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options?: { timeout?: number },
+  options?: { timeout?: number, partial: boolean },
 ) {
+  const partial = options?.partial;
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
-      return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
+      return await locator._expect('to.have.class.array', { expectedText, expressionArg: { partial }, isNot, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
-      return await locator._expect('to.have.class', { expectedText, isNot, timeout });
+      return await locator._expect('to.have.class', { expectedText, expressionArg: { partial }, isNot, timeout });
     }, expected, options);
   }
 }
@@ -391,7 +392,17 @@ export function toHaveURL(
   expected: string | RegExp | ((url: URL) => boolean),
   options?: { ignoreCase?: boolean; timeout?: number },
 ) {
-  return toHaveURLExternal.call(this, page, expected, options);
+  // Ports don't support predicates. Keep separate server and client codepaths
+  if (typeof expected === 'function')
+    return toHaveURLWithPredicate.call(this, page, expected, options);
+
+  const baseURL = (page.context() as any)._options.baseURL;
+  expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
+  const locator = page.locator(':root') as LocatorEx;
+  return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    return await locator._expect('to.have.url', { expectedText, isNot, timeout });
+  }, expected, options);
 }
 
 export async function toBeOK(

@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-import type playwright from 'playwright';
-import { ToolDeclaration, JSONSchemaType } from './types';
+import type { Context } from '../context';
 
-export type ToolResult = {
-  error?: string;
-  code: Array<string>;
-  snapshot: string;
-}
+export type ResourceSchema = {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+};
 
-export type ToolCall = (page: playwright.Page, tool: string, parameters: { [key: string]: JSONSchemaType; }) => Promise<ToolResult>;
+export type ResourceResult = {
+  uri: string;
+  mimeType?: string;
+  text?: string;
+  blob?: string;
+};
 
-export const schema: ToolDeclaration[];
-export const call: ToolCall;
-export const snapshot: (page) => Promise<string>;
+export type Resource = {
+  schema: ResourceSchema;
+  read: (context: Context, uri: string) => Promise<ResourceResult[]>;
+};

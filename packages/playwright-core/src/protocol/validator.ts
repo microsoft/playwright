@@ -173,7 +173,7 @@ scheme.SetOriginStorage = tObject({
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
-  indexedDB: tArray(tType('IndexedDBDatabase')),
+  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });
 scheme.SerializedError = tObject({
   error: tOptional(tObject({
@@ -344,6 +344,14 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
+scheme.LocalUtilsGlobToRegexParams = tObject({
+  glob: tString,
+  baseURL: tOptional(tString),
+  webSocketUrl: tOptional(tBoolean),
+});
+scheme.LocalUtilsGlobToRegexResult = tObject({
+  regex: tString,
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
@@ -378,6 +386,7 @@ scheme.PlaywrightNewRequestParams = tObject({
     passphrase: tOptional(tString),
     pfx: tOptional(tBinary),
   }))),
+  maxRedirects: tOptional(tNumber),
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
@@ -1467,7 +1476,7 @@ scheme.FrameAddStyleTagResult = tObject({
 });
 scheme.FrameAriaSnapshotParams = tObject({
   selector: tString,
-  id: tOptional(tBoolean),
+  ref: tOptional(tBoolean),
   mode: tOptional(tEnum(['raw', 'regex'])),
   timeout: tOptional(tNumber),
 });

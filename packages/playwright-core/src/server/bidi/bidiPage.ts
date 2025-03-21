@@ -37,7 +37,7 @@ import type { BidiSession } from './bidiConnection';
 import type * as channels from '@protocol/channels';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
-const kPlaywrightBindingChannel = 'playwrightChannel';
+export const kPlaywrightBindingChannel = 'playwrightChannel';
 
 export class BidiPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -51,7 +51,7 @@ export class BidiPage implements PageDelegate {
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
   private readonly _pdf: BidiPDF;
-  private _initScriptIds: string[] = [];
+  private _initScriptIds: bidi.Script.PreloadScript[] = [];
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -92,7 +92,6 @@ export class BidiPage implements PageDelegate {
     await Promise.all([
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
-      this._updateViewport(),
       this._installMainBinding(),
       this._addAllInitScripts(),
     ]);
@@ -258,10 +257,6 @@ export class BidiPage implements PageDelegate {
   async updateEmulateMedia(): Promise<void> {
   }
 
-  async updateEmulatedViewportSize(): Promise<void> {
-    await this._updateViewport();
-  }
-
   async updateUserAgent(): Promise<void> {
   }
 
@@ -271,7 +266,7 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  private async _updateViewport(): Promise<void> {
+  async updateEmulatedViewportSize(): Promise<void> {
     const options = this._browserContext._options;
     const deviceSize = this._page.emulatedSize();
     if (deviceSize === null)
@@ -328,7 +323,11 @@ export class BidiPage implements PageDelegate {
   }
 
   // TODO: consider calling this only when bindings are added.
+  // TODO: delete this method once we can add preload script for persistent context.
   private async _installMainBinding() {
+    // For non-persistent context, the main binding is installed during context creation.
+    if (this._browserContext._browserContextId)
+      return;
     const functionDeclaration = addMainBinding.toString();
     const args: bidi.Script.ChannelValue[] = [{
       type: 'channel',
@@ -573,7 +572,7 @@ export class BidiPage implements PageDelegate {
   }
 }
 
-function addMainBinding(callback: (arg: any) => void) {
+export function addMainBinding(callback: (arg: any) => void) {
   (globalThis as any)['__playwright__binding__'] = callback;
 }
 

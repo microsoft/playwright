@@ -264,7 +264,6 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `localStorage` <[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` ?<[Array]<[unknown]>> indexedDB to set for context
 
 Learn more about [storage state and auth](../auth.md).
 
@@ -676,13 +675,13 @@ Emulates `'forced-colors'` media feature, supported values are `'active'`, `'non
 
 ## context-option-contrast
 * langs: js, java
-- `contrast` <null|[ForcedColors]<"no-preference"|"more">>
+- `contrast` <null|[Contrast]<"no-preference"|"more">>
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-contrast-csharp-python
 * langs: csharp, python
-- `contrast` <[ForcedColors]<"no-preference"|"more"|"null">>
+- `contrast` <[Contrast]<"no-preference"|"more"|"null">>
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
 
@@ -1062,7 +1061,7 @@ Close the browser process on SIGHUP. Defaults to `true`.
 
 Whether to run browser in headless mode. More details for
 [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+[Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
 [`option: BrowserType.launch.devtools`] option is `true`.
 
 ## js-python-browser-option-firefoxuserprefs
@@ -1154,6 +1153,11 @@ Note that outer and inner locators must belong to the same frame. Inner locator 
 - `hasNotText` <[string]|[RegExp]>
 
 Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element. When passed a [string], matching is case-insensitive and searches for a substring.
+
+## locator-option-visible
+- `visible` <[boolean]>
+
+Only matches visible or invisible elements.
 
 ## locator-options-list-v1.14
 - %%-locator-option-has-text-%%

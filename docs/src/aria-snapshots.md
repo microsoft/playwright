@@ -149,7 +149,7 @@ Each accessible element in the tree is represented as a YAML node:
   as `checked`, `disabled`, `expanded`, `level`, `pressed`, or `selected`.
 
 These values are derived from ARIA attributes or calculated based on HTML semantics. To inspect the accessibility tree
-structure of a page, use the [Chrome DevTools Accessibility Pane](https://developer.chrome.com/docs/devtools/accessibility/reference#pane).
+structure of a page, use the [Chrome DevTools Accessibility Tab](https://developer.chrome.com/docs/devtools/accessibility/reference#tab).
 
 
 ## Snapshot matching
@@ -339,10 +339,10 @@ npx playwright test --update-snapshots --update-source-mode=3way
 
 #### Snapshots as separate files
 
-To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method with the `name` option, specifying a `.snapshot.yml` file extension.
+To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method with the `name` option, specifying a `.aria.yml` file extension.
 
 ```js
-await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main.snapshot.yml' });
+await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main.aria.yml' });
 ```
 
 By default, snapshots from a test file `example.spec.ts` are placed in the `example.spec.ts-snapshots` directory. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the [snapshot path template](./api/class-testconfig#test-config-snapshot-path-template) using the following configuration:

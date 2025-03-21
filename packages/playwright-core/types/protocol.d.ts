@@ -804,7 +804,7 @@ some CSP errors in the future.
        */
       frame: AffectedFrame;
     }
-    export type ContentSecurityPolicyViolationType = "kInlineViolation"|"kEvalViolation"|"kURLViolation"|"kTrustedTypesSinkViolation"|"kTrustedTypesPolicyViolation"|"kWasmEvalViolation";
+    export type ContentSecurityPolicyViolationType = "kInlineViolation"|"kEvalViolation"|"kURLViolation"|"kSRIViolation"|"kTrustedTypesSinkViolation"|"kTrustedTypesPolicyViolation"|"kWasmEvalViolation";
     export interface SourceCodeLocation {
       scriptId?: Runtime.ScriptId;
       url: string;
@@ -860,6 +860,7 @@ CORS RFC1918 enforcement.
     }
     export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"UntrustworthyReportingOrigin"|"InsecureContext"|"InvalidHeader"|"InvalidRegisterTriggerHeader"|"SourceAndTriggerHeaders"|"SourceIgnored"|"TriggerIgnored"|"OsSourceIgnored"|"OsTriggerIgnored"|"InvalidRegisterOsSourceHeader"|"InvalidRegisterOsTriggerHeader"|"WebAndOsHeaders"|"NoWebOrOsSupport"|"NavigationRegistrationWithoutTransientUserActivation"|"InvalidInfoHeader"|"NoRegisterSourceHeader"|"NoRegisterTriggerHeader"|"NoRegisterOsSourceHeader"|"NoRegisterOsTriggerHeader"|"NavigationRegistrationUniqueScopeAlreadySet";
     export type SharedDictionaryError = "UseErrorCrossOriginNoCorsRequest"|"UseErrorDictionaryLoadFailure"|"UseErrorMatchingDictionaryNotUsed"|"UseErrorUnexpectedContentDictionaryHeader"|"WriteErrorCossOriginNoCorsRequest"|"WriteErrorDisallowedBySettings"|"WriteErrorExpiredResponse"|"WriteErrorFeatureDisabled"|"WriteErrorInsufficientResources"|"WriteErrorInvalidMatchField"|"WriteErrorInvalidStructuredHeader"|"WriteErrorNavigationRequest"|"WriteErrorNoMatchField"|"WriteErrorNonListMatchDestField"|"WriteErrorNonSecureContext"|"WriteErrorNonStringIdField"|"WriteErrorNonStringInMatchDestList"|"WriteErrorNonStringMatchField"|"WriteErrorNonTokenTypeField"|"WriteErrorRequestAborted"|"WriteErrorShuttingDown"|"WriteErrorTooLongIdField"|"WriteErrorUnsupportedType";
+    export type SRIMessageSignatureError = "MissingSignatureHeader"|"MissingSignatureInputHeader"|"InvalidSignatureHeader"|"InvalidSignatureInputHeader"|"SignatureHeaderValueIsNotByteSequence"|"SignatureHeaderValueIsParameterized"|"SignatureHeaderValueIsIncorrectLength"|"SignatureInputHeaderMissingLabel"|"SignatureInputHeaderValueNotInnerList"|"SignatureInputHeaderValueMissingComponents"|"SignatureInputHeaderInvalidComponentType"|"SignatureInputHeaderInvalidComponentName"|"SignatureInputHeaderInvalidHeaderComponentParameter"|"SignatureInputHeaderInvalidDerivedComponentParameter"|"SignatureInputHeaderKeyIdLength"|"SignatureInputHeaderInvalidParameter"|"SignatureInputHeaderMissingRequiredParameters"|"ValidationFailedSignatureExpired"|"ValidationFailedInvalidLength"|"ValidationFailedSignatureMismatch";
     /**
      * Details for issues around "Attribution Reporting API" usage.
 Explainer: https://github.com/WICG/attribution-reporting-api
@@ -891,6 +892,10 @@ instead of "limited-quirks".
     }
     export interface SharedDictionaryIssueDetails {
       sharedDictionaryError: SharedDictionaryError;
+      request: AffectedRequest;
+    }
+    export interface SRIMessageSignatureIssueDetails {
+      error: SRIMessageSignatureError;
       request: AffectedRequest;
     }
     export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingId"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInput"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB";
@@ -952,7 +957,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"InvalidFieldsSpecified"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo";
+    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"InvalidFieldsSpecified"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo"|"CorsError";
     export interface FederatedAuthUserInfoRequestIssueDetails {
       federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
     }
@@ -980,6 +985,17 @@ features, encourage the use of new ones, and provide general guidance.
        */
       failureMessage: string;
       requestId?: Network.RequestId;
+    }
+    export type PartitioningBlobURLInfo = "BlockedCrossPartitionFetching"|"EnforceNoopenerForNavigation";
+    export interface PartitioningBlobURLIssueDetails {
+      /**
+       * The BlobURL that failed to load.
+       */
+      url: string;
+      /**
+       * Additional information about the Partitioning Blob URL issue.
+       */
+      partitioningBlobURLInfo: PartitioningBlobURLInfo;
     }
     export type SelectElementAccessibilityIssueReason = "DisallowedSelectChild"|"DisallowedOptGroupChild"|"NonPhrasingContentOptionChild"|"InteractiveContentOptionChild"|"InteractiveContentLegendChild";
     /**
@@ -1032,7 +1048,7 @@ registrations being ignored.
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"SelectElementAccessibilityIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"SelectElementAccessibilityIssue"|"SRIMessageSignatureIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -1049,6 +1065,7 @@ add a new optional field to this type.
       corsIssueDetails?: CorsIssueDetails;
       attributionReportingIssueDetails?: AttributionReportingIssueDetails;
       quirksModeIssueDetails?: QuirksModeIssueDetails;
+      partitioningBlobURLIssueDetails?: PartitioningBlobURLIssueDetails;
       navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
       genericIssueDetails?: GenericIssueDetails;
       deprecationIssueDetails?: DeprecationIssueDetails;
@@ -1061,6 +1078,7 @@ add a new optional field to this type.
       federatedAuthUserInfoRequestIssueDetails?: FederatedAuthUserInfoRequestIssueDetails;
       sharedDictionaryIssueDetails?: SharedDictionaryIssueDetails;
       selectElementAccessibilityIssueDetails?: SelectElementAccessibilityIssueDetails;
+      sriMessageSignatureIssueDetails?: SRIMessageSignatureIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -2791,6 +2809,83 @@ stylesheet rules) this rule came from.
       style: CSSStyle;
     }
     /**
+     * CSS function argument representation.
+     */
+    export interface CSSFunctionParameter {
+      /**
+       * The parameter name.
+       */
+      name: string;
+      /**
+       * The parameter type.
+       */
+      type: string;
+    }
+    /**
+     * CSS function conditional block representation.
+     */
+    export interface CSSFunctionConditionNode {
+      /**
+       * Media query for this conditional block. Only one type of condition should be set.
+       */
+      media?: CSSMedia;
+      /**
+       * Container query for this conditional block. Only one type of condition should be set.
+       */
+      containerQueries?: CSSContainerQuery;
+      /**
+       * @supports CSS at-rule condition. Only one type of condition should be set.
+       */
+      supports?: CSSSupports;
+      /**
+       * Block body.
+       */
+      children: CSSFunctionNode[];
+      /**
+       * The condition text.
+       */
+      conditionText: string;
+    }
+    /**
+     * Section of the body of a CSS function rule.
+     */
+    export interface CSSFunctionNode {
+      /**
+       * A conditional block. If set, style should not be set.
+       */
+      condition?: CSSFunctionConditionNode;
+      /**
+       * Values set by this node. If set, condition should not be set.
+       */
+      style?: CSSStyle;
+    }
+    /**
+     * CSS function at-rule representation.
+     */
+    export interface CSSFunctionRule {
+      /**
+       * Name of the function.
+       */
+      name: Value;
+      /**
+       * The css style sheet identifier (absent for user agent stylesheet and user-specified
+stylesheet rules) this rule came from.
+       */
+      styleSheetId?: StyleSheetId;
+      /**
+       * Parent stylesheet's origin.
+       */
+      origin: StyleSheetOrigin;
+      /**
+       * List of parameters.
+       */
+      parameters: CSSFunctionParameter[];
+      /**
+       * Function body.
+       */
+      children: CSSFunctionNode[];
+    }
+    /**
      * CSS keyframe rule representation.
      */
     export interface CSSKeyframeRule {
@@ -3162,6 +3257,10 @@ will not be set if there is no active position-try fallback.
        * Id of the first parent element that does not have display: contents.
        */
       parentLayoutNodeId?: DOM.NodeId;
+      /**
+       * A list of CSS at-function rules referenced by styles of this node.
+       */
+      cssFunctionRules?: CSSFunctionRule[];
     }
     /**
      * Returns all media queries parsed by the rendering engine.
@@ -4762,7 +4861,7 @@ appear on top of all other content.
       /**
        * Type of relation to get.
        */
-      relation: "PopoverTarget";
+      relation: "PopoverTarget"|"InterestTarget";
     }
     export type getElementByRelationReturnValue = {
       /**
@@ -8696,7 +8795,7 @@ applicable or not known.
     /**
      * The reason why request was blocked.
      */
-    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"PreflightMissingAllowPrivateNetwork"|"PreflightInvalidAllowPrivateNetwork"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"InvalidPrivateNetworkAccess"|"UnexpectedPrivateNetworkAccess"|"NoCorsRedirectModeNotFollow"|"PreflightMissingPrivateNetworkAccessId"|"PreflightMissingPrivateNetworkAccessName"|"PrivateNetworkAccessPermissionUnavailable"|"PrivateNetworkAccessPermissionDenied";
+    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"PreflightMissingAllowPrivateNetwork"|"PreflightInvalidAllowPrivateNetwork"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"InvalidPrivateNetworkAccess"|"UnexpectedPrivateNetworkAccess"|"NoCorsRedirectModeNotFollow"|"PreflightMissingPrivateNetworkAccessId"|"PreflightMissingPrivateNetworkAccessName"|"PrivateNetworkAccessPermissionUnavailable"|"PrivateNetworkAccessPermissionDenied"|"LocalNetworkAccessPermissionDenied";
     export interface CorsErrorStatus {
       corsError: CorsError;
       failedParameter: string;
@@ -9372,7 +9471,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
      * List of content encodings supported by the backend.
      */
     export type ContentEncoding = "deflate"|"gzip"|"br"|"zstd";
-    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate"|"PreflightBlock"|"PreflightWarn";
+    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate"|"PreflightBlock"|"PreflightWarn"|"PermissionBlock";
     export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
     export interface ConnectTiming {
       /**
@@ -11645,7 +11744,7 @@ as an ad.
     export type GatedAPIFeatures = "SharedArrayBuffers"|"SharedArrayBuffersTransferAllowed"|"PerformanceMeasureMemory"|"PerformanceProfile";
     /**
      * All Permissions Policy features. This enum should match the one defined
-in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
+in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
      */
     export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
     /**
@@ -11694,6 +11793,17 @@ parsable.
       tokensWithStatus: OriginTrialTokenWithStatus[];
     }
     /**
+     * Additional information about the frame document's security origin.
+     */
+    export interface SecurityOriginDetails {
+      /**
+       * Indicates whether the frame document's security origin is one
+of the local hostnames (e.g. "localhost") or IP addresses (IPv4
+127.0.0.0/8 or IPv6 ::1).
+       */
+      isLocalhost: boolean;
+    }
+    /**
      * Information about the Frame on the page.
      */
     export interface Frame {
@@ -11732,6 +11842,10 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Frame document's security origin.
        */
       securityOrigin: string;
+      /**
+       * Additional details about the frame document's security origin.
+       */
+      securityOriginDetails?: SecurityOriginDetails;
       /**
        * Frame document's mimeType as determined by the browser.
        */
@@ -12235,7 +12349,7 @@ https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-expl
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCSticky"|"WebTransportSticky"|"WebSocketSticky"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"RequestedByWebViewClient"|"PostMessageByWebViewClient";
+    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCSticky"|"WebTransportSticky"|"WebSocketSticky"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"RequestedByWebViewClient"|"PostMessageByWebViewClient"|"CacheControlNoStoreDeviceBoundSessionTerminated";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -12848,6 +12962,11 @@ option, use with caution.
      * Enables page domain notifications.
      */
     export type enableParameters = {
+      /**
+       * If true, the `Page.fileChooserOpened` event will be emitted regardless of the state set by
+`Page.setInterceptFileChooserDialog` command (default: false).
+       */
+      enableFileChooserOpenedEvent?: boolean;
     }
     export type enableReturnValue = {
     }
@@ -15623,6 +15742,10 @@ The object has the following API:
        * Binding name, 'cdp' if not specified.
        */
       bindingName?: string;
+      /**
+       * If true, inherits the current root session's permissions (default: false).
+       */
+      inheritPermissions?: boolean;
     }
     export type exposeDevToolsProtocolReturnValue = {
     }
@@ -17332,7 +17455,7 @@ CDP events for them are emitted separately but they share
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch"|"BrowsingDataRemoved";
     /**
      * Preloading status values, see also PreloadingTriggeringOutcome. This
 status is shared by prefetchStatusUpdated and prerenderStatusUpdated.

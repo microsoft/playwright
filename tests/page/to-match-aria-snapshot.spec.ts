@@ -682,3 +682,14 @@ test('should not match what is not matched', async ({ page }) => {
 -   - button "bogus"
 + - paragraph: Text`);
 });
+
+test('should match url', async ({ page }) => {
+  await page.setContent(`
+    <a href='https://example.com'>Link</a>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - link:
+      - /url: /.*example.com/
+  `);
+});

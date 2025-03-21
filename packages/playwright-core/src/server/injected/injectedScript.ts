@@ -33,7 +33,7 @@ import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 import { parseSelector, stringifySelector, visitAllSelectorParts } from '../../utils/isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
-import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
+import type { AriaSnapshot } from './ariaSnapshot';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
@@ -78,7 +78,7 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
-  private _ariaElementById: Map<number, Element> | undefined;
+  private _lastAriaSnapshot: AriaSnapshot | undefined;
 
   // Recorder must use any external dependencies through InjectedScript.
   // Otherwise it will end up with a copy of all modules it uses, and any
@@ -137,7 +137,7 @@ export class InjectedScript {
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
-    this._engines.set('internal:aria-id', this._createAriaIdEngine());
+    this._engines.set('aria-ref', this._createAriaIdEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -225,28 +225,16 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', id?: boolean }): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', ref?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    const ariaSnapshot = generateAriaTree(node as Element);
-    this._ariaElementById = ariaSnapshot.elements;
-    return renderAriaTree(ariaSnapshot.root, { ...options, ids: options?.id ? ariaSnapshot.ids : undefined });
-  }
-
-  ariaSnapshotAsObject(node: Node): AriaSnapshot {
-    return generateAriaTree(node as Element);
+    const generation = (this._lastAriaSnapshot?.generation || 0) + 1;
+    this._lastAriaSnapshot = generateAriaTree(node as Element, generation);
+    return renderAriaTree(this._lastAriaSnapshot, options);
   }
 
   ariaSnapshotElement(snapshot: AriaSnapshot, elementId: number): Element | null {
     return snapshot.elements.get(elementId) || null;
-  }
-
-  renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex', id?: boolean}): string {
-    return renderAriaTree(ariaNode, options);
-  }
-
-  renderAriaSnapshotWithIds(ariaSnapshot: AriaSnapshot): string {
-    return renderAriaTree(ariaSnapshot.root, { ids: ariaSnapshot.ids });
   }
 
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
@@ -620,8 +608,13 @@ export class InjectedScript {
 
   _createAriaIdEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      const ariaId = parseInt(selector, 10);
-      const result = this._ariaElementById?.get(ariaId);
+      const match = selector.match(/^s(\d+)e(\d+)$/);
+      if (!match)
+        throw this.createStacklessError('Invalid aria-ref selector, should be of form s<number>e<number>');
+      const [, generation, elementId] = match;
+      if (this._lastAriaSnapshot?.generation !== +generation)
+        throw this.createStacklessError(`Stale aria-ref, expected s${this._lastAriaSnapshot?.generation}e{number}, got ${selector}`);
+      const result = this._lastAriaSnapshot?.elements?.get(+elementId);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };
@@ -1405,7 +1398,12 @@ export class InjectedScript {
           return { received: null, matches: false };
         received = value;
       } else if (expression === 'to.have.class') {
-        received = element.classList.toString();
+        if (!options.expectedText)
+          throw this.createStacklessError('Expected text is not provided for ' + expression);
+        return {
+          received: element.classList.toString(),
+          matches: new ExpectedTextMatcher(options.expectedText[0]).matchesClassList(this, element.classList, options.expressionArg.partial),
+        };
       } else if (expression === 'to.have.css') {
         received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
@@ -1422,6 +1420,8 @@ export class InjectedScript {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {
         received = this.document.title;
+      } else if (expression === 'to.have.url') {
+        received = this.document.location.href;
       } else if (expression === 'to.have.value') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
@@ -1447,31 +1447,52 @@ export class InjectedScript {
       return { received, matches };
     }
 
-    // List of values.
-    let received: string[] | undefined;
-    if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
-    else if (expression === 'to.have.class.array')
-      received = elements.map(e => e.classList.toString());
+    // Following matchers depend all on ExpectedTextValue.
+    if (!options.expectedText)
+      throw this.createStacklessError('Expected text is not provided for ' + expression);
 
-    if (received && options.expectedText) {
-      // "To match an array" is "to contain an array" + "equal length"
-      const lengthShouldMatch = expression !== 'to.contain.text.array';
-      const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
-      if (!matchesLength)
+    if (expression === 'to.have.class.array') {
+      const receivedClassLists = elements.map(e => e.classList);
+      const received = receivedClassLists.map(String);
+      if (receivedClassLists.length !== options.expectedText.length)
         return { received, matches: false };
-
-      // Each matcher should get a "received" that matches it, in order.
-      const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-      let mIndex = 0, rIndex = 0;
-      while (mIndex < matchers.length && rIndex < received.length) {
-        if (matchers[mIndex].matches(received[rIndex]))
-          ++mIndex;
-        ++rIndex;
-      }
-      return { received, matches: mIndex === matchers.length };
+      const matches = this._matchSequentially(options.expectedText, receivedClassLists, (matcher, r) =>
+        matcher.matchesClassList(this, r, options.expressionArg.partial)
+      );
+      return {
+        received: received,
+        matches,
+      };
     }
-    throw this.createStacklessError('Unknown expect matcher: ' + expression);
+
+    if (!['to.contain.text.array', 'to.have.text.array'].includes(expression))
+      throw this.createStacklessError('Unknown expect matcher: ' + expression);
+
+    const received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
+    // "To match an array" is "to contain an array" + "equal length"
+    const lengthShouldMatch = expression !== 'to.contain.text.array';
+    const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
+    if (!matchesLength)
+      return { received, matches: false };
+
+    const matches = this._matchSequentially(options.expectedText, received, (matcher, r) => matcher.matches(r));
+    return { received, matches };
+  }
+
+  private _matchSequentially<T>(
+    expectedText: channels.ExpectedTextValue[],
+    received: T[],
+    matchFn: (matcher: ExpectedTextMatcher, received: T) => boolean
+  ): boolean {
+    const matchers = expectedText.map(e => new ExpectedTextMatcher(e));
+    let mIndex = 0;
+    let rIndex = 0;
+    while (mIndex < matchers.length && rIndex < received.length) {
+      if (matchFn(matchers[mIndex], received[rIndex]))
+        ++mIndex;
+      ++rIndex;
+    }
+    return mIndex === matchers.length;
   }
 }
 
@@ -1626,6 +1647,15 @@ class ExpectedTextMatcher {
     if (this._regex)
       return !!this._regex.test(text);
     return false;
+  }
+
+  matchesClassList(injectedScript: InjectedScript, classList: DOMTokenList, partial: boolean): boolean {
+    if (partial) {
+      if (this._regex)
+        throw injectedScript.createStacklessError('Partial matching does not support regular expressions. Please provide a string value.');
+      return this._string!.split(/\s+/g).filter(Boolean).every(className => classList.contains(className));
+    }
+    return this.matches(classList.toString());
   }
 
   private normalize(s: string | undefined): string | undefined {

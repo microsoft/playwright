@@ -29,7 +29,7 @@ npm run build
 # 2. Configure Git and clone the Trace Viewer repository
 git config --global user.name github-actions
 git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
-git clone "https://${GH_SERVICE_ACCOUNT_TOKEN}@github.com/microsoft/trace.playwright.dev.git" trace.playwright.dev
+git clone "https://x-access-token:${GH_SERVICE_ACCOUNT_TOKEN}@github.com/microsoft/trace.playwright.dev.git" trace.playwright.dev
 
 # 3. Copy the built Trace Viewer to the repository
 if [[ "${RELEASE_CHANNEL}" == "--stable" ]]; then

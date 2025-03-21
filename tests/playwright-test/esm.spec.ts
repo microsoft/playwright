@@ -62,7 +62,7 @@ test('should support import attributes', async ({ runInlineTest }) => {
   expect(result.stdout).toContain('imported value (test): bar');
 });
 
-test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
+test('should import esm from ts when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as fs from 'fs';
@@ -73,8 +73,10 @@ test('should import esm from ts when package.json has type module in experimenta
       import { foo } from './b.ts';
       import { bar } from './c.js';
       import { qux } from './d.js';
-      import { test, expect } from '@playwright/test';
+      // Make sure to import a type-only Locator below to check that our babel strips it out.
+      import { test, expect, Locator } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
+        const locator: Locator = null!;
         expect(testInfo.project.name).toBe('foo');
         expect(bar).toBe('bar');
         expect(qux).toBe('qux');

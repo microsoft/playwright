@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -14,6 +15,4 @@
  * limitations under the License.
  */
 
-const { schema, call, snapshot } = require('./lib/tools/browser');
-
-module.exports = { schema, call, snapshot };
+require('./lib/program');

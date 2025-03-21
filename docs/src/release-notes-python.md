@@ -4,6 +4,47 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.51
+
+### Highlights
+
+* New option [`option: BrowserContext.storageState.indexedDB`] for [`method: BrowserContext.storageState`] allows to save and restore IndexedDB contents. Useful when your application uses [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to store authentication tokens, like Firebase Authentication.
+
+  Here is an example following the [authentication guide](./auth.md#reusing-signed-in-state):
+
+  ```python
+  # Save storage state into the file. Make sure to include IndexedDB.
+  storage = await context.storage_state(path="state.json", indexed_db=True)
+
+  # Create a new context with the saved storage state.
+  context = await browser.new_context(storage_state="state.json")
+  ```
+
+* New option [`option: Locator.filter.visible`] for [`method: Locator.filter`] allows matching only visible elements.
+
+  ```python
+  # Ignore invisible todo items.
+  todo_items = page.get_by_test_id("todo-item").filter(visible=True)
+  # Check there are exactly 3 visible ones.
+  await expect(todo_items).to_have_count(3)
+  ```
+
+* New option `contrast` for methods [`method: Page.emulateMedia`] and [`method: Browser.newContext`] allows to emulate the `prefers-contrast` media feature.
+
+* New option [`option: APIRequest.newContext.failOnStatusCode`] makes all fetch requests made through the [APIRequestContext] throw on response codes other than 2xx and 3xx.
+
+### Browser Versions
+
+* Chromium 134.0.6998.35
+* Mozilla Firefox 135.0
+* WebKit 18.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 133
+* Microsoft Edge 133
+
+
 ## Version 1.50
 
 ### Async Pytest Plugin

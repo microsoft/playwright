@@ -73,7 +73,7 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
 
       const keys = await idbRequestToPromise(objectStore.getAllKeys());
       const records = await Promise.all(keys.map(async key => {
-        const record: channels.OriginStorage['indexedDB'][0]['stores'][0]['records'][0] = {};
+        const record: channels.IndexedDBDatabase['stores'][0]['records'][0] = {};
 
         if (objectStore.keyPath === null) {
           const { encoded, trivial } = trySerialize(key);
@@ -125,7 +125,7 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
     localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name)! })),
     indexedDB: recordIndexedDB ? await Promise.all((await indexedDB.databases()).map(collectDB)).catch(e => {
       throw new Error('Unable to serialize IndexedDB: ' + e.message);
-    }) : [],
+    }) : undefined,
   };
 }
 

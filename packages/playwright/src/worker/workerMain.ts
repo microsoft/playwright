@@ -22,7 +22,7 @@ import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { stdioChunkToParams } from '../common/ipc';
 import { debugTest, relativeFilePath } from '../util';
 import { FixtureRunner } from './fixtureRunner';
-import { SkipError, TestInfoImpl } from './testInfo';
+import { TestSkipError, TestInfoImpl } from './testInfo';
 import { testInfoError } from './util';
 import { inheritFixtureNames } from '../common/fixtures';
 import { PoolBuilder } from '../common/poolBuilder';
@@ -324,9 +324,12 @@ export class WorkerMain extends ProcessRunner {
 
     // Create warning if any of the async calls were not awaited in various stages.
     const checkForFloatingPromises = (functionDescription: string) => {
+      if (process.env.PW_DISABLE_FLOATING_PROMISES_WARNING)
+        return;
       if (!testInfo._floatingPromiseScope.hasFloatingPromises())
         return;
-      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
+      // TODO: 1.52: Actually build annotations
+      // testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
       testInfo._floatingPromiseScope.clear();
     };
 
@@ -555,7 +558,7 @@ export class WorkerMain extends ProcessRunner {
       } catch (error) {
         firstError = firstError ?? error;
         // Skip in beforeAll/modifier prevents others from running.
-        if (type === 'beforeAll' && (error instanceof SkipError))
+        if (type === 'beforeAll' && (error instanceof TestSkipError))
           break;
         if (type === 'beforeAll' && !this._skipRemainingTestsInSuite) {
           // This will inform dispatcher that we should not run more tests from this group
@@ -593,7 +596,7 @@ export class WorkerMain extends ProcessRunner {
       } catch (error) {
         firstError = firstError ?? error;
         // Skip in modifier prevents others from running.
-        if (error instanceof SkipError)
+        if (error instanceof TestSkipError)
           break;
       }
     }

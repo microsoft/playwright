@@ -134,10 +134,11 @@ async function generateFirefoxProtocol(executablePath) {
   const data = zip.entryDataSync(zip.entry('chrome/juggler/content/protocol/Protocol.js'))
 
   const ctx = vm.createContext();
-  const protocolJSCode = data.toString('utf8');
+  const protocolJSCode = data.toString('utf8').replace('export const protocol', 'const protocol')
   function inject() {
     this.ChromeUtils = {
-      import: () => ({t})
+      import: () => ({t}),
+      importESModule: () => ({t}),
     }
     const t = {};
     t.String = {"$type": "string"};
@@ -166,7 +167,7 @@ async function generateFirefoxProtocol(executablePath) {
       return {"$type": "ref", "$ref": schemeName };
     }
   }
-  const json = vm.runInContext(`(${inject})();${protocolJSCode}; this.protocol;`, ctx);
+  const json = vm.runInContext(`(${inject})();${protocolJSCode}; protocol;`, ctx);
   await fs.promises.writeFile(outputPath, firefoxJSONToTS(json));
   console.log(`Wrote protocol.d.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
 }

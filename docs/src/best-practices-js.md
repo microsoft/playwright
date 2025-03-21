@@ -113,6 +113,7 @@ Playwright has a [test generator](./codegen.md) that can generate tests and pick
 To pick a locator run the `codegen` command followed by the URL that you would like to pick a locator from.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -201,6 +202,7 @@ You can live debug your test by clicking or editing the locators in your test in
 You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -243,6 +245,7 @@ You can then step through your test, view actionability logs and edit the locato
 To debug a specific test add the name of the test file and the line number of the test followed by the `--debug` flag.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -284,6 +287,7 @@ For CI failures, use the Playwright [trace viewer](./trace-viewer.md) instead of
 Traces are configured in the Playwright config file and are set to run on CI on the first retry of a failed test. We don't recommend setting this to `on` so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -320,6 +324,7 @@ pnpm exec playwright test --trace on
 Once you run this command your traces will be recorded for each test and can be viewed directly from the HTML report.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -398,6 +403,7 @@ export default defineConfig({
 By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -436,6 +442,7 @@ Check the [release notes](./release-notes.md) to see what the latest version is 
 You can see what version of Playwright you have by running the following command.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -510,6 +517,7 @@ test('runs in parallel 2', async ({ page }) => { /* ... */ });
 Playwright can [shard](./test-parallel.md#shard-tests-between-multiple-machines) a test suite, so that it can be executed on multiple machines.
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},

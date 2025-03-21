@@ -321,23 +321,17 @@ it('reverse engineer hasNotText', async ({ page }) => {
 });
 
 it('reverse engineer visible', async ({ page }) => {
-  expect.soft(generate(page.getByText('Hello').visible().locator('div'))).toEqual({
-    csharp: `GetByText("Hello").Visible().Locator("div")`,
-    java: `getByText("Hello").visible().locator("div")`,
-    javascript: `getByText('Hello').visible().locator('div')`,
-    python: `get_by_text("Hello").visible().locator("div")`,
+  expect.soft(generate(page.getByText('Hello').filter({ visible: true }).locator('div'))).toEqual({
+    csharp: `GetByText("Hello").Filter(new() { Visible = true }).Locator("div")`,
+    java: `getByText("Hello").filter(new Locator.FilterOptions().setVisible(true)).locator("div")`,
+    javascript: `getByText('Hello').filter({ visible: true }).locator('div')`,
+    python: `get_by_text("Hello").filter(visible=True).locator("div")`,
   });
-  expect.soft(generate(page.getByText('Hello').visible({ visible: true }).locator('div'))).toEqual({
-    csharp: `GetByText("Hello").Visible().Locator("div")`,
-    java: `getByText("Hello").visible().locator("div")`,
-    javascript: `getByText('Hello').visible().locator('div')`,
-    python: `get_by_text("Hello").visible().locator("div")`,
-  });
-  expect.soft(generate(page.getByText('Hello').visible({ visible: false }).locator('div'))).toEqual({
-    csharp: `GetByText("Hello").Visible(new() { Visible = false }).Locator("div")`,
-    java: `getByText("Hello").visible(new Locator.VisibleOptions().setVisible(false)).locator("div")`,
-    javascript: `getByText('Hello').visible({ visible: false }).locator('div')`,
-    python: `get_by_text("Hello").visible(visible=False).locator("div")`,
+  expect.soft(generate(page.getByText('Hello').filter({ visible: false }).locator('div'))).toEqual({
+    csharp: `GetByText("Hello").Filter(new() { Visible = false }).Locator("div")`,
+    java: `getByText("Hello").filter(new Locator.FilterOptions().setVisible(false)).locator("div")`,
+    javascript: `getByText('Hello').filter({ visible: false }).locator('div')`,
+    python: `get_by_text("Hello").filter(visible=False).locator("div")`,
   });
 });
 

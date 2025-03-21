@@ -22,7 +22,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
 * deprecated: This method is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 
 - returns: <[null]|[Object]>
-  - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage_intro).
+  - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage).
   - `name` <[string]> A human readable name for the node.
   - `value` <[string]|[float]> The current value of the node, if applicable.
   - `description` <[string]> An additional human readable description of the node, if applicable.

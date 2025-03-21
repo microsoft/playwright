@@ -92,13 +92,14 @@ it('should support locator.or()', async ({ page }) => {
 });
 
 it('should support playwright.getBy*', async ({ page }) => {
-  await page.setContent('<span>Hello</span><span title="world">World</span>');
+  await page.setContent('<span>Hello</span><span title="world">World</span><div>one</div><div style="display:none">two</div>');
   expect(await page.evaluate(`playwright.getByText('hello').element.innerHTML`)).toContain('Hello');
   expect(await page.evaluate(`playwright.getByTitle('world').element.innerHTML`)).toContain('World');
   expect(await page.evaluate(`playwright.locator('span').filter({ hasText: 'hello' }).element.innerHTML`)).toContain('Hello');
   expect(await page.evaluate(`playwright.locator('span').first().element.innerHTML`)).toContain('Hello');
   expect(await page.evaluate(`playwright.locator('span').last().element.innerHTML`)).toContain('World');
   expect(await page.evaluate(`playwright.locator('span').nth(1).element.innerHTML`)).toContain('World');
+  expect(await page.evaluate(`playwright.locator('div').filter({ visible: false }).element.innerHTML`)).toContain('two');
 });
 
 it('expected properties on playwright object', async ({ page }) => {

@@ -279,7 +279,7 @@ OriginStorage:
       type: array
       items: NameValue
     indexedDB:
-      type: array
+      type: array?
       items: IndexedDBDatabase
 
 SerializedError:
@@ -705,6 +705,14 @@ LocalUtils:
       parameters:
         stacksId: string
 
+    globToRegex:
+      parameters:
+        glob: string
+        baseURL: string?
+        webSocketUrl: boolean?
+      returns:
+        regex: string
+
 Root:
   type: interface
 
@@ -762,6 +770,7 @@ Playwright:
               key: binary?
               passphrase: string?
               pfx: binary?
+        maxRedirects: number?
         httpCredentials:
           type: object?
           properties:
@@ -1946,7 +1955,7 @@ Frame:
     ariaSnapshot:
       parameters:
         selector: string
-        id: boolean?
+        ref: boolean?
         mode:
           type: enum?
           literals:

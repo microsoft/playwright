@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Copied from upstream: https://github.com/puppeteer/puppeteer/blob/main/packages/puppeteer-core/src/bidi/core/Connection.ts
+
 import * as Bidi from './bidiProtocol';
 
 export interface Commands {

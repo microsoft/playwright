@@ -22,14 +22,14 @@ test.describe.configure({ mode: 'parallel' });
 
 test('should match snapshot with name', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'a.spec.ts-snapshots/test.snapshot.yml': `
+    'a.spec.ts-snapshots/test.aria.yml': `
       - heading "hello world"
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
       });
     `
   });
@@ -43,66 +43,66 @@ test('should generate multiple missing', async ({ runInlineTest }, testInfo) => 
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-1.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
         await page.setContent(\`<h1>hello world 2</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-2.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
       });
     `
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-1.snapshot.yml, writing actual`);
-  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-2.snapshot.yml, writing actual`);
-  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-1.snapshot.yml'), 'utf8');
+  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-1.aria.yml, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-2.aria.yml, writing actual`);
+  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-1.aria.yml'), 'utf8');
   expect(snapshot1).toBe('- heading "hello world" [level=1]');
-  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-2.snapshot.yml'), 'utf8');
+  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-2.aria.yml'), 'utf8');
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
 
 test('should rebaseline all', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'a.spec.ts-snapshots/test-1.snapshot.yml': `
+    'a.spec.ts-snapshots/test-1.aria.yml': `
       - heading "foo"
     `,
-    'a.spec.ts-snapshots/test-2.snapshot.yml': `
+    'a.spec.ts-snapshots/test-2.aria.yml': `
       - heading "bar"
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-1.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
         await page.setContent(\`<h1>hello world 2</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-2.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
       });
     `
   }, { 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output).toContain(`A snapshot is generated at a.spec.ts-snapshots${path.sep}test-1.snapshot.yml`);
-  expect(result.output).toContain(`A snapshot is generated at a.spec.ts-snapshots${path.sep}test-2.snapshot.yml`);
-  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-1.snapshot.yml'), 'utf8');
+  expect(result.output).toContain(`A snapshot is generated at a.spec.ts-snapshots${path.sep}test-1.aria.yml`);
+  expect(result.output).toContain(`A snapshot is generated at a.spec.ts-snapshots${path.sep}test-2.aria.yml`);
+  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-1.aria.yml'), 'utf8');
   expect(snapshot1).toBe('- heading "hello world" [level=1]');
-  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-2.snapshot.yml'), 'utf8');
+  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-2.aria.yml'), 'utf8');
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
 
 test('should not rebaseline matching', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'a.spec.ts-snapshots/test.snapshot.yml': `
+    'a.spec.ts-snapshots/test.aria.yml': `
       - heading "hello world"
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
       });
     `
   }, { 'update-snapshots': 'changed' });
 
   expect(result.exitCode).toBe(0);
-  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test.snapshot.yml'), 'utf8');
+  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test.aria.yml'), 'utf8');
   expect(snapshot1.trim()).toBe('- heading "hello world"');
 });
 
@@ -120,11 +120,11 @@ test('should generate snapshot name', async ({ runInlineTest }, testInfo) => {
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-name-1.snapshot.yml, writing actual`);
-  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-name-2.snapshot.yml, writing actual`);
-  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-name-1.snapshot.yml'), 'utf8');
+  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-name-1.aria.yml, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-name-2.aria.yml, writing actual`);
+  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-name-1.aria.yml'), 'utf8');
   expect(snapshot1).toBe('- heading "hello world" [level=1]');
-  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-name-2.snapshot.yml'), 'utf8');
+  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-name-2.aria.yml'), 'utf8');
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
 
@@ -161,13 +161,13 @@ for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
           await expect(page.locator('body')).toMatchAriaSnapshot({ timeout: 1 });
         });
       `,
-      'a.spec.ts-snapshots/test-1.snapshot.yml': '- heading "Old content" [level=1]',
+      'a.spec.ts-snapshots/test-1.aria.yml': '- heading "Old content" [level=1]',
     });
 
     const rebase = updateSnapshots === 'all' || updateSnapshots === 'changed';
     expect(result.exitCode).toBe(rebase ? 0 : 1);
     if (rebase) {
-      const snapshotOutputPath = testInfo.outputPath('a.spec.ts-snapshots/test-1.snapshot.yml');
+      const snapshotOutputPath = testInfo.outputPath('a.spec.ts-snapshots/test-1.aria.yml');
       expect(result.output).toContain(`A snapshot is generated at`);
       const data = fs.readFileSync(snapshotOutputPath);
       expect(data.toString()).toBe('- heading "New content" [level=1]');
@@ -187,7 +187,7 @@ test('should respect timeout', async ({ runInlineTest }, testInfo) => {
         await expect(page.locator('body')).toMatchAriaSnapshot({ timeout: 1 });
       });
     `,
-    'a.spec.ts-snapshots/test-1.snapshot.yml': '- heading "new world" [level=1]',
+    'a.spec.ts-snapshots/test-1.aria.yml': '- heading "new world" [level=1]',
   });
 
   expect(result.exitCode).toBe(1);
@@ -201,14 +201,14 @@ test('should respect config.snapshotPathTemplate', async ({ runInlineTest }, tes
         snapshotPathTemplate: 'my-snapshots/{testFilePath}/{arg}{ext}',
       };
     `,
-    'my-snapshots/dir/a.spec.ts/test.snapshot.yml': `
+    'my-snapshots/dir/a.spec.ts/test.aria.yml': `
       - heading "hello world"
     `,
     'dir/a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
       });
     `
   });
@@ -228,17 +228,17 @@ test('should respect config.expect.toMatchAriaSnapshot.pathTemplate', async ({ r
         },
       };
     `,
-    'my-snapshots/dir/a.spec.ts/test.snapshot.yml': `
+    'my-snapshots/dir/a.spec.ts/test.aria.yml': `
       - heading "wrong one"
     `,
-    'actual-snapshots/dir/a.spec.ts/test.snapshot.yml': `
+    'actual-snapshots/dir/a.spec.ts/test.aria.yml': `
       - heading "hello world"
     `,
     'dir/a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.snapshot.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
       });
     `
   });

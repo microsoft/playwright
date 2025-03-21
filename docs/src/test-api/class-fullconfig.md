@@ -10,6 +10,12 @@ Resolved configuration which is accessible via [`property: TestInfo.config`] and
 
 Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
 
+## property: FullConfig.failOnFlakyTests
+* since: v1.52
+- type: <[boolean]>
+
+See [`property: TestConfig.failOnFlakyTests`].
+
 ## property: FullConfig.forbidOnly
 * since: v1.10
 - type: <[boolean]>
@@ -93,8 +99,8 @@ See [`property: TestConfig.reporter`].
 ## property: FullConfig.reportSlowTests
 * since: v1.10
 - type: <[null]|[Object]>
-  - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
-  - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+  - `max` <[int]> The maximum number of slow test files to report.
+  - `threshold` <[float]> Test file duration in milliseconds that is considered slow.
 
 See [`property: TestConfig.reportSlowTests`].
 
