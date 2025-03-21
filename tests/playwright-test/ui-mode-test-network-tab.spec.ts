@@ -108,7 +108,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
   await page.getByText('Network', { exact: true }).click();
 
   await page.getByText('post-data-1').click();
-
+  await page.getByRole('tab', { name: 'Payload' }).click();
   await expect(page.locator('.CodeMirror-code .CodeMirror-line').allInnerTexts()).resolves.toEqual([
     '{',
     '  "data": {',
@@ -151,14 +151,21 @@ test('should display list of query parameters (only if present)', async ({ runUI
 
   await page.getByText('call-with-query-params').click();
 
-  await expect(page.getByText('Query String Parameters')).toBeVisible();
-  await expect(page.getByText('param1: value1')).toBeVisible();
-  await expect(page.getByText('param1: value2')).toBeVisible();
-  await expect(page.getByText('param2: value2')).toBeVisible();
+  await page.getByRole('tab', { name: 'Payload' }).click();
+  const group = page.getByRole('group', { name: 'Query String Parameters' });
+  await expect(group.getByRole('table')).toMatchAriaSnapshot(
+      `- table:
+         - rowgroup:
+           - 'row "param1: value1"'
+           - 'row "param1: value2"'
+           - 'row "param2: value2"'
+      `
+  );
 
   await page.getByText('endpoint').click();
 
-  await expect(page.getByText('Query String Parameters')).not.toBeVisible();
+  await expect(page.getByText('No payload for this request')).toBeVisible();
+  await expect(group).not.toBeVisible();
 });
 
 test('should not duplicate network entries from beforeAll', {
