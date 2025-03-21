@@ -416,6 +416,26 @@ it('should throw for too deep reference chain', {
     : 'Cannot serialize result: object reference chain is too long.');
 });
 
+it('should throw usable message for unserializable shallow function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, () => { }))
+      .rejects.toThrow(/Attempting to serialize unexpected value: \(\) => {}/);
+});
+
+it('should throw usable message for unserializable object one deep function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, { aProperty: () => { } }))
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "aProperty": \(\) => {}/);
+});
+
+it('should throw usable message for unserializable object nested function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, { a: { inner: { property: () => { } } } }))
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\.property": \(\) => {}/);
+});
+
+it('should throw usable message for unserializable array nested function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, { a: { inner: ['firstValue', { property: () => { } }] } }))
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\[1\]\.property": \(\) => {}/);
+});
+
 it('should alias Window, Document and Node', async ({ page }) => {
   const object = await page.evaluate('[window, document, document.body]');
   expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);

@@ -17,10 +17,10 @@
 import type { SerializedValue } from '@protocol/channels';
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
-  return innerParseSerializedValue(value, handles, new Map());
+  return innerParseSerializedValue(value, handles, new Map(), []);
 }
 
-function innerParseSerializedValue(value: SerializedValue, handles: any[] | undefined, refs: Map<number, object>): any {
+function innerParseSerializedValue(value: SerializedValue, handles: any[] | undefined, refs: Map<number, object>, accessChain: Array<string | number>): any {
   if (value.ref !== undefined)
     return refs.get(value.ref);
   if (value.n !== undefined)
@@ -61,15 +61,15 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   if (value.a !== undefined) {
     const result: any[] = [];
     refs.set(value.id!, result);
-    for (const v of value.a)
-      result.push(innerParseSerializedValue(v, handles, refs));
+    for (let i = 0; i < value.a.length; i++)
+      result.push(innerParseSerializedValue(value.a[i], handles, refs, [...accessChain, i]));
     return result;
   }
   if (value.o !== undefined) {
     const result: any = {};
     refs.set(value.id!, result);
     for (const { k, v } of value.o)
-      result[k] = innerParseSerializedValue(v, handles, refs);
+      result[k] = innerParseSerializedValue(v, handles, refs, [...accessChain, k]);
     return result;
   }
   if (value.h !== undefined) {
@@ -77,7 +77,7 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
       throw new Error('Unexpected handle');
     return handles[value.h];
   }
-  throw new Error('Unexpected value');
+  throw new Error(`Attempting to deserialize unexpected value${accessChainToDisplayString(accessChain)}: ${value}`);
 }
 
 export type HandleOrValue = { h: number } | { fallThrough: any };
@@ -87,10 +87,10 @@ type VisitorInfo = {
 };
 
 export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
-  return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map() });
+  return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map() }, []);
 }
 
-function innerSerializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
+function innerSerializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo, accessChain: Array<string | number>): SerializedValue {
   const handle = handleSerializer(value);
   if ('fallThrough' in handle)
     value = handle.fallThrough;
@@ -137,7 +137,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);
     for (let i = 0; i < value.length; ++i)
-      a.push(innerSerializeValue(value[i], handleSerializer, visitorInfo));
+      a.push(innerSerializeValue(value[i], handleSerializer, visitorInfo, [...accessChain, i]));
     return { a, id };
   }
   if (typeof value === 'object') {
@@ -145,10 +145,21 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);
     for (const name of Object.keys(value))
-      o.push({ k: name, v: innerSerializeValue(value[name], handleSerializer, visitorInfo) });
+      o.push({ k: name, v: innerSerializeValue(value[name], handleSerializer, visitorInfo, [...accessChain, name]) });
     return { o, id };
   }
-  throw new Error('Unexpected value');
+  // Likely only functions can reach here.
+  throw new Error(`Attempting to serialize unexpected value${accessChainToDisplayString(accessChain)}: ${value}`);
+}
+
+function accessChainToDisplayString(accessChain: Array<string | number>): string {
+  const chainString = accessChain.map((accessor, i) => {
+    if (typeof accessor === 'string')
+      return i ? `.${accessor}` : accessor;
+    return `[${accessor}]`;
+  }).join('');
+
+  return chainString.length > 0 ? ` at position "${chainString}"` : '';
 }
 
 function isRegExp(obj: any): obj is RegExp {
