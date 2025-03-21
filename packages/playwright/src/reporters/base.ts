@@ -297,7 +297,7 @@ export class TerminalReporter implements ReporterV2 {
     });
     const encounteredWarnings = new Map<string, Array<TestCase>>();
     for (const test of warningTests) {
-      for (const annotation of test.annotations) {
+      for (const annotation of [...test.annotations, ...test.results.flatMap(r => r.annotations)]) {
         if (annotation.type !== 'warning' || annotation.description === undefined)
           continue;
         let tests = encounteredWarnings.get(annotation.description);
