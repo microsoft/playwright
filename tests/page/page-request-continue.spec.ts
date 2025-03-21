@@ -484,8 +484,7 @@ it('continue should not override cookie', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
-}, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'We currently clear all headers during interception in firefox');
+}, async ({ page, server }) => {
   server.setRoute('/set-cookie', (request, response) => {
     response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
     response.end();
