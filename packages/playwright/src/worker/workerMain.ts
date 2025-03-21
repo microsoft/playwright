@@ -301,6 +301,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = testInfo;
     setCurrentTestInfo(testInfo);
+    const staticAnnotations = new Set(testInfo.annotations);
     this.dispatchEvent('testBegin', buildTestBeginPayload(testInfo));
 
     const isSkipped = testInfo.expectedStatus === 'skipped';
@@ -310,7 +311,7 @@ export class WorkerMain extends ProcessRunner {
     if (isSkipped && nextTest && !hasAfterAllToRunBeforeNextTest) {
       // Fast path - this test is skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
-      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, test));
+      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, staticAnnotations));
       return;
     }
 
@@ -492,7 +493,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = null;
     setCurrentTestInfo(null);
-    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, test));
+    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, staticAnnotations));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
@@ -612,8 +613,7 @@ function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
   };
 }
 
-function buildTestEndPayload(testInfo: TestInfoImpl, test: TestCase): TestEndPayload {
-  const staticAnnotations = test.staticAnnotations();
+function buildTestEndPayload(testInfo: TestInfoImpl, staticAnnotations: Set<Annotation>): TestEndPayload {
   return {
     testId: testInfo.testId,
     duration: testInfo.duration,
@@ -621,7 +621,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl, test: TestCase): TestEndPay
     errors: testInfo.errors,
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
-    annotations: testInfo.annotations.filter(a => !staticAnnotations.includes(a)),
+    annotations: testInfo.annotations.filter(a => !staticAnnotations.has(a)),
     timeout: testInfo.timeout,
   };
 }
