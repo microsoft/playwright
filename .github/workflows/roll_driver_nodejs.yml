@@ -27,8 +27,8 @@ jobs:
           echo "HAS_CHANGES=1" >> $GITHUB_OUTPUT
           BRANCH_NAME="roll-driver-nodejs/$(date +%Y-%b-%d)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
-          git config --global user.name github-actions
-          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config --global user.name microsoft-playwright-automation[bot]
+          git config --global user.email 4203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
           git checkout -b "$BRANCH_NAME"
           git add .
           git commit -m "chore(driver): roll driver to recent Node.js LTS version"
