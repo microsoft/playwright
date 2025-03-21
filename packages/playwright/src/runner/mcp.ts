@@ -44,7 +44,7 @@ export async function startMcpServer(dispatcher: TestServerDispatcher) {
     const tests = teleSuiteUpdater.asModel().rootSuite.allTests().map(t => {
       return {
         id: t.id,
-        title: t.titlePath().slice(1).join(' >> '),
+        title: t.titlePath().filter(p => p !== '').join(' >> '),
         location: t.location.file + ':' + t.location.line,
       };
     });
