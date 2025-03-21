@@ -417,7 +417,7 @@ class HtmlBuilder {
         projectName,
         location,
         duration,
-        annotations: this._serializeAnnotations(test.annotations),
+        annotations: this._serializeAnnotations([...test.annotations, ...results.flatMap(r => r.annotations)]),
         tags: test.tags,
         outcome: test.outcome(),
         path,

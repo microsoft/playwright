@@ -597,7 +597,8 @@ export interface TestResult {
    *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip),
    *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    *   and
-   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail);
+   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail)
+   *   during test execution;
    * - annotations appended to
    *   [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *

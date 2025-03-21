@@ -242,7 +242,8 @@ export class TeleReporterReceiver {
     result.errors = payload.errors;
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
-    result.annotations = payload.annotations;
+    if (payload.annotations)
+      result.annotations = payload.annotations;
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();

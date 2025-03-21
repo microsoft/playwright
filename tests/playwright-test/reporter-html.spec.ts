@@ -2458,12 +2458,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'a.test.js': `
           const { test, expect } = require('@playwright/test');
           test('annotated test',{ annotation :[{type:'key',description:'value'}]}, async ({}) => {expect(1).toBe(1);});
+          test('slow test', () => { test.slow(); });
           test('non-annotated test', async ({}) => {expect(1).toBe(2);});
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
       expect(result.exitCode).toBe(1);
-      expect(result.passed).toBe(1);
+      expect(result.passed).toBe(2);
       expect(result.failed).toBe(1);
 
       await showReport();
@@ -2482,6 +2483,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
         await expect(page.getByText('non-annotated test')).not.toBeVisible();
         await expect(page.getByText('annotated test')).toBeVisible();
+      });
+
+      await test.step('filter by result annotation', async () => {
+        await searchInput.fill('annot:slow');
+        await expect(page.getByText('slow test')).toBeVisible();
       });
     });
 
