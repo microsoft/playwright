@@ -37,7 +37,7 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
       const ctor = v?.constructor;
       if (isFirefox) {
         const constructorImpl = ctor?.toString();
-        if (constructorImpl.startsWith('function Object() {') && constructorImpl.includes('[native code]'))
+        if (constructorImpl && constructorImpl.startsWith('function Object() {') && constructorImpl.includes('[native code]'))
           return true;
       }
 

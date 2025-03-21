@@ -95,7 +95,7 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
         const transaction = openRequest.result.transaction(['store', 'store2'], 'readwrite');
         transaction
             .objectStore('store')
-            .put({ name: 'foo', date: new Date(0) });
+            .put({ name: 'foo', date: new Date(0), null: null });
         transaction
             .objectStore('store2')
             .put('bar', 'foo');
@@ -138,7 +138,7 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
     openRequest.addEventListener('error', () => reject(openRequest.error));
   }));
   expect(idbValues).toEqual([
-    { name: 'foo', date: new Date(0) },
+    { name: 'foo', date: new Date(0), null: null },
     'bar'
   ]);
   await context2.close();
