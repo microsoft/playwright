@@ -26,7 +26,6 @@ permissions:
 jobs:
   test_linux:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +45,6 @@ jobs:
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +71,6 @@ jobs:
 
   test_win:
     name: "Windows"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +89,6 @@ jobs:
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -125,7 +121,6 @@ jobs:
 
   headed_tests:
     name: "headed ${{ matrix.browser }} (${{ matrix.os }})"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -149,7 +144,6 @@ jobs:
 
   transport_linux:
     name: "Transport"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -170,7 +164,6 @@ jobs:
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -197,7 +190,6 @@ jobs:
 
   test_chromium_channels:
     name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
@@ -219,7 +211,6 @@ jobs:
 
   chromium_tot:
     name: Chromium tip-of-tree ${{ matrix.os }}${{ matrix.headed }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -245,7 +236,6 @@ jobs:
 
   chromium_tot_headless_shell:
     name: Chromium tip-of-tree headless-shell-${{ matrix.os }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -266,7 +256,6 @@ jobs:
 
   firefox_beta:
     name: Firefox Beta ${{ matrix.os }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -300,7 +289,6 @@ jobs:
 
   test_channel_chromium:
     name: Test channel=chromium
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
