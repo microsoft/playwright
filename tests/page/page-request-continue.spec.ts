@@ -767,8 +767,7 @@ it('propagate headers cross origin redirect after interception', {
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' },
   ]
-}, async ({ page, server, browserName, isAndroid }) => {
-  it.skip(isAndroid, 'Context is reused, so the cookies are not isolated between tests.');
+}, async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/empty.html');
   let resolve;
   const serverRequestPromise = new Promise<http.IncomingMessage>(f => resolve = f);
