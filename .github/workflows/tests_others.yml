@@ -57,7 +57,6 @@ jobs:
 
   test_webview2:
     name: WebView2
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-2022
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -87,7 +86,6 @@ jobs:
 
   test_clock_frozen_time_linux:
     name: time library - ${{ matrix.clock }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
@@ -112,7 +110,6 @@ jobs:
 
   test_clock_frozen_time_test_runner:
     name: time test runner - ${{ matrix.clock }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-22.04
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -136,7 +133,6 @@ jobs:
 
   test_electron:
     name: Electron - ${{ matrix.os }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
