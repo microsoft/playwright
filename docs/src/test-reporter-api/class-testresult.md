@@ -21,7 +21,7 @@ The list of files or buffers attached during the test execution through [`proper
   - `description` ?<[string]> Optional description.
 
 The list of annotations appended during test execution. Includes:
-* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`];
+* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`] during test execution;
 * annotations appended to [`property: TestInfo.annotations`].
 
 Annotations are available during test execution through [`property: TestInfo.annotations`].
