@@ -85,8 +85,6 @@ export const TestResultView: React.FC<{
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
 
-  console.log({videos})
-
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
       {errors.map((error, index) => {
