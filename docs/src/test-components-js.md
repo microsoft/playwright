@@ -217,7 +217,7 @@ Working around these and other limitations is quick and elegant: for every use c
 
 Let's say you'd like to test following component:
 
-```js title="input-media.tsx"
+```ts title="input-media.tsx"
 import React from 'react';
 
 type InputMediaProps = {
@@ -232,7 +232,7 @@ export function InputMedia(props: InputMediaProps) {
 
 Create a story file for your component:
 
-```js title="input-media.story.tsx"
+```ts title="input-media.story.tsx"
 import React from 'react';
 import InputMedia from './import-media';
 
@@ -479,7 +479,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 }>
   <TabItem value="react">
 
-  ```js title="playwright/index.tsx"
+  ```ts title="playwright/index.tsx"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
   import { BrowserRouter } from 'react-router-dom';
 
@@ -493,7 +493,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   });
   ```
 
-  ```js title="src/pages/ProductsPage.spec.tsx"
+  ```ts title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
   import type { HooksConfig } from '../playwright';
   import { ProductsPage } from './pages/ProductsPage';
@@ -510,7 +510,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   <TabItem value="vue">
 
-  ```js title="playwright/index.ts"
+  ```ts title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
   import { router } from '../src/router';
 
@@ -524,7 +524,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   });
   ```
 
-  ```js title="src/pages/ProductsPage.spec.ts"
+  ```ts title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue';
   import type { HooksConfig } from '../playwright';
   import ProductsPage from './pages/ProductsPage.vue';
@@ -874,7 +874,7 @@ Check [Vite documentation](https://vite.dev/guide/features#css) for more details
 
 Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
 
-```js title="playwright/index.ts"
+```ts title="playwright/index.ts"
 import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
 import { createTestingPinia } from '@pinia/testing';
 import type { StoreState } from 'pinia';
@@ -900,7 +900,7 @@ beforeMount<HooksConfig>(async ({ hooksConfig }) => {
 });
 ```
 
-```js title="src/pinia.spec.ts"
+```ts title="src/pinia.spec.ts"
 import { test, expect } from '@playwright/experimental-ct-vue';
 import type { HooksConfig } from '../playwright';
 import Store from './Store.vue';

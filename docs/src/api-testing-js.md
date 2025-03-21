@@ -258,7 +258,7 @@ test('last created issue should be on the server', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Title' }).fill('Bug report 1');
   await page.getByRole('textbox', { name: 'Comment body' }).fill('Bug description');
   await page.getByText('Submit new issue').click();
-  const issueId = page.url().substr(page.url().lastIndexOf('/'));
+  const issueId = new URL(page.url()).pathname.split('/').pop();
 
   const newIssue = await apiContext.get(
       `https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`

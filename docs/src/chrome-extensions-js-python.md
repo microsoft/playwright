@@ -107,7 +107,7 @@ Note the use of the `chromium` channel that allows to run extensions in headless
 
 First, add fixtures that will load the extension:
 
-```js title="fixtures.ts"
+```ts title="fixtures.ts"
 import { test as base, chromium, type BrowserContext } from '@playwright/test';
 import path from 'path';
 

@@ -43,7 +43,7 @@ Here is how typical test environment setup differs between traditional test styl
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```js title="todo-page.ts"
+```ts title="todo-page.ts"
 import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -126,7 +126,7 @@ Fixtures have a number of advantages over before/after hooks:
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```js title="todo-page.ts"
+```ts title="todo-page.ts"
 import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -164,7 +164,7 @@ export class TodoPage {
   </div>
 </details>
 
-```js title="example.spec.ts"
+```ts title="example.spec.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
@@ -201,7 +201,7 @@ Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page
   <summary>Click to expand the code for the <code>TodoPage</code> and <code>SettingsPage</code></summary>
   <div>
 
-```js title="todo-page.ts"
+```ts title="todo-page.ts"
 import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -239,7 +239,7 @@ export class TodoPage {
 
 SettingsPage is similar:
 
-```js title="settings-page.ts"
+```ts title="settings-page.ts"
 import type { Page } from '@playwright/test';
 
 export class SettingsPage {
@@ -255,7 +255,7 @@ export class SettingsPage {
   </div>
 </details>
 
-```js title="my-test.ts"
+```ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 import { SettingsPage } from './settings-page';
@@ -354,7 +354,7 @@ Playwright Test uses [worker processes](./test-parallel.md) to run test files. S
 
 Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to login into this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets up this fixture once per worker.
 
-```js title="my-test.ts"
+```ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 type Account = {
@@ -406,7 +406,7 @@ Automatic fixtures are set up for each test/worker, even when the test does not 
 
 Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
-```js title="my-test.ts"
+```ts title="my-test.ts"
 import debug from 'debug';
 import fs from 'fs';
 import { test as base } from '@playwright/test';
@@ -436,7 +436,7 @@ export { expect } from '@playwright/test';
 
 By default, fixture shares timeout with the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
 
-```js
+```ts
 import { test as base, expect } from '@playwright/test';
 
 const test = base.extend<{ slowFixture: string }>({
@@ -462,8 +462,8 @@ Below we'll create a `defaultItem` option in addition to the `todoPage` fixture 
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```js title="todo-page.ts"
-import type { Page, Locator } from '@playwright/test';
+```ts title="todo-page.ts"
+import type { Locator } from '@playwright/test';
 
 export class TodoPage {
   private readonly inputBox: Locator;
@@ -501,7 +501,7 @@ export class TodoPage {
   </div>
 </details>
 
-```js title="my-test.ts"
+```ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
@@ -533,7 +533,7 @@ export { expect } from '@playwright/test';
 
 We can now use `todoPage` fixture as usual, and set the `defaultItem` option in the config file.
 
-```js title="playwright.config.ts"
+```ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import type { MyOptions } from './my-test';
 
@@ -555,7 +555,7 @@ export default defineConfig<MyOptions>({
 
 If the value of your option is an array, for example `[{ name: 'Alice' }, { name: 'Bob' }]`, you'll need to wrap it into an extra array when providing the value. This is best illustrated with an example.
 
-```js
+```ts
 type Person = { name: string };
 const test = base.extend<{ persons: Person[] }>({
   // Declare the option, default value is an empty array.
@@ -586,7 +586,7 @@ Fixtures follow these rules to determine the execution order:
 
 Consider the following example:
 
-```js
+```ts
 import { test as base } from '@playwright/test';
 
 const test = base.extend<{
