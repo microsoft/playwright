@@ -12,8 +12,7 @@
 
 The list of annotations applicable to the current test. Includes:
 * annotations defined on the test or suite via [`method: Test.(call)`] and [`method: Test.describe`];
-* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`];
-* annotations appended to [`property: TestInfo.annotations`] during the test execution.
+* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`] prior to test execution.
 
 Annotations are available during test execution through [`property: TestInfo.annotations`].
 

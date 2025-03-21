@@ -106,7 +106,7 @@ test('test modifiers should work', async ({ runInlineTest }) => {
     const test = spec.tests[0];
     expect(test.expectedStatus).toBe(expectedStatus);
     expect(test.results[0].status).toBe(status);
-    expect(test.annotations).toEqual(annotations);
+    expect([...test.annotations, ...test.results.flatMap(r => r.annotations)]).toEqual(annotations);
   };
   expectTest('passed1', 'passed', 'passed', []);
   expectTest('passed2', 'passed', 'passed', []);
@@ -306,23 +306,6 @@ test.describe('test modifier annotations', () => {
     expectTest('focused fail by suite', 'failed', 'expected', ['fail']);
   });
 
-  test('should not multiple on retry', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.test.ts': `
-        import { test, expect } from '@playwright/test';
-        test('retry', () => {
-          test.info().annotations.push({ type: 'example' });
-          expect(1).toBe(2);
-        });
-      `,
-    }, { retries: 3 });
-    const expectTest = expectTestHelper(result);
-
-    expect(result.exitCode).toBe(1);
-    expect(result.passed).toBe(0);
-    expectTest('retry', 'passed', 'unexpected', ['example']);
-  });
-
   test('should not multiply on repeat-each', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
@@ -424,7 +407,7 @@ test('should skip inside fixture', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
 });
 
 test('modifier with a function should throw in the test', async ({ runInlineTest }) => {
@@ -477,8 +460,8 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
-  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.outputLines).toEqual([
     'beforeEach',
     'passed',
@@ -615,8 +598,8 @@ test('should skip all tests from beforeAll', async ({ runInlineTest }) => {
     'beforeAll',
     'afterAll',
   ]);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[1].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
 });
 
 test('should report skipped tests in-order with correct properties', async ({ runInlineTest }) => {
@@ -712,7 +695,7 @@ test('static modifiers should be added in serial mode', async ({ runInlineTest }
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(2);
   expect(result.didNotRun).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow' }]);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'slow' }]);
   expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme' }]);
   expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip' }]);
   expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([]);

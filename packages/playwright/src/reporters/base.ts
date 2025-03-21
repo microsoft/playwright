@@ -291,10 +291,13 @@ export class TerminalReporter implements ReporterV2 {
   }
 
   private _printWarnings() {
-    const warningTests = this.suite.allTests().filter(test => test.annotations.some(a => a.type === 'warning'));
+    const warningTests = this.suite.allTests().filter(test => {
+      const annotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)];
+      return annotations.some(a => a.type === 'warning');
+    });
     const encounteredWarnings = new Map<string, Array<TestCase>>();
     for (const test of warningTests) {
-      for (const annotation of test.annotations) {
+      for (const annotation of [...test.annotations, ...test.results.flatMap(r => r.annotations)]) {
         if (annotation.type !== 'warning' || annotation.description === undefined)
           continue;
         let tests = encounteredWarnings.get(annotation.description);

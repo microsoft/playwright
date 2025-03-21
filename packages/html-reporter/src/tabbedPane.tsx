@@ -30,14 +30,18 @@ export const TabbedPane: React.FunctionComponent<{
   selectedTab: string,
   setSelectedTab: (tab: string) => void
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
+  const idPrefix = React.useId();
   return <div className='tabbed-pane'>
     <div className='vbox'>
       <div className='hbox' style={{ flex: 'none' }}>
-        <div className='tabbed-pane-tab-strip'>{
+        <div className='tabbed-pane-tab-strip' role='tablist'>{
           tabs.map(tab => (
             <div className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
               onClick={() => setSelectedTab(tab.id)}
-              key={tab.id}>
+              id={`${idPrefix}-${tab.id}`}
+              key={tab.id}
+              role='tab'
+              aria-selected={selectedTab === tab.id}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>
           ))
@@ -46,7 +50,7 @@ export const TabbedPane: React.FunctionComponent<{
       {
         tabs.map(tab => {
           if (selectedTab === tab.id)
-            return <div key={tab.id} className='tab-content'>{tab.render()}</div>;
+            return <div key={tab.id} className='tab-content' role='tabpanel' aria-labelledby={`${idPrefix}-${tab.id}`}>{tab.render()}</div>;
         })
       }
     </div>

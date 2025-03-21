@@ -59,7 +59,7 @@ export type TestFileSummary = {
   stats: Stats;
 };
 
-export type TestCaseAnnotation = { type: string, description?: string };
+export type TestAnnotation = { type: string, description?: string };
 
 export type TestCaseSummary = {
   testId: string,
@@ -67,7 +67,7 @@ export type TestCaseSummary = {
   path: string[];
   projectName: string;
   location: Location;
-  annotations: TestCaseAnnotation[];
+  annotations: TestAnnotation[];
   tags: string[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
@@ -98,6 +98,7 @@ export type TestResult = {
   errors: string[];
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
+  annotations: TestAnnotation[];
 };
 
 export type TestStep = {

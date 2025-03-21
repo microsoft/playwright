@@ -68,14 +68,14 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
-  annotations?: { type: string, description?: string }[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestEnd = {
   testId: string;
   expectedStatus: reporterTypes.TestStatus;
   timeout: number;
-  annotations: { type: string, description?: string }[];
+  annotations: Annotation[];
 };
 
 export type JsonTestResultStart = {
@@ -94,6 +94,7 @@ export type JsonTestResultEnd = {
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
   attachments: JsonAttachment[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestStepStart = {
@@ -241,6 +242,8 @@ export class TeleReporterReceiver {
     result.errors = payload.errors;
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
+    if (payload.annotations)
+      result.annotations = payload.annotations;
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
@@ -562,6 +565,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
   stdout: reporterTypes.TestResult['stdout'] = [];
   stderr: reporterTypes.TestResult['stderr'] = [];
   attachments: reporterTypes.TestResult['attachments'] = [];
+  annotations: reporterTypes.TestResult['annotations'] = [];
   status: reporterTypes.TestStatus = 'skipped';
   steps: TeleTestStep[] = [];
   errors: reporterTypes.TestResult['errors'] = [];

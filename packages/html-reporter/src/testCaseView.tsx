@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation, TestCaseSummary } from './types';
+import type { TestCase, TestAnnotation, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -46,8 +46,13 @@ export const TestCaseView: React.FC<{
   }, [test]);
 
   const visibleAnnotations = React.useMemo(() => {
-    return test?.annotations?.filter(annotation => !annotation.type.startsWith('_')) || [];
-  }, [test?.annotations]);
+    if (!test)
+      return [];
+    const annotations = [...test.annotations];
+    if (test.results[selectedResultIndex])
+      annotations.push(...test.results[selectedResultIndex].annotations);
+    return annotations.filter(annotation => !annotation.type.startsWith('_'));
+  }, [test, selectedResultIndex]);
 
   return <div className='test-case-column vbox'>
     {test && <div className='hbox'>
@@ -71,7 +76,7 @@ export const TestCaseView: React.FC<{
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {!!visibleAnnotations.length && <AutoChip header='Annotations'>
+    {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
       {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
@@ -86,7 +91,7 @@ export const TestCaseView: React.FC<{
   </div>;
 };
 
-function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>

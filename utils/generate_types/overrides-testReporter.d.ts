@@ -125,6 +125,7 @@ export interface JSONReportTestResult {
     body?: string;
     contentType: string;
   }[];
+  annotations: { type: string, description?: string }[];
   errorLocation?: Location;
 }
 

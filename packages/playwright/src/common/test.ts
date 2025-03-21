@@ -351,6 +351,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       status: 'skipped',
       steps: [],
       errors: [],
+      annotations: [],
     };
     this.results.push(result);
     return result;

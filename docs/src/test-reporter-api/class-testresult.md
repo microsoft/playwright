@@ -14,6 +14,20 @@ A result of a single [TestCase] run.
 
 The list of files or buffers attached during the test execution through [`property: TestInfo.attachments`].
 
+## property: TestResult.annotations
+* since: v1.52
+- type: <[Array]<[Object]>>
+  - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
+  - `description` ?<[string]> Optional description.
+
+The list of annotations appended during test execution. Includes:
+* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`] during test execution;
+* annotations appended to [`property: TestInfo.annotations`].
+
+Annotations are available during test execution through [`property: TestInfo.annotations`].
+
+Learn more about [test annotations](../test-annotations.md).
+
 ## property: TestResult.duration
 * since: v1.10
 - type: <[float]>
