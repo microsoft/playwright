@@ -85,6 +85,8 @@ export const TestResultView: React.FC<{
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
 
+  console.log({videos})
+
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
       {errors.map((error, index) => {
@@ -127,7 +129,7 @@ export const TestResultView: React.FC<{
 
     {!!videos.length && <Anchor id='attachment-video'><AutoChip header='Videos' revealOnAnchorId='attachment-video'>
       {videos.map((a, i) => <div key={`video-${i}`}>
-        <video controls>
+        <video key={a.path} controls>
           <source src={a.path} type={a.contentType}/>
         </video>
         <AttachmentLink attachment={a} result={result}></AttachmentLink>
