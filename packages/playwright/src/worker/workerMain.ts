@@ -292,6 +292,8 @@ export class WorkerMain extends ProcessRunner {
     for (const annotation of test.annotations)
       processAnnotation(annotation);
 
+    const staticAnnotations = new Set(testInfo.annotations);
+
     // Process existing annotations dynamically set for parent suites.
     for (const suite of suites) {
       const extraAnnotations = this._activeSuites.get(suite) || [];
@@ -301,7 +303,6 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = testInfo;
     setCurrentTestInfo(testInfo);
-    const staticAnnotations = new Set(testInfo.annotations);
     this.dispatchEvent('testBegin', buildTestBeginPayload(testInfo));
 
     const isSkipped = testInfo.expectedStatus === 'skipped';

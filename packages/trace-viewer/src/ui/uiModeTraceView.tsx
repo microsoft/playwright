@@ -86,7 +86,7 @@ export const TraceView: React.FC<{
     };
   }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
-  const annotations = item.testCase ? [...item.testCase.annotations, ...item.testCase.results[0].annotations] : [];
+  const annotations = item.testCase ? [...item.testCase.annotations, ...(item.testCase.results[0]?.annotations ?? [])] : [];
 
   return <Workbench
     key='workbench'
