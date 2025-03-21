@@ -63,21 +63,21 @@ test('should run visible', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-error\] fails/} [selected]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite" [expanded=false]
-      - treeitem "[icon-error] b.test.ts" [expanded]:
+          - treeitem /\\[icon-error\\] suite \\d+[hmsp]+/
+      - treeitem /\\[icon-error\\] b\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-error\] fails/}
-      - treeitem "[icon-check] c.test.ts" [expanded]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] c\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
           - treeitem "[icon-circle-slash] skipped"
   `);
 
@@ -123,9 +123,9 @@ test('should run on hover', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+      - treeitem /\\[icon-circle-outline\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -152,9 +152,9 @@ test('should run on double click', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+      - treeitem /\\[icon-circle-outline\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/} [selected]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -182,10 +182,10 @@ test('should run on Enter', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
           - treeitem "[icon-circle-outline] passes"
-          - treeitem ${/\[icon-error\] fails/} [selected]:
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -223,21 +223,21 @@ test('should run by project', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-error\] fails/} [selected]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite" [expanded=false]
-      - treeitem "[icon-error] b.test.ts" [expanded]:
+          - treeitem /\\[icon-error\\] suite \\d+[hmsp]+/
+      - treeitem /\\[icon-error\\] b\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-error\] fails/}
-      - treeitem "[icon-check] c.test.ts" [expanded]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] c\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
           - treeitem "[icon-circle-slash] skipped"
   `);
 
@@ -261,22 +261,25 @@ test('should run by project', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
-          - treeitem ${/\[icon-error\] fails/}:
+          - treeitem /\\[icon-circle-outline\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/ [expanded]:
             - group:
-              - treeitem ${/\[icon-error\] foo/} [selected]
+              - treeitem /\\[icon-error\\] foo \\d+[hmsp]+/ [selected]:
+                - button "Run"
+                - button "Show source"
+                - button "Watch"
               - treeitem "[icon-circle-outline] bar"
-          - treeitem "[icon-error] suite" [expanded=false]
-      - treeitem "[icon-error] b.test.ts" [expanded]:
+          - treeitem /\\[icon-error\\] suite \\d+[hmsp]+/
+      - treeitem /\\[icon-error\\] b\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
-          - treeitem ${/\[icon-error\] fails/} [expanded=false]
-      - treeitem "[icon-circle-outline] c.test.ts" [expanded]:
+          - treeitem /\\[icon-circle-outline\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+      - treeitem /\\[icon-circle-outline\\] c\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
-          - treeitem ${/\[icon-circle-outline\] skipped/} [expanded=false]
+          - treeitem /\\[icon-circle-outline\\] passes \\d+[hmsp]+/
+          - treeitem "[icon-circle-outline] skipped"
   `);
 
   await page.getByText('Status:').click();
@@ -294,16 +297,25 @@ test('should run by project', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/} [expanded] [selected]:
+          - treeitem /\\[icon-circle-outline\\] passes \\d+[hmsp]+/ [expanded] [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
             - group:
-              - treeitem ${/\[icon-check\] foo/}
-              - treeitem ${/\[icon-circle-outline\] bar/}
-          - treeitem ${/\[icon-error\] fails/}
+              - treeitem /\\[icon-check\\] foo \\d+[hmsp]+/
+              - treeitem "[icon-circle-outline] bar"
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] suite \\d+[hmsp]+/
+      - treeitem /\\[icon-error\\] b\\.test\\.ts \\d+[hmsp]+/ [expanded]:
+        - group:
+          - treeitem /\\[icon-circle-outline\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+      - treeitem /\\[icon-circle-outline\\] c\\.test\\.ts \\d+[hmsp]+/ [expanded]:
+        - group:
+          - treeitem /\\[icon-circle-outline\\] passes \\d+[hmsp]+/
+          - treeitem "[icon-circle-outline] skipped"
   `);
 
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
@@ -328,28 +340,28 @@ test('should run by project', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/} [expanded]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/ [expanded]:
             - group:
-              - treeitem ${/\[icon-check\] foo/}
-              - treeitem ${/\[icon-check\] bar/}
-          - treeitem ${/\[icon-error\] fails/} [expanded]:
+              - treeitem /\\[icon-check\\] foo \\d+[hmsp]+/
+              - treeitem /\\[icon-check\\] bar \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/ [expanded]:
             - group:
-              - treeitem ${/\[icon-error\] foo/} [selected]:
+              - treeitem /\\[icon-error\\] foo \\d+[hmsp]+/ [selected]:
                 - button "Run"
                 - button "Show source"
                 - button "Watch"
-              - treeitem ${/\[icon-error\] bar/}
-          - treeitem ${/\[icon-error\] suite/}
-      - treeitem "[icon-error] b.test.ts" [expanded]:
+              - treeitem /\\[icon-error\\] bar \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] suite \\d+[hmsp]+/
+      - treeitem /\\[icon-error\\] b\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/} [expanded=false]
-          - treeitem ${/\[icon-error\] fails/} [expanded=false]
-      - treeitem "[icon-check] c.test.ts" [expanded]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] c\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/} [expanded=false]
-          - treeitem ${/\[icon-circle-slash\] skipped/} [expanded=false]
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem "[icon-circle-slash] skipped"
   `);
 });
 
@@ -379,12 +391,12 @@ test('should stop', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-loading] a.test.ts" [expanded]:
+      - treeitem /\\[icon-loading\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
           - treeitem "[icon-circle-slash] test 0"
-          - treeitem ${/\[icon-check\] test 1/}
-          - treeitem ${/\[icon-loading\] test 2/}
-          - treeitem ${/\[icon-clock\] test 3/}
+          - treeitem /\\[icon-check\\] test 1 \\d+[hmsp]+/
+          - treeitem "[icon-loading] test 2"
+          - treeitem "[icon-clock] test 3"
   `);
 
   await expect(page.getByTitle('Run all')).toBeDisabled();
@@ -402,12 +414,12 @@ test('should stop', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+      - treeitem /\\[icon-circle-outline\\] a\\.test\\.ts [\\d,.]+[hmsp]+/ [expanded]:
         - group:
           - treeitem "[icon-circle-slash] test 0"
-          - treeitem ${/\[icon-check\] test 1/}
-          - treeitem ${/\[icon-circle-outline\] test 2/}
-          - treeitem ${/\[icon-circle-outline\] test 3/}
+          - treeitem /\\[icon-check\\] test 1 \\d+[hmsp]+/
+          - treeitem /\\[icon-circle-outline\\] test 2 [\\d,.]+[hmsp]+/
+          - treeitem "[icon-circle-outline] test 3"
   `);
 });
 
@@ -440,10 +452,12 @@ test('should run folder', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] folder-b" [expanded] [selected]:
+      - treeitem /\\[icon-check\\] folder-b \\d+[hmsp]+/ [expanded] [selected]:
+        - button "Run"
+        - button "Watch"
         - group:
-          - treeitem "[icon-check] folder-c" [expanded=false]
-          - treeitem "[icon-check] in-b.test.ts" [expanded=false]
+          - treeitem /\\[icon-check\\] folder-c \\d+[hmsp]+/
+          - treeitem /\\[icon-check\\] in-b\\.test\\.ts \\d+[hmsp]+/
       - treeitem "[icon-circle-outline] in-a.test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-outline] passes"
@@ -459,35 +473,35 @@ test('should show time', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
 
   await expect.poll(dumpTestTree(page, { time: true })).toBe(`
-    ▼ ❌ a.test.ts
+    ▼ ❌ a.test.ts XXms
         ✅ passes XXms
         ❌ fails XXms <=
-      ► ❌ suite
-    ▼ ❌ b.test.ts
+      ► ❌ suite XXms
+    ▼ ❌ b.test.ts XXms
         ✅ passes XXms
         ❌ fails XXms
-    ▼ ✅ c.test.ts
+    ▼ ✅ c.test.ts XXms
         ✅ passes XXms
         ⊘ skipped
   `);
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-error] a.test.ts" [expanded]:
+      - treeitem /\\[icon-error\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+m?s/}
-          - treeitem ${/\[icon-error\] fails \d+m?s/} [selected]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite" [expanded=false]
-      - treeitem "[icon-error] b.test.ts" [expanded]:
+          - treeitem /\\[icon-error\\] suite \\d+[hmsp]+/
+      - treeitem /\\[icon-error\\] b\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+m?s/}
-          - treeitem ${/\[icon-error\] fails \d+m?s/}
-      - treeitem "[icon-check] c.test.ts" [expanded]:
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
+          - treeitem /\\[icon-error\\] fails \\d+[hmsp]+/
+      - treeitem /\\[icon-check\\] c\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+m?s/}
+          - treeitem /\\[icon-check\\] passes \\d+[hmsp]+/
           - treeitem "[icon-circle-slash] skipped"
   `);
 
@@ -511,15 +525,15 @@ test('should show test.fail as passing', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
 
   await expect.poll(dumpTestTree(page, { time: true })).toBe(`
-    ▼ ✅ a.test.ts
+    ▼ ✅ a.test.ts XXms
         ✅ should fail XXms
   `);
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should fail \d+m?s/}
+          - treeitem /\\[icon-check\\] should fail \\d+[hmsp]+/
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -553,9 +567,9 @@ test('should ignore repeatEach', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should pass/}
+          - treeitem /\\[icon-check\\] should pass \\d+[hmsp]+/
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -588,9 +602,9 @@ test('should remove output folder before test run', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should pass/}
+          - treeitem /\\[icon-check\\] should pass \\d+[hmsp]+/
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -603,9 +617,9 @@ test('should remove output folder before test run', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should pass/}
+          - treeitem /\\[icon-check\\] should pass \\d+[hmsp]+/
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -651,9 +665,9 @@ test('should show proper total when using deps', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+      - treeitem /\\[icon-circle-outline\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] run @setup setup/} [selected]:
+          - treeitem /\\[icon-check\\] run @setup setup \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -671,10 +685,10 @@ test('should show proper total when using deps', async ({ runUITest }) => {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] run @setup setup/}
-          - treeitem ${/\[icon-check\] run @chromium chromium/} [selected]:
+          - treeitem /\\[icon-check\\] run @setup setup \\d+[hmsp]+/
+          - treeitem /\\[icon-check\\] run @chromium chromium \\d+[hmsp]+/ [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -741,9 +755,9 @@ test('should respect --tsconfig option', {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] test/}
+          - treeitem /\\[icon-check\\] test \\d+[hmsp]+/
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -770,9 +784,9 @@ test('should respect --ignore-snapshots option', {
 
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem "[icon-check] a.test.ts" [expanded]:
+      - treeitem /\\[icon-check\\] a\\.test\\.ts \\d+[hmsp]+/ [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] snapshot/}
+          - treeitem /\\[icon-check\\] snapshot \\d+[hmsp]+/
   `);
 });
 
