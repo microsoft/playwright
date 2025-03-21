@@ -36,8 +36,8 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
     function isPlainObject(v: any) {
       const ctor = v?.constructor;
       if (isFirefox) {
-        const constructorImpl = ctor?.toString();
-        if (constructorImpl.startsWith('function Object() {') && constructorImpl.includes('[native code]'))
+        const constructorImpl = ctor?.toString() as string | undefined;
+        if (constructorImpl?.startsWith('function Object() {') && constructorImpl?.includes('[native code]'))
           return true;
       }
 
