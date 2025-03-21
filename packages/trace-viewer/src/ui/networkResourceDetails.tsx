@@ -30,13 +30,13 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
   sdkLanguage: Language;
   startTimeOffset: number;
-  onClose: () => void;
+  onClose?: () => void;
 }> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
   return <TabbedPane
     dataTestId='network-request-details'
-    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}></ToolbarButton>]}
+    leftToolbar={onClose ? [<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}></ToolbarButton>] : undefined}
     tabs={[
       {
         id: 'request',
