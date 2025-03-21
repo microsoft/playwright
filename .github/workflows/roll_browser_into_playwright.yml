@@ -43,8 +43,8 @@ jobs:
       run: |
         BRANCH_NAME="roll-into-pw-${BROWSER}/${REVISION}"
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
-        git config --global user.name github-actions
-        git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+        git config --global user.name microsoft-playwright-automation[bot]
+        git config --global user.email 4203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
         git checkout -b "$BRANCH_NAME"
         git add .
         git commit -m "feat(${BROWSER}): roll to r${REVISION}"
