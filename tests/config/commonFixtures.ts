@@ -20,6 +20,8 @@ import { execSync, spawn } from 'child_process';
 import net from 'net';
 import fs from 'fs';
 import { stripAnsi } from './utils';
+import { Client as McpClient } from '@modelcontextprotocol/sdk/client/index.js';
+import { Transport as McpTransport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 type TestChildParams = {
   command: string[],
@@ -221,6 +223,40 @@ export class TestChildProcess {
 
   write(chars: string) {
     this.process.stdin!.write(chars);
+  }
+
+  async attachMCP(): Promise<McpClient> {
+    const transport: McpTransport = {
+      start: async () => {},
+      send: async message => {
+        this.write(JSON.stringify(message) + '\n');
+      },
+      close: async () => {},
+    };
+
+    let buffer = '';
+    this.process.stdout?.on('data', data => {
+      buffer += data.toString();
+      let newlineIndex: number;
+
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        const message = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (!message)
+          continue;
+
+        try {
+          const parsed = JSON.parse(message);
+          transport.onmessage?.(parsed);
+        } catch {}
+      }
+    });
+
+    const client = new McpClient({ name: 'testing client', version: '0.0.0' });
+    await client.connect(transport);
+
+    return client;
   }
 }
 

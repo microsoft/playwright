@@ -34,6 +34,7 @@ import { InternalReporter } from '../reporters/internalReporter';
 import ListReporter from '../reporters/list';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import { serializeError } from '../util';
+import { startMcpServer } from './mcp';
 
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
@@ -59,6 +60,8 @@ class TestServer {
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
+    if (process.env.PW_MCP)
+      await startMcpServer(this._dispatcher);
     return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
   }
 
