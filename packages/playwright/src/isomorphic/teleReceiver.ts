@@ -94,7 +94,7 @@ export type JsonTestResultEnd = {
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
   attachments: JsonAttachment[];
-  annotations: Annotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestStepStart = {

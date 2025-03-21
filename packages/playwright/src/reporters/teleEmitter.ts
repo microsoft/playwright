@@ -237,7 +237,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       status: result.status,
       errors: result.errors,
       attachments: this._serializeAttachments(result.attachments),
-      annotations: result.annotations,
+      annotations: result.annotations?.length ? result.annotations : undefined,
     };
   }
 
