@@ -110,8 +110,8 @@ const DetailsSection: React.FC<{
 
       <table>
         <tbody>
-          {data.map(({ name, value }) => (
-            <tr key={name + value}>
+          {data.map(({ name, value }, index) => (
+            <tr key={index}>
               <td>{name}:</td>
               <td>{value}</td>
             </tr>
