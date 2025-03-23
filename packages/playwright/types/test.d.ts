@@ -156,6 +156,39 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   dependencies?: Array<string>;
 
   /**
+   * Controls whether a project runs by default when no specific project is supplied. When set to true, the project will
+   * only run if explicitly specified with the --project parameter When set to false (default), the project will run
+   * when no specific project is specified in the command.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   workers: 10,  // total workers limit
+   *
+   *   projects: [
+   *     {
+   *       name: 'project runs when no specific project specified 1',
+   *     },
+   *     {
+   *       name: 'project runs when no specific project specified 2',
+   *       disabledByDefault: false
+   *     },
+   *     {
+   *       name: 'project does not run when no specific project specified',
+   *       disabledByDefault: true
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  disabledByDefault?: boolean;
+
+  /**
    * Configuration for the `expect` assertion library.
    *
    * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option
@@ -738,6 +771,12 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * See [testProject.dependencies](https://playwright.dev/docs/api/class-testproject#test-project-dependencies).
    */
   dependencies: Array<string>;
+
+  /**
+   * See
+   * [testProject.disabledByDefault](https://playwright.dev/docs/api/class-testproject#test-project-disabled-by-default).
+   */
+  disabledByDefault?: boolean;
 
   /**
    * See [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep).

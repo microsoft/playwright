@@ -749,3 +749,47 @@ test('should throw on invalid --tsconfig', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`--tsconfig "does-not-exist.json" does not exist`);
 });
+
+test.only('should not run those projects where disabledByDefault set to true when project is not specified', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+         { name: 'first' , disabledByDefault: true},
+         { name: 'second' },
+         { name: 'third' , disabledByDefault: false},
+         { name: 'fourth' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(new Set(result.outputLines)).toEqual(new Set(['second', 'third', 'fourth']));
+});
+
+test.only('should run project if name specified when disabledByyDefault is set to true', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+         { name: 'first' , disabledByDefault: true},
+         { name: 'second' },
+         { name: 'third' , disabledByDefault: false},
+         { name: 'fourth' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });    `
+  }, {'--project': ['*i*']});
+  expect(result.exitCode).toBe(0);
+  expect(new Set(result.outputLines)).toEqual(new Set(['first','third']));
+});

@@ -35,7 +35,8 @@ function wildcardPatternToRegExp(pattern: string): RegExp {
 
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
   if (!projectNames)
-    return [...projects];
+    return projects.filter((project) => !project.project.disabledByDefault);
+
 
   const projectNamesToFind = new Set<string>();
   const unmatchedProjectNames = new Map<string, string>();
@@ -61,8 +62,10 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
       if (regex.test(lowerCaseName))
         return true;
     }
+
     return false;
   });
+
 
   if (unmatchedProjectNames.size) {
     const unknownProjectNames = Array.from(unmatchedProjectNames.values()).map(n => `"${n}"`).join(', ');

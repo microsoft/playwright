@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { log } from 'node:console';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should run projects with dependencies', async ({ runInlineTest }) => {
@@ -689,4 +690,24 @@ test('should allow only in dependent (2)', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test.only('should run teardown aftesdsfsfdr failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'D'},
+          { name: 'B' , dependencies: ['C']},
+          { name: 'C',  disabledByDefault: true},
+          { name: 'D' , disabledByDefault: true},
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.only('setup', async ({}) => {});
+    `,
+  }, { workers: 1 }, undefined, {});
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['A', 'B']);
 });

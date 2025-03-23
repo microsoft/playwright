@@ -22,7 +22,7 @@ import path from 'path';
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
-import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
+import { builtInReporters, defaultReporter, defaultTimeout, FullConfigInternal } from './common/config';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 export { program } from 'playwright-core/lib/cli/program';
 import { prepareErrorStack } from './reporters/base';
@@ -174,8 +174,19 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliLastFailed = !!opts.lastFailed;
 
+
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
-  filterProjects(config.projects, config.cliProjectFilter);
+  const filteredProjects: FullConfigInternal[] = [];
+  const validProjects = filterProjects(config.projects, config.cliProjectFilter);
+  for (const project of config.projects) {
+    if (validProjects.includes(project)) {
+      if (project.deps)
+        project.deps = project.deps.filter(p => validProjects.includes(p))
+      
+      if (project.teardown)
+        project.teardown = validProjects.includes(project.teardown) ? project.teardown : undefined
+    }
+  }
 
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)

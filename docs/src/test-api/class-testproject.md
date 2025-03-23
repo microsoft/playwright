@@ -424,3 +424,36 @@ export default defineConfig({
   ],
 });
 ```
+
+## property: TestProject.disabledByDefault
+* since: v1.52
+- type: ?<[boolean]>
+
+Controls whether a project runs by default when no specific project is supplied.
+When set to true, the project will only run if explicitly specified with the --project parameter
+When set to false (default), the project will run when no specific project is specified in the command.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  workers: 10,  // total workers limit
+
+  projects: [
+    {
+      name: 'project runs when no specific project specified 1',
+    },
+    {
+      name: 'project runs when no specific project specified 2',
+      disabledByDefault: false
+    },
+    {
+      name: 'project does not run when no specific project specified',
+      disabledByDefault: true
+    },
+  ],
+});
+```
+
