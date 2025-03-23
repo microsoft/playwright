@@ -183,22 +183,26 @@ function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: Sear
 }
 
 export function filterWithToken(tokens: string[], token: string, append: boolean): string {
+  let newTokens;
+
   if (append) {
     if (!tokens.includes(token))
-      return '#?q=' + [...tokens, token].join(' ').trim();
-    return '#?q=' + tokens.filter(t => t !== token).join(' ').trim();
+      newTokens = [...tokens, token];
+    else
+      newTokens = tokens.filter(t => t !== token);
+
+  } else {
+    // if metaKey or ctrlKey is not pressed, replace existing token with new token
+    let prefix: 's:' | 'p:' | '@';
+    if (token.startsWith('s:'))
+      prefix = 's:';
+    if (token.startsWith('p:'))
+      prefix = 'p:';
+    if (token.startsWith('@'))
+      prefix = '@';
+
+    newTokens = [...tokens.filter(t => !t.startsWith(prefix)), token];
   }
 
-  // if metaKey or ctrlKey is not pressed, replace existing token with new token
-  let prefix: 's:' | 'p:' | '@';
-  if (token.startsWith('s:'))
-    prefix = 's:';
-  if (token.startsWith('p:'))
-    prefix = 'p:';
-  if (token.startsWith('@'))
-    prefix = '@';
-
-  const newTokens = tokens.filter(t => !t.startsWith(prefix));
-  newTokens.push(token);
   return '#?q=' + newTokens.join(' ').trim();
 }
