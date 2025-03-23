@@ -47,7 +47,7 @@ export const ReportView: React.FC<{
 }> = ({ report }) => {
   const searchParams = React.useContext(SearchParamsContext);
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
-  const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
+  const [filterText, setFilterText] = React.useState(searchParams.get('q') ?? '');
 
   const testIdToFileIdMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -125,7 +125,6 @@ const TestCaseViewLoader: React.FC<{
   }, [test, report, testId, testIdToFileIdMap]);
 
   return <TestCaseView
-    projectNames={report.json().projectNames}
     next={next}
     prev={prev}
     test={test}

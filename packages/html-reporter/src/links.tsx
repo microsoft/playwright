@@ -22,6 +22,8 @@ import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
+import { filterWithToken } from './filter';
+import { hashStringToInt } from './utils';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -53,17 +55,23 @@ export const Link: React.FunctionComponent<{
   }}>{children}</a>;
 };
 
-export const ProjectLink: React.FunctionComponent<{
-  projectNames: string[],
-  projectName: string,
-}> = ({ projectNames, projectName }) => {
-  const encoded = encodeURIComponent(projectName);
-  const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
-  return <Link href={`#?q=p:${value}`}>
-    <span className={clsx('label', `label-color-${projectNames.indexOf(projectName) % 6}`)} style={{ margin: '6px 0 0 6px' }}>
-      {projectName}
+export const LabelLink: React.FunctionComponent<{
+  searchParams: URLSearchParams,
+  name: string,
+  prefix?: 'p:'
+}> = ({ searchParams, name, prefix = '' }) => {
+  return <Link click={filterWithToken(searchParams, `${prefix}${name}`, false)} ctrlClick={filterWithToken(searchParams, `${prefix}${name}`, true)}>
+    <span style={{ margin: '6px 0 0 6px' }} className={clsx('label', `label-color-${hashStringToInt(name)}`)} >
+      {name}
     </span>
   </Link>;
+};
+
+export const TagLinks: React.FunctionComponent<{
+  searchParams: URLSearchParams,
+  tags: string[],
+}> = ({ searchParams, tags }) => {
+  return <>{tags.map(tag => (<LabelLink key={tag} searchParams={searchParams} name={tag}/>))}</>;
 };
 
 export const AttachmentLink: React.FunctionComponent<{
@@ -152,7 +160,12 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
   return <div ref={ref}>{children}</div>;
 }
 
-export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
+export function testResultHref({ test, result, anchor, filter }: {
+  test?: TestCase | TestCaseSummary,
+  result?: TestResult | TestResultSummary,
+  anchor?: string,
+  filter?: URLSearchParams
+}) {
   const params = new URLSearchParams();
   if (test)
     params.set('testId', test.testId);
@@ -160,5 +173,7 @@ export function testResultHref({ test, result, anchor }: { test?: TestCase | Tes
     params.set('run', '' + test.results.indexOf(result as any));
   if (anchor)
     params.set('anchor', anchor);
+  if (filter?.get('q'))
+    params.set('q', filter.get('q') ?? '');
   return `#?` + params;
 }

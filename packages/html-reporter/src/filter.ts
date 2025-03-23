@@ -182,9 +182,10 @@ function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: Sear
   return searchValues;
 }
 
-export function filterWithToken(tokens: string[], token: string, append: boolean): string {
-  let newTokens;
+export function filterWithToken(searchParams: URLSearchParams, token: string, append: boolean): string {
+  const tokens = (searchParams.get('q') ?? '').split(' ');
 
+  let newTokens;
   if (append) {
     if (!tokens.includes(token))
       newTokens = [...tokens, token];
@@ -193,7 +194,7 @@ export function filterWithToken(tokens: string[], token: string, append: boolean
 
   } else {
     // if metaKey or ctrlKey is not pressed, replace existing token with new token
-    let prefix: 's:' | 'p:' | '@';
+    let prefix: 's:' | 'p:' | '@' | '' = '';
     if (token.startsWith('s:'))
       prefix = 's:';
     if (token.startsWith('p:'))
@@ -204,5 +205,5 @@ export function filterWithToken(tokens: string[], token: string, append: boolean
     newTokens = [...tokens.filter(t => !t.startsWith(prefix)), token];
   }
 
-  return '#?q=' + newTokens.join(' ').trim();
+  return '#?q=' + encodeURIComponent(newTokens.join(' ').trim());
 }
