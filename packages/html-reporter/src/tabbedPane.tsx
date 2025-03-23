@@ -20,7 +20,7 @@ import * as React from 'react';
 
 export interface TabbedPaneTab {
   id: string;
-  title: string | JSX.Element;
+  title: React.ReactNode;
   count?: number;
   render: () => React.ReactElement;
 }

@@ -73,7 +73,7 @@ export const ReportView: React.FC<{
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} />
         <TestFilesView

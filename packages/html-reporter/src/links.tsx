@@ -33,7 +33,7 @@ export function navigate(href: string | URL) {
 
 export const Route: React.FunctionComponent<{
   predicate: (params: URLSearchParams) => boolean,
-  children: any
+  children: React.ReactNode
 }> = ({ predicate, children }) => {
   const searchParams = React.useContext(SearchParamsContext);
   return predicate(searchParams) ? children : null;
@@ -45,7 +45,7 @@ export const Link: React.FunctionComponent<{
   ctrlClick?: string,
   className?: string,
   title?: string,
-  children: any,
+  children: React.ReactNode,
 }> = ({ click, ctrlClick, children, ...rest }) => {
   return <a {...rest} style={{ textDecoration: 'none', color: 'var(--color-fg-default)', cursor: 'pointer' }} onClick={e => {
     if (click) {
@@ -120,7 +120,7 @@ function downloadFileNameForAttachment(attachment: TestAttachment): string {
 }
 
 export function generateTraceUrl(traces: TestAttachment[]) {
-  return `trace/index.html?${traces.map((a, i) => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`;
+  return `trace/index.html?${traces.map(a => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`;
 }
 
 const kMissingContentType = 'x-playwright/missing';

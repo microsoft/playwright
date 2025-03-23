@@ -27,7 +27,7 @@ test('should render counters', async ({ mount }) => {
     flaky: 17,
     skipped: 10,
     ok: false,
-  }} filterText='' setFilterText={() => { }}></HeaderView>);
+  }} filterText='' setFilterText={() => { }} />);
   await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('90');
   await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
@@ -53,8 +53,7 @@ test('should toggle filters', async ({ page, mount }) => {
     }}
     filterText=''
     setFilterText={(filterText: string) => filters.push(filterText)}
-  >
-  </HeaderView>);
+  />);
   await component.locator('a', { hasText: 'All' }).click();
   await component.locator('a', { hasText: 'Passed' }).click();
   await expect(page).toHaveURL(/#\?q=s:passed/);

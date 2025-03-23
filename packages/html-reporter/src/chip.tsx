@@ -23,23 +23,24 @@ import { clsx } from '@web/uiUtils';
 import { type AnchorID, useAnchor } from './links';
 
 export const Chip: React.FC<{
-  header: JSX.Element | string,
+  header: React.ReactNode,
   expanded?: boolean,
   noInsets?: boolean,
   setExpanded?: (expanded: boolean) => void,
-  children?: any,
+  children?: React.ReactNode,
   dataTestId?: string,
 }> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
   const id = React.useId();
   return <div className='chip' data-testid={dataTestId}>
     <div
       role='button'
-      aria-expanded={!!expanded}
+      aria-expanded={expanded}
       aria-controls={id}
       className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
       onClick={() => setExpanded?.(!expanded)}
-      title={typeof header === 'string' ? header : undefined}>
-      {setExpanded && !!expanded && icons.downArrow()}
+      title={typeof header === 'string' ? header : undefined}
+    >
+      {setExpanded && expanded && icons.downArrow()}
       {setExpanded && !expanded && icons.rightArrow()}
       {header}
     </div>
@@ -48,10 +49,10 @@ export const Chip: React.FC<{
 };
 
 export const AutoChip: React.FC<{
-  header: JSX.Element | string,
+  header: string,
   initialExpanded?: boolean,
   noInsets?: boolean,
-  children?: any,
+  children?: React.ReactNode,
   dataTestId?: string,
   revealOnAnchorId?: AnchorID,
 }> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
