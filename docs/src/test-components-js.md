@@ -217,7 +217,7 @@ Working around these and other limitations is quick and elegant: for every use c
 
 Let's say you'd like to test following component:
 
-```ts title="input-media.tsx"
+```js title="input-media.tsx"
 import React from 'react';
 
 type InputMediaProps = {
@@ -232,7 +232,7 @@ export function InputMedia(props: InputMediaProps) {
 
 Create a story file for your component:
 
-```ts title="input-media.story.tsx"
+```js title="input-media.story.tsx"
 import React from 'react';
 import InputMedia from './import-media';
 
@@ -479,7 +479,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 }>
   <TabItem value="react">
 
-  ```ts title="playwright/index.tsx"
+  ```js title="playwright/index.tsx"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
   import { BrowserRouter } from 'react-router-dom';
 
@@ -493,7 +493,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   });
   ```
 
-  ```ts title="src/pages/ProductsPage.spec.tsx"
+  ```js title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
   import type { HooksConfig } from '../playwright';
   import { ProductsPage } from './pages/ProductsPage';
@@ -510,7 +510,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   <TabItem value="vue">
 
-  ```ts title="playwright/index.ts"
+  ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
   import { router } from '../src/router';
 
@@ -524,7 +524,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   });
   ```
 
-  ```ts title="src/pages/ProductsPage.spec.ts"
+  ```js title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue';
   import type { HooksConfig } from '../playwright';
   import ProductsPage from './pages/ProductsPage.vue';
@@ -686,7 +686,7 @@ Playwright provides an **experimental** `router` fixture to intercept and handle
 
 Here is an example of reusing your existing MSW handlers in the test.
 
-```ts
+```js
 import { handlers } from '@src/mocks/handlers';
 
 test.beforeEach(async ({ router }) => {
@@ -702,7 +702,7 @@ test('example test', async ({ mount }) => {
 
 You can also introduce a one-off handler for a specific test.
 
-```ts
+```js
 import { http, HttpResponse } from 'msw';
 
 test('example test', async ({ mount, router }) => {
@@ -874,7 +874,7 @@ Check [Vite documentation](https://vite.dev/guide/features#css) for more details
 
 Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
 
-```ts title="playwright/index.ts"
+```js title="playwright/index.ts"
 import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
 import { createTestingPinia } from '@pinia/testing';
 import type { StoreState } from 'pinia';
@@ -900,7 +900,7 @@ beforeMount<HooksConfig>(async ({ hooksConfig }) => {
 });
 ```
 
-```ts title="src/pinia.spec.ts"
+```js title="src/pinia.spec.ts"
 import { test, expect } from '@playwright/experimental-ct-vue';
 import type { HooksConfig } from '../playwright';
 import Store from './Store.vue';

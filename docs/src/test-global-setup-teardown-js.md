@@ -151,7 +151,7 @@ export default defineConfig({
 
 Here is a global setup example that authenticates once and reuses authentication state in tests. It uses the `baseURL` and `storageState` options from the configuration file.
 
-```ts title="global-setup.ts"
+```js title="global-setup.ts"
 import { chromium, type FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {
@@ -195,7 +195,7 @@ test('test', async ({ page }) => {
 
 You can make arbitrary data available in your tests from your global setup file by setting them as environment variables via `process.env`.
 
-```ts title="global-setup.ts"
+```js title="global-setup.ts"
 import type { FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {
@@ -228,7 +228,7 @@ test('test', async ({ page }) => {
 
 In some instances, it may be useful to capture a trace of failures encountered during the global setup. In order to do this, you must [start tracing](./api/class-tracing.md#tracing-start) in your setup, and you must ensure that you [stop tracing](./api/class-tracing.md#tracing-stop) if an error occurs before that error is thrown. This can be achieved by wrapping your setup in a `try...catch` block.  Here is an example that expands the global setup example to capture a trace.
 
-```ts title="global-setup.ts"
+```js title="global-setup.ts"
 import { chromium, type FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {

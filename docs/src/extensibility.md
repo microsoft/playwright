@@ -22,7 +22,7 @@ Selectors must be registered before creating the page.
 An example of registering selector engine that queries elements based on a tag name:
 
 
-```ts title="baseTest.ts"
+```js title="baseTest.ts"
 import { test as base } from '@playwright/test';
 
 export { expect } from '@playwright/test';

@@ -43,7 +43,7 @@ Here is how typical test environment setup differs between traditional test styl
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```ts title="todo-page.ts"
+```js title="todo-page.ts"
 import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -126,7 +126,7 @@ Fixtures have a number of advantages over before/after hooks:
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```ts title="todo-page.ts"
+```js title="todo-page.ts"
 import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -164,7 +164,7 @@ export class TodoPage {
   </div>
 </details>
 
-```ts title="example.spec.ts"
+```js title="example.spec.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
@@ -201,7 +201,7 @@ Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page
   <summary>Click to expand the code for the <code>TodoPage</code> and <code>SettingsPage</code></summary>
   <div>
 
-```ts title="todo-page.ts"
+```js title="todo-page.ts"
 import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -239,7 +239,7 @@ export class TodoPage {
 
 SettingsPage is similar:
 
-```ts title="settings-page.ts"
+```js title="settings-page.ts"
 import type { Page } from '@playwright/test';
 
 export class SettingsPage {
@@ -255,7 +255,7 @@ export class SettingsPage {
   </div>
 </details>
 
-```ts title="my-test.ts"
+```js title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 import { SettingsPage } from './settings-page';
@@ -354,7 +354,7 @@ Playwright Test uses [worker processes](./test-parallel.md) to run test files. S
 
 Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to login into this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets up this fixture once per worker.
 
-```ts title="my-test.ts"
+```js title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 type Account = {
@@ -406,7 +406,7 @@ Automatic fixtures are set up for each test/worker, even when the test does not 
 
 Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
-```ts title="my-test.ts"
+```js title="my-test.ts"
 import debug from 'debug';
 import fs from 'fs';
 import { test as base } from '@playwright/test';
@@ -436,7 +436,7 @@ export { expect } from '@playwright/test';
 
 By default, fixture shares timeout with the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
 
-```ts
+```js
 import { test as base, expect } from '@playwright/test';
 
 const test = base.extend<{ slowFixture: string }>({
@@ -462,7 +462,7 @@ Below we'll create a `defaultItem` option in addition to the `todoPage` fixture 
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```ts title="todo-page.ts"
+```js title="todo-page.ts"
 import type { Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -501,7 +501,7 @@ export class TodoPage {
   </div>
 </details>
 
-```ts title="my-test.ts"
+```js title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
@@ -533,7 +533,7 @@ export { expect } from '@playwright/test';
 
 We can now use `todoPage` fixture as usual, and set the `defaultItem` option in the config file.
 
-```ts title="playwright.config.ts"
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import type { MyOptions } from './my-test';
 
@@ -555,7 +555,7 @@ export default defineConfig<MyOptions>({
 
 If the value of your option is an array, for example `[{ name: 'Alice' }, { name: 'Bob' }]`, you'll need to wrap it into an extra array when providing the value. This is best illustrated with an example.
 
-```ts
+```js
 type Person = { name: string };
 const test = base.extend<{ persons: Person[] }>({
   // Declare the option, default value is an empty array.
@@ -586,7 +586,7 @@ Fixtures follow these rules to determine the execution order:
 
 Consider the following example:
 
-```ts
+```js
 import { test as base } from '@playwright/test';
 
 const test = base.extend<{
@@ -727,7 +727,7 @@ export const test = base.extend({
 
 [`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can declare them as auto fixtures like this:
 
-```ts title="fixtures.ts"
+```js title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
 export const test = base.extend<{ forEachTest: void }>({
@@ -743,7 +743,7 @@ export const test = base.extend<{ forEachTest: void }>({
 
 And then import the fixtures in all your tests:
 
-```ts title="mytest.spec.ts"
+```js title="mytest.spec.ts"
 import { test } from './fixtures';
 import { expect } from '@playwright/test';
 
@@ -758,7 +758,7 @@ test('basic', async ({ page }) => {
 [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks run before/after all tests declared in the same file and same [`method: Test.describe`] block (if any), once per worker process. If you want to declare hooks
 that run before/after all tests in every file, you can declare them as auto fixtures with `scope: 'worker'` as follows:
 
-```ts title="fixtures.ts"
+```js title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
 export const test = base.extend<{}, { forEachWorker: void }>({
@@ -774,7 +774,7 @@ export const test = base.extend<{}, { forEachWorker: void }>({
 
 And then import the fixtures in all your tests:
 
-```ts title="mytest.spec.ts"
+```js title="mytest.spec.ts"
 import { test } from './fixtures';
 import { expect } from '@playwright/test';
 

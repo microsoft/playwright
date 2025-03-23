@@ -82,7 +82,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```ts tab=js-ts title="my-test.ts"
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 export type TestOptions = {
@@ -127,7 +127,7 @@ module.exports = defineConfig({
 });
 ```
 
-```ts tab=js-ts title="playwright.config.ts"
+```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import type { TestOptions } from './my-test';
 
@@ -167,7 +167,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```ts tab=js-ts title="my-test.ts"
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 export type TestOptions = {

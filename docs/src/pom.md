@@ -52,7 +52,7 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
 };
 ```
 
-```ts tab=js-ts title="playwright-dev-page.ts"
+```js tab=js-ts title="playwright-dev-page.ts"
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export class PlaywrightDevPage {
