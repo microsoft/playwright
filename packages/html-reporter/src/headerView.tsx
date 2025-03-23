@@ -23,12 +23,13 @@ import * as icons from './icons';
 import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
+import { FormEvent } from 'react';
 
-export const HeaderView: React.FC<React.PropsWithChildren<{
+export const HeaderView: React.FC<{
   stats: Stats,
   filterText: string,
   setFilterText: (filterText: string) => void,
-}>> = ({ stats, filterText, setFilterText }) => {
+}> = ({ stats, filterText, setFilterText }) => {
   const searchParams = React.useContext(SearchParamsContext);
   React.useEffect(() => {
     // Add an extra space such that users can easily add to query
@@ -36,24 +37,21 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
     setFilterText(query ? `${query} ` : '');
   }, [searchParams, setFilterText]);
 
+  const updateQuery = (event: FormEvent) => {
+    event.preventDefault();
+    const url = new URL(window.location.href);
+    url.hash = filterText ? '?' + new URLSearchParams({ q: filterText }) : '';
+    navigate(url);
+  };
+
   return (<>
     <div className='pt-3'>
       <div className='header-view-status-container ml-2 pl-2 d-flex'>
-        <StatsNavView stats={stats}></StatsNavView>
+        <StatsNavView stats={stats} />
       </div>
-      <form className='subnav-search' onSubmit={
-        event => {
-          event.preventDefault();
-          const url = new URL(window.location.href);
-          url.hash = filterText ? '?' + new URLSearchParams({ q: filterText }) : '';
-          navigate(url);
-        }
-      }>
+      <form className='subnav-search' onSubmit={updateQuery} onBlur={updateQuery}>
         {icons.search()}
-        {/* Use navigationId to reset defaultValue */}
-        <input spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
-          setFilterText(e.target.value);
-        }}></input>
+        <input spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => { setFilterText(e.target.value); }} />
       </form>
     </div>
   </>);
