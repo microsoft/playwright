@@ -34,7 +34,7 @@ export const HeaderView: React.FC<{
   React.useEffect(() => {
     // Add an extra space such that users can easily add to query
     const query = searchParams.get('q');
-    setFilterText(query ? `${query} ` : '');
+    setFilterText(query ? `${query.trim()} ` : '');
   }, [searchParams, setFilterText]);
 
   const updateQuery = (event: FormEvent) => {
