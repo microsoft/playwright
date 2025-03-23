@@ -31,50 +31,49 @@ export function navigate(href: string | URL) {
   window.dispatchEvent(navEvent);
 }
 
-export const Route: React.FunctionComponent<{
+export const Route: React.FC<React.PropsWithChildren<{
   predicate: (params: URLSearchParams) => boolean,
-  children: React.ReactNode
-}> = ({ predicate, children }) => {
+}>> = ({ predicate, children }) => {
   const searchParams = React.useContext(SearchParamsContext);
   return predicate(searchParams) ? children : null;
 };
 
-export const Link: React.FunctionComponent<{
+export const Link: React.FC<React.PropsWithChildren<{
   href?: string,
   click?: string,
   ctrlClick?: string,
   className?: string,
   title?: string,
-  children: React.ReactNode,
-}> = ({ click, ctrlClick, children, ...rest }) => {
-  return <a {...rest} style={{ textDecoration: 'none', color: 'var(--color-fg-default)', cursor: 'pointer' }} onClick={e => {
-    if (click) {
-      e.preventDefault();
-      navigate(e.metaKey || e.ctrlKey ? ctrlClick || click : click);
-    }
-  }}>{children}</a>;
+}>> = ({ click, ctrlClick, children, ...rest }) => {
+  return <a {...rest} style={{ textDecoration: 'none', color: 'var(--color-fg-default)', cursor: 'pointer' }}
+    onClick={e => {
+      if (click) {
+        e.preventDefault();
+        navigate(e.metaKey || e.ctrlKey ? ctrlClick || click : click);
+      }
+    }}>{children}</a>;
 };
 
-export const LabelLink: React.FunctionComponent<{
+export const LabelLink: React.FC<{
   searchParams: URLSearchParams,
   name: string,
   prefix?: 'p:'
 }> = ({ searchParams, name, prefix = '' }) => {
   return <Link click={filterWithToken(searchParams, `${prefix}${name}`, false)} ctrlClick={filterWithToken(searchParams, `${prefix}${name}`, true)}>
-    <span style={{ margin: '6px 0 0 6px' }} className={clsx('label', `label-color-${hashStringToInt(name)}`)} >
+    <span style={{ margin: '6px 0 0 6px' }} className={clsx('label', `label-color-${hashStringToInt(name)}`)}>
       {name}
     </span>
   </Link>;
 };
 
-export const TagLinks: React.FunctionComponent<{
+export const TagLinks: React.FC<{
   searchParams: URLSearchParams,
   tags: string[],
 }> = ({ searchParams, tags }) => {
   return <>{tags.map(tag => (<LabelLink key={tag} searchParams={searchParams} name={tag}/>))}</>;
 };
 
-export const AttachmentLink: React.FunctionComponent<{
+export const AttachmentLink: React.FC<{
   attachment: TestAttachment,
   result: TestResult,
   href?: string,
@@ -83,22 +82,26 @@ export const AttachmentLink: React.FunctionComponent<{
 }> = ({ attachment, result, href, linkName, openInNewTab }) => {
   const [flash, triggerFlash] = useFlash();
   useAnchor('attachment-' + result.attachments.indexOf(attachment), triggerFlash);
-  return <TreeItem title={<span>
-    {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
-    {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
-    {!attachment.path && (
-      openInNewTab
-        ? <a href={URL.createObjectURL(new Blob([attachment.body!], { type: attachment.contentType }))} target='_blank' rel='noreferrer' onClick={e => e.stopPropagation()}>{attachment.name}</a>
-        : <span>{linkifyText(attachment.name)}</span>
-    )}
-  </span>} loadChildren={attachment.body ? () => {
-    return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }} flash={flash}></TreeItem>;
+
+  return <TreeItem
+    title={<span>
+      {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
+      {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
+      {!attachment.path && (
+        openInNewTab
+          ? <a href={URL.createObjectURL(new Blob([attachment.body!], { type: attachment.contentType }))} target='_blank' rel='noreferrer' onClick={e => e.stopPropagation()}>{attachment.name}</a>
+          : <span>{linkifyText(attachment.name)}</span>
+      )}
+    </span>}
+    loadChildren={attachment.body ? () => [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>] : undefined} depth={0}
+    style={{ lineHeight: '32px' }}
+    flash={flash}
+  />;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
 
-export const SearchParamsProvider: React.FunctionComponent<React.PropsWithChildren> = ({ children }) => {
+export const SearchParamsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [searchParams, setSearchParams] = React.useState<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
 
   React.useEffect(() => {

@@ -23,7 +23,6 @@ import * as ReactDOM from 'react-dom/client';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
-// @ts-ignore
 const zipjs = zipImport as typeof zip;
 
 import logo from '@web/assets/playwright-logo.svg';
@@ -72,7 +71,7 @@ class ZipReport implements LoadedReport {
         const oldReport = localStorage.getItem(kPlaywrightReportStorageForHMR);
         if (oldReport)
           return resolve(oldReport);
-        alert('couldnt find report, something with HMR is broken');
+        alert("Couldn't find report, something with HMR is broken");
       }
     });
 

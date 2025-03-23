@@ -73,13 +73,13 @@ export const TestCaseView: React.FC<{
 
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
-        id: String(index),
+        id: index,
         title: <div style={{ display: 'flex', alignItems: 'center' }}>
           {statusIcon(result.status)} {index === 0 ? 'Run' : `Retry #${index}`}
           {(test.results.length > 1) && <span className='test-case-run-duration'>{msToString(result.duration)}</span>}
         </div>,
         render: () => <TestResultView test={test} result={result} />
-      })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
+      }))} selectedTab={selectedResultIndex} setSelectedTab={id => setSelectedResultIndex(id)} />}
   </div>;
 };
 

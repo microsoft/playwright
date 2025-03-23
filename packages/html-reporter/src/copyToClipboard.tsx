@@ -25,7 +25,7 @@ type CopyToClipboardProps = {
 /**
  * A copy to clipboard button.
  */
-export const CopyToClipboard: React.FunctionComponent<CopyToClipboardProps> = ({ value }) => {
+export const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ value }) => {
   type IconType = 'copy' | 'check' | 'cross';
   const [icon, setIcon] = React.useState<IconType>('copy');
   const handleCopy = React.useCallback(() => {
@@ -42,14 +42,10 @@ export const CopyToClipboard: React.FunctionComponent<CopyToClipboardProps> = ({
   return <button className='copy-icon' title='Copy to clipboard' aria-label='Copy to clipboard' onClick={handleCopy}>{iconElement}</button>;
 };
 
-type CopyToClipboardContainerProps = CopyToClipboardProps & {
-  children: React.ReactNode
-};
-
 /**
  * Container for displaying a copy to clipboard button alongside children.
  */
-export const CopyToClipboardContainer: React.FunctionComponent<CopyToClipboardContainerProps> = ({ children, value }) => {
+export const CopyToClipboardContainer: React.FC<React.PropsWithChildren<CopyToClipboardProps>> = ({ children, value }) => {
   return <span className='copy-value-container'>
     {children}
     <span className='copy-button-container'>

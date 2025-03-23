@@ -22,14 +22,13 @@ import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
 import { type AnchorID, useAnchor } from './links';
 
-export const Chip: React.FC<{
+export const Chip: React.FC<React.PropsWithChildren<{
   header: React.ReactNode,
   expanded?: boolean,
   noInsets?: boolean,
   setExpanded?: (expanded: boolean) => void,
-  children?: React.ReactNode,
   dataTestId?: string,
-}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
+}>> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
   const id = React.useId();
   return <div className='chip' data-testid={dataTestId}>
     <div
@@ -48,14 +47,14 @@ export const Chip: React.FC<{
   </div>;
 };
 
-export const AutoChip: React.FC<{
+export const AutoChip: React.FC<React.PropsWithChildren<{
   header: string,
   initialExpanded?: boolean,
   noInsets?: boolean,
   children?: React.ReactNode,
   dataTestId?: string,
   revealOnAnchorId?: AnchorID,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
+}>> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
   const onReveal = React.useCallback(() => setExpanded(true), []);
   useAnchor(revealOnAnchorId, onReveal);

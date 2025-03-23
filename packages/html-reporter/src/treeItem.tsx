@@ -19,7 +19,7 @@ import './treeItem.css';
 import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
 
-export const TreeItem: React.FunctionComponent<{
+export const TreeItem: React.FC<{
   title: React.ReactNode,
   loadChildren?: () => React.ReactNode[],
   onClick?: () => void,

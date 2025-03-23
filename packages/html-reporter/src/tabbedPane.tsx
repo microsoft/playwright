@@ -19,16 +19,16 @@ import './tabbedPane.css';
 import * as React from 'react';
 
 export interface TabbedPaneTab {
-  id: string;
+  id: number;
   title: React.ReactNode;
   count?: number;
   render: () => React.ReactElement;
 }
 
-export const TabbedPane: React.FunctionComponent<{
+export const TabbedPane: React.FC<{
   tabs: TabbedPaneTab[],
-  selectedTab: string,
-  setSelectedTab: (tab: string) => void
+  selectedTab: number,
+  setSelectedTab: (tab: number) => void
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
   return <div className='tabbed-pane'>
     <div className='vbox'>
@@ -40,8 +40,8 @@ export const TabbedPane: React.FunctionComponent<{
               key={tab.id}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>
-          ))
-        }</div>
+          ))}
+        </div>
       </div>
       {
         tabs.map(tab => {
