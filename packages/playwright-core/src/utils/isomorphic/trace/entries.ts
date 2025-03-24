@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import type { Language } from '../../../playwright-core/src/utils/isomorphic/locatorGenerators';
+import type { Language } from '../locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
-
-// *Entry structures are used to pass the trace between the sw and the page.
 
 export type ContextEntry = {
   origin: 'testRunner'|'library';

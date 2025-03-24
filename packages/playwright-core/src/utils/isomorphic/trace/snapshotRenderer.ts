@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
+import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
 
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
-import type { PageEntry } from '../types/entries';
+import type { PageEntry } from './entries';
 import type { LRUCache } from './lruCache';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
@@ -255,7 +255,7 @@ declare global {
 }
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) { /* eslint-disable no-restricted-globals */
     const searchParams = new URLSearchParams(location.search);
     const shouldPopulateCanvasFromScreenshot = searchParams.has('shouldPopulateCanvasFromScreenshot');
     const isUnderTest = searchParams.has('isUnderTest');
@@ -556,7 +556,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
 
     window.addEventListener('load', onLoad);
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
-  }
+  } /* eslint-enable no-restricted-globals */
 
   return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
 }

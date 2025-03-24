@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
-
+import { parseClientSideCallMetadata } from '../traceUtils';
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';
 
-import type { ContextEntry } from '../types/entries';
+import type { ContextEntry } from './entries';
 
 export interface TraceModelBackend {
   entryNames(): Promise<string[]>;

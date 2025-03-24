@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { splitProgress } from './progress';
-import { unwrapPopoutUrl } from './snapshotRenderer';
-import { SnapshotServer } from './snapshotServer';
-import { TraceModel } from './traceModel';
+import { unwrapPopoutUrl } from '@isomorphic/trace/snapshotRenderer';
+import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
+import { TraceModel } from '@isomorphic/trace/traceModel';
+import { TraceVersionError } from '@isomorphic/trace/traceModernizer';
+
 import { FetchTraceModelBackend, TraceViewerServer, ZipTraceModelBackend } from './traceModelBackends';
-import { TraceVersionError } from './traceModernizer';
+import { splitProgress } from './progress';
 
 // @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
