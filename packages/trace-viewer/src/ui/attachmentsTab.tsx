@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import type { Attachment, MultiTraceModel } from './modelUtil';
+import type { Attachment, MultiTraceModel } from '@isomorphic/trace/modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';

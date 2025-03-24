@@ -21,10 +21,10 @@ import './networkTab.css';
 import { NetworkResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
-import { context, type MultiTraceModel } from './modelUtil';
+import { context, type MultiTraceModel } from '@isomorphic/trace/modelUtil';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
-import type { ContextEntry } from '../types/entries';
+import type { ContextEntry } from '@isomorphic/trace/entries';
 import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
 import type { Language } from '@isomorphic/locatorGenerators';
 

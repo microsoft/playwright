@@ -20,7 +20,7 @@ import * as React from 'react';
 import type { Boundaries } from './geometry';
 import { FilmStrip } from './filmStrip';
 import type { FilmStripPreviewPoint } from './filmStrip';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel } from '@isomorphic/trace/modelUtil';
 import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Entry } from '@trace/har';

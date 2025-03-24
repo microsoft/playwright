@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { SnapshotStorage } from '../../../../../trace-viewer/src/sw/snapshotStorage';
+import { SnapshotStorage } from '@isomorphic/trace/snapshotStorage';
+
 import { ManualPromise } from '../../../utils';
 import { HarTracer } from '../../har/harTracer';
 import { Snapshotter } from '../recorder/snapshotter';
 
-import type { SnapshotRenderer } from '../../../../../trace-viewer/src/sw/snapshotRenderer';
+import type { SnapshotRenderer } from '@isomorphic/trace/snapshotRenderer';
 import type { BrowserContext } from '../../browserContext';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import type { Page } from '../../page';

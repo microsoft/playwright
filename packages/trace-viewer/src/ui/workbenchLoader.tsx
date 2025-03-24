@@ -15,8 +15,8 @@
 */
 
 import * as React from 'react';
-import type { ContextEntry } from '../types/entries';
-import { MultiTraceModel } from './modelUtil';
+import type { ContextEntry } from '@isomorphic/trace/entries';
+import { MultiTraceModel } from '@isomorphic/trace/modelUtil';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';

@@ -18,11 +18,11 @@ import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/t
 import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
-import * as modelUtil from './modelUtil';
+import * as modelUtil from '@isomorphic/trace/modelUtil';
 import { asLocator, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
-import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
+import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trace/modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';

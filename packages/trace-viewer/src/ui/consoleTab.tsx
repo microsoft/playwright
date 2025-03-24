@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import * as React from 'react';
 import './consoleTab.css';
-import type * as modelUtil from './modelUtil';
+import type * as modelUtil from '@isomorphic/trace/modelUtil';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from './geometry';
 import { clsx, msToString } from '@web/uiUtils';

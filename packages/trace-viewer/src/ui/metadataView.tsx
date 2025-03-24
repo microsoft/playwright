@@ -16,7 +16,7 @@
 
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
-import type { MultiTraceModel } from './modelUtil';
+import type { MultiTraceModel } from '@isomorphic/trace/modelUtil';
 import './callTab.css';
 
 export const MetadataView: React.FunctionComponent<{

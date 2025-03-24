@@ -16,7 +16,7 @@
 
 import { ErrorMessage } from '@web/components/errorMessage';
 import * as React from 'react';
-import type * as modelUtil from './modelUtil';
+import type * as modelUtil from '@isomorphic/trace/modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';

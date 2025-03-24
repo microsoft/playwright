@@ -22,7 +22,7 @@ import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
-import type * as modelUtil from './modelUtil';
+import type * as modelUtil from '@isomorphic/trace/modelUtil';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTabsView } from './snapshotTab';
 import { SourceTab } from './sourceTab';

@@ -20,9 +20,9 @@ import '@web/common.css';
 import '@web/third_party/vscode/codicon.css';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
-import type { ContextEntry } from '../types/entries';
-import type { SourceLocation } from './modelUtil';
-import { MultiTraceModel } from './modelUtil';
+import type { ContextEntry } from '@isomorphic/trace/entries';
+import type { SourceLocation } from '@isomorphic/trace/modelUtil';
+import { MultiTraceModel } from '@isomorphic/trace/modelUtil';
 import { Workbench } from './workbench';
 
 export const TraceView: React.FC<{

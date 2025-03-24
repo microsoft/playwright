@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, prevInList } from '@isomorphic/trace/modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';

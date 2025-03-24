@@ -19,8 +19,8 @@ import path from 'path';
 
 import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
+import { kTopLevelAttachmentPrefix } from '@isomorphic/trace/modelUtil';
 
-import { kTopLevelAttachmentPrefix } from '../isomorphic/util';
 import { filteredStackTrace } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
