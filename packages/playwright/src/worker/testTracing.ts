@@ -17,9 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
+import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime, kTopLevelAttachmentPrefix } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
-import { kTopLevelAttachmentPrefix } from '@isomorphic/trace/modelUtil';
 
 import { filteredStackTrace } from '../util';
 
