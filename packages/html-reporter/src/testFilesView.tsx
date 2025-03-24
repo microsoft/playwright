@@ -57,16 +57,16 @@ export const TestFilesView: React.FC<{
 export const TestFilesHeader: React.FC<{
   report: HTMLReport | undefined,
   filteredStats?: FilteredStats,
-}> = ({ report, filteredStats }) => {
-  const [metadataVisible, setMetadataVisible] = React.useState(false);
-
+  metadataVisible: boolean,
+  toggleMetadataVisible: () => void,
+}> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
   if (!report)
     return null;
 
   return <>
     <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
       <div className='test-file-header-info'>
-        {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={() => setMetadataVisible(visible => !visible)} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
+        {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
           {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
         </div>}
         {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}

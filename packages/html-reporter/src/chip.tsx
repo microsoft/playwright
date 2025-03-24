@@ -33,7 +33,7 @@ export const Chip: React.FC<React.PropsWithChildren<{
   return <div className='chip' data-testid={dataTestId}>
     <div
       role='button'
-      aria-expanded={expanded}
+      aria-expanded={!!expanded}
       aria-controls={id}
       className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
       onClick={() => setExpanded?.(!expanded)}
@@ -51,7 +51,6 @@ export const AutoChip: React.FC<React.PropsWithChildren<{
   header: string,
   initialExpanded?: boolean,
   noInsets?: boolean,
-  children?: React.ReactNode,
   dataTestId?: string,
   revealOnAnchorId?: AnchorID,
 }>> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {

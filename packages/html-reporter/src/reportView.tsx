@@ -48,6 +48,7 @@ export const ReportView: React.FC<{
   const searchParams = React.useContext(SearchParamsContext);
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') ?? '');
+  const [metadataVisible, setMetadataVisible] = React.useState(false);
 
   const testIdToFileIdMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -75,7 +76,7 @@ export const ReportView: React.FC<{
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
       <Route predicate={testFilesRoutePredicate}>
-        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} />
+        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
           tests={filteredTests.files}
           expandedFiles={expandedFiles}
