@@ -31,34 +31,110 @@ import type { Entry, QueryParameter } from '@trace/har';
 type RequestBody = { text: string, mimeType?: string } | null;
 type ResponseBody = { dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null;
 
-function statusClass(statusCode: number): string {
-  if ((statusCode >= 100 && statusCode < 300) || statusCode === 304)
-    return 'green-circle';
-  if (statusCode >= 300 && statusCode < 400)
-    return 'yellow-circle';
-  return 'red-circle';
-}
+export const NetworkResourceDetails: React.FC<{
+  resource: ResourceSnapshot;
+  sdkLanguage: Language;
+  startTimeOffset: number;
+  onClose: () => void;
+}> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
+  const [selectedTab, setSelectedTab] = React.useState('headers');
 
-function formatBody(body: string | null, contentType: string): string {
-  if (body === null)
-    return 'Loading...';
+  const [requestBody, setRequestBody] = React.useState<RequestBody>(null);
+  const [responseBody, setResponseBody] = React.useState<ResponseBody>(null);
 
-  if (body === '')
-    return '<Empty>';
+  React.useEffect(() => {
+    const readRequest = async () => {
+      if (!resource.request.postData) {
+        setRequestBody(null);
+        return;
+      }
 
-  if (contentType.includes('application/json')) {
-    try {
-      return JSON.stringify(JSON.parse(body), null, 2);
-    } catch (err) {
-      return body;
-    }
-  }
+      const requestContentTypeHeader = resource.request.headers.find(({ name }) => name.toLowerCase() === 'content-type');
+      const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
+      if (resource.request.postData._sha1) {
+        const response = await fetch(`sha1/${resource.request.postData._sha1}`);
+        setRequestBody({ text: formatBody(await response.text(), requestContentType), mimeType: requestContentType });
+      } else {
+        setRequestBody({ text: formatBody(resource.request.postData.text, requestContentType), mimeType: requestContentType });
+      }
+    };
 
-  if (contentType.includes('application/x-www-form-urlencoded'))
-    return decodeURIComponent(body);
+    const readResponse = async () => {
+      if (!resource.response.content._sha1) {
+        setResponseBody(null);
+        return;
+      }
 
-  return body;
-}
+      const mimeType = resource.response.content.mimeType;
+      const useBase64 = mimeType.includes('image');
+      const response = await fetch(`sha1/${resource.response.content._sha1}`);
+      if (useBase64) {
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const eventPromise = new Promise<any>(f => reader.onload = f);
+        reader.readAsDataURL(blob);
+        setResponseBody({ dataUrl: (await eventPromise).target.result });
+        return;
+      }
+
+      const isFont = mimeType.includes('font');
+      if (isFont) {
+        const font = await response.arrayBuffer();
+        setResponseBody({ font });
+      } else {
+        const formattedBody = formatBody(await response.text(), mimeType);
+        setResponseBody({ text: formattedBody, mimeType: mimeType });
+      }
+    };
+
+    readRequest();
+    readResponse();
+  }, [resource]);
+
+  return <TabbedPane
+    dataTestId='network-request-details'
+    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}/>]}
+    rightToolbar={[<CopyDropdown key='dropdown' requestBody={requestBody} resource={resource} sdkLanguage={sdkLanguage}/>]}
+    tabs={[
+      {
+        id: 'headers',
+        title: 'Headers',
+        render: () => <HeadersTab resource={resource} startTimeOffset={startTimeOffset}/>,
+      },
+      {
+        id: 'payload',
+        title: 'Payload',
+        render: () => <PayloadTab queryString={resource.request.queryString} requestBody={requestBody}/>,
+      },
+      {
+        id: 'response',
+        title: 'Response',
+        render: () => <ResponseTab responseBody={responseBody}/>,
+      },
+    ]}
+    selectedTab={selectedTab}
+    setSelectedTab={setSelectedTab}/>;
+};
+
+const HeadersTab: React.FC<{
+  resource: ResourceSnapshot;
+  startTimeOffset: number;
+}> = ({ resource, startTimeOffset }) => {
+  return <div className='network-request-details-tab'>
+    <DetailsSection title='General' data={Object.entries({
+      'URL': resource.request.url,
+      'Method': resource.request.method,
+      'Status Code': resource.response.status !== -1 ? <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText} </span> : null,
+      'Start': msToString(startTimeOffset),
+      'Duration': msToString(resource.time)
+    }).map(([name, value]) => ({ name, value }))}/>
+
+    <DetailsSection title='Request Headers' showCountWhenCollapsed data={resource.request.headers}/>
+
+    <DetailsSection title='Response Headers' showCountWhenCollapsed data={resource.response.headers}/>
+  </div>;
+};
+
 
 const CopyDropdown: React.FC<{
   resource: Entry,
@@ -124,25 +200,6 @@ const DetailsSection: React.FC<{
   );
 };
 
-const HeadersTab: React.FC<{
-  resource: ResourceSnapshot;
-  startTimeOffset: number;
-}> = ({ resource, startTimeOffset }) => {
-  return <div className='network-request-details-tab'>
-    <DetailsSection title='General' data={Object.entries({
-      'URL': resource.request.url,
-      'Method': resource.request.method,
-      'Status Code': resource.response.status !== -1 ? <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText} </span> : null,
-      'Start': msToString(startTimeOffset),
-      'Duration': msToString(resource.time)
-    }).map(([name, value]) => ({ name, value }))}/>
-
-    <DetailsSection title='Request Headers' showCountWhenCollapsed data={resource.request.headers}/>
-
-    <DetailsSection title='Response Headers' showCountWhenCollapsed data={resource.response.headers}/>
-  </div>;
-};
-
 const PayloadTab: React.FC<{
   queryString: QueryParameter[];
   requestBody: RequestBody,
@@ -155,6 +212,18 @@ const PayloadTab: React.FC<{
     {requestBody && <DetailsSection title='Request Body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
     </DetailsSection>}
+  </div>;
+};
+
+const ResponseTab: React.FC<{
+  responseBody: ResponseBody
+}> = ({ responseBody }) => {
+  return <div className='network-request-details-tab'>
+    {!responseBody && <em>Response body is not available for this request</em>}
+    {responseBody?.font && <FontPreview font={responseBody.font}/>}
+    {responseBody?.dataUrl && <img draggable='false' src={responseBody.dataUrl}/>}
+    {responseBody?.text &&
+      <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };
 
@@ -194,102 +263,31 @@ const FontPreview: React.FC<{
   </div>;
 };
 
-const ResponseTab: React.FC<{
-  responseBody: ResponseBody
-}> = ({ responseBody }) => {
-  return <div className='network-request-details-tab'>
-    {!responseBody && <em>Response body is not available for this request</em>}
-    {responseBody?.font && <FontPreview font={responseBody.font}/>}
-    {responseBody?.dataUrl && <img draggable='false' src={responseBody.dataUrl}/>}
-    {responseBody?.text &&
-      <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
-  </div>;
-};
+function statusClass(statusCode: number): string {
+  if ((statusCode >= 100 && statusCode < 300) || statusCode === 304)
+    return 'green-circle';
+  if (statusCode >= 300 && statusCode < 400)
+    return 'yellow-circle';
+  return 'red-circle';
+}
 
-export const NetworkResourceDetails: React.FC<{
-  resource: ResourceSnapshot;
-  sdkLanguage: Language;
-  startTimeOffset: number;
-  onClose: () => void;
-}> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
-  const [selectedTab, setSelectedTab] = React.useState('headers');
+function formatBody(body: string | null, contentType: string): string {
+  if (body === null)
+    return 'Loading...';
 
-  const [requestBody, setRequestBody] = React.useState<RequestBody>(null);
-  const [responseBody, setResponseBody] = React.useState<ResponseBody>(null);
+  if (body === '')
+    return '<Empty>';
 
-  React.useEffect(() => {
-    const readRequest = async () => {
-      if (!resource.request.postData) {
-        setRequestBody(null);
-        return;
-      }
+  if (contentType.includes('application/json')) {
+    try {
+      return JSON.stringify(JSON.parse(body), null, 2);
+    } catch (err) {
+      return body;
+    }
+  }
 
-      const requestContentTypeHeader = resource.request.headers.find(({ name }) => name.toLowerCase() === 'content-type');
-      const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
-      if (resource.request.postData._sha1) {
-        const response = await fetch(`sha1/${resource.request.postData._sha1}`);
-        setRequestBody({ text: formatBody(await response.text(), requestContentType), mimeType: requestContentType });
-      } else {
-        setRequestBody({
-          text: formatBody(resource.request.postData.text, requestContentType),
-          mimeType: requestContentType
-        });
-      }
-    };
+  if (contentType.includes('application/x-www-form-urlencoded'))
+    return decodeURIComponent(body);
 
-    const readResponse = async () => {
-      if (!resource.response.content._sha1) {
-        setResponseBody(null);
-        return;
-      }
-
-      const mimeType = resource.response.content.mimeType;
-      const useBase64 = mimeType.includes('image');
-      const response = await fetch(`sha1/${resource.response.content._sha1}`);
-      if (useBase64) {
-        const blob = await response.blob();
-        const reader = new FileReader();
-        const eventPromise = new Promise<any>(f => reader.onload = f);
-        reader.readAsDataURL(blob);
-        setResponseBody({ dataUrl: (await eventPromise).target.result });
-        return;
-      }
-
-      const isFont = mimeType.includes('font');
-      if (isFont) {
-        const font = await response.arrayBuffer();
-        setResponseBody({ font });
-      } else {
-        const formattedBody = formatBody(await response.text(), mimeType);
-        setResponseBody({ text: formattedBody, mimeType: mimeType });
-      }
-    };
-
-    readRequest();
-    readResponse();
-  }, [resource]);
-
-  return <TabbedPane
-    dataTestId='network-request-details'
-    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}/>]}
-    rightToolbar={[<CopyDropdown key='dropdown' requestBody={requestBody} resource={resource} sdkLanguage={sdkLanguage}/>]}
-    tabs={[
-      {
-        id: 'headers',
-        title: 'Headers',
-        render: () => <HeadersTab resource={resource} startTimeOffset={startTimeOffset}/>,
-      },
-      {
-        id: 'payload',
-        title: 'Payload',
-        render: () => <PayloadTab queryString={resource.request.queryString} requestBody={requestBody}/>,
-      },
-      {
-        id: 'response',
-        title: 'Response',
-        render: () => <ResponseTab responseBody={responseBody}/>,
-      },
-    ]}
-    selectedTab={selectedTab}
-    setSelectedTab={setSelectedTab}/>;
-};
+  return body;
+}
