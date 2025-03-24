@@ -22,8 +22,3 @@ export const enquirer: typeof import('../bundles/utils/node_modules/enquirer') =
 export const chokidar: typeof import('../bundles/utils/node_modules/chokidar') = require('./utilsBundleImpl').chokidar;
 export const getEastAsianWidth: typeof import('../bundles/utils/node_modules/get-east-asian-width') = require('./utilsBundleImpl').getEastAsianWidth;
 export type { RawSourceMap } from '../bundles/utils/node_modules/source-map';
-export const mcp: {
-    McpServer: typeof import('../bundles/utils/node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp').McpServer;
-    StdioServerTransport: typeof import('../bundles/utils/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js').StdioServerTransport;
-} = require('./utilsBundleImpl').mcp;
-export const z: typeof import('../bundles/utils/node_modules/zod').z = require('./utilsBundleImpl').z;

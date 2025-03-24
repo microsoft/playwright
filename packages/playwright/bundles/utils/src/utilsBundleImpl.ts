@@ -36,12 +36,3 @@ export const chokidar = chokidarLibrary;
 
 import * as getEastAsianWidthLibrary from 'get-east-asian-width';
 export const getEastAsianWidth = getEastAsianWidthLibrary;
-
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-export const mcp = {
-  McpServer,
-  StdioServerTransport,
-};
-
-export { z } from 'zod';

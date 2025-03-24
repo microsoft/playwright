@@ -9,6 +9,7 @@
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.7.0",
     "colors": "1.4.0",
     "commander": "8.3.0",
     "debug": "^4.3.4",
@@ -27,7 +28,8 @@
     "signal-exit": "3.0.7",
     "socks-proxy-agent": "6.1.1",
     "ws": "8.17.1",
-    "yaml": "^2.6.0"
+    "yaml": "^2.6.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",

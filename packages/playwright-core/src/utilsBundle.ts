@@ -37,6 +37,11 @@ export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
 export const wsSender = require('./utilsBundleImpl').wsSender;
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
+export const mcp: {
+  McpServer: typeof import('../bundles/utils/node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp').McpServer;
+  StdioServerTransport: typeof import('../bundles/utils/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js').StdioServerTransport;
+} = require('./utilsBundleImpl').mcp;
+export const z: typeof import('../bundles/utils/node_modules/zod').z = require('./utilsBundleImpl').z;
 
 export function ms(ms: number): string {
   if (!isFinite(ms))

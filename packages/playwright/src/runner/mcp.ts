@@ -17,7 +17,8 @@
 import path from 'path';
 import { Writable } from 'stream';
 
-import { mcp, z } from '../utilsBundle';
+import { mcp, z } from 'playwright-core/lib/utilsBundle';
+
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerDispatcher } from './testServer';
 

@@ -65,3 +65,12 @@ export const ws = wsLibrary;
 export const wsServer = WebSocketServer;
 export const wsReceiver = Receiver;
 export const wsSender = Sender;
+
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+export const mcp = {
+  McpServer,
+  StdioServerTransport,
+};
+
+export { z } from 'zod';
