@@ -20786,6 +20786,11 @@ export interface Route {
    * request to the network, other matching handlers won't be invoked. Use
    * [route.fallback([options])](https://playwright.dev/docs/api/class-route#route-fallback) If you want next matching
    * handler in the chain to be invoked.
+   *
+   * **NOTE** The `Cookie` header cannot be overridden using this method. If a value is provided, it will be ignored,
+   * and the cookie will be loaded from the browser's cookie store. To set custom cookies, use
+   * [browserContext.addCookies(cookies)](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-cookies).
+   *
    * @param options
    */
   continue(options?: {

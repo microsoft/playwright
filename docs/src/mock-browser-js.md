@@ -9,8 +9,6 @@ Playwright provides native support for most of the browser features. However, th
 and APIs which are not (yet) fully supported by all browsers. Playwright usually doesn't provide dedicated
 automation APIs in such cases. You can use mocks to test the behavior of your application in such cases. This guide gives a few examples.
 
-## Introduction
-
 Let's consider a web app that uses [battery API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getBattery)
 to show your device's battery status. We'll mock the battery API and check that the page correctly displays the
 battery status.

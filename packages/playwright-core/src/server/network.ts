@@ -329,6 +329,8 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
+    if (overrides.headers)
+      overrides.headers = overrides.headers?.filter(header => header.name.toLowerCase() !== 'cookie');
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);

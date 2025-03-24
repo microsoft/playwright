@@ -8397,7 +8397,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
    * When a string is provided, it must fully match the element's `class` attribute. To match individual classes or
-   * perform partial matches, use a regular expression:
+   * perform partial matches use
+   * [`partial`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-class-option-partial).
    *
    * **Usage**
    *
@@ -8408,7 +8409,8 @@ interface LocatorAssertions {
    * ```js
    * const locator = page.locator('#component');
    * await expect(locator).toHaveClass('middle selected row');
-   * await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
+   * await expect(locator).toHaveClass('selected', { partial: true });
+   * await expect(locator).toHaveClass('middle row', { partial: true });
    * ```
    *
    * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
@@ -8424,6 +8426,15 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveClass(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
+    /**
+     * Whether to perform a partial match, defaults to `false`. In an exact match, which is the default, the `className`
+     * attribute must be exactly the same as the asserted value. In a partial match, all classes from the asserted value,
+     * separated by spaces, must be present in the
+     * [Element.classList](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList) in any order. Partial match
+     * does not support a regular expression.
+     */
+    partial?: boolean;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */

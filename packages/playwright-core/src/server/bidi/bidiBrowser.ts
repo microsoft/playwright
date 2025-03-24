@@ -98,13 +98,9 @@ export class BidiBrowser extends Browser {
     });
 
     if (options.persistent) {
-      const { userContexts } = await browser._browserSession.send('browser.getUserContexts', {});
-      if (!userContexts.length)
-        throw new Error('Cannot dermine default context id, no contexts found.');
       const context = new BidiBrowserContext(browser, undefined, options.persistent);
-      context._defaultUserContext = userContexts[0].userContext;
       browser._defaultContext = context;
-      await (browser._defaultContext as BidiBrowserContext)._initialize();
+      await context._initialize();
       // Create default page as we cannot get access to the existing one.
       const page = await browser._defaultContext.doCreateNewPage();
       await page.waitForInitializedOrError();
@@ -209,7 +205,6 @@ export class BidiBrowser extends Browser {
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _initScriptIds: bidi.Script.PreloadScript[] = [];
-  _defaultUserContext: bidi.Browser.UserContext | undefined;
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -376,7 +371,9 @@ export class BidiBrowserContext extends BrowserContext {
   private _userContextId(): bidi.Browser.UserContext {
     if (this._browserContextId)
       return this._browserContextId;
-    return this._defaultUserContext!;
+    // Default context always has same id, see
+    // https://w3c.github.io/webdriver-bidi/#default-user-context
+    return 'default';
   }
 }
 
