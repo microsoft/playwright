@@ -385,7 +385,7 @@ export class TraceModernizer {
         version: 7,
         browserName: '',
         options: {},
-        platform: process.platform,
+        platform: globalThis.process?.platform,
         wallTime: 0,
         monotonicTime: 0,
         sdkLanguage: 'javascript',

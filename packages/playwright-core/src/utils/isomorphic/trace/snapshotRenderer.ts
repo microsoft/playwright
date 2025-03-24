@@ -255,7 +255,7 @@ declare global {
 }
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) { /* eslint-disable no-restricted-globals */
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     const searchParams = new URLSearchParams(location.search);
     const shouldPopulateCanvasFromScreenshot = searchParams.has('shouldPopulateCanvasFromScreenshot');
     const isUnderTest = searchParams.has('isUnderTest');
@@ -556,7 +556,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
 
     window.addEventListener('load', onLoad);
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
-  } /* eslint-enable no-restricted-globals */
+  }
 
   return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
