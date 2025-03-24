@@ -16,14 +16,11 @@
 
 import './browserFrame.css';
 import * as React from 'react';
-import { useState } from 'react';
 import { CopyToClipboard } from './copyToClipboard';
 
 export const BrowserFrame: React.FunctionComponent<{
   url?: string,
 }> = ({ url }): React.ReactElement => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return <div className='browser-frame-header'>
     <div style={{ whiteSpace: 'nowrap' }}>
       <span className='browser-frame-dot' style={{ backgroundColor: 'rgb(242, 95, 88)' }}></span>
@@ -33,11 +30,9 @@ export const BrowserFrame: React.FunctionComponent<{
     <div
       className='browser-frame-address-bar'
       title={url || 'about:blank'}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {url || 'about:blank'}
-      {isHovered && url && (
+      {url && (
         <CopyToClipboard value={url} />
       )}
     </div>

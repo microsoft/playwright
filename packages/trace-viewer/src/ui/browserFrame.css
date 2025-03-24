@@ -36,6 +36,14 @@
   white-space: nowrap;
 }
 
+.browser-frame-address-bar > button {
+  display: none;
+}
+
+.browser-frame-address-bar:hover > button {
+  display: inline-block;
+}
+
 .browser-frame-menu-bar {
   background-color: #aaa;
   display: block;

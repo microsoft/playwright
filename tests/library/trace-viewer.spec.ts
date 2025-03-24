@@ -467,22 +467,15 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
     await page.evaluate('2+2');
   });
   await traceViewer.snapshotFrame('page.evaluate');
-  await expect(traceViewer.page.locator('.browser-frame-address-bar')).toHaveText(server.EMPTY_PAGE);
-});
-
-test('should show copy button on snapshot url hover and copy to clipboard on click', async ({ page, runAndTrace, server }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.EMPTY_PAGE);
-    await page.evaluate('2+2');
-  });
+  let browserFrameAddressBarLocator = traceViewer.page.locator('.browser-frame-address-bar');
+  await expect(browserFrameAddressBarLocator).toHaveText(server.EMPTY_PAGE);
   await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-  await traceViewer.snapshotFrame('page.evaluate');
-  await expect(traceViewer.page.locator('.browser-frame-address-bar')).toHaveText(server.EMPTY_PAGE);
-  const copySelector = '.browser-frame-address-bar > button[title="Copy"]';
-  await expect(traceViewer.page.locator(copySelector)).toBeHidden();
+  await expect(browserFrameAddressBarLocator).toHaveText(server.EMPTY_PAGE);
+  let copySelectorLocator = traceViewer.page.locator('.browser-frame-address-bar > button[title="Copy"]');
+  await expect(copySelectorLocator).toBeHidden();
   await traceViewer.page.hover('.browser-frame-address-bar');
-  await expect(traceViewer.page.locator(copySelector)).toBeVisible();
-  await traceViewer.page.locator(copySelector).click();
+  await expect(copySelectorLocator).toBeVisible();
+  await copySelectorLocator.click();
   expect(await traceViewer.page.evaluate(() => navigator.clipboard.readText())).toBe(server.EMPTY_PAGE);
 });
 
