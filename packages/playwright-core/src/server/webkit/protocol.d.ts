@@ -26,7 +26,6 @@ export module Protocol {
        * Equal to the corresponding `transition-property` CSS property. Should not be provided if `animationName` is also provided.
        */
       cssTransitionProperty?: string;
-      effect?: Effect;
       /**
        * Backtrace that was captured when this `WebAnimation` was created.
        */
@@ -104,10 +103,6 @@ export module Protocol {
      */
     export type effectChangedPayload = {
       animationId: AnimationId;
-      /**
-       * This is omitted when the effect is removed without a replacement.
-       */
-      effect?: Effect;
     }
     /**
      * Dispatched whenever the target of any effect of any animation is changed in any way.
@@ -154,6 +149,18 @@ export module Protocol {
     export type disableParameters = {
     }
     export type disableReturnValue = {
+    }
+    /**
+     * Gets the `Effect` for the animation with the given `AnimationId`.
+     */
+    export type requestEffectParameters = {
+      animationId: AnimationId;
+    }
+    export type requestEffectReturnValue = {
+      /**
+       * This is omitted when there is no effect.
+       */
+      effect?: Effect;
     }
     /**
      * Gets the `DOM.NodeId` for the target of the effect of the animation with the given `AnimationId`.
@@ -9179,6 +9186,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   export interface CommandParameters {
     "Animation.enable": Animation.enableParameters;
     "Animation.disable": Animation.disableParameters;
+    "Animation.requestEffect": Animation.requestEffectParameters;
     "Animation.requestEffectTarget": Animation.requestEffectTargetParameters;
     "Animation.resolveAnimation": Animation.resolveAnimationParameters;
     "Animation.startTracking": Animation.startTrackingParameters;
@@ -9483,6 +9491,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   export interface CommandReturnValues {
     "Animation.enable": Animation.enableReturnValue;
     "Animation.disable": Animation.disableReturnValue;
+    "Animation.requestEffect": Animation.requestEffectReturnValue;
     "Animation.requestEffectTarget": Animation.requestEffectTargetReturnValue;
     "Animation.resolveAnimation": Animation.resolveAnimationReturnValue;
     "Animation.startTracking": Animation.startTrackingReturnValue;
