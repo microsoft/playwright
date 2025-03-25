@@ -387,19 +387,29 @@ function resolveReporter(id: string) {
   return require.resolve(id, { paths: [process.cwd()] });
 }
 
-function resolveAvailableProjects(projects: FullProjectInternal[], projectNames?: string[]) {
-  const filteredProjects = new Set(filterProjects(projects, projectNames));
-  const enabledProjects = new Set(projects.filter(p => !p.project.disabledByDefault));
+function resolveAvailableProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
+  const filteredProjects = filterProjects(projects, projectNames).map(p => p.project.name);
+  const enabledProjects = projects.filter(p => !p.project.disabledByDefault).map(p => p.project.name);
 
-  const availableProjects = !projectNames ? enabledProjects : enabledProjects.union(filteredProjects);
+  const availableProjects = !projectNames ? new Set(enabledProjects) : new Set([...enabledProjects, ...filteredProjects]);
+  const projectsToRun: Set<FullProjectInternal> = new Set();
 
-  for (const project of availableProjects) {
-    project.deps = project.deps.filter(p => availableProjects.has(p));
+  for (const project of projects) {
+      if (availableProjects.has(project.project.name))
+        projectsToRun.add(project);
+      project.project.dependencies = project.project.dependencies.filter(p => availableProjects.has(p));
+      project.deps = project.deps.filter(p => availableProjects.has(p.project.name));
 
     if (project.teardown)
-      project.teardown = availableProjects.has(project.teardown) ? project.teardown : undefined;
+      project.teardown = availableProjects.has(project.teardown.project.name) ? project.teardown : undefined;
   }
-  return Array.from(availableProjects);
+
+  projects.forEach(p => {
+    console.log('Curr: ', p.project.name)
+    console.log('Deps: ', p.deps.map(p => p.project.name))
+    console.log('Teardown: ', p.teardown?.project.name)
+  })
+  return Array.from(projectsToRun);
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure'];

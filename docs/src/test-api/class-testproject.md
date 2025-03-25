@@ -450,7 +450,7 @@ export default defineConfig({
       disabledByDefault: false
     },
     {
-      name: 'project does not run when no specific project specified',
+      name: 'project runs when explicitly specified in cli',
       disabledByDefault: true
     },
   ],

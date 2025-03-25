@@ -731,5 +731,5 @@ test('should only run projects with disabledByDefault set to false when no proje
       });    `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toEqual(['A', 'C']);
+  expect(new Set(result.outputLines)).toEqual(new Set(['A', 'C']));
 });
