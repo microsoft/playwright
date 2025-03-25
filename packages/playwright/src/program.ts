@@ -22,7 +22,7 @@ import path from 'path';
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
-import { builtInReporters, defaultReporter, defaultTimeout, FullConfigInternal } from './common/config';
+import { builtInReporters, defaultReporter, defaultTimeout, FullProjectInternal } from './common/config';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 export { program } from 'playwright-core/lib/cli/program';
 import { prepareErrorStack } from './reporters/base';
@@ -174,19 +174,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliLastFailed = !!opts.lastFailed;
 
-
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
-  const filteredProjects: FullConfigInternal[] = [];
-  const validProjects = filterProjects(config.projects, config.cliProjectFilter);
-  for (const project of config.projects) {
-    if (validProjects.includes(project)) {
-      if (project.deps)
-        project.deps = project.deps.filter(p => validProjects.includes(p))
-      
-      if (project.teardown)
-        project.teardown = validProjects.includes(project.teardown) ? project.teardown : undefined
-    }
-  }
+  // Evaluate the projects based on cliFilter and disabledByDefault in order to mutate the dependencies and teardown for each project
+  config.projects = resolveAvailableProjects(config.projects, config.cliProjectFilter);
 
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)
@@ -395,6 +385,21 @@ function resolveReporter(id: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [process.cwd()] });
+}
+
+function resolveAvailableProjects(projects: FullProjectInternal[], projectNames?: string[]) {
+  const filteredProjects = new Set(filterProjects(projects, projectNames));
+  const enabledProjects = new Set(projects.filter(p => !p.project.disabledByDefault));
+
+  const availableProjects = !projectNames ? enabledProjects : enabledProjects.union(filteredProjects);
+
+  for (const project of availableProjects) {
+    project.deps = project.deps.filter(p => availableProjects.has(p));
+
+    if (project.teardown)
+      project.teardown = availableProjects.has(project.teardown) ? project.teardown : undefined;
+  }
+  return Array.from(availableProjects);
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure'];

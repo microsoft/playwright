@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { log } from 'node:console';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should run projects with dependencies', async ({ runInlineTest }) => {
@@ -692,22 +691,45 @@ test('should allow only in dependent (2)', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test.only('should run teardown aftesdsfsfdr failure', async ({ runInlineTest }) => {
+test('should only run projects specified in cli when disabledByDefault is true for projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
         projects: [
           { name: 'A', teardown: 'D'},
-          { name: 'B' , dependencies: ['C']},
-          { name: 'C',  disabledByDefault: true},
-          { name: 'D' , disabledByDefault: true},
+          { name: 'B' , dependencies: ['A']},
+          { name: 'C' ,  dependencies: ['B'], disabledByDefault: true},
+          { name: 'D', disabledByDefault: true},
         ],
       };`,
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
-      test.only('setup', async ({}) => {});
+      test('setup', async ({}) => {
+        console.log('%%' + test.info().project.name)
+      });
     `,
-  }, { workers: 1 }, undefined, {});
+  }, { '--project': ['C'] });
   expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toEqual(['A', 'B']);
+  expect(new Set(result.outputLines)).toEqual(new Set(['A', 'B', 'C']));
+});
+
+test('should only run projects with disabledByDefault set to false when no project specified in cli', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'D'},
+          { name: 'B' , dependencies: ['A'], disabledByDefault: true},
+          { name: 'C',  dependencies: ['B']},
+          { name: 'D' , disabledByDefault: true},
+        ],
+      };`,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['A', 'C']);
 });

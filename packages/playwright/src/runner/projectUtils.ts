@@ -35,7 +35,7 @@ function wildcardPatternToRegExp(pattern: string): RegExp {
 
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
   if (!projectNames)
-    return projects.filter((project) => !project.project.disabledByDefault);
+    return [...projects];
 
 
   const projectNamesToFind = new Set<string>();
@@ -246,3 +246,9 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
   await visit(testDir, [], 'included');
   return files;
 }
+
+// export function filterDefaultProjects(projects: FullConfigInternal[], filteredProjects) {
+//   for (const project of projects) {
+
+//   }
+// }
