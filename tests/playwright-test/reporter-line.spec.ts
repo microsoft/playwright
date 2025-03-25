@@ -188,5 +188,22 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('1) a.test.ts:3:15 › passes ──');
       expect(result.exitCode).toBe(1);
     });
+
+    test('should show error prompt with relative path', async ({ runInlineTest, useIntermediateMergeReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('one', async ({}) => {
+            expect(1).toBe(0);
+          });
+        `,
+      }, { reporter: 'line' });
+      const text = result.output;
+      if (useIntermediateMergeReport)
+        expect(text).toContain('Error Prompt: blob-report/resources/');
+      else
+        expect(text).toContain('Error Prompt: test-results/a-one/_prompt-0.md');
+      expect(result.exitCode).toBe(1);
+    });
   });
 }

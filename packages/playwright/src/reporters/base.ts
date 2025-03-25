@@ -344,7 +344,7 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
   lines.push(screen.colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
-    const errors = formatResultFailure(screen, test, result, '    ');
+    const errors = formatResultFailure(screen, config, test, result, '    ', true);
     if (!errors.length)
       continue;
     const retryLines = [];
@@ -406,7 +406,7 @@ function quotePathIfNeeded(path: string): string {
   return path;
 }
 
-export function formatResultFailure(screen: Screen, test: TestCase, result: TestResult, initialIndent: string): ErrorDetails[] {
+export function formatResultFailure(screen: Screen, config: FullConfig, test: TestCase, result: TestResult, initialIndent: string, includePrompt: boolean): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
@@ -420,10 +420,16 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     });
   }
 
-  for (const error of result.errors) {
+  for (const [index, error] of result.errors.entries()) {
     const formattedError = formatError(screen, error);
+    let message = formattedError.message;
+    if (includePrompt) {
+      const promptPath = result.attachments.find(a => a.name === `_prompt-${index}`)?.path;
+      if (promptPath)
+        message += '\n' + screen.colors.cyan(`Error Prompt: ${relativeFilePath(screen, config, promptPath)}`);
+    }
     errorDetails.push({
-      message: indent(formattedError.message, initialIndent),
+      message: indent(message, initialIndent),
       location: formattedError.location,
     });
   }

@@ -113,7 +113,7 @@ export class GitHubReporter extends TerminalReporter {
       const title = this.formatTestTitle(test);
       const header = this.formatTestHeader(test, { indent: '  ', index: index + 1, mode: 'error' });
       for (const result of test.results) {
-        const errors = formatResultFailure(this.screen, test, result, '    ');
+        const errors = formatResultFailure(this.screen, this.config, test, result, '    ', false);
         for (const error of errors) {
           const options: GitHubLogOptions = {
             file: workspaceRelativePath(error.location?.file || test.location.file),
