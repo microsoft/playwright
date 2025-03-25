@@ -60,6 +60,16 @@ export type ErrorDescription = {
 
 export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
 
+export type MultiTraceModelOrLoadError = ({
+  type: 'model',
+  model: MultiTraceModel,
+} | {
+  type: 'error',
+  errors: string[]
+}) & {
+  isLive: boolean;
+};
+
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;

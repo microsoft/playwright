@@ -21,7 +21,7 @@ import '@web/third_party/vscode/codicon.css';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { ContextEntry } from '../types/entries';
-import type { SourceLocation } from './modelUtil';
+import type { MultiTraceModelOrLoadError, SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
 
@@ -32,7 +32,7 @@ export const TraceView: React.FC<{
   revealSource?: boolean,
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
-  const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
+  const [trace, setTrace] = React.useState<MultiTraceModelOrLoadError | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -47,19 +47,19 @@ export const TraceView: React.FC<{
 
     const result = item.testCase?.results[0];
     if (!result) {
-      setModel(undefined);
+      setTrace(undefined);
       return;
     }
 
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
+      loadSingleTraceFile(attachment.path).then(model => setTrace({ type: 'model', model, isLive: false }));
       return;
     }
 
     if (!outputDir) {
-      setModel(undefined);
+      setTrace(undefined);
       return;
     }
 
@@ -73,9 +73,31 @@ export const TraceView: React.FC<{
     pollTimer.current = setTimeout(async () => {
       try {
         const model = await loadSingleTraceFile(traceLocation);
-        setModel({ model, isLive: true });
-      } catch {
-        setModel(undefined);
+        setTrace({ type: 'model', model, isLive: true });
+      } catch (e) {
+        if (result.status !== 'failed') {
+          setTrace(undefined);
+          return;
+        }
+
+        // Test failed. We don't know what happened to the trace
+        const treeErrors = () => {
+          if (!item.treeItem || item.treeItem.kind !== 'case' || !item.treeItem.test)
+            return [];
+          const test = item.treeItem.test;
+          return test.results.flatMap(result => result.errors).flatMap(error => {
+            if (!error.message)
+              return [];
+            return [error.message];
+          });
+        };
+
+        setTrace({
+          type: 'error',
+          errors: treeErrors(),
+          isLive: false
+        });
+
       } finally {
         setCounter(counter + 1);
       }
@@ -84,15 +106,14 @@ export const TraceView: React.FC<{
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
+  }, [outputDir, item, setTrace, counter, setCounter, pathSeparator]);
 
   return <Workbench
     key='workbench'
-    model={model?.model}
+    trace={trace}
     showSourcesFirst={true}
     rootDir={rootDir}
     fallbackLocation={item.testFile}
-    isLive={model?.isLive}
     status={item.treeItem?.status}
     annotations={item.testCase?.annotations || []}
     onOpenExternally={onOpenExternally}
@@ -113,6 +134,8 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   params.set('trace', url);
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
-  const contextEntries = await response.json() as ContextEntry[];
+  const contextEntries = await response.json() as ContextEntry[] | { error: string };
+  if ('error' in contextEntries)
+    throw new Error(contextEntries.error);
   return new MultiTraceModel(contextEntries);
 }
