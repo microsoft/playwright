@@ -127,6 +127,31 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
   }
 }
 
+export async function attachErrorContext(testInfo: TestInfo, ariaSnapshot: string | undefined) {
+  for (const [index] of testInfo.errors.entries()) {
+    if (testInfo.attachments.find(a => a.name === `_error-context-${index}`))
+      continue;
+
+    const promptParts = [];
+
+    if (ariaSnapshot) {
+      promptParts.push(
+          '# Page snapshot',
+          '',
+          '```yaml',
+          ariaSnapshot,
+          '```',
+      );
+    }
+
+    (testInfo as TestInfoImpl)._attach({
+      name: `_error-context-${index}`,
+      contentType: 'text/markdown',
+      body: Buffer.from(promptParts.join('\n')),
+    }, undefined);
+  }
+}
+
 async function loadSource(file: string, sourceCache: Map<string, string>) {
   let source = sourceCache.get(file);
   if (!source) {

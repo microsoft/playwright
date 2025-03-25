@@ -355,3 +355,25 @@ test('should report parallelIndex', async ({ runInlineTest }, testInfo) => {
   expect(result.report.suites[0].specs[1].tests[0].results[0].parallelIndex).toBe(1);
   expect(result.report.suites[0].specs[2].tests[0].results[0].parallelIndex).toBe(1);
 });
+
+test('attaches error context', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+          export default { use: { _optionAttachErrorContext: true } };
+    `,
+    'a.test.js': `
+      const { test, expect } = require('@playwright/test');
+      test('one', async ({ page }, testInfo) => {
+        await page.setContent('<button>Click me</button>');
+        throw new Error('kaboom');
+      });
+    `,
+  }, { reporter: 'json' });
+
+  expect(result.report.suites[0].specs[0].tests[0].results[0].attachments).toEqual([
+    expect.objectContaining({
+      name: '_error-context-0',
+      contentType: 'text/markdown',
+    }),
+  ]);
+});
