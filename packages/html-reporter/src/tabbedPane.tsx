@@ -37,7 +37,9 @@ export const TabbedPane: React.FC<{
           tabs.map(tab => (
             <div className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
               onClick={() => setSelectedTab(tab.id)}
-              key={tab.id}>
+              key={tab.id}
+              role='button'
+            >
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>
           ))}

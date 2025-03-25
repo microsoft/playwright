@@ -183,7 +183,7 @@ function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: Sear
 }
 
 export function filterWithToken(searchParams: URLSearchParams, token: string, append: boolean): string {
-  const tokens = (searchParams.get('q') ?? '').split(' ');
+  const tokens = searchParams.get('q')?.split(' ') ?? [];
 
   let newTokens;
   if (append) {
