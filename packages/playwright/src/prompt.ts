@@ -131,18 +131,13 @@ export async function attachErrorContext(testInfo: TestInfo, ariaSnapshot: strin
   if (!ariaSnapshot)
     return;
 
-  for (const [index] of testInfo.errors.entries()) {
-    if (testInfo.attachments.find(a => a.name === `_error-context-${index}`))
-      continue;
-
-    (testInfo as TestInfoImpl)._attach({
-      name: `_error-context-${index}`,
-      contentType: 'application/json',
-      body: Buffer.from(JSON.stringify({
-        pageSnapshot: ariaSnapshot,
-      })),
-    }, undefined);
-  }
+  (testInfo as TestInfoImpl)._attach({
+    name: `_error-context`,
+    contentType: 'application/json',
+    body: Buffer.from(JSON.stringify({
+      pageSnapshot: ariaSnapshot,
+    })),
+  }, undefined);
 }
 
 async function loadSource(file: string, sourceCache: Map<string, string>) {
