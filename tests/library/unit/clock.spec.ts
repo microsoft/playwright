@@ -1157,7 +1157,12 @@ it.describe('stubTimers', () => {
 
   it('restores global property on uninstall if it was inherited onto the global object', ({}) => {
     // Give the global object an inherited 'setTimeout' method
-    const proto = { Date,
+    const proto = {
+      Date,
+      Intl,
+      Map,
+      Set,
+      performance,
       setTimeout: () => {},
       clearTimeout: () => {},
       setInterval: () => {},

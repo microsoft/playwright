@@ -218,11 +218,25 @@ const noBooleanCompareRules = {
 };
 
 const noWebGlobalsRules = {
+  // This should contain every bulitin from builtins.ts.
   "no-restricted-globals": [
     "error",
-    { name: "window" },
-    { name: "document" },
-    { name: "globalThis" },
+    { "name": "window", "message": "Use InjectedScript.window instead" },
+    { "name": "document", "message": "Use InjectedScript.document instead" },
+    { "name": "globalThis", "message": "Use InjectedScript.window instead" },
+    { "name": "setTimeout", "message": "Use InjectedScript.builtins.setTimeout instead" },
+    { "name": "clearTimeout", "message": "Use InjectedScript.builtins.clearTimeout instead" },
+    { "name": "setInterval", "message": "Use InjectedScript.builtins.setInterval instead" },
+    { "name": "clearInterval", "message": "Use InjectedScript.builtins.clearInterval instead" },
+    { "name": "requestAnimationFrame", "message": "Use InjectedScript.builtins.requestAnimationFrame instead" },
+    { "name": "cancelAnimationFrame", "message": "Use InjectedScript.builtins.cancelAnimationFrame instead" },
+    { "name": "requestIdleCallback", "message": "Use InjectedScript.builtins.requestIdleCallback instead" },
+    { "name": "cancelIdleCallback", "message": "Use InjectedScript.builtins.cancelIdleCallback instead" },
+    { "name": "performance", "message": "Use InjectedScript.builtins.performance instead" },
+    { "name": "eval", "message": "Use InjectedScript.builtins.eval instead" },
+    { "name": "Date", "message": "Use InjectedScript.builtins.Date instead" },
+    { "name": "Map", "message": "Use InjectedScript.builtins.Map instead" },
+    { "name": "Set", "message": "Use InjectedScript.builtins.Set instead" },
   ],
 };
 
@@ -358,6 +372,8 @@ export default [
       "packages/playwright-core/src/server/injected/**/*.ts",
       "packages/playwright-core/src/server/isomorphic/**/*.ts",
       "packages/playwright-core/src/utils/isomorphic/**/*.ts",
+      "packages/playwright-core/src/server/pageBinding.ts",
+      "packages/playwright-core/src/server/storageScript.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,
     rules: {

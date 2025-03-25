@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type { Builtins } from './builtins';
+
 export type SerializedValue =
     undefined | boolean | number | string |
     { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
@@ -27,14 +29,14 @@ export type SerializedValue =
     { ref: number } |
     { h: number };
 
-export type HandleOrValue = { h: number } | { fallThrough: any };
+type HandleOrValue = { h: number } | { fallThrough: any };
 
 type VisitorInfo = {
-  visited: Map<object, number>;
+  visited: Builtins.Map<object, number>;
   lastId: number;
 };
 
-export function source() {
+export function source(builtins: Builtins) {
 
   function isRegExp(obj: any): obj is RegExp {
     try {
@@ -44,9 +46,9 @@ export function source() {
     }
   }
 
-  function isDate(obj: any): obj is Date {
+  function isDate(obj: any): obj is Builtins.Date {
     try {
-      return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+      return obj instanceof builtins.Date || Object.prototype.toString.call(obj) === '[object Date]';
     } catch (error) {
       return false;
     }
@@ -68,7 +70,7 @@ export function source() {
     }
   }
 
-  function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Map<number, object> = new Map()): any {
+  function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Builtins.Map<number, object> = new builtins.Map()): any {
     if (Object.is(value, undefined))
       return undefined;
     if (typeof value === 'object' && value) {
@@ -90,7 +92,7 @@ export function source() {
         return undefined;
       }
       if ('d' in value)
-        return new Date(value.d);
+        return new builtins.Date(value.d);
       if ('u' in value)
         return new URL(value.u);
       if ('bi' in value)
@@ -124,7 +126,7 @@ export function source() {
   }
 
   function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
-    return serialize(value, handleSerializer, { visited: new Map(), lastId: 0 });
+    return serialize(value, handleSerializer, { visited: new builtins.Map(), lastId: 0 });
   }
 
   function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -236,7 +238,3 @@ export function source() {
 
   return { parseEvaluationResultValue, serializeAsCallArgument };
 }
-
-const result = source();
-export const parseEvaluationResultValue = result.parseEvaluationResultValue;
-export const serializeAsCallArgument = result.serializeAsCallArgument;
