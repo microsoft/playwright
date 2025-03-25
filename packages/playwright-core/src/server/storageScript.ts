@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import type { Builtins } from './isomorphic/builtins';
 import type { source } from './isomorphic/utilityScriptSerializers';
 import type * as channels from '@protocol/channels';
 
 export type Storage = Omit<channels.OriginStorage, 'origin'>;
 
-export async function collect(serializers: ReturnType<typeof source>, isFirefox: boolean, recordIndexedDB: boolean): Promise<Storage> {
+export async function collect(serializersSource: typeof source, builtins: Builtins, isFirefox: boolean, recordIndexedDB: boolean): Promise<Storage> {
+  const { serializeAsCallArgument } = serializersSource(builtins);
+
   async function collectDB(dbInfo: IDBDatabaseInfo) {
     if (!dbInfo.name)
       throw new Error('Database name is empty');
@@ -46,7 +49,7 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
 
     function trySerialize(value: any): { trivial?: any, encoded?: any } {
       let trivial = true;
-      const encoded = serializers.serializeAsCallArgument(value, v => {
+      const encoded = serializeAsCallArgument(value, v => {
         const isTrivial = (
           isPlainObject(v)
           || Array.isArray(v)
@@ -129,7 +132,9 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
   };
 }
 
-export async function restore(originState: channels.SetOriginStorage, serializers: ReturnType<typeof source>) {
+export async function restore(serializersSource: typeof source, builtins: Builtins, originState: channels.SetOriginStorage) {
+  const { parseEvaluationResultValue } = serializersSource(builtins);
+
   for (const { name, value } of (originState.localStorage || []))
     localStorage.setItem(name, value);
 
@@ -159,8 +164,8 @@ export async function restore(originState: channels.SetOriginStorage, serializer
       await Promise.all(store.records.map(async record => {
         await idbRequestToPromise(
             objectStore.add(
-                record.value ?? serializers.parseEvaluationResultValue(record.valueEncoded),
-                record.key ?? serializers.parseEvaluationResultValue(record.keyEncoded),
+                record.value ?? parseEvaluationResultValue(record.valueEncoded),
+                record.key ?? parseEvaluationResultValue(record.keyEncoded),
             )
         );
       }));
