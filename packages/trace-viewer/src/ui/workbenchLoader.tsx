@@ -184,7 +184,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
     <LLMProvider>
-      <Workbench model={model} inert={showFileUploadDropArea} />
+      <Workbench trace={{ type: 'model', model, isLive: false }} inert={showFileUploadDropArea} />
     </LLMProvider>
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
