@@ -370,10 +370,11 @@ test('attaches error context', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'json' });
 
-  expect(result.report.suites[0].specs[0].tests[0].results[0].attachments).toEqual([
-    expect.objectContaining({
-      name: '_error-context-0',
-      contentType: 'text/markdown',
-    }),
-  ]);
+  const errorContext = result.report.suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === '_error-context-0');
+  expect(errorContext).toBeDefined();
+  expect(errorContext!.contentType).toBe('application/json');
+  const json = JSON.parse(Buffer.from(errorContext!.body, 'base64').toString('utf-8'));
+  expect(json).toEqual({
+    ariaSnapshot: expect.any(String),
+  });
 });
