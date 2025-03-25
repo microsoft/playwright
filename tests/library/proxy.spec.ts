@@ -322,3 +322,37 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
   await browser.close();
   await closeProxyServer();
 });
+
+it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
+  const browser = await browserType.launch({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+
+  server.sendOnWebSocketConnection('incoming');
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+
+  const page = await browser.newPage();
+
+  await page.goto('http://fake-localhost-127-0-0-1.nip.io:1337/target.html');
+  expect(await page.title()).toBe('Served by the proxy');
+
+  const value = await page.evaluate(() => {
+    let cb;
+    const result = new Promise(f => cb = f);
+    const ws = new WebSocket('ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
+    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    return result;
+  });
+  expect(value).toBe('incoming');
+
+  // WebKit does not use CONNECT for websockets, but other browsers do.
+  if (browserName === 'webkit')
+    expect(proxyServer.wsUrls).toContain('ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
+  else
+    expect(proxyServer.connectHosts).toContain('fake-localhost-127-0-0-1.nip.io:1337');
+
+  await browser.close();
+});

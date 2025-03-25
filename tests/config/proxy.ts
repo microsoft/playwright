@@ -88,6 +88,10 @@ export class TestProxy {
         url.host = `127.0.0.1:${port}`;
       if (options?.prefix)
         url.pathname = url.pathname.replace(options.prefix, '');
+      if (url.protocol === 'ws:')
+        url.protocol = 'http:';
+      else if (url.protocol === 'wss:')
+        url.protocol = 'https:';
       req.url = url.toString();
     });
   }
