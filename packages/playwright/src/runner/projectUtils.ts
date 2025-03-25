@@ -37,7 +37,6 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   if (!projectNames)
     return [...projects];
 
-
   const projectNamesToFind = new Set<string>();
   const unmatchedProjectNames = new Map<string, string>();
   const patterns = new Set<RegExp>();
@@ -62,10 +61,8 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
       if (regex.test(lowerCaseName))
         return true;
     }
-
     return false;
   });
-
 
   if (unmatchedProjectNames.size) {
     const unknownProjectNames = Array.from(unmatchedProjectNames.values()).map(n => `"${n}"`).join(', ');
@@ -246,9 +243,3 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
   await visit(testDir, [], 'included');
   return files;
 }
-
-// export function filterDefaultProjects(projects: FullConfigInternal[], filteredProjects) {
-//   for (const project of projects) {
-
-//   }
-// }

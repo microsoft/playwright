@@ -326,7 +326,7 @@ test('should filter by project wildcard and exact name', async ({ runInlineTest 
       });    `
   }, { '--project': ['first', '*bar', 'pref*x'] });
   expect(result.exitCode).toBe(0);
-  expect(new Set(result.outputLines)).not.toEqual(new Set(['first', 'fooBar', 'prefix']));
+  expect(new Set(result.outputLines)).toEqual(new Set(['first', 'fooBar', 'prefix']));
 });
 
 test('should print nice error when project is unknown', async ({ runInlineTest }) => {
