@@ -128,21 +128,20 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
 }
 
 export async function attachErrorContext(testInfo: TestInfo, ariaSnapshot: string | undefined) {
+  if (!ariaSnapshot)
+    return;
+
   for (const [index] of testInfo.errors.entries()) {
     if (testInfo.attachments.find(a => a.name === `_error-context-${index}`))
       continue;
 
-    const promptParts = [];
-
-    if (ariaSnapshot) {
-      promptParts.push(
-          '# Page snapshot',
-          '',
-          '```yaml',
-          ariaSnapshot,
-          '```',
-      );
-    }
+    const promptParts = [
+      '# Page snapshot',
+      '',
+      '```yaml',
+      ariaSnapshot,
+      '```',
+    ];
 
     (testInfo as TestInfoImpl)._attach({
       name: `_error-context-${index}`,
