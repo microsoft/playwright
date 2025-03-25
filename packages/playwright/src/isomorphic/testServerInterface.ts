@@ -102,6 +102,7 @@ export interface TestServerInterface {
     projects?: string[];
     reuseContext?: boolean;
     connectWsEndpoint?: string;
+    attachErrorContext?: boolean;
   }): Promise<{
     status: reporterTypes.FullResult['status'];
   }>;
