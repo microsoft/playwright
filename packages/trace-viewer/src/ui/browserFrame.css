@@ -37,11 +37,11 @@
 }
 
 .browser-frame-address-bar > button {
-  display: none;
+  visibility: hidden;
 }
 
 .browser-frame-address-bar:hover > button {
-  display: inline-block;
+  visibility: visible;
 }
 
 .browser-frame-menu-bar {
