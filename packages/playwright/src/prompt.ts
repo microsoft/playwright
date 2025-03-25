@@ -139,7 +139,7 @@ export async function attachErrorContext(testInfo: TestInfo, ariaSnapshot: strin
       name: `_error-context-${index}`,
       contentType: 'application/json',
       body: Buffer.from(JSON.stringify({
-        ariaSnapshot,
+        pageSnapshot: ariaSnapshot,
       })),
     }, undefined);
   }

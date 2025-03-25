@@ -375,6 +375,6 @@ test('attaches error context', async ({ runInlineTest }) => {
   expect(errorContext!.contentType).toBe('application/json');
   const json = JSON.parse(Buffer.from(errorContext!.body, 'base64').toString('utf-8'));
   expect(json).toEqual({
-    ariaSnapshot: expect.any(String),
+    pageSnapshot: expect.any(String),
   });
 });
