@@ -203,7 +203,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       if (useIntermediateMergeReport)
         expect(text).toContain(`Error Prompt: ${path.join('blob-report', 'resources')}`);
       else
-        expect(text).toContain(`Error Prompt: ${path.join('test-results', 'a-one', '_prompt-0.md')}`);
+        expect(text).toContain(`Error Prompt: ${path.join('test-results', 'a-one', 'prompt.md')}`);
       expect(result.exitCode).toBe(1);
     });
   });
