@@ -86,7 +86,7 @@ SerializedValue:
     ta:
       type: object?
       properties:
-        b: string
+        b: binary
         k:
           type: enum
           literals:

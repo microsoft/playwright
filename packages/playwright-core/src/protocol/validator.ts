@@ -59,7 +59,7 @@ scheme.SerializedValue = tObject({
   u: tOptional(tString),
   bi: tOptional(tString),
   ta: tOptional(tObject({
-    b: tString,
+    b: tBinary,
     k: tEnum(['i8', 'ui8', 'ui8c', 'i16', 'ui16', 'i32', 'ui32', 'f32', 'f64', 'bi64', 'bui64']),
   })),
   e: tOptional(tObject({

@@ -57,8 +57,10 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   }
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
-  if (value.ta !== undefined)
-    return base64ToTypedArray(value.ta.b, typedArrayKindToConstructor[value.ta.k]);
+  if (value.ta !== undefined) {
+    const ctor = typedArrayKindToConstructor[value.ta.k] as any;
+    return new ctor(value.ta.b.buffer, value.ta.b.byteOffset, value.ta.b.length);
+  }
 
   if (value.a !== undefined) {
     const result: any[] = [];
@@ -132,7 +134,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
 
   const typedArrayKind = constructorToTypedArrayKind.get(value.constructor);
   if (typedArrayKind)
-    return { ta: { b: typedArrayToBase64(value), k: typedArrayKind } };
+    return { ta: { b: Buffer.from(value.buffer, value.byteOffset, value.length), k: typedArrayKind } };
 
   const id = visitorInfo.visited.get(value);
   if (id)
@@ -201,18 +203,3 @@ const typedArrayKindToConstructor: Record<TypedArrayKind, Function> = {
   bui64: BigUint64Array,
 };
 const constructorToTypedArrayKind: Map<Function, TypedArrayKind> = new Map(Object.entries(typedArrayKindToConstructor).map(([k, v]) => [v, k as TypedArrayKind]));
-
-function typedArrayToBase64(array: any) {
-  if ('toBase64' in array)
-    return array.toBase64();
-  const binary = Array.from(new Uint8Array(array.buffer, array.byteOffset, array.byteLength)).map(b => String.fromCharCode(b)).join('');
-  return btoa(binary);
-}
-
-function base64ToTypedArray(base64: string, TypedArrayConstructor: any) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++)
-    bytes[i] = binary.charCodeAt(i);
-  return new TypedArrayConstructor(bytes.buffer);
-}
