@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { filteredLocation, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
@@ -217,8 +217,10 @@ export class TestInfoImpl implements TestInfo {
       return;
 
     const description = modifierArgs[1];
-    const filteredStack = filteredStackTrace(captureRawStack());
-    this.annotations.push({ type, description, location: filteredStack[0] });
+    const callLocation = filteredLocation(captureRawStack());
+    const baseLocation = this.column !== undefined && this.line !== undefined && this.file !== undefined ? { column: this.column, line: this.line, file: this.file } : undefined;
+    const location = callLocation ? callLocation : baseLocation;
+    this.annotations.push({ type, description, location });
     if (type === 'slow') {
       this._timeoutManager.slow();
     } else if (type === 'skip' || type === 'fixme') {
@@ -542,8 +544,8 @@ export class TestStepInfoImpl implements TestStepInfo {
     if (args.length > 0 && !args[0])
       return;
     const description = args[1] as (string|undefined);
-    const filteredStack = filteredStackTrace(captureRawStack());
-    this.annotations.push({ type: 'skip', description, location: filteredStack[0] });
+    const location = filteredLocation(captureRawStack());
+    this.annotations.push({ type: 'skip', description, location });
     throw new StepSkipError(description);
   }
 }

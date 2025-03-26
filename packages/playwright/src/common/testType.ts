@@ -104,7 +104,7 @@ export class TestTypeImpl {
       details = fnOrDetails;
     }
 
-    const validatedDetails = validateTestDetails(details);
+    const validatedDetails = validateTestDetails(details, location);
     const test = new TestCase(title, body, this, location);
     test._requireFile = suite._requireFile;
     test.annotations.push(...validatedDetails.annotations);
@@ -143,7 +143,7 @@ export class TestTypeImpl {
       body = fn!;
     }
 
-    const validatedDetails = validateTestDetails(details);
+    const validatedDetails = validateTestDetails(details, location);
     const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
     child.location = location;
@@ -315,8 +315,9 @@ function throwIfRunningInsideJest() {
   }
 }
 
-function validateTestDetails(details: TestDetails) {
-  const annotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
+function validateTestDetails(details: TestDetails, location: Location) {
+  const originalAnnotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
+  const annotations = originalAnnotations.map(annotation => ({ ...annotation, location }));
   const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
   for (const tag of tags) {
     if (tag[0] !== '@')

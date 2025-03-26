@@ -2056,9 +2056,11 @@ export type TestAnnotation = {
   location?: Location;
 };
 
+export type TestDetailsAnnotation = Omit<TestAnnotation, 'location'>;
+
 export type TestDetails = {
   tag?: string | string[];
-  annotation?: TestAnnotation | TestAnnotation[];
+  annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<void> | void;
