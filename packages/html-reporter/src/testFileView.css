@@ -63,36 +63,10 @@
   fill: var(--color-fg-muted);
 }
 
-.test-file-trace-button {
-  background-color: var(--color-scale-yellow-0);
-  padding: 2px 4px 2px 4px;
-  border-radius: 6px;
-  line-height: 20px;
-  font-weight: 500;
-  color: var(--color-scale-yellow-5);
-  border: 1px solid var(--color-scale-yellow-2);
+.test-file-badge.button {
+  background-color: transparent;
 }
 
-.test-file-trace-button:hover {
-  background-color: var(--color-scale-yellow-1);
-  color: var(--color-scale-yellow-5);
-  text-decoration: none;
-}
-
-.test-file-trace-button svg {
-  fill: var(--color-scale-yellow-5);
-}
-
-.test-file-trace-button-content {
-  display: flex;
-  align-items: center;
-}
-
-.test-file-trace-button-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-scale-yellow-5);
-}
 .test-file-test-outcome-skipped {
   color: var(--color-fg-muted);
 }
