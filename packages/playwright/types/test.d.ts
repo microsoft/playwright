@@ -9402,7 +9402,7 @@ export interface TestInfo {
     description?: string;
 
     /**
-     * Optional location in the source where the annotation is added
+     * Optional location in the source where the annotation is added.
      */
     location?: Location;
   }>;
