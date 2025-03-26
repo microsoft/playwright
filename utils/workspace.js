@@ -173,11 +173,6 @@ const workspace = new Workspace(ROOT_PATH, [
     files: LICENCE_FILES,
   }),
   new PWPackage({
-    name: '@playwright/experimental-tools',
-    path: path.join(ROOT_PATH, 'packages', 'playwright-mcp'),
-    files: LICENCE_FILES,
-  }),
-  new PWPackage({
     name: '@playwright/browser-webkit',
     path: path.join(ROOT_PATH, 'packages', 'playwright-browser-webkit'),
     files: LICENCE_FILES,

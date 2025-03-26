@@ -28,7 +28,7 @@ npm run build
 
 # 2. Configure Git and clone the Trace Viewer repository
 git config --global user.name microsoft-playwright-automation[bot]
-git config --global user.email 4203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
 git clone "https://x-access-token:${GH_SERVICE_ACCOUNT_TOKEN}@github.com/microsoft/trace.playwright.dev.git" trace.playwright.dev
 
 # 3. Copy the built Trace Viewer to the repository

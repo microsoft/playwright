@@ -23,6 +23,7 @@ import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { ElementText } from './selectorUtils';
 import type { CSSComplexSelector, CSSComplexSelectorList, CSSFunctionArgument, CSSSimpleSelector } from '../../utils/isomorphic/cssParser';
+import type { Builtins } from '../isomorphic/builtins';
 
 type QueryContext = {
   scope: Element | Document;
@@ -33,6 +34,7 @@ type QueryContext = {
 };
 export type Selector = any; // Opaque selector type.
 export interface SelectorEvaluator {
+  readonly builtins: Builtins;
   query(context: QueryContext, selector: Selector): Element[];
   matches(element: Element, selector: Selector, context: QueryContext): boolean;
 }
@@ -41,24 +43,36 @@ export interface SelectorEngine {
   query?(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[];
 }
 
-type QueryCache = Map<any, { rest: any[], result: any }[]>;
+type QueryCache = Builtins.Map<any, { rest: any[], result: any }[]>;
+
 export class SelectorEvaluatorImpl implements SelectorEvaluator {
-  private _engines = new Map<string, SelectorEngine>();
-  private _cacheQueryCSS: QueryCache = new Map();
-  private _cacheMatches: QueryCache = new Map();
-  private _cacheQuery: QueryCache = new Map();
-  private _cacheMatchesSimple: QueryCache = new Map();
-  private _cacheMatchesParents: QueryCache = new Map();
-  private _cacheCallMatches: QueryCache = new Map();
-  private _cacheCallQuery: QueryCache = new Map();
-  private _cacheQuerySimple: QueryCache = new Map();
-  _cacheText = new Map<Element | ShadowRoot, ElementText>();
-  private _scoreMap: Map<Element, number> | undefined;
+  readonly builtins: Builtins;
+  private _engines: Builtins.Map<string, SelectorEngine>;
+  private _cacheQueryCSS: QueryCache;
+  private _cacheMatches: QueryCache;
+  private _cacheQuery: QueryCache;
+  private _cacheMatchesSimple: QueryCache;
+  private _cacheMatchesParents: QueryCache;
+  private _cacheCallMatches: QueryCache;
+  private _cacheCallQuery: QueryCache;
+  private _cacheQuerySimple: QueryCache;
+  _cacheText: Builtins.Map<Element | ShadowRoot, ElementText>;
+  private _scoreMap: Builtins.Map<Element, number> | undefined;
   private _retainCacheCounter = 0;
 
-  constructor(extraEngines: Map<string, SelectorEngine>) {
-    for (const [name, engine] of extraEngines)
-      this._engines.set(name, engine);
+  constructor(builtins: Builtins) {
+    this.builtins = builtins;
+    this._cacheText = new builtins.Map();
+    this._cacheQueryCSS = new builtins.Map();
+    this._cacheMatches = new builtins.Map();
+    this._cacheQuery = new builtins.Map();
+    this._cacheMatchesSimple = new builtins.Map();
+    this._cacheMatchesParents = new builtins.Map();
+    this._cacheCallMatches = new builtins.Map();
+    this._cacheCallQuery = new builtins.Map();
+    this._cacheQuerySimple = new builtins.Map();
+
+    this._engines = new builtins.Map();
     this._engines.set('not', notEngine);
     this._engines.set('is', isEngine);
     this._engines.set('where', isEngine);
@@ -154,7 +168,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 
         // query() recursively calls itself, so we set up a new map for this particular query() call.
         const previousScoreMap = this._scoreMap;
-        this._scoreMap = new Map();
+        this._scoreMap = new this.builtins.Map();
         let elements = this._querySimple(context, selector.simples[selector.simples.length - 1].selector);
         elements = elements.filter(element => this._matchesParents(element, selector, selector.simples.length - 2, context));
         if (this._scoreMap.size) {
@@ -383,7 +397,7 @@ const isEngine: SelectorEngine = {
     let elements: Element[] = [];
     for (const arg of args)
       elements = elements.concat(evaluator.query(context, arg));
-    return args.length === 1 ? elements : sortInDOMOrder(elements);
+    return args.length === 1 ? elements : sortInDOMOrder(evaluator.builtins, elements);
   },
 };
 
@@ -538,10 +552,10 @@ function previousSiblingInContext(element: Element, context: QueryContext): Elem
   return element.previousElementSibling || undefined;
 }
 
-export function sortInDOMOrder(elements: Iterable<Element>): Element[] {
+export function sortInDOMOrder(builtins: Builtins, elements: Iterable<Element>): Element[] {
   type SortEntry = { children: Element[], taken: boolean };
 
-  const elementToEntry = new Map<Element, SortEntry>();
+  const elementToEntry = new builtins.Map<Element, SortEntry>();
   const roots: Element[] = [];
   const result: Element[] = [];
 
@@ -568,7 +582,7 @@ export function sortInDOMOrder(elements: Iterable<Element>): Element[] {
     if (entry.taken)
       result.push(element);
     if (entry.children.length > 1) {
-      const set = new Set(entry.children);
+      const set = new builtins.Set(entry.children);
       entry.children = [];
       let child = element.firstElementChild;
       while (child && entry.children.length < set.size) {

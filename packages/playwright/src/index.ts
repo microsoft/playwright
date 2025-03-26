@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { attachErrorPrompts } from './prompt';
+import { attachErrorContext, attachErrorPrompts } from './prompt';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -61,6 +61,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
+  _optionAttachErrorContext: boolean,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -245,13 +246,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, _optionAttachErrorContext }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, _optionAttachErrorContext);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -393,6 +394,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
   _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
+  _optionAttachErrorContext: [false, { scope: 'worker', option: true }],
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
@@ -621,10 +623,12 @@ class ArtifactsRecorder {
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
   private _sourceCache: Map<string, string> = new Map();
+  private _attachErrorContext: boolean;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, attachErrorContext: boolean) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
+    this._attachErrorContext = attachErrorContext;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -703,7 +707,10 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    await attachErrorPrompts(this._testInfo, this._sourceCache, this._pageSnapshot);
+    if (this._attachErrorContext)
+      await attachErrorContext(this._testInfo, this._pageSnapshot);
+    else
+      await attachErrorPrompts(this._testInfo, this._sourceCache, this._pageSnapshot);
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {

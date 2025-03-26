@@ -17,8 +17,8 @@
 @import '@web/third_party/vscode/colors.css';
 
 .test-error-container {
+  position: relative;
   white-space: pre;
-  overflow: auto;
   flex: none;
   padding: 0;
   background-color: var(--color-canvas-subtle);
@@ -28,6 +28,7 @@
 }
 
 .test-error-view {
+  overflow: auto;
   padding: 16px;
 }
 

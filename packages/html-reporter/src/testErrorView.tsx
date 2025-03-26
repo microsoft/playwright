@@ -28,7 +28,7 @@ export const TestErrorView: React.FC<{
   return (
     <CodeSnippet code={error} testId={testId}>
       {prompt && (
-        <div style={{ float: 'right', margin: 10 }}>
+        <div style={{ position: 'absolute', right: 0, padding: '10px' }}>
           <PromptButton prompt={prompt} />
         </div>
       )}

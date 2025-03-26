@@ -34,7 +34,7 @@ jobs:
       id: cherry-pick
       run: |
         git config --global user.name microsoft-playwright-automation[bot]
-        git config --global user.email 4203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+        git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
         for COMMIT_HASH in $(echo "${{ github.event.inputs.commit_hashes }}" | tr "," "\n"); do
           git cherry-pick --no-commit "$COMMIT_HASH"
 
