@@ -861,7 +861,12 @@ export class Registry {
         return undefined;
       }
       const prefixes = (process.platform === 'win32' ? [
-        process.env.LOCALAPPDATA, process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)']
+        process.env.LOCALAPPDATA,
+        process.env.PROGRAMFILES,
+        process.env['PROGRAMFILES(X86)'],
+        // In some cases there is no PROGRAMFILES/(86) env var set but HOMEDRIVE is set.
+        process.env.HOMEDRIVE + '\\Program Files',
+        process.env.HOMEDRIVE + '\\Program Files (x86)',
       ].filter(Boolean) : ['']) as string[];
 
       for (const prefix of prefixes) {
@@ -941,7 +946,12 @@ export class Registry {
         return undefined;
       }
       const prefixes = (process.platform === 'win32' ? [
-        process.env.LOCALAPPDATA, process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)']
+        process.env.LOCALAPPDATA,
+        process.env.PROGRAMFILES,
+        process.env['PROGRAMFILES(X86)'],
+        // In some cases there is no PROGRAMFILES/(86) env var set but HOMEDRIVE is set.
+        process.env.HOMEDRIVE + '\\Program Files',
+        process.env.HOMEDRIVE + '\\Program Files (x86)',
       ].filter(Boolean) : ['']) as string[];
 
       for (const prefix of prefixes) {
