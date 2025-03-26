@@ -686,7 +686,7 @@ Playwright provides an **experimental** `router` fixture to intercept and handle
 
 Here is an example of reusing your existing MSW handlers in the test.
 
-```ts
+```js
 import { handlers } from '@src/mocks/handlers';
 
 test.beforeEach(async ({ router }) => {
@@ -702,7 +702,7 @@ test('example test', async ({ mount }) => {
 
 You can also introduce a one-off handler for a specific test.
 
-```ts
+```js
 import { http, HttpResponse } from 'msw';
 
 test('example test', async ({ mount, router }) => {
