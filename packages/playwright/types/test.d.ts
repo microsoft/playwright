@@ -2050,14 +2050,15 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
-export type TestDetailsAnnotation = {
+export type TestAnnotation = {
   type: string;
   description?: string;
+  location?: Location;
 };
 
 export type TestDetails = {
   tag?: string | string[];
-  annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
+  annotation?: TestAnnotation | TestAnnotation[];
 }
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<void> | void;
@@ -9397,6 +9398,11 @@ export interface TestInfo {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added
+     */
+    location?: Location;
   }>;
 
   /**

@@ -26,9 +26,9 @@ import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
+import type { FullProject, TestAnnotation, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
@@ -92,7 +92,7 @@ export class TestInfoImpl implements TestInfo {
   readonly fn: Function;
   expectedStatus: TestStatus;
   duration: number = 0;
-  readonly annotations: Annotation[] = [];
+  readonly annotations: TestAnnotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
   status: TestStatus = 'passed';
   snapshotSuffix: string = '';
@@ -217,7 +217,8 @@ export class TestInfoImpl implements TestInfo {
       return;
 
     const description = modifierArgs[1];
-    this.annotations.push({ type, description });
+    const filteredStack = filteredStackTrace(captureRawStack());
+    this.annotations.push({ type, description, location: filteredStack[0] });
     if (type === 'slow') {
       this._timeoutManager.slow();
     } else if (type === 'skip' || type === 'fixme') {
@@ -503,7 +504,7 @@ export class TestInfoImpl implements TestInfo {
 }
 
 export class TestStepInfoImpl implements TestStepInfo {
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
 
   private _testInfo: TestInfoImpl;
   private _stepId: string;
@@ -513,9 +514,9 @@ export class TestStepInfoImpl implements TestStepInfo {
     this._stepId = stepId;
   }
 
-  async _runStepBody<T>(skip: boolean, body: (step: TestStepInfo) => T | Promise<T>) {
+  async _runStepBody<T>(skip: boolean, body: (step: TestStepInfo) => T | Promise<T>, location?: Location) {
     if (skip) {
-      this.annotations.push({ type: 'skip' });
+      this.annotations.push({ type: 'skip', location });
       return undefined as T;
     }
     try {
@@ -541,7 +542,8 @@ export class TestStepInfoImpl implements TestStepInfo {
     if (args.length > 0 && !args[0])
       return;
     const description = args[1] as (string|undefined);
-    this.annotations.push({ type: 'skip', description });
+    const filteredStack = filteredStackTrace(captureRawStack());
+    this.annotations.push({ type: 'skip', description, location: filteredStack[0] });
     throw new StepSkipError(description);
   }
 }

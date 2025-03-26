@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { Metadata } from '../../types/test';
+import type { Metadata, TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
-import type { Annotation } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type StringIntern = (s: string) => string;
@@ -68,14 +67,14 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonTestEnd = {
   testId: string;
   expectedStatus: reporterTypes.TestStatus;
   timeout: number;
-  annotations: Annotation[];
+  annotations: TestAnnotation[];
 };
 
 export type JsonTestResultStart = {
@@ -94,7 +93,7 @@ export type JsonTestResultEnd = {
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
   attachments: JsonAttachment[];
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonTestStepStart = {
@@ -111,7 +110,7 @@ export type JsonTestStepEnd = {
   duration: number;
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonFullResult = {
@@ -477,7 +476,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
   retries = 0;
   tags: string[] = [];
   repeatEachIndex = 0;

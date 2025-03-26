@@ -114,9 +114,9 @@ export class TestTypeImpl {
     if (type === 'only' || type === 'fail.only')
       test._only = true;
     if (type === 'skip' || type === 'fixme' || type === 'fail')
-      test.annotations.push({ type });
+      test.annotations.push({ type, location });
     else if (type === 'fail.only')
-      test.annotations.push({ type: 'fail' });
+      test.annotations.push({ type: 'fail', location });
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
@@ -158,7 +158,7 @@ export class TestTypeImpl {
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
     if (type === 'skip' || type === 'fixme')
-      child._staticAnnotations.push({ type });
+      child._staticAnnotations.push({ type, location });
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
@@ -229,7 +229,7 @@ export class TestTypeImpl {
         if (modifierArgs.length >= 1 && !modifierArgs[0])
           return;
         const description = modifierArgs[1];
-        suite._staticAnnotations.push({ type, description });
+        suite._staticAnnotations.push({ type, description, location });
       }
       return;
     }
@@ -276,7 +276,7 @@ export class TestTypeImpl {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
         result = await raceAgainstDeadline(async () => {
           try {
-            return await step.info._runStepBody(expectation === 'skip', body);
+            return await step.info._runStepBody(expectation === 'skip', body, step.location);
           } catch (e) {
             // If the step timed out, the test fixtures will tear down, which in turn
             // will abort unfinished actions in the step body. Record such errors here.
