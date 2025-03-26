@@ -57,6 +57,8 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   }
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
+  if (value.ta !== undefined)
+    return base64ToTypedArray(value.ta.b, typedArrayKindToConstructor[value.ta.k]);
 
   if (value.a !== undefined) {
     const result: any[] = [];
@@ -128,6 +130,10 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
   if (isRegExp(value))
     return { r: { p: value.source, f: value.flags } };
 
+  const typedArrayKind = constructorToTypedArrayKind.get(value.constructor);
+  if (typedArrayKind)
+    return { ta: { b: typedArrayToBase64(value), k: typedArrayKind } };
+
   const id = visitorInfo.visited.get(value);
   if (id)
     return { ref: id };
@@ -166,4 +172,36 @@ function isURL(obj: any): obj is URL {
 function isError(obj: any): obj is Error {
   const proto = obj ? Object.getPrototypeOf(obj) : null;
   return obj instanceof Error || proto?.name === 'Error' || (proto && isError(proto));
+}
+
+
+type TypedArrayKind = NonNullable<SerializedValue['ta']>['k'];
+const typedArrayKindToConstructor: Record<TypedArrayKind, Function> = {
+  i8: Int8Array,
+  ui8: Uint8Array,
+  ui8c: Uint8ClampedArray,
+  i16: Int16Array,
+  ui16: Uint16Array,
+  i32: Int32Array,
+  ui32: Uint32Array,
+  f32: Float32Array,
+  f64: Float64Array,
+  bi64: BigInt64Array,
+  bui64: BigUint64Array,
+};
+const constructorToTypedArrayKind: Map<Function, TypedArrayKind> = new Map(Object.entries(typedArrayKindToConstructor).map(([k, v]) => [v, k as TypedArrayKind]));
+
+function typedArrayToBase64(array: any) {
+  if ('toBase64' in array)
+    return array.toBase64();
+  const binary = Array.from(new Uint8Array(array.buffer, array.byteOffset, array.byteLength)).map(b => String.fromCharCode(b)).join('');
+  return btoa(binary);
+}
+
+function base64ToTypedArray(base64: string, TypedArrayConstructor: any) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++)
+    bytes[i] = binary.charCodeAt(i);
+  return new TypedArrayConstructor(bytes.buffer);
 }
