@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
@@ -200,9 +201,9 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: 'line' });
       const text = result.output;
       if (useIntermediateMergeReport)
-        expect(text).toContain('Error Prompt: blob-report/resources/');
+        expect(text).toContain(`Error Prompt: ${path.join('blob-report', 'resources')}`);
       else
-        expect(text).toContain('Error Prompt: test-results/a-one/_prompt-0.md');
+        expect(text).toContain(`Error Prompt: ${path.join('test-results', 'a-one', '_prompt-0.md')}`);
       expect(result.exitCode).toBe(1);
     });
   });
