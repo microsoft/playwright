@@ -463,7 +463,7 @@ Below we'll create a `defaultItem` option in addition to the `todoPage` fixture 
   <div>
 
 ```js title="todo-page.ts"
-import type { Locator } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
   private readonly inputBox: Locator;
