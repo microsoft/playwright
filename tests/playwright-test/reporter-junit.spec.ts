@@ -62,10 +62,16 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
+
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['classname']).toContain('a.test.js');
+      expect(testcase['$']['path']).toBe('a.test.js');
+      expect(testcase['$']['name']).toContain('one');
+
       const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
-      expect(failure['$']['message']).toContain('a.test.js');
-      expect(failure['$']['message']).toContain('one');
-      expect(failure['$']['type']).toBe('FAILURE');
+      expect(failure['$']['message']).toContain('Error: expect(received).toBe(expected)');
+      expect(failure['$']['message']).toContain('1');
+      expect(failure['$']['type']).toBe('ERROR');
       expect(failure['_']).toContain('expect(1).toBe(0)');
       expect(result.exitCode).toBe(1);
     });
@@ -93,11 +99,36 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('one', async ({}, testInfo) => {
-            expect(testInfo.retry).toBe(3);
+            expect(testInfo.retry).toBe(2);
           });
         `,
-      }, { retries: 3, reporter: 'junit' });
-      expect(result.output).not.toContain('Retry #1');
+      }, { retries: 2, reporter: 'junit' });
+      const testSuite = parseXML(result.output)['testsuites']['testsuite'][0];
+      const firstRun = testSuite['testcase'][0];
+      expect(firstRun['$']['path']).toBe('a.test.js');
+      expect(firstRun['$']['name']).toContain('one');
+
+      const firstRunFailure = firstRun['failure'][0];
+      expect(firstRunFailure['$']['message']).toContain('Error: expect(received).toBe(expected)');
+      expect(firstRunFailure['$']['type']).toBe('ERROR');
+      expect(firstRunFailure['_']).toContain('expect(testInfo.retry).toBe(2)');
+
+      const firstRetry = testSuite['testcase'][1];
+      expect(firstRetry['$']['path']).toBe('a.test.js');
+      expect(firstRetry['$']['name']).toContain('one');
+      const firstRetryFailure = firstRetry['failure'][0];
+      expect(firstRetryFailure['$']['message']).toContain('Error: expect(received).toBe(expected)');
+      expect(firstRetryFailure['$']['type']).toBe('ERROR');
+      expect(firstRetryFailure['_']).toContain('expect(testInfo.retry).toBe(2)');
+
+      const secondRetry = testSuite['testcase'][2];
+      expect(secondRetry['$']['path']).toBe('a.test.js');
+      expect(secondRetry['$']['name']).toContain('one');
+      const secondRetryFailure = secondRetry['failure'][0];
+      expect(secondRetryFailure['$']['message']).toContain('Error: expect(received).toBe(expected)');
+      expect(secondRetryFailure['$']['type']).toBe('ERROR');
+      expect(secondRetryFailure['_']).toContain('expect(testInfo.retry).toBe(2)');
+
       expect(result.exitCode).toBe(0);
     });
 
