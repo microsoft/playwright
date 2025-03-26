@@ -341,6 +341,44 @@ test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) 
   await expect(traceViewer.snapshotContainer).toHaveCSS('height', '600px');
 });
 
+test.only('should have before and after snapshots', async ({ runAndTrace, page, server }, testInfo) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate('document.body.innerText = "Before step"');
+    await test.step('step 1', async () => {
+      await page.evaluate('document.body.innerText = "Inside step 1"');
+    })
+    await test.step('step 2', async () => {
+      await page.evaluate('document.body.innerText = "Inside step 2"');
+    })
+
+    await page.evaluate('document.body.innerText = "After step 2"');
+    await test.step('step 3', async () => {
+      await page.evaluate('document.body.innerText = "Inside step 3"');
+    })
+  })
+
+  const getActionSnapshotText = async (action: string, ordinal: number,  kind: 'Before' | 'After') => {
+    await traceViewer.selectAction(action, ordinal);
+    await traceViewer.selectSnapshot(kind);  
+
+    await testInfo.attach(action + ' ' + kind, {contentType: 'image/png', body: await traceViewer.page.screenshot()});
+    return await traceViewer.snapshotContainer.contentFrame().locator('body').innerText({timeout: 1000})
+  }
+
+  expect(await getActionSnapshotText('page.evaluate', 0, 'Before')).toBe('');
+  expect(await getActionSnapshotText('page.evaluate', 0, 'After')).toBe('Before step');
+
+  expect(await getActionSnapshotText('step 1', 0, 'Before')).toBe('Before step');
+  expect(await getActionSnapshotText('step 1', 0, 'After')).toBe('Inside step 1');
+
+  expect(await getActionSnapshotText('step 2', 0, 'Before')).toBe('Inside step 1');
+  expect(await getActionSnapshotText('step 2', 0, 'After')).toBe('Inside step 2');
+
+  expect(await getActionSnapshotText('step 3', 0, 'Before')).toBe('After step 2');
+  expect(await getActionSnapshotText('step 3', 0, 'After')).toBe('Inside step 3');
+});
+
 test('should have correct stack trace', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
 
