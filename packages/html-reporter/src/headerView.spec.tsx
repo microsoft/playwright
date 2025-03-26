@@ -16,18 +16,21 @@
 
 import { test, expect } from '@playwright/experimental-ct-react';
 import { HeaderView } from './headerView';
+import { SearchParamsProvider } from './links';
 
 test.use({ viewport: { width: 720, height: 200 } });
 
 test('should render counters', async ({ mount }) => {
-  const component = await mount(<HeaderView stats={{
-    total: 100,
-    expected: 42,
-    unexpected: 31,
-    flaky: 17,
-    skipped: 10,
-    ok: false,
-  }} filterText='' setFilterText={() => { }}></HeaderView>);
+  const component = await mount(<SearchParamsProvider>
+    <HeaderView stats={{
+      total: 100,
+      expected: 42,
+      unexpected: 31,
+      flaky: 17,
+      skipped: 10,
+      ok: false,
+    }} filterText='' setFilterText={() => { }} />
+  </SearchParamsProvider>);
   await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('90');
   await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
@@ -42,19 +45,20 @@ test('should render counters', async ({ mount }) => {
 
 test('should toggle filters', async ({ page, mount }) => {
   const filters: string[] = [];
-  const component = await mount(<HeaderView
-    stats={{
-      total: 100,
-      expected: 42,
-      unexpected: 31,
-      flaky: 17,
-      skipped: 10,
-      ok: false,
-    }}
-    filterText=''
-    setFilterText={(filterText: string) => filters.push(filterText)}
-  >
-  </HeaderView>);
+  const component = await mount(<SearchParamsProvider>
+    <HeaderView
+      stats={{
+        total: 100,
+        expected: 42,
+        unexpected: 31,
+        flaky: 17,
+        skipped: 10,
+        ok: false,
+      }}
+      filterText=''
+      setFilterText={(filterText: string) => filters.push(filterText)}
+    />
+  </SearchParamsProvider>);
   await component.locator('a', { hasText: 'All' }).click();
   await component.locator('a', { hasText: 'Passed' }).click();
   await expect(page).toHaveURL(/#\?q=s:passed/);
@@ -65,5 +69,5 @@ test('should toggle filters', async ({ page, mount }) => {
   await component.locator('a', { hasText: 'Skipped' }).click();
   await expect(page).toHaveURL(/#\?q=s:skipped/);
   await component.getByRole('textbox').fill('annot:annotation type=annotation description');
-  expect(filters).toEqual(['', 's:passed', 's:failed', 's:flaky', 's:skipped', 'annot:annotation type=annotation description']);
+  expect(filters).toEqual(['', '', 's:passed ', 's:failed ', 's:flaky ', 's:skipped ', 'annot:annotation type=annotation description']);
 });
