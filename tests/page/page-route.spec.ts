@@ -168,7 +168,6 @@ it('should properly return navigation response when URL has cookies', async ({ p
 
 it('should not override cookie header', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16773' });
-  it.fixme(browserName === 'firefox', 'We currently clear all headers during interception in firefox');
 
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = 'original=value');

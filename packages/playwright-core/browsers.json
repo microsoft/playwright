@@ -3,15 +3,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1163",
+      "revision": "1164",
       "installByDefault": true,
-      "browserVersion": "135.0.7049.17"
+      "browserVersion": "135.0.7049.28"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1163",
+      "revision": "1164",
       "installByDefault": true,
-      "browserVersion": "135.0.7049.17"
+      "browserVersion": "135.0.7049.28"
     },
     {
       "name": "chromium-tip-of-tree",
@@ -27,13 +27,13 @@
     },
     {
       "name": "firefox",
-      "revision": "1477",
+      "revision": "1478",
       "installByDefault": true,
       "browserVersion": "136.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1473",
+      "revision": "1474",
       "installByDefault": false,
       "browserVersion": "137.0b2"
     },

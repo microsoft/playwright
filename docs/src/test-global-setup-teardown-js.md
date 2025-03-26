@@ -138,7 +138,7 @@ Similarly, use `globalTeardown` to run something once after all the tests. Alter
 Beware of `globalSetup` and `globalTeardown` caveats:
 
 - These methods will not produce traces or artifacts unless explictly enabled, as described in [Capturing trace of failures during global setup](#capturing-trace-of-failures-during-global-setup).
-- Options sush as `headless` or `testIdAttribute` specified in the config file are not applied,
+- Options such as `headless` or `testIdAttribute` specified in the config file are not applied.
 - An uncaught exception thrown in `globalSetup` will prevent Playwright from running tests, and no test results will appear in reporters.
 
 Consider using [project dependencies](#option-1-project-dependencies) to produce traces, artifacts, respect config options and get test results in reporters even in case of a setup failure.

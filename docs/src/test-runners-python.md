@@ -262,8 +262,10 @@ See the [guides for CI providers](./ci.md) to deploy your tests to CI/CD.
 
 ## Async Fixtures
 
-If you want to use async fixtures, you can use the [`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/) plugin.
-Make sure to use `pytest-asyncio>=0.24.0` and make your tests use of [`loop_scope=session`](https://pytest-asyncio.readthedocs.io/en/stable/how-to-guides/run_session_tests_in_same_loop.html).
+To use async fixtures, install [`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/).
+
+Ensure you are using `pytest-asyncio>=0.26.0` and set [`asyncio_default_test_loop_scope = session`](https://pytest-asyncio.readthedocs.io/en/v0.26.0/how-to-guides/change_default_test_loop.html) in your configuration (`pytest.ini/pyproject.toml/setup.cfg`).
+
 
 ```python
 import pytest
