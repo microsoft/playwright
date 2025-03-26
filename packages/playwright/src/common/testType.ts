@@ -107,16 +107,16 @@ export class TestTypeImpl {
     const validatedDetails = validateTestDetails(details);
     const test = new TestCase(title, body, this, location);
     test._requireFile = suite._requireFile;
-    test._staticAnnotations.push(...validatedDetails.annotations);
+    test.annotations.push(...validatedDetails.annotations);
     test._tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
     if (type === 'only' || type === 'fail.only')
       test._only = true;
     if (type === 'skip' || type === 'fixme' || type === 'fail')
-      test._staticAnnotations.push({ type });
+      test.annotations.push({ type });
     else if (type === 'fail.only')
-      test._staticAnnotations.push({ type: 'fail' });
+      test.annotations.push({ type: 'fail' });
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {

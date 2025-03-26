@@ -166,7 +166,8 @@ class JUnitReporter implements ReporterV2 {
       children: [] as XMLEntry[]
     };
 
-    for (const annotation of test.annotations) {
+    const annotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)];
+    for (const annotation of annotations) {
       const property: XMLEntry = {
         name: 'property',
         attributes: {

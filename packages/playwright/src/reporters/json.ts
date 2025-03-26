@@ -213,6 +213,7 @@ class JSONReporter implements ReporterV2 {
       retry: result.retry,
       steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
       startTime: result.startTime.toISOString(),
+      annotations: result.annotations,
       attachments: result.attachments.map(a => ({
         name: a.name,
         contentType: a.contentType,
