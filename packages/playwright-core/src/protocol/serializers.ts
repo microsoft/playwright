@@ -57,6 +57,10 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   }
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
+  if (value.ta !== undefined) {
+    const ctor = typedArrayKindToConstructor[value.ta.k] as any;
+    return new ctor(value.ta.b.buffer, value.ta.b.byteOffset, value.ta.b.length);
+  }
 
   if (value.a !== undefined) {
     const result: any[] = [];
@@ -128,6 +132,10 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
   if (isRegExp(value))
     return { r: { p: value.source, f: value.flags } };
 
+  const typedArrayKind = constructorToTypedArrayKind.get(value.constructor);
+  if (typedArrayKind)
+    return { ta: { b: Buffer.from(value.buffer, value.byteOffset, value.length), k: typedArrayKind } };
+
   const id = visitorInfo.visited.get(value);
   if (id)
     return { ref: id };
@@ -178,3 +186,20 @@ function isError(obj: any): obj is Error {
   const proto = obj ? Object.getPrototypeOf(obj) : null;
   return obj instanceof Error || proto?.name === 'Error' || (proto && isError(proto));
 }
+
+
+type TypedArrayKind = NonNullable<SerializedValue['ta']>['k'];
+const typedArrayKindToConstructor: Record<TypedArrayKind, Function> = {
+  i8: Int8Array,
+  ui8: Uint8Array,
+  ui8c: Uint8ClampedArray,
+  i16: Int16Array,
+  ui16: Uint16Array,
+  i32: Int32Array,
+  ui32: Uint32Array,
+  f32: Float32Array,
+  f64: Float64Array,
+  bi64: BigInt64Array,
+  bui64: BigUint64Array,
+};
+const constructorToTypedArrayKind: Map<Function, TypedArrayKind> = new Map(Object.entries(typedArrayKindToConstructor).map(([k, v]) => [v, k as TypedArrayKind]));

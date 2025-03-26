@@ -180,6 +180,10 @@ export type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
+  ta?: {
+    b: Binary,
+    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  },
   e?: {
     m: string,
     n: string,

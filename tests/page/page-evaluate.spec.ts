@@ -94,6 +94,27 @@ it('should transfer arrays as arrays, not objects', async ({ page }) => {
   expect(result).toBe(true);
 });
 
+it('should transfer typed arrays', async ({ page }) => {
+  const testCases = [
+    new Int8Array([1, 2, 3]),
+    new Uint8Array([1, 2, 3]),
+    new Uint8ClampedArray([1, 2, 3]),
+    new Int16Array([1, 2, 3]),
+    new Uint16Array([1, 2, 3]),
+    new Int32Array([1, 2, 3]),
+    new Uint32Array([1, 2, 3]),
+    new Float32Array([1.1, 2.2, 3.3]),
+    new Float64Array([1.1, 2.2, 3.3]),
+    new BigInt64Array([1n, 2n, 3n]),
+    new BigUint64Array([1n, 2n, 3n])
+  ];
+
+  for (const typedArray of testCases) {
+    const result = await page.evaluate(a => a, typedArray);
+    expect(result).toEqual(typedArray);
+  }
+});
+
 it('should transfer bigint', async ({ page }) => {
   expect(await page.evaluate(() => 42n)).toBe(42n);
   expect(await page.evaluate(a => a, 17n)).toBe(17n);
