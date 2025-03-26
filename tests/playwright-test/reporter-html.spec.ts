@@ -619,7 +619,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.getByRole('link', { name: 'View trace' }).click();
+      await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
       await expect(page.getByTestId('actions-tree')).toContainText('apiRequestContext.get');
@@ -645,14 +645,14 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await test.step('view via server', async () => {
         await showReport();
-        await page.locator('[title="View trace"]').click();
+        await page.getByRole('link', { name: 'View Trace' }).click();
         await expect(page.locator('dialog')).toBeHidden();
       });
 
       await test.step('view via local file://', async () => {
         const reportFolder = testInfo.outputPath('playwright-report');
         await page.goto(url.pathToFileURL(path.join(reportFolder, 'index.html')).toString());
-        await page.locator('[title="View trace"]').click();
+        await page.getByRole('link', { name: 'View Trace' }).click();
         await expect(page.locator('dialog')).toBeVisible();
         await expect(page.locator('dialog')).toContainText('must be loaded over');
       });

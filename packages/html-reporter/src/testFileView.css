@@ -63,6 +63,10 @@
   fill: var(--color-fg-muted);
 }
 
+.test-file-badge.button {
+  background-color: transparent;
+}
+
 .test-file-test-outcome-skipped {
   color: var(--color-fg-muted);
 }
