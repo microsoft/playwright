@@ -476,19 +476,21 @@ function onupgrade(req: http.IncomingMessage, socket: net.Socket, head: Buffer) 
 		localAddress: this.localAddress,
 	});
 
+  proxyReq.on('error', () => socket.destroy());
 	proxyReq.on('upgrade', async function (proxyRes, proxySocket, proxyHead) {
 		const header = ['HTTP/1.1 101 Switching Protocols'];
 		for (const [key, value] of Object.entries(proxyRes.headersDistinct))
 			header.push(`${key}: ${value}`);
 		socket.write(header.join('\r\n') + '\r\n\r\n');
-		if (proxyHead && proxyHead.length) proxySocket.unshift(proxyHead);
+		if (proxyHead && proxyHead.length)
+      proxySocket.unshift(proxyHead);
 
-		try {
-			await pipeline(proxySocket, socket, proxySocket);
-		} catch (error) {
-			if (error.code !== "ECONNRESET")
-				throw error;
-		}
+		proxySocket.pipe(socket);
+		socket.pipe(proxySocket);
+		proxySocket.on('error', () => socket.destroy());
+		socket.on('error', () => proxySocket.destroy());
+		proxySocket.on('end', () => socket.end());
+		socket.on('end', () => proxySocket.end());
 	});
 
 	proxyReq.end(head);
