@@ -66,7 +66,6 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
 }
 
 export function filteredLocation(rawStack: RawStack): Location | undefined {
-  console.log(filteredStackTrace(rawStack));
   const frame = filteredStackTrace(rawStack)[0] as StackFrame | undefined;
   if (!frame)
     return undefined;
