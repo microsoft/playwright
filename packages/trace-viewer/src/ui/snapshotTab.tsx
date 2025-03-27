@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, prevInList, nextInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -49,7 +49,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
-  const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
+  const [snapshotTab, setSnapshotTab] = React.useState<'action' | 'before' | 'after'>('action');
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shouldPopulateCanvasFromScreenshot, _] = useSetting('shouldPopulateCanvasFromScreenshot', false);
@@ -123,7 +123,7 @@ export const SnapshotView: React.FunctionComponent<{
 
       const iframe = [iframeRef0, iframeRef1][newVisibleIframe].current;
       if (iframe) {
-        let loadedCallback = () => {};
+        let loadedCallback = () => { };
         const loadedPromise = new Promise<void>(f => loadedCallback = f);
         try {
           iframe.addEventListener('load', loadedCallback);
@@ -331,12 +331,34 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 
   // if the action has no beforeSnapshot, use the last available afterSnapshot.
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
-  let a = action;
-  while (!beforeSnapshot && a) {
-    a = prevInList(a);
-    beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
+  let prev: ActionTraceEvent | undefined = action;
+  while (!beforeSnapshot && prev) {
+    prev = prevInList(prev);
+    beforeSnapshot = prev?.afterSnapshot ? { action: prev, snapshotName: prev?.afterSnapshot } : undefined;
   }
-  const afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
+
+  let afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : undefined;
+
+
+  // finding first action (with snapshot) started after original action end
+  let after: ActionTraceEvent | undefined = action;
+
+  while (!afterSnapshot && after && after.startTime > action.endTime) {
+    after = nextInList(after);
+    afterSnapshot = after?.beforeSnapshot ? { action: after, snapshotName: after.beforeSnapshot } : undefined;
+  }
+
+  // finding last action (with snapshot) ended before original action end. Relevant if original action is last step in timeline.
+  if (!afterSnapshot) {
+    after = action
+    while (after && after.endTime <= action.endTime) {
+      after = nextInList(after);
+      if (after?.afterSnapshot) {
+        afterSnapshot = { action: after, snapshotName: after.afterSnapshot };
+      }
+    }
+  }
+
   const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
