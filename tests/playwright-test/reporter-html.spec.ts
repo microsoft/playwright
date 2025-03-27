@@ -2808,8 +2808,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
     test('should not show prompt for empty timeout error', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
-        'uncommitted.txt': `uncommitted file`,
-        'playwright.config.ts': `export default {}`,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
           test('sample', async ({ page }) => {
@@ -2822,6 +2820,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'sample' }).click();
       await expect(page.getByRole('button', { name: 'Copy prompt' })).toHaveCount(1);
+    });
+
+    test('should include snapshot when page wasnt closed', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({ browser }) => {
+            const page = await browser.newPage();
+            await page.setContent('<button>Click me</button>');
+            expect(2).toBe(3);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+      await page.getByRole('link', { name: 'sample' }).click();
+      await page.getByRole('button', { name: 'Copy prompt' }).click();
+      const prompt = await page.evaluate(() => navigator.clipboard.readText());
+      expect(prompt, 'contains snapshot').toContain('- button "Click me"');
     });
   });
 }
