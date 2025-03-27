@@ -148,8 +148,8 @@ The [playwright.dev](https://playwright.dev/) documentation site lives in a sepa
 
 Most of the time this should not concern you. However, if you are doing something unusual in the docs, you can build locally and test how your changes will look in practice:
 1. Clone the [microsoft/playwright.dev](https://github.com/microsoft/playwright.dev) repo.
-2. Follow [the playwright.dev README instructions to "roll docs"](https://github.com/microsoft/playwright.dev/#roll-docs) against your local `playwright` repo with your changes in progress.
-3. Follow [the playwright.dev README instructions to "run dev server"](https://github.com/microsoft/playwright.dev/#run-dev-server) to view your changes.
+1. Follow [the playwright.dev README instructions to "roll docs"](https://github.com/microsoft/playwright.dev/#roll-docs) against your local `playwright` repo with your changes in progress.
+1. Follow [the playwright.dev README instructions to "run dev server"](https://github.com/microsoft/playwright.dev/#run-dev-server) to view your changes.
 
 ## Contributor License Agreement
 
