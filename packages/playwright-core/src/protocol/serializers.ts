@@ -59,7 +59,7 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
     return new RegExp(value.r.p, value.r.f);
   if (value.ta !== undefined) {
     const ctor = typedArrayKindToConstructor[value.ta.k] as any;
-    return new ctor(value.ta.b.buffer, value.ta.b.byteOffset, value.ta.b.length);
+    return new ctor(value.ta.b.buffer, value.ta.b.byteOffset, value.ta.b.length / ctor.BYTES_PER_ELEMENT);
   }
 
   if (value.a !== undefined) {
@@ -134,7 +134,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
 
   const typedArrayKind = constructorToTypedArrayKind.get(value.constructor);
   if (typedArrayKind)
-    return { ta: { b: Buffer.from(value.buffer, value.byteOffset, value.length), k: typedArrayKind } };
+    return { ta: { b: Buffer.from(value.buffer, value.byteOffset, value.byteLength), k: typedArrayKind } };
 
   const id = visitorInfo.visited.get(value);
   if (id)
