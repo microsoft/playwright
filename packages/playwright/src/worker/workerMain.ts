@@ -324,14 +324,6 @@ export class WorkerMain extends ProcessRunner {
 
     testInfo._allowSkips = true;
 
-    // Create warning if any of the async calls were not awaited in various stages.
-    const checkForFloatingPromises = (functionDescription: string) => {
-      if (!testInfo._floatingPromiseScope.hasFloatingPromises())
-        return;
-      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
-      testInfo._floatingPromiseScope.clear();
-    };
-
     await (async () => {
       await testInfo._runWithTimeout({ type: 'test' }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
@@ -371,7 +363,7 @@ export class WorkerMain extends ProcessRunner {
         testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
       });
 
-      checkForFloatingPromises('beforeAll/beforeEach hooks');
+      testInfo._checkForFloatingPromises('beforeAll/beforeEach hooks');
 
       if (testFunctionParams === null) {
         // Fixture setup failed or was skipped, we should not run the test now.
@@ -381,8 +373,13 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._runWithTimeout({ type: 'test' }, async () => {
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
-        await fn(testFunctionParams, testInfo);
-        checkForFloatingPromises('the test');
+        try {
+          await fn(testFunctionParams, testInfo);
+        } catch (e) {
+          throw e;
+        } finally {
+          testInfo._checkForFloatingPromises('the test');
+        }
       });
     })().catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
@@ -440,7 +437,7 @@ export class WorkerMain extends ProcessRunner {
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    checkForFloatingPromises('afterAll/afterEach hooks');
+    testInfo._checkForFloatingPromises('afterAll/afterEach hooks');
 
     if (testInfo._isFailure())
       this._isStopped = true;

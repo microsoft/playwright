@@ -346,6 +346,16 @@ export class TestInfoImpl implements TestInfo {
       serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
+    // We don't know if this occurred in test or hooks
+    this._checkForFloatingPromises('the test');
+  }
+
+  // Create warning if any of the async calls were not awaited in various stages.
+  _checkForFloatingPromises(functionDescription: string) {
+    if (!this._floatingPromiseScope.hasFloatingPromises())
+      return;
+    this.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
+    this._floatingPromiseScope.clear();
   }
 
   async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location }, cb: () => Promise<any>) {

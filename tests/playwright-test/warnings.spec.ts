@@ -40,6 +40,8 @@ test.describe('await', () => {
         import { test, expect } from '@playwright/test';
         test('custom test name', async ({ page }) => {
           expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+          // Timeout to make sure the expect actually gets processed
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
@@ -56,6 +58,7 @@ test.describe('await', () => {
         test('test', async ({ page }) => {
           await page.setContent('<div>A</div>');
           expect(page.locator('div')).toHaveText('A');
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
@@ -97,6 +100,7 @@ test.describe('await', () => {
         test('test', async ({ page }) => {
           await page.setContent('<div>A</div>');
           expect(page.locator('div')).toHaveText('A').then(() => {});
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
@@ -110,6 +114,7 @@ test.describe('await', () => {
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
           expect(Promise.reject(new Error('foo'))).rejects.toThrow('foo');
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
@@ -123,6 +128,7 @@ test.describe('await', () => {
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
           expect(Promise.reject(new Error('foo'))).rejects.not.toThrow('foo');
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
@@ -183,6 +189,7 @@ test.describe('await', () => {
           await page.setContent('<div>A</div>');
           const expectPromise = expect(page.locator('div')).toHaveText('A');
           expect(expectPromise instanceof Promise).toBeTruthy();
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
@@ -201,6 +208,7 @@ test.describe('await', () => {
               page = await browser.newPage();
               await page.setContent('<div>A</div>');
               expect(page.locator('div')).toHaveText('A');
+              await new Promise(f => setTimeout(f, 1000));
             });
             test('test ${hook}', async () => {
               await expect(page.locator('div')).toBeVisible();
@@ -228,6 +236,7 @@ test.describe('await', () => {
             });
             test.${hook}(async () => {
               expect(Promise.resolve()).resolves.toBe(undefined);
+              await new Promise(f => setTimeout(f, 1000));
             });
           `
         });
@@ -245,12 +254,15 @@ test.describe('await', () => {
         import { test, expect } from '@playwright/test';
         test.beforeAll(async () => {
           expect(Promise.resolve()).resolves.toBe(undefined);
+          await new Promise(f => setTimeout(f, 1000));
         });
         test('test', async () => {
           expect(Promise.resolve()).resolves.toBe(undefined);
+          await new Promise(f => setTimeout(f, 1000));
         });
         test.afterEach(async () => {
           expect(Promise.resolve()).resolves.toBe(undefined);
+          await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
