@@ -716,7 +716,7 @@ class ArtifactsRecorder {
 
     await this._screenshotRecorder.persistTemporary();
 
-    const context = this._playwright._allContexts()[0];
+    const context = leftoverContexts[0];
     if (context)
       await this._takePageSnapshot(context);
 
