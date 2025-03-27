@@ -24,6 +24,9 @@ import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { terminalScreen } from '../reporters/base';
 import { InternalReporter } from '../reporters/internalReporter';
 import { affectedTestFiles } from '../transform/compilationCache';
+import { formatTestHeader } from '../reporters/base';
+import { loadCodeFrame } from '../util';
+import { TestAnnotation } from '../../types/test';
 
 import type { FullResult, TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
@@ -48,9 +51,11 @@ export type FindRelatedTestFilesReport = {
 
 export class Runner {
   private _config: FullConfigInternal;
+  private _lastRun?: LastRunReporter;
 
-  constructor(config: FullConfigInternal) {
+  constructor(config: FullConfigInternal, lastRun?: LastRunReporter) {
     this._config = config;
+    this._lastRun = lastRun;
   }
 
   async listTestFiles(projectNames?: string[]): Promise<ConfigListFilesReport> {
@@ -79,7 +84,7 @@ export class Runner {
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
     const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
-    const lastRun = new LastRunReporter(config);
+    const lastRun = this._lastRun ?? new LastRunReporter(config);
     if (config.cliLastFailed)
       await lastRun.filterLastFailed();
 
@@ -133,5 +138,35 @@ export class Runner {
       createClearCacheTask(this._config),
     ]);
     return { status };
+  }
+
+  async printWarnings(lastRun: LastRunReporter) {
+    const reporter = new InternalReporter([createErrorCollectingReporter(terminalScreen, true)]);
+    const testRun = new TestRun(this._config, reporter);
+    const status = await runTasks(testRun, [
+      ...createPluginSetupTasks(this._config),
+      createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false })
+    ]);
+
+    const tests = testRun.rootSuite?.allTests() ?? [];
+
+    const lastRunInfo = await lastRun.runInfo();
+    const knownWarnings = lastRunInfo?.warningTests ?? {};
+
+    const warningAnnotations = tests.flatMap(test => knownWarnings[test.id] ?? []);
+    const sourceCache = new Map<string, string>();
+
+    const warningMessages = await Promise.all(warningAnnotations.map(annotation => this._buildWarning(annotation, sourceCache)));
+    for (const message of warningMessages)
+      console.log(terminalScreen.colors.yellow(message));
+
+    return { status };
+  }
+
+  private async _buildWarning(annotation: TestAnnotation, sourceCache: Map<string, string>): Promise<string> {
+    if (!annotation.location)
+      return 'TODO';
+
+    return await loadCodeFrame(annotation.location, sourceCache, { linesAbove: 2, linesBelow: 2, message: 'This is inline' });
   }
 }

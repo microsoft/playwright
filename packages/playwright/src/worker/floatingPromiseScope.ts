@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
+import { captureRawStack } from '../util/stackTrace';
+
+import { Location } from '../../types/test';
+import { filteredLocation } from '../util';
+
 export class FloatingPromiseScope {
-  readonly _floatingCalls: Set<Promise<any>> = new Set();
+  readonly _floatingCalls: Map<Promise<any>, Location | undefined> = new Map();
 
   /**
    * Enables a promise API call to be tracked by the test, alerting if unawaited.
@@ -41,7 +46,8 @@ export class FloatingPromiseScope {
       }
     });
 
-    this._floatingCalls.add(promise);
+    const location = filteredLocation(captureRawStack());
+    this._floatingCalls.set(promise, {});
 
     return promiseProxy;
   }
@@ -50,7 +56,7 @@ export class FloatingPromiseScope {
     this._floatingCalls.clear();
   }
 
-  hasFloatingPromises(): boolean {
-    return this._floatingCalls.size > 0;
+  floatingPromises(): Array<{ location: Location | undefined, promise: Promise<any> }> {
+    return Array.from(this._floatingCalls.entries()).map(([promise, location]) => ({ location, promise }));
   }
 }

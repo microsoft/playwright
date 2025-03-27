@@ -200,6 +200,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   // Explicitly apply --last-failed filter after sharding.
   if (config.lastFailedTestIdMatcher)
     filterByTestIds(rootSuite, config.lastFailedTestIdMatcher);
+  if (config.warningTestIdMatcher)
+    filterByTestIds(rootSuite, config.warningTestIdMatcher);
 
   // Now prepend dependency projects without filtration.
   {

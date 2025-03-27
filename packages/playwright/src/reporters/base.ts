@@ -26,6 +26,7 @@ import { getEastAsianWidth } from '../utilsBundle';
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { Colors } from '@isomorphic/colors';
+import type { TestAnnotation } from '../../types/test';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -44,6 +45,7 @@ type TestSummary = {
   flaky: TestCase[];
   failuresToPrint: TestCase[];
   fatalErrors: TestError[];
+  warnings: TestAnnotation[];
 };
 
 export type Screen = {
@@ -192,7 +194,7 @@ export class TerminalReporter implements ReporterV2 {
     return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ didNotRun, skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
+  protected generateSummaryMessage({ didNotRun, skipped, expected, interrupted, unexpected, flaky, fatalErrors, warnings }: TestSummary) {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(this.screen.colors.red(`  ${unexpected.length} failed`));
@@ -209,6 +211,8 @@ export class TerminalReporter implements ReporterV2 {
       for (const test of flaky)
         tokens.push(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '    ' })));
     }
+    if (warnings.length)
+      tokens.push(this.screen.colors.yellow(`  ${warnings.length} warnings. Run "npx playwright --show-test-warnings" for more information.`));
     if (skipped)
       tokens.push(this.screen.colors.yellow(`  ${skipped} skipped`));
     if (didNotRun)
@@ -229,8 +233,14 @@ export class TerminalReporter implements ReporterV2 {
     const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
     const flaky: TestCase[] = [];
+    const warnings: TestAnnotation[] = [];
 
     this.suite.allTests().forEach(test => {
+      [...test.annotations, ...test.results.flatMap(r => r.annotations)].forEach(annotation => {
+        if (annotation.type === 'warning')
+          warnings.push(annotation);
+      });
+
       switch (test.outcome()) {
         case 'skipped': {
           if (test.results.some(result => result.status === 'interrupted')) {
@@ -260,6 +270,7 @@ export class TerminalReporter implements ReporterV2 {
       flaky,
       failuresToPrint,
       fatalErrors: this._fatalErrors,
+      warnings,
     };
   }
 
@@ -464,7 +475,7 @@ function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, ste
   return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
 
-function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
+export function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
   const title = formatTestTitle(screen, config, test);
   const header = `${options.indent || ''}${options.index ? options.index + ') ' : ''}${title}`;
   let fullHeader = header;

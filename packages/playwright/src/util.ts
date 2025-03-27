@@ -22,6 +22,8 @@ import util from 'util';
 import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
 import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
+import { codeFrameColumns } from './transform/babelBundle';
+
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
@@ -76,6 +78,29 @@ export function filteredLocation(rawStack: RawStack): Location | undefined {
   };
 }
 
+export async function loadCodeFrame(location: StackFrame, sourceCache: Map<string, string>, options?: Parameters<typeof codeFrameColumns>[2]): Promise<string> {
+  const source = await loadSource(location.file, sourceCache);
+  return codeFrameColumns(
+      source,
+      {
+        start: {
+          line: location.line,
+          column: location.column
+        },
+      },
+      options
+  );
+}
+
+async function loadSource(file: string, sourceCache: Map<string, string>): Promise<string> {
+  let source = sourceCache.get(file);
+  if (!source) {
+    // A mild race is Ok here.
+    source = await fs.promises.readFile(file, 'utf8');
+    sourceCache.set(file, source);
+  }
+  return source;
+}
 
 export function serializeError(error: Error | any): TestInfoErrorImpl {
   if (error instanceof Error)

@@ -33,6 +33,7 @@ import { Runner } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { serializeError } from './util';
+import { LastRunReporter } from './runner/lastRun';
 
 import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './common/ipc';
@@ -218,7 +219,17 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
   }
 
-  const runner = new Runner(config);
+  const lastRun = new LastRunReporter(config);
+  const runner = new Runner(config, lastRun);
+
+  if (opts.showWarnings) {
+    console.log('Showing warnings');
+    await lastRun.filterWarnings();
+    const { status } = await runner.printWarnings(lastRun);
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
+  }
+
   const status = await runner.runAllTests();
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
@@ -415,6 +426,7 @@ const testOptions: [string, string][] = [
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
+  ['--show-warnings', `Show all warning messages collected in the last test run. Does not execute tests.`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--tsconfig <path>', `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)`],
