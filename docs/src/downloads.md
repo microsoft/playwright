@@ -41,7 +41,7 @@ download.saveAs(Paths.get("/path/to/save/at/", download.suggestedFilename()));
 async with page.expect_download() as download_info:
     # Perform the action that initiates download
     await page.get_by_text("Download file").click()
-download = await download_info.value
+    download = await download_info.value
 
 # Wait for the download process to complete and save the downloaded file somewhere
 await download.save_as("/path/to/save/at/" + download.suggested_filename)
@@ -52,7 +52,7 @@ await download.save_as("/path/to/save/at/" + download.suggested_filename)
 with page.expect_download() as download_info:
     # Perform the action that initiates download
     page.get_by_text("Download file").click()
-download = download_info.value
+    download = download_info.value
 
 # Wait for the download process to complete and save the downloaded file somewhere
 download.save_as("/path/to/save/at/" + download.suggested_filename)
