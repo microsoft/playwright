@@ -41,6 +41,7 @@ export type Annotation = { type: string, description?: string };
 export const defaultTimeout = 30000;
 
 export class FullConfigInternal {
+  readonly projects: FullProjectInternal[] = [];
   readonly config: FullConfig;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
@@ -48,7 +49,6 @@ export class FullConfigInternal {
   readonly plugins: TestRunnerPluginRegistration[];
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
-  projects: FullProjectInternal[] = [];
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;

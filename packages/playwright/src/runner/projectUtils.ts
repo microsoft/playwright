@@ -34,8 +34,25 @@ function wildcardPatternToRegExp(pattern: string): RegExp {
 }
 
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
-  if (!projectNames)
-    return [...projects];
+
+  if (!projectNames) {
+    const filteredProjects = projects.map(p => p.project.name);
+    const enabledProjects = projects.filter(p => !p.project.disabledByDefault).map(p => p.project.name);
+
+    const availableProjects = !projectNames ? new Set(enabledProjects) : new Set([...enabledProjects, ...filteredProjects]);
+    const projectsToRun: Set<FullProjectInternal> = new Set();
+
+    for (const project of projects) {
+      if (availableProjects.has(project.project.name))
+        projectsToRun.add(project);
+      project.project.dependencies = project.project.dependencies.filter(p => availableProjects.has(p));
+      project.deps = project.deps.filter(p => availableProjects.has(p.project.name));
+
+      if (project.teardown)
+        project.teardown = availableProjects.has(project.teardown.project.name) ? project.teardown : undefined;
+    }
+    return Array.from(projectsToRun);
+  }
 
   const projectNamesToFind = new Set<string>();
   const unmatchedProjectNames = new Map<string, string>();
@@ -74,8 +91,31 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
     throw new Error(`No projects matched. Available projects: ${allProjects}`);
   }
 
+  const enabledProjectNames = result.map(p => p.project.name);
+  const projectsToRun: Set<FullProjectInternal> = new Set([...result]);
 
-  return result;
+  for (const project of projects) {
+    if (enabledProjectNames.includes(project.project.name))
+      projectsToRun.add(project);
+    project.deps = project.deps.filter(dep => {
+      if (enabledProjectNames.includes(dep.project.name) || !dep.project.disabledByDefault) {
+        projectsToRun.add(dep);
+        return true;
+      }
+      return false;
+    });
+    project.project.dependencies = project.project.dependencies.filter(depName => project.deps.map(p => p.project.name).includes(depName));
+
+    if (project.teardown) {
+      if  (enabledProjectNames.includes(project.teardown.project.name) || !project.teardown.project.disabledByDefault)
+        projectsToRun.add(project.teardown);
+      else
+        project.teardown = undefined;
+    }
+
+  }
+
+  return Array.from(projectsToRun);
 }
 
 export function buildTeardownToSetupsMap(projects: FullProjectInternal[]): Map<FullProjectInternal, FullProjectInternal[]> {
