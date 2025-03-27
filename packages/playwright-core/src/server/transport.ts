@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { makeWaitForNextTask } from '../utils';
+import { createProxyAgent, makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './utils/happyEyeballs';
 import { ws } from '../utilsBundle';
 
 import type { WebSocket } from '../utilsBundle';
 import type { Progress } from './progress';
-import type { HeadersArray } from './types';
+import type { HeadersArray, ProxySettings } from './types';
 import type { ClientRequest, IncomingMessage } from 'http';
 
 export const perMessageDeflate = {
@@ -60,6 +60,13 @@ export interface ConnectionTransport {
   onclose?: (reason?: string) => void,
 }
 
+type WebSocketTransportOptions = {
+  headers?: { [key: string]: string; };
+  followRedirects?: boolean;
+  debugLogHeader?: string;
+  proxy?: ProxySettings;
+};
+
 export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;
   private _progress?: Progress;
@@ -70,14 +77,14 @@ export class WebSocketTransport implements ConnectionTransport {
   readonly wsEndpoint: string;
   readonly headers: HeadersArray = [];
 
-  static async connect(progress: (Progress|undefined), url: string, headers?: { [key: string]: string; }, followRedirects?: boolean, debugLogHeader?: string): Promise<WebSocketTransport> {
-    return await WebSocketTransport._connect(progress, url, headers || {}, { follow: !!followRedirects, hadRedirects: false }, debugLogHeader);
+  static async connect(progress: (Progress|undefined), url: string, options: WebSocketTransportOptions = {}): Promise<WebSocketTransport> {
+    return await WebSocketTransport._connect(progress, url, options, false /* hadRedirects */);
   }
 
-  static async _connect(progress: (Progress|undefined), url: string, headers: { [key: string]: string; }, redirect: { follow: boolean, hadRedirects: boolean }, debugLogHeader?: string): Promise<WebSocketTransport> {
+  static async _connect(progress: (Progress|undefined), url: string, options: WebSocketTransportOptions, hadRedirects: boolean): Promise<WebSocketTransport> {
     const logUrl = stripQueryParams(url);
     progress?.log(`<ws connecting> ${logUrl}`);
-    const transport = new WebSocketTransport(progress, url, logUrl, headers, redirect.follow && redirect.hadRedirects, debugLogHeader);
+    const transport = new WebSocketTransport(progress, url, logUrl, { ...options, followRedirects: !!options.followRedirects && hadRedirects });
     let success = false;
     progress?.cleanupWhenAborted(async () => {
       if (!success)
@@ -94,13 +101,13 @@ export class WebSocketTransport implements ConnectionTransport {
         transport._ws.close();
       });
       transport._ws.on('unexpected-response', (request: ClientRequest, response: IncomingMessage) => {
-        if (redirect.follow && !redirect.hadRedirects && (response.statusCode === 301 || response.statusCode === 302 || response.statusCode === 307 || response.statusCode === 308)) {
+        if (options.followRedirects && !hadRedirects && (response.statusCode === 301 || response.statusCode === 302 || response.statusCode === 307 || response.statusCode === 308)) {
           fulfill({ redirect: response });
           transport._ws.close();
           return;
         }
         for (let i = 0; i < response.rawHeaders.length; i += 2) {
-          if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
+          if (options.debugLogHeader && response.rawHeaders[i] === options.debugLogHeader)
             progress?.log(response.rawHeaders[i + 1]);
         }
         const chunks: Buffer[] = [];
@@ -117,32 +124,34 @@ export class WebSocketTransport implements ConnectionTransport {
 
     if (result.redirect) {
       // Strip authorization headers from the redirected request.
-      const newHeaders = Object.fromEntries(Object.entries(headers || {}).filter(([name]) => {
+      const newHeaders = Object.fromEntries(Object.entries(options.headers || {}).filter(([name]) => {
         return !name.includes('access-key') && name.toLowerCase() !== 'authorization';
       }));
-      return WebSocketTransport._connect(progress, result.redirect.headers.location!, newHeaders, { follow: true, hadRedirects: true }, debugLogHeader);
+      return WebSocketTransport._connect(progress, result.redirect.headers.location!, { ...options, headers: newHeaders }, true /* hadRedirects */);
     }
 
     success = true;
     return transport;
   }
 
-  constructor(progress: Progress|undefined, url: string, logUrl: string, headers?: { [key: string]: string; }, followRedirects?: boolean, debugLogHeader?: string) {
+  constructor(progress: Progress|undefined, url: string, logUrl: string, options: WebSocketTransportOptions) {
     this.wsEndpoint = url;
     this._logUrl = logUrl;
+    const proxyAgent = createProxyAgent(options.proxy, new URL(url));
+    const happyEyeballsAgent = (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent;
     this._ws = new ws(url, [], {
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       // Prevent internal http client error when passing negative timeout.
       handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? 30_000, 1),
-      headers,
-      followRedirects,
-      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+      headers: options.headers,
+      followRedirects: options.followRedirects,
+      agent: proxyAgent || happyEyeballsAgent,
       perMessageDeflate,
     });
     this._ws.on('upgrade', response => {
       for (let i = 0; i < response.rawHeaders.length; i += 2) {
         this.headers.push({ name: response.rawHeaders[i], value: response.rawHeaders[i + 1] });
-        if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
+        if (options.debugLogHeader && response.rawHeaders[i] === options.debugLogHeader)
           progress?.log(response.rawHeaders[i + 1]);
       }
     });

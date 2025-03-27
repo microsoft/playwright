@@ -21794,6 +21794,34 @@ export interface ConnectOverCDPOptions {
   logger?: Logger;
 
   /**
+   * Proxy settings to use for the connection between the client and the remote browser. Note this proxy **is not** used
+   * by the browser to load web pages.
+   */
+  proxy?: {
+    /**
+     * Proxy to be used for the remote connection. HTTP and SOCKS proxies are supported, for example
+     * `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
+     * proxy.
+     */
+    server: string;
+
+    /**
+     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     */
+    bypass?: string;
+
+    /**
+     * Optional username to use if HTTP proxy requires authentication.
+     */
+    username?: string;
+
+    /**
+     * Optional password to use if HTTP proxy requires authentication.
+     */
+    password?: string;
+  };
+
+  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
    * on. Defaults to 0.
    */
@@ -21833,6 +21861,34 @@ export interface ConnectOptions {
    * Logger sink for Playwright logging. Optional.
    */
   logger?: Logger;
+
+  /**
+   * Proxy settings to use for the connection between the client and the remote browser. Note this proxy **is not** used
+   * by the browser to load web pages.
+   */
+  proxy?: {
+    /**
+     * Proxy to be used for the remote connection. HTTP and SOCKS proxies are supported, for example
+     * `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
+     * proxy.
+     */
+    server: string;
+
+    /**
+     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     */
+    bypass?: string;
+
+    /**
+     * Optional username to use if HTTP proxy requires authentication.
+     */
+    username?: string;
+
+    /**
+     * Optional password to use if HTTP proxy requires authentication.
+     */
+    password?: string;
+  };
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going

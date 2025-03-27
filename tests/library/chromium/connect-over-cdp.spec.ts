@@ -446,6 +446,32 @@ test('should be able to connect via localhost', async ({ browserType }, testInfo
   }
 });
 
+test('should be able to connect over http proxy', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35206' },
+}, async ({ browserType, proxyServer }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  proxyServer.forwardTo(port, { allowConnectRequests: true });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://some.random.host.does.not.exist:1337`, {
+      proxy: { server: `localhost:${proxyServer.PORT}` },
+    });
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    const page = await contexts[0].newPage();
+    expect(await page.evaluate('11 * 11')).toBe(121);
+    await cdpBrowser.close();
+    // We should "CONNECT" twice:
+    // - to convert http url into ws url
+    // - actually connect to the ws endpoint
+    expect(proxyServer.connectHosts).toEqual(['some.random.host.does.not.exist:1337', 'some.random.host.does.not.exist:1337']);
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('emulate media should not be affected by second connectOverCDP', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24109' });
   test.fixme();
