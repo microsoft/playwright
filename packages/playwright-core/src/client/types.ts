@@ -103,6 +103,12 @@ export type ConnectOptions = {
   slowMo?: number,
   timeout?: number,
   logger?: Logger,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string
+  },
 };
 export type LaunchServerOptions = {
   channel?: channels.BrowserTypeLaunchOptions['channel'],

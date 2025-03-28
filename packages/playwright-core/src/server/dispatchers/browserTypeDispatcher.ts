@@ -43,7 +43,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
   }
 
   async connectOverCDP(params: channels.BrowserTypeConnectOverCDPParams, metadata: CallMetadata): Promise<channels.BrowserTypeConnectOverCDPResult> {
-    const browser = await this._object.connectOverCDP(metadata, params.endpointURL, params, params.timeout);
+    const browser = await this._object.connectOverCDP(metadata, params.endpointURL, params);
     const browserDispatcher = new BrowserDispatcher(this, browser);
     return {
       browser: browserDispatcher,
