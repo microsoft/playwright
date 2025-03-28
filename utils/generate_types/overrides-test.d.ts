@@ -65,13 +65,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
-export type TestAnnotation = {
+export type TestDetailsAnnotation = {
   type: string;
   description?: string;
-  location?: Location;
 };
 
-export type TestDetailsAnnotation = Omit<TestAnnotation, 'location'>;
+export type TestAnnotation = TestDetailsAnnotation & {
+  location?: Location;
+};
 
 export type TestDetails = {
   tag?: string | string[];

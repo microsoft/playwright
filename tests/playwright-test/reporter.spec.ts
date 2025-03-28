@@ -642,7 +642,6 @@ test('should report annotations from test declaration', async ({ runInlineTest }
         });
         test.describe('inner', { annotation: { type: 'bar' } }, () => {
           test('foo-bar-suite', () => {
-            const location = { file: expect.any(String), line: 36, column: 14 };
             expect(test.info().annotations).toEqual([
               { type: 'foo', location: { file: expect.any(String), line: 32, column: 12 } },
               { type: 'bar', location: { file: expect.any(String), line: 36, column: 14 } }

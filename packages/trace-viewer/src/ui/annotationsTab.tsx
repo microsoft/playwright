@@ -18,7 +18,7 @@ import * as React from 'react';
 import './annotationsTab.css';
 import { PlaceholderPanel } from './placeholderPanel';
 import { linkifyText } from '@web/renderUtils';
-import type { TestAnnotation } from 'playwright/test';
+import type { TestAnnotation } from '@playwright/test';
 
 export const AnnotationsTab: React.FunctionComponent<{
   annotations: TestAnnotation[],

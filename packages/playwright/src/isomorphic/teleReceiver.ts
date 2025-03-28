@@ -234,7 +234,7 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testEndPayload.testId)!;
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
-    test.annotations = testEndPayload.annotations;
+    test.annotations = this._absoluteAnnotationLocations(testEndPayload.annotations);
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
@@ -242,7 +242,7 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     if (payload.annotations)
-      result.annotations = payload.annotations;
+      result.annotations = this._absoluteAnnotationLocations(payload.annotations);
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
@@ -254,6 +254,7 @@ export class TeleReporterReceiver {
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
     const location = this._absoluteLocation(payload.location);
+    test.annotations = this._absoluteAnnotationLocations(test.annotations);
     const step = new TeleTestStep(payload, parentStep, location, result);
     if (parentStep)
       parentStep.steps.push(step);
@@ -372,8 +373,16 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
-    test.annotations = payload.annotations ?? [];
+    test.annotations = this._absoluteAnnotationLocations(payload.annotations ?? []);
     return test;
+  }
+
+  private _absoluteAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
+    return annotations.map(annotation => {
+      if (annotation.location)
+        annotation.location = this._absoluteLocation(annotation.location);
+      return annotation;
+    });
   }
 
   private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;

@@ -24,6 +24,7 @@ import { filteredLocation, filteredStackTrace, getContainedPath, normalizeAndSav
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
+import { wrapFunctionWithLocation } from '../transform/transform';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestAnnotation, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
@@ -32,7 +33,6 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
-
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
@@ -202,7 +202,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
+  private _modifier = wrapFunctionWithLocation((location: Location, type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) => {
     if (typeof modifierArgs[1] === 'function') {
       throw new Error([
         'It looks like you are calling test.skip() inside the test and pass a callback.',
@@ -217,9 +217,6 @@ export class TestInfoImpl implements TestInfo {
       return;
 
     const description = modifierArgs[1];
-    const callLocation = filteredLocation(captureRawStack());
-    const baseLocation = this.column !== undefined && this.line !== undefined && this.file !== undefined ? { column: this.column, line: this.line, file: this.file } : undefined;
-    const location = callLocation ? callLocation : baseLocation;
     this.annotations.push({ type, description, location });
     if (type === 'slow') {
       this._timeoutManager.slow();
@@ -230,7 +227,7 @@ export class TestInfoImpl implements TestInfo {
       if (this.expectedStatus !== 'skipped')
         this.expectedStatus = 'failed';
     }
-  }
+  });
 
   private _findLastPredefinedStep(steps: TestStepInternal[]): TestStepInternal | undefined {
     // Find the deepest predefined step that has not finished yet.

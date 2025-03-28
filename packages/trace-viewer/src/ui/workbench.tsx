@@ -42,7 +42,7 @@ import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
-import type { TestAnnotation } from 'playwright/test';
+import type { TestAnnotation } from '@playwright/test';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
