@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { Locator } from '@playwright/test';
+import type { Locator, Frame } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
 function unshift(snapshot: string): string {
@@ -688,5 +688,8 @@ it('ref mode should list iframes', async ({ page }) => {
   });
 
   const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot1).toContain('- iframe "foo" [ref=s1e4]');
+  expect(snapshot1).toContain('- iframe [ref=s1e4]');
+
+  const frameSnapshot = await page.frameLocator(`aria-ref=s1e4`).locator('body').ariaSnapshot({ ref: true });
+  expect(frameSnapshot).toEqual('- heading "World" [level=1] [ref=s1e3]');
 });
