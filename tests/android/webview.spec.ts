@@ -69,3 +69,36 @@ test('select webview from socketName', async function({ androidDevice }) {
   await newPage.close();
   await context.close();
 });
+
+test.fixme('should be able to receive webView cookies', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/35392',
+  }
+}, async function({ androidDevice, server }) {
+  expect(androidDevice.webViews().length).toBe(0);
+  server.setRoute('/cookies', (req, res) => {
+    res.setHeader('Set-Cookie', 'cookie1=value1; Path=/; HttpOnly');
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<html><body>hello world</body></html>');
+  });
+  await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+  const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
+  const page = await webview.page();
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/cookies');
+  const cookies = await page.context().cookies();
+  expect(cookies.length).toBe(1);
+  expect(cookies).toEqual([
+    {
+      name: 'cookie1',
+      value: 'value1',
+      domain: new URL(server.CROSS_PROCESS_PREFIX).hostname,
+      path: '/',
+      expires: -1,
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax'
+    }
+  ]);
+  await page.context().clearCookies();
+});
