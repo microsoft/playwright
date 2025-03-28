@@ -40,7 +40,7 @@ const test = baseTest.extend<{
 
         assertURLQuery: async ({ page }, use) => {
           await use(async query => {
-            await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === query);
+            await expect(page).toHaveURL(url => (new URLSearchParams(url.hash.slice(1)).get('q') ?? '') === query);
           });
         }
       });
