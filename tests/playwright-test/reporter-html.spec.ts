@@ -1960,7 +1960,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@smoke fails');
         await expect(searchInput).toHaveValue('s:failed @smoke ');
-        await assertURLQuery('@failed @smoke');
+        await assertURLQuery('s:failed @smoke');
 
         await passedNavMenu.click();
         await smokeLabelButton.click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
@@ -1970,7 +1970,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@regression passes');
         await expect(searchInput).toHaveValue('s:passed @regression ');
-        await assertURLQuery('@passed @regression');
+        await assertURLQuery('s:passed @regression');
 
         await allNavMenu.click();
         await regressionLabelButton.click();
