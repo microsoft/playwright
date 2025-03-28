@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import { parseErrorStack } from 'playwright-core/lib/utils';
@@ -38,17 +38,21 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
     }
   }
 
-  for (const [index, error] of testInfo.errors.entries()) {
+  const errors = [...testInfo.errors.entries()].filter(([, error]) => {
     if (!error.message)
-      return;
-    if (testInfo.attachments.find(a => a.name === `_prompt-${index}`))
-      continue;
+      return false;
 
     // Skip errors that are just a single line - they are likely to already be the error message.
     if (!error.message.includes('\n') && !meaningfulSingleLineErrors.has(error.message))
-      continue;
+      return false;
 
+    return true;
+  });
+
+  for (const [index, error] of errors) {
     const metadata = testInfo.config.metadata as MetadataWithCommitInfo;
+    if (testInfo.attachments.find(a => a.name === `_prompt-${index}`))
+      continue;
 
     const promptParts = [
       `# Instructions`,
@@ -119,10 +123,13 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
       );
     }
 
+    const promptPath = testInfo.outputPath(errors.length === 1 ? `prompt.md` : `prompt-${index}.md`);
+    await fs.writeFile(promptPath, promptParts.join('\n'), 'utf8');
+
     (testInfo as TestInfoImpl)._attach({
       name: `_prompt-${index}`,
       contentType: 'text/markdown',
-      body: Buffer.from(promptParts.join('\n')),
+      path: promptPath,
     }, undefined);
   }
 }
@@ -144,7 +151,7 @@ async function loadSource(file: string, sourceCache: Map<string, string>) {
   let source = sourceCache.get(file);
   if (!source) {
     // A mild race is Ok here.
-    source = await fs.promises.readFile(file, 'utf8');
+    source = await fs.readFile(file, 'utf8');
     sourceCache.set(file, source);
   }
   return source;

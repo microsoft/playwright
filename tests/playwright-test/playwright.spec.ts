@@ -510,7 +510,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   expect(fs.existsSync(dirPass)).toBeFalsy();
 
   const dirFail = test.info().outputPath('test-results', 'a-fail-chromium');
-  expect(fs.existsSync(dirFail)).toBeFalsy();
+  expect(fs.readdirSync(dirFail)).toEqual(['prompt.md']);
 
   const dirRetry = test.info().outputPath('test-results', 'a-fail-chromium-retry1');
   const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
