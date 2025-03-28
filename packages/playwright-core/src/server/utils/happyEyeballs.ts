@@ -55,14 +55,14 @@ class HttpsHappyEyeballsAgent extends https.Agent {
 export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent({ keepAlive: true });
 export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent({ keepAlive: true });
 
-export async function createSocket(host: string, port: number): Promise<net.Socket> {
+export async function createSocket(options: { host: string, port: number }): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
-    if (net.isIP(host)) {
-      const socket = net.createConnection({ host, port });
+    if (net.isIP(options.host)) {
+      const socket = net.createConnection(options);
       socket.on('connect', () => resolve(socket));
       socket.on('error', error => reject(error));
     } else {
-      createConnectionAsync({ host, port }, (err, socket) => {
+      createConnectionAsync(options, (err, socket) => {
         if (err)
           reject(err);
         if (socket)
