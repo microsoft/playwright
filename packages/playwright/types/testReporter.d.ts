@@ -464,6 +464,11 @@ export interface TestCase {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added.
+     */
+    location?: Location;
   }>;
 
   /**
@@ -617,6 +622,11 @@ export interface TestResult {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added.
+     */
+    location?: Location;
   }>;
 
   /**
@@ -732,6 +742,11 @@ export interface TestStep {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added.
+     */
+    location?: Location;
   }>;
 
   /**
