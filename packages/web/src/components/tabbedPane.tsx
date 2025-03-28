@@ -45,9 +45,8 @@ export const TabbedPane: React.FunctionComponent<{
   return <div className='tabbed-pane' data-testid={dataTestId}>
     <div className='vbox'>
       <Toolbar>
-        { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>
-          {...leftToolbar}
-        </div>}
+        { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>{...leftToolbar}</div>}
+
         {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist'>
           {[...tabs.map(tab => (
             <TabbedPaneTab
@@ -62,8 +61,9 @@ export const TabbedPane: React.FunctionComponent<{
             />)),
           ]}
         </div>}
+
         {mode === 'select' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist'>
-          <select style={{ width: '100%', background: 'none', cursor: 'pointer' }} onChange={e => {
+          <select style={{ width: '100%', background: 'none', cursor: 'pointer' }} value={selectedTab} onChange={e => {
             setSelectedTab?.(tabs[e.currentTarget.selectedIndex].id);
           }}>
             {tabs.map(tab => {
@@ -72,14 +72,14 @@ export const TabbedPane: React.FunctionComponent<{
                 suffix = ` (${tab.count})`;
               if (tab.errorCount)
                 suffix = ` (${tab.errorCount})`;
-              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab} role='tab' aria-controls={`${id}-${tab.id}`}>{tab.title}{suffix}</option>;
+              return <option key={tab.id} value={tab.id} role='tab' aria-controls={`${id}-${tab.id}`}>{tab.title}{suffix}</option>;
             })}
           </select>
         </div>}
-        {rightToolbar && <div style={{ flex: 'none', display: 'flex', alignItems: 'center' }}>
-          {...rightToolbar}
-        </div>}
+
+        {rightToolbar && <div style={{ flex: 'none', display: 'flex', alignItems: 'center' }}>{...rightToolbar}</div>}
       </Toolbar>
+
       {
         tabs.map(tab => {
           const className = 'tab-content tab-' + tab.id;
