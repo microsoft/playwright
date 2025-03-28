@@ -23,6 +23,9 @@ export class FloatingPromiseScope {
    * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
    */
   wrapPromiseAPIResult<T>(promise: Promise<T>): Promise<T> {
+    if (process.env.PW_DISABLE_FLOATING_PROMISES_WARNING)
+      return promise;
+
     const promiseProxy = new Proxy(promise, {
       get: (target, prop, receiver) => {
         if (prop === 'then') {

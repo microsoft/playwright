@@ -363,8 +363,6 @@ export class WorkerMain extends ProcessRunner {
         testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
       });
 
-      testInfo._checkForFloatingPromises('beforeAll/beforeEach hooks');
-
       if (testFunctionParams === null) {
         // Fixture setup failed or was skipped, we should not run the test now.
         return;
@@ -373,13 +371,7 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._runWithTimeout({ type: 'test' }, async () => {
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
-        try {
-          await fn(testFunctionParams, testInfo);
-        } catch (e) {
-          throw e;
-        } finally {
-          testInfo._checkForFloatingPromises('the test');
-        }
+        await fn(testFunctionParams, testInfo);
       });
     })().catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
@@ -437,7 +429,11 @@ export class WorkerMain extends ProcessRunner {
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    testInfo._checkForFloatingPromises('afterAll/afterEach hooks');
+    // Create warning if any of the async calls were not awaited in various stages.
+    if (testInfo._floatingPromiseScope.hasFloatingPromises()) {
+      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of the test. This can cause flakiness.` });
+      testInfo._floatingPromiseScope.clear();
+    }
 
     if (testInfo._isFailure())
       this._isStopped = true;

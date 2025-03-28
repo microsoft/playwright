@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-const warningSnippet = 'Some async calls were not awaited';
+const warningSnippet = 'Some async calls were not awaited by the end of the test';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -218,7 +218,6 @@ test.describe('await', () => {
 
         expect(exitCode).toBe(0);
         expect(stdout).toContain(warningSnippet);
-        expect(stdout).toContain(`${group[0]}/${group[1]} hooks`);
       });
     }
   });
@@ -243,7 +242,6 @@ test.describe('await', () => {
 
         expect(exitCode).toBe(0);
         expect(stdout).toContain(warningSnippet);
-        expect(stdout).toContain(`${group[0]}/${group[1]} hooks`);
       });
     }
   });
@@ -267,8 +265,6 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(0);
-    expect(stdout).toContain(`${warningSnippet} by the end of beforeAll/beforeEach hooks.`);
-    expect(stdout).toContain(`${warningSnippet} by the end of the test.`);
-    expect(stdout).toContain(`${warningSnippet} by the end of afterAll/afterEach hooks.`);
+    expect(stdout).toContain(warningSnippet);
   });
 });
