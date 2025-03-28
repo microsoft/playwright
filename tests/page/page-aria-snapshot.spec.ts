@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { Locator, Frame } from '@playwright/test';
+import type { Locator, FrameLocator, Page } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
 function unshift(snapshot: string): string {
@@ -683,13 +683,44 @@ it('ref mode should list iframes', async ({ page }) => {
     <h1>Hello</h1>
     <iframe name="foo" src="data:text/html,<h1>World</h1>">
   `);
-  page.on('console', message => {
-    console.log(message.text());
-  });
 
   const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
   expect(snapshot1).toContain('- iframe [ref=s1e4]');
 
   const frameSnapshot = await page.frameLocator(`aria-ref=s1e4`).locator('body').ariaSnapshot({ ref: true });
   expect(frameSnapshot).toEqual('- heading "World" [level=1] [ref=s1e3]');
+});
+
+it('ref mode can be used to stitch all frame snapshots', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/nested-frames.html');
+
+  async function allFrameSnapshot(frame: Page | FrameLocator): Promise<string> {
+    const snapshot = await frame.locator('body').ariaSnapshot({ ref: true });
+    const lines = snapshot.split('\n');
+    const result = [];
+    for (const line of lines) {
+      const match = line.match(/^(\s*)- iframe \[ref=(.*)\]/);
+      if (!match) {
+        result.push(line);
+        continue;
+      }
+
+      const leadingSpace = match[1];
+      const ref = match[2];
+      const childFrame = frame.frameLocator(`aria-ref=${ref}`);
+      const childSnapshot = await allFrameSnapshot(childFrame);
+      result.push(line + ':', childSnapshot.split('\n').map(l => leadingSpace + '  ' + l).join('\n'));
+    }
+    return result.join('\n');
+  }
+
+  expect(await allFrameSnapshot(page)).toEqual(`
+- iframe [ref=s1e3]:
+  - iframe [ref=s1e3]:
+    - text: Hi, I'm frame
+  - iframe [ref=s1e4]:
+    - text: Hi, I'm frame
+- iframe [ref=s1e4]:
+  - text: Hi, I'm frame
+  `.trim());
 });
