@@ -61,13 +61,13 @@ test('should toggle filters', async ({ page, mount }) => {
   </SearchParamsProvider>);
   await component.locator('a', { hasText: 'All' }).click();
   await component.locator('a', { hasText: 'Passed' }).click();
-  await expect(page).toHaveURL(/#\?q=s:passed/);
+  await expect(page).toHaveURL(/#\?q=s%3Apassed/);
   await component.locator('a', { hasText: 'Failed' }).click();
-  await expect(page).toHaveURL(/#\?q=s:failed/);
+  await expect(page).toHaveURL(/#\?q=s%3Afailed/);
   await component.locator('a', { hasText: 'Flaky' }).click();
-  await expect(page).toHaveURL(/#\?q=s:flaky/);
+  await expect(page).toHaveURL(/#\?q=s%3Aflaky/);
   await component.locator('a', { hasText: 'Skipped' }).click();
-  await expect(page).toHaveURL(/#\?q=s:skipped/);
+  await expect(page).toHaveURL(/#\?q=s%3Askipped/);
   await component.getByRole('textbox').fill('annot:annotation type=annotation description');
   expect(filters).toEqual(['', '', 's:passed ', 's:failed ', 's:flaky ', 's:skipped ', 'annot:annotation type=annotation description']);
 });

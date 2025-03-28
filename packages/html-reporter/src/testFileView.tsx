@@ -37,9 +37,8 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
     setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
-    header={<span>
-      {file.fileName}
-    </span>}>
+    header={<span>{file.fileName}</span>}
+  >
     {file.tests.map(test =>
       <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome)}>
         <div className='hbox' style={{ alignItems: 'flex-start' }}>
@@ -51,8 +50,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               <Link href={testResultHref({ test }) + filterParam} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
-              {projectNames.length > 1 && !!test.projectName &&
-              <ProjectLink projectNames={projectNames} projectName={test.projectName} />}
+              {projectNames.length > 1 && !!test.projectName && <ProjectLink searchParams={searchParams} projectNames={projectNames} projectName={test.projectName} />}
               <LabelsClickView labels={test.tags} />
             </span>
           </div>
@@ -108,9 +106,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
 
   const onClickHandle = (e: React.MouseEvent, label: string) => {
     e.preventDefault();
-    const q = searchParams.get('q')?.toString() || '';
-    const tokens = q.split(' ');
-    navigate(filterWithToken(tokens, label, e.metaKey || e.ctrlKey));
+    navigate(filterWithToken(searchParams, label, e.metaKey || e.ctrlKey));
   };
 
   return labels.length > 0 ? (

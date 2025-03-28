@@ -113,19 +113,19 @@ const annotationLinkRenderingTestCase: TestCase = {
 test('should correctly render links in annotations', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={annotationLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
 
-  const firstLink = await component.getByText('https://playwright.dev/docs/intro').first();
+  const firstLink = component.getByText('https://playwright.dev/docs/intro').first();
   await expect(firstLink).toBeVisible();
   await expect(firstLink).toHaveAttribute('href', 'https://playwright.dev/docs/intro');
 
-  const secondLink = await component.getByText('https://playwright.dev/docs/api/class-playwright').first();
+  const secondLink = component.getByText('https://playwright.dev/docs/api/class-playwright').first();
   await expect(secondLink).toBeVisible();
   await expect(secondLink).toHaveAttribute('href', 'https://playwright.dev/docs/api/class-playwright');
 
-  const thirdLink = await component.getByText('https://github.com/microsoft/playwright/issues/23180').first();
+  const thirdLink = component.getByText('https://github.com/microsoft/playwright/issues/23180').first();
   await expect(thirdLink).toBeVisible();
   await expect(thirdLink).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/23180');
 
-  const fourthLink = await component.getByText('https://github.com/microsoft/playwright/issues/23181').first();
+  const fourthLink = component.getByText('https://github.com/microsoft/playwright/issues/23181').first();
   await expect(fourthLink).toBeVisible();
   await expect(fourthLink).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/23181');
 });
@@ -170,7 +170,21 @@ const attachmentLinkRenderingTestCase: TestCase = {
   results: [resultWithAttachment]
 };
 
-const testCaseSummary: TestCaseSummary = {
+const previousTestCaseSummary: TestCaseSummary = {
+  testId: 'previousTestId',
+  title: 'previous test',
+  path: [],
+  projectName: 'chromium',
+  location: { file: 'test.spec.ts', line: 42, column: 0 },
+  tags: [],
+  outcome: 'expected',
+  duration: 10,
+  ok: true,
+  annotations: [],
+  results: [resultWithAttachment]
+};
+
+const nextTestCaseSummary: TestCaseSummary = {
   testId: 'nextTestId',
   title: 'next test',
   path: [],
@@ -188,7 +202,7 @@ const testCaseSummary: TestCaseSummary = {
 test('should correctly render links in attachments', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await component.getByText('first attachment').click();
-  const body = await component.getByText('The body with https://playwright.dev/docs/intro link');
+  const body = component.getByText('The body with https://playwright.dev/docs/intro link');
   await expect(body).toBeVisible();
   await expect(body.locator('a').filter({ hasText: 'playwright.dev' })).toHaveAttribute('href', 'https://playwright.dev/docs/intro');
   await expect(body.locator('a').filter({ hasText: 'github.com' })).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
@@ -209,12 +223,14 @@ test('should correctly render links in attachment name', async ({ mount }) => {
 });
 
 test('should correctly render prev and next', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={testCaseSummary} next={testCaseSummary} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={previousTestCaseSummary} next={nextTestCaseSummary} run={0} />);
   await expect(component).toMatchAriaSnapshot(`
     - text: group
-    - link "« previous"
-    - link "next »"
-    - text: "My test test.spec.ts:42 10ms"
+    - link "« previous":
+       - /url: "#?testId=previousTestId"
+    - link "next »":
+       - /url: "#?testId=nextTestId"
+    - text: "My test test.spec.ts:42 10ms chromium"
   `);
 });
 
@@ -237,19 +253,34 @@ const testCaseWithTwoAttempts: TestCase = {
 };
 
 test('total duration is selected run duration', async ({ mount, page }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0} />);
+  const runSelectedState = `
+    - text: My test test.spec.ts:42 200ms chromium
+    - button "Annotations" [expanded]
+    - region: "annotation: Annotation text annotation: Another annotation text"
+    - tablist:
+      - tab "Run 50ms" [selected]
+      - 'tab "Retry #1 150ms"'
+    - tabpanel "Run 50ms":
+      - button "Errors" [expanded]
+      - region: Error message
+      - button "Test Steps" [expanded]
+      - region: 10ms Outer step— test.spec.ts:62
+    `;
+
+  await expect(component).toMatchAriaSnapshot(runSelectedState);
+  await page.getByRole('tab', { name: 'Run 50ms' }).click();
+  await expect(component).toMatchAriaSnapshot(runSelectedState);
+  await page.getByRole('tab', { name: 'Retry #1 150ms' }).click();
   await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 200ms"
+    - text: My test test.spec.ts:42 200ms chromium
+    - button "Annotations" [expanded]
+    - region: "annotation: Annotation text annotation: Another annotation text"
     - tablist:
       - tab "Run 50ms"
-      - 'tab "Retry #1 150ms"'
-  `);
-  await page.getByRole('tab', { name: 'Run' }).click();
-  await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 200ms"
-  `);
-  await page.getByRole('tab', { name: 'Retry' }).click();
-  await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 200ms"
+      - 'tab "Retry #1 150ms" [selected]'
+    - 'tabpanel "Retry #1 150ms"':
+      - button "Test Steps" [expanded]
+      - region: 10ms Outer step— test.spec.ts:62
   `);
 });

@@ -73,7 +73,7 @@ export const TestCaseView: React.FC<{
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>}
     {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
-      {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+      {test && !!test.projectName && <ProjectLink searchParams={searchParams} projectNames={projectNames} projectName={test.projectName} />}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
     {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>

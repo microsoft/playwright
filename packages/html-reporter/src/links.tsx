@@ -22,6 +22,7 @@ import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
+import { filterWithToken } from './filter';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -54,12 +55,11 @@ export const Link: React.FunctionComponent<{
 };
 
 export const ProjectLink: React.FunctionComponent<{
+  searchParams: URLSearchParams,
   projectNames: string[],
   projectName: string,
-}> = ({ projectNames, projectName }) => {
-  const encoded = encodeURIComponent(projectName);
-  const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
-  return <Link href={`#?q=p:${value}`}>
+}> = ({ searchParams, projectNames, projectName }) => {
+  return <Link click={filterWithToken(searchParams, `p:${projectName}`, false)} ctrlClick={filterWithToken(searchParams, `p:${projectName}`, true)}>
     <span className={clsx('label', `label-color-${projectNames.indexOf(projectName) % 6}`)} style={{ margin: '6px 0 0 6px' }}>
       {projectName}
     </span>
