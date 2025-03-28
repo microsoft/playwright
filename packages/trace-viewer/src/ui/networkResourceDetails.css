@@ -95,7 +95,7 @@
     flex-direction: column;
     width: 135px;
     z-index: 10;
-    backdrop-filter: blur(5px);
+    background-color: var(--vscode-list-dropBackground);
 
     button {
       padding: 8px;
