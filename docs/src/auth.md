@@ -13,6 +13,11 @@ Regardless of the authentication strategy you choose, you are likely to store au
 
 We recommend to create `playwright/.auth` directory and add it to your `.gitignore`. Your authentication routine will produce authenticated browser state and save it to a file in this `playwright/.auth` directory. Later on, tests will reuse this state and start already authenticated.
 
+:::danger
+The browser state file may contain sensitive cookies and headers that could be used to impersonate you or your test account.
+We strongly discourage checking them into private or public repositories.
+:::
+
 ```bash tab=bash-bash
 mkdir -p playwright/.auth
 echo $'\nplaywright/.auth' >> .gitignore
