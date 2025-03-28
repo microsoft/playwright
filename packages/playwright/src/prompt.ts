@@ -38,10 +38,8 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
     }
   }
 
-  const errors = [...testInfo.errors.entries()].filter(([index, error]) => {
+  const errors = [...testInfo.errors.entries()].filter(([, error]) => {
     if (!error.message)
-      return false;
-    if (testInfo.attachments.find(a => a.name === `_prompt-${index}`))
       return false;
 
     // Skip errors that are just a single line - they are likely to already be the error message.
@@ -53,6 +51,8 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
 
   for (const [index, error] of errors) {
     const metadata = testInfo.config.metadata as MetadataWithCommitInfo;
+    if (testInfo.attachments.find(a => a.name === `_prompt-${index}`))
+      continue;
 
     const promptParts = [
       `# Instructions`,
