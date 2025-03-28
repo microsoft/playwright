@@ -85,16 +85,21 @@
     width: 135px;
   }
 
+  &:not(:hover) .copy-request-dropdown-menu {
+    display: none;
+  }
+
   .copy-request-dropdown-menu {
     position: absolute;
     display: flex;
     flex-direction: column;
     width: 135px;
+    z-index: 10;
+    backdrop-filter: blur(5px);
 
     button {
       padding: 8px;
       text-align: left;
-      z-index: 10;
     }
   }
 }

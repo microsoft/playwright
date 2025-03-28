@@ -88,25 +88,21 @@ const CopyDropdown: React.FC<{
   sdkLanguage: Language,
   requestBody: RequestBody,
 }> = ({ resource, sdkLanguage, requestBody }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   const copiedDescription = <><span className='codicon codicon-check' style={{ marginRight: '5px' }} /> Copied </>;
   const copyAsPlaywright = async () => getAPIRequestCodeGen(sdkLanguage).generatePlaywrightRequestCall(resource.request, requestBody?.text);
   return (
-    <div className='copy-request-dropdown' onMouseLeave={() => setIsOpen(false)} onMouseEnter={() => setIsOpen(true)}>
+    <div className='copy-request-dropdown'>
       <ToolbarButton className='copy-request-dropdown-toggle'>
         <span className='codicon codicon-copy' style={{ marginRight: '5px' }}/>
         Copy request
         <span className='codicon codicon-chevron-down' style={{ marginLeft: '5px' }}/>
       </ToolbarButton>
 
-      {isOpen && (
-        <div className='copy-request-dropdown-menu'>
-          <CopyToClipboardTextButton description='Copy as cURL' copiedDescription={copiedDescription} value={() => generateCurlCommand(resource)}/>
-          <CopyToClipboardTextButton description='Copy as Fetch' copiedDescription={copiedDescription} value={() => generateFetchCall(resource)}/>
-          <CopyToClipboardTextButton description='Copy as Playwright' copiedDescription={copiedDescription} value={copyAsPlaywright}/>
-        </div>
-      )}
+      <div className='copy-request-dropdown-menu'>
+        <CopyToClipboardTextButton description='Copy as cURL' copiedDescription={copiedDescription} value={() => generateCurlCommand(resource)}/>
+        <CopyToClipboardTextButton description='Copy as Fetch' copiedDescription={copiedDescription} value={() => generateFetchCall(resource)}/>
+        <CopyToClipboardTextButton description='Copy as Playwright' copiedDescription={copiedDescription} value={copyAsPlaywright}/>
+      </div>
     </div>
   );
 };
