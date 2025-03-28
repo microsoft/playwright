@@ -677,3 +677,16 @@ it('should generate refs', async ({ page }) => {
   const e = await expect(page.locator('aria-ref=s1e3')).toHaveText('One').catch(e => e);
   expect(e.message).toContain('Error: Stale aria-ref, expected s2e{number}, got s1e3');
 });
+
+it('ref mode should list iframes', async ({ page }) => {
+  await page.setContent(`
+    <h1>Hello</h1>
+    <iframe src="data:text/html,<h1>World</h1>">
+  `);
+  page.on('console', message => {
+    console.log(message.text());
+  });
+
+  const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
+  expect(snapshot1).toContain('- iframe [ref=s1e4]');
+});

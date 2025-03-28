@@ -24,7 +24,7 @@ import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRole
 import type { Builtins } from '../isomorphic/builtins';
 
 export type AriaNode = AriaProps & {
-  role: AriaRole | 'fragment';
+  role: AriaRole | 'fragment' | 'iframe';
   name: string;
   children: (AriaNode | string)[];
   element: Element;
@@ -145,6 +145,9 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
 }
 
 function toAriaNode(builtins: Builtins, element: Element): AriaNode | null {
+  if (element.nodeName === 'IFRAME')
+    return { role: 'iframe', name: '', children: [], props: {}, element };
+
   const role = roleUtils.getAriaRole(element);
   if (!role || role === 'presentation' || role === 'none')
     return null;
