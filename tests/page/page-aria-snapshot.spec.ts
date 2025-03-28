@@ -681,13 +681,12 @@ it('should generate refs', async ({ page }) => {
 it('ref mode should list iframes', async ({ page }) => {
   await page.setContent(`
     <h1>Hello</h1>
-    <iframe src="data:text/html,<h1>World</h1>">
+    <iframe name="foo" src="data:text/html,<h1>World</h1>">
   `);
   page.on('console', message => {
     console.log(message.text());
   });
 
   const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot1).toContain('- iframe [ref=s1e4]');
-  // TOOD: add iframe ID
+  expect(snapshot1).toContain('- iframe "foo" [ref=s1e4]');
 });

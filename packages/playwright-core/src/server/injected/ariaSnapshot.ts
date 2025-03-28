@@ -146,7 +146,7 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
 
 function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean): AriaNode | null {
   if (includeIframe && element.nodeName === 'IFRAME')
-    return { role: 'iframe', name: '', children: [], props: {}, element };
+    return { role: 'iframe', name: element.getAttribute('name') ?? '', children: [], props: {}, element };
 
   const role = roleUtils.getAriaRole(element);
   if (!role || role === 'presentation' || role === 'none')
