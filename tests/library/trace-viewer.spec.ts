@@ -469,12 +469,11 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
   await traceViewer.snapshotFrame('page.evaluate');
   const browserFrameAddressBarLocator = traceViewer.page.locator('.browser-frame-address-bar');
   await expect(browserFrameAddressBarLocator).toHaveText(server.EMPTY_PAGE);
-  await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-  await expect(browserFrameAddressBarLocator).toHaveText(server.EMPTY_PAGE);
-  const copySelectorLocator = traceViewer.page.locator('.browser-frame-address-bar > button[title="Copy"]');
+  const copySelectorLocator = browserFrameAddressBarLocator.getByRole('button', { name: 'Copy'})
   await expect(copySelectorLocator).toBeHidden();
-  await traceViewer.page.hover('.browser-frame-address-bar');
+  await browserFrameAddressBarLocator.hover();
   await expect(copySelectorLocator).toBeVisible();
+  await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await copySelectorLocator.click();
   expect(await traceViewer.page.evaluate(() => navigator.clipboard.readText())).toBe(server.EMPTY_PAGE);
 });
