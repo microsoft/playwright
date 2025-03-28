@@ -344,18 +344,21 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
   lines.push(screen.colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
-    const errors = formatResultFailure(screen, config, test, result, '    ', true);
+    const errors = formatResultFailure(screen, test, result, '    ');
     if (!errors.length)
       continue;
-    const retryLines = [];
     if (result.retry) {
-      retryLines.push('');
-      retryLines.push(screen.colors.gray(separator(screen, `    Retry #${result.retry}`)));
+      resultLines.push('');
+      resultLines.push(screen.colors.gray(separator(screen, `    Retry #${result.retry}`)));
     }
-    resultLines.push(...retryLines);
     resultLines.push(...errors.map(error => '\n' + error.message));
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
+      if (attachment.name.startsWith('_prompt') && attachment.path) {
+        resultLines.push('');
+        resultLines.push(screen.colors.dim(`    Error Prompt: ${relativeFilePath(screen, config, attachment.path)}`));
+        continue;
+      }
       if (attachment.name.startsWith('_'))
         continue;
       const hasPrintableContent = attachment.contentType.startsWith('text/');
@@ -406,7 +409,7 @@ function quotePathIfNeeded(path: string): string {
   return path;
 }
 
-export function formatResultFailure(screen: Screen, config: FullConfig, test: TestCase, result: TestResult, initialIndent: string, includePrompt: boolean): ErrorDetails[] {
+export function formatResultFailure(screen: Screen, test: TestCase, result: TestResult, initialIndent: string): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
@@ -420,16 +423,10 @@ export function formatResultFailure(screen: Screen, config: FullConfig, test: Te
     });
   }
 
-  for (const [index, error] of result.errors.entries()) {
+  for (const error of result.errors) {
     const formattedError = formatError(screen, error);
-    let message = formattedError.message;
-    if (includePrompt) {
-      const promptPath = result.attachments.find(a => a.name === `_prompt-${index}`)?.path;
-      if (promptPath)
-        message += '\n' + screen.colors.cyan(`Error Prompt: ${relativeFilePath(screen, config, promptPath)}`);
-    }
     errorDetails.push({
-      message: indent(message, initialIndent),
+      message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
     });
   }
