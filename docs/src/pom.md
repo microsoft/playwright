@@ -132,6 +132,58 @@ await expect(playwrightDev.tocList).toHaveText([
 ]);
 ```
 
+## Page object as fixture
+* langs: js
+
+Instanciating the different Page Objects can be cumbersome and makes the test code unnecessarily complex. [Test fixtures](./test-fixtures) are a good way to establish the environment for each test, they can be used to initialize Page Object. Below we use `test.extend()` to create a new test object that will include a Page Object.
+
+```js title="fixtures.ts"
+import { test as base } from '@playwright/test';
+import { PlaywrightDevPage } from './playwright-dev-page';
+
+// Declare the types of your fixtures.
+type MyFixtures = {
+  playwrightDevPage: PlaywrightDevPage;
+};
+
+export const test = base.extend<MyFixtures>({
+  playwrightDevPage: async ({ page }, use) => {
+    await use(new PlaywrightDevPage(page));
+  },
+});
+export { expect } from '@playwright/test';
+```
+
+Now we can use the instance `playwrightDevPage` in our tests, as a fixture.
+
+```js title="example.spec.ts"
+// Import test with our new fixtures.
+import { test, expect } from './fixtures';
+
+test('getting started should contain table of contents', async ({ playwrightDevPage }) => {
+  await playwrightDevPage.goto();
+  await playwrightDevPage.getStarted();
+  await expect(playwrightDevPage.tocList).toHaveText([
+    `How to install Playwright`,
+    `What's Installed`,
+    `How to run the example test`,
+    `How to open the HTML test report`,
+    `Write tests using web first assertions, page fixtures and locators`,
+    `Run single test, multiple tests, headed mode`,
+    `Generate tests with Codegen`,
+    `See a trace of your tests`
+  ]);
+});
+
+test('should show Page Object Model article', async ({ playwrightDevPage, page }) => {
+  await playwrightDevPage.goto();
+  await playwrightDevPage.pageObjectModel();
+  // You can use other fixtures, like page
+  await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
+});
+```
+
+
 ## Implementation
 * langs: java, csharp, python
 
