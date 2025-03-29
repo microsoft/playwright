@@ -44,18 +44,17 @@ import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
 
 export const Workbench: React.FunctionComponent<{
-  model?: modelUtil.MultiTraceModel,
+  trace?: modelUtil.MultiTraceModelOrLoadError,
   showSourcesFirst?: boolean,
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
-  isLive?: boolean,
   hideTimeline?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
+}> = ({ trace, showSourcesFirst, rootDir, fallbackLocation, hideTimeline, status: treeStatus, annotations, inert, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -68,6 +67,9 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+
+  const model = trace?.type === 'model' ? trace.model : undefined;
+  const isLive = trace?.isLive;
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -162,7 +164,7 @@ export const Workbench: React.FunctionComponent<{
 
   const consoleModel = useConsoleTabModel(model, selectedTime);
   const networkModel = useNetworkTabModel(model, selectedTime);
-  const errorsModel = useErrorsTabModel(model);
+  const errorsModel = useErrorsTabModel(trace);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -286,6 +288,9 @@ export const Workbench: React.FunctionComponent<{
   else if (model && model.wallTime)
     time = Date.now() - model.wallTime;
 
+  const isTraceError = trace?.type === 'error';
+  const status = isTraceError ? 'failed' : treeStatus;
+
   const actionsTab: TabbedPaneTabModel = {
     id: 'actions',
     title: 'Actions',
@@ -293,8 +298,10 @@ export const Workbench: React.FunctionComponent<{
       {status && <div className='workbench-run-status'>
         <span className={clsx('codicon', testStatusIcon(status))}></span>
         <div>{testStatusText(status)}</div>
-        <div className='spacer'></div>
-        <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
+        {isTraceError ? <div>: Could not load trace</div> : <>
+          <div className='spacer'></div>
+          <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
+        </>}
       </div>}
       <ActionList
         sdkLanguage={sdkLanguage}

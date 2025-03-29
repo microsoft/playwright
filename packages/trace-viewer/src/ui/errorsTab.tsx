@@ -42,12 +42,14 @@ type ErrorsTabModel = {
   errors: Map<string, modelUtil.ErrorDescription>;
 };
 
-export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
+export function useErrorsTabModel(model: modelUtil.MultiTraceModelOrLoadError | undefined): ErrorsTabModel {
   return React.useMemo(() => {
     if (!model)
       return { errors: new Map() };
+    if (model.type === 'error')
+      return { errors: new Map(model.errors.map(error => [error, { message: error, stack: [] }])) };
     const errors = new Map<string, modelUtil.ErrorDescription>();
-    for (const error of model.errorDescriptors)
+    for (const error of model.model.errorDescriptors)
       errors.set(error.message, error);
     return { errors };
   }, [model]);
