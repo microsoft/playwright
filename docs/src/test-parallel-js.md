@@ -125,6 +125,27 @@ test('runs second', async () => {
 });
 ```
 
+## Override execution mode
+
+If you opt-in all tests into fully-parallel mode in the configuration file:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  fullyParallel: true,
+});
+```
+
+Sometimes you'll want to run tests in order, the default setting. You can override the mode per describe :
+```js
+test.describe('runs in parallel with other describes', () => {
+  test.describe.configure({ mode: 'default' });
+  test('in order 1', async ({ page }) => {});
+  test('in order 2', async ({ page }) => {});
+});
+```
+
 ## Shard tests between multiple machines
 
 Playwright Test can shard a test suite, so that it can be executed on multiple machines.

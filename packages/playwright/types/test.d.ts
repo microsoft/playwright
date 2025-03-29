@@ -3542,7 +3542,20 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    *   test('runs in parallel 2', async ({ page }) => {});
    *   ```
    *
-   * - Running tests serially, retrying from the start.
+   * - Running tests in order, retry is per failed test. If one test fails, subsequent tests are still runned.
+   *
+   *   This is the default mode. It can be useful to set it explicitly to override project configuration that uses
+   *   `fullyParallel`.
+   *
+   *   ```js
+   *   // All tests run in order, second test will run even if the first one fails.
+   *   test.describe.configure({ mode: 'default' });
+   *   test('runs first', async ({ page }) => {});
+   *   test('runs second', async ({ page }) => {});
+   *   ```
+   *
+   * - Running tests serially, retrying from the start. If one of the serial tests fails, all subsequent tests are
+   *   skipped.
    *
    *   **NOTE** Running serially is not recommended. It is usually better to make your tests isolated, so they can be
    *   run independently.
