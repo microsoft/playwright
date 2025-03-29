@@ -96,7 +96,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
-  browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
+  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit', '_bidiChromium', '_bidiFirefox'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
@@ -105,7 +105,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         ...connectOptions,
         exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as any)._exposeNetwork,
         headers: {
-          ...(_reuseContext ? { 'x-playwright-reuse-context': '1' } : {}),
           // HTTP headers are ASCII only (not UTF-8).
           'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
           ...connectOptions.headers,
