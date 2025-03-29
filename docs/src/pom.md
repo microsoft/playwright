@@ -16,43 +16,7 @@ Page objects **simplify authoring** by creating a higher-level API which suits y
 
 We will create a `PlaywrightDevPage` helper class to encapsulate common operations on the `playwright.dev` page. Internally, it will use the `page` object.
 
-```js tab=js-js title="playwright-dev-page.js"
-const { expect } = require('@playwright/test');
-
-exports.PlaywrightDevPage = class PlaywrightDevPage {
-
-  /**
-   * @param {import('@playwright/test').Page} page
-   */
-  constructor(page) {
-    this.page = page;
-    this.getStartedLink = page.locator('a', { hasText: 'Get started' });
-    this.gettingStartedHeader = page.locator('h1', { hasText: 'Installation' });
-    this.pomLink = page.locator('li', {
-      hasText: 'Guides',
-    }).locator('a', {
-      hasText: 'Page Object Model',
-    });
-    this.tocList = page.locator('article div.markdown ul > li > a');
-  }
-
-  async goto() {
-    await this.page.goto('https://playwright.dev');
-  }
-
-  async getStarted() {
-    await this.getStartedLink.first().click();
-    await expect(this.gettingStartedHeader).toBeVisible();
-  }
-
-  async pageObjectModel() {
-    await this.getStarted();
-    await this.pomLink.click();
-  }
-};
-```
-
-```js tab=js-ts title="playwright-dev-page.ts"
+```js tab=js-test title="playwright-dev-page.ts"
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export class PlaywrightDevPage {
@@ -121,35 +85,7 @@ module.exports = { PlaywrightDevPage };
 
 Now we can use the `PlaywrightDevPage` class in our tests.
 
-```js tab=js-js title="example.spec.js"
-const { test, expect } = require('@playwright/test');
-const { PlaywrightDevPage } = require('./playwright-dev-page');
-
-test('getting started should contain table of contents', async ({ page }) => {
-  const playwrightDev = new PlaywrightDevPage(page);
-  await playwrightDev.goto();
-  await playwrightDev.getStarted();
-  await expect(playwrightDev.tocList).toHaveText([
-    `How to install Playwright`,
-    `What's Installed`,
-    `How to run the example test`,
-    `How to open the HTML test report`,
-    `Write tests using web first assertions, page fixtures and locators`,
-    `Run single test, multiple tests, headed mode`,
-    `Generate tests with Codegen`,
-    `See a trace of your tests`
-  ]);
-});
-
-test('should show Page Object Model article', async ({ page }) => {
-  const playwrightDev = new PlaywrightDevPage(page);
-  await playwrightDev.goto();
-  await playwrightDev.pageObjectModel();
-  await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
-});
-```
-
-```js tab=js-ts title="example.spec.ts"
+```js tab=js-test title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 import { PlaywrightDevPage } from './playwright-dev-page';
 
@@ -195,6 +131,58 @@ await expect(playwrightDev.tocList).toHaveText([
   `See a trace of your tests`
 ]);
 ```
+
+## Page object as fixture
+* langs: js
+
+Instanciating the different Page Objects can be cumbersome and makes the test code unnecessarily complex. [Test fixtures](./test-fixtures) are a good way to establish the environment for each test, they can be used to initialize Page Object. Below we use `test.extend()` to create a new test object that will include a Page Object.
+
+```js title="fixtures.ts"
+import { test as base } from '@playwright/test';
+import { PlaywrightDevPage } from './playwright-dev-page';
+
+// Declare the types of your fixtures.
+type MyFixtures = {
+  playwrightDevPage: PlaywrightDevPage;
+};
+
+export const test = base.extend<MyFixtures>({
+  playwrightDevPage: async ({ page }, use) => {
+    await use(new PlaywrightDevPage(page));
+  },
+});
+export { expect } from '@playwright/test';
+```
+
+Now we can use the instance `playwrightDevPage` in our tests, as a fixture.
+
+```js title="example.spec.ts"
+// Import test with our new fixtures.
+import { test, expect } from './fixtures';
+
+test('getting started should contain table of contents', async ({ playwrightDevPage }) => {
+  await playwrightDevPage.goto();
+  await playwrightDevPage.getStarted();
+  await expect(playwrightDevPage.tocList).toHaveText([
+    `How to install Playwright`,
+    `What's Installed`,
+    `How to run the example test`,
+    `How to open the HTML test report`,
+    `Write tests using web first assertions, page fixtures and locators`,
+    `Run single test, multiple tests, headed mode`,
+    `Generate tests with Codegen`,
+    `See a trace of your tests`
+  ]);
+});
+
+test('should show Page Object Model article', async ({ playwrightDevPage, page }) => {
+  await playwrightDevPage.goto();
+  await playwrightDevPage.pageObjectModel();
+  // You can use other fixtures, like page
+  await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
+});
+```
+
 
 ## Implementation
 * langs: java, csharp, python
