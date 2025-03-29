@@ -690,3 +690,46 @@ test('should allow only in dependent (2)', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should only run projects specified in cli when disabledByDefault is true for projects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'D'},
+          { name: 'B' , dependencies: ['A']},
+          { name: 'C' ,  dependencies: ['B'], disabledByDefault: true},
+          { name: 'D', disabledByDefault: true},
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup', async ({}) => {
+        console.log('%%' + test.info().project.name)
+      });
+    `,
+  }, { '--project': ['C'] });
+  expect(result.exitCode).toBe(0);
+  expect(new Set(result.outputLines)).toEqual(new Set(['A', 'B', 'C']));
+});
+
+test('should only run projects with disabledByDefault set to false when no project specified in cli', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'D'},
+          { name: 'B' , dependencies: ['A'], disabledByDefault: true},
+          { name: 'C',  dependencies: ['B']},
+          { name: 'D' , disabledByDefault: true},
+        ],
+      };`,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(new Set(result.outputLines)).toEqual(new Set(['A', 'C']));
+});

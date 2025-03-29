@@ -93,3 +93,9 @@ See [`property: TestProject.timeout`].
 - type: <[Fixtures]>
 
 See [`property: TestProject.use`].
+
+## property: FullProject.disabledByDefault
+* since: v1.10
+- type: ?<[boolean]>
+
+See [`property: TestProject.disabledByDefault`].

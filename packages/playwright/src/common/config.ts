@@ -41,12 +41,12 @@ export type Annotation = { type: string, description?: string };
 export const defaultTimeout = 30000;
 
 export class FullConfigInternal {
+  readonly projects: FullProjectInternal[] = [];
   readonly config: FullConfig;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly webServers: NonNullable<FullConfig['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
-  readonly projects: FullProjectInternal[] = [];
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
   cliArgs: string[] = [];
@@ -190,6 +190,7 @@ export class FullProjectInternal {
       use: mergeObjects(config.use, projectConfig.use, configCLIOverrides.use),
       dependencies: projectConfig.dependencies || [],
       teardown: projectConfig.teardown,
+      disabledByDefault: projectConfig.disabledByDefault ?? false
     };
     this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
     this.expect = takeFirst(projectConfig.expect, config.expect, {});

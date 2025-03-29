@@ -253,6 +253,25 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
   return result;
 }
 
+export function resolveAvailableProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
+  const filteredProjects = filterProjects(projects, projectNames).map(p => p.project.name);
+  const enabledProjects = projects.filter(p => !p.project.disabledByDefault).map(p => p.project.name);
+
+  const availableProjects = !projectNames ? new Set(enabledProjects) : new Set([...enabledProjects, ...filteredProjects]);
+  const projectsToRun: Set<FullProjectInternal> = new Set();
+
+  for (const project of projects) {
+    if (availableProjects.has(project.project.name))
+      projectsToRun.add(project);
+    project.project.dependencies = project.project.dependencies.filter(p => availableProjects.has(p));
+    project.deps = project.deps.filter(p => availableProjects.has(p.project.name));
+
+    if (project.teardown)
+      project.teardown = availableProjects.has(project.teardown.project.name) ? project.teardown : undefined;
+  }
+  return Array.from(projectsToRun);
+}
+
 function buildProjectSuite(project: FullProjectInternal, projectSuite: Suite): Suite {
   const result = new Suite(project.project.name, 'project');
   result._fullProject = project;
