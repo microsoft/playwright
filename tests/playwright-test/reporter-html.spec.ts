@@ -2019,7 +2019,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
-        await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
+        await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['@smoke fails', '@smoke passes']);
         await expect(searchInput).toHaveValue('@smoke ');
         await assertURLQuery('@smoke');
 
@@ -2028,9 +2028,18 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
-        await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
+        await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['@regression fails', '@regression passes']);
         await expect(searchInput).toHaveValue('@regression ');
         await assertURLQuery('@regression');
+
+        await searchInput.fill('!@regression');
+        await searchInput.press('Enter');
+        await expect(page.locator('.test-file-test')).toHaveCount(2);
+        await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+        await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+        await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['@smoke fails', '@smoke passes']);
+        await expect(searchInput).toHaveValue('!@regression ');
+        await assertURLQuery('!@regression');
       });
 
       test('if label contains similar words only one label should be selected', async ({ runInlineTest, showReport, page }) => {
@@ -2062,7 +2071,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await showReport();
 
         await expect(page.locator('.chip')).toHaveCount(3);
-        await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+        await expect(page.locator('.chip', { hasText: 'a.test.js' })).
+        Count(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
 
@@ -2430,13 +2440,33 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
       await expect(page.getByText('a test 1')).toBeVisible();
       await expect(page.getByText('a test 2')).toBeVisible();
-      await expect(page.getByText('file-b.test.js', { exact: true })).not.toBeVisible();
-      await expect(page.getByText('b test 1')).not.toBeVisible();
-      await expect(page.getByText('b test 2')).not.toBeVisible();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeHidden();
+      await expect(page.getByText('b test 1')).toBeHidden();
+      await expect(page.getByText('b test 2')).toBeHidden();
+
+      await searchInput.fill('!file-a');
+      await expect(page.getByText('file-a.test.js', { exact: true })).toBeHidden();
+      await expect(page.getByText('a test 1')).toBeHidden();
+      await expect(page.getByText('a test 2')).toBeHidden();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('b test 1')).toBeVisible();
+      await expect(page.getByText('b test 2')).toBeVisible();
 
       await searchInput.fill('file-a:3');
+      await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
       await expect(page.getByText('a test 1')).toBeVisible();
-      await expect(page.getByText('a test 2')).not.toBeVisible();
+      await expect(page.getByText('a test 2')).toBeHidden();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeHidden();
+      await expect(page.getByText('b test 1')).toBeHidden();
+      await expect(page.getByText('b test 2')).toBeHidden();
+
+      await searchInput.fill('!file-a:3');
+      await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('a test 1')).toBeHidden();
+      await expect(page.getByText('a test 2')).toBeVisible();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('b test 1')).toBeVisible();
+      await expect(page.getByText('b test 2')).toBeVisible();
     });
 
     test('tests should filter by status', async ({ runInlineTest, showReport, page }) => {
@@ -2458,17 +2488,22 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await searchInput.fill('s:failed');
       await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-      await expect(page.getByText('failed title')).not.toBeVisible();
+      await expect(page.getByText('failed title')).toBeHidden();
       await expect(page.getByText('passes title')).toBeVisible();
+
+      await searchInput.fill('!s:failed');
+      await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('failed title')).toBeVisible();
+      await expect(page.getByText('passes title')).toBeHidden();
     });
 
     test('tests should filter by annotation texts', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'a.test.js': `
           const { test, expect } = require('@playwright/test');
-          test('annotated test',{ annotation :[{type:'key',description:'value'}]}, async ({}) => {expect(1).toBe(1);});
+          test('with annotation',{ annotation :[{type:'key',description:'value'}]}, async ({}) => {expect(1).toBe(1);});
           test('slow test', () => { test.slow(); });
-          test('non-annotated test', async ({}) => {expect(1).toBe(2);});
+          test('without annotation', async ({}) => {expect(1).toBe(2);});
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
@@ -2483,15 +2518,29 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await test.step('filter by type and value', async () => {
         await searchInput.fill('annot:key=value');
         await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-        await expect(page.getByText('non-annotated test')).not.toBeVisible();
-        await expect(page.getByText('annotated test')).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeHidden();
+        await expect(page.getByText('with annotation')).toBeVisible();
+      });
+
+      await test.step('NOT filter by type and value', async () => {
+        await searchInput.fill('!annot:key=value');
+        await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeVisible();
+        await expect(page.getByText('with annotation')).toBeHidden();
       });
 
       await test.step('filter by type', async () => {
         await searchInput.fill('annot:key');
         await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-        await expect(page.getByText('non-annotated test')).not.toBeVisible();
-        await expect(page.getByText('annotated test')).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeHidden();
+        await expect(page.getByText('with annotation')).toBeVisible();
+      });
+
+      await test.step('NOT filter by type', async () => {
+        await searchInput.fill('!annot:key');
+        await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeVisible();
+        await expect(page.getByText('with annotation')).toBeHidden();
       });
 
       await test.step('filter by result annotation', async () => {
@@ -2525,9 +2574,17 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
 
+      await searchInput.fill('!a.test.js:3');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeHidden();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
+
       await searchInput.fill('a.test.js:4:15');
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeHidden();
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
+
+      await searchInput.fill('!a.test.js:4:15');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
     });
 
     test('should properly display beforeEach with and without title', async ({ runInlineTest, showReport, page }) => {
