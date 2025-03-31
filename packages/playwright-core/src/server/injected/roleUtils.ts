@@ -1013,18 +1013,19 @@ function belongsToDisabledFieldSet(element: Element): boolean {
   return !legendElement || !legendElement.contains(element);
 }
 
-function hasExplicitAriaDisabled(element: Element | undefined): boolean {
+function hasExplicitAriaDisabled(element: Element | undefined, isAncestor = false): boolean {
   if (!element)
     return false;
-  if (kAriaDisabledRoles.includes(getAriaRole(element) || '')) {
+  if (isAncestor || kAriaDisabledRoles.includes(getAriaRole(element) || '')) {
     const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
     if (attribute === 'true')
       return true;
     if (attribute === 'false')
       return false;
+    // aria-disabled works across shadow boundaries.
+    return hasExplicitAriaDisabled(parentElementOrShadowHost(element), true);
   }
-  // aria-disabled works across shadow boundaries.
-  return hasExplicitAriaDisabled(parentElementOrShadowHost(element));
+  return false;
 }
 
 function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions) {
