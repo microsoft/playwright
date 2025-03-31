@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "playwright-core": "1.52.0-next",
-    "vite": "^6.2.3",
+    "vite": "^6.2.4",
     "playwright": "1.52.0-next"
   }
 }
