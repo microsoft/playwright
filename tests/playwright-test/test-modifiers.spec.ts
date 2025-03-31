@@ -125,7 +125,7 @@ test('test modifiers should work', async ({ runInlineTest }) => {
   expectTest('failed4', 'failed', 'failed', [{ type: 'fail', description: 'reason', location: { file: expect.any(String), line: 51, column: 14 } }]);
   expectTest('suite1', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 56, column: 14 } }]);
   expectTest('suite2', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 61, column: 14 } }]);
-  expectTest('suite3', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 67, column: 13 } }]);
+  expectTest('suite3', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 66, column: 14 } }]);
   expectTest('suite4', 'passed', 'passed', []);
   expect(result.passed).toBe(10);
   expect(result.skipped).toBe(9);
@@ -460,8 +460,8 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
-  expect(result.report.suites[0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 21, column: 9 } }]);
-  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 21, column: 9 } }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
+  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
   expect(result.outputLines).toEqual([
     'beforeEach',
     'passed',

@@ -669,8 +669,8 @@ test('should report annotations from test declaration', async ({ runInlineTest }
     `title=fail-foo-bar, annotations=foo(24:12),bar=desc(24:12),fail(24:12)`,
     `title=foo-suite, annotations=foo(32:12)`,
     `title=foo-bar-suite, annotations=foo(32:12),bar(36:14)`,
-    `title=skip-foo-suite, annotations=foo(46:21),skip(46:21)`,
-    `title=fixme-bar-suite, annotations=bar(50:21),fixme(50:21)`,
+    `title=skip-foo-suite, annotations=foo(45:21),skip(45:21)`,
+    `title=fixme-bar-suite, annotations=bar(49:21),fixme(49:21)`,
   ]);
 });
 

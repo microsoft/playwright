@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { filteredLocation, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
@@ -202,7 +202,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
   }
 
-  private _modifier = wrapFunctionWithLocation((location: Location, type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) => {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, modifierArgs: [arg?: any, description?: string]) {
     if (typeof modifierArgs[1] === 'function') {
       throw new Error([
         'It looks like you are calling test.skip() inside the test and pass a callback.',
@@ -227,7 +227,7 @@ export class TestInfoImpl implements TestInfo {
       if (this.expectedStatus !== 'skipped')
         this.expectedStatus = 'failed';
     }
-  });
+  }
 
   private _findLastPredefinedStep(steps: TestStepInternal[]): TestStepInternal | undefined {
     // Find the deepest predefined step that has not finished yet.
@@ -481,20 +481,29 @@ export class TestInfoImpl implements TestInfo {
     return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments);
   }
 
-  skip(...args: [arg?: any, description?: string]) {
-    this._modifier('skip', args);
+  skip = wrapFunctionWithLocation((location: Location, ...args: [arg?: any, description?: string]) => this._skipWithLocation(location, ...args));
+
+  fixme = wrapFunctionWithLocation((location: Location, ...args: [arg?: any, description?: string]) => this._fixmeWithLocation(location, args));
+
+  fail = wrapFunctionWithLocation((location: Location, ...args: [arg?: any, description?: string]) => this._failWithLocation(location, args));
+
+  slow = wrapFunctionWithLocation((location: Location, ...args: [ arg?: any, description?: string]) => this._slowWithLocation(location, args));
+
+  // These are called with dynamic dispatch from the `TestTypeImpl` and `WorkerMain` classes
+  _skipWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
+    this._modifier('skip', location, args);
   }
 
-  fixme(...args: [arg?: any, description?: string]) {
-    this._modifier('fixme', args);
+  _fixmeWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
+    this._modifier('fixme', location, args);
   }
 
-  fail(...args: [arg?: any, description?: string]) {
-    this._modifier('fail', args);
+  _failWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
+    this._modifier('fail', location, args);
   }
 
-  slow(...args: [arg?: any, description?: string]) {
-    this._modifier('slow', args);
+  _slowWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
+    this._modifier('slow', location, args);
   }
 
   setTimeout(timeout: number) {
@@ -535,16 +544,15 @@ export class TestStepInfoImpl implements TestStepInfo {
     this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
   }
 
-  skip(...args: unknown[]) {
+  skip = wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
     // skip();
     // skip(condition: boolean, description: string);
     if (args.length > 0 && !args[0])
       return;
     const description = args[1] as (string|undefined);
-    const location = filteredLocation(captureRawStack());
     this.annotations.push({ type: 'skip', description, location });
     throw new StepSkipError(description);
-  }
+  });
 }
 
 export class TestSkipError extends Error {
