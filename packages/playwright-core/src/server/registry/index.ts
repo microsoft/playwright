@@ -1019,23 +1019,32 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
+  private async _checkRegistryDirectoryPermissions() {
+    // Before invoking proper-lockfile, perform a preliminary check to ensure that the user has write permissions for
+    // the ms-playwright directory. This avoids excessive retries on EACCES errors since proper-lockfile retries them too.
+    if (process.platform !== 'linux')
+      return;
+    try {
+      const lockfileTestPath = path.join(registryDirectory, '__dirlock-test-' + process.pid);
+      await fs.promises.writeFile(lockfileTestPath, '');
+      await fs.promises.unlink(lockfileTestPath);
+    } catch (e) {
+      if (e.code === 'EACCES') {
+        throw new Error(`Permission denied: ${registryDirectory}.\n` +
+          `Please check if you have write permissions to the directory.`);
+      }
+      throw e;
+    }
+  }
+
   async install(executablesToInstall: Executable[], forceReinstall: boolean) {
     const executables = this._dedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
     const linksDir = path.join(registryDirectory, '.links');
 
-    // proper-lockfile does retry EACCES errors as well hence we do a best-effort permission check here to not end up stalling.
-    try {
-      const lockfileTestPath = path.join(registryDirectory, '__dirlock-test-' + process.pid);
-      await fs.promises.writeFile(lockfileTestPath, '');
-      await fs.promises.unlink(lockfileTestPath);
-    } catch (e) {
-      if (e.code === 'EACCES' || e.code === 'EPERM') {
-        throw new Error(`Permission denied: ${registryDirectory}.\n` +
-          `Please check if you have write permissions to the directory.`);
-      }
-    }
+    await this._checkRegistryDirectoryPermissions();
+
     let releaseLock;
     try {
       releaseLock = await lockfile.lock(registryDirectory, {

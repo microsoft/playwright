@@ -16,6 +16,7 @@
 import { test, expect } from './npmTest';
 import { chromium } from '@playwright/test';
 import path from 'path';
+import fs from 'node:fs';
 
 test.use({ isolateBrowsers: true });
 
@@ -140,4 +141,18 @@ test('should print error if recording video without ffmpeg', async ({ exec, writ
     expect(result).not.toContain('unhandledRejection');
     expect(result).toContain(`browserType.launchPersistentContext: Executable doesn't exist at`);
   });
+});
+
+test('should show a friendly error when PLAYWRIGHT_BROWSERS_PATH is not writable', async ({ exec }) => {
+  test.skip(process.platform !== 'linux', 'This check is only performed on Linux');
+  test.skip(process.getuid() === 0, 'This check is not performed as root');
+  await exec('npm i playwright');
+
+  const browsersPath = test.info().outputPath('browsers');
+  await fs.promises.mkdir(browsersPath);
+  await fs.promises.chmod(browsersPath, 0o444);
+
+  const result = await exec('npx playwright install chromium', { env: { PLAYWRIGHT_BROWSERS_PATH: browsersPath }, expectToExitWithError: true });
+  expect(result).toContain(`Error: Permission denied: ${browsersPath}.`);
+  expect(result).toContain('Please check if you have write permissions to the directory.');
 });
