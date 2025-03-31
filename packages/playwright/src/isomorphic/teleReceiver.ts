@@ -236,8 +236,9 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testEndPayload.testId)!;
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
-    // Should be empty array
-    test.annotations = testEndPayload.annotations;
+    // Should be empty array, but if it's not, it represents all annotations for that test
+    if (testEndPayload.annotations.length > 0)
+      test.annotations = testEndPayload.annotations;
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
