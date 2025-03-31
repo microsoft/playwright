@@ -150,11 +150,14 @@ test('should display list of query parameters (only if present)', async ({ runUI
   await page.getByText('Network', { exact: true }).click();
 
   await page.getByText('call-with-query-params').click();
-
-  await expect(page.getByText('Query String Parameters')).toBeVisible();
-  await expect(page.getByText('param1: value1')).toBeVisible();
-  await expect(page.getByText('param1: value2')).toBeVisible();
-  await expect(page.getByText('param2: value2')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Query String Parameters' })).toMatchAriaSnapshot(
+      `- table:
+         - rowgroup:
+           - 'row "param1: value1"'
+           - 'row "param1: value2"'
+           - 'row "param2: value2"'
+      `
+  );
 
   await page.getByText('endpoint').click();
 
