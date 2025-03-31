@@ -75,6 +75,12 @@ export class TestInfoImpl implements TestInfo {
   _hasUnhandledError = false;
   _allowSkips = false;
 
+  // ------------ Main methods ------------
+  skip: (arg?: any, description?: string) => void;
+  fixme: (arg?: any, description?: string) => void;
+  fail: (arg?: any, description?: string) => void;
+  slow: (arg?: any, description?: string) => void;
+
   // ------------ TestInfo fields ------------
   readonly testId: string;
   readonly repeatEachIndex: number;
@@ -200,9 +206,14 @@ export class TestInfoImpl implements TestInfo {
     };
 
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
+
+    this.skip = wrapFunctionWithLocation((location, ...args) => this._modifier('skip', location, args));
+    this.fixme = wrapFunctionWithLocation((location, ...args) => this._modifier('fixme', location, args));
+    this.fail = wrapFunctionWithLocation((location, ...args) => this._modifier('fail', location, args));
+    this.slow = wrapFunctionWithLocation((location, ...args) => this._modifier('slow', location, args));
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, modifierArgs: [arg?: any, description?: string]) {
+  _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, modifierArgs: [arg?: any, description?: string]) {
     if (typeof modifierArgs[1] === 'function') {
       throw new Error([
         'It looks like you are calling test.skip() inside the test and pass a callback.',
@@ -479,31 +490,6 @@ export class TestInfoImpl implements TestInfo {
   snapshotPath(...pathSegments: string[]) {
     const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments);
-  }
-
-  skip = wrapFunctionWithLocation((location: Location, ...args: [arg?: any, description?: string]) => this._skipWithLocation(location, ...args));
-
-  fixme = wrapFunctionWithLocation((location: Location, ...args: [arg?: any, description?: string]) => this._fixmeWithLocation(location, args));
-
-  fail = wrapFunctionWithLocation((location: Location, ...args: [arg?: any, description?: string]) => this._failWithLocation(location, args));
-
-  slow = wrapFunctionWithLocation((location: Location, ...args: [ arg?: any, description?: string]) => this._slowWithLocation(location, args));
-
-  // These are called with dynamic dispatch from the `TestTypeImpl` and `WorkerMain` classes
-  _skipWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
-    this._modifier('skip', location, args);
-  }
-
-  _fixmeWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
-    this._modifier('fixme', location, args);
-  }
-
-  _failWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
-    this._modifier('fail', location, args);
-  }
-
-  _slowWithLocation(location: Location, ...args: [arg?: any, description?: string]) {
-    this._modifier('slow', location, args);
   }
 
   setTimeout(timeout: number) {

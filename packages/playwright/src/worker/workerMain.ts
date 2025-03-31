@@ -512,7 +512,7 @@ export class WorkerMain extends ProcessRunner {
         continue;
       const fn = async (fixtures: any) => {
         const result = await modifier.fn(fixtures);
-        testInfo[`_${modifier.type}WithLocation`](modifier.location, !!result, modifier.description);
+        testInfo._modifier(modifier.type, modifier.location, [!!result, modifier.description]);
       };
       inheritFixtureNames(modifier.fn, fn);
       runnables.push({

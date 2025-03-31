@@ -74,7 +74,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
       expectedStatus: test.expectedStatus,
-      // Annotations will be converted to relative by _serializeTest
+      // Annotations will be converted to relative by _serializeTest in the initial project serialization.
       annotations: test.annotations,
       timeout: test.timeout,
     };

@@ -474,7 +474,6 @@ class PathSeparatorPatcher {
       return;
     }
     if (jsonEvent.method === 'onTestEnd') {
-      // TODO: Fix types
       const test = jsonEvent.params.test as JsonTestEnd;
       test.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
       const testResult = jsonEvent.params.result as JsonTestResultEnd;

@@ -239,7 +239,7 @@ export class TestTypeImpl {
       throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
     if (typeof modifierArgs[0] === 'function')
       throw new Error(`test.${type}() with a function can only be called inside describe block`);
-    testInfo[`_${type}WithLocation`](location, ...modifierArgs as [any, any]);
+    testInfo._modifier(type, location, modifierArgs as [any, any]);
   }
 
   private _setTimeout(location: Location, timeout: number) {
