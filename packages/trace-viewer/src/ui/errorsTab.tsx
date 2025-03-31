@@ -46,8 +46,8 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModelOrLoadError | 
   return React.useMemo(() => {
     if (!model)
       return { errors: new Map() };
-    if (model.type === 'error')
-      return { errors: new Map(model.errors.map(error => [error, { message: error, stack: [] }])) };
+    if (model.type !== 'success')
+      return { errors: new Map(model.fallback.errors.map(error => [error, { message: error, stack: [] }])) };
     const errors = new Map<string, modelUtil.ErrorDescription>();
     for (const error of model.model.errorDescriptors)
       errors.set(error.message, error);

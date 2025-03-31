@@ -34,6 +34,8 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
 
+  const trace = React.useMemo(() => ({ type: 'success', model, isLive: false } as const), [model]);
+
   const processTraceFiles = React.useCallback((files: FileList) => {
     const blobUrls = [];
     const fileNames = [];
@@ -184,7 +186,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
     <LLMProvider>
-      <Workbench trace={{ type: 'model', model, isLive: false }} inert={showFileUploadDropArea} />
+      <Workbench trace={trace} inert={showFileUploadDropArea} />
     </LLMProvider>
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>

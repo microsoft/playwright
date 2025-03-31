@@ -32,7 +32,7 @@ export const TraceView: React.FC<{
   revealSource?: boolean,
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
-  const [trace, setTrace] = React.useState<MultiTraceModelOrLoadError | undefined>();
+  const [trace, setTrace] = React.useState<MultiTraceModelOrLoadError>({ type: 'noData', fallback: { location: item.testFile, errors: [] } });
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -41,25 +41,29 @@ export const TraceView: React.FC<{
     return { outputDir };
   }, [item]);
 
+  const setNoData = React.useCallback(() => {
+    setTrace({ type: 'noData', fallback: { location: item.testFile, errors: [] } });
+  }, [item.testFile]);
+
   React.useEffect(() => {
     if (pollTimer.current)
       clearTimeout(pollTimer.current);
 
     const result = item.testCase?.results[0];
     if (!result) {
-      setTrace(undefined);
+      setNoData();
       return;
     }
 
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setTrace({ type: 'model', model, isLive: false }));
+      loadSingleTraceFile(attachment.path).then(model => setTrace({ type: 'success', model, isLive: false }));
       return;
     }
 
     if (!outputDir) {
-      setTrace(undefined);
+      setNoData();
       return;
     }
 
@@ -73,31 +77,34 @@ export const TraceView: React.FC<{
     pollTimer.current = setTimeout(async () => {
       try {
         const model = await loadSingleTraceFile(traceLocation);
-        setTrace({ type: 'model', model, isLive: true });
+        setTrace({ type: 'success', model, isLive: true });
       } catch (e) {
-        if (result.status !== 'failed') {
-          setTrace(undefined);
-          return;
-        }
+        const errors = result.errors.flatMap(error => !!error.message ? [error.message] : []);
+        setTrace(existingTrace => {
+          // Clear trace so we can show nothing
+          if (errors.length === 0)
+            return { type: 'noData', fallback: { location: item.testFile, errors: [] } };
 
-        // Test failed. We don't know what happened to the trace
-        const treeErrors = () => {
-          if (!item.treeItem || item.treeItem.kind !== 'case' || !item.treeItem.test)
-            return [];
-          const test = item.treeItem.test;
-          return test.results.flatMap(result => result.errors).flatMap(error => {
-            if (!error.message)
-              return [];
-            return [error.message];
-          });
-        };
+          if (existingTrace?.type === 'error') {
+            // Update fallback data but keep empty model static
+            return {
+              ...existingTrace,
+              fallback: {
+                location: item.treeItem?.location,
+                errors,
+              },
+            };
+          }
 
-        setTrace({
-          type: 'error',
-          errors: treeErrors(),
-          isLive: false
+          return {
+            type: 'error',
+            model: new MultiTraceModel([]),
+            fallback: {
+              location: item.treeItem?.location,
+              errors: [e.message],
+            },
+          };
         });
-
       } finally {
         setCounter(counter + 1);
       }
@@ -106,14 +113,13 @@ export const TraceView: React.FC<{
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [outputDir, item, setTrace, counter, setCounter, pathSeparator]);
+  }, [outputDir, item, setTrace, setNoData, counter, setCounter, pathSeparator]);
 
   return <Workbench
     key='workbench'
     trace={trace}
     showSourcesFirst={true}
     rootDir={rootDir}
-    fallbackLocation={item.testFile}
     status={item.treeItem?.status}
     annotations={item.testCase?.annotations || []}
     onOpenExternally={onOpenExternally}

@@ -47,14 +47,13 @@ export const Workbench: React.FunctionComponent<{
   trace?: modelUtil.MultiTraceModelOrLoadError,
   showSourcesFirst?: boolean,
   rootDir?: string,
-  fallbackLocation?: modelUtil.SourceLocation,
   hideTimeline?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ trace, showSourcesFirst, rootDir, fallbackLocation, hideTimeline, status: treeStatus, annotations, inert, onOpenExternally, revealSource }) => {
+}> = ({ trace, showSourcesFirst, rootDir, hideTimeline, status: treeStatus, annotations, inert, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -68,8 +67,8 @@ export const Workbench: React.FunctionComponent<{
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
 
-  const model = trace?.type === 'model' ? trace.model : undefined;
-  const isLive = trace?.isLive;
+  const model = trace?.type !== 'noData' ? trace?.model : undefined;
+  const isLive = trace?.type === 'success' ? trace.isLive : undefined;
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -200,11 +199,13 @@ export const Workbench: React.FunctionComponent<{
     }} wallTime={model?.wallTime ?? 0} />
   };
 
+  const fallbackData = trace?.type !== 'success' ? trace?.fallback : undefined;
+
   // Fallback location w/o action stands for file / test.
   // Render error count on Source tab for that case.
   let fallbackSourceErrorCount: number | undefined = undefined;
-  if (!selectedAction && fallbackLocation)
-    fallbackSourceErrorCount = fallbackLocation.source?.errors.length;
+  if (!selectedAction && fallbackData?.location)
+    fallbackSourceErrorCount = fallbackData.location.source?.errors.length;
 
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
@@ -215,7 +216,7 @@ export const Workbench: React.FunctionComponent<{
       sources={sources}
       rootDir={rootDir}
       stackFrameLocation={sidebarLocation === 'bottom' ? 'right' : 'bottom'}
-      fallbackLocation={fallbackLocation}
+      fallbackLocation={fallbackData?.location}
       onOpenExternally={onOpenExternally}
     />
   };
