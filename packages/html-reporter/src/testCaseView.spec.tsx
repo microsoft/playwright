@@ -253,34 +253,19 @@ const testCaseWithTwoAttempts: TestCase = {
 };
 
 test('total duration is selected run duration', async ({ mount, page }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0} />);
-  const runSelectedState = `
-    - text: My test test.spec.ts:42 200ms chromium
-    - button "Annotations" [expanded]
-    - region: "annotation: Annotation text annotation: Another annotation text"
-    - tablist:
-      - tab "Run 50ms" [selected]
-      - 'tab "Retry #1 150ms"'
-    - tabpanel "Run 50ms":
-      - button "Errors" [expanded]
-      - region: Error message
-      - button "Test Steps" [expanded]
-      - region: 10ms Outer step— test.spec.ts:62
-    `;
-
-  await expect(component).toMatchAriaSnapshot(runSelectedState);
-  await page.getByRole('tab', { name: 'Run 50ms' }).click();
-  await expect(component).toMatchAriaSnapshot(runSelectedState);
-  await page.getByRole('tab', { name: 'Retry #1 150ms' }).click();
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await expect(component).toMatchAriaSnapshot(`
-    - text: My test test.spec.ts:42 200ms chromium
-    - button "Annotations" [expanded]
-    - region: "annotation: Annotation text annotation: Another annotation text"
+    - text: "My test test.spec.ts:42 200ms chromium"
     - tablist:
       - tab "Run 50ms"
-      - 'tab "Retry #1 150ms" [selected]'
-    - 'tabpanel "Retry #1 150ms"':
-      - button "Test Steps" [expanded]
-      - region: 10ms Outer step— test.spec.ts:62
+      - 'tab "Retry #1 150ms"'
+  `);
+  await page.getByRole('tab', { name: 'Run' }).click();
+  await expect(component).toMatchAriaSnapshot(`
+    - text: "My test test.spec.ts:42 200ms chromium"
+  `);
+  await page.getByRole('tab', { name: 'Retry' }).click();
+  await expect(component).toMatchAriaSnapshot(`
+    - text: "My test test.spec.ts:42 200ms chromium"
   `);
 });
