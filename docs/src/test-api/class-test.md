@@ -474,7 +474,7 @@ Learn more about the execution modes [here](../test-parallel.md).
   This is the default mode. It can be useful to set it explicitly to override project configuration that uses `fullyParallel`.
 
   ```js
-  // All tests run in order, second test will run even if the first one fails.
+  // Tests in this file run in order. Retries, if any, run independently.
   test.describe.configure({ mode: 'default' });
   test('runs first', async ({ page }) => {});
   test('runs second', async ({ page }) => {});
