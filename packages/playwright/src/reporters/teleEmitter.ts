@@ -73,7 +73,6 @@ export class TeleReporterEmitter implements ReporterV2 {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
       expectedStatus: test.expectedStatus,
-      annotations: test.annotations,
       timeout: test.timeout,
     };
     this._messageSink({
