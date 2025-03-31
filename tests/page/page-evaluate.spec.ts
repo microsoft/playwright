@@ -882,3 +882,363 @@ it('should work with deleted Map', {
   await page.goto(server.PREFIX + '/page');
   expect(await page.evaluate(x => ({ value: 2 * x }), 17)).toEqual({ value: 34 });
 });
+
+it('should properly handle performance marks and measures', async ({ page }) => {
+  // Tests that performance.mark() and measure() record and return correct timeline entries
+  const result = await page.evaluate(async () => {
+    performance.mark('start');
+    // Add small delay to ensure measurable duration
+    await new Promise(f => setTimeout(f, 10));
+    performance.mark('end');
+    performance.measure('duration', 'start', 'end');
+    
+    const entries = performance.getEntriesByName('duration', 'measure');
+    return entries.map(entry => ({
+      name: entry.name,
+      entryType: entry.entryType,
+      startTime: entry.startTime,
+      duration: entry.duration
+    }));
+  });
+  expect(result).toHaveLength(1);
+  expect(result).toEqual([{
+    name: 'duration',
+    entryType: 'measure',
+    startTime: expect.any(Number),
+    duration: expect.any(Number)
+  }]);
+  expect(result[0].duration).toBeGreaterThanOrEqual(0);
+});
+
+it('should cleanup timers when navigating away and back', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  
+  // Set up timer and verify initial state
+  await page.evaluate(() => {
+    window['timerFired'] = false;
+    window['timerId'] = setTimeout(() => {
+      window['timerFired'] = true;
+    }, 1000);
+    // Verify timer was set
+    return window['timerId'] > 0;
+  });
+
+  // Verify timer hasn't fired yet
+  expect(await page.evaluate(() => window['timerFired'])).toBe(false);
+
+  // Navigate away and verify timer is cleared
+  await page.goto(server.PREFIX + '/grid.html');
+  expect(await page.evaluate(() => {
+    return {
+      timerFired: window['timerFired'] || false,
+      timerExists: 'timerId' in window
+    };
+  })).toEqual({
+    timerFired: false,
+    timerExists: false
+  });
+
+  // Return to original page and verify timer state was reset
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => {
+    return {
+      timerFired: window['timerFired'] || false,
+      timerExists: 'timerId' in window
+    };
+  })).toEqual({
+    timerFired: false,
+    timerExists: false
+  });
+});
+
+it('should execute requestIdleCallback in order', async ({ page, browserName }) => {
+  it.skip(browserName !== 'chromium', 'requestIdleCallback is Chromium-only');
+  
+  await page.goto('about:blank');
+  const result = await page.evaluate(() => {
+    return new Promise<number[]>(resolve => {
+      window['callbacks'] = [];
+      let completed = 0;
+      
+      // Schedule three callbacks
+      requestIdleCallback(() => {
+        window['callbacks'].push(1);
+        if (++completed === 3) resolve(window['callbacks']);
+      });
+      
+      requestIdleCallback(() => {
+        window['callbacks'].push(2);
+        if (++completed === 3) resolve(window['callbacks']);
+      });
+      
+      requestIdleCallback(() => {
+        window['callbacks'].push(3);
+        if (++completed === 3) resolve(window['callbacks']);
+      });
+    });
+  });
+
+  expect(result).toEqual([1, 2, 3]);
+});
+
+it('should respect requestIdleCallback timeout', async ({ page, browserName }) => {
+  it.skip(browserName !== 'chromium', 'requestIdleCallback is Chromium-only');
+  
+  await page.goto('about:blank');
+  const result = await page.evaluate(() => {
+    return new Promise<{ callbackTime: number, startTime: number }>(resolve => {
+      const startTime = performance.now();
+      
+      // Create some blocking work to delay idle callback
+      setTimeout(() => {
+        let dummy = 0;
+        for (let i = 0; i < 1000000; i++) dummy += i;
+      }, 0);
+      
+      // Schedule callback with 50ms timeout
+      requestIdleCallback((deadline) => {
+        resolve({
+          startTime,
+          callbackTime: performance.now(),
+        });
+      }, { timeout: 50 });
+    });
+  });
+
+  // Verify callback executed within timeout window
+  const elapsed = result.callbackTime - result.startTime;
+  expect(elapsed).toBeGreaterThan(0);
+  expect(elapsed).toBeLessThanOrEqual(70); // Allow some buffer for timing
+});
+
+it('should invoke requestIdleCallback due to timeout even if main thread is blocked', async ({ page, browserName }) => {
+  it.skip(browserName !== 'chromium', 'requestIdleCallback is Chromium-only');
+  
+  await page.goto('about:blank');
+  const result = await page.evaluate(() => {
+    return new Promise<{ callbackTime: number, startTime: number }>(resolve => {
+      const startTime = performance.now();
+      
+      // Immediately block main thread for ~40ms
+      while (performance.now() - startTime < 40) {} 
+      
+      // Schedule callback with 50ms timeout
+      requestIdleCallback((deadline) => {
+        resolve({
+          startTime,
+          callbackTime: performance.now(),
+        });
+      }, { timeout: 50 });
+    });
+  });
+
+  // Verify callback executed within timeout window
+  const elapsed = result.callbackTime - result.startTime;
+  expect(elapsed).toBeGreaterThan(0);
+  expect(elapsed).toBeLessThanOrEqual(70); // Allow some buffer for timing
+});
+
+// Verifies that timeRemaining() returns a positive number under idle conditions
+it('should report remaining idle time', async ({ page, browserName }) => {
+  it.skip(browserName !== 'chromium', 'requestIdleCallback is Chromium-only');
+  
+  await page.goto('about:blank');
+  const timeRemaining = await page.evaluate(() => {
+    return new Promise<number>(resolve => {
+      requestIdleCallback(deadline => {
+        resolve(deadline.timeRemaining());
+      });
+    });
+  });
+
+  expect(typeof timeRemaining).toBe('number');
+  expect(timeRemaining).toBeGreaterThan(0);
+  expect(timeRemaining).toBeLessThanOrEqual(50);
+});
+
+// Verifies that PerformanceObserver captures resource timing entries,
+// and that entries can be cleared from the buffer after processing.
+it('should observe resource timing entries', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  
+  const result = await page.evaluate(async url => {
+    // Set up observer before loading resource
+    const entries: PerformanceEntry[] = [];
+    const observer = new PerformanceObserver(list => {
+      entries.push(...list.getEntries());
+    });
+    observer.observe({ entryTypes: ['resource'] });
+
+    // Load an image and wait for it
+    const img = document.createElement('img');
+    const loaded = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Image load timeout')), 5000);
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(undefined);
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Failed to load image'));
+      };
+    });
+
+    img.src = url + '/pptr.png';
+    document.body.appendChild(img);
+    
+    try {
+      await loaded;
+
+      // Get the entry and clean up
+      const entry = entries.find(e => e.name.includes('/pptr.png'));
+      observer.disconnect();
+      performance.clearResourceTimings();
+
+      // Verify buffer was cleared
+      const remainingEntries = performance.getEntriesByType('resource');
+
+      return {
+        hasEntry: !!entry,
+        entryFields: entry && {
+          name: entry.name,
+          entryType: entry.entryType,
+          startTime: entry.startTime,
+          duration: entry.duration
+        },
+        bufferedEntriesCount: remainingEntries.length
+      };
+    } catch (error) {
+      observer.disconnect();
+      throw error;
+    }
+  }, server.PREFIX);
+
+  // Verify entry was captured
+  expect(result.hasEntry).toBe(true);
+  
+  // Verify entry fields
+  expect(result.entryFields).toEqual({
+    name: expect.stringContaining('/pptr.png'),
+    entryType: 'resource',
+    startTime: expect.any(Number),
+    duration: expect.any(Number)
+  });
+
+  // Verify timing values are valid
+  expect(result.entryFields.startTime).toBeGreaterThan(0);
+  expect(result.entryFields.duration).toBeGreaterThan(0);
+
+  // Verify buffer was cleared
+  expect(result.bufferedEntriesCount).toBe(0);
+});
+
+// Verifies that timers do not persist across same-origin navigations
+it('should handle timers across same-origin navigation', async ({ page, server }) => {
+  // Start on initial page and set timer
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    window['timerFired'] = false;
+    setTimeout(() => {
+      window['timerFired'] = true;
+    }, 2000);
+  });
+
+  // Navigate to another page and back
+  const originalUrl = page.url();
+  await page.goto(server.PREFIX + '/grid.html');
+  await page.goto(originalUrl);
+
+  // Wait long enough for timer to have fired
+  await page.waitForTimeout(3000);
+
+  // Check if timer fired after returning
+  const timerFired = await page.evaluate(() => window['timerFired']);
+  expect(timerFired).toBe(false); // Timer should be cleared by navigation
+});
+
+// Verifies that the execution context (timers and globals) is cleared across same-origin navigations
+it('should not persist execution context across same-origin navigation', async ({ page, server }) => {
+  // Start on initial page and set up execution context
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    // Set up both timer and global state
+    window['timerFired'] = false;
+    window['stateValue'] = 'initial';
+    setTimeout(() => {
+      window['timerFired'] = true;
+      window['stateValue'] = 'changed';
+    }, 1000);
+  });
+
+  // Verify initial state
+  expect(await page.evaluate(() => ({
+    timerFired: window['timerFired'],
+    stateValue: window['stateValue']
+  }))).toEqual({
+    timerFired: false,
+    stateValue: 'initial'
+  });
+
+  // Navigate away and back using browser history
+  await page.goto(server.PREFIX + '/grid.html');
+  await page.goBack();
+
+  // Wait longer than the original timer
+  await page.waitForTimeout(2000);
+
+  // Verify entire execution context was reset
+  expect(await page.evaluate(() => ({
+    timerFired: window['timerFired'] || false,
+    stateValue: window['stateValue'],
+    timerExists: 'setTimeout' in window
+  }))).toEqual({
+    timerFired: false,
+    stateValue: undefined,
+    timerExists: true  // setTimeout should exist but be a fresh instance
+  });
+});
+
+// Verifies that timers are properly cleaned up across cross-origin navigations
+it('should cleanup timers across cross-origin navigation', async ({ page, server }) => {
+  // Use a subdomain for cross-origin
+  // Ensure sub.localhost resolves for cross-origin simulation; handled by test server setup
+  const crossOrigin = server.PREFIX.replace('localhost', 'sub.localhost');
+
+  // Start on first origin and set timer
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    window['timerFired'] = false;
+    window['timerStart'] = performance.now();
+    setTimeout(() => {
+      window['timerFired'] = true;
+    }, 1000);
+  });
+
+  // Verify timer was set
+  expect(await page.evaluate(() => ({
+    timerFired: window['timerFired'],
+    timerExists: typeof window['timerStart'] === 'number'
+  }))).toEqual({
+    timerFired: false,
+    timerExists: true
+  });
+
+  // Navigate to different origin
+  await page.goto(`${crossOrigin}/empty.html`);
+
+  // Wait longer than original timer
+  await page.waitForTimeout(2000);
+
+// Verify timer state is not accessible from new origin (i.e. original context is gone)
+  expect(await page.evaluate(() => ({
+    timerFired: window['timerFired'] || false,
+    timerStart: window['timerStart'],
+    hasSetTimeout: 'setTimeout' in window
+  }))).toEqual({
+    timerFired: false,
+    timerStart: undefined,
+    hasSetTimeout: true  // New context should have setTimeout
+  });
+});
+
+

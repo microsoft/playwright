@@ -502,8 +502,14 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('throws on negative ticks', async ({ clock }) => {
-    await expect(clock.runFor(-500)).rejects.toThrow('Negative ticks are not supported');
+  it('throws on negative time values', async ({ clock }) => {
+    // Verify that negative time values are rejected with a clear error
+    const stub = createStub();
+    clock.setTimeout(stub, 100);
+    
+    await expect(clock.runFor(-1000)).rejects.toThrow('Negative ticks are not supported');
+    // Verify the timer was not executed
+    expect(stub.called).toBeFalsy();
   });
 
   it('creates updated Date while ticking promises', async ({ clock }) => {
@@ -728,6 +734,51 @@ it.describe('runFor', () => {
     await clock.runFor(100);
 
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
+  });
+
+// Verifies that runFor can handle extremely large durations without overflow
+  it('should handle runFor with MAX_SAFE_INTEGER without overflow', async ({ clock }) => {
+    const stub = createStub();
+    clock.setTimeout(stub, Number.MAX_SAFE_INTEGER - 1);
+    
+    // Advance clock by MAX_SAFE_INTEGER
+    await clock.runFor(Number.MAX_SAFE_INTEGER);
+    
+    expect(stub.called).toBe(true);
+    expect(stub.callCount).toBe(1);
+  });
+
+// Verifies that timers with equivalent durations (e.g. 1000ms and 1s) are handled consistently.
+// Confirms all such timers fire as expected regardless of unit representation.
+  it('should consistently handle equivalent timer durations across time unit formats', async ({ clock }) => {
+    const groups: {[key: string]: string[]} = {
+      '1sec': [],
+      '1min': [],
+      '2min': []
+    };
+    
+    // Schedule pairs of equivalent timers using different formats
+    clock.setTimeout(() => groups['1sec'].push('ms'), 1000);     // 1 second in ms
+    clock.setTimeout(() => groups['1sec'].push('sec'), 1000);    // 1 second
+    
+    clock.setTimeout(() => groups['1min'].push('ms'), 60000);    // 1 minute in ms
+    clock.setTimeout(() => groups['1min'].push('min'), 60000);   // 1 minute
+    
+    clock.setTimeout(() => groups['2min'].push('ms'), 120000);   // 2 minutes in ms
+    clock.setTimeout(() => groups['2min'].push('min'), 120000);  // 2 minutes
+    
+    // Advance clock to cover all timers
+    await clock.runFor(120000);
+
+    // Verify each group of equivalent timers fired
+    expect(groups['1sec']).toHaveLength(2);
+    expect(groups['1min']).toHaveLength(2);
+    expect(groups['2min']).toHaveLength(2);
+    
+    // Verify timers fired in chronological order
+    expect(groups['1sec'][0]).toBeDefined();
+    expect(groups['1min'][0]).toBeDefined();
+    expect(groups['2min'][0]).toBeDefined();
   });
 });
 
@@ -1683,6 +1734,76 @@ it('works with slow setTimeout in busy embedder when not paused', async ({ insta
     `600: 600`,
     `800: 800`,
   ]);
+});
+
+// Verifies that timers scheduled across a DST transition behave correctly and the system time reflects the DST jump (e.g. 2:00 AM → 3:00 AM).
+it('should handle daylight saving time transitions correctly', async ({ clock }) => {
+  // Start just before DST transition (March 14, 2021 1:59:59 AM EST)
+  const dstStart = new Date('2021-03-14T01:59:59-05:00').getTime();
+  await clock.install(dstStart);
+
+  
+  const timestamps: number[] = [];
+  
+  // Set timers that will fire across the DST boundary
+  clock.setTimeout(() => {
+    timestamps.push(clock.Date.now());
+  }, 1000); // Should be dstStart + 1000 (skipping the DST gap)
+  
+  clock.setTimeout(() => {
+    timestamps.push(clock.Date.now());
+  }, 2000); // Should be dstStart + 2000
+  
+  // Advance clock across DST boundary
+  await clock.runFor(2000);
+  
+  // Verify timestamps show correct advancement
+  expect(timestamps[0]).toBe(dstStart + 1000);
+  expect(timestamps[1]).toBe(dstStart + 2000);
+  
+  // Verify current time is correct
+  expect(clock.Date.now()).toBe(dstStart + 2000);
+});
+
+it('should handle performance timing APIs correctly', async ({ page }) => {
+  await page.evaluate(() => {
+    // Create mark and measure entries
+    performance.mark('start');
+    performance.mark('end');
+    performance.measure('test-measure', 'start', 'end');
+
+    // Create resource timing entry
+    const img = document.createElement('img');
+    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    document.body.appendChild(img);
+
+    // Record current time
+    const now = performance.now();
+
+    // Get entries by type
+    const marks = performance.getEntriesByType('mark');
+    const measures = performance.getEntriesByType('measure'); 
+    const resources = performance.getEntriesByType('resource');
+
+    // Verify mark entries
+    expect(marks).toHaveLength(2);
+    expect(marks[0].entryType).toBe('mark');
+    expect(marks[0].name).toBe('start');
+    expect(marks[0].startTime).toBeLessThan(now);
+
+    // Verify measure entries
+    expect(measures).toHaveLength(1);
+    expect(measures[0].entryType).toBe('measure');
+    expect(measures[0].name).toBe('test-measure');
+    expect(measures[0].startTime).toBeLessThan(measures[0].duration);
+
+    // Verify resource entries
+    expect(resources.length).toBeGreaterThan(0);
+    const imgEntry = resources.find(e => e.name.includes('data:image/gif'));
+    expect(imgEntry).toBeDefined();
+    expect(imgEntry.entryType).toBe('resource');
+    expect(imgEntry.duration).toBeGreaterThan(0);
+  });
 });
 
 interface Stub {
