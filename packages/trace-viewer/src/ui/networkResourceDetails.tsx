@@ -24,7 +24,7 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
-import { msToString } from '@web/uiUtils';
+import { msToString, useAsyncMemo } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 
 type RequestBody = { text: string, mimeType?: string } | null;
@@ -38,24 +38,20 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 }> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
-  const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
-  React.useEffect(() => {
-    const readResources = async  () => {
-      if (resource.request.postData) {
-        const requestContentTypeHeader = resource.request.headers.find(q => q.name.toLowerCase() === 'content-type');
-        const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
-        if (resource.request.postData._sha1) {
-          const response = await fetch(`sha1/${resource.request.postData._sha1}`);
-          setRequestBody({ text: formatBody(await response.text(), requestContentType), mimeType: requestContentType });
-        } else {
-          setRequestBody({ text: formatBody(resource.request.postData.text, requestContentType), mimeType: requestContentType });
-        }
+  const requestBody = useAsyncMemo<RequestBody>(async () => {
+    if (resource.request.postData) {
+      const requestContentTypeHeader = resource.request.headers.find(q => q.name.toLowerCase() === 'content-type');
+      const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
+      if (resource.request.postData._sha1) {
+        const response = await fetch(`sha1/${resource.request.postData._sha1}`);
+        return { text: formatBody(await response.text(), requestContentType), mimeType: requestContentType };
       } else {
-        setRequestBody(null);
+        return { text: formatBody(resource.request.postData.text, requestContentType), mimeType: requestContentType };
       }
-    };
-    readResources();
-  }, [resource]);
+    } else {
+      return null;
+    }
+  }, [resource], null);
 
   return <TabbedPane
     dataTestId='network-request-details'
