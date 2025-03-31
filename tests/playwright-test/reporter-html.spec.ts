@@ -2071,8 +2071,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await showReport();
 
         await expect(page.locator('.chip')).toHaveCount(3);
-        await expect(page.locator('.chip', { hasText: 'a.test.js' })).
-        Count(1);
+        await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
 
