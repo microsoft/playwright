@@ -1019,19 +1019,15 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
-  async install(executablesToInstall: Executable[], forceReinstall: boolean) {
-    const executables = this._dedupe(executablesToInstall);
-    await fs.promises.mkdir(registryDirectory, { recursive: true });
+  async _performWithRegistryLock<ReturnValue = void>(callback: () => Promise<ReturnValue>): Promise<ReturnValue> {
     const lockfilePath = path.join(registryDirectory, '__dirlock');
-    const linksDir = path.join(registryDirectory, '.links');
-
-    let releaseLock;
+    let releaseLock: (() => Promise<void>)| undefined = undefined;
     try {
       releaseLock = await lockfile.lock(registryDirectory, {
         retries: {
-          // Retry 20 times during 10 minutes with
-          // exponential back-off.
-          // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+        // Retry 20 times during 10 minutes with
+        // exponential back-off.
+        // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
           retries: 20,
           factor: 1.27579,
         },
@@ -1040,6 +1036,37 @@ export class Registry {
         },
         lockfilePath,
       });
+      return await callback();
+    } catch (e) {
+      if (e.code === 'ELOCKED') {
+        const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
+        throw new Error('\n' + wrapInASCIIBox([
+          `An active lockfile is found at:`,
+          ``,
+          `  ${lockfilePath}`,
+          ``,
+          `Either:`,
+          `- wait a few minutes if other Playwright is installing browsers in parallel`,
+          `- remove lock manually with:`,
+          ``,
+          `    ${rmCommand} ${lockfilePath}`,
+          ``,
+          `<3 Playwright Team`,
+        ].join('\n'), 1));
+      } else {
+        throw e;
+      }
+    } finally {
+      await releaseLock?.();
+    }
+  }
+
+  async install(executablesToInstall: Executable[], forceReinstall: boolean) {
+    const executables = this._dedupe(executablesToInstall);
+    await fs.promises.mkdir(registryDirectory, { recursive: true });
+    const linksDir = path.join(registryDirectory, '.links');
+
+    await this._performWithRegistryLock(async () => {
       // Create a link first, so that cache validation does not remove our own browsers.
       await fs.promises.mkdir(linksDir, { recursive: true });
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
@@ -1073,46 +1100,26 @@ export class Registry {
         }
         await executable._install();
       }
-    } catch (e) {
-      if (e.code === 'ELOCKED') {
-        const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
-        throw new Error('\n' + wrapInASCIIBox([
-          `An active lockfile is found at:`,
-          ``,
-          `  ${lockfilePath}`,
-          ``,
-          `Either:`,
-          `- wait a few minutes if other Playwright is installing browsers in parallel`,
-          `- remove lock manually with:`,
-          ``,
-          `    ${rmCommand} ${lockfilePath}`,
-          ``,
-          `<3 Playwright Team`,
-        ].join('\n'), 1));
-      } else {
-        throw e;
-      }
-    } finally {
-      if (releaseLock)
-        await releaseLock();
-    }
+    });
   }
 
   async uninstall(all: boolean): Promise<{ numberOfBrowsersLeft: number }> {
-    const linksDir = path.join(registryDirectory, '.links');
-    if (all) {
-      const links = await fs.promises.readdir(linksDir).catch(() => []);
-      for (const link of links)
-        await fs.promises.unlink(path.join(linksDir, link));
-    } else {
-      await fs.promises.unlink(path.join(linksDir, calculateSha1(PACKAGE_PATH))).catch(() => {});
-    }
+    return await this._performWithRegistryLock(async () => {
+      const linksDir = path.join(registryDirectory, '.links');
+      if (all) {
+        const links = await fs.promises.readdir(linksDir).catch(() => []);
+        for (const link of links)
+          await fs.promises.unlink(path.join(linksDir, link));
+      } else {
+        await fs.promises.unlink(path.join(linksDir, calculateSha1(PACKAGE_PATH))).catch(() => { });
+      }
 
-    // Remove stale browsers.
-    await this._validateInstallationCache(linksDir);
-    return {
-      numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
-    };
+      // Remove stale browsers.
+      await this._validateInstallationCache(linksDir);
+      return {
+        numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
+      };
+    });
   }
 
   async validateHostRequirementsForExecutablesIfNeeded(executables: Executable[], sdkLanguage: string) {
