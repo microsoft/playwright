@@ -75,6 +75,8 @@ export type JsonTestEnd = {
   testId: string;
   expectedStatus: reporterTypes.TestStatus;
   timeout: number;
+  // Dropped in 1.52. Kept as empty array for backwards compatibility.
+  annotations: [];
 };
 
 export type JsonTestResultStart = {
@@ -234,6 +236,8 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testEndPayload.testId)!;
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
+    // Should be empty array
+    test.annotations = testEndPayload.annotations;
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;

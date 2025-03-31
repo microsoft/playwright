@@ -74,6 +74,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       testId: test.id,
       expectedStatus: test.expectedStatus,
       timeout: test.timeout,
+      annotations: []
     };
     this._messageSink({
       method: 'onTestEnd',
