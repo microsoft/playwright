@@ -405,9 +405,7 @@ export class TeleReporterReceiver {
       return;
     if (relativePath.startsWith('/') || relativePath.startsWith('\\'))
       throw new Error('Absolute paths are not supported: ' + relativePath);
-    if (this._options.resolvePath)
-      return this._options.resolvePath(this._rootDir, relativePath);
-    return this._rootDir + '/' + relativePath;
+    return this._options.resolvePath ? this._options.resolvePath(this._rootDir, relativePath) : this._rootDir + '/' + relativePath;
   }
 }
 
