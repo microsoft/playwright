@@ -74,7 +74,7 @@ export const TraceView: React.FC<{
       try {
         const model = await loadSingleTraceFile(traceLocation);
         setModel({ model, isLive: true });
-      } catch (e) {
+      } catch {
         const model = new MultiTraceModel([]);
         model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
         setModel({ model, isLive: false });

@@ -60,11 +60,6 @@ export type ErrorDescription = {
 
 export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
 
-export type FallbackData = {
-  location: SourceLocation | undefined,
-  errors: string[]
-};
-
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
