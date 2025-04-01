@@ -237,7 +237,7 @@ export class TeleReporterReceiver {
     test.expectedStatus = testEndPayload.expectedStatus;
     // Should be empty array, but if it's not, it represents all annotations for that test
     if (testEndPayload.annotations.length > 0)
-      test.annotations = this._absoluteAnnotationLocations(testEndPayload.annotations);;
+      test.annotations = this._absoluteAnnotationLocations(testEndPayload.annotations);
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
@@ -257,7 +257,6 @@ export class TeleReporterReceiver {
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
     const location = this._absoluteLocation(payload.location);
-    test.annotations = this._absoluteAnnotationLocations(test.annotations);
     const step = new TeleTestStep(payload, parentStep, location, result);
     if (parentStep)
       parentStep.steps.push(step);
@@ -404,7 +403,11 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (relativePath === undefined)
       return;
-    return this._options.resolvePath ? this._options.resolvePath(this._rootDir, relativePath) : this._rootDir + '/' + relativePath;
+    if (relativePath.startsWith('/') || relativePath.startsWith('\\'))
+      throw new Error('Absolute paths are not supported: ' + relativePath);
+    if (this._options.resolvePath)
+      return this._options.resolvePath(this._rootDir, relativePath);
+    return this._rootDir + '/' + relativePath;
   }
 }
 
