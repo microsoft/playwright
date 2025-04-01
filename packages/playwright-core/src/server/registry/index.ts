@@ -1024,7 +1024,6 @@ export class Registry {
       return await this._installImpl(executablesToInstall, forceReinstall);
 
     // TODO: Remove the following if we have confidence that we don't need the lock anymore.
-    const executables = this._dedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
 
@@ -1043,7 +1042,7 @@ export class Registry {
         },
         lockfilePath,
       });
-      await this._installImpl(executables, forceReinstall);
+      await this._installImpl(executablesToInstall, forceReinstall);
     } catch (e) {
       if (e.code === 'ELOCKED') {
         const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
