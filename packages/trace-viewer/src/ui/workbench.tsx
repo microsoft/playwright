@@ -44,16 +44,18 @@ import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
 
 export const Workbench: React.FunctionComponent<{
-  trace?: modelUtil.MultiTraceModelOrLoadError,
+  model?: modelUtil.MultiTraceModel,
   showSourcesFirst?: boolean,
   rootDir?: string,
+  fallbackLocation?: modelUtil.SourceLocation,
+  isLive?: boolean,
   hideTimeline?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ trace, showSourcesFirst, rootDir, hideTimeline, status: treeStatus, annotations, inert, onOpenExternally, revealSource }) => {
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -66,9 +68,6 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-
-  const model = trace?.type !== 'noData' ? trace?.model : undefined;
-  const isLive = trace?.type === 'success' ? trace.isLive : undefined;
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -163,7 +162,7 @@ export const Workbench: React.FunctionComponent<{
 
   const consoleModel = useConsoleTabModel(model, selectedTime);
   const networkModel = useNetworkTabModel(model, selectedTime);
-  const errorsModel = useErrorsTabModel(trace);
+  const errorsModel = useErrorsTabModel(model);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -199,13 +198,11 @@ export const Workbench: React.FunctionComponent<{
     }} wallTime={model?.wallTime ?? 0} />
   };
 
-  const fallbackData = trace?.type !== 'success' ? trace?.fallback : undefined;
-
   // Fallback location w/o action stands for file / test.
   // Render error count on Source tab for that case.
   let fallbackSourceErrorCount: number | undefined = undefined;
-  if (!selectedAction && fallbackData?.location)
-    fallbackSourceErrorCount = fallbackData.location.source?.errors.length;
+  if (!selectedAction && fallbackLocation)
+    fallbackSourceErrorCount = fallbackLocation.source?.errors.length;
 
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
@@ -216,7 +213,7 @@ export const Workbench: React.FunctionComponent<{
       sources={sources}
       rootDir={rootDir}
       stackFrameLocation={sidebarLocation === 'bottom' ? 'right' : 'bottom'}
-      fallbackLocation={fallbackData?.location}
+      fallbackLocation={fallbackLocation}
       onOpenExternally={onOpenExternally}
     />
   };
@@ -289,9 +286,6 @@ export const Workbench: React.FunctionComponent<{
   else if (model && model.wallTime)
     time = Date.now() - model.wallTime;
 
-  const isTraceError = trace?.type === 'error';
-  const status = isTraceError ? 'failed' : treeStatus;
-
   const actionsTab: TabbedPaneTabModel = {
     id: 'actions',
     title: 'Actions',
@@ -299,10 +293,8 @@ export const Workbench: React.FunctionComponent<{
       {status && <div className='workbench-run-status'>
         <span className={clsx('codicon', testStatusIcon(status))}></span>
         <div>{testStatusText(status)}</div>
-        {isTraceError ? <div>: Could not load trace</div> : <>
-          <div className='spacer'></div>
-          <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
-        </>}
+        <div className='spacer'></div>
+        <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
       </div>}
       <ActionList
         sdkLanguage={sdkLanguage}

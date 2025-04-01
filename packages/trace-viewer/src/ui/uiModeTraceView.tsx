@@ -21,7 +21,7 @@ import '@web/third_party/vscode/codicon.css';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { ContextEntry } from '../types/entries';
-import type { MultiTraceModelOrLoadError, SourceLocation } from './modelUtil';
+import type { SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
 
@@ -32,7 +32,7 @@ export const TraceView: React.FC<{
   revealSource?: boolean,
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
-  const [trace, setTrace] = React.useState<MultiTraceModelOrLoadError>({ type: 'noData', fallback: { location: item.testFile, errors: [] } });
+  const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -41,29 +41,25 @@ export const TraceView: React.FC<{
     return { outputDir };
   }, [item]);
 
-  const setNoData = React.useCallback(() => {
-    setTrace({ type: 'noData', fallback: { location: item.testFile, errors: [] } });
-  }, [item.testFile]);
-
   React.useEffect(() => {
     if (pollTimer.current)
       clearTimeout(pollTimer.current);
 
     const result = item.testCase?.results[0];
     if (!result) {
-      setNoData();
+      setModel(undefined);
       return;
     }
 
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setTrace({ type: 'success', model, isLive: false }));
+      loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
       return;
     }
 
     if (!outputDir) {
-      setNoData();
+      setModel(undefined);
       return;
     }
 
@@ -77,34 +73,11 @@ export const TraceView: React.FC<{
     pollTimer.current = setTimeout(async () => {
       try {
         const model = await loadSingleTraceFile(traceLocation);
-        setTrace({ type: 'success', model, isLive: true });
+        setModel({ model, isLive: true });
       } catch (e) {
-        const errors = result.errors.flatMap(error => !!error.message ? [error.message] : []);
-        setTrace(existingTrace => {
-          // Clear trace so we can show nothing
-          if (errors.length === 0)
-            return { type: 'noData', fallback: { location: item.testFile, errors: [] } };
-
-          if (existingTrace?.type === 'error') {
-            // Update fallback data but keep empty model static
-            return {
-              ...existingTrace,
-              fallback: {
-                location: item.treeItem?.location,
-                errors,
-              },
-            };
-          }
-
-          return {
-            type: 'error',
-            model: new MultiTraceModel([]),
-            fallback: {
-              location: item.treeItem?.location,
-              errors: [e.message],
-            },
-          };
-        });
+        const model = new MultiTraceModel([]);
+        model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
+        setModel({ model, isLive: false });
       } finally {
         setCounter(counter + 1);
       }
@@ -113,13 +86,15 @@ export const TraceView: React.FC<{
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [outputDir, item, setTrace, setNoData, counter, setCounter, pathSeparator]);
+  }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
   return <Workbench
     key='workbench'
-    trace={trace}
+    model={model?.model}
     showSourcesFirst={true}
     rootDir={rootDir}
+    fallbackLocation={item.testFile}
+    isLive={model?.isLive}
     status={item.treeItem?.status}
     annotations={item.testCase?.annotations || []}
     onOpenExternally={onOpenExternally}

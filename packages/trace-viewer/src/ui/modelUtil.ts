@@ -60,19 +60,6 @@ export type ErrorDescription = {
 
 export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
 
-export type MultiTraceModelOrLoadError = {
-  type: 'success',
-  model: MultiTraceModel,
-  isLive: boolean,
-} | {
-  type: 'error',
-  fallback: FallbackData,
-  model: MultiTraceModel
-} | {
-  type: 'noData',
-  fallback: FallbackData,
-};
-
 export type FallbackData = {
   location: SourceLocation | undefined,
   errors: string[]
