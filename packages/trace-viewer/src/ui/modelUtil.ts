@@ -24,8 +24,9 @@ import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
-const nextInContextSymbol = Symbol('next');
+const nextInContextSymbol = Symbol('nextInContext');
 const prevInListSymbol = Symbol('prev');
+const nextInListSymbol = Symbol('next');
 const eventsSymbol = Symbol('events');
 
 export type SourceLocation = {
@@ -198,8 +199,10 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     return a1.startTime - a2.startTime;
   });
 
-  for (let i = 1; i < result.length; ++i)
+  for (let i = 0; i < result.length; ++i) {
     (result[i] as any)[prevInListSymbol] = result[i - 1];
+    (result[i] as any)[nextInListSymbol] = result[i + 1];
+  }
 
   return result;
 }
@@ -357,6 +360,10 @@ function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
 
 export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[prevInListSymbol];
+}
+
+export function nextInList(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[nextInListSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
