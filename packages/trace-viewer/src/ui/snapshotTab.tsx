@@ -367,7 +367,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
     if (isTestStep(action)) {
       let last: ActionTraceEvent | undefined;
       for (let a = nextInList(action); a; a = nextInList(a)) {
-        if (a.endTime < action.endTime && a.afterSnapshot)
+        if (a.endTime <= action.endTime && a.afterSnapshot)
           last = a;
       }
       if (last)
