@@ -1,4 +1,4 @@
 export default {
   testDir: '../../tests',
-  reporter: [[require.resolve('../../tests/config/ghaMarkdownReporter.ts')], ['html']]
+  reporter: [[require.resolve('../../packages/playwright-dashboard/lib/ghaMarkdownReporterg')], ['html']]
 };
