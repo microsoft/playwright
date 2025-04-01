@@ -16,12 +16,6 @@
   },
   "license": "Apache-2.0",
   "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./index.mjs",
-      "require": "./index.js",
-      "default": "./index.js"
-    },
     "./package.json": "./package.json"
   },
   "scripts": {

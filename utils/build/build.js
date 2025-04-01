@@ -288,19 +288,6 @@ steps.push({
   concurrent: true,
 });
 
-// Build/watch playwright-dashboard.
-steps.push({
-  command: 'npm',
-  args: [
-    'run',
-    watchMode ? 'watch' : 'build',
-    ...(withSourceMaps ? ['--', '--sourcemap'] : [])
-  ],
-  shell: true,
-  cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-dashboard'),
-  concurrent: true,
-});
-
 // Build/watch trace viewer service worker.
 steps.push({
   command: 'npx',
