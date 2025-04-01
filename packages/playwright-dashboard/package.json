@@ -1,0 +1,24 @@
+{
+  "name": "@playwright/dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Playwright utilities for running on GitHub",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "playwright-core": "1.52.0-next"
+  }
+}
