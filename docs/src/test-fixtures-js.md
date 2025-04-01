@@ -727,7 +727,7 @@ export const test = base.extend({
 
 [`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can declare them as auto fixtures like this:
 
-```ts title="fixtures.ts"
+```js title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
 export const test = base.extend<{ forEachTest: void }>({
@@ -743,7 +743,7 @@ export const test = base.extend<{ forEachTest: void }>({
 
 And then import the fixtures in all your tests:
 
-```ts title="mytest.spec.ts"
+```js title="mytest.spec.ts"
 import { test } from './fixtures';
 import { expect } from '@playwright/test';
 
@@ -758,7 +758,7 @@ test('basic', async ({ page }) => {
 [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks run before/after all tests declared in the same file and same [`method: Test.describe`] block (if any), once per worker process. If you want to declare hooks
 that run before/after all tests in every file, you can declare them as auto fixtures with `scope: 'worker'` as follows:
 
-```ts title="fixtures.ts"
+```js title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
 export const test = base.extend<{}, { forEachWorker: void }>({
@@ -774,7 +774,7 @@ export const test = base.extend<{}, { forEachWorker: void }>({
 
 And then import the fixtures in all your tests:
 
-```ts title="mytest.spec.ts"
+```js title="mytest.spec.ts"
 import { test } from './fixtures';
 import { expect } from '@playwright/test';
 

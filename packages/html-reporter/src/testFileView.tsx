@@ -87,7 +87,18 @@ function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
 
 function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
   const firstTraces = test.results.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
-  return firstTraces ? <Link href={generateTraceUrl(firstTraces)} title='View trace' className='test-file-badge'>{trace()}</Link> : undefined;
+  if (!firstTraces)
+    return undefined;
+
+  const isFailed = test.outcome === 'unexpected' || test.outcome === 'flaky';
+
+  return <Link
+    href={generateTraceUrl(firstTraces)}
+    title={isFailed ? 'View Failing Trace' : 'View Trace'}
+    className={clsx('test-file-badge', isFailed && 'button')}>
+    {trace()}
+    {isFailed && <span style={{ color: 'var(--color-scale-gray-7)' }}>View Failing Trace</span>}
+  </Link>;
 }
 
 const LabelsClickView: React.FC<React.PropsWithChildren<{

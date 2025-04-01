@@ -334,7 +334,7 @@ The way source code is updated can be changed using the `--update-source-method`
 - **"overwrite"**: Overwrites the source code with the new snapshot values.
 
 ```bash
-npx playwright test --update-snapshots --update-source-mode=3way
+npx playwright test --update-snapshots --update-source-method=3way
 ```
 
 #### Snapshots as separate files

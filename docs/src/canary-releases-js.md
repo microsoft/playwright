@@ -18,9 +18,6 @@ Using a canary release in production might seem risky, but in practice, it's not
 A canary release passes all automated tests and is used to test e.g. the HTML report, Trace Viewer, or Playwright Inspector with end-to-end tests.
 
 :::
-```txt
-npm install -D @playwright/test@next
-```
 
 ## Next npm Dist Tag
 
@@ -34,7 +31,7 @@ You can see on [npm](https://www.npmjs.com/package/@playwright/test?activeTab=ve
 
 ## Using a Canary Release
 
-```txt
+```bash
 npm install -D @playwright/test@next
 ```
 

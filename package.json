@@ -52,6 +52,7 @@
   ],
   "devDependencies": {
     "@actions/core": "^1.10.0",
+    "@actions/github": "^6.0.0",
     "@babel/cli": "^7.26.4",
     "@babel/code-frame": "^7.26.2",
     "@babel/plugin-transform-class-properties": "^7.25.9",

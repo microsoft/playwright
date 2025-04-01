@@ -619,7 +619,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.getByRole('link', { name: 'View trace' }).click();
+      await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
       await expect(page.getByTestId('actions-tree')).toContainText('apiRequestContext.get');
@@ -645,14 +645,14 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await test.step('view via server', async () => {
         await showReport();
-        await page.locator('[title="View trace"]').click();
+        await page.getByRole('link', { name: 'View Trace' }).click();
         await expect(page.locator('dialog')).toBeHidden();
       });
 
       await test.step('view via local file://', async () => {
         const reportFolder = testInfo.outputPath('playwright-report');
         await page.goto(url.pathToFileURL(path.join(reportFolder, 'index.html')).toString());
-        await page.locator('[title="View trace"]').click();
+        await page.getByRole('link', { name: 'View Trace' }).click();
         await expect(page.locator('dialog')).toBeVisible();
         await expect(page.locator('dialog')).toContainText('must be loaded over');
       });
@@ -1623,7 +1623,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.label')).toHaveText(['chromium', 'flaky']);
         await page.locator('.label', { has: page.getByText('flaky', { exact: true }) }).click();
         await expect(page).not.toHaveURL(/testId/);
-        await expect(searchInput).toHaveValue('@flaky');
+        await expect(searchInput).toHaveValue('@flaky ');
         await page.goBack();
         await expect(page).toHaveURL(/testId/);
         await expect(page.locator('.label')).toHaveCount(2);
@@ -1698,7 +1698,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await expect(smokeLabelButton).toBeVisible();
         await smokeLabelButton.click();
-        await expect(searchInput).toHaveValue('@smoke');
+        await expect(searchInput).toHaveValue('@smoke ');
         await expect(page.locator('.test-file-test')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
@@ -1718,7 +1718,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
 
         await regressionLabelButton.click();
-        await expect(searchInput).toHaveValue('@regression');
+        await expect(searchInput).toHaveValue('@regression ');
         await expect(page.locator('.test-file-test')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
@@ -1731,7 +1731,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const tagWithDash = page.locator('.test-file-test', { has: page.getByText('Error Pages › @GCC-1508 passes', { exact: true }) }).locator('.label', { hasText: 'GCC-1508' });
 
         await tagWithDash.click();
-        await expect(searchInput).toHaveValue('@GCC-1508');
+        await expect(searchInput).toHaveValue('@GCC-1508 ');
         await expect(page.locator('.test-file-test')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
@@ -1742,7 +1742,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const tagWithDash2 = page.locator('.test-file-test', { has: page.getByText('Error Pages › @GCC-1510 fails', { exact: true }) }).locator('.label', { hasText: 'GCC-1510' });
 
         await tagWithDash2.click();
-        await expect(searchInput).toHaveValue('@GCC-1510');
+        await expect(searchInput).toHaveValue('@GCC-1510 ');
         await expect(page.locator('.test-file-test')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
@@ -1950,7 +1950,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@smoke fails');
-        await expect(searchInput).toHaveValue('s:failed @smoke');
+        await expect(searchInput).toHaveValue('s:failed @smoke ');
         await expect(page).toHaveURL(/s:failed%20@smoke/);
 
         await passedNavMenu.click();
@@ -1960,7 +1960,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@regression passes');
-        await expect(searchInput).toHaveValue('s:passed @regression');
+        await expect(searchInput).toHaveValue('s:passed @regression ');
         await expect(page).toHaveURL(/s:passed%20@regression/);
 
         await allNavMenu.click();
@@ -1969,7 +1969,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
-        await expect(searchInput).toHaveValue('@regression');
+        await expect(searchInput).toHaveValue('@regression ');
         await expect(page).toHaveURL(/@regression/);
       });
 
@@ -2010,8 +2010,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
-        await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
-        await expect(searchInput).toHaveValue('@smoke');
+        await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['@smoke fails', '@smoke passes']);
+        await expect(searchInput).toHaveValue('@smoke ');
         await expect(page).toHaveURL(/%40smoke/);
 
         await searchInput.fill('@regression');
@@ -2019,9 +2019,18 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
-        await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
-        await expect(searchInput).toHaveValue('@regression');
+        await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['@regression fails', '@regression passes']);
+        await expect(searchInput).toHaveValue('@regression ');
         await expect(page).toHaveURL(/%40regression/);
+
+        await searchInput.fill('!@regression');
+        await searchInput.press('Enter');
+        await expect(page.locator('.test-file-test')).toHaveCount(2);
+        await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+        await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+        await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['@smoke fails', '@smoke passes']);
+        await expect(searchInput).toHaveValue('!@regression ');
+        await expect(page).toHaveURL(/%21%40regression/);
       });
 
       test('if label contains similar words only one label should be selected', async ({ runInlineTest, showReport, page }) => {
@@ -2143,7 +2152,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.keyboard.down(process.platform === 'darwin' ? 'Meta' : 'Control');
         await smokeButton.click();
 
-        await expect(searchInput).toHaveValue('@smoke');
+        await expect(searchInput).toHaveValue('@smoke ');
         await expect(page).toHaveURL(/@smoke/);
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2152,7 +2161,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await regressionButton.click();
 
-        await expect(searchInput).toHaveValue('@smoke @regression');
+        await expect(searchInput).toHaveValue('@smoke @regression ');
         await expect(page).toHaveURL(/@smoke%20@regression/);
         await expect(page.locator('.chip')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2161,7 +2170,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await smokeButton.click();
 
-        await expect(searchInput).toHaveValue('@regression');
+        await expect(searchInput).toHaveValue('@regression ');
         await expect(page).toHaveURL(/@regression/);
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2170,7 +2179,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await flakyButton.click();
 
-        await expect(searchInput).toHaveValue('@regression @flaky');
+        await expect(searchInput).toHaveValue('@regression @flaky ');
         await expect(page).toHaveURL(/@regression%20@flaky/);
         await expect(page.locator('.chip')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
@@ -2179,7 +2188,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await regressionButton.click();
 
-        await expect(searchInput).toHaveValue('@flaky');
+        await expect(searchInput).toHaveValue('@flaky ');
         await expect(page).toHaveURL(/@flaky/);
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
@@ -2198,7 +2207,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.keyboard.up(process.platform === 'darwin' ? 'Meta' : 'Control');
         await smokeButton.click();
 
-        await expect(searchInput).toHaveValue('@smoke');
+        await expect(searchInput).toHaveValue('@smoke ');
         await expect(page).toHaveURL(/@smoke/);
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2207,7 +2216,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await regressionButton.click();
 
-        await expect(searchInput).toHaveValue('@regression');
+        await expect(searchInput).toHaveValue('@regression ');
         await expect(page).toHaveURL(/@regression/);
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2216,7 +2225,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await flakyButton.click();
 
-        await expect(searchInput).toHaveValue('@flaky');
+        await expect(searchInput).toHaveValue('@flaky ');
         await expect(page).toHaveURL(/@flaky/);
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
@@ -2421,13 +2430,33 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
       await expect(page.getByText('a test 1')).toBeVisible();
       await expect(page.getByText('a test 2')).toBeVisible();
-      await expect(page.getByText('file-b.test.js', { exact: true })).not.toBeVisible();
-      await expect(page.getByText('b test 1')).not.toBeVisible();
-      await expect(page.getByText('b test 2')).not.toBeVisible();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeHidden();
+      await expect(page.getByText('b test 1')).toBeHidden();
+      await expect(page.getByText('b test 2')).toBeHidden();
+
+      await searchInput.fill('!file-a');
+      await expect(page.getByText('file-a.test.js', { exact: true })).toBeHidden();
+      await expect(page.getByText('a test 1')).toBeHidden();
+      await expect(page.getByText('a test 2')).toBeHidden();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('b test 1')).toBeVisible();
+      await expect(page.getByText('b test 2')).toBeVisible();
 
       await searchInput.fill('file-a:3');
+      await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
       await expect(page.getByText('a test 1')).toBeVisible();
-      await expect(page.getByText('a test 2')).not.toBeVisible();
+      await expect(page.getByText('a test 2')).toBeHidden();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeHidden();
+      await expect(page.getByText('b test 1')).toBeHidden();
+      await expect(page.getByText('b test 2')).toBeHidden();
+
+      await searchInput.fill('!file-a:3');
+      await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('a test 1')).toBeHidden();
+      await expect(page.getByText('a test 2')).toBeVisible();
+      await expect(page.getByText('file-b.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('b test 1')).toBeVisible();
+      await expect(page.getByText('b test 2')).toBeVisible();
     });
 
     test('tests should filter by status', async ({ runInlineTest, showReport, page }) => {
@@ -2449,17 +2478,22 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await searchInput.fill('s:failed');
       await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-      await expect(page.getByText('failed title')).not.toBeVisible();
+      await expect(page.getByText('failed title')).toBeHidden();
       await expect(page.getByText('passes title')).toBeVisible();
+
+      await searchInput.fill('!s:failed');
+      await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('failed title')).toBeVisible();
+      await expect(page.getByText('passes title')).toBeHidden();
     });
 
     test('tests should filter by annotation texts', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'a.test.js': `
           const { test, expect } = require('@playwright/test');
-          test('annotated test',{ annotation :[{type:'key',description:'value'}]}, async ({}) => {expect(1).toBe(1);});
+          test('with annotation',{ annotation :[{type:'key',description:'value'}]}, async ({}) => {expect(1).toBe(1);});
           test('slow test', () => { test.slow(); });
-          test('non-annotated test', async ({}) => {expect(1).toBe(2);});
+          test('without annotation', async ({}) => {expect(1).toBe(2);});
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
@@ -2474,15 +2508,29 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await test.step('filter by type and value', async () => {
         await searchInput.fill('annot:key=value');
         await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-        await expect(page.getByText('non-annotated test')).not.toBeVisible();
-        await expect(page.getByText('annotated test')).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeHidden();
+        await expect(page.getByText('with annotation')).toBeVisible();
+      });
+
+      await test.step('NOT filter by type and value', async () => {
+        await searchInput.fill('!annot:key=value');
+        await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeVisible();
+        await expect(page.getByText('with annotation')).toBeHidden();
       });
 
       await test.step('filter by type', async () => {
         await searchInput.fill('annot:key');
         await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-        await expect(page.getByText('non-annotated test')).not.toBeVisible();
-        await expect(page.getByText('annotated test')).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeHidden();
+        await expect(page.getByText('with annotation')).toBeVisible();
+      });
+
+      await test.step('NOT filter by type', async () => {
+        await searchInput.fill('!annot:key');
+        await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+        await expect(page.getByText('without annotation')).toBeVisible();
+        await expect(page.getByText('with annotation')).toBeHidden();
       });
 
       await test.step('filter by result annotation', async () => {
@@ -2516,9 +2564,17 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
 
+      await searchInput.fill('!a.test.js:3');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeHidden();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
+
       await searchInput.fill('a.test.js:4:15');
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeHidden();
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
+
+      await searchInput.fill('!a.test.js:4:15');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
     });
 
     test('should properly display beforeEach with and without title', async ({ runInlineTest, showReport, page }) => {
@@ -2808,8 +2864,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
     test('should not show prompt for empty timeout error', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
-        'uncommitted.txt': `uncommitted file`,
-        'playwright.config.ts': `export default {}`,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
           test('sample', async ({ page }) => {
@@ -2822,6 +2876,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'sample' }).click();
       await expect(page.getByRole('button', { name: 'Copy prompt' })).toHaveCount(1);
+    });
+
+    test('should include snapshot when page wasnt closed', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({ browser }) => {
+            const page = await browser.newPage();
+            await page.setContent('<button>Click me</button>');
+            expect(2).toBe(3);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+      await page.getByRole('link', { name: 'sample' }).click();
+      await page.getByRole('button', { name: 'Copy prompt' }).click();
+      const prompt = await page.evaluate(() => navigator.clipboard.readText());
+      expect(prompt, 'contains snapshot').toContain('- button "Click me"');
     });
   });
 }

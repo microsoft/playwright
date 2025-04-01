@@ -24,7 +24,7 @@ import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRole
 import type { Builtins } from '../isomorphic/builtins';
 
 export type AriaNode = AriaProps & {
-  role: AriaRole | 'fragment';
+  role: AriaRole | 'fragment' | 'iframe';
   name: string;
   children: (AriaNode | string)[];
   element: Element;
@@ -38,7 +38,7 @@ export type AriaSnapshot = {
   ids: Builtins.Map<Element, number>;
 };
 
-export function generateAriaTree(builtins: Builtins, rootElement: Element, generation: number): AriaSnapshot {
+export function generateAriaTree(builtins: Builtins, rootElement: Element, generation: number, includeIframe: boolean): AriaSnapshot {
   const visited = new builtins.Set<Node>();
 
   const snapshot: AriaSnapshot = {
@@ -87,7 +87,7 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
     }
 
     addElement(element);
-    const childAriaNode = toAriaNode(builtins, element);
+    const childAriaNode = toAriaNode(builtins, element, includeIframe);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
     processElement(childAriaNode || ariaNode, element, ariaChildren);
@@ -144,7 +144,10 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
   return snapshot;
 }
 
-function toAriaNode(builtins: Builtins, element: Element): AriaNode | null {
+function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean): AriaNode | null {
+  if (includeIframe && element.nodeName === 'IFRAME')
+    return { role: 'iframe', name: '', children: [], props: {}, element };
+
   const role = roleUtils.getAriaRole(element);
   if (!role || role === 'presentation' || role === 'none')
     return null;
@@ -232,7 +235,7 @@ export type MatcherReceived = {
 };
 
 export function matchesAriaTree(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
-  const snapshot = generateAriaTree(builtins, rootElement, 0);
+  const snapshot = generateAriaTree(builtins, rootElement, 0, false);
   const matches = matchesNodeDeep(snapshot.root, template, false);
   return {
     matches,
@@ -244,7 +247,7 @@ export function matchesAriaTree(builtins: Builtins, rootElement: Element, templa
 }
 
 export function getAllByAria(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(builtins, rootElement, 0).root;
+  const root = generateAriaTree(builtins, rootElement, 0, false).root;
   const matches = matchesNodeDeep(root, template, true);
   return matches.map(n => n.element);
 }

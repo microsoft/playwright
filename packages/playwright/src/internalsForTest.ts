@@ -17,6 +17,7 @@
 import path from 'path';
 
 import { fileDependenciesForTest } from './transform/compilationCache';
+export { default as MarkdownReporter } from './reporters/markdown';
 
 export function fileDependencies() {
   return Object.fromEntries([...fileDependenciesForTest().entries()].map(entry => (

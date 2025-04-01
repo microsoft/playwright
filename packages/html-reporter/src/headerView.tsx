@@ -24,22 +24,17 @@ import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
 
-export const HeaderView: React.FC<React.PropsWithChildren<{
+export const HeaderView: React.FC<{
   stats: Stats,
   filterText: string,
   setFilterText: (filterText: string) => void,
-}>> = ({ stats, filterText, setFilterText }) => {
+}> = ({ stats, filterText, setFilterText }) => {
+  const searchParams = React.useContext(SearchParamsContext);
   React.useEffect(() => {
-    const popstateFn = () => {
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      setFilterText(params.get('q') || '');
-    };
-    window.addEventListener('popstate', popstateFn);
-
-    return () => {
-      window.removeEventListener('popstate', popstateFn);
-    };
-  }, [setFilterText]);
+    // Add an extra space such that users can easily add to query
+    const query = searchParams.get('q');
+    setFilterText(query ? `${query.trim()} ` : '');
+  }, [searchParams, setFilterText]);
 
   return (<>
     <div className='pt-3'>

@@ -180,6 +180,10 @@ export type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
+  ta?: {
+    b: Binary,
+    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  },
   e?: {
     m: string,
     n: string,
@@ -536,6 +540,12 @@ export type LocalUtilsConnectParams = {
   exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
@@ -543,6 +553,12 @@ export type LocalUtilsConnectOptions = {
   exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectResult = {
@@ -1161,11 +1177,23 @@ export type BrowserTypeConnectOverCDPParams = {
   headers?: NameValue[],
   slowMo?: number,
   timeout?: number,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
 };
 export type BrowserTypeConnectOverCDPOptions = {
   headers?: NameValue[],
   slowMo?: number,
   timeout?: number,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,

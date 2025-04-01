@@ -269,8 +269,7 @@ export class TerminalReporter implements ReporterV2 {
     if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
-    // TODO: 1.52: Make warning display prettier
-    // this._printWarnings();
+    this._printWarnings();
     this._printSummary(summaryMessage);
   }
 
@@ -350,15 +349,18 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
     const errors = formatResultFailure(screen, test, result, '    ');
     if (!errors.length)
       continue;
-    const retryLines = [];
     if (result.retry) {
-      retryLines.push('');
-      retryLines.push(screen.colors.gray(separator(screen, `    Retry #${result.retry}`)));
+      resultLines.push('');
+      resultLines.push(screen.colors.gray(separator(screen, `    Retry #${result.retry}`)));
     }
-    resultLines.push(...retryLines);
     resultLines.push(...errors.map(error => '\n' + error.message));
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
+      if (attachment.name.startsWith('_prompt') && attachment.path) {
+        resultLines.push('');
+        resultLines.push(screen.colors.dim(`    Error Prompt: ${relativeFilePath(screen, config, attachment.path)}`));
+        continue;
+      }
       if (attachment.name.startsWith('_'))
         continue;
       const hasPrintableContent = attachment.contentType.startsWith('text/');

@@ -69,9 +69,13 @@ class MarkdownReporter extends TerminalReporter {
     lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
 
+    await this.publishReport(lines.join('\n'));
+  }
+
+  protected async publishReport(report: string): Promise<void> {
     const reportFile = resolveReporterOutputPath('report.md', this._options.configDir, this._options.outputFile);
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
-    await fs.promises.writeFile(reportFile, lines.join('\n'));
+    await fs.promises.writeFile(reportFile, report);
   }
 
   private _printTestList(prefix: string, tests: TestCase[], lines: string[], suffix?: string) {

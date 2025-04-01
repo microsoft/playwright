@@ -165,7 +165,7 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: T
       }
     }
 
-    const prompt = attachments.find(a => a.name === `_prompt-${i}`)?.body;
+    const prompt = attachments.find(a => a.name === `_prompt-${i}`);
     return { type: 'regular', error, prompt };
   });
 }

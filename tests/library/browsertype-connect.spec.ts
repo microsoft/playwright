@@ -765,6 +765,24 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
+    test('should connect over http proxy', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33894' },
+    }, async ({ connect, startRemoteServer, proxyServer }) => {
+      const remoteServer = await startRemoteServer(kind);
+      const url = new URL(remoteServer.wsEndpoint());
+      proxyServer.forwardTo(+url.port, { allowConnectRequests: true });
+      const browser = await connect(`http://some.random.host.does.not.exist:1337`, {
+        proxy: { server: `localhost:${proxyServer.PORT}` },
+      });
+      const page = await browser.newPage();
+      expect(await page.evaluate('11 * 11')).toBe(121);
+      await browser.close();
+      // We should "CONNECT" twice:
+      // - to convert http url into ws url
+      // - actually connect to the ws endpoint
+      expect(proxyServer.connectHosts).toEqual(['some.random.host.does.not.exist:1337', 'some.random.host.does.not.exist:1337']);
+    });
+
     test.describe('socks proxy', () => {
       test.skip(({ mode }) => mode !== 'default');
       test.skip(kind === 'launchServer', 'not supported yet');

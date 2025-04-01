@@ -19,11 +19,12 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
+import { TestAttachment } from './types';
 
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
-  prompt?: string;
+  prompt?: TestAttachment;
 }> = ({ error, testId, prompt }) => {
   return (
     <CodeSnippet code={error} testId={testId}>
@@ -46,13 +47,14 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
-const PromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
+const PromptButton: React.FC<{ prompt: TestAttachment }> = ({ prompt }) => {
   const [copied, setCopied] = React.useState(false);
   return <button
     className='button'
     style={{ minWidth: 100 }}
     onClick={async () => {
-      await navigator.clipboard.writeText(prompt);
+      const text = prompt.body ? prompt.body : await fetch(prompt.path!).then(r => r.text());
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
