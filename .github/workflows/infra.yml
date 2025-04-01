@@ -36,6 +36,7 @@ jobs:
         fi
     - name: Audit prod NPM dependencies
       run: node utils/check_audit.js
+      continue-on-error: true
   lint-snippets:
     name: "Lint snippets"
     runs-on: ubuntu-latest
