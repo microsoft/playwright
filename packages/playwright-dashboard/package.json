@@ -18,10 +18,6 @@
   "exports": {
     "./package.json": "./package.json"
   },
-  "scripts": {
-    "build": "esbuild ./src/* --outdir=lib --format=cjs --platform=node --target=ES2019",
-    "watch": "esbuild ./src/* --outdir=lib --format=cjs --platform=node --target=ES2019 --watch"
-  },
   "dependencies": {
     "playwright-core": "1.52.0-next"
   }
