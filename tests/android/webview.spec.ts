@@ -70,7 +70,7 @@ test('select webview from socketName', async function({ androidDevice }) {
   await context.close();
 });
 
-test.fixme('should be able to receive webView cookies', {
+test('should be able to receive webView cookies', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/35392',
