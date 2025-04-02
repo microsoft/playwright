@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, nextInList, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, nextStartTime, prevEndTime } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -325,29 +325,16 @@ export type SnapshotUrls = {
   popoutUrl: string;
 };
 
-function isTestStep(action: ActionTraceEvent) {
-  return context(action).origin === 'testRunner' && action.callId.startsWith('test.step');
-}
-
 export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshots {
   if (!action)
     return {};
 
-  // if the action has no beforeSnapshot, use the last available afterSnapshot.
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
   if (!beforeSnapshot) {
-    for (let a = prevInList(action); a; a = prevInList(a)) {
+    // If the action has no beforeSnapshot, use the last available afterSnapshot.
+    for (let a = prevEndTime(action); a; a = prevEndTime(a)) {
       if (a.endTime <= action.startTime && a.afterSnapshot) {
         beforeSnapshot = { action: a, snapshotName: a.afterSnapshot };
-        break;
-      }
-    }
-  }
-  // For test.step, we can use snapshot from the first nested action.
-  if (!beforeSnapshot && isTestStep(action)) {
-    for (let a = nextInList(action); a; a = nextInList(a)) {
-      if (a.startTime < action.endTime && a.beforeSnapshot) {
-        beforeSnapshot = { action: a, snapshotName: a.beforeSnapshot };
         break;
       }
     }
@@ -355,27 +342,25 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 
   let afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : undefined;
   if (!afterSnapshot) {
-    for (let a = nextInList(action); a; a = nextInList(a)) {
-      if (a.startTime >= action.endTime && a.beforeSnapshot) {
-        afterSnapshot = { action: a, snapshotName: a.beforeSnapshot };
-        break;
-      }
+    let last: ActionTraceEvent | undefined;
+    // - For test.step, we want to use the snapshot of the last nested action.
+    // - For a regular action, we use snapshot of any overlapping in time action
+    //   as a best effort.
+    // - If there are no "nested" actions, use the beforeSnapshot which works best
+    //   for simple `expect(a).toBe(b);` case. Also if the action doesn't have
+    //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
+    //   and we calculated it above from a previous action.
+    for (let a = nextStartTime(action); a && a.startTime <= action.endTime; a = nextStartTime(a)) {
+      if (a.endTime > action.endTime || !a.afterSnapshot)
+        continue;
+      if (last && last.endTime > a.endTime)
+        continue;
+      last = a;
     }
-  }
-  // For test.step, we can use snapshot from the last nested action.
-  if (!afterSnapshot) {
-    if (isTestStep(action)) {
-      let last: ActionTraceEvent | undefined;
-      for (let a = nextInList(action); a; a = nextInList(a)) {
-        if (a.endTime <= action.endTime && a.afterSnapshot)
-          last = a;
-      }
-      if (last)
-        afterSnapshot = { action: last, snapshotName: last.afterSnapshot! };
-    } else {
-      // Simple expect(a).toBe(b) case.
+    if (last)
+      afterSnapshot = { action: last, snapshotName: last.afterSnapshot! };
+    else
       afterSnapshot = beforeSnapshot;
-    }
   }
 
   const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;

@@ -25,8 +25,8 @@ import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('nextInContext');
-const prevInListSymbol = Symbol('prev');
-const nextInListSymbol = Symbol('next');
+const prevEndTimeSymbol = Symbol('prevEndTime');
+const nextStartTimeSymbol = Symbol('prevEndTime');
 const eventsSymbol = Symbol('events');
 
 export type SourceLocation = {
@@ -191,6 +191,18 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
     result.push(...actions);
   }
+
+  result.sort((a1, a2) => {
+    if (a2.parentId === a1.callId)
+      return 1;
+    if (a1.parentId === a2.callId)
+      return -1;
+    return a1.endTime - a2.endTime;
+  });
+
+  for (let i = 1; i < result.length; ++i)
+    (result[i] as any)[prevEndTimeSymbol] = result[i - 1];
+
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
       return -1;
@@ -199,10 +211,8 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     return a1.startTime - a2.startTime;
   });
 
-  for (let i = 0; i < result.length; ++i) {
-    (result[i] as any)[prevInListSymbol] = result[i - 1];
-    (result[i] as any)[nextInListSymbol] = result[i + 1];
-  }
+  for (let i = 0; i + 1 < result.length; ++i)
+    (result[i] as any)[nextStartTimeSymbol] = result[i + 1];
 
   return result;
 }
@@ -358,12 +368,12 @@ function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextInContextSymbol];
 }
 
-export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[prevInListSymbol];
+export function prevEndTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[prevEndTimeSymbol];
 }
 
-export function nextInList(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[nextInListSymbol];
+export function nextStartTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[nextStartTimeSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
