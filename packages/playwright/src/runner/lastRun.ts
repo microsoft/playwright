@@ -24,12 +24,13 @@ import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { TestAnnotation } from 'packages/playwright-test';
 
+type WarningAnnotation = Omit<TestAnnotation, 'type'> & { type: 'warning' };
+
 type LastRunInfo = {
   status: FullResult['status'];
   failedTests: string[];
   warningTests: {
-    // Specifically only the warning annotations are needed
-    [id: string]: TestAnnotation[];
+    [id: string]: WarningAnnotation[];
   };
 };
 
@@ -94,7 +95,7 @@ export class LastRunReporter implements ReporterV2 {
     for (const test of this._suite?.allTests() ?? []) {
       const warningAnnotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)].filter(a => a.type === 'warning');
       if (warningAnnotations.length > 0)
-        warningTests[test.id] = warningAnnotations;
+        warningTests[test.id] = warningAnnotations as WarningAnnotation[];
     }
     const lastRunReport = JSON.stringify({ status: result.status, failedTests, warningTests }, undefined, 2);
     await fs.promises.writeFile(this._lastRunFile, lastRunReport);
