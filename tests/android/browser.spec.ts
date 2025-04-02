@@ -19,7 +19,7 @@ import { androidTest as test, expect } from './androidTest';
 
 test('androidDevice.model', async function({ androidDevice }) {
   expect(androidDevice.model()).toContain('sdk_gphone');
-  expect(androidDevice.model()).toContain('x86_64');
+  expect(androidDevice.model()).toContain(process.arch === 'arm64' ? 'arm64' : 'x86_64');
 });
 
 test('androidDevice.launchBrowser', async function({ androidDevice }) {
@@ -53,11 +53,11 @@ test('androidDevice.launchBrowser should throw for bad proxy server value', asyn
   expect(error.message).toContain('proxy.server: expected string, got number');
 });
 
-test('androidDevice.launchBrowser should pass proxy config', async ({ androidDevice, server, mode, loopback }) => {
+test('androidDevice.launchBrowser should pass proxy config', async ({ androidDevice, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
-  const context = await androidDevice.launchBrowser({ proxy: { server: `${loopback}:${server.PORT}` } });
+  const context = await androidDevice.launchBrowser({ proxy: { server: new URL(server.EMPTY_PAGE).host } });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Served by the proxy');

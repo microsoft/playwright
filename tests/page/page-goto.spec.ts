@@ -864,9 +864,9 @@ it('should wait for load when iframe attaches and detaches', async ({ page, serv
   expect(await page.$('iframe')).toBe(null);
 });
 
-it('should return url with basic auth info', async ({ page, server, loopback }) => {
+it('should return url with basic auth info', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23138' });
-  const url = `http://admin:admin@${loopback || 'localhost'}:${server.PORT}/empty.html`;
+  const url = `http://admin:admin@${new URL(server.PREFIX).host}/empty.html`;
   await page.goto(url);
   expect(page.url()).toBe(url);
 });

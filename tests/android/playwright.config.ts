@@ -49,26 +49,29 @@ const metadata = {
   video: false,
 };
 
+const use: typeof config.projects[0]['use'] = {
+  sameOriginHost: '10.0.2.2',
+  // sslip.io is a free service that provides wildcard DNS for any IP address.
+  // It allows us to use a domain name that resolves to the local machine's IP address.
+  // Modifying /etc/hosts is not necessary by that and would be hard.
+  crossOriginHost: '10.0.2.2.sslip.io',
+  browserName: 'chromium',
+};
+
 config.projects!.push({
   name: 'android-native',
-  use: {
-    loopback: '10.0.2.2',
-    browserName: 'chromium',
-  },
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-android{ext}',
   testDir: path.join(testDir, 'android'),
   metadata,
+  use,
 });
 
 config.projects!.push({
   name: 'android-page',
-  use: {
-    loopback: '10.0.2.2',
-    browserName: 'chromium',
-  },
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-android{ext}',
   testDir: path.join(testDir, 'page'),
   metadata,
+  use,
 });
 
 export default config;

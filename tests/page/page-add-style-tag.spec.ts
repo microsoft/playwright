@@ -76,9 +76,7 @@ it('should throw when added with content to the CSP page', async ({ page, server
   expect(error).toBeTruthy();
 });
 
-it('should throw when added with URL to the CSP page', async ({ page, server, isAndroid }) => {
-  it.skip(isAndroid, 'No cross-process on Android');
-
+it('should throw when added with URL to the CSP page', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;
   await page.addStyleTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedstyle.css' }).catch(e => error = e);

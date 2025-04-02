@@ -23,7 +23,8 @@ import type { SocksSocketRequestedPayload } from 'playwright-core/src/server/uti
 import { SocksProxy } from '../../packages/playwright-core/lib/server/utils/socksProxy';
 
 export type ServerWorkerOptions = {
-  loopback?: string;
+  sameOriginHost?: string;
+  crossOriginHost?: string;
   __servers: ServerFixtures;
 };
 
@@ -36,17 +37,18 @@ export type ServerFixtures = {
 };
 
 export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
-  loopback: [undefined, { scope: 'worker', option: true }],
-  __servers: [async ({ loopback }, run, workerInfo) => {
+  sameOriginHost: [undefined, { scope: 'worker', option: true }],
+  crossOriginHost: [undefined, { scope: 'worker', option: true }],
+  __servers: [async ({ sameOriginHost, crossOriginHost }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 4;
-    const server = await TestServer.create(assetsPath, port, loopback);
+    const server = await TestServer.create(assetsPath, port, sameOriginHost, crossOriginHost);
     server.enableHTTPCache(cachedPath);
 
     const httpsPort = port + 1;
-    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback);
+    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, sameOriginHost, crossOriginHost);
     httpsServer.enableHTTPCache(cachedPath);
 
     const socksServer = new MockSocksServer();

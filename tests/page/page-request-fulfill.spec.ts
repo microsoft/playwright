@@ -229,9 +229,7 @@ it('should not modify the headers sent to the server', async ({ page, server }) 
   expect(interceptedRequests[1].headers).toEqual(interceptedRequests[0].headers);
 });
 
-it('should include the origin header', async ({ page, server, isAndroid }) => {
-  it.skip(isAndroid, 'No cross-process on Android');
-
+it('should include the origin header', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/empty.html');
   let interceptedRequest;
   await page.route(server.CROSS_PROCESS_PREFIX + '/something', (route, request) => {

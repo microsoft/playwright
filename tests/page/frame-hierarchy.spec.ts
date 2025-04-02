@@ -35,16 +35,15 @@ function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   return result;
 }
 
-it('should handle nested frames @smoke', async ({ page, server, isAndroid }) => {
-  it.skip(isAndroid, 'No cross-process on Android');
-
+it('should handle nested frames @smoke', async ({ page, server }) => {
+  const localhost = new URL(server.EMPTY_PAGE).hostname;
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   expect(dumpFrames(page.mainFrame())).toEqual([
-    'http://localhost:<PORT>/frames/nested-frames.html',
-    '    http://localhost:<PORT>/frames/frame.html (aframe)',
-    '    http://localhost:<PORT>/frames/two-frames.html (2frames)',
-    '        http://localhost:<PORT>/frames/frame.html (dos)',
-    '        http://localhost:<PORT>/frames/frame.html (uno)',
+    `http://${localhost}:<PORT>/frames/nested-frames.html`,
+    `    http://${localhost}:<PORT>/frames/frame.html (aframe)`,
+    `    http://${localhost}:<PORT>/frames/two-frames.html (2frames)`,
+    `        http://${localhost}:<PORT>/frames/frame.html (dos)`,
+    `        http://${localhost}:<PORT>/frames/frame.html (uno)`,
   ]);
 });
 

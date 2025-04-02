@@ -372,9 +372,8 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
   expect(response.request().failure()).toBeNull();
 });
 
-it('should delete the origin header', async ({ page, server, isAndroid, browserName }) => {
+it('should delete the origin header', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
-  it.skip(isAndroid, 'No cross-process on Android');
   it.fail(browserName === 'webkit', 'Does not delete origin in webkit');
 
   await page.goto(server.PREFIX + '/empty.html');
