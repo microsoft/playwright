@@ -753,14 +753,20 @@ class ArtifactsRecorder {
   }
 }
 
-const paramsToRender = ['url', 'selector', 'text', 'key'];
-
+function paramsToRender(apiName: string) {
+  switch (apiName) {
+    case 'locator.fill':
+      return ['value'];
+    default:
+      return ['url', 'selector', 'text', 'key'];
+  }
+}
 function renderApiCall(apiName: string, params: any) {
   if (apiName === 'tracing.group')
     return params.name;
   const paramsArray = [];
   if (params) {
-    for (const name of paramsToRender) {
+    for (const name of paramsToRender(apiName)) {
       if (!(name in params))
         continue;
       let value;
