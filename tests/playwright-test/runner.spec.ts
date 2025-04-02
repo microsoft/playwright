@@ -873,3 +873,71 @@ test('should run last failed tests in a shard', async ({ runInlineTest }) => {
   expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
 });
+
+test('should --show-warnings', async ({ runInlineTest }) => {
+  const workspace = {
+    'passing.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {
+        expect(1).toBe(1);
+      });
+    `,
+    'failing.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('fail unawaited1', async ({ page }) => {
+        expect(page.locator('a')).toBeAttached();
+      });
+      test('fail unawaited2', async ({ page }) => {
+        expect(page.locator('b')).toBeAttached();
+      });
+    `,
+    'multiples.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('fail 2x unawaited', async ({ page }) => {
+        expect(page.locator('a')).toBeAttached();
+        expect(page.locator('b')).toBeAttached();
+      });
+      test('manually inserted', async ({ page }) => {
+        test.info().annotations.push({ type: 'warning', description: 'This is a custom warning' });
+        test.info().annotations.push({ type: 'warning', description: 'This is a custom warning' });
+        expect(page.locator('a')).toBeAttached();
+      });
+      test('step', async ({ page }) => {
+        test.step('a step', async () => {
+          await page.setContent('hello');
+        });
+      });
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.output).toContain('8 warnings. Run "npx playwright test --show-warnings" for more information.');
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--show-warnings'] });
+  expect(result2.exitCode).toBe(0);
+
+  const testHeaderRegex = (fileName: string, testName: string) => new RegExp(`^\\s*\\d+\\) ${fileName}\\.spec\.js:\\d+:\\d+ › ${testName}`);
+  const promiseDescription = 'Some async calls were not awaited by the end of the test. This can cause flakiness.';
+
+  const outputLines = result2.output.split('\n');
+  expect(outputLines[1]).toMatch(testHeaderRegex('failing', 'fail unawaited1'));
+  expect(outputLines[3]).toContain(`Warning: ${promiseDescription}`);
+
+  // 10 lines for code frame
+  expect(outputLines[13]).toMatch(testHeaderRegex('failing', 'fail unawaited2'));
+  expect(outputLines[15]).toContain(`Warning: ${promiseDescription}`);
+
+  // Code frame is 1 line shorter
+  expect(outputLines[24]).toMatch(testHeaderRegex('multiples', 'fail 2x unawaited'));
+  expect(outputLines[26]).toContain(`Warning (x2): ${promiseDescription}`);
+
+  // 18 lines for 2 code frames
+  expect(outputLines[44]).toMatch(testHeaderRegex('multiples', 'manually inserted'));
+  expect(outputLines[46]).toContain(`Warning (x2): This is a custom warning`);
+
+  // No code frame
+  expect(outputLines[48]).toContain(`Warning: ${promiseDescription}`);
+
+  expect(outputLines[58]).toMatch(testHeaderRegex('multiples', 'step'));
+  expect(outputLines[60]).toContain(`Warning: ${promiseDescription}`);
+});
