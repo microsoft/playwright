@@ -29,7 +29,13 @@ if [[ "$(uname -m)" == "arm64" ]]; then
 fi
 # SystemWebViewShell.apk is ABI-neutral, so we can use it for both arm and arm64. Its not contained in the arm64 zip.
 ${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebViewShell.apk"
-${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebView.apk"
+# ADB is not able to figure out the ABI of the APK, so we need to specify it manually.
+if [[ "$(uname -m)" == "arm64" ]]; then
+    ${ANDROID_HOME}/platform-tools/adb install -r --abi arm64-v8a "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebView.apk"
+else
+    ${ANDROID_HOME}/platform-tools/adb install -r --abi x86_64 "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebView.apk"
+fi
+${ANDROID_HOME}/platform-tools/adb shell 'cmd webviewupdate set-webview-implementation com.android.webview' 
 
 rm -rf "${WEBVIEW_TMP_DIR}"
 echo "Chromium WebView installed"
