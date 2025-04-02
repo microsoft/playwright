@@ -1735,7 +1735,7 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
     };`,
     'dir1/tests1/a.test.js': `
       import { test, expect } from '@playwright/test';
-      test('math 1', { annotation: { type: 'warning', description: 'Some warning' } }, async ({}) => { test.setTimeout(1000000); });
+      test('math 1', { annotation: { type: 'warning', description: 'Some warning' } }, async ({}) => { });
     `,
   };
   await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
@@ -1746,7 +1746,7 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
     };`,
     'dir2/tests2/b.test.js': `
       import { test, expect } from '@playwright/test';
-      test('math 2', { annotation: { type: 'issue' } }, async ({}) => { test.setTimeout(1000000); });
+      test('math 2', { annotation: { type: 'issue' } }, async ({}) => { });
     `,
   };
   await runInlineTest(files2, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir2/playwright.config.ts')] });
