@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { Metadata } from '../../types/test';
+import type { Metadata, TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
-import type { Annotation } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type StringIntern = (s: string) => string;
@@ -68,7 +67,7 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonTestEnd = {
@@ -95,7 +94,7 @@ export type JsonTestResultEnd = {
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
   attachments: JsonAttachment[];
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonTestStepStart = {
@@ -112,7 +111,7 @@ export type JsonTestStepEnd = {
   duration: number;
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonFullResult = {
@@ -238,7 +237,7 @@ export class TeleReporterReceiver {
     test.expectedStatus = testEndPayload.expectedStatus;
     // Should be empty array, but if it's not, it represents all annotations for that test
     if (testEndPayload.annotations.length > 0)
-      test.annotations = testEndPayload.annotations;
+      test.annotations = this._absoluteAnnotationLocations(testEndPayload.annotations);
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
@@ -246,7 +245,7 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     if (payload.annotations)
-      result.annotations = payload.annotations;
+      result.annotations = this._absoluteAnnotationLocations(payload.annotations);
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
@@ -376,8 +375,16 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
-    test.annotations = payload.annotations ?? [];
+    test.annotations = this._absoluteAnnotationLocations(payload.annotations ?? []);
     return test;
+  }
+
+  private _absoluteAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
+    return annotations.map(annotation => {
+      if (annotation.location)
+        annotation.location = this._absoluteLocation(annotation.location);
+      return annotation;
+    });
   }
 
   private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;
@@ -480,7 +487,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
   retries = 0;
   tags: string[] = [];
   repeatEachIndex = 0;

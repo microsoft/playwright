@@ -17,9 +17,10 @@
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
 
-import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
+import type { FixturesWithLocation, FullProjectInternal } from './config';
 import type { FixturePool } from './fixtures';
 import type { TestTypeImpl } from './testType';
+import type { TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { FullProject, Location } from '../../types/testReporter';
 
@@ -50,7 +51,7 @@ export class Suite extends Base {
   _timeout: number | undefined;
   _retries: number | undefined;
   // Annotations known statically before running the test, e.g. `test.describe.skip()` or `test.describe({ annotation }, body)`.
-  _staticAnnotations: Annotation[] = [];
+  _staticAnnotations: TestAnnotation[] = [];
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
   _modifiers: Modifier[] = [];
@@ -252,7 +253,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
   retries = 0;
   repeatEachIndex = 0;
 

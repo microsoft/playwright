@@ -2055,6 +2055,10 @@ export type TestDetailsAnnotation = {
   description?: string;
 };
 
+export type TestAnnotation = TestDetailsAnnotation & {
+  location?: Location;
+};
+
 export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
@@ -9410,6 +9414,11 @@ export interface TestInfo {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added.
+     */
+    location?: Location;
   }>;
 
   /**
