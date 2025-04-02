@@ -1169,7 +1169,7 @@ test('should report api steps', async ({ runInlineTest, server }) => {
         let myPage;
         test.beforeAll(async ({ browser }) => {
           myPage = await browser.newPage();
-          await myPage.setContent('<button></button>');
+          await myPage.setContent('<button></button><input/>');
         });
 
         test('pass1', async () => {
@@ -1177,6 +1177,9 @@ test('should report api steps', async ({ runInlineTest, server }) => {
         });
         test('pass2', async () => {
           await myPage.click('button');
+        });
+        test('pass3', async () => {
+          await myPage.getByRole('textbox').fill('foo');
         });
 
         test.afterAll(async () => {
@@ -1197,8 +1200,11 @@ hook      |After Hooks
 hook      |Before Hooks
 pw:api    |page.click(button) @ a.test.ts:25
 hook      |After Hooks
-hook      |  afterAll hook @ a.test.ts:28
-pw:api    |    page.close @ a.test.ts:29
+hook      |Before Hooks
+pw:api    |locator.fill(foo) @ a.test.ts:28
+hook      |After Hooks
+hook      |  afterAll hook @ a.test.ts:31
+pw:api    |    page.close @ a.test.ts:32
 hook      |Before Hooks
 fixture   |  fixture: browser
 pw:api    |    browserType.launch

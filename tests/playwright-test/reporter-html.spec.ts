@@ -2898,24 +2898,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
     });
-
-
-    test('locator.fill value is rendered', async ({ runInlineTest, showReport, page }) => {
-      const result = await runInlineTest({
-        'a.test.js': `
-          const { test, expect } = require('@playwright/test');
-          test('sample', async ({ page }) => {
-            await page.setContent('<input />');
-            await page.getByRole('textbox').fill('foo');
-          });
-        `,
-      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(0);
-      await showReport();
-      await page.getByRole('link', { name: 'sample' }).click();
-
-      await expect(page.locator('.tree-item')).toContainText(['locator.fill(foo)']);
-    });
   });
 }
 
