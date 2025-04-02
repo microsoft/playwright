@@ -25,8 +25,8 @@ import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('nextInContext');
-const prevEndTimeSymbol = Symbol('prevEndTime');
-const nextStartTimeSymbol = Symbol('prevEndTime');
+const prevByEndTimeSymbol = Symbol('prevByEndTime');
+const nextByStartTimeSymbol = Symbol('nextByStartTime');
 const eventsSymbol = Symbol('events');
 
 export type SourceLocation = {
@@ -201,7 +201,7 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
   });
 
   for (let i = 1; i < result.length; ++i)
-    (result[i] as any)[prevEndTimeSymbol] = result[i - 1];
+    (result[i] as any)[prevByEndTimeSymbol] = result[i - 1];
 
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
@@ -212,7 +212,7 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
   });
 
   for (let i = 0; i + 1 < result.length; ++i)
-    (result[i] as any)[nextStartTimeSymbol] = result[i + 1];
+    (result[i] as any)[nextByStartTimeSymbol] = result[i + 1];
 
   return result;
 }
@@ -368,12 +368,12 @@ function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextInContextSymbol];
 }
 
-export function prevEndTime(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[prevEndTimeSymbol];
+export function previousActionByEndTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[prevByEndTimeSymbol];
 }
 
-export function nextStartTime(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[nextStartTimeSymbol];
+export function nextActionByStartTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[nextByStartTimeSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {

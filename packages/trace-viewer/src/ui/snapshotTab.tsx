@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, nextStartTime, prevEndTime } from './modelUtil';
+import { context, type MultiTraceModel, nextActionByStartTime, previousActionByEndTime } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -332,7 +332,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
   if (!beforeSnapshot) {
     // If the action has no beforeSnapshot, use the last available afterSnapshot.
-    for (let a = prevEndTime(action); a; a = prevEndTime(a)) {
+    for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
       if (a.endTime <= action.startTime && a.afterSnapshot) {
         beforeSnapshot = { action: a, snapshotName: a.afterSnapshot };
         break;
@@ -350,7 +350,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
     //   for simple `expect(a).toBe(b);` case. Also if the action doesn't have
     //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
     //   and we calculated it above from a previous action.
-    for (let a = nextStartTime(action); a && a.startTime <= action.endTime; a = nextStartTime(a)) {
+    for (let a = nextActionByStartTime(action); a && a.startTime <= action.endTime; a = nextActionByStartTime(a)) {
       if (a.endTime > action.endTime || !a.afterSnapshot)
         continue;
       if (last && last.endTime > a.endTime)
