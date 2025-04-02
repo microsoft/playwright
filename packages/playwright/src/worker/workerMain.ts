@@ -432,7 +432,9 @@ export class WorkerMain extends ProcessRunner {
 
     // Create warning if any of the async calls were not awaited in various stages.
     if (!process.env.PW_DISABLE_FLOATING_PROMISES_WARNING && testInfo._floatingPromiseScope.hasFloatingPromises()) {
-      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of the test. This can cause flakiness.` });
+      testInfo.annotations.push(...testInfo._floatingPromiseScope.floatingPromises().map(({ location }) => ({
+        type: 'warning', description: `Some async calls were not awaited by the end of the test. This can cause flakiness.`, location
+      })));
       testInfo._floatingPromiseScope.clear();
     }
 

@@ -223,7 +223,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const runner = new Runner(config, lastRun);
 
   if (opts.showWarnings) {
-    console.log('Showing warnings');
     await lastRun.filterWarnings();
     const { status } = await runner.printWarnings(lastRun);
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);

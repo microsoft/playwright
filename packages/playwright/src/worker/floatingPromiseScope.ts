@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { captureRawStack } from '../util/stackTrace';
+import { captureRawStack } from 'playwright-core/lib/utils';
 
 import { Location } from '../../types/test';
 import { filteredLocation } from '../util';
@@ -47,13 +47,17 @@ export class FloatingPromiseScope {
     });
 
     const location = filteredLocation(captureRawStack());
-    this._floatingCalls.set(promise, {});
+    this._floatingCalls.set(promise, location);
 
     return promiseProxy;
   }
 
   clear() {
     this._floatingCalls.clear();
+  }
+
+  hasFloatingPromises(): boolean {
+    return this._floatingCalls.size > 0;
   }
 
   floatingPromises(): Array<{ location: Location | undefined, promise: Promise<any> }> {

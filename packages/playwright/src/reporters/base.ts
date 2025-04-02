@@ -212,7 +212,7 @@ export class TerminalReporter implements ReporterV2 {
         tokens.push(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '    ' })));
     }
     if (warnings.length)
-      tokens.push(this.screen.colors.yellow(`  ${warnings.length} warnings. Run "npx playwright --show-test-warnings" for more information.`));
+      tokens.push(this.screen.colors.yellow(`  ${warnings.length} warnings. Run "npx playwright test --show-warnings" for more information.`));
     if (skipped)
       tokens.push(this.screen.colors.yellow(`  ${skipped} skipped`));
     if (didNotRun)
@@ -280,7 +280,6 @@ export class TerminalReporter implements ReporterV2 {
     if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
-    this._printWarnings();
     this._printSummary(summaryMessage);
   }
 
@@ -298,31 +297,6 @@ export class TerminalReporter implements ReporterV2 {
     });
     if (slowTests.length)
       console.log(this.screen.colors.yellow('  Consider running tests from slow files in parallel, see https://playwright.dev/docs/test-parallel.'));
-  }
-
-  private _printWarnings() {
-    const warningTests = this.suite.allTests().filter(test => {
-      const annotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)];
-      return annotations.some(a => a.type === 'warning');
-    });
-    const encounteredWarnings = new Map<string, Array<TestCase>>();
-    for (const test of warningTests) {
-      for (const annotation of [...test.annotations, ...test.results.flatMap(r => r.annotations)]) {
-        if (annotation.type !== 'warning' || annotation.description === undefined)
-          continue;
-        let tests = encounteredWarnings.get(annotation.description);
-        if (!tests) {
-          tests = [];
-          encounteredWarnings.set(annotation.description, tests);
-        }
-        tests.push(test);
-      }
-    }
-    for (const [description, tests] of encounteredWarnings) {
-      console.log(this.screen.colors.yellow('  Warning: ') + description);
-      for (const test of tests)
-        console.log(this.formatTestHeader(test, { indent: '    ', mode: 'default' }));
-    }
   }
 
   private _printSummary(summary: string) {

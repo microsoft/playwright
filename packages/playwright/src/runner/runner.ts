@@ -26,8 +26,9 @@ import { InternalReporter } from '../reporters/internalReporter';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { formatTestHeader } from '../reporters/base';
 import { loadCodeFrame } from '../util';
-import { TestAnnotation } from '../../types/test';
 
+import type { TestAnnotation, Location } from '../../types/test';
+import type { TestCase } from '../common/test';
 import type { FullResult, TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 
@@ -149,24 +150,72 @@ export class Runner {
     ]);
 
     const tests = testRun.rootSuite?.allTests() ?? [];
+    const testsMap = new Map(tests.map(test => [test.id, test]));
 
     const lastRunInfo = await lastRun.runInfo();
     const knownWarnings = lastRunInfo?.warningTests ?? {};
 
-    const warningAnnotations = tests.flatMap(test => knownWarnings[test.id] ?? []);
+    const testToWarnings = Object.entries(knownWarnings).flatMap(([id, warnings]) => {
+      const test = testsMap.get(id);
+      if (!test)
+        return [];
+
+      return { test, warnings };
+    });
+
     const sourceCache = new Map<string, string>();
 
-    const warningMessages = await Promise.all(warningAnnotations.map(annotation => this._buildWarning(annotation, sourceCache)));
-    for (const message of warningMessages)
-      console.log(terminalScreen.colors.yellow(message));
+    const warningMessages = await Promise.all(testToWarnings.map(({ test, warnings }, i) => this._buildWarning(test, warnings, i + 1, sourceCache)));
+    if (warningMessages.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`${warningMessages.join('\n')}\n`);
+    }
 
     return { status };
   }
 
-  private async _buildWarning(annotation: TestAnnotation, sourceCache: Map<string, string>): Promise<string> {
-    if (!annotation.location)
-      return 'TODO';
+  private async _buildWarning(test: TestCase, warnings: TestAnnotation[], renderIndex: number, sourceCache: Map<string, string>): Promise<string> {
+    const encounteredWarnings = new Map<string, Array<Location | undefined>>();
+    for (const annotation of warnings) {
+      if (annotation.description === undefined)
+        continue;
+      let matchingWarnings = encounteredWarnings.get(annotation.description);
+      if (!matchingWarnings) {
+        matchingWarnings = [];
+        encounteredWarnings.set(annotation.description, matchingWarnings);
+      }
+      matchingWarnings.push(annotation.location);
+    }
 
-    return await loadCodeFrame(annotation.location, sourceCache, { linesAbove: 2, linesBelow: 2, message: 'This is inline' });
+    // Sort warnings by location inside of each category
+    for (const locations of encounteredWarnings.values()) {
+      locations.sort((a, b) => {
+        if (!a)
+          return 1;
+        if (!b)
+          return -1;
+        if (a.line !== b.line)
+          return a.line - b.line;
+        if (a.column !== b.column)
+          return a.column - b.column;
+        return 0;
+      });
+    }
+
+    const testHeader = formatTestHeader(terminalScreen, this._config.config, test, { indent: '  ', index: renderIndex });
+
+    const codeFrameIndent = '    ';
+
+    const warningMessages = await Promise.all(encounteredWarnings.entries().map(async ([description, locations]) => {
+      const renderedCodeFrames = await Promise.all(locations.flatMap(location => !!location ? loadCodeFrame(location, sourceCache, { highlightCode: true }) : []));
+      const indentedCodeFrames = renderedCodeFrames.map(f => f.split('\n').map(line => `${codeFrameIndent}${line}`).join('\n'));
+
+      const warningCount = locations.length > 1 ? ` (x${locations.length})` : '';
+      const allFrames = renderedCodeFrames.length > 0 ? `\n\n${indentedCodeFrames.join('\n\n')}` : '';
+
+      return `    ${terminalScreen.colors.yellow(`Warning${warningCount}: ${description}`)}${allFrames}`;
+    }));
+
+    return `\n${testHeader}\n\n${warningMessages.join('\n\n')}`;
   }
 }
