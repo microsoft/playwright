@@ -403,8 +403,6 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (relativePath === undefined)
       return;
-    if (relativePath.startsWith('/') || relativePath.startsWith('\\'))
-      throw new Error('Absolute paths are not supported: ' + relativePath);
     return this._options.resolvePath ? this._options.resolvePath(this._rootDir, relativePath) : this._rootDir + '/' + relativePath;
   }
 }
