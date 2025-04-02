@@ -244,6 +244,9 @@ steps.push({
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
+  // These packages have their own build step.
+  if (['@playwright/client'].includes(pkg.name))
+    continue;
   steps.push({
     command: 'npx',
     args: [
