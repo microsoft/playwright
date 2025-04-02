@@ -24,8 +24,9 @@ import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
-const nextInContextSymbol = Symbol('next');
-const prevInListSymbol = Symbol('prev');
+const nextInContextSymbol = Symbol('nextInContext');
+const prevByEndTimeSymbol = Symbol('prevByEndTime');
+const nextByStartTimeSymbol = Symbol('nextByStartTime');
 const eventsSymbol = Symbol('events');
 
 export type SourceLocation = {
@@ -190,6 +191,18 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
     result.push(...actions);
   }
+
+  result.sort((a1, a2) => {
+    if (a2.parentId === a1.callId)
+      return 1;
+    if (a1.parentId === a2.callId)
+      return -1;
+    return a1.endTime - a2.endTime;
+  });
+
+  for (let i = 1; i < result.length; ++i)
+    (result[i] as any)[prevByEndTimeSymbol] = result[i - 1];
+
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
       return -1;
@@ -198,8 +211,8 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     return a1.startTime - a2.startTime;
   });
 
-  for (let i = 1; i < result.length; ++i)
-    (result[i] as any)[prevInListSymbol] = result[i - 1];
+  for (let i = 0; i + 1 < result.length; ++i)
+    (result[i] as any)[nextByStartTimeSymbol] = result[i + 1];
 
   return result;
 }
@@ -355,8 +368,12 @@ function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextInContextSymbol];
 }
 
-export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[prevInListSymbol];
+export function previousActionByEndTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[prevByEndTimeSymbol];
+}
+
+export function nextActionByStartTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[nextByStartTimeSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {

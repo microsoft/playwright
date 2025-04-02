@@ -150,6 +150,61 @@ test('should show snapshots for sync assertions', async ({ runUITest }) => {
   ).toHaveText('Submit');
 });
 
+test('should show snapshots for steps', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35285' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(async ({ page }) => {
+        await page.setContent('<div>initial</div>');
+      });
+      test('steps test', async ({ page }) => {
+        await test.step('first', async () => {
+          await page.setContent("<div>foo</div>");
+        });
+        await test.step('middle', async () => {
+          await page.setContent("<div>bar</div>");
+        });
+        await test.step('last', async () => {
+          await page.setContent("<div>baz</div>");
+        });
+      });
+    `,
+  });
+
+  await page.getByText('steps test').dblclick();
+
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /Before Hooks \\d+[hmsp]+/
+      - treeitem /first \\d+[hmsp]+/
+      - treeitem /middle \\d+[hmsp]+/
+      - treeitem /last \\d+[hmsp]+/
+      - treeitem /After Hooks \\d+[hmsp]+/
+  `);
+
+  await page.getByTestId('actions-tree').getByText('first').click();
+  const snapshot = page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('div');
+
+  await page.getByText('After', { exact: true }).click();
+  await expect(snapshot).toHaveText('foo');
+  await page.getByText('Before', { exact: true }).click();
+  await expect(snapshot).toHaveText('initial');
+
+  await page.getByTestId('actions-tree').getByText('middle').click();
+  await page.getByText('After', { exact: true }).click();
+  await expect(snapshot).toHaveText('bar');
+  await page.getByText('Before', { exact: true }).click();
+  await expect(snapshot).toHaveText('foo');
+
+  await page.getByTestId('actions-tree').getByText('last').click();
+  await page.getByText('After', { exact: true }).click();
+  await expect(snapshot).toHaveText('baz');
+  await page.getByText('Before', { exact: true }).click();
+  await expect(snapshot).toHaveText('bar');
+});
+
 test('should show image diff', async ({ runUITest }) => {
   const { page } = await runUITest({
     'playwright.config.js': `

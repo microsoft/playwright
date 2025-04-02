@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, nextActionByStartTime, previousActionByEndTime } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -329,14 +329,40 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   if (!action)
     return {};
 
-  // if the action has no beforeSnapshot, use the last available afterSnapshot.
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
-  let a = action;
-  while (!beforeSnapshot && a) {
-    a = prevInList(a);
-    beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
+  if (!beforeSnapshot) {
+    // If the action has no beforeSnapshot, use the last available afterSnapshot.
+    for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
+      if (a.endTime <= action.startTime && a.afterSnapshot) {
+        beforeSnapshot = { action: a, snapshotName: a.afterSnapshot };
+        break;
+      }
+    }
   }
-  const afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
+
+  let afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : undefined;
+  if (!afterSnapshot) {
+    let last: ActionTraceEvent | undefined;
+    // - For test.step, we want to use the snapshot of the last nested action.
+    // - For a regular action, we use snapshot of any overlapping in time action
+    //   as a best effort.
+    // - If there are no "nested" actions, use the beforeSnapshot which works best
+    //   for simple `expect(a).toBe(b);` case. Also if the action doesn't have
+    //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
+    //   and we calculated it above from a previous action.
+    for (let a = nextActionByStartTime(action); a && a.startTime <= action.endTime; a = nextActionByStartTime(a)) {
+      if (a.endTime > action.endTime || !a.afterSnapshot)
+        continue;
+      if (last && last.endTime > a.endTime)
+        continue;
+      last = a;
+    }
+    if (last)
+      afterSnapshot = { action: last, snapshotName: last.afterSnapshot! };
+    else
+      afterSnapshot = beforeSnapshot;
+  }
+
   const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
