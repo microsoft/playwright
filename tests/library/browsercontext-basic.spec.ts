@@ -343,9 +343,23 @@ it('default user agent', async ({ launchPersistent, browser, page, mode }) => {
   expect(await page.evaluate(() => navigator.userAgent)).toBe(userAgent);
 });
 
-it('should create two pages in parallel', async ({ context }) => {
+it('should create two pages in parallel in various contexts', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34586' }
+}, async ({ browser }) => {
+  const context1 = await browser.newContext();
+  const context2 = await browser.newContext();
   await Promise.all([
-    context.newPage(),
-    context.newPage(),
+    context1.newPage(),
+    context1.newPage(),
+    context2.newPage(),
+    context2.newPage(),
   ]);
+  await context1.close();
+  await context2.close();
+  const context3 = await browser.newContext();
+  await Promise.all([
+    context3.newPage(),
+    context3.newPage(),
+  ]);
+  await context3.close();
 });
