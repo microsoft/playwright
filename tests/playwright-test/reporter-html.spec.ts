@@ -101,7 +101,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
       await page.locator('text=stdout').click();
       await expect(page.locator('.attachment-body')).toHaveText(/TESTID=.*/);
       const idString = await page.locator('.attachment-body').textContent();
@@ -149,7 +149,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
       await expect(page.getByRole('link', { name: 'screenshot' })).toBeVisible();
     });
 
@@ -175,7 +175,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.locator('text=Image mismatch')).toBeVisible();
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
 
@@ -253,7 +253,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.locator('text=Image mismatch')).toHaveCount(2);
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
       await expect(page.locator('text="Screenshots"')).toHaveCount(0);
@@ -288,7 +288,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.getByTestId('test-screenshot-error-view').getByTestId('error-suffix')).toContainText([
         `> 6 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
         `>  7 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
@@ -326,7 +326,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.locator('text=Image mismatch')).toHaveCount(1);
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
       await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
@@ -363,7 +363,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.locator('text=Image mismatch')).toHaveCount(0);
       await expect(page.locator('img')).toHaveCount(0);
       await expect(page.locator('a', { hasText: 'expected-actual' })).toBeVisible();
@@ -392,7 +392,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.locator('text=Screenshots')).toBeVisible();
       await expect(page.locator('img')).toBeVisible();
       const src = await page.locator('img').getAttribute('src');
@@ -423,7 +423,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
 
       await expect(page.locator('div').filter({ hasText: /^Screenshotsscreenshot$/ }).getByRole('img')).toHaveAttribute('src', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
       await expect(page.getByRole('link', { name: 'screenshot' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
@@ -451,7 +451,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await page.locator('text=stdout').click();
       await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
       await page.locator('text=stderr').click();
@@ -471,7 +471,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
       await expect(page.locator('.test-error-view span:has-text("true")').first()).toHaveCSS('color', 'rgb(205, 49, 49)');
     });
 
@@ -494,7 +494,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
       await page.click('.action-title >> text=page.evaluate');
       await page.click('text=Source');
@@ -527,7 +527,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
       await page.click('.action-title >> text=page.evaluate');
       await page.click('text=Source');
@@ -557,7 +557,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
       await expect(page.locator('.workbench-loader .title')).toHaveText('a.test.js:3 › passes');
     });
@@ -581,7 +581,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=passes');
+      await page.getByRole('link', { name: 'passes' }).click();
       // Expect one image-link to trace viewer and 2 separate download links
       await expect(page.locator('img')).toHaveCount(1);
       await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace']);
@@ -702,7 +702,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(0);
 
       await showReport();
-      await page.click('text=fails');
+      await page.getByRole('link', { name: 'fails' }).click();
 
       await page.click('.tree-item:has-text("outer error") >> text=outer error');
       await page.click('.tree-item:has-text("outer error") >> .tree-item >> text=inner error');
@@ -748,7 +748,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=example');
+      await page.getByRole('link', { name: 'example' }).click();
       await page.click('text=step title');
       await page.click('text=expect.toBe');
       await expect(page.getByTestId('test-snippet')).toContainText([
@@ -779,7 +779,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=example');
+      await page.getByRole('link', { name: 'example' }).click();
       await page.click('text=skipped step title (skipped)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step.skip('skipped step title', async () => {`);
     });
@@ -804,7 +804,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=example');
+      await page.getByRole('link', { name: 'example' }).click();
       await page.click('text=step title (skipped: conditional step.skip)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step('step title', async (step) => {`);
     });
@@ -825,8 +825,28 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=annotated test');
+      await page.getByRole('link', { name: 'annotated test' }).click();
       await expect(page.locator('.test-case-annotation')).toHaveText('issue: I am not interested in this test');
+    });
+
+    test('should not crash on falsy non-string annotation', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35469' } }, async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { timeout: 1500 };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('annotated test', async ({ page }) => {
+            test.info().annotations.push({ type: 'issue', description: 0 });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'annotated test' }).click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('issue: 0');
     });
 
     test('should render dynamic annotations at test result level', async ({ runInlineTest, page, showReport }) => {
@@ -1089,7 +1109,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       await showReport();
-      await page.click('text="is a test"');
+      await page.getByRole('link', { name: 'is a test' }).click();
 
       await expect(page.locator('.test-error-view').getByText('-old')).toHaveCSS('color', 'rgb(205, 49, 49)');
       await expect(page.locator('.test-error-view').getByText('+new', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
@@ -1107,7 +1127,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       await showReport();
-      await page.click('text="is a test"');
+      await page.getByRole('link', { name: 'is a test' }).click();
       await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('color', 'rgb(246, 248, 250)');
       await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
 
@@ -2597,7 +2617,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=titles');
+      await page.getByRole('link', { name: 'titles' }).click();
 
       await page.click('text=Before Hooks');
       await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
@@ -2626,7 +2646,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=titles');
+      await page.getByRole('link', { name: 'titles' }).click();
 
       await page.click('text=Before Hooks');
       await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
@@ -2655,7 +2675,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=titles');
+      await page.getByRole('link', { name: 'titles' }).click();
 
       await page.click('text=After Hooks');
       await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
@@ -2684,7 +2704,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=titles');
+      await page.getByRole('link', { name: 'titles' }).click();
 
       await page.click('text=After Hooks');
       await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
