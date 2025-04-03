@@ -35,6 +35,7 @@ jobs:
         node-version: 20
     - run: npm ci
       env:
+        ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     - run: npm run build
     - run: npx playwright install --with-deps chromium

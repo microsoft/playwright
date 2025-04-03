@@ -65,12 +65,14 @@ runs:
       shell: bash
       env:
         PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: ''
     - name: Run tests
       if: inputs.shell != 'bash'
       run: ${{ inputs.command }}
       shell: ${{ inputs.shell }}
       env:
         PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: ''
     - name: Azure Login
       uses: azure/login@v2
       if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
