@@ -178,13 +178,10 @@ export function source(builtins: Builtins) {
 
   function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
     if (value && typeof value === 'object') {
-      // eslint-disable-next-line no-restricted-globals
       if (typeof globalThis.Window === 'function' && value instanceof globalThis.Window)
         return 'ref: <Window>';
-      // eslint-disable-next-line no-restricted-globals
       if (typeof globalThis.Document === 'function' && value instanceof globalThis.Document)
         return 'ref: <Document>';
-      // eslint-disable-next-line no-restricted-globals
       if (typeof globalThis.Node === 'function' && value instanceof globalThis.Node)
         return 'ref: <Node>';
     }
