@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { MultiMap } from 'playwright-core/lib/utils';
+
 import { LastRunReporter } from './lastRun';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
@@ -175,20 +177,21 @@ export class Runner {
   }
 
   private async _buildWarning(test: TestCase, warnings: TestAnnotation[], renderIndex: number, sourceCache: Map<string, string>): Promise<string> {
-    const encounteredWarnings = new Map<string, Array<Location | undefined>>();
+    const encounteredWarnings = new MultiMap<string, Location | undefined>();
     for (const annotation of warnings) {
       if (annotation.description === undefined)
         continue;
-      let matchingWarnings = encounteredWarnings.get(annotation.description);
-      if (!matchingWarnings) {
-        matchingWarnings = [];
-        encounteredWarnings.set(annotation.description, matchingWarnings);
-      }
-      matchingWarnings.push(annotation.location);
+      encounteredWarnings.set(annotation.description, annotation.location);
     }
 
-    // Sort warnings by location inside of each category
-    for (const locations of encounteredWarnings.values()) {
+    const testHeader = formatTestHeader(terminalScreen, this._config.config, test, { indent: '  ', index: renderIndex });
+
+    const codeFrameIndent = '    ';
+
+    const groupedWarnings = [...encounteredWarnings.keys()].map(description => {
+      const locations = encounteredWarnings.get(description);
+
+      // Sort warnings by location inside of each category
       locations.sort((a, b) => {
         if (!a)
           return 1;
@@ -200,13 +203,11 @@ export class Runner {
           return a.column - b.column;
         return 0;
       });
-    }
 
-    const testHeader = formatTestHeader(terminalScreen, this._config.config, test, { indent: '  ', index: renderIndex });
+      return { description, locations };
+    });
 
-    const codeFrameIndent = '    ';
-
-    const warningMessages = await Promise.all(encounteredWarnings.entries().map(async ([description, locations]) => {
+    const warningMessages = await Promise.all(groupedWarnings.map(async ({ description, locations }) => {
       const renderedCodeFrames = await Promise.all(locations.flatMap(location => !!location ? loadCodeFrame(location, sourceCache, { highlightCode: true }) : []));
       const indentedCodeFrames = renderedCodeFrames.map(f => f.split('\n').map(line => `${codeFrameIndent}${line}`).join('\n'));
 

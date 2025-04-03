@@ -211,8 +211,10 @@ export class TerminalReporter implements ReporterV2 {
       for (const test of flaky)
         tokens.push(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '    ' })));
     }
-    if (warnings.length)
-      tokens.push(this.screen.colors.yellow(`  ${warnings.length} warnings. Run "npx playwright test --show-warnings" for more information.`));
+    if (warnings.length) {
+      const warningsTitle = warnings.length === 1 ? '1 warning' : `${warnings.length} warnings`;
+      tokens.push(this.screen.colors.yellow(`  ${warningsTitle}. Run "npx playwright test --show-warnings" for more information.`));
+    }
     if (skipped)
       tokens.push(this.screen.colors.yellow(`  ${skipped} skipped`));
     if (didNotRun)
