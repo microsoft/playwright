@@ -115,8 +115,6 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   params.set('trace', url);
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
-  const contextEntries = await response.json() as ContextEntry[] | { error: string };
-  if ('error' in contextEntries)
-    throw new Error(contextEntries.error);
+  const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
 }
