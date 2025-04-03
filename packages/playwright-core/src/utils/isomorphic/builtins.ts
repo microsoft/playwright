@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-restricted-globals */
-
 // Make sure to update eslint.config.mjs when changing the list of builitins.
 export type Builtins = {
   setTimeout: Window['setTimeout'],
