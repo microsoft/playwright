@@ -67,17 +67,6 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   return frames;
 }
 
-export function filteredLocation(rawStack: RawStack): Location | undefined {
-  const frame = filteredStackTrace(rawStack)[0] as StackFrame | undefined;
-  if (!frame)
-    return undefined;
-  return {
-    file: frame.file,
-    line: frame.line,
-    column: frame.column
-  };
-}
-
 export async function loadCodeFrame(location: StackFrame, sourceCache: Map<string, string>, options?: Parameters<typeof codeFrameColumns>[2]): Promise<string> {
   const source = await loadSource(location.file, sourceCache);
   return codeFrameColumns(

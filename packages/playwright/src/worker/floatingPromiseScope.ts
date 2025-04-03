@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import { captureRawStack } from 'playwright-core/lib/utils';
-
 import { Location } from '../../types/test';
-import { filteredLocation } from '../util';
 
 export class FloatingPromiseScope {
   readonly _floatingCalls: Map<Promise<any>, Location | undefined> = new Map();
@@ -27,7 +24,7 @@ export class FloatingPromiseScope {
    *
    * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
    */
-  wrapPromiseAPIResult<T>(promise: Promise<T>): Promise<T> {
+  wrapPromiseAPIResult<T>(promise: Promise<T>, location: Location | undefined): Promise<T> {
     if (process.env.PW_DISABLE_FLOATING_PROMISES_WARNING)
       return promise;
 
@@ -46,7 +43,6 @@ export class FloatingPromiseScope {
       }
     });
 
-    const location = filteredLocation(captureRawStack());
     this._floatingCalls.set(promise, location);
 
     return promiseProxy;
