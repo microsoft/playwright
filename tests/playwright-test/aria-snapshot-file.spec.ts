@@ -194,6 +194,22 @@ test('should respect timeout', async ({ runInlineTest }, testInfo) => {
   expect(result.output).toContain(`Timed out 1ms waiting for`);
 });
 
+test('should immediately produce new snapshot if timeout is 0', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35461' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import path from 'path';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello world</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot({ timeout: 0 });
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`A snapshot doesn't exist at`);
+});
+
 test('should respect config.snapshotPathTemplate', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

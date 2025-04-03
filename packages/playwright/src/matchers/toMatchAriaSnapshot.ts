@@ -100,6 +100,8 @@ export async function toMatchAriaSnapshot(
     } else {
       // When generating new baseline, run entire pipeline against impossible match.
       expected = `- none "Generating new baseline"`;
+      if (timeout === 0)
+        timeout = 1; // one shot timeout
     }
   }
 
