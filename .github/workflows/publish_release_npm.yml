@@ -23,7 +23,6 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
     - run: utils/publish_all_packages.sh --release-candidate
       if: ${{ github.event.release.prerelease }}
       env:

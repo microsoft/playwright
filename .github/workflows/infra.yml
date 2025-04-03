@@ -24,8 +24,7 @@ jobs:
         node-version: 18
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
-    - run: npx playwright install
+    - run: npx playwright install --with-deps
     - run: npm run lint
     - name: Verify clean tree
       run: |
