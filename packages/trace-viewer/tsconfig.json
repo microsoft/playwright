@@ -16,7 +16,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@injected/*": ["../playwright-core/src/server/injected/*"],
+      "@injected/*": ["../injected/src/*"],
       "@isomorphic/*": ["../playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["../protocol/src/*"],
       "@recorder/*": ["../recorder/src/*"],

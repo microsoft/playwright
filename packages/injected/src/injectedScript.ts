@@ -15,36 +15,35 @@
  */
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
+import { ensureBuiltins } from '@isomorphic/builtins';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
+import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { ensureBuiltins } from '../../utils/isomorphic/builtins';
 import { generateAriaTree, getAllByAria, matchesAriaTree, renderAriaTree } from './ariaSnapshot';
 import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setBrowserName } from './domUtils';
 import { Highlight } from './highlight';
-import { kLayoutSelectorNames,  layoutSelectorScore } from './layoutSelectorUtils';
+import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
 import { createReactEngine } from './reactSelectorEngine';
 import { createRoleEngine } from './roleSelectorEngine';
 import { getAriaDisabled, getAriaRole, getCheckedAllowMixed, getCheckedWithoutMixed, getElementAccessibleDescription, getElementAccessibleErrorMessage, getElementAccessibleName, getReadonly } from './roleUtils';
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
-import { generateSelector  } from './selectorGenerator';
-import { elementMatchesText, elementText,  getElementLabels } from './selectorUtils';
+import { generateSelector } from './selectorGenerator';
+import { elementMatchesText, elementText, getElementLabels } from './selectorUtils';
 import { createVueEngine } from './vueSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
-import { parseSelector, stringifySelector, visitAllSelectorParts } from '../../utils/isomorphic/selectorParser';
-import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
+import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { Builtins } from '@isomorphic/builtins';
+import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
+import type { Language } from '@isomorphic/locatorGenerators';
+import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
+import type * as channels from '@protocol/channels';
 import type { AriaSnapshot } from './ariaSnapshot';
-import type { Builtins } from '../../utils/isomorphic/builtins';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
 import type { ElementText, TextMatcher } from './selectorUtils';
-import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
-import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../../utils/isomorphic/selectorParser';
-import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
-import type * as channels from '@protocol/channels';
 
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };

@@ -19,7 +19,7 @@ import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAl
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
-import type { InjectedScript } from './injected/injectedScript';
+import type { InjectedScript } from '@injected/injectedScript';
 import type { JSHandle } from './javascript';
 import type * as types from './types';
 import type { ParsedSelector } from '../utils/isomorphic/selectorParser';

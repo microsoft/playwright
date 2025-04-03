@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { ensureBuiltins } from '../../utils/isomorphic/builtins';
-import { source } from '../../utils/isomorphic/utilityScriptSerializers';
+import { ensureBuiltins } from '@isomorphic/builtins';
+import { source } from '@isomorphic/utilityScriptSerializers';
 
-import type { Builtins } from '../../utils/isomorphic/builtins';
+import type { Builtins } from '@isomorphic/builtins';
 
 export class UtilityScript {
   constructor(isUnderTest: boolean) {

@@ -37,7 +37,7 @@ import { compressCallLog } from './callLog';
 
 import type { ConsoleMessage } from './console';
 import type { Dialog } from './dialog';
-import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from './injected/injectedScript';
+import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';

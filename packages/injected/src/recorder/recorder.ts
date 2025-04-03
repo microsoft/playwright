@@ -16,14 +16,14 @@
 
 import clipPaths from './clipPaths';
 
-import type { Point } from '../../../utils/isomorphic/types';
+import type { Point } from '@isomorphic/types';
 import type { Highlight, HighlightEntry } from '../highlight';
 import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Builtins } from '../../../utils/isomorphic/builtins';
+import type { Builtins } from '@isomorphic/builtins';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',

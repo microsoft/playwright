@@ -33,7 +33,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@injected': path.resolve(__dirname, '../playwright-core/src/server/injected'),
+      '@injected': path.resolve(__dirname, '../injected/src'),
       '@isomorphic': path.resolve(__dirname, '../playwright-core/src/utils/isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@testIsomorphic': path.resolve(__dirname, '../playwright/src/isomorphic'),

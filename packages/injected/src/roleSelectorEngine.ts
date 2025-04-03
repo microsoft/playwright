@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
+import { parseAttributeSelector } from '@isomorphic/selectorParser';
+import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
+
 import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { matchesAttributePart } from './selectorUtils';
-import { parseAttributeSelector   } from '../../utils/isomorphic/selectorParser';
-import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
-import type { Builtins } from '../../utils/isomorphic/builtins';
+import type { Builtins } from '@isomorphic/builtins';
+import type { AttributeSelectorOperator, AttributeSelectorPart } from '@isomorphic/selectorParser';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import type { AttributeSelectorOperator, AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
 
 type RoleEngineOptions = {
   role: string;

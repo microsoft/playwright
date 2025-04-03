@@ -27,37 +27,37 @@ const esbuild = require('esbuild');
  */
 const injectedScripts = [
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'utilityScript.ts'),
+    path.join(ROOT, 'packages', 'injected', 'src', 'utilityScript.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'injectedScript.ts'),
+    path.join(ROOT, 'packages', 'injected', 'src', 'injectedScript.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'consoleApi.ts'),
+    path.join(ROOT, 'packages', 'injected', 'src', 'consoleApi.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder', 'pollingRecorder.ts'),
+    path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'pollingRecorder.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'clock.ts'),
+    path.join(ROOT, 'packages', 'injected', 'src', 'clock.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'webSocketMock.ts'),
+    path.join(ROOT, 'packages', 'injected', 'src', 'webSocketMock.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
