@@ -243,6 +243,22 @@ test('should support disabled', async ({ page }) => {
   ]);
 });
 
+test('should inherit disabled from the ancestor', async ({ page }) => {
+  await page.setContent(`
+    <span aria-disabled="true">
+      <button>Click me!</button>
+    </span>
+  `);
+  await expect(page.locator('button')).toBeDisabled();
+
+  await page.setContent(`
+    <span aria-disabled="true">
+      <h1>Heading</h1>
+    </span>
+  `);
+  await expect(page.locator('h1')).not.toBeDisabled();
+});
+
 test('should support disabled fieldset', async ({ page }) => {
   await page.setContent(`
     <fieldset disabled>
