@@ -28,7 +28,6 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
     - name: "@next: publish with commit timestamp (triggered manually)"
       if: contains(github.ref, 'main') && github.event_name == 'workflow_dispatch'
       run: |
