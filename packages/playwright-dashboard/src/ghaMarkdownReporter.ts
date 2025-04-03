@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { MarkdownReporter } from 'playwright/lib/internalsForTest';
 import { context, getOctokit } from '@actions/github';
 import * as core from '@actions/core';
+
+import MarkdownReporter from './markdownReporter';
 
 import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
 import type { FullConfig } from '@playwright/test';

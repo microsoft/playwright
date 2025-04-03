@@ -19,6 +19,6 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "playwright-core": "1.52.0-next"
+    "@playwright/test": "1.52.0-next"
   }
 }
