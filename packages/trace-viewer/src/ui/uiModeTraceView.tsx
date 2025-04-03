@@ -32,7 +32,7 @@ export const TraceView: React.FC<{
   revealSource?: boolean,
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
-  const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
+  const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -75,7 +75,9 @@ export const TraceView: React.FC<{
         const model = await loadSingleTraceFile(traceLocation);
         setModel({ model, isLive: true });
       } catch {
-        setModel(undefined);
+        const model = new MultiTraceModel([]);
+        model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
+        setModel({ model, isLive: false });
       } finally {
         setCounter(counter + 1);
       }

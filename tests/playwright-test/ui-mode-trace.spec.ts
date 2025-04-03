@@ -581,3 +581,27 @@ test('fails', async ({ page }) => {
   5 | });
     `.trim());
 });
+
+test('should indicate current test status', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+import { test, expect } from '@playwright/test';
+test('basic pass', async ({ page }) => {
+  await page.setContent('<button>Submit</button>');
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  expect(1).toBe(1);
+});
+test('basic fail', async ({ page }) => {
+  await page.setContent('<button>Submit</button>');
+  expect(1).toBe(2);
+});
+    `.trim(),
+  });
+
+  await page.getByTestId('test-tree').getByText('basic pass').dblclick();
+  await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Running');
+  await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Passed');
+
+  await page.getByTestId('test-tree').getByText('basic fail').dblclick();
+  await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Failed');
+});
