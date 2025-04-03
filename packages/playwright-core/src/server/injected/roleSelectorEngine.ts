@@ -19,7 +19,7 @@ import { matchesAttributePart } from './selectorUtils';
 import { parseAttributeSelector   } from '../../utils/isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
-import type { Builtins } from '../isomorphic/builtins';
+import type { Builtins } from '../../utils/isomorphic/builtins';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { AttributeSelectorOperator, AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
 

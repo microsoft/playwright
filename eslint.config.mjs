@@ -370,7 +370,6 @@ export default [
   {
     files: [
       "packages/playwright-core/src/server/injected/**/*.ts",
-      "packages/playwright-core/src/server/isomorphic/**/*.ts",
       "packages/playwright-core/src/utils/isomorphic/**/*.ts",
       "packages/playwright-core/src/server/pageBinding.ts",
       "packages/playwright-core/src/server/storageScript.ts",

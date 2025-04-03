@@ -24,7 +24,7 @@ import * as frames from './frames';
 import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
-import { ensureBuiltins } from './isomorphic/builtins';
+import { ensureBuiltins } from '../utils/isomorphic/builtins';
 import { createPageBindingScript, deliverBindingResult, takeBindingHandle } from './pageBinding';
 import * as js from './javascript';
 import { ProgressController } from './progress';

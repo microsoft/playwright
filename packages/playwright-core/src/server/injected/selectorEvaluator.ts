@@ -23,7 +23,7 @@ import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { ElementText } from './selectorUtils';
 import type { CSSComplexSelector, CSSComplexSelectorList, CSSFunctionArgument, CSSSimpleSelector } from '../../utils/isomorphic/cssParser';
-import type { Builtins } from '../isomorphic/builtins';
+import type { Builtins } from '../../utils/isomorphic/builtins';
 
 type QueryContext = {
   scope: Element | Document;

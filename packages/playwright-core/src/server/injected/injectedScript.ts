@@ -16,7 +16,7 @@
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 
-import { ensureBuiltins } from '../isomorphic/builtins';
+import { ensureBuiltins } from '../../utils/isomorphic/builtins';
 import { generateAriaTree, getAllByAria, matchesAriaTree, renderAriaTree } from './ariaSnapshot';
 import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setBrowserName } from './domUtils';
 import { Highlight } from './highlight';
@@ -35,7 +35,7 @@ import { parseSelector, stringifySelector, visitAllSelectorParts } from '../../u
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
 import type { AriaSnapshot } from './ariaSnapshot';
-import type { Builtins } from '../isomorphic/builtins';
+import type { Builtins } from '../../utils/isomorphic/builtins';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
