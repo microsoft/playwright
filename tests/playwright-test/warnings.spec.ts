@@ -46,7 +46,7 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(1);
-    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 39 } }]);
+    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 39 }) }]);
   });
 
   test('should warn about missing await on expects when passing', async ({ runInlineTest }) => {
@@ -61,7 +61,7 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(0);
-    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 39 } }]);
+    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 39 }) }]);
   });
 
   test('should not warn when not missing await on expects when failing', async ({ runInlineTest }) => {
@@ -117,7 +117,7 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(0);
-    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 60 } }]);
+    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 60 }) }]);
   });
 
   test('should warn about missing await on reject.not', async ({ runInlineTest }) => {
@@ -131,7 +131,7 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(1);
-    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 64 } }]);
+    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 64 }) }]);
   });
 
   test('should warn about missing await on test.step', async ({ runInlineTest }) => {
@@ -146,7 +146,7 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(0);
-    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 16 } }]);
+    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 16 }) }]);
   });
 
   test('should not warn when not missing await on test.step', async ({ runInlineTest }) => {
@@ -176,7 +176,7 @@ test.describe('await', () => {
       `
     });
     expect(exitCode).toBe(0);
-    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 21 } }]);
+    expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 21 }) }]);
   });
 
   test('traced promise should be instanceof Promise', async ({ runInlineTest }) => {
@@ -215,7 +215,7 @@ test.describe('await', () => {
         });
 
         expect(exitCode).toBe(0);
-        expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 7, column: 43 } }]);
+        expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 7, column: 43 }) }]);
       });
     }
   });
@@ -239,7 +239,7 @@ test.describe('await', () => {
         });
 
         expect(exitCode).toBe(0);
-        expect(results[0].annotations).toEqual([{ type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 8, column: 50 } }]);
+        expect(results[0].annotations).toEqual([{ type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 8, column: 50 }) }]);
       });
     }
   });
@@ -264,9 +264,9 @@ test.describe('await', () => {
     });
     expect(exitCode).toBe(0);
     expect(results[0].annotations).toEqual([
-      { type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 46 } },
-      { type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 8, column: 46 } },
-      { type: 'warning', description, location: { file: expect.stringMatching(/a\.test\.ts$/), line: 12, column: 46 } },
+      { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 4, column: 46 }) },
+      { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 8, column: 46 }) },
+      { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 12, column: 46 }) },
     ]);
   });
 });
