@@ -24,7 +24,7 @@ import { isSessionClosedError } from './protocolError';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 
 import type * as frames from './frames';
-import type { ElementState, HitTargetInterceptionResult, InjectedScript } from './injected/injectedScript';
+import type { ElementState, HitTargetInterceptionResult, InjectedScript } from '@injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import type { Page } from './page';
 import type { Progress } from './progress';

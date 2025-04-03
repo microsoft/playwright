@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../../utils/isomorphic/locatorUtils';
-import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
+import { escapeForTextSelector } from '@isomorphic/stringUtils';
 
 import type { InjectedScript } from './injectedScript';
-import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import type { ByRoleOptions } from '../../utils/isomorphic/locatorUtils';
+import type { Language } from '@isomorphic/locatorGenerators';
+import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 
 const selectorSymbol = Symbol('selector');
 

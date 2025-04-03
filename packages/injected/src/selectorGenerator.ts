@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
+
 import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
 
+import type { Builtins } from '@isomorphic/builtins';
 import type { InjectedScript } from './injectedScript';
-import type { Builtins } from '../../utils/isomorphic/builtins';
 
 type SelectorToken = {
   engine: string;

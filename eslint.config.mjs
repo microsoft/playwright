@@ -380,7 +380,7 @@ export default [
   },
   {
     files: [
-      "packages/playwright-core/src/server/injected/**/*.ts",
+      "packages/injected/src/**/*.ts",
       "packages/playwright-core/src/server/pageBinding.ts",
       "packages/playwright-core/src/server/storageScript.ts",
     ],

@@ -21,7 +21,7 @@ import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
-import type { Builtins } from '../../utils/isomorphic/builtins';
+import type { Builtins } from '@isomorphic/builtins';
 
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';

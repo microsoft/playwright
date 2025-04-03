@@ -25,7 +25,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
-import type * as ws from '../injected/webSocketMock';
+import type * as ws from '@injected/webSocketMock';
 import type * as channels from '@protocol/channels';
 
 export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
