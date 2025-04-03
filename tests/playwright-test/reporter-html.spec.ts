@@ -829,7 +829,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-annotation')).toHaveText('issue: I am not interested in this test');
     });
 
-    test('should not crash on falsy non-string annotation', async ({ runInlineTest, page, showReport }) => {
+    test('should not crash on falsy non-string annotation', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35469' } }, async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
           module.exports = { timeout: 1500 };
