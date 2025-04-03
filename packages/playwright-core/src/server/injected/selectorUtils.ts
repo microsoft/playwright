@@ -18,7 +18,7 @@ import { getAriaLabelledByElements } from './roleUtils';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 import type { AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
-import type { Builtins } from '../isomorphic/builtins';
+import type { Builtins } from '../../utils/isomorphic/builtins';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {

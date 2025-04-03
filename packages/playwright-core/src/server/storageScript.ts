@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Builtins } from './isomorphic/builtins';
-import type { source } from './isomorphic/utilityScriptSerializers';
+import type { Builtins } from '../utils/isomorphic/builtins';
+import type { source } from '../utils/isomorphic/utilityScriptSerializers';
 import type * as channels from '@protocol/channels';
 
 export type Storage = Omit<channels.OriginStorage, 'origin'>;

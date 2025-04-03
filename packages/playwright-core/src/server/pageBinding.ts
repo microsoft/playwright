@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ensureBuiltins } from './isomorphic/builtins';
-import { source } from './isomorphic/utilityScriptSerializers';
+import { ensureBuiltins } from '../utils/isomorphic/builtins';
+import { source } from '../utils/isomorphic/utilityScriptSerializers';
 
-import type { Builtins } from './isomorphic/builtins';
-import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
+import type { Builtins } from '../utils/isomorphic/builtins';
+import type { SerializedValue } from '../utils/isomorphic/utilityScriptSerializers';
 
 export type BindingPayload = {
   name: string;

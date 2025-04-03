@@ -23,7 +23,7 @@ import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Builtins } from '../../isomorphic/builtins';
+import type { Builtins } from '../../../utils/isomorphic/builtins';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',

@@ -19,7 +19,7 @@ import { matchesComponentAttribute } from './selectorUtils';
 import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import type { Builtins } from '../isomorphic/builtins';
+import type { Builtins } from '../../utils/isomorphic/builtins';
 
 type ComponentNode = {
   name: string,

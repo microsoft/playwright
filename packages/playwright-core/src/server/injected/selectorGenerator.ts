@@ -20,7 +20,7 @@ import { elementText, getElementLabels } from './selectorUtils';
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
 
 import type { InjectedScript } from './injectedScript';
-import type { Builtins } from '../isomorphic/builtins';
+import type { Builtins } from '../../utils/isomorphic/builtins';
 
 type SelectorToken = {
   engine: string;

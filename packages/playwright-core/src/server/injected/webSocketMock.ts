@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ensureBuiltins } from '../isomorphic/builtins';
+import { ensureBuiltins } from '../../utils/isomorphic/builtins';
 
 export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
 export type WSData = { data: string, isBase64: boolean };
