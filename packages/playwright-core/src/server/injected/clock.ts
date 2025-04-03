@@ -119,7 +119,19 @@ export class ClockController {
 
   performanceNow(): DOMHighResTimeStamp {
     this._replayLogOnce();
+    this._syncRealTimeBusyLoop();
     return this._now.ticks;
+  }
+
+  private _syncRealTimeBusyLoop() {
+    if (this._realTime) {
+      const now = this._embedder.performanceNow();
+      const sinceLastSync = now - this._realTime.lastSyncTicks;
+      if (sinceLastSync > 0) {
+        this._advanceNow(shiftTicks(this._now.ticks, sinceLastSync));
+        this._realTime.lastSyncTicks = now;
+      }
+    }
   }
 
   private _innerSetTime(time: WallTime) {

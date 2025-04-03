@@ -533,3 +533,30 @@ it.describe('Date.now', () => {
     expect(dateValue).toBe(1001);
   });
 });
+
+it('correctly increments performance.now during blocking execution', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/35362',
+  }
+}, async ({ page, server }) => {
+  await page.clock.setSystemTime(new Date('2026-01-01'));
+  server.setRoute('/repro.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <html>
+        <body>
+          <script>
+          // call performance.now() until 5s has passed
+          const start = performance.now();
+          while (performance.now() - start < 5000) { }
+          console.log('done');
+          </script>
+        </body>
+      </html>
+    `);
+  });
+  const waitForDone = page.waitForEvent('console', msg => msg.text() === 'done');
+  await page.goto(server.PREFIX + '/repro.html');
+  await waitForDone;
+});
