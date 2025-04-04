@@ -237,7 +237,7 @@ test.describe('toHaveClass', () => {
     await expect(locator).toHaveClass('foo', { partial: true });
     await expect(locator).toHaveClass('bar', { partial: true });
     await expect(
-      expect(locator).toHaveClass(/f.o/, { partial: true })
+        expect(locator).toHaveClass(/f.o/, { partial: true })
     ).rejects.toThrow('Partial matching does not support regular expressions. Please provide a string value.');
     await expect(locator).not.toHaveClass('foo');
     await expect(locator).not.toHaveClass('foo', { partial: false });
@@ -256,7 +256,7 @@ test.describe('toHaveClass', () => {
     await expect(locator).toHaveClass(['aaa', 'b2b', 'ccc'], { partial: true });
     await expect(locator).not.toHaveClass(['aaa', 'b2b', 'ccc']);
     await expect(
-      expect(locator).toHaveClass([/b2?ar/, /b2?ar/, /b2?ar/], { partial: true })
+        expect(locator).toHaveClass([/b2?ar/, /b2?ar/, /b2?ar/], { partial: true })
     ).rejects.toThrow('Partial matching does not support regular expressions. Please provide a string value.');
     await expect(locator).not.toHaveClass(['aaa', 'b2b', 'ccc'], { partial: false });
     await expect(locator).not.toHaveClass(['not-there', 'b2b', 'ccc'], { partial: true }); // Class not there

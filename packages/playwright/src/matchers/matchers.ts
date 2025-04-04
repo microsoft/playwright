@@ -291,10 +291,10 @@ export function toHaveCSS(
     const styles = options.styles;
     return toBeTruthy.call(this, 'toHaveCSS', locator, 'Locator', 'matching styles', '', async (isNot, timeout) => {
       const results = await Promise.all(
-        Object.entries(styles).map(async ([styleName, value]) => {
-          const expectedText = serializeExpectedTextValues([String(value)]);
-          return locator._expect('to.have.css', { expressionArg: styleName, expectedText, isNot, timeout });
-        })
+          Object.entries(styles).map(async ([styleName, value]) => {
+            const expectedText = serializeExpectedTextValues([String(value)]);
+            return locator._expect('to.have.css', { expressionArg: styleName, expectedText, isNot, timeout });
+          })
       );
       const allMatch = results.every(result => result.matches);
       return { matches: allMatch, received: results.map(r => r.received) };
