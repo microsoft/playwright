@@ -693,3 +693,101 @@ test('should match url', async ({ page }) => {
       - /url: /.*example.com/
   `);
 });
+
+test('should detect unexpected children: equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>One</li>
+      <li>Two</li>
+      <li>Three</li>
+    </ul>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: "One"
+      - listitem: "Three"
+  `);
+
+  const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: equal
+      - listitem: "One"
+      - listitem: "Three"
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(e.message).toContain('Timed out 1000ms waiting');
+  expect(stripAnsi(e.message)).toContain('+   - listitem: Two');
+});
+
+test('should detect unexpected children: deep-equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - list:
+          - listitem: 1.1
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+  `);
+
+  const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(e.message).toContain('Timed out 1000ms waiting');
+  expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
+});
+
+test('should allow restoring contain mode inside deep-equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(e.message).toContain('Timed out 1000ms waiting');
+  expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - /children: contain
+          - listitem: 1.1
+  `);
+});
