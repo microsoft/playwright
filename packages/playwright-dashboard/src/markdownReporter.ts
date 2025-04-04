@@ -27,7 +27,7 @@ type MarkdownReporterOptions = {
 class MarkdownReporter implements Reporter {
   private _options: MarkdownReporterOptions;
   private _fatalErrors: TestError[] = [];
-  private _config!: FullConfig;
+  protected _config!: FullConfig;
   private _suite!: Suite;
 
   constructor(options: MarkdownReporterOptions) {
