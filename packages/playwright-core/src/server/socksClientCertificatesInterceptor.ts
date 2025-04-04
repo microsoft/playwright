@@ -39,10 +39,15 @@ function loadDummyServerCertsIfNeeded() {
   dummyServerTlsOptions = { key, cert };
 }
 
+type ALPNCacheOptions = {
+  socket?: stream.Duplex | undefined;
+  secureContext: tls.SecureContext | undefined;
+};
+
 class ALPNCache {
   private _cache = new Map<string, ManualPromise<string>>();
 
-  get(host: string, port: number, success: (protocol: string) => void) {
+  get(host: string, port: number, options: ALPNCacheOptions, success: (protocol: string) => void) {
     const cacheKey = `${host}:${port}`;
     {
       const result = this._cache.get(cacheKey);
@@ -54,22 +59,55 @@ class ALPNCache {
     const result = new ManualPromise<string>();
     this._cache.set(cacheKey, result);
     result.then(success);
-    createTLSSocket({
-      host,
-      port,
-      servername: net.isIP(host) ? undefined : host,
-      ALPNProtocols: ['h2', 'http/1.1'],
-      rejectUnauthorized: false,
-    }).then(socket => {
-      // The server may not respond with ALPN, in which case we default to http/1.1.
-      result.resolve(socket.alpnProtocol || 'http/1.1');
-      socket.end();
-    }).catch(error => {
-      debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
-      result.resolve('http/1.1');
-    });
+    const fixtures = {
+      __testHookLookup: (options as any).__testHookLookup
+    };
+
+    if (!options.socket) {
+      createTLSSocket({
+        host,
+        port,
+        servername: net.isIP(host) ? undefined : host,
+        ALPNProtocols: ['h2', 'http/1.1'],
+        rejectUnauthorized: false,
+        secureContext: options.secureContext,
+        ...fixtures,
+      }).then(socket => {
+        // The server may not respond with ALPN, in which case we default to http/1.1.
+        result.resolve(socket.alpnProtocol || 'http/1.1');
+        socket.end();
+      }).catch(error => {
+        debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
+        result.resolve('http/1.1');
+      });
+    } else {
+      // a socket might be provided, for example, when using a proxy.
+      const socket = tls.connect({
+        socket: options.socket,
+        port: port,
+        host: host,
+        ALPNProtocols: ['h2', 'http/1.1'],
+        rejectUnauthorized: false,
+        secureContext: options.secureContext,
+        servername: net.isIP(host) ? undefined : host
+      });
+      socket.on('secureConnect', () => {
+        result.resolve(socket.alpnProtocol || 'http/1.1');
+        socket.end();
+      });
+      socket.on('error', error => {
+        result.resolve('http/1.1');
+      });
+      socket.on('timeout', () => {
+        result.resolve('http/1.1');
+      });
+    }
   }
 }
+
+// Only used for fixtures
+type SocksProxyConnectionOptions = {
+};
 
 class SocksProxyConnection {
   private readonly socksProxy: ClientCertificatesProxy;
@@ -84,12 +122,14 @@ class SocksProxyConnection {
   private _targetCloseEventListener: () => void;
   private _dummyServer: tls.Server | undefined;
   private _closed = false;
+  private _options: SocksProxyConnectionOptions;
 
-  constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
+  constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number, options: SocksProxyConnectionOptions) {
     this.socksProxy = socksProxy;
     this.uid = uid;
     this.host = host;
     this.port = port;
+    this._options = options;
     this._targetCloseEventListener = () => {
       // Close the other end and cleanup TLS resources.
       this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid });
@@ -99,10 +139,14 @@ class SocksProxyConnection {
   }
 
   async connect() {
+    const fixtures = {
+      __testHookLookup: (this._options as any).__testHookLookup
+    };
+
     if (this.socksProxy.proxyAgentFromOptions)
       this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
-      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+      this.target = await createSocket({ host: rewriteToLocalhostIfNeeded(this.host), port: this.port, ...fixtures });
 
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
@@ -142,7 +186,7 @@ class SocksProxyConnection {
       this.target.write(data);
   }
 
-  private _attachTLSListeners() {
+  private async _attachTLSListeners() {
     this.internal = new stream.Duplex({
       read: () => {},
       write: (data, encoding, callback) => {
@@ -150,7 +194,20 @@ class SocksProxyConnection {
         callback();
       }
     });
-    this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
+    const secureContext = this.socksProxy.secureContextForOrigin(new URL(`https://${this.host}:${this.port}`).origin);
+    const fixtures = {
+      __testHookLookup: (this._options as any).__testHookLookup
+    };
+
+    const alpnCacheOptions: ALPNCacheOptions = {
+      secureContext,
+      ...fixtures
+    };
+    if (this.socksProxy.proxyAgentFromOptions)
+      alpnCacheOptions.socket = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+
+    this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnCacheOptions, alpnProtocolChosenByServer => {
+      alpnCacheOptions.socket?.destroy();
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
       if (this._closed)
         return;
@@ -221,7 +278,7 @@ class SocksProxyConnection {
           rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
           ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
           servername: !net.isIP(this.host) ? this.host : undefined,
-          secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
+          secureContext: secureContext,
         });
 
         targetTLS.once('secureConnect', () => {
@@ -239,8 +296,9 @@ class SocksProxyConnection {
 export class ClientCertificatesProxy {
   _socksProxy: SocksProxy;
   private _connections: Map<string, SocksProxyConnection> = new Map();
+  private _patterns: Pattern[] = [];
   ignoreHTTPSErrors: boolean | undefined;
-  secureContextMap: Map<string, tls.SecureContext> = new Map();
+  private _secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
   proxyAgentFromOptions: ReturnType<typeof createProxyAgent>;
 
@@ -256,7 +314,9 @@ export class ClientCertificatesProxy {
     this._socksProxy.setPattern('*');
     this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
       try {
-        const connection = new SocksProxyConnection(this, payload.uid, payload.host, payload.port);
+        const connection = new SocksProxyConnection(this, payload.uid, payload.host, payload.port, {
+          __testHookLookup: (contextOptions as any).__testHookLookup
+        });
         await connection.connect();
         this._connections.set(payload.uid, connection);
       } catch (error) {
@@ -277,7 +337,14 @@ export class ClientCertificatesProxy {
     // Step 1. Group certificates by origin.
     const origin2certs = new Map<string, types.BrowserContextOptions['clientCertificates']>();
     for (const cert of clientCertificates || []) {
-      const origin = normalizeOrigin(cert.origin);
+      const pattern = Pattern.fromString(cert.origin);
+      if (pattern === undefined) {
+        debugLogger.log('client-certificates', `Invalid client certificate pattern: ${cert.origin}`);
+        continue;
+      } else {
+        this._patterns.push(pattern);
+      }
+      const origin = pattern.normalizedOrigin;
       const certs = origin2certs.get(origin) || [];
       certs.push(cert);
       origin2certs.set(origin, certs);
@@ -286,12 +353,19 @@ export class ClientCertificatesProxy {
     // Step 2. Create secure contexts for each origin.
     for (const [origin, certs] of origin2certs) {
       try {
-        this.secureContextMap.set(origin, tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
+        this._secureContextMap.set(origin, tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
       } catch (error) {
         error = rewriteOpenSSLErrorIfNeeded(error);
         throw rewriteErrorMessage(error, `Failed to load client certificate: ${error.message}`);
       }
     }
+  }
+
+  public secureContextForOrigin(origin: string): tls.SecureContext | undefined {
+    const pattern = this._patterns.find(p => p.matches(origin));
+    if (!pattern)
+      return undefined;
+    return this._secureContextMap.get(pattern.normalizedOrigin);
   }
 
   public async listen() {
@@ -301,14 +375,6 @@ export class ClientCertificatesProxy {
 
   public async close() {
     await this._socksProxy.close();
-  }
-}
-
-function normalizeOrigin(origin: string): string {
-  try {
-    return new URL(origin).origin;
-  } catch (error) {
-    return origin;
   }
 }
 
@@ -338,7 +404,7 @@ export function getMatchingTLSOptionsForOrigin(
   origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c =>
-    normalizeOrigin(c.origin) === origin
+    Pattern.fromString(c.origin)?.matches(origin)
   );
   return convertClientCertificatesToTLSOptions(matchingCerts);
 }
@@ -356,4 +422,182 @@ export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
     'For more details, see https://github.com/openssl/openssl/blob/master/README-PROVIDERS.md#the-legacy-provider',
     'You could probably modernize the certificate by following the steps at https://github.com/nodejs/node/issues/40672#issuecomment-1243648223',
   ].join('\n'));
+}
+
+/*
+  Pattern is a pattern that matches a URL. Based on the Chromium
+  implementation, used in content policies:
+  https://source.chromium.org/chromium/chromium/src/+/main:components/content_settings/core/common/content_settings_pattern.h;l=248;drc=20799f4c32d950ce93d495f44eec648400f38a19
+
+  Example: "https://[*.].hello.com/path"
+
+  The only difference is that we don't support the precedence rules and
+  paths patterns are not implemented.
+*/
+export class Pattern {
+  private readonly _scheme: string;
+  private readonly _isSchemeWildcard: boolean;
+  private readonly _host: string;
+  private readonly _isDomainWildcard: boolean;
+  private readonly _isSubdomainWildcard: boolean;
+  private readonly _port: string;
+  private readonly _isPortWildcard: boolean;
+  private readonly _host_parts: string[];
+  private readonly _implicitPort: string;
+  private readonly _normalizedOrigin: string;
+  constructor(scheme: string, isSchemeWildcard: boolean, host: string, isDomainWildcard: boolean, isSubdomainWildcard: boolean, port: string, isPortWildcard: boolean) {
+    this._scheme = scheme;
+    this._isSchemeWildcard = isSchemeWildcard;
+    this._host = host;
+    this._isDomainWildcard = isDomainWildcard;
+    this._isSubdomainWildcard = isSubdomainWildcard;
+    this._port = port;
+    this._isPortWildcard = isPortWildcard;
+    this._host_parts = this._host.split('.').reverse();
+    this._implicitPort = this._scheme === 'https' ? '443' : (this._scheme === 'http' ? '80' : '');
+    this._normalizedOrigin = `${this._isSchemeWildcard ? '*' : this._scheme}://${this._isSubdomainWildcard ? '[*.]' : ''}${this._isDomainWildcard ? '*' : this._host}${this._isPortWildcard ? ':*' : this._port ? `:${this._port}` : ''}`;
+  }
+
+  get scheme() {
+    return this._scheme;
+  }
+
+  get host() {
+    return this._host;
+  }
+
+  get port() {
+    return this._port;
+  }
+
+  get isSchemeWildcard() {
+    return this._isSchemeWildcard;
+  }
+
+  get isDomainWildcard() {
+    return this._isDomainWildcard;
+  }
+
+  get isSubdomainWildcard() {
+    return this._isSubdomainWildcard;
+  }
+
+  get isPortWildcard() {
+    return this._isPortWildcard;
+  }
+
+  get normalizedOrigin() {
+    return this._normalizedOrigin;
+  }
+
+  matches(url: string): boolean {
+    const urlObj = new URL(url);
+    const urlScheme = urlObj.protocol.replace(':', '');
+    if (!this._isSchemeWildcard && this._scheme !== urlScheme)
+      return false;
+
+    let urlPort = urlObj.port;
+    if (urlPort === '')
+      urlPort = urlScheme === 'https' ? '443' : (urlScheme === 'http' ? '80' : '');
+    let patternPort = this._port;
+    if (patternPort === '')
+      patternPort = this._implicitPort;
+
+    if (!this._isPortWildcard && patternPort !== urlPort)
+      return false;
+
+    const urlHostParts = urlObj.hostname.split('.').reverse();
+
+    if (this._isDomainWildcard)
+      return true;
+
+    if (this._host_parts.length > urlHostParts.length)
+      return false;
+
+    for (let i = 0; i < this._host_parts.length; i++) {
+      if (this._host_parts[i] !== '*' && this._host_parts[i] !== urlHostParts[i])
+        return false;
+    }
+
+    if (this._host_parts.length < urlHostParts.length)
+      return this._isSubdomainWildcard;
+
+    return true;
+  }
+
+  static fromString(pattern: string, defaultScheme: string = 'https') {
+
+    let restPattern = pattern;
+    let scheme = '';
+    let host = '';
+    let port = '';
+    let isSchemeWildcard = false;
+    let isDomainWildcard = false;
+    let isSubdomainWildcard = false;
+    let isPortWildcard = false;
+
+    const schemeIndex = pattern.indexOf('://');
+    if (schemeIndex !== -1) {
+      scheme = restPattern.substring(0, schemeIndex);
+      restPattern = restPattern.substring(schemeIndex + 3);
+    } else {
+      scheme = defaultScheme;
+    }
+    // skip userinfo
+    const userInfoIndex = restPattern.indexOf('@');
+    if (userInfoIndex !== -1)
+      restPattern = restPattern.substring(schemeIndex + 1);
+
+    isSchemeWildcard = scheme === '*';
+    isSubdomainWildcard = restPattern.startsWith('[*.]');
+    if (isSubdomainWildcard)
+      restPattern = restPattern.substring(4);
+
+    // literal ipv6 address
+    if (restPattern.startsWith('[')) {
+      const closingBracketIndex = restPattern.indexOf(']');
+      if (closingBracketIndex === -1)
+        return undefined;
+      host = restPattern.substring(1, closingBracketIndex);
+      restPattern = restPattern.substring(closingBracketIndex + 1);
+    } else {
+      // ipv4 or domain
+      const slashIndex = restPattern.indexOf('/');
+      const portIndex = restPattern.indexOf(':');
+      host = restPattern;
+      if (slashIndex !== -1 && (portIndex === -1 || slashIndex < portIndex)) {
+        host = restPattern.substring(0, slashIndex);
+        restPattern = restPattern.substring(slashIndex);
+      } else if (portIndex !== -1) {
+        host = restPattern.substring(0, portIndex);
+        restPattern = restPattern.substring(portIndex);
+      } else {
+        restPattern = '';
+      }
+    }
+    if (host === '*')
+      isDomainWildcard = true;
+
+    const portIndex = restPattern.indexOf(':');
+    if (portIndex !== -1) {
+      if (restPattern.startsWith(':*')) {
+        isPortWildcard = true;
+        port = '*';
+        restPattern = restPattern.substring(2);
+        if (!restPattern.startsWith('/') || restPattern === '')
+          return undefined;
+      } else {
+        const slashIndex = restPattern.indexOf('/');
+        if (slashIndex !== -1) {
+          port = restPattern.substring(1, slashIndex);
+          restPattern = restPattern.substring(slashIndex);
+        } else {
+          port = restPattern.substring(1);
+          restPattern = '';
+        }
+      }
+    }
+    return new Pattern(scheme, isSchemeWildcard, host, isDomainWildcard, isSubdomainWildcard, port, isPortWildcard);
+  }
+
 }
