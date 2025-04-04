@@ -200,6 +200,29 @@ Examples:
     Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
 
 program
+    .command('list')
+    .description('List browsers used by this installation of Playwright')
+    .option('--all', 'List all browsers used by any Playwright installation.')
+    .action(async (options: { all?: boolean }) => {
+      await registry.list(!!options.all).then(browsersInfo => {
+        for (const info of browsersInfo) {
+          const whichInstanceLog = ` (${info.currentInstance ? 'CURRENT' : 'OTHER'})`;
+          console.log(`Playwright${options.all ? whichInstanceLog : ''}: ${info.target}`);
+
+          for (const browser of info.browsers) {
+            console.log(`  Browser: ${browser.name}`);
+            console.log(`    Version: ${browser.version}`);
+            console.log(`    Location: ${browser.dir}`);
+            console.log(`    Installation completed: ${browser.installationCompleted}`);
+            console.log(``);
+          }
+          console.log(``);
+          console.log(``);
+        }
+      }).catch(logErrorAndExit);
+    });
+
+program
     .command('uninstall')
     .description('Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
     .option('--all', 'Removes all browsers used by any Playwright installation from the system.')
