@@ -695,7 +695,7 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: C
     },
   };
 
-  // TODO: unify ensureBuiltins and platformOriginals
+  // TODO: unify Builtins and platformOriginals
   const clock = new ClockController(embedder);
   const api = createApi(clock, originals.bound);
   return { clock, api, originals: originals.raw };

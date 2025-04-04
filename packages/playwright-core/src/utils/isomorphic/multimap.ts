@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+import { builtins } from './builtins';
+
+import type { Builtins } from './builtins';
+
 export class MultiMap<K, V> {
-  private _map: Map<K, V[]>;
+  private _map: Builtins.Map<K, V[]>;
 
   constructor() {
-    this._map = new Map<K, V[]>();
+    this._map = new (builtins().Map)<K, V[]>();
   }
 
   set(key: K, value: V) {

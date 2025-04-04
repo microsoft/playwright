@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import { builtins } from './builtins';
 import { monotonicTime } from './time';
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
-  let timer: NodeJS.Timeout | undefined;
+  let timer: number | undefined;
   return Promise.race([
     cb().then(result => {
       return { result, timedOut: false };
@@ -25,10 +26,10 @@ export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: num
     new Promise<{ timedOut: true }>(resolve => {
       const kMaxDeadline = 2147483647; // 2^31-1
       const timeout = (deadline || kMaxDeadline) - monotonicTime();
-      timer = setTimeout(() => resolve({ timedOut: true }), timeout);
+      timer = builtins().setTimeout(() => resolve({ timedOut: true }), timeout);
     }),
   ]).finally(() => {
-    clearTimeout(timer);
+    builtins().clearTimeout(timer);
   });
 }
 
@@ -49,7 +50,7 @@ export async function pollAgainstDeadline<T>(callback: () => Promise<{ continueP
     const interval = pollIntervals!.shift() ?? lastPollInterval;
     if (deadline && deadline <= monotonicTime() + interval)
       break;
-    await new Promise(x => setTimeout(x, interval));
+    await new Promise(x => builtins().setTimeout(x, interval));
   }
   return { timedOut: true, result: lastResult };
 }
