@@ -16,11 +16,11 @@
 
 import path from 'path';
 
-import { getPackageManagerExecCommand, MultiMap, parseErrorStack } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, parseErrorStack } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
-import { ansiRegex, loadCodeFrame, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
+import { ansiRegex, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
@@ -195,7 +195,7 @@ export class TerminalReporter implements ReporterV2 {
     return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ didNotRun, skipped, expected, warnings, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
+  protected generateSummaryMessage({ didNotRun, skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(this.screen.colors.red(`  ${unexpected.length} failed`));
@@ -211,11 +211,6 @@ export class TerminalReporter implements ReporterV2 {
       tokens.push(this.screen.colors.yellow(`  ${flaky.length} flaky`));
       for (const test of flaky)
         tokens.push(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '    ' })));
-    }
-    if (warnings) {
-      const warningsTitle = warnings === 1 ? '1 warning' : `${warnings} warnings`;
-      // TODO: Remove hint when setting is enabled
-      tokens.push(this.screen.colors.yellow(`  ${warningsTitle}. Run with "printAllWarnings: true" to see them.`));
     }
     if (skipped)
       tokens.push(this.screen.colors.yellow(`  ${skipped} skipped`));
@@ -287,22 +282,16 @@ export class TerminalReporter implements ReporterV2 {
   async epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    const sourceCache = new Map<string, string>();
     if (full && summary.failuresToPrint.length && !this._omitFailures)
-      await this._printFailures(summary.failuresToPrint, sourceCache);
-    if (full && summary.testToUnprintedWarnings.length > 0)
-      await this._printRemainingWarnings(summary.testToUnprintedWarnings, sourceCache);
+      this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
     this._printSummary(summaryMessage);
   }
 
-  private async _printFailures(failures: TestCase[], sourceCache: Map<string, string>) {
-    const testIdToWarnings = await buildFailuresToWarnings(this.screen, this.config, failures, sourceCache);
-
+  private _printFailures(failures: TestCase[]) {
     console.log('');
     failures.forEach((test, index) => {
-      const warnings = testIdToWarnings.get(test.id);
-      console.log(formatFailure(this.screen, this.config, test, index + 1, warnings));
+      console.log(formatFailure(this.screen, this.config, test, index + 1));
     });
   }
 
@@ -313,15 +302,6 @@ export class TerminalReporter implements ReporterV2 {
     });
     if (slowTests.length)
       console.log(this.screen.colors.yellow('  Consider running tests from slow files in parallel, see https://playwright.dev/docs/test-parallel.'));
-  }
-
-  /**
-   * Print warnings that were not printed as part of printing failures.
-   */
-  private async _printRemainingWarnings(testToUnprintedWarnings: Array<{ test: TestCase, warnings: TestAnnotation[] }>, sourceCache: Map<string, string>) {
-    const warningMessages = await Promise.all(testToUnprintedWarnings.map(({ test, warnings }, i) => formatTestWarning(this.screen, this.config, warnings, sourceCache, { test, index: i + 1 })));
-    if (warningMessages.length > 0)
-      console.log(`${warningMessages.join('\n')}\n`);
   }
 
   private _printSummary(summary: string) {
@@ -350,13 +330,12 @@ export class TerminalReporter implements ReporterV2 {
   }
 }
 
-export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number, warnings?: { testWarning?: string, resultWarnings?: Array<string | undefined> }): string {
+export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number): string {
   const lines: string[] = [];
   const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error' });
   lines.push(screen.colors.red(header));
-  for (let i = 0; i < test.results.length; i++) {
-    const result = test.results[i];
-    const resultWarning = warnings?.resultWarnings?.[i];
+  for (const result of test.results) {
+    const warnings = [...result.annotations, ...test.annotations].filter(a => a.type === 'warning');
     const resultLines: string[] = [];
     const errors = formatResultFailure(screen, test, result, '    ');
     if (!errors.length)
@@ -366,12 +345,10 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
       resultLines.push(screen.colors.gray(separator(screen, `    Retry #${result.retry}`)));
     }
     resultLines.push(...errors.map(error => '\n' + error.message));
-    if (resultWarning) {
+    if (warnings.length) {
       resultLines.push('');
-      resultLines.push(resultWarning);
+      resultLines.push(...formatTestWarning(screen, config, test, warnings));
     }
-    if (result.attachments.length > 0)
-      resultLines.push('');
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
       if (attachment.name.startsWith('_prompt') && attachment.path) {
@@ -408,81 +385,30 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
       }
       resultLines.push(screen.colors.cyan(separator(screen, '   ')));
     }
-    if (warnings?.testWarning) {
-      resultLines.push('');
-      // TODO: Rename
-      resultLines.push(screen.colors.yellow(separator(screen, `    Test warnings:`)));
-      resultLines.push('');
-      resultLines.push(warnings.testWarning);
-    }
     lines.push(...resultLines);
   }
   lines.push('');
   return lines.join('\n');
 }
 
-export async function formatTestWarning(screen: Screen, config: FullConfig, warnings: TestAnnotation[], sourceCache: Map<string, string>, headerInfo: { test: TestCase, index: number } | undefined = undefined): Promise<string> {
-  const encounteredWarnings = new MultiMap<string, Location | undefined>();
-  for (const annotation of warnings) {
-    if (annotation.description === undefined)
-      continue;
-    encounteredWarnings.set(annotation.description, annotation.location);
-  }
-
-  let testHeader = '';
-  if (headerInfo)
-    testHeader = `\n${formatTestHeader(screen, config, headerInfo.test, { indent: '  ', index: headerInfo.index })}\n\n`;
-
-  const codeFrameIndent = '    ';
-
-  const groupedWarnings = [...encounteredWarnings.keys()].map(description => {
-    const locations = encounteredWarnings.get(description);
-
-    // Sort warnings by location inside of each category
-    locations.sort((a, b) => {
-      if (!a)
-        return 1;
-      if (!b)
-        return -1;
-      if (a.line !== b.line)
-        return a.line - b.line;
-      if (a.column !== b.column)
-        return a.column - b.column;
-      return 0;
-    });
-
-    return { description, locations };
+export function formatTestWarning(screen: Screen, config: FullConfig, test: TestCase, warnings: TestAnnotation[]): string[] {
+  warnings.sort((a, b) => {
+    if (!a || !a.location)
+      return 1;
+    if (!b || !b.location)
+      return -1;
+    if (a.location.line !== b.location.line)
+      return a.location.line - b.location.line;
+    if (a.location.column !== b.location.column)
+      return a.location.column - b.location.column;
+    return 0;
   });
 
-  const warningMessages = await Promise.all(groupedWarnings.map(async ({ description, locations }) => {
-    const renderedCodeFrames = await Promise.all(locations.flatMap(location => !!location ? loadCodeFrame(location, sourceCache, { highlightCode: true }) : []));
-    const indentedCodeFrames = renderedCodeFrames.map(f => f.split('\n').map(line => `${codeFrameIndent}${line}`).join('\n'));
-
-    const warningCount = locations.length > 1 ? ` (x${locations.length})` : '';
-    const allFrames = renderedCodeFrames.length > 0 ? `\n\n${indentedCodeFrames.join('\n\n')}` : '';
-
-    return `    ${terminalScreen.colors.yellow(`Warning${warningCount}: ${description}`)}${allFrames}`;
-  }));
-
-  return `${testHeader}${warningMessages.join('\n\n')}`;
-}
-
-async function buildFailuresToWarnings(screen: Screen, config: FullConfig, failures: TestCase[], sourceCache: Map<string, string>): Promise<Map<string, { testWarning?: string, resultWarnings?: Array<string | undefined> }>> {
-  const prebuiltWarnings = await Promise.all(failures.map(async test => {
-    const staticWarnings = test.annotations.filter(a => a.type === 'warning');
-
-    const renderedStaticWarnings = staticWarnings.length > 0 ? formatTestWarning(screen, config, staticWarnings, sourceCache) : undefined;
-    const renderedResultWarnings = test.results.map(result => {
-      const warnings = result.annotations.filter(a => a.type === 'warning');
-      return warnings.length > 0 ? formatTestWarning(screen, config, warnings, sourceCache) : undefined;
-    });
-
-    const [testWarning, ...resultWarnings] = await Promise.all([renderedStaticWarnings, ...renderedResultWarnings] as const);
-
-    return [test.id, { testWarning, resultWarnings }] as const;
-  }));
-
-  return new Map(prebuiltWarnings);
+  return warnings.filter(w => !!w.description).map(w => {
+    // Location should always exist on warnings
+    const location = !!w.location ? `:${w.location.line}:${w.location.column}` : '';
+    return `${screen.colors.yellow(`    Warning: ${relativeTestPath(screen, config, test)}${location}: ${w.description}`)}`;
+  });
 }
 
 export function formatRetry(screen: Screen, result: TestResult) {
@@ -552,6 +478,28 @@ function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, ste
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
   return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
+
+// type IncludeLocationRequest = { type: 'test' } | { type: 'external', location: Location } | { type: 'none' };
+
+// function formatTestTitlePath(screen: Screen, config: FullConfig, test: TestCase, includeLocation: IncludeLocationRequest): string {
+//   const [, projectName, , ...titles] = test.titlePath();
+//   let location: Location | undefined;
+//   switch (includeLocation.type) {
+//     case 'test':
+//       location = test.location;
+//       break;
+//     case 'external':
+//       location = includeLocation.location;
+//       break;
+//     case 'none':
+//       location = undefined;
+//       break;
+//   }
+
+//   let locationString = relativeTestPath(screen, config, test);
+//   if (location)
+//     locationString += `${relativeTestPath(screen, config, test)}:${location.line}:${location.column}`;
+// }
 
 export function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
   const title = formatTestTitle(screen, config, test);
