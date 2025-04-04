@@ -17,6 +17,17 @@
 import { stripVTControlCharacters } from 'node:util';
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
+import type { Locator } from '@playwright/test';
+import React from 'react';
+
+declare global {
+  namespace PlaywrightTest {
+    interface Matchers<R> {
+      toHaveCSS(name: string, value: string | RegExp, options?: { timeout?: number, styles?: React.CSSProperties }): Promise<R>;
+      toHaveCSS(styles: React.CSSProperties, options?: { timeout?: number }): Promise<R>;
+    }
+  }
+}
 
 test.describe('toHaveCount', () => {
   test('toHaveCount pass', async ({ page }) => {
@@ -392,6 +403,96 @@ test.describe('toHaveCSS', () => {
     await page.setContent('<div id=node style="--custom-color-property:#FF00FF;">Text content</div>');
     const locator = page.locator('#node');
     await expect(locator).toHaveCSS('--custom-color-property', '#FF00FF');
+  });
+
+  test('pass with CSSProperties object', async ({ page }) => {
+    await page.setContent('<div id=node style="color: rgb(255, 0, 0); background-color: rgb(0, 0, 255); font-size: 18px">Text content</div>');
+    const locator = page.locator('#node');
+    const styles: React.CSSProperties = {
+      color: 'rgb(255, 0, 0)',
+      backgroundColor: 'rgb(0, 0, 255)',
+      fontSize: '18px'
+    };
+    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { styles });
+  });
+
+  test('pass with CSSProperties object and custom properties', async ({ page }) => {
+    await page.setContent('<div id=node style="--custom-color-property:#FF00FF; --custom-size: 20px;">Text content</div>');
+    const locator = page.locator('#node');
+    const styles: React.CSSProperties = {
+      '--custom-color-property': '#FF00FF',
+      '--custom-size': '20px'
+    } as React.CSSProperties;
+    await expect(locator).toHaveCSS('--custom-color-property', '#FF00FF', { styles });
+  });
+
+  test('fail with CSSProperties object', async ({ page }) => {
+    await page.setContent('<div id=node style="color: rgb(255, 0, 0); background-color: rgb(0, 0, 0)">Text content</div>');
+    const locator = page.locator('#node');
+    const styles: React.CSSProperties = {
+      color: 'rgb(0, 0, 0)',
+      backgroundColor: 'rgb(255, 255, 255)'
+    };
+    const error = await expect(locator).toHaveCSS('color', 'rgb(0, 0, 0)', { styles, timeout: 500 }).catch(e => e);
+    expect(error.message).toContain('toHaveCSS with timeout 500ms');
+  });
+
+  test('pass with CSSProperties object and computed styles', async ({ page }) => {
+    await page.setContent(`
+      <style>
+        #node {
+          color: rgb(255, 0, 0);
+          background-color: rgb(0, 0, 255);
+          font-size: 18px;
+        }
+      </style>
+      <div id=node>Text content</div>
+    `);
+    const locator = page.locator('#node');
+    const styles: React.CSSProperties = {
+      color: 'rgb(255, 0, 0)',
+      backgroundColor: 'rgb(0, 0, 255)',
+      fontSize: '18px'
+    };
+    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { styles });
+  });
+
+  test('pass with CSSProperties object and inherited styles', async ({ page }) => {
+    await page.setContent(`
+      <style>
+        body {
+          color: rgb(255, 0, 0);
+          font-size: 18px;
+        }
+      </style>
+      <div id=node>Text content</div>
+    `);
+    const locator = page.locator('#node');
+    const styles: React.CSSProperties = {
+      color: 'rgb(255, 0, 0)',
+      fontSize: '18px'
+    };
+    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { styles });
+  });
+
+  test('pass with CSSProperties object and media queries', async ({ page }) => {
+    await page.setContent(`
+      <style>
+        @media (min-width: 100px) {
+          #node {
+            color: rgb(255, 0, 0);
+            background-color: rgb(0, 0, 255);
+          }
+        }
+      </style>
+      <div id=node>Text content</div>
+    `);
+    const locator = page.locator('#node');
+    const styles: React.CSSProperties = {
+      color: 'rgb(255, 0, 0)',
+      backgroundColor: 'rgb(0, 0, 255)'
+    };
+    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { styles });
   });
 });
 

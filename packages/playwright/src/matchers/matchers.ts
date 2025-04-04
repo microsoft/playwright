@@ -30,6 +30,7 @@ import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
 import type { APIResponse, Locator, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
+import React from 'react';
 
 export type ExpectMatcherStateInternal = ExpectMatcherState & { _stepInfo?: TestStepInfoImpl };
 
@@ -284,12 +285,29 @@ export function toHaveCSS(
   locator: LocatorEx,
   name: string,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options?: { timeout?: number, styles?: React.CSSProperties },
 ) {
-  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
-  }, expected, options);
+  if (options?.styles) {
+    const styles = options.styles;
+    return toEqual.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+      const promises = Object.entries(styles).map(([styleName, value]) => {
+        const expectedText = serializeExpectedTextValues([String(value)]);
+        return locator._expect('to.have.css', { expressionArg: styleName, expectedText, isNot, timeout });
+      });
+      const results = await Promise.all(promises);
+      const matches = results.every(r => r.matches);
+      if (!matches) {
+        const received = results.map(r => r.received).join(', ');
+        return { matches: false, received };
+      }
+      return { matches: true };
+    }, styles, { timeout: options.timeout })
+  } else {
+    return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+      const expectedText = serializeExpectedTextValues([expected]);
+      return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
+    }, expected, options)
+  }
 }
 
 export function toHaveId(
@@ -440,7 +458,7 @@ export async function toPass(
   const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
 
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
-  const result = await pollAgainstDeadline<Error|undefined>(async () => {
+  const result = await pollAgainstDeadline<Error | undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
     try {
