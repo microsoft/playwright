@@ -17,7 +17,7 @@
 import { SdkObject } from './instrumentation';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { isUnderTest } from '../utils';
-import { ensureBuiltins } from '../utils/isomorphic/builtins';
+import { builtins } from '../utils/isomorphic/builtins';
 import { source } from '../utils/isomorphic/utilityScriptSerializers';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
@@ -46,7 +46,7 @@ export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
 export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>;
 
-const utilityScriptSerializers = source(ensureBuiltins(globalThis));
+const utilityScriptSerializers = source(builtins());
 export const parseEvaluationResultValue = utilityScriptSerializers.parseEvaluationResultValue;
 export const serializeAsCallArgument = utilityScriptSerializers.serializeAsCallArgument;
 

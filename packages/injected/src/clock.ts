@@ -10,7 +10,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { ensureBuiltins } from '@isomorphic/builtins';
+import { builtins } from '@isomorphic/builtins';
 
 import type { Builtins } from '@isomorphic/builtins';
 
@@ -86,8 +86,8 @@ export class ClockController {
   private _realTime: { startTicks: EmbedderTicks, lastSyncTicks: EmbedderTicks } | undefined;
   private _currentRealTimeTimer: { callAt: Ticks, dispose: () => void } | undefined;
 
-  constructor(builtins: Builtins, embedder: Embedder) {
-    this._timers = new builtins.Map();
+  constructor(embedder: Embedder) {
+    this._timers = new (builtins().Map)();
     this._now = { time: asWallTime(0), isFixedTime: false, ticks: 0 as Ticks, origin: asWallTime(-1) };
     this._embedder = embedder;
   }
@@ -696,7 +696,7 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: C
   };
 
   // TODO: unify ensureBuiltins and platformOriginals
-  const clock = new ClockController(ensureBuiltins(globalObject as any), embedder);
+  const clock = new ClockController(embedder);
   const api = createApi(clock, originals.bound);
   return { clock, api, originals: originals.raw };
 }
