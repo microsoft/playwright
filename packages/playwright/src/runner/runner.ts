@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import { MultiMap } from 'playwright-core/lib/utils';
-
 import { LastRunReporter } from './lastRun';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
@@ -26,11 +24,7 @@ import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { terminalScreen } from '../reporters/base';
 import { InternalReporter } from '../reporters/internalReporter';
 import { affectedTestFiles } from '../transform/compilationCache';
-import { formatTestHeader } from '../reporters/base';
-import { loadCodeFrame } from '../util';
 
-import type { TestAnnotation, Location } from '../../types/test';
-import type { TestCase } from '../common/test';
 import type { FullResult, TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 
@@ -141,82 +135,5 @@ export class Runner {
       createClearCacheTask(this._config),
     ]);
     return { status };
-  }
-
-  async printWarnings(lastRun: LastRunReporter) {
-    const reporter = new InternalReporter([createErrorCollectingReporter(terminalScreen, true)]);
-    const testRun = new TestRun(this._config, reporter);
-    const status = await runTasks(testRun, [
-      ...createPluginSetupTasks(this._config),
-      createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false })
-    ]);
-
-    const tests = testRun.rootSuite?.allTests() ?? [];
-    const testsMap = new Map(tests.map(test => [test.id, test]));
-
-    const lastRunInfo = await lastRun.runInfo();
-    const knownWarnings = lastRunInfo?.warningTests ?? {};
-
-    const testToWarnings = Object.entries(knownWarnings).flatMap(([id, warnings]) => {
-      const test = testsMap.get(id);
-      if (!test)
-        return [];
-
-      return { test, warnings };
-    });
-
-    const sourceCache = new Map<string, string>();
-
-    const warningMessages = await Promise.all(testToWarnings.map(({ test, warnings }, i) => this._buildWarning(test, warnings, i + 1, sourceCache)));
-    if (warningMessages.length > 0) {
-      // eslint-disable-next-line no-console
-      console.log(`${warningMessages.join('\n')}\n`);
-    }
-
-    return { status };
-  }
-
-  private async _buildWarning(test: TestCase, warnings: TestAnnotation[], renderIndex: number, sourceCache: Map<string, string>): Promise<string> {
-    const encounteredWarnings = new MultiMap<string, Location | undefined>();
-    for (const annotation of warnings) {
-      if (annotation.description === undefined)
-        continue;
-      encounteredWarnings.set(annotation.description, annotation.location);
-    }
-
-    const testHeader = formatTestHeader(terminalScreen, this._config.config, test, { indent: '  ', index: renderIndex });
-
-    const codeFrameIndent = '    ';
-
-    const groupedWarnings = [...encounteredWarnings.keys()].map(description => {
-      const locations = encounteredWarnings.get(description);
-
-      // Sort warnings by location inside of each category
-      locations.sort((a, b) => {
-        if (!a)
-          return 1;
-        if (!b)
-          return -1;
-        if (a.line !== b.line)
-          return a.line - b.line;
-        if (a.column !== b.column)
-          return a.column - b.column;
-        return 0;
-      });
-
-      return { description, locations };
-    });
-
-    const warningMessages = await Promise.all(groupedWarnings.map(async ({ description, locations }) => {
-      const renderedCodeFrames = await Promise.all(locations.flatMap(location => !!location ? loadCodeFrame(location, sourceCache, { highlightCode: true }) : []));
-      const indentedCodeFrames = renderedCodeFrames.map(f => f.split('\n').map(line => `${codeFrameIndent}${line}`).join('\n'));
-
-      const warningCount = locations.length > 1 ? ` (x${locations.length})` : '';
-      const allFrames = renderedCodeFrames.length > 0 ? `\n\n${indentedCodeFrames.join('\n\n')}` : '';
-
-      return `    ${terminalScreen.colors.yellow(`Warning${warningCount}: ${description}`)}${allFrames}`;
-    }));
-
-    return `\n${testHeader}\n\n${warningMessages.join('\n\n')}`;
   }
 }

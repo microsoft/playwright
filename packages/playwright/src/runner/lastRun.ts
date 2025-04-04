@@ -22,22 +22,15 @@ import { filterProjects } from './projectUtils';
 import type { FullResult, Suite } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
-import type { TestAnnotation } from 'packages/playwright-test';
-
-type WarningAnnotation = Omit<TestAnnotation, 'type'> & { type: 'warning' };
 
 type LastRunInfo = {
   status: FullResult['status'];
   failedTests: string[];
-  warningTests: {
-    [id: string]: WarningAnnotation[];
-  };
 };
 
 export class LastRunReporter implements ReporterV2 {
   private _config: FullConfigInternal;
   private _lastRunFile: string | undefined;
-  private _lastRunInfo: LastRunInfo | undefined;
   private _suite: Suite | undefined;
 
   constructor(config: FullConfigInternal) {
@@ -47,31 +40,14 @@ export class LastRunReporter implements ReporterV2 {
       this._lastRunFile = path.join(project.project.outputDir, '.last-run.json');
   }
 
-  async runInfo() {
-    if (this._lastRunInfo)
-      return this._lastRunInfo;
-
+  async filterLastFailed() {
     if (!this._lastRunFile)
-      return undefined;
-
+      return;
     try {
-      return JSON.parse(await fs.promises.readFile(this._lastRunFile, 'utf8')) as LastRunInfo;
+      const lastRunInfo = JSON.parse(await fs.promises.readFile(this._lastRunFile, 'utf8')) as LastRunInfo;
+      this._config.lastFailedTestIdMatcher = id => lastRunInfo.failedTests.includes(id);
     } catch {
     }
-  }
-
-  async filterLastFailed() {
-    const runInfo = await this.runInfo();
-    if (!runInfo)
-      return;
-    this._config.lastFailedTestIdMatcher = id => runInfo.failedTests.includes(id);
-  }
-
-  async filterWarnings() {
-    const runInfo = await this.runInfo();
-    if (!runInfo)
-      return;
-    this._config.warningTestIdMatcher = id => id in runInfo.warningTests;
   }
 
   version(): 'v2' {
@@ -91,13 +67,7 @@ export class LastRunReporter implements ReporterV2 {
       return;
     await fs.promises.mkdir(path.dirname(this._lastRunFile), { recursive: true });
     const failedTests = this._suite?.allTests().filter(t => !t.ok()).map(t => t.id);
-    const warningTests: LastRunInfo['warningTests'] = {};
-    for (const test of this._suite?.allTests() ?? []) {
-      const warningAnnotations = [...test.annotations, ...test.results.flatMap(r => r.annotations)].filter(a => a.type === 'warning');
-      if (warningAnnotations.length > 0)
-        warningTests[test.id] = warningAnnotations as WarningAnnotation[];
-    }
-    const lastRunReport = JSON.stringify({ status: result.status, failedTests, warningTests }, undefined, 2);
+    const lastRunReport = JSON.stringify({ status: result.status, failedTests }, undefined, 2);
     await fs.promises.writeFile(this._lastRunFile, lastRunReport);
   }
 }
