@@ -19,34 +19,32 @@
   height: 100%;
   user-select: text;
   line-height: 24px;
-  margin-left: 10px;
   overflow: auto;
-}
 
-.network-request-details-url {
-  white-space: normal;
-  word-wrap: break-word;
-  margin-left: 10px;
-}
+  em {
+    margin: 10px
+  }
 
-.network-request-details-headers {
-  white-space: pre;
-  overflow: hidden;
-  margin-left: 10px;
-}
+  .network-details {
+    margin-bottom: 8px;
 
-.network-request-details-header {
-  margin: 3px 0;
-  font-weight: bold;
-}
+    summary {
+      font-weight: bold;
+      cursor: pointer;
+      background-color: var(--vscode-sideBar-background);
+      padding: 4px;
+    }
 
-.network-request-details-general {
-  white-space: pre;
-  margin-left: 10px;
-}
+    table {
+      white-space: pre-wrap;
+      margin-left: 12px;
+      word-break: break-word;
 
-.network-request-details-tab .cm-wrapper {
-  overflow: hidden;
+      td:first-of-type {
+        width: 200px;
+      }
+    }
+  }
 }
 
 .network-font-preview {
