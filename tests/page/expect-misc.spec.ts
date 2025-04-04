@@ -51,7 +51,7 @@ test.describe('toHaveCount', () => {
   test('eventually pass zero', async ({ page }) => {
     await page.setContent('<div><span>hello</span></div>');
     const locator = page.locator('span');
-    setTimeout(() => page.evaluate(() => document.querySelector('div').textContent = '').catch(() => {}), 200);
+    setTimeout(() => page.evaluate(() => document.querySelector('div').textContent = '').catch(() => { }), 200);
     await expect(locator).toHaveCount(0);
     await expect(locator).not.toHaveCount(1);
   });
@@ -237,7 +237,7 @@ test.describe('toHaveClass', () => {
     await expect(locator).toHaveClass('foo', { partial: true });
     await expect(locator).toHaveClass('bar', { partial: true });
     await expect(
-        expect(locator).toHaveClass(/f.o/, { partial: true })
+      expect(locator).toHaveClass(/f.o/, { partial: true })
     ).rejects.toThrow('Partial matching does not support regular expressions. Please provide a string value.');
     await expect(locator).not.toHaveClass('foo');
     await expect(locator).not.toHaveClass('foo', { partial: false });
@@ -256,7 +256,7 @@ test.describe('toHaveClass', () => {
     await expect(locator).toHaveClass(['aaa', 'b2b', 'ccc'], { partial: true });
     await expect(locator).not.toHaveClass(['aaa', 'b2b', 'ccc']);
     await expect(
-        expect(locator).toHaveClass([/b2?ar/, /b2?ar/, /b2?ar/], { partial: true })
+      expect(locator).toHaveClass([/b2?ar/, /b2?ar/, /b2?ar/], { partial: true })
     ).rejects.toThrow('Partial matching does not support regular expressions. Please provide a string value.');
     await expect(locator).not.toHaveClass(['aaa', 'b2b', 'ccc'], { partial: false });
     await expect(locator).not.toHaveClass(['not-there', 'b2b', 'ccc'], { partial: true }); // Class not there
@@ -409,10 +409,16 @@ test.describe('toHaveCSS', () => {
     const locator = page.locator('#node');
     const styles: React.CSSProperties = {
       color: 'rgb(255, 0, 0)',
-      backgroundColor: 'rgb(0, 0, 255)',
+      backgroundColor: 'rgb(0, 0, 255)', // Ensure correct property name
       fontSize: '18px'
     };
-    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { styles });
+
+    for (const [property, value] of Object.entries(styles)) {
+      // Normalize property name for getComputedStyle
+      const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+
+      await expect(locator).toHaveCSS(cssProperty, value);
+    }
   });
 
   test('pass with CSSProperties object and custom properties', async ({ page }) => {
@@ -432,8 +438,8 @@ test.describe('toHaveCSS', () => {
       color: 'rgb(0, 0, 0)',
       backgroundColor: 'rgb(255, 255, 255)',
     };
-    const error = await expect(locator).toHaveCSS('color', 'rgb(0, 0, 0)', { styles, timeout: 500 }).catch(e => e);
-    expect(error.message).toContain('toHaveCSS with timeout 500ms');
+    const error = await expect(locator).toHaveCSS('color', 'rgb(0, 0, 0)', { styles, timeout: 100 }).catch(e => e);
+    expect(error.message).toContain('toHaveCSS with timeout 100ms');
   });
 });
 

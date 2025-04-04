@@ -289,25 +289,21 @@ export function toHaveCSS(
 ) {
   if (options?.styles) {
     const styles = options.styles;
-    return toEqual.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
-      const promises = Object.entries(styles).map(([styleName, value]) => {
-        const expectedText = serializeExpectedTextValues([String(value)]);
-        return locator._expect('to.have.css', { expressionArg: styleName, expectedText, isNot, timeout });
-      });
-      const results = await Promise.all(promises);
-      const matches = results.every(r => r.matches);
-      if (!matches) {
-        const received = results.map(r => r.received).join(', ');
-        return { matches: false, received };
-      }
-      return { matches: true };
-    }, styles, { timeout: options.timeout });
-  } else {
-    return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = serializeExpectedTextValues([expected]);
-      return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
-    }, expected, options);
+    return toBeTruthy.call(this, 'toHaveCSS', locator, 'Locator', 'matching styles', '', async (isNot, timeout) => {
+      const results = await Promise.all(
+        Object.entries(styles).map(async ([styleName, value]) => {
+          const expectedText = serializeExpectedTextValues([String(value)]);
+          return locator._expect('to.have.css', { expressionArg: styleName, expectedText, isNot, timeout });
+        })
+      );
+      const allMatch = results.every(result => result.matches);
+      return { matches: allMatch, received: results.map(r => r.received) };
+    }, options);
   }
+  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = serializeExpectedTextValues([expected]);
+    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
+  }, expected, options);
 }
 
 export function toHaveId(
