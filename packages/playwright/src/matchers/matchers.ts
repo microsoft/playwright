@@ -16,6 +16,7 @@
 
 import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
+import React from 'react';
 
 import { callLogText, expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
@@ -30,7 +31,6 @@ import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
 import type { APIResponse, Locator, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
-import React from 'react';
 
 export type ExpectMatcherStateInternal = ExpectMatcherState & { _stepInfo?: TestStepInfoImpl };
 
@@ -301,12 +301,12 @@ export function toHaveCSS(
         return { matches: false, received };
       }
       return { matches: true };
-    }, styles, { timeout: options.timeout })
+    }, styles, { timeout: options.timeout });
   } else {
     return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
       return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
-    }, expected, options)
+    }, expected, options);
   }
 }
 
