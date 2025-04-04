@@ -19,7 +19,8 @@ import * as path from 'path';
 
 import { parseErrorStack } from 'playwright-core/lib/utils';
 
-import { loadCodeFrame, stripAnsiEscapes } from './util';
+import { stripAnsiEscapes } from './util';
+import { codeFrameColumns } from './transform/babelBundle';
 
 import type { TestInfo } from '../types/test';
 import type { MetadataWithCommitInfo } from './isomorphic/types';
@@ -86,9 +87,15 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
     const parsedError = error.stack ? parseErrorStack(error.stack, path.sep) : undefined;
     const inlineMessage = stripAnsiEscapes(parsedError?.message || error.message || '').split('\n')[0];
     const location = parsedError?.location || { file: testInfo.file, line: testInfo.line, column: testInfo.column };
-    const codeFrame = await loadCodeFrame(
-        location,
-        sourceCache,
+    const source = await loadSource(location.file, sourceCache);
+    const codeFrame = codeFrameColumns(
+        source,
+        {
+          start: {
+            line: location.line,
+            column: location.column
+          },
+        },
         {
           highlightCode: false,
           linesAbove: 100,
@@ -138,4 +145,14 @@ export async function attachErrorContext(testInfo: TestInfo, ariaSnapshot: strin
       pageSnapshot: ariaSnapshot,
     })),
   }, undefined);
+}
+
+async function loadSource(file: string, sourceCache: Map<string, string>) {
+  let source = sourceCache.get(file);
+  if (!source) {
+    // A mild race is Ok here.
+    source = await fs.readFile(file, 'utf8');
+    sourceCache.set(file, source);
+  }
+  return source;
 }

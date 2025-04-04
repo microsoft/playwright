@@ -69,7 +69,7 @@ class DotReporter extends TerminalReporter {
   override async onEnd(result: FullResult) {
     await super.onEnd(result);
     process.stdout.write('\n');
-    await this.epilogue(true);
+    this.epilogue(true);
   }
 }
 

@@ -58,7 +58,6 @@ export class FullConfigInternal {
   cliLastFailed?: boolean;
   testIdMatcher?: Matcher;
   lastFailedTestIdMatcher?: Matcher;
-  warningTestIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];

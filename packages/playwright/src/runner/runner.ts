@@ -48,11 +48,9 @@ export type FindRelatedTestFilesReport = {
 
 export class Runner {
   private _config: FullConfigInternal;
-  private _lastRun?: LastRunReporter;
 
-  constructor(config: FullConfigInternal, lastRun?: LastRunReporter) {
+  constructor(config: FullConfigInternal) {
     this._config = config;
-    this._lastRun = lastRun;
   }
 
   async listTestFiles(projectNames?: string[]): Promise<ConfigListFilesReport> {
@@ -81,7 +79,7 @@ export class Runner {
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
     const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
-    const lastRun = this._lastRun ?? new LastRunReporter(config);
+    const lastRun = new LastRunReporter(config);
     if (config.cliLastFailed)
       await lastRun.filterLastFailed();
 

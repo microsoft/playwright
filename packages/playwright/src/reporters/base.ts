@@ -40,13 +40,11 @@ type TestSummary = {
   didNotRun: number;
   skipped: number;
   expected: number;
-  warnings: number;
   interrupted: TestCase[];
   unexpected: TestCase[];
   flaky: TestCase[];
   failuresToPrint: TestCase[];
   fatalErrors: TestError[];
-  testToUnprintedWarnings: Array<{ test: TestCase, warnings: TestAnnotation[] }>;
 };
 
 export type Screen = {
@@ -228,23 +226,12 @@ export class TerminalReporter implements ReporterV2 {
     let didNotRun = 0;
     let skipped = 0;
     let expected = 0;
-    let warningsCount = 0;
     const interrupted: TestCase[] = [];
     const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
     const flaky: TestCase[] = [];
-    const testToUnprintedWarnings: Array<{ test: TestCase, warnings: TestAnnotation[] }> = [];
 
     this.suite.allTests().forEach(test => {
-      warningsCount += [...test.annotations, ...test.results.flatMap(r => r.annotations)].filter(a => a.type === 'warning').length;
-
-      const passingResults = test.results.filter(r => r.errors.length === 0);
-      if (passingResults.length > 0) {
-        // We only have warnings to still display in passing results, as all warnings in failed results will have already been printed.
-        const warnings = [...test.annotations, ...passingResults.flatMap(r => r.annotations)].filter(a => a.type === 'warning');
-        testToUnprintedWarnings.push({ test, warnings });
-      }
-
       switch (test.outcome()) {
         case 'skipped': {
           if (test.results.some(result => result.status === 'interrupted')) {
@@ -269,17 +256,15 @@ export class TerminalReporter implements ReporterV2 {
       didNotRun,
       skipped,
       expected,
-      warnings: warningsCount,
       interrupted,
       unexpected,
       flaky,
       failuresToPrint,
       fatalErrors: this._fatalErrors,
-      testToUnprintedWarnings,
     };
   }
 
-  async epilogue(full: boolean) {
+  epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
     if (full && summary.failuresToPrint.length && !this._omitFailures)
@@ -478,28 +463,6 @@ function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, ste
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
   return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
-
-// type IncludeLocationRequest = { type: 'test' } | { type: 'external', location: Location } | { type: 'none' };
-
-// function formatTestTitlePath(screen: Screen, config: FullConfig, test: TestCase, includeLocation: IncludeLocationRequest): string {
-//   const [, projectName, , ...titles] = test.titlePath();
-//   let location: Location | undefined;
-//   switch (includeLocation.type) {
-//     case 'test':
-//       location = test.location;
-//       break;
-//     case 'external':
-//       location = includeLocation.location;
-//       break;
-//     case 'none':
-//       location = undefined;
-//       break;
-//   }
-
-//   let locationString = relativeTestPath(screen, config, test);
-//   if (location)
-//     locationString += `${relativeTestPath(screen, config, test)}:${location.line}:${location.column}`;
-// }
 
 export function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
   const title = formatTestTitle(screen, config, test);

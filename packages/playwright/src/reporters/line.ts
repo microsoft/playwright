@@ -113,7 +113,7 @@ class LineReporter extends TerminalReporter {
     if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
       process.stdout.write(`\u001B[1A\u001B[2K`);
     await super.onEnd(result);
-    await this.epilogue(false);
+    this.epilogue(false);
   }
 }
 
