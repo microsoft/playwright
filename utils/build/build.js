@@ -240,7 +240,7 @@ steps.push({
   shell: true,
 });
 
-// Run Babel.
+// Run esbuild.
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
@@ -250,13 +250,14 @@ for (const pkg of workspace.packages()) {
   steps.push({
     command: 'npx',
     args: [
-      'babel',
-      ...(watchMode ? ['-w'] : []),
-      ...(withSourceMaps ? ['--source-maps'] : []),
-      '--extensions', '.ts',
-      '--out-dir', quotePath(path.join(pkg.path, 'lib')),
-      quotePath(path.join(pkg.path, 'src')),
-    ],
+      'esbuild',
+      quotePath(path.join(pkg.path, 'src/**/*.ts')),
+      `--outdir=${quotePath(path.join(pkg.path, 'lib'))}`,
+      ...(withSourceMaps ? [`--sourcemap=linked`] : []),
+      ...(watchMode ? ['--watch=true'] : []),
+      '--platform=node',
+      '--format=cjs',
+      ],
     shell: true,
     concurrent: true,
   });
@@ -411,7 +412,7 @@ copyFiles.push({
   to: 'packages/playwright-core/lib',
 });
 
-// Babel doesn't touch JS files, so copy them manually.
+// esbuild doesn't touch JS files, so copy them manually.
 // For example: diff_match_patch.js
 copyFiles.push({
   files: 'packages/playwright-core/src/**/*.js',
@@ -420,7 +421,7 @@ copyFiles.push({
   ignored: ['**/.eslintrc.js', '**/injected/**/*']
 });
 
-// Sometimes we require JSON files that babel ignores.
+// Sometimes we require JSON files that esbuild ignores.
 // For example, deviceDescriptorsSource.json
 copyFiles.push({
   files: 'packages/playwright-core/src/**/*.json',
