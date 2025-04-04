@@ -65,18 +65,6 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   return frames;
 }
 
-export function filteredLocation(rawStack: RawStack): Location | undefined {
-  const frame = filteredStackTrace(rawStack)[0] as StackFrame | undefined;
-  if (!frame)
-    return undefined;
-  return {
-    file: frame.file,
-    line: frame.line,
-    column: frame.column
-  };
-}
-
-
 export function serializeError(error: Error | any): TestInfoErrorImpl {
   if (error instanceof Error)
     return filterStackTrace(error);

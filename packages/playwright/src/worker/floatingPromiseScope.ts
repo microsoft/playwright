@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
+import type { Location } from '../../types/test';
+
 export class FloatingPromiseScope {
-  readonly _floatingCalls: Set<Promise<any>> = new Set();
+  readonly _floatingCalls: Map<Promise<any>, Location | undefined> = new Map();
 
   /**
    * Enables a promise API call to be tracked by the test, alerting if unawaited.
    *
    * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
    */
-  wrapPromiseAPIResult<T>(promise: Promise<T>): Promise<T> {
+  wrapPromiseAPIResult<T>(promise: Promise<T>, location: Location | undefined): Promise<T> {
     if (process.env.PW_DISABLE_FLOATING_PROMISES_WARNING)
       return promise;
 
@@ -41,7 +43,7 @@ export class FloatingPromiseScope {
       }
     });
 
-    this._floatingCalls.add(promise);
+    this._floatingCalls.set(promise, location);
 
     return promiseProxy;
   }
@@ -52,5 +54,9 @@ export class FloatingPromiseScope {
 
   hasFloatingPromises(): boolean {
     return this._floatingCalls.size > 0;
+  }
+
+  floatingPromises(): Array<{ location: Location | undefined, promise: Promise<any> }> {
+    return Array.from(this._floatingCalls.entries()).map(([promise, location]) => ({ location, promise }));
   }
 }
