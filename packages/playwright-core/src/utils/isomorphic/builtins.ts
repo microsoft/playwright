@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-restricted-globals */
+
 // Make sure to update eslint.config.mjs when changing the list of builitins.
 export type Builtins = {
   setTimeout: Window['setTimeout'],
@@ -41,7 +43,8 @@ export namespace Builtins {
   export type Date = OriginalDate;
 }
 
-export function ensureBuiltins(global: typeof globalThis): Builtins {
+export function builtins(global?: typeof globalThis): Builtins {
+  global = global ?? globalThis;
   if (!(global as any)['__playwright_builtins__']) {
     const builtins: Builtins = {
       setTimeout: global.setTimeout?.bind(global),

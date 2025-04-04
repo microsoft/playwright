@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { builtins } from '@isomorphic/builtins';
 import { customCSSNames } from '@isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
@@ -35,7 +36,6 @@ type QueryContext = {
 };
 export type Selector = any; // Opaque selector type.
 export interface SelectorEvaluator {
-  readonly builtins: Builtins;
   query(context: QueryContext, selector: Selector): Element[];
   matches(element: Element, selector: Selector, context: QueryContext): boolean;
 }
@@ -47,7 +47,6 @@ export interface SelectorEngine {
 type QueryCache = Builtins.Map<any, { rest: any[], result: any }[]>;
 
 export class SelectorEvaluatorImpl implements SelectorEvaluator {
-  readonly builtins: Builtins;
   private _engines: Builtins.Map<string, SelectorEngine>;
   private _cacheQueryCSS: QueryCache;
   private _cacheMatches: QueryCache;
@@ -61,19 +60,18 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _scoreMap: Builtins.Map<Element, number> | undefined;
   private _retainCacheCounter = 0;
 
-  constructor(builtins: Builtins) {
-    this.builtins = builtins;
-    this._cacheText = new builtins.Map();
-    this._cacheQueryCSS = new builtins.Map();
-    this._cacheMatches = new builtins.Map();
-    this._cacheQuery = new builtins.Map();
-    this._cacheMatchesSimple = new builtins.Map();
-    this._cacheMatchesParents = new builtins.Map();
-    this._cacheCallMatches = new builtins.Map();
-    this._cacheCallQuery = new builtins.Map();
-    this._cacheQuerySimple = new builtins.Map();
+  constructor() {
+    this._cacheText = new (builtins().Map)();
+    this._cacheQueryCSS = new (builtins().Map)();
+    this._cacheMatches = new (builtins().Map)();
+    this._cacheQuery = new (builtins().Map)();
+    this._cacheMatchesSimple = new (builtins().Map)();
+    this._cacheMatchesParents = new (builtins().Map)();
+    this._cacheCallMatches = new (builtins().Map)();
+    this._cacheCallQuery = new (builtins().Map)();
+    this._cacheQuerySimple = new (builtins().Map)();
 
-    this._engines = new builtins.Map();
+    this._engines = new (builtins().Map)();
     this._engines.set('not', notEngine);
     this._engines.set('is', isEngine);
     this._engines.set('where', isEngine);
@@ -169,7 +167,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 
         // query() recursively calls itself, so we set up a new map for this particular query() call.
         const previousScoreMap = this._scoreMap;
-        this._scoreMap = new this.builtins.Map();
+        this._scoreMap = new (builtins().Map)();
         let elements = this._querySimple(context, selector.simples[selector.simples.length - 1].selector);
         elements = elements.filter(element => this._matchesParents(element, selector, selector.simples.length - 2, context));
         if (this._scoreMap.size) {
@@ -398,7 +396,7 @@ const isEngine: SelectorEngine = {
     let elements: Element[] = [];
     for (const arg of args)
       elements = elements.concat(evaluator.query(context, arg));
-    return args.length === 1 ? elements : sortInDOMOrder(evaluator.builtins, elements);
+    return args.length === 1 ? elements : sortInDOMOrder(elements);
   },
 };
 
@@ -553,10 +551,10 @@ function previousSiblingInContext(element: Element, context: QueryContext): Elem
   return element.previousElementSibling || undefined;
 }
 
-export function sortInDOMOrder(builtins: Builtins, elements: Iterable<Element>): Element[] {
+export function sortInDOMOrder(elements: Iterable<Element>): Element[] {
   type SortEntry = { children: Element[], taken: boolean };
 
-  const elementToEntry = new builtins.Map<Element, SortEntry>();
+  const elementToEntry = new (builtins().Map)<Element, SortEntry>();
   const roots: Element[] = [];
   const result: Element[] = [];
 
@@ -583,7 +581,7 @@ export function sortInDOMOrder(builtins: Builtins, elements: Iterable<Element>):
     if (entry.taken)
       result.push(element);
     if (entry.children.length > 1) {
-      const set = new builtins.Set(entry.children);
+      const set = new (builtins().Set)(entry.children);
       entry.children = [];
       let child = element.firstElementChild;
       while (child && entry.children.length < set.size) {

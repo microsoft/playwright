@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-import { ensureBuiltins } from '@isomorphic/builtins';
+import { builtins } from '@isomorphic/builtins';
 import { source } from '@isomorphic/utilityScriptSerializers';
-
-import type { Builtins } from '@isomorphic/builtins';
 
 export class UtilityScript {
   constructor(isUnderTest: boolean) {
-    // eslint-disable-next-line no-restricted-globals
-    this.builtins = ensureBuiltins(globalThis);
     if (isUnderTest) {
       // eslint-disable-next-line no-restricted-globals
-      (globalThis as any).builtins = this.builtins;
+      (globalThis as any).builtins = builtins();
     }
-    const result = source(this.builtins);
+    const result = source(builtins());
     this.serializeAsCallArgument = result.serializeAsCallArgument;
     this.parseEvaluationResultValue = result.parseEvaluationResultValue;
   }
 
-  readonly builtins: Builtins;
   readonly serializeAsCallArgument;
   readonly parseEvaluationResultValue;
 
@@ -43,7 +38,7 @@ export class UtilityScript {
     for (let i = 0; i < args.length; i++)
       parameters[i] = this.parseEvaluationResultValue(args[i], handles);
 
-    let result = this.builtins.eval(expression);
+    let result = builtins().eval(expression);
     if (isFunction === true) {
       result = result(...parameters);
     } else if (isFunction === false) {
