@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Location } from '../../types/test';
+import type { Location } from '../../types/test';
 
 export class FloatingPromiseScope {
   readonly _floatingCalls: Map<Promise<any>, Location | undefined> = new Map();
