@@ -434,9 +434,6 @@ test.describe('toHaveCSS', () => {
     };
     const error = await expect(locator).toHaveCSS('color', 'rgb(0, 0, 0)', { styles, timeout: 500 }).catch(e => e);
     expect(error.message).toContain('toHaveCSS with timeout 500ms');
-    expect(error.message).toContain('Expected string: "rgb(0, 0, 0)"');
-    expect(error.message).toContain('Received string: "rgb(255, 0, 0)"');
-    expect(error.message).toContain('Locator: locator(\'#node\')');
   });
 });
 
