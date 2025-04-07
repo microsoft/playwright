@@ -6,10 +6,10 @@ on:
     branches:
       - main
     paths:
-      - package.json
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
       - tests/bidi/**
+    types: [ labeled ]
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
