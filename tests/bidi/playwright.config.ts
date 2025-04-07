@@ -65,15 +65,25 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-const executablePath = process.env.BIDIPATH;
-if (executablePath && !process.env.TEST_WORKER_INDEX)
-  console.error(`Using executable at ${executablePath}`);
+type BrowserName = '_bidiChromium' | '_bidiFirefox';
+
+const getExecutablePath = (browserName: BrowserName) => {
+  if (browserName === '_bidiChromium')
+    return process.env.BIDI_CRPATH;
+  if (browserName === '_bidiFirefox')
+    return process.env.BIDI_FFPATH;
+};
+
 const browserToChannels = {
   '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
   '_bidiFirefox': ['bidi-firefox-nightly', 'bidi-firefox-beta', 'bidi-firefox-stable'],
 };
+
 for (const [key, channels] of Object.entries(browserToChannels)) {
   const browserName: any = key;
+  const executablePath = getExecutablePath(browserName);
+  if (executablePath && !process.env.TEST_WORKER_INDEX)
+    console.error(`Using executable at ${executablePath}`);
   for (const channel of channels) {
     const testIgnore: RegExp[] = [
       /library\/debug-controller/,
