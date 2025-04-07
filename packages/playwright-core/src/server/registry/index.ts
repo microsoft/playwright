@@ -918,7 +918,7 @@ export class Registry {
           return executablePath;
       }
       if (shouldThrow)
-        throw new Error(`Cannot find Firefox installation for channel '${name}' at the standard system paths or ${folder}`);
+        throw new Error(`Cannot find Firefox installation for channel '${name}' at the standard system paths.`);
       return undefined;
     };
     return {
