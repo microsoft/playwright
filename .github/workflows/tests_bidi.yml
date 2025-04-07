@@ -9,6 +9,7 @@ on:
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
       - tests/bidi/**
+    types: [ labeled ]
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
@@ -18,6 +19,7 @@ env:
 
 jobs:
   test_bidi:
+    if: (github.event_name == 'pull_request' && github.event.label.name == 'CQ-bidi') || github.event_name != 'pull_request'
     name: BiDi
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
