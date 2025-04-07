@@ -179,6 +179,10 @@ export class TeleReporterReceiver {
       this._onStepBegin(params.testId, params.resultId, params.step);
       return;
     }
+    if (method === 'onAttach') {
+      this._onAttach(params.testId, params.resultId, params.stepId, params.attachments);
+      return;
+    }
     if (method === 'onStepEnd') {
       this._onStepEnd(params.testId, params.resultId, params.step);
       return;
@@ -274,6 +278,17 @@ export class TeleReporterReceiver {
     step.duration = payload.duration;
     step.error = payload.error;
     this._reporter.onStepEnd?.(test, result, step);
+  }
+
+  private _onAttach(testId: string, resultId: string, stepId: string, attachments: JsonAttachment[]) {
+    const test = this._tests.get(testId)!;
+    const result = test.results.find(r => r._id === resultId)!;
+    result.attachments.push(...attachments.map(a => ({
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      body: a.base64 ? Buffer.from(a.base64, 'base64') : undefined,
+    })));
   }
 
   private _onError(error: reporterTypes.TestError) {

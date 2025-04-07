@@ -36,7 +36,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _emitterOptions: TeleReporterEmitterOptions;
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
-  private readonly _idSymbol = Symbol('id');
+  protected readonly _idSymbol = Symbol('id');
 
   constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
