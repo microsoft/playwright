@@ -486,5 +486,36 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('› passes @bar1 @bar2 (');
       expect(text).toContain('› passes @baz1 @baz2 (');
     });
+
+    test('should show warnings on failing tests', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fail', async ({ page }, testInfo) => {
+            testInfo.annotations.push({ type: 'warning', description: 'foo' });
+            expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+            throw new Error();
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+      expect(result.output).toContain('Warning: a.spec.ts: foo');
+      expect(result.output).toContain('Warning: a.spec.ts:5:41: This async call was not awaited by the end of the test.');
+    });
+
+    test('should not show warnings on passing tests', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('success', async ({ page }, testInfo) => {
+            testInfo.annotations.push({ type: 'warning', description: 'foo' });
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      expect(result.output).not.toContain('Warning: a.spec.ts: foo');
+    });
   });
 }
