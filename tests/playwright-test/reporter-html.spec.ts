@@ -900,6 +900,36 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(popup.url()).toBe(server.EMPTY_PAGE);
     });
 
+    test('should render warnings', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { timeout: 1500 };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('warning test', async ({ page }) => {
+            test.info().annotations.push({ type: 'issue', description: 'I am not interested in this test' });
+            test.info().annotations.push({ type: 'warning', description: 'This is some warning' });
+            await page.setContent('<div>A</div>');
+            expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+            throw new Error();
+            // Timeout to make sure the expect actually gets processed
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+
+      test.setTimeout(10000);
+
+      await showReport();
+      await page.click('text=warning test');
+      await expect(page.locator('.test-case-annotation').nth(0)).toHaveText('issue: I am not interested in this test');
+      await page.getByRole('button', { name: 'Warnings' }).click();
+      await expect(page.locator('.test-case-annotation').nth(1)).toContainText('a.test.js:7:41: This async call was not awaited by the end of the test.');
+      await expect(page.locator('.test-case-annotation').nth(2)).toHaveText('This is some warning');
+    });
+
     test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `

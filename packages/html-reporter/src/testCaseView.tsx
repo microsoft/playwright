@@ -52,7 +52,7 @@ export const TestCaseView: React.FC<{
     const annotations = [...test.annotations];
     if (test.results[selectedResultIndex])
       annotations.push(...test.results[selectedResultIndex].annotations);
-    return annotations.filter(annotation => !annotation.type.startsWith('_'));
+    return annotations.filter(annotation => !annotation.type.startsWith('_') && annotation.type !== 'warning');
   }, [test, selectedResultIndex]);
 
   return <div className='test-case-column vbox'>

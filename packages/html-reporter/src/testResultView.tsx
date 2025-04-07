@@ -27,6 +27,8 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import { CodeSnippet, TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
+import { CopyToClipboardContainer } from './copyToClipboard';
+import { linkifyText } from '@web/renderUtils';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
@@ -71,7 +73,7 @@ export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
 }> = ({ test, result }) => {
-  const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
+  const { screenshots, videos, traces, otherAttachments, diffs, errors, warnings, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const screenshotAnchors = [...screenshots].map(a => `attachment-${attachments.indexOf(a)}`);
@@ -82,7 +84,19 @@ export const TestResultView: React.FC<{
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
     const errors = classifyErrors(result.errors, diffs, result.attachments);
-    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
+    const warnings = result.annotations.filter(a => a.type === 'warning');
+    warnings.sort((a, b) => {
+      if (!a || !a.location)
+        return 1;
+      if (!b || !b.location)
+        return -1;
+      if (a.location.line !== b.location.line)
+        return a.location.line - b.location.line;
+      if (a.location.column !== b.location.column)
+        return a.location.column - b.location.column;
+      return 0;
+    });
+    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, warnings, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
 
   return <div className='test-result'>
@@ -91,6 +105,17 @@ export const TestResultView: React.FC<{
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
         return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} prompt={error.prompt}></TestErrorView>;
+      })}
+    </AutoChip>}
+    {!!warnings.length && <AutoChip header='Warnings' initialExpanded={false}>
+      {warnings.map(({ description, location }, index) => {
+        const title = location ? `${location.file}:${location.line}:${location.column}` : undefined;
+        const displayedDescription = description ?? 'Unknown';
+
+        return <div key={index} className='test-case-annotation'>
+          {title && <span className='test-result-warning-title'>{`${title}: `}</span>}
+          <CopyToClipboardContainer value={displayedDescription}>{linkifyText(displayedDescription)}</CopyToClipboardContainer>
+        </div>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
