@@ -37,12 +37,17 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
       if: matrix.channel == 'bidi-chromium'
-    - run: npx -y @puppeteer/browsers install firefox@nightly
-      if: matrix.channel == 'bidi-firefox-nightly'
+    - if: matrix.channel == 'bidi-firefox-nightly'
+      id: install_firefox
+      run: |
+        npx -y @puppeteer/browsers install firefox@nightly |\
+          awk 'END { $1=""; sub(/^ /,""); print "bidi_ffpath="$0 }' |\
+          tee -a $GITHUB_OUTPUT
     - name: Run tests
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: '1'
+        BIDI_FFPATH: ${{ steps.install_firefox.outputs.bidi_ffpath }}
     - name: Upload csv report to GitHub
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
