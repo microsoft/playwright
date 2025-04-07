@@ -942,6 +942,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test('should have link for opening HTML attachments in new tab', async ({ runInlineTest, page, showReport }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32281' });
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35489' });
+
       const result = await runInlineTest({
         'a.test.js': `
           import * as fs from 'fs/promises';
@@ -954,7 +957,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
             const attachmentFile = testInfo.outputPath('foo.html');
             await fs.writeFile(attachmentFile, '<h1>Hello World</h1>');
-            await testInfo.attach('foo.html', { path: attachmentFile, contentType: 'text/html' });
+            await testInfo.attach('foo.html', { path: attachmentFile });
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
@@ -977,6 +980,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
 
       await expect(fooTab.getByText('Hello World')).toBeVisible();
+      await page.pause()
     });
 
     test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest, showReport, page }, testInfo) => {

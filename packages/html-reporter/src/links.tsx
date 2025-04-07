@@ -84,7 +84,15 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
     {!attachment.path && (
       openInNewTab
-        ? <a href={URL.createObjectURL(new Blob([attachment.body!], { type: attachment.contentType }))} target='_blank' rel='noreferrer' onClick={e => e.stopPropagation()}>{attachment.name}</a>
+        ? (
+          <a
+            href={URL.createObjectURL(new Blob([attachment.body!], { type: attachment.contentType }))}
+            target='_blank' rel='noreferrer'
+            onClick={e => e.stopPropagation() /* dont expand the tree item */}
+          >
+            {attachment.name}
+          </a>
+        )
         : <span>{linkifyText(attachment.name)}</span>
     )}
   </span>} loadChildren={attachment.body ? () => {
