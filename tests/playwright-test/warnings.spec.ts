@@ -266,4 +266,26 @@ test.describe('await', () => {
       { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 12, column: 46 }) },
     ]);
   });
+
+  test('should dedupe warnings that occur at the same location', async ({ runInlineTest }) => {
+    const { exitCode, results } = await runInlineTest({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          for (let i = 0; i < 3; i++) {
+            expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+          }
+          expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+          await new Promise(f => setTimeout(f, 1000));
+        });
+      `
+    });
+
+    expect(exitCode).toBe(1);
+
+    expect(results[0].annotations).toEqual([
+      { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 5, column: 41 }) },
+      { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 7, column: 39 }) },
+    ]);
+  });
 });

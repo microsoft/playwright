@@ -435,7 +435,14 @@ export class WorkerMain extends ProcessRunner {
 
       // Only if failed, create warning if any of the async calls were not awaited in various stages.
       if (!process.env.PW_DISABLE_FLOATING_PROMISES_WARNING && testInfo._floatingPromiseScope.hasFloatingPromises()) {
-        testInfo.annotations.push(...testInfo._floatingPromiseScope.floatingPromises().map(({ location }) => ({
+        // Dedupe by location
+        const annotationLocations = new Map<string | undefined, Location | undefined>(testInfo._floatingPromiseScope.floatingPromises().map(
+            ({ location }) => {
+              const locationKey = location ? `${location.file}:${location.line}:${location.column}` : undefined;
+              return [locationKey, location];
+            }));
+
+        testInfo.annotations.push(...annotationLocations.values().map(location => ({
           type: 'warning', description: `This async call was not awaited by the end of the test. This can cause flakiness. It is recommended to run ESLint with "@typescript-eslint/no-floating-promises" to verify.`, location
         })));
         testInfo._floatingPromiseScope.clear();
