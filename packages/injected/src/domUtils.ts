@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-let browserNameForWorkarounds = '';
-export function setBrowserName(name: string) {
-  browserNameForWorkarounds = name;
+type GlobalOptions = {
+  browserNameForWorkarounds?: string;
+  inputFileRoleTextbox?: boolean;
+};
+let globalOptions: GlobalOptions = {};
+export function setGlobalOptions(options: GlobalOptions) {
+  globalOptions = options;
+}
+export function getGlobalOptions(): GlobalOptions {
+  return globalOptions;
 }
 
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {
@@ -83,7 +90,7 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
   // All the browser implement it, but WebKit has a bug which prevents us from using it:
   // https://bugs.webkit.org/show_bug.cgi?id=264733
   // @ts-ignore
-  if (Element.prototype.checkVisibility && browserNameForWorkarounds !== 'webkit') {
+  if (Element.prototype.checkVisibility && globalOptions.browserNameForWorkarounds !== 'webkit') {
     if (!element.checkVisibility())
       return false;
   } else {

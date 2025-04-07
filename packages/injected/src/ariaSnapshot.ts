@@ -16,7 +16,7 @@
 
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { getElementComputedStyle } from './domUtils';
+import { getElementComputedStyle, getGlobalOptions } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
@@ -174,7 +174,7 @@ function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean
     result.selected = roleUtils.getAriaSelected(element);
 
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-    if (element.type !== 'checkbox' && element.type !== 'radio')
+    if (element.type !== 'checkbox' && element.type !== 'radio' && (element.type !== 'file' || getGlobalOptions().inputFileRoleTextbox))
       result.children = [element.value];
   }
 
