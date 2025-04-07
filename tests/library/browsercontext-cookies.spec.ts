@@ -429,3 +429,37 @@ it('should parse cookie with large Max-Age correctly', async ({ server, page, de
     },
   ]);
 });
+
+it('iframe should inherit cookies from parent', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35439' } }, async ({ page, isLinux, browserName }) => {
+  await page.route('**', async (route, request) => {
+    if (request.url().includes('sub.example.test')) {
+      await route.fulfill({
+        body: `
+            <p id="result"></p>
+            <script>document.getElementById('result').textContent = document.cookie || 'no cookies';</script>
+        `,
+        contentType: 'text/html',
+      });
+      return;
+    }
+    await route.fulfill({
+      headers: { 'set-cookie': 'testCookie=value; SameSite=Lax; Domain=example.test' },
+      contentType: 'text/html',
+      body: `
+          <p id="result"></p>
+          <script>document.getElementById('result').textContent = document.cookie || 'no cookies';</script>
+          <iframe src="http://sub.example.test"></iframe>
+      `
+    });
+  });
+
+  await page.goto('http://example.test');
+
+  await expect(page.locator('body')).toContainText('testCookie=value');
+
+  // webkit on linux is broken!
+  if (browserName === 'webkit' && isLinux)
+    await expect(page.frameLocator('iframe').locator('body')).toContainText('no cookies');
+  else
+    await expect(page.frameLocator('iframe').locator('body')).toContainText('testCookie=value');
+});
