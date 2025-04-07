@@ -437,8 +437,8 @@ it.describe('while running', () => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(1000);
-    await page.waitForTimeout(1000);
-    await page.clock.resume();
+    // Internally wait to make sure the clock is paused and not running.
+    await page.waitForTimeout(1111);
     const now = await page.evaluate(() => Date.now());
     expect(now).toBeGreaterThanOrEqual(0);
     expect(now).toBeLessThanOrEqual(1000);
