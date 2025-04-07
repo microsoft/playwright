@@ -77,7 +77,11 @@ export const AttachmentLink: React.FunctionComponent<{
   useAnchor('attachment-' + result.attachments.indexOf(attachment), triggerFlash);
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
-    {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
+    {attachment.path && (
+      openInNewTab
+        ? <a href={href || attachment.path} target='_blank' rel='noreferrer'>{linkName || attachment.name}</a>
+        : <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>
+    )}
     {!attachment.path && (
       openInNewTab
         ? <a href={URL.createObjectURL(new Blob([attachment.body!], { type: attachment.contentType }))} target='_blank' rel='noreferrer' onClick={e => e.stopPropagation()}>{attachment.name}</a>
