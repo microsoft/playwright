@@ -99,6 +99,7 @@ export class ClockController {
 
   now(): number {
     this._replayLogOnce();
+    this._syncRealTime();
     return this._now.time;
   }
 
@@ -119,7 +120,19 @@ export class ClockController {
 
   performanceNow(): DOMHighResTimeStamp {
     this._replayLogOnce();
+    this._syncRealTime();
     return this._now.ticks;
+  }
+
+  private _syncRealTime() {
+    if (!this._realTime)
+      return;
+    const now = this._embedder.performanceNow();
+    const sinceLastSync = now - this._realTime.lastSyncTicks;
+    if (sinceLastSync > 0) {
+      this._advanceNow(shiftTicks(this._now.ticks, sinceLastSync));
+      this._realTime.lastSyncTicks = now;
+    }
   }
 
   private _innerSetTime(time: WallTime) {
@@ -216,12 +229,10 @@ export class ClockController {
     this._currentRealTimeTimer = {
       callAt,
       dispose: this._embedder.setTimeout(() => {
-        const now = this._embedder.performanceNow();
         this._currentRealTimeTimer = undefined;
-        const sinceLastSync = now - this._realTime!.lastSyncTicks;
-        this._realTime!.lastSyncTicks = now;
+        this._syncRealTime();
         // eslint-disable-next-line no-console
-        void this._runTo(shiftTicks(this._now.ticks, sinceLastSync)).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
+        void this._runTo(this._now.ticks).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
       }, callAt - this._now.ticks),
     };
   }
@@ -230,7 +241,6 @@ export class ClockController {
     this._replayLogOnce();
     await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
   }
-
 
   private async _innerFastForwardTo(to: Ticks) {
     if (to < this._now.ticks)
