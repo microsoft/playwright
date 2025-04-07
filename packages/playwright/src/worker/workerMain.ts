@@ -442,7 +442,7 @@ export class WorkerMain extends ProcessRunner {
               return [locationKey, location];
             }));
 
-        testInfo.annotations.push(...annotationLocations.values().map(location => ({
+        testInfo.annotations.push(...[...annotationLocations.values()].map(location => ({
           type: 'warning', description: `This async call was not awaited by the end of the test. This can cause flakiness. It is recommended to run ESLint with "@typescript-eslint/no-floating-promises" to verify.`, location
         })));
         testInfo._floatingPromiseScope.clear();
