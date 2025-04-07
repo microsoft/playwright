@@ -6,6 +6,7 @@ on:
     branches:
       - main
     paths:
+      - package.json
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
       - tests/bidi/**
