@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { performance } from './builtins';
 
-let _timeOrigin = builtins().performance.timeOrigin;
+let _timeOrigin = performance.timeOrigin;
 let _timeShift = 0;
 
 export function setTimeOrigin(origin: number) {
   _timeOrigin = origin;
-  _timeShift = builtins().performance.timeOrigin - origin;
+  _timeShift = performance.timeOrigin - origin;
 }
 
 export function timeOrigin(): number {
@@ -29,5 +29,5 @@ export function timeOrigin(): number {
 }
 
 export function monotonicTime(): number {
-  return Math.floor((builtins().performance.now() + _timeShift) * 1000) / 1000;
+  return Math.floor((performance.now() + _timeShift) * 1000) / 1000;
 }

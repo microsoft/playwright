@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { Map } from './builtins';
 import { captureRawStack } from './stackTrace';
-
-import type { Builtins } from './builtins';
 
 export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
@@ -62,12 +60,8 @@ export class ManualPromise<T = void> extends Promise<T> {
 export class LongStandingScope {
   private _terminateError: Error | undefined;
   private _closeError: Error | undefined;
-  private _terminatePromises: Builtins.Map<ManualPromise<Error>, string[]>;
+  private _terminatePromises = new Map<ManualPromise<Error>, string[]>();
   private _isClosed = false;
-
-  constructor() {
-    this._terminatePromises = new (builtins().Map)();
-  }
 
   reject(error: Error) {
     this._isClosed = true;

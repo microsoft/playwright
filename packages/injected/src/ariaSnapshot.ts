@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { builtins } from '@isomorphic/builtins';
+import { Map, Set } from '@isomorphic/builtins';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
 import { getElementComputedStyle, getGlobalOptions } from './domUtils';
@@ -22,7 +22,6 @@ import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
-import type { Builtins } from '@isomorphic/builtins';
 
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
@@ -34,19 +33,19 @@ export type AriaNode = AriaProps & {
 
 export type AriaSnapshot = {
   root: AriaNode;
-  elements: Builtins.Map<number, Element>;
+  elements: Map<number, Element>;
   generation: number;
-  ids: Builtins.Map<Element, number>;
+  ids: Map<Element, number>;
 };
 
 export function generateAriaTree(rootElement: Element, generation: number): AriaSnapshot {
-  const visited = new (builtins().Set)<Node>();
+  const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {} },
-    elements: new (builtins().Map)<number, Element>(),
+    elements: new Map<number, Element>(),
     generation,
-    ids: new (builtins().Map)<Element, number>(),
+    ids: new Map<Element, number>(),
   };
 
   const addElement = (element: Element) => {

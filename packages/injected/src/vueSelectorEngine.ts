@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { builtins } from '@isomorphic/builtins';
+import { Set } from '@isomorphic/builtins';
 import { parseAttributeSelector } from '@isomorphic/selectorParser';
 
 import { isInsideScope } from './domUtils';
@@ -221,7 +221,7 @@ function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRo
   const document = root.ownerDocument || root;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   // Vue2 roots are referred to from elements.
-  const vue2Roots = new (builtins().Set)<VueVNode>();
+  const vue2Roots = new Set<VueVNode>();
   do {
     const node = walker.currentNode;
     if ((node as any).__vue__)
@@ -259,7 +259,7 @@ export const createVueEngine = (): SelectorEngine => ({
       }
       return true;
     })).flat();
-    const allRootElements = new (builtins().Set)<Element>();
+    const allRootElements = new Set<Element>();
     for (const treeNode of treeNodes) {
       for (const rootElement of treeNode.rootElements)
         allRootElements.add(rootElement);

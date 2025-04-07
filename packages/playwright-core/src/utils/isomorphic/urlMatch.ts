@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { Map, Set } from './builtins';
 import { isString } from './stringUtils';
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
-const escapedChars = new (builtins().Set)(['$', '^', '+', '.', '*', '(', ')', '|', '\\', '?', '{', '}', '[', ']']);
+const escapedChars = new Set(['$', '^', '+', '.', '*', '(', ')', '|', '\\', '?', '{', '}', '[', ']']);
 
 export function globToRegexPattern(glob: string): string {
   const tokens = ['^'];
@@ -119,7 +119,7 @@ function toWebSocketBaseUrl(baseURL: string | undefined) {
 
 function resolveGlobBase(baseURL: string | undefined, match: string): string {
   if (!match.startsWith('*')) {
-    const tokenMap = new (builtins().Map)<string, string>();
+    const tokenMap = new Map<string, string>();
     function mapToken(original: string, replacement: string) {
       if (original.length === 0)
         return '';

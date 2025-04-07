@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { builtins } from '@isomorphic/builtins';
+import { Map, Set } from '@isomorphic/builtins';
 
 import { getGlobalOptions, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
-import type { Builtins } from '@isomorphic/builtins';
 
 function hasExplicitAccessibleName(e: Element) {
   return e.hasAttribute('aria-label') || e.hasAttribute('aria-labelledby');
@@ -435,7 +434,7 @@ export function getElementAccessibleName(element: Element, includeHidden: boolea
       // step 2.
       accessibleName = asFlatString(getTextAlternativeInternal(element, {
         includeHidden,
-        visitedElements: new (builtins().Set)(),
+        visitedElements: new Set(),
         embeddedInTargetElement: 'self',
       }));
     }
@@ -459,7 +458,7 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
       const describedBy = getIdRefs(element, element.getAttribute('aria-describedby'));
       accessibleDescription = asFlatString(describedBy.map(ref => getTextAlternativeInternal(ref, {
         includeHidden,
-        visitedElements: new (builtins().Set)(),
+        visitedElements: new Set(),
         embeddedInDescribedBy: { element: ref, hidden: isElementHiddenForAria(ref) },
       })).join(' '));
     } else if (element.hasAttribute('aria-description')) {
@@ -519,7 +518,7 @@ export function getElementAccessibleErrorMessage(element: Element): string {
       // Relevant vague spec: https://w3c.github.io/core-aam/#ariaErrorMessage.
       const parts = errorMessages.map(errorMessage => asFlatString(
           getTextAlternativeInternal(errorMessage, {
-            visitedElements: new (builtins().Set)(),
+            visitedElements: new Set(),
             embeddedInDescribedBy: { element: errorMessage, hidden: isElementHiddenForAria(errorMessage) },
           })
       ));
@@ -531,7 +530,7 @@ export function getElementAccessibleErrorMessage(element: Element): string {
 }
 
 type AccessibleNameOptions = {
-  visitedElements: Builtins.Set<Element>,
+  visitedElements: Set<Element>,
   includeHidden?: boolean,
   embeddedInDescribedBy?: { element: Element, hidden: boolean },
   embeddedInLabelledBy?: { element: Element, hidden: boolean },
@@ -1054,26 +1053,26 @@ function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement
   })).filter(accessibleName => !!accessibleName).join(' ');
 }
 
-let cacheAccessibleName: Builtins.Map<Element, string> | undefined;
-let cacheAccessibleNameHidden: Builtins.Map<Element, string> | undefined;
-let cacheAccessibleDescription: Builtins.Map<Element, string> | undefined;
-let cacheAccessibleDescriptionHidden: Builtins.Map<Element, string> | undefined;
-let cacheAccessibleErrorMessage: Builtins.Map<Element, string> | undefined;
-let cacheIsHidden: Builtins.Map<Element, boolean> | undefined;
-let cachePseudoContentBefore: Builtins.Map<Element, string> | undefined;
-let cachePseudoContentAfter: Builtins.Map<Element, string> | undefined;
+let cacheAccessibleName: Map<Element, string> | undefined;
+let cacheAccessibleNameHidden: Map<Element, string> | undefined;
+let cacheAccessibleDescription: Map<Element, string> | undefined;
+let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
+let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
+let cacheIsHidden: Map<Element, boolean> | undefined;
+let cachePseudoContentBefore: Map<Element, string> | undefined;
+let cachePseudoContentAfter: Map<Element, string> | undefined;
 let cachesCounter = 0;
 
 export function beginAriaCaches() {
   ++cachesCounter;
-  cacheAccessibleName ??= new (builtins().Map)();
-  cacheAccessibleNameHidden ??= new (builtins().Map)();
-  cacheAccessibleDescription ??= new (builtins().Map)();
-  cacheAccessibleDescriptionHidden ??= new (builtins().Map)();
-  cacheAccessibleErrorMessage ??= new (builtins().Map)();
-  cacheIsHidden ??= new (builtins().Map)();
-  cachePseudoContentBefore ??= new (builtins().Map)();
-  cachePseudoContentAfter ??= new (builtins().Map)();
+  cacheAccessibleName ??= new Map();
+  cacheAccessibleNameHidden ??= new Map();
+  cacheAccessibleDescription ??= new Map();
+  cacheAccessibleDescriptionHidden ??= new Map();
+  cacheAccessibleErrorMessage ??= new Map();
+  cacheIsHidden ??= new Map();
+  cachePseudoContentBefore ??= new Map();
+  cachePseudoContentAfter ??= new Map();
 }
 
 export function endAriaCaches() {

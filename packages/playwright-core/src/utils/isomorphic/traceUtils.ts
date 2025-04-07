@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { Map } from './builtins';
 
 import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
-import type { Builtins } from './builtins';
 
 export type SerializedStackFrame = [number, number, number, string];
 export type SerializedStack = [number, SerializedStackFrame[]];
@@ -27,8 +26,8 @@ export type SerializedClientSideCallMetadata = {
   stacks: SerializedStack[];
 };
 
-export function parseClientSideCallMetadata(data: SerializedClientSideCallMetadata): Builtins.Map<string, StackFrame[]> {
-  const result = new (builtins().Map)<string, StackFrame[]>();
+export function parseClientSideCallMetadata(data: SerializedClientSideCallMetadata): Map<string, StackFrame[]> {
+  const result = new Map<string, StackFrame[]>();
   const { files, stacks } = data;
   for (const s of stacks) {
     const [id, ff] = s;
@@ -38,7 +37,7 @@ export function parseClientSideCallMetadata(data: SerializedClientSideCallMetada
 }
 
 export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
-  const fileNames = new (builtins().Map)<string, number>();
+  const fileNames = new Map<string, number>();
   const stacks: SerializedStack[] = [];
   for (const m of metadatas) {
     if (!m.stack || !m.stack.length)

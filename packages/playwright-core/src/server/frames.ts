@@ -1567,9 +1567,9 @@ export class Frame extends SdkObject {
                 return;
               }
               if (typeof polling !== 'number')
-                injected.builtins.requestAnimationFrame(next);
+                injected.utils.builtins.requestAnimationFrame(next);
               else
-                injected.builtins.setTimeout(next, polling);
+                injected.utils.builtins.setTimeout(next, polling);
             } catch (e) {
               reject(e);
             }

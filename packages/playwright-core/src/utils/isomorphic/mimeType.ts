@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { Map } from './builtins';
 
 export function isJsonMimeType(mimeType: string) {
   return !!mimeType.match(/^(application\/json|application\/.*?\+json|text\/(x-)?json)(;\s*charset=.*)?$/);
@@ -23,7 +23,6 @@ export function isJsonMimeType(mimeType: string) {
 export function isTextualMimeType(mimeType: string) {
   return !!mimeType.match(/^(text\/.*?|application\/(json|(x-)?javascript|xml.*?|ecmascript|graphql|x-www-form-urlencoded)|image\/svg(\+xml)?|application\/.*?(\+json|\+xml))(;\s*charset=.*)?$/);
 }
-
 export function getMimeTypeForPath(path: string): string | null {
   const dotIndex = path.lastIndexOf('.');
   if (dotIndex === -1)
@@ -32,7 +31,7 @@ export function getMimeTypeForPath(path: string): string | null {
   return types.get(extension) || null;
 }
 
-const types = new (builtins().Map)<string, string>([
+const types: Map<string, string> = new Map([
   ['ez', 'application/andrew-inset'],
   ['aw', 'application/applixware'],
   ['atom', 'application/atom+xml'],

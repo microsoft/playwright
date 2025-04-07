@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { Set } from './builtins';
 import { InvalidSelectorError, parseCSS } from './cssParser';
 
 import type { CSSComplexSelectorList } from './cssParser';
 export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
 export type NestedSelectorBody = { parsed: ParsedSelector, distance?: number };
-const kNestedSelectorNames = new (builtins().Set)(['internal:has', 'internal:has-not', 'internal:and', 'internal:or', 'internal:chain', 'left-of', 'right-of', 'above', 'below', 'near']);
-const kNestedSelectorNamesWithDistance = new (builtins().Set)(['left-of', 'right-of', 'above', 'below', 'near']);
+const kNestedSelectorNames = new Set(['internal:has', 'internal:has-not', 'internal:and', 'internal:or', 'internal:chain', 'left-of', 'right-of', 'above', 'below', 'near']);
+const kNestedSelectorNamesWithDistance = new Set(['left-of', 'right-of', 'above', 'below', 'near']);
 
 export type ParsedSelectorPart = {
   name: string,
@@ -40,7 +40,7 @@ type ParsedSelectorStrings = {
   capture?: number,
 };
 
-export const customCSSNames = new (builtins().Set)(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'has-text', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
+export const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'has-text', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
 
 export function parseSelector(selector: string): ParsedSelector {
   const parsedStrings = parseSelectorString(selector);

@@ -27,22 +27,20 @@ export type Builtins = {
   requestIdleCallback: Window['requestIdleCallback'],
   cancelIdleCallback: (id: number) => void,
   performance: Window['performance'],
-  eval: typeof eval,
-  Intl: typeof Intl,
-  Date: typeof Date,
-  Map: typeof Map,
-  Set: typeof Set,
+  eval: typeof window['eval'],
+  Intl: typeof window['Intl'],
+  Date: typeof window['Date'],
+  Map: typeof window['Map'],
+  Set: typeof window['Set'],
 };
 
-type OriginalMap<K, V> = Map<K, V>;
-type OriginalSet<T> = Set<T>;
-type OriginalDate = Date;
-export namespace Builtins {
-  export type Map<K, V> = OriginalMap<K, V>;
-  export type Set<T> = OriginalSet<T>;
-  export type Date = OriginalDate;
-}
-
+// Builtins are created once lazily upon the first import of this module, see "instance" below.
+// This is how it works in Node.js environment, or when something goes unexpectedly in the browser.
+//
+// However, the same "builtins()" function is also evaluated inside an InitScript before
+// anything else happens in the page. This way, original builtins are saved on the global object
+// before page can temper with them. Later on, any call to builtins() will retrieve the stored
+// builtins instead of initializing them again.
 export function builtins(global?: typeof globalThis): Builtins {
   global = global ?? globalThis;
   if (!(global as any)['__playwright_builtins__']) {
@@ -66,3 +64,18 @@ export function builtins(global?: typeof globalThis): Builtins {
   }
   return (global as any)['__playwright_builtins__'];
 }
+
+const instance = builtins();
+export const setTimeout = instance.setTimeout;
+export const clearTimeout = instance.clearTimeout;
+export const setInterval = instance.setInterval;
+export const clearInterval = instance.clearInterval;
+export const requestAnimationFrame = instance.requestAnimationFrame;
+export const cancelAnimationFrame = instance.cancelAnimationFrame;
+export const requestIdleCallback = instance.requestIdleCallback;
+export const cancelIdleCallback = instance.cancelIdleCallback;
+export const performance = instance.performance;
+export const Intl = instance.Intl;
+export const Date = instance.Date;
+export const Map = instance.Map;
+export const Set = instance.Set;

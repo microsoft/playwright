@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { setTimeout, clearTimeout } from './builtins';
 import { monotonicTime } from './time';
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
@@ -26,10 +26,10 @@ export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: num
     new Promise<{ timedOut: true }>(resolve => {
       const kMaxDeadline = 2147483647; // 2^31-1
       const timeout = (deadline || kMaxDeadline) - monotonicTime();
-      timer = builtins().setTimeout(() => resolve({ timedOut: true }), timeout);
+      timer = setTimeout(() => resolve({ timedOut: true }), timeout);
     }),
   ]).finally(() => {
-    builtins().clearTimeout(timer);
+    clearTimeout(timer);
   });
 }
 
@@ -50,7 +50,7 @@ export async function pollAgainstDeadline<T>(callback: () => Promise<{ continueP
     const interval = pollIntervals!.shift() ?? lastPollInterval;
     if (deadline && deadline <= monotonicTime() + interval)
       break;
-    await new Promise(x => builtins().setTimeout(x, interval));
+    await new Promise(x => setTimeout(x, interval));
   }
   return { timedOut: true, result: lastResult };
 }

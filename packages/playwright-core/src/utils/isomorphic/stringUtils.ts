@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
-
-import type { Builtins } from './builtins';
+import { Map } from './builtins';
 
 // NOTE: this function should not be used to escape any selectors.
 export function escapeWithQuotes(text: string, char: string = '\'') {
@@ -78,10 +76,10 @@ function cssEscapeOne(s: string, i: number): string {
   return '\\' + s.charAt(i);
 }
 
-let normalizedWhitespaceCache: Builtins.Map<string, string> | undefined;
+let normalizedWhitespaceCache: Map<string, string> | undefined;
 
 export function cacheNormalizedWhitespaces() {
-  normalizedWhitespaceCache = new (builtins().Map)();
+  normalizedWhitespaceCache = new Map();
 }
 
 export function normalizeWhiteSpace(text: string): string {

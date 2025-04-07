@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { builtins } from '@isomorphic/builtins';
+import { Set } from '@isomorphic/builtins';
 import { parseAttributeSelector } from '@isomorphic/selectorParser';
 
 import { isInsideScope } from './domUtils';
 import { matchesComponentAttribute } from './selectorUtils';
 
-import type { Builtins } from '@isomorphic/builtins';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 type ComponentNode = {
@@ -216,7 +215,7 @@ export const createReactEngine = (): SelectorEngine => ({
       }
       return true;
     })).flat();
-    const allRootElements: Builtins.Set<Element> = new (builtins().Set)();
+    const allRootElements: Set<Element> = new Set();
     for (const treeNode of treeNodes) {
       for (const domNode of treeNode.rootElements)
         allRootElements.add(domNode);

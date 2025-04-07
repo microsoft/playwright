@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import { builtins } from './builtins';
+import { Set } from './builtins';
 import * as css from './cssTokenizer';
-
-import type { Builtins } from './builtins';
 
 export class InvalidSelectorError extends Error {
 }
@@ -39,7 +37,7 @@ export type CSSSimpleSelector = { css?: string, functions: CSSFunction[] };
 export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
 export type CSSComplexSelectorList = CSSComplexSelector[];
 
-export function parseCSS(selector: string, customNames: Builtins.Set<string>): { selector: CSSComplexSelectorList, names: string[] } {
+export function parseCSS(selector: string, customNames: Set<string>): { selector: CSSComplexSelectorList, names: string[] } {
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
@@ -74,7 +72,7 @@ export function parseCSS(selector: string, customNames: Builtins.Set<string>): {
     throw new InvalidSelectorError(`Unsupported token "${unsupportedToken.toSource()}" while parsing css selector "${selector}". Did you mean to CSS.escape it?`);
 
   let pos = 0;
-  const names = new (builtins().Set)<string>();
+  const names = new Set<string>();
 
   function unexpected() {
     return new InvalidSelectorError(`Unexpected token "${tokens[pos].toSource()}" while parsing css selector "${selector}". Did you mean to CSS.escape it?`);

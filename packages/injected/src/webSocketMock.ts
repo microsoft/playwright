@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { builtins } from '@isomorphic/builtins';
+import { Map } from '@isomorphic/builtins';
 
 export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
 export type WSData = { data: string, isBase64: boolean };
@@ -89,7 +89,7 @@ export function inject(globalThis: GlobalThis) {
 
   const binding = (globalThis as any).__pwWebSocketBinding as (message: BindingPayload) => void;
   const NativeWebSocket: typeof WebSocket = globalThis.WebSocket;
-  const idToWebSocket = new (builtins().Map)<string, WebSocketMock>();
+  const idToWebSocket = new Map<string, WebSocketMock>();
   (globalThis as any).__pwWebSocketDispatch = (request: APIRequest) => {
     const ws = idToWebSocket.get(request.id);
     if (!ws)
