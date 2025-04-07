@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 
-import { spawnAsync } from 'playwright-core/lib/utils';
+import { monotonicTime, spawnAsync } from 'playwright-core/lib/utils';
 
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
@@ -29,6 +29,17 @@ export const addGitCommitInfoPlugin = (fullConfig: FullConfigInternal) => {
   fullConfig.plugins.push({ factory: gitCommitInfoPlugin.bind(null, fullConfig) });
 };
 
+function print(s: string, ...args: any[]) {
+  // eslint-disable-next-line no-console
+  console.log('GitCommitInfo: ' + s, ...args);
+}
+
+function debug(s: string, ...args: any[]) {
+  if (!process.env.DEBUG_GIT_COMMIT_INFO)
+    return;
+  print(s, ...args);
+}
+
 const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
   return {
     name: 'playwright:git-commit-info',
@@ -36,25 +47,25 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
     setup: async (config: FullConfig, configDir: string) => {
       const metadata = config.metadata as MetadataWithCommitInfo;
       const ci = await ciInfo();
-      if (!metadata.ci && ci)
+      if (!metadata.ci && ci) {
+        debug('ci info', ci);
         metadata.ci = ci;
+      }
 
       if (fullConfig.captureGitInfo?.commit || (fullConfig.captureGitInfo?.commit === undefined && ci)) {
-        const git = await gitCommitInfo(configDir).catch(e => {
-          // eslint-disable-next-line no-console
-          console.error('Failed to get git commit info', e);
-        });
-        if (git)
+        const git = await gitCommitInfo(configDir).catch(e => print('failed to get git commit info', e));
+        if (git) {
+          debug('commit info', git);
           metadata.gitCommit = git;
+        }
       }
 
       if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
-        const diffResult = await gitDiff(configDir, ci).catch(e => {
-          // eslint-disable-next-line no-console
-          console.error('Failed to get git diff', e);
-        });
-        if (diffResult)
+        const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
+        if (diffResult) {
+          debug(`diff length ${diffResult.length}`);
           metadata.gitDiff = diffResult;
+        }
       }
     },
   };
@@ -153,6 +164,10 @@ async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined>
 
   // Check dirty state first.
   const uncommitted = await runGit('git diff', gitDir);
+  if (uncommitted === undefined) {
+    // Failed to run git diff.
+    return;
+  }
   if (uncommitted)
     return uncommitted.substring(0, diffLimit);
 
@@ -162,14 +177,20 @@ async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined>
 }
 
 async function runGit(command: string, cwd: string): Promise<string | undefined> {
+  debug(`running "${command}"`);
+  const start = monotonicTime();
   const result = await spawnAsync(
       command,
       [],
       { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
-  if (process.env.DEBUG_GIT_COMMIT_INFO && result.code) {
-    // eslint-disable-next-line no-console
-    console.error(`Failed to run ${command}: ${result.stderr}`);
+  if (monotonicTime() - start > GIT_OPERATIONS_TIMEOUT_MS) {
+    print(`timeout of ${GIT_OPERATIONS_TIMEOUT_MS}ms exceeded while running "${command}"`);
+    return;
   }
+  if (result.code)
+    debug(`failure, code=${result.code}\n\n${result.stderr}`);
+  else
+    debug(`success`);
   return result.code ? undefined : result.stdout.trim();
 }
