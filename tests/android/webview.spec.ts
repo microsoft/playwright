@@ -70,7 +70,9 @@ test('select webview from socketName', async function({ androidDevice }) {
   await context.close();
 });
 
-test('should be able to receive webView cookies', {
+// Requires a newer WebView version with
+// https://chromium-review.googlesource.com/c/chromium/src/+/6411892
+test.fail('should be able to receive webView cookies', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/35392',
