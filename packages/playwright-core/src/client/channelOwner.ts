@@ -18,6 +18,7 @@ import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
 import { captureLibraryStackTrace } from './clientStackTrace';
 import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
+import { wrapPromiseAPIResult } from '../utils/isomorphic/floatingPromises';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
@@ -155,22 +156,20 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
           if (validator) {
-            return async (params: any) => {
-              return await this._wrapApiCall(async apiZone => {
-                const validatedParams = validator(params, '', this._validatorToWireContext());
-                if (!apiZone.isInternal && !apiZone.reported) {
-                  // Reporting/tracing/logging this api call for the first time.
-                  apiZone.params = params;
-                  apiZone.reported = true;
-                  this._instrumentation.onApiCallBegin(apiZone);
-                  logApiCall(this._platform, this._logger, `=> ${apiZone.apiName} started`);
-                  return await this._connection.sendMessageToServer(this, prop, validatedParams, apiZone.apiName, apiZone.frames, apiZone.stepId);
-                }
-                // Since this api call is either internal, or has already been reported/traced once,
-                // passing undefined apiName will avoid an extra unneeded tracing entry.
-                return await this._connection.sendMessageToServer(this, prop, validatedParams, undefined, [], undefined);
-              });
-            };
+            return (params: any) => this._wrapApiCall(apiZone => {
+              const validatedParams = validator(params, '', this._validatorToWireContext());
+              if (!apiZone.isInternal && !apiZone.reported) {
+                // Reporting/tracing/logging this api call for the first time.
+                apiZone.params = params;
+                apiZone.reported = true;
+                this._instrumentation.onApiCallBegin(apiZone);
+                logApiCall(this._platform, this._logger, `=> ${apiZone.apiName} started`);
+                return this._connection.sendMessageToServer(this, prop, validatedParams, apiZone.apiName, apiZone.frames, apiZone.stepId);
+              }
+              // Since this api call is either internal, or has already been reported/traced once,
+              // passing undefined apiName will avoid an extra unneeded tracing entry.
+              return this._connection.sendMessageToServer(this, prop, validatedParams, undefined, [], undefined);
+            });
           }
         }
         return obj[prop];
@@ -180,17 +179,27 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal?: boolean): Promise<R> {
-    const logger = this._logger;
-    const existingApiZone = this._platform.zones.current().data<ApiZone>();
-    if (existingApiZone)
-      return await func(existingApiZone);
-
+  _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal?: boolean): Promise<R> {
     if (isInternal === undefined)
       isInternal = this._isInternalType;
+
+    // TODO: Only enable wrapping in some scenarios
+    const wrapPromise = (promise: Promise<R>, apiZone: ApiZone) => {
+      return !isInternal ? wrapPromiseAPIResult(promise, apiZone.frames[0], this._instrumentation.onRegisterApiPromise, this._instrumentation.onUnregisterApiPromise) : promise;
+    };
+
+    const existingApiZone = this._platform.zones.current().data<ApiZone>();
+    if (existingApiZone)
+      return wrapPromise(func(existingApiZone), existingApiZone);
+
     const stackTrace = captureLibraryStackTrace(this._platform);
     const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
 
+    return wrapPromise(this._internalWrapApiCall<R>(func, apiZone, isInternal), apiZone);
+  }
+
+  private async _internalWrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, apiZone: ApiZone, isInternal: boolean): Promise<R> {
+    const logger = this._logger;
     try {
       const result = await this._platform.zones.current().push(apiZone).run(async () => await func(apiZone));
       if (!isInternal) {
@@ -202,7 +211,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       const innerError = ((this._platform.showInternalStackFrames() || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       if (apiZone.apiName && !apiZone.apiName.includes('<anonymous>'))
         e.message = apiZone.apiName + ': ' + e.message;
-      const stackFrames = '\n' + stringifyStackFrames(stackTrace.frames).join('\n') + innerError;
+      const stackFrames = '\n' + stringifyStackFrames(apiZone.frames).join('\n') + innerError;
       if (stackFrames.trim())
         e.stack = e.message + stackFrames;
       else

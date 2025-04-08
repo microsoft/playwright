@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { Location } from '../../../playwright/types/test';
 import type { BrowserContext } from './browserContext';
 import type { APIRequestContext } from './fetch';
 import type { StackFrame } from '@protocol/channels';
@@ -28,13 +29,18 @@ export interface ApiCallData {
   error?: Error;
 }
 
-export interface ClientInstrumentation {
+interface ClientInstrumentationLifecycle {
   addListener(listener: ClientInstrumentationListener): void;
   removeListener(listener: ClientInstrumentationListener): void;
   removeAllListeners(): void;
+}
+
+interface ClientInstrumentationApi {
   onApiCallBegin(apiCall: ApiCallData): void;
   onApiCallEnd(apiCal: ApiCallData): void;
   onWillPause(options: { keepTestTimeout: boolean }): void;
+  onRegisterApiPromise<T>(promise: Promise<T>, location: Location | undefined): void;
+  onUnregisterApiPromise<T>(promise: Promise<T>): void;
 
   runAfterCreateBrowserContext(context: BrowserContext): Promise<void>;
   runAfterCreateRequestContext(context: APIRequestContext): Promise<void>;
@@ -42,21 +48,14 @@ export interface ClientInstrumentation {
   runBeforeCloseRequestContext(context: APIRequestContext): Promise<void>;
 }
 
-export interface ClientInstrumentationListener {
-  onApiCallBegin?(apiCall: ApiCallData): void;
-  onApiCallEnd?(apiCall: ApiCallData): void;
-  onWillPause?(options: { keepTestTimeout: boolean }): void;
+export type ClientInstrumentation = ClientInstrumentationLifecycle & ClientInstrumentationApi;
 
-  runAfterCreateBrowserContext?(context: BrowserContext): Promise<void>;
-  runAfterCreateRequestContext?(context: APIRequestContext): Promise<void>;
-  runBeforeCloseBrowserContext?(context: BrowserContext): Promise<void>;
-  runBeforeCloseRequestContext?(context: APIRequestContext): Promise<void>;
-}
+export type ClientInstrumentationListener = Partial<ClientInstrumentationApi>;
 
 export function createInstrumentation(): ClientInstrumentation {
   const listeners: ClientInstrumentationListener[] = [];
   return new Proxy({}, {
-    get: (obj: any, prop: string | symbol) => {
+    get: (obj: any, prop: keyof ClientInstrumentation | symbol) => {
       if (typeof prop !== 'string')
         return obj[prop];
       if (prop === 'addListener')
