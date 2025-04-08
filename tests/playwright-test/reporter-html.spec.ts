@@ -980,7 +980,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
 
       await expect(fooTab.getByText('Hello World')).toBeVisible();
-      await page.pause()
     });
 
     test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest, showReport, page }, testInfo) => {
