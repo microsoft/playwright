@@ -16,7 +16,7 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: app-token
         with:
           app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
