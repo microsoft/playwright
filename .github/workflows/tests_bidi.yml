@@ -2,6 +2,11 @@ name: tests BiDi
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Playwright SHA / ref to test. Use 'refs/pull/PULL_REQUEST_ID/head' to test a PR. Defaults to the current branch.
+        required: false
+        default: ''
   pull_request:
     branches:
       - main
@@ -9,7 +14,6 @@ on:
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
       - tests/bidi/**
-    types: [ labeled ]
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
@@ -19,7 +23,6 @@ env:
 
 jobs:
   test_bidi:
-    if: ${{ (github.event_name == 'pull_request' && github.event.label.name == 'CQ-bidi') || github.event_name != 'pull_request' }}
     name: BiDi
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
@@ -32,6 +35,11 @@ jobs:
         channel: [bidi-chromium, bidi-firefox-nightly]
     steps:
     - uses: actions/checkout@v4
+      if: github.event_name != 'workflow_dispatch'
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: ${{ github.event.inputs.ref }}
     - uses: actions/setup-node@v4
       with:
         node-version: 20
