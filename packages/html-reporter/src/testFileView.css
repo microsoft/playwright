@@ -65,6 +65,7 @@
 
 .test-file-badge.button {
   background-color: transparent;
+  border-color: transparent;
 }
 
 .test-file-test-outcome-skipped {
