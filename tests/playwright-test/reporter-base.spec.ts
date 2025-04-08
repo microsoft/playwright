@@ -486,5 +486,72 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('› passes @bar1 @bar2 (');
       expect(text).toContain('› passes @baz1 @baz2 (');
     });
+
+    test('should show warnings on failing tests', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fail', async ({ page }, testInfo) => {
+            testInfo.annotations.push({ type: 'warning', description: 'foo' });
+            expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+            throw new Error();
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+      expect(result.output).toContain('Warning: a.spec.ts:5:41: This async call was not awaited by the end of the test.');
+      expect(result.output).toContain('Warning: foo');
+    });
+
+    test('should not show warnings on passing tests', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('success', async ({ page }, testInfo) => {
+            testInfo.annotations.push({ type: 'warning', description: 'foo' });
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      expect(result.output).not.toContain('Warning: foo');
+    });
+
+    test('should properly sort warnings', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'external.js': `
+          import { expect } from '@playwright/test';
+          export const externalAsyncCall = (page) => {
+            expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+          };
+        `,
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          import { externalAsyncCall } from './external.js';
+          test('fail a', async ({ page }, testInfo) => {
+            testInfo.annotations.push({ type: 'warning', description: 'foo' });
+            externalAsyncCall(page);
+            expect(page.locator('div')).toHaveText('A', { timeout: 100 });
+            testInfo.annotations.push({ type: 'warning', description: 'bar' });
+            throw new Error();
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+      expect(result.output).toContain('Warning: a.spec.ts:7:41: This async call was not awaited by the end of the test.');
+      expect(result.output).toContain('Warning: external.js:4:41: This async call was not awaited by the end of the test.');
+      expect(result.output).toContain('Warning: foo');
+      expect(result.output).toContain('Warning: bar');
+
+      const manualIndexFoo = result.output.indexOf('Warning: foo');
+      const manualIndexBar = result.output.indexOf('Warning: bar');
+      const externalIndex = result.output.indexOf('Warning: external.js:4:41');
+      const specIndex = result.output.indexOf('Warning: a.spec.ts:7:41');
+      expect(specIndex).toBeLessThan(externalIndex);
+      expect(externalIndex).toBeLessThan(manualIndexFoo);
+      expect(manualIndexFoo).toBeLessThan(manualIndexBar);
+    });
   });
 }
