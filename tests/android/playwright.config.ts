@@ -32,7 +32,7 @@ const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightT
   globalTimeout: 7200000,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],

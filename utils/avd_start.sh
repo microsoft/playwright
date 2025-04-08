@@ -15,21 +15,32 @@ ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop 
 ${ANDROID_HOME}/platform-tools/adb devices
 echo "Emulator started"
 
-echo "Installing Chromium WebView"
 # See here for the latest revision: https://storage.googleapis.com/chromium-browser-snapshots/Android/LAST_CHANGE
-CHROMIUM_ANDROID_REVISION="1441404"
+CHROMIUM_ANDROID_REVISION="1444033"
+# See here for the latest revision: https://storage.googleapis.com/chromium-browser-snapshots/Android_Arm64/LAST_CHANGE
+CHROMIUM_ANDROID_ARM64_REVISION="1444027"
+# See here for the latest revision: https://storage.googleapis.com/chromium-browser-snapshots/AndroidDesktop_x64/LAST_CHANGE
+CHROMIUM_ANDROID_DESKTOP_REVISION="1444025"
+
+echo "Installing Chromium WebView"
 WEBVIEW_TMP_DIR="$(mktemp -d)"
 
-curl -s --fail --retry 5 -o "$WEBVIEW_TMP_DIR/chrome-android.zip" "https://storage.googleapis.com/chromium-browser-snapshots/Android/${CHROMIUM_ANDROID_REVISION}/chrome-android.zip"
+curl -s --fail --retry 5 -o "$WEBVIEW_TMP_DIR/chrome-android.zip" "https://storage.googleapis.com/chromium-browser-snapshots/Android/$CHROMIUM_ANDROID_REVISION/chrome-android.zip"
 unzip -q "$WEBVIEW_TMP_DIR/chrome-android.zip" -d "${WEBVIEW_TMP_DIR}"
+${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebViewShell.apk"
+echo "Chromium WebView Shell installed"
 
 if [[ "$(uname -m)" == "arm64" ]]; then
-    curl -s --fail --retry 5 -o "$WEBVIEW_TMP_DIR/chrome-android-arm64.zip" "https://storage.googleapis.com/chromium-browser-snapshots/Android_Arm64/${CHROMIUM_ANDROID_REVISION}/chrome-android.zip"
+    curl -s --fail --retry 5 -o "$WEBVIEW_TMP_DIR/chrome-android-arm64.zip" "https://storage.googleapis.com/chromium-browser-snapshots/Android_Arm64/$CHROMIUM_ANDROID_ARM64_REVISION/chrome-android.zip"
     unzip -o -q "$WEBVIEW_TMP_DIR/chrome-android-arm64.zip" -d "${WEBVIEW_TMP_DIR}"
+    ${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebView.apk"
+else
+    curl -s --fail --retry 5 -o "$WEBVIEW_TMP_DIR/chrome-android-desktop.zip" "https://storage.googleapis.com/chromium-browser-snapshots/AndroidDesktop_x64/$CHROMIUM_ANDROID_DESKTOP_REVISION/chrome-android-desktop.zip"
+    unzip -o -q "$WEBVIEW_TMP_DIR/chrome-android-desktop.zip" -d "${WEBVIEW_TMP_DIR}"
+    ${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android-desktop/apks/SystemWebView.apk"
 fi
-# SystemWebViewShell.apk is ABI-neutral, so we can use it for both arm and arm64. Its not contained in the arm64 zip.
-${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebViewShell.apk"
-${ANDROID_HOME}/platform-tools/adb install -r "${WEBVIEW_TMP_DIR}/chrome-android/apks/SystemWebView.apk"
+
+${ANDROID_HOME}/platform-tools/adb shell 'cmd webviewupdate set-webview-implementation com.android.webview' 
 
 rm -rf "${WEBVIEW_TMP_DIR}"
 echo "Chromium WebView installed"
