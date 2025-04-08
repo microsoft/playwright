@@ -702,13 +702,6 @@ LocalUtils:
         exposeNetwork: string?
         slowMo: number?
         timeout: number?
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
         socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
@@ -1017,13 +1010,6 @@ BrowserType:
           items: NameValue
         slowMo: number?
         timeout: number?
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
       returns:
         browser: Browser
         defaultContext: BrowserContext?
