@@ -289,17 +289,17 @@ await using var context = await browser.NewContextAsync(new()
 
 ## Locale & Timezone
 
-Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
+Emulate the browser Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    // Emulates the user locale.
+    // Emulates the browser locale.
     locale: 'en-GB',
 
-    // Emulates the user timezone.
+    // Emulates the browser timezone.
     timezoneId: 'Europe/Paris',
   },
 });
@@ -355,6 +355,13 @@ await using var context = await browser.NewContextAsync(new()
 ```
 
 <img width="1394" alt="Bing in german lang and timezone" src="https://user-images.githubusercontent.com/13063165/220416571-ccc96ab1-44bb-4579-8430-64502fc24a15.png" />
+
+######
+* langs: js
+
+Note that this only affects the browser timezone and locale, not the test runner timezone.
+To set the test runner timezone, you can use the [`TZ` environment variable](https://nodejs.org/api/cli.html#tz).
+
 ## Permissions
 
 Allow app to show system notifications.
