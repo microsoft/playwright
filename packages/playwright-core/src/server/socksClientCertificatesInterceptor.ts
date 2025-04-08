@@ -23,7 +23,7 @@ import tls from 'tls';
 import { SocksProxy } from './utils/socksProxy';
 import { ManualPromise, escapeHTML, generateSelfSignedCertificate, rewriteErrorMessage } from '../utils';
 import { verifyClientCertificates } from './browserContext';
-import { createProxyAgent } from './utils/network';
+import { createProxyAgent } from './fetch';
 import { debugLogger } from './utils/debugLogger';
 import { createSocket, createTLSSocket } from './utils/happyEyeballs';
 
@@ -242,7 +242,7 @@ export class ClientCertificatesProxy {
   ignoreHTTPSErrors: boolean | undefined;
   secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
-  proxyAgentFromOptions: ReturnType<typeof createProxyAgent>;
+  proxyAgentFromOptions: ReturnType<typeof createProxyAgent> | undefined;
 
   constructor(
     contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>
@@ -250,7 +250,7 @@ export class ClientCertificatesProxy {
     verifyClientCertificates(contextOptions.clientCertificates);
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
-    this.proxyAgentFromOptions = createProxyAgent(contextOptions.proxy);
+    this.proxyAgentFromOptions = contextOptions.proxy ? createProxyAgent(contextOptions.proxy) : undefined;
     this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');

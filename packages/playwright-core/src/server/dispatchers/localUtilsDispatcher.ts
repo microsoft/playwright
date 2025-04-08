@@ -33,7 +33,6 @@ import type { RootDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import type * as http from 'http';
 import type { HTTPRequestParams } from '../utils/network';
-import type { ProxySettings } from '../types';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
@@ -91,9 +90,9 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
         'x-playwright-proxy': params.exposeNetwork ?? '',
         ...params.headers,
       };
-      const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint, params.proxy);
+      const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
 
-      const transport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: wsHeaders, followRedirects: true, debugLogHeader: 'x-playwright-debug-log', proxy: params.proxy });
+      const transport = await WebSocketTransport.connect(progress, wsEndpoint, wsHeaders, true, 'x-playwright-debug-log');
       const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
       const pipe = new JsonPipeDispatcher(this);
       transport.onmessage = json => {
@@ -129,7 +128,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 }
 
-async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: string, proxy?: ProxySettings): Promise<string> {
+async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: string): Promise<string> {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
 
@@ -143,7 +142,6 @@ async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: stri
     method: 'GET',
     timeout: progress?.timeUntilDeadline() ?? 30_000,
     headers: { 'User-Agent': getUserAgent() },
-    proxy,
   }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
     return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
         `This does not look like a Playwright server, try connecting via ws://.`);

@@ -64,15 +64,15 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, proxy?: types.ProxySettings, timeout?: number, headers?: types.HeadersArray }) {
+  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, timeout?: number) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.timeout({ timeout }));
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, proxy?: types.ProxySettings }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -84,10 +84,10 @@ export class Chromium extends BrowserType {
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
-    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap, options.proxy);
+    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
     progress.throwIfAborted();
 
-    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap, proxy: options.proxy });
+    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
     const cleanedUp = new ManualPromise<void>();
     const doCleanup = async () => {
       await removeFolders([artifactsDir]);
@@ -365,35 +365,18 @@ class ChromiumReadyState extends BrowserReadyState {
   }
 }
 
-async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers: { [key: string]: string; }, proxy?: types.ProxySettings) {
+async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers: { [key: string]: string; }) {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
-  // Chromium insists on localhost "Host" header for security reasons, and in the case of proxy
-  // we end up with the remote host instead of localhost.
-  const extraHeaders = proxy ? { Host: `localhost:9222` } : {};
   const json = await fetchData({
     url: httpURL,
-    headers: { ...headers, ...extraHeaders },
-    proxy,
+    headers,
   }, async (_, resp) => new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
     `This does not look like a DevTools server, try connecting via ws://.`)
   );
-  const wsUrl = JSON.parse(json).webSocketDebuggerUrl;
-  if (proxy) {
-    // webSocketDebuggerUrl will be a localhost URL, accessible from the browser's computer.
-    // When using a proxy, assume we need to connect through the original endpointURL.
-    // Example:
-    //   connecting to http://example.com/
-    //   making request to http://example.com/json/version/
-    //   webSocketDebuggerUrl ends up as ws://localhost:9222/devtools/page/<guid>
-    //   we construct ws://example.com/devtools/page/<guid> by appending the pathname to the original URL
-    const url = new URL(endpointURL);
-    url.pathname += (url.pathname.endsWith('/') ? '' : '/') + new URL(wsUrl).pathname.substring(1);
-    return url.toString();
-  }
-  return wsUrl;
+  return JSON.parse(json).webSocketDebuggerUrl;
 }
 
 async function seleniumErrorHandler(params: HTTPRequestParams, response: http.IncomingMessage) {

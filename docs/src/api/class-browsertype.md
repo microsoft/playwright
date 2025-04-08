@@ -144,16 +144,6 @@ Some common examples:
 1. `"<loopback>"` to expose localhost network.
 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and localhost.
 
-### option: BrowserType.connect.proxy
-* since: v1.52
-- `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for the remote connection. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-  - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
-
-Proxy settings to use for the connection between the client and the remote browser. Note this proxy **is not** used by the browser to load web pages.
-
 ## async method: BrowserType.connectOverCDP
 * since: v1.9
 - returns: <[Browser]>
@@ -241,16 +231,6 @@ Logger sink for Playwright logging. Optional.
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
-
-### option: BrowserType.connectOverCDP.proxy
-* since: v1.52
-- `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for the remote connection. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-  - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
-
-Proxy settings to use for the connection between the client and the remote browser. Note this proxy **is not** used by the browser to load web pages.
 
 ## method: BrowserType.executablePath
 * since: v1.8
