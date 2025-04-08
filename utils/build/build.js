@@ -254,7 +254,7 @@ for (const pkg of workspace.packages()) {
       quotePath(path.join(pkg.path, 'src/**/*.ts')),
       `--outdir=${quotePath(path.join(pkg.path, 'lib'))}`,
       ...(withSourceMaps ? [`--sourcemap=linked`] : []),
-      ...(watchMode ? ['--watch=true'] : []),
+      ...(watchMode ? ['--watch'] : []),
       '--platform=node',
       '--format=cjs',
       ],
