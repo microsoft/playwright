@@ -33,7 +33,7 @@ jobs:
           git add .
           git commit -m "chore(driver): roll driver to recent Node.js LTS version"
           git push origin $BRANCH_NAME
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: app-token
         with:
           app-id: ${{ vars.PLAYWRIGHT_APP_ID }}

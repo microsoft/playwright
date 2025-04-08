@@ -2,6 +2,11 @@ name: tests BiDi
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Playwright SHA / ref to test. Use 'refs/pull/PULL_REQUEST_ID/head' to test a PR. Defaults to the current branch.
+        required: false
+        default: ''
   pull_request:
     branches:
       - main
@@ -9,7 +14,6 @@ on:
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
       - tests/bidi/**
-    types: [ labeled ]
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
@@ -19,7 +23,6 @@ env:
 
 jobs:
   test_bidi:
-    if: ${{ (github.event_name == 'pull_request' && github.event.label.name == 'CQ-bidi') || github.event_name != 'pull_request' }}
     name: BiDi
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
@@ -32,6 +35,11 @@ jobs:
         channel: [bidi-chromium, bidi-firefox-nightly]
     steps:
     - uses: actions/checkout@v4
+      if: github.event_name != 'workflow_dispatch'
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: ${{ github.event.inputs.ref }}
     - uses: actions/setup-node@v4
       with:
         node-version: 20
@@ -39,12 +47,17 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
       if: matrix.channel == 'bidi-chromium'
-    - run: npx -y @puppeteer/browsers install firefox@nightly
-      if: matrix.channel == 'bidi-firefox-nightly'
+    - if: matrix.channel == 'bidi-firefox-nightly'
+      id: install_firefox
+      run: |
+        npx -y @puppeteer/browsers install firefox@nightly |\
+          awk 'END { $1=""; sub(/^ /,""); print "bidi_ffpath="$0 }' |\
+          tee -a $GITHUB_OUTPUT
     - name: Run tests
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: '1'
+        BIDI_FFPATH: ${{ steps.install_firefox.outputs.bidi_ffpath }}
     - name: Upload csv report to GitHub
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4

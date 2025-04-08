@@ -21,7 +21,7 @@ import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelec
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
 import { generateAriaTree, getAllByAria, matchesAriaTree, renderAriaTree } from './ariaSnapshot';
-import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setBrowserName } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
 import { createReactEngine } from './reactSelectorEngine';
@@ -107,7 +107,7 @@ export class InjectedScript {
   private _allHitTargetInterceptorEvents: Builtins.Set<string>;
 
   // eslint-disable-next-line no-restricted-globals
-  constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
+  constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, inputFileRoleTextbox: boolean, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.window = window;
     this.document = window.document;
     this.isUnderTest = isUnderTest;
@@ -217,7 +217,7 @@ export class InjectedScript {
 
     this._stableRafCount = stableRafCount;
     this._browserName = browserName;
-    setBrowserName(browserName);
+    setGlobalOptions({ browserNameForWorkarounds: browserName, inputFileRoleTextbox });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
@@ -284,7 +284,7 @@ export class InjectedScript {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     const generation = (this._lastAriaSnapshot?.generation || 0) + 1;
-    this._lastAriaSnapshot = generateAriaTree(this.builtins, node as Element, generation, options?.ref ?? false);
+    this._lastAriaSnapshot = generateAriaTree(this.builtins, node as Element, generation);
     return renderAriaTree(this._lastAriaSnapshot, options);
   }
 

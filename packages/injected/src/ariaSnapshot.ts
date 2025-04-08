@@ -16,7 +16,7 @@
 
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { getElementComputedStyle } from './domUtils';
+import { getElementComputedStyle, getGlobalOptions } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
@@ -38,7 +38,7 @@ export type AriaSnapshot = {
   ids: Builtins.Map<Element, number>;
 };
 
-export function generateAriaTree(builtins: Builtins, rootElement: Element, generation: number, includeIframe: boolean): AriaSnapshot {
+export function generateAriaTree(builtins: Builtins, rootElement: Element, generation: number): AriaSnapshot {
   const visited = new builtins.Set<Node>();
 
   const snapshot: AriaSnapshot = {
@@ -87,7 +87,7 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
     }
 
     addElement(element);
-    const childAriaNode = toAriaNode(builtins, element, includeIframe);
+    const childAriaNode = toAriaNode(builtins, element);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
     processElement(childAriaNode || ariaNode, element, ariaChildren);
@@ -144,8 +144,8 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
   return snapshot;
 }
 
-function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean): AriaNode | null {
-  if (includeIframe && element.nodeName === 'IFRAME')
+function toAriaNode(builtins: Builtins, element: Element): AriaNode | null {
+  if (element.nodeName === 'IFRAME')
     return { role: 'iframe', name: '', children: [], props: {}, element };
 
   const role = roleUtils.getAriaRole(element);
@@ -174,7 +174,7 @@ function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean
     result.selected = roleUtils.getAriaSelected(element);
 
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-    if (element.type !== 'checkbox' && element.type !== 'radio')
+    if (element.type !== 'checkbox' && element.type !== 'radio' && (element.type !== 'file' || getGlobalOptions().inputFileRoleTextbox))
       result.children = [element.value];
   }
 
@@ -235,7 +235,7 @@ export type MatcherReceived = {
 };
 
 export function matchesAriaTree(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
-  const snapshot = generateAriaTree(builtins, rootElement, 0, false);
+  const snapshot = generateAriaTree(builtins, rootElement, 0);
   const matches = matchesNodeDeep(snapshot.root, template, false, false);
   return {
     matches,
@@ -247,7 +247,7 @@ export function matchesAriaTree(builtins: Builtins, rootElement: Element, templa
 }
 
 export function getAllByAria(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(builtins, rootElement, 0, false).root;
+  const root = generateAriaTree(builtins, rootElement, 0).root;
   const matches = matchesNodeDeep(root, template, true, false);
   return matches.map(n => n.element);
 }

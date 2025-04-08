@@ -25,7 +25,7 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { TestInfoImpl } from '../worker/testInfo';
+import type { TestInfoImpl, TestStepInternal } from '../worker/testInfo';
 
 
 const testTypeSymbol = Symbol('testType');
@@ -266,11 +266,11 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    return testInfo._floatingPromiseScope.wrapPromiseAPIResult(this._stepInternal(expectation, testInfo, title, body, options));
+    const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+    return testInfo._floatingPromiseScope.wrapPromiseAPIResult(this._stepInternal(expectation, testInfo, step, body, options), step.location);
   }
 
-  private async _stepInternal<T>(expectation: 'pass'|'skip', testInfo: TestInfoImpl, title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
-    const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+  private async _stepInternal<T>(expectation: 'pass'|'skip', testInfo: TestInfoImpl, step: TestStepInternal, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     return await currentZone().with('stepZone', step).run(async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
