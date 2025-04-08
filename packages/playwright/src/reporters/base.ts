@@ -276,7 +276,7 @@ export class TerminalReporter implements ReporterV2 {
   private _printFailures(failures: TestCase[]) {
     console.log('');
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.screen, this.config, test, index + 1));
+      console.log(this.formatFailure(test, index + 1));
     });
   }
 
@@ -332,7 +332,7 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
     resultLines.push(...errors.map(error => '\n' + error.message));
     if (warnings.length) {
       resultLines.push('');
-      resultLines.push(...formatTestWarning(screen, config, test, warnings));
+      resultLines.push(...formatTestWarning(screen, config, warnings));
     }
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
@@ -376,23 +376,23 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
   return lines.join('\n');
 }
 
-export function formatTestWarning(screen: Screen, config: FullConfig, test: TestCase, warnings: TestAnnotation[]): string[] {
+function formatTestWarning(screen: Screen, config: FullConfig, warnings: TestAnnotation[]): string[] {
   warnings.sort((a, b) => {
-    if (!a || !a.location)
+    const aLocationKey = a.location ? `${a.location.file}:${a.location.line}:${a.location.column}` : undefined;
+    const bLocationKey = b.location ? `${b.location.file}:${b.location.line}:${b.location.column}` : undefined;
+
+    if (!aLocationKey && !bLocationKey)
+      return 0;
+    if (!aLocationKey)
       return 1;
-    if (!b || !b.location)
+    if (!bLocationKey)
       return -1;
-    if (a.location.line !== b.location.line)
-      return a.location.line - b.location.line;
-    if (a.location.column !== b.location.column)
-      return a.location.column - b.location.column;
-    return 0;
+    return aLocationKey.localeCompare(bLocationKey);
   });
 
   return warnings.filter(w => !!w.description).map(w => {
-    // Location should always exist on warnings
-    const location = !!w.location ? `:${w.location.line}:${w.location.column}` : '';
-    return `${screen.colors.yellow(`    Warning: ${relativeTestPath(screen, config, test)}${location}: ${w.description}`)}`;
+    const location = !!w.location ? `${relativeFilePath(screen, config, w.location.file)}:${w.location.line}:${w.location.column}: ` : '';
+    return `${screen.colors.yellow(`    Warning: ${location}${w.description}`)}`;
   });
 }
 
@@ -464,7 +464,7 @@ function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, ste
   return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
 
-export function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
+function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
   const title = formatTestTitle(screen, config, test);
   const header = `${options.indent || ''}${options.index ? options.index + ') ' : ''}${title}`;
   let fullHeader = header;
