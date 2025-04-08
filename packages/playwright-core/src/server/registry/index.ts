@@ -683,27 +683,27 @@ export class Registry {
     }));
 
     this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-stable', {
-      'linux': '/firefox/firefox',
-      'darwin': '/Firefox.app/Contents/MacOS/firefox',
-      'win32': '\\core\\firefox.exe',
+      'linux': '/snap/bin/firefox',
+      'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\Mozilla Firefox\\firefox.exe',
     }));
     this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-beta', {
-      'linux': '/firefox/firefox',
-      'darwin': '/Firefox.app/Contents/MacOS/firefox',
-      'win32': '\\core\\firefox.exe',
+      'linux': '/opt/firefox-beta/firefox',
+      'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\Mozilla Firefox\\firefox.exe',
     }));
     this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-nightly', {
-      'linux': '/firefox/firefox',
-      'darwin': '/Firefox Nightly.app/Contents/MacOS/firefox',
-      'win32': '\\firefox\\firefox.exe',
+      'linux': '/opt/firefox-nightly/firefox',
+      'darwin': '/Applications/Firefox Nightly.app/Contents/MacOS/firefox',
+      'win32': '\\Mozilla Firefox\\firefox.exe',
     }));
 
-    this._executables.push(this._createBidiChannel('bidi-chrome-stable', {
+    this._executables.push(this._createBidiChromiumChannel('bidi-chrome-stable', {
       'linux': '/opt/google/chrome/chrome',
       'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
     }));
-    this._executables.push(this._createBidiChannel('bidi-chrome-canary', {
+    this._executables.push(this._createBidiChromiumChannel('bidi-chrome-canary', {
       'linux': '',
       'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
@@ -903,24 +903,22 @@ export class Registry {
           throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
         return undefined;
       }
-      const folder = path.resolve('firefox');
-      let channelName = 'stable';
-      if (name.includes('beta'))
-        channelName = 'beta';
-      else if (name.includes('nightly'))
-        channelName = 'nightly';
-      const installedVersions = fs.readdirSync(folder);
-      const found = installedVersions.filter(e => e.includes(channelName));
-      if (found.length === 1)
-        return path.join(folder, found[0], suffix);
-      if (found.length > 1) {
-        if (shouldThrow)
-          throw new Error(`Multiple Firefox installations found for channel '${name}': ${found.join(', ')}`);
-        else
-          return undefined;
+      const prefixes = (process.platform === 'win32' ? [
+        process.env.LOCALAPPDATA,
+        process.env.PROGRAMFILES,
+        process.env['PROGRAMFILES(X86)'],
+        // In some cases there is no PROGRAMFILES/(86) env var set but HOMEDRIVE is set.
+        process.env.HOMEDRIVE + '\\Program Files',
+        process.env.HOMEDRIVE + '\\Program Files (x86)',
+      ].filter(Boolean) : ['']) as string[];
+
+      for (const prefix of prefixes) {
+        const executablePath = path.join(prefix, suffix);
+        if (canAccessFile(executablePath))
+          return executablePath;
       }
       if (shouldThrow)
-        throw new Error(`Cannot find Firefox installation for channel '${name}' under ${folder}`);
+        throw new Error(`Cannot find Firefox installation for channel '${name}' at the standard system paths.`);
       return undefined;
     };
     return {
@@ -937,7 +935,7 @@ export class Registry {
     };
   }
 
-  private _createBidiChannel(name: BidiChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+  private _createBidiChromiumChannel(name: BidiChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
@@ -964,7 +962,7 @@ export class Registry {
 
       const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
       const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
-      throw new Error(`Firefox distribution '${name}' is not found${location}${installation}`);
+      throw new Error(`Chromium distribution '${name}' is not found${location}${installation}`);
     };
     return {
       type: 'channel',
