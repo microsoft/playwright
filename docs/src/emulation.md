@@ -355,6 +355,13 @@ await using var context = await browser.NewContextAsync(new()
 ```
 
 <img width="1394" alt="Bing in german lang and timezone" src="https://user-images.githubusercontent.com/13063165/220416571-ccc96ab1-44bb-4579-8430-64502fc24a15.png" />
+
+####
+* langs: js
+
+Note that this only affects the browser timezone and locale, not the test runner timezone.
+To set the test runner timezone, you can use the [`TZ` environment variable](https://nodejs.org/api/cli.html#tz).
+
 ## Permissions
 
 Allow app to show system notifications.
