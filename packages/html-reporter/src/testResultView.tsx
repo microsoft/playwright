@@ -86,15 +86,15 @@ export const TestResultView: React.FC<{
     const errors = classifyErrors(result.errors, diffs, result.attachments);
     const warnings = result.annotations.filter(a => a.type === 'warning');
     warnings.sort((a, b) => {
-      if (!a || !a.location)
+      const aLocationKey = a.location ? `${a.location.file}:${a.location.line}:${a.location.column}` : undefined;
+      const bLocationKey = b.location ? `${b.location.file}:${b.location.line}:${b.location.column}` : undefined;
+      if (!aLocationKey && !bLocationKey)
+        return 0;
+      if (!aLocationKey)
         return 1;
-      if (!b || !b.location)
+      if (!bLocationKey)
         return -1;
-      if (a.location.line !== b.location.line)
-        return a.location.line - b.location.line;
-      if (a.location.column !== b.location.column)
-        return a.location.column - b.location.column;
-      return 0;
+      return aLocationKey.localeCompare(bLocationKey);
     });
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, warnings, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
