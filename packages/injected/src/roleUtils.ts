@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { getGlobalOptions, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 import type { Builtins } from '@isomorphic/builtins';
@@ -131,6 +131,11 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
     }
     if (type === 'hidden')
       return null;
+    // File inputs do not have a role by the spec: https://www.w3.org/TR/html-aam-1.0/#el-input-file.
+    // However, there are open issues about fixing it: https://github.com/w3c/aria/issues/1926.
+    // All browsers report it as a button, and it is rendered as a button, so we do "button".
+    if (type === 'file' && !getGlobalOptions().inputFileRoleTextbox)
+      return 'button';
     return inputTypeToRole[type] || 'textbox';
   },
   'INS': () => 'insertion',
@@ -663,6 +668,18 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
         return 'Reset';
       const title = element.getAttribute('title') || '';
       return title;
+    }
+
+    // SPEC DIFFERENCE.
+    // There is no spec for this, but Chromium/WebKit do "Choose File" so we follow that.
+    // All browsers respect labels, aria-labelledby and aria-label.
+    // No browsers respect the title attribute, although w3c accname tests disagree. We follow browsers.
+    if (!getGlobalOptions().inputFileRoleTextbox && tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
+      options.visitedElements.add(element);
+      const labels = (element as HTMLInputElement).labels || [];
+      if (labels.length && !options.embeddedInLabelledBy)
+        return getAccessibleNameFromAssociatedLabels(labels, options);
+      return 'Choose File';
     }
 
     // https://w3c.github.io/html-aam/#input-type-image-accessible-name-computation

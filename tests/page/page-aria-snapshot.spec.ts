@@ -416,13 +416,19 @@ it('should ignore presentation and none roles', async ({ page }) => {
   `);
 });
 
-it('should treat input value as text in templates', async ({ page }) => {
+it('should treat input value as text in templates, but not for checkbox/radio/file', async ({ page }) => {
   await page.setContent(`
     <input value='hello world'>
+    <input type=file>
+    <input type=checkbox checked>
+    <input type=radio checked>
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - textbox: hello world
+    - button "Choose File"
+    - checkbox [checked]
+    - radio [checked]
   `);
 });
 

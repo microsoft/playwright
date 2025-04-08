@@ -101,6 +101,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
+          ${process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? 'true' : 'false'},
           [${custom.join(',\n')}]
         );
         })();
