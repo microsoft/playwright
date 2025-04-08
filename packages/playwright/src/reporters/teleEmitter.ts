@@ -36,7 +36,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _emitterOptions: TeleReporterEmitterOptions;
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
-  protected readonly _idSymbol = Symbol('id');
+  private readonly _idSymbol = Symbol('id');
 
   constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
@@ -99,6 +99,25 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   onStepEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
+    // Create synthetic onAttach event so we serialize the entire attachment along with the step
+    // TODO: Attachment indices are still wrong after merge
+    this._messageSink({
+      method: 'onAttach',
+      params: {
+        testId: test.id,
+        resultId: (result as any)[this._idSymbol],
+        stepId: (step as any)[this._idSymbol],
+        attachments: step.attachments.flatMap((attachment: reporterTypes.TestResult['attachments'][number] | undefined) => {
+          // Due to an old bug in users' blobs, the blob may serialize the attachment index as -1,
+          // resulting an undefined attachment. We must preserve the order, but cannot perform normal
+          // serialization on the undefined value
+          if (!attachment)
+            return attachment;
+          return this._serializeAttachments([attachment]);
+        }),
+      }
+    });
+
     this._messageSink({
       method: 'onStepEnd',
       params: {

@@ -26,7 +26,7 @@ import { yazl } from 'playwright-core/lib/zipBundle';
 import { resolveOutputFile } from './base';
 import { TeleReporterEmitter } from './teleEmitter';
 
-import type { FullConfig, FullResult, TestCase, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import type { EventEmitter } from 'events';
 
@@ -61,28 +61,6 @@ export class BlobReporter extends TeleReporterEmitter {
     if (this._options.fileName && !this._options.fileName.endsWith('.zip'))
       throw new Error(`Blob report file name must end with .zip extension: ${this._options.fileName}`);
     this._salt = createGuid();
-  }
-
-  override onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
-    // Create synthetic onAttach event so we serialize the entire attachment along with the step
-    this._messages.push({
-      method: 'onAttach',
-      params: {
-        testId: test.id,
-        resultId: (result as any)[this._idSymbol],
-        stepId: (step as any)[this._idSymbol],
-        attachments: step.attachments.flatMap((attachment: TestResult['attachments'][number] | undefined) => {
-          // Due to an old bug in users' blobs, the blob may serialize the attachment index as -1,
-          // resulting an undefined attachment. We must preserve the order, but cannot perform normal
-          // serialization on the undefined value
-          if (!attachment)
-            return attachment;
-          return this._serializeAttachments([attachment]);
-        }),
-      }
-    });
-
-    super.onStepEnd(test, result, step);
   }
 
   override onConfigure(config: FullConfig) {
