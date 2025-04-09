@@ -1084,7 +1084,7 @@ await Expect(locator).ToContainClassAsync("selected");
 await Expect(locator).ToContainClassAsync("row middle");
 ```
 
-When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class values. Each element's class attribute is matched against the corresponding string or regular expression in the array:
+When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class lists. Each element's class attribute is matched against the corresponding class in the array:
 
 ```html
 <div class='list'></div>
@@ -1562,7 +1562,7 @@ Attribute name.
 * langs:
   - alias-java: hasClass
 
-Ensures the [Locator] points to an element with given CSS classes. When a string is provided, it must fully match the element's `class` attribute. To match individual classes or perform partial matches use [`method: LocatorAssertions.toContainClass`].
+Ensures the [Locator] points to an element with given CSS classes. When a string is provided, it must fully match the element's `class` attribute. To match individual classes use [`method: LocatorAssertions.toContainClass`].
 
 **Usage**
 
