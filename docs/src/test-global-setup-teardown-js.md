@@ -9,14 +9,14 @@ There are two ways to configure global setup and teardown: using a global setup 
 
 | Feature                          | Project Dependencies (recommended) | `globalSetup` (config option)      |
 |----------------------------------|-------------------------------------|-----------------------------------|
+| Runs before all tests            | ✅ Yes                              | ✅ Yes         |
 | HTML report visibility           | ✅ Shown as a separate project      | ❌ Not shown                       |
-| Trace recording (trace viewer)   | ✅ Full trace available             | ❌ Not supported                   |
+| Trace recording                  | ✅ Full trace available             | ❌ Not supported                   |
 | Playwright fixtures              | ✅ Fully supported                  | ❌ Not supported                   |
-| Runs as part of test suite       | ✅ Runs as part of suite            | ❌ Runs in the test runner process |
 | Browser management               | ✅ Via `browser` fixture            | ❌ Fully manual via `browserType.launch()` |
 | Parallelism and retries          | ✅ Supported via standard config    | ❌ Not applicable                  |
 | Config options like `headless` or `testIdAttribute`  | ✅ Automatically applied            | ❌ Ignored                              |
-| Error handling                   | ✅ Fails as a regular test       | ❌ An uncaught exception will prevent Playwright from running tests, and no test results will appear in reporters.      |
+
 
 ## Option 1: Project Dependencies
 
@@ -146,7 +146,7 @@ You can use the `globalSetup` option in the [configuration file](./test-configur
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
 :::note
-Beware that `globalSetup` and `globalTeardown` lack some features — see the [intro](#introduction) section for a detailed comparison. For example, they do not respect config options like `headless` or `testIdAttribute`, won't produce traces or artifacts unless explicitly configured, and uncaught exceptions will prevent tests from running with no results reported. Consider using [project dependencies](#option-1-project-dependencies) instead to get full feature support.
+Beware that `globalSetup` and `globalTeardown` lack some features — see the [intro](#introduction) section for a detailed comparison. Consider using [project dependencies](#option-1-project-dependencies) instead to get full feature support.
 :::
 
 ```js title="playwright.config.ts"
