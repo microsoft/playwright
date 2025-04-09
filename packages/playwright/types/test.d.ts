@@ -8201,6 +8201,51 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
+   * All classes from the asserted value, separated by spaces, must be present in the
+   * [Element.classList](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList) in any order.
+   *
+   * **Usage**
+   *
+   * ```html
+   * <div class='middle selected row' id='component'></div>
+   * ```
+   *
+   * ```js
+   * const locator = page.locator('#component');
+   * await expect(locator).toContainClass('middle selected row');
+   * await expect(locator).toContainClass('selected');
+   * await expect(locator).toContainClass('row middle');
+   * ```
+   *
+   * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
+   * expected class lists. Each element's class attribute is matched against the corresponding class in the array:
+   *
+   * ```html
+   * <div class='list'></div>
+   *   <div class='component inactive'></div>
+   *   <div class='component active'></div>
+   *   <div class='component inactive'></div>
+   * </div>
+   * ```
+   *
+   * ```js
+   * const locator = page.locator('list > .component');
+   * await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
+   * ```
+   *
+   * @param expected A string containing expected class names, separated by spaces, or a list of such strings to assert multiple
+   * elements.
+   * @param options
+   */
+  toContainClass(expected: string|ReadonlyArray<string>, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element that contains the given
    * text. All nested elements will be considered when computing the text content of the element. You can use regular
    * expressions for the value as well.
@@ -8407,9 +8452,8 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
-   * When a string is provided, it must fully match the element's `class` attribute. To match individual classes or
-   * perform partial matches use
-   * [`partial`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-class-option-partial).
+   * When a string is provided, it must fully match the element's `class` attribute. To match individual classes use
+   * [expect(locator).toContainClass(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-contain-class).
    *
    * **Usage**
    *
@@ -8420,8 +8464,7 @@ interface LocatorAssertions {
    * ```js
    * const locator = page.locator('#component');
    * await expect(locator).toHaveClass('middle selected row');
-   * await expect(locator).toHaveClass('selected', { partial: true });
-   * await expect(locator).toHaveClass('middle row', { partial: true });
+   * await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
    * ```
    *
    * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
@@ -8437,15 +8480,6 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveClass(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
-    /**
-     * Whether to perform a partial match, defaults to `false`. In an exact match, which is the default, the `className`
-     * attribute must be exactly the same as the asserted value. In a partial match, all classes from the asserted value,
-     * separated by spaces, must be present in the
-     * [Element.classList](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList) in any order. Partial match
-     * does not support a regular expression.
-     */
-    partial?: boolean;
-
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */

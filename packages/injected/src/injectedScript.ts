@@ -1452,12 +1452,12 @@ export class InjectedScript {
         if (value === null)
           return { received: null, matches: false };
         received = value;
-      } else if (expression === 'to.have.class') {
+      } else if (['to.have.class', 'to.contain.class'].includes(expression)) {
         if (!options.expectedText)
           throw this.createStacklessError('Expected text is not provided for ' + expression);
         return {
           received: element.classList.toString(),
-          matches: new ExpectedTextMatcher(this.builtins, options.expectedText[0]).matchesClassList(this, element.classList, options.expressionArg.partial),
+          matches: new ExpectedTextMatcher(this.builtins, options.expectedText[0]).matchesClassList(this, element.classList, /* partial */ expression === 'to.contain.class'),
         };
       } else if (expression === 'to.have.css') {
         received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
@@ -1506,13 +1506,13 @@ export class InjectedScript {
     if (!options.expectedText)
       throw this.createStacklessError('Expected text is not provided for ' + expression);
 
-    if (expression === 'to.have.class.array') {
+    if (['to.have.class.array', 'to.contain.class.array'].includes(expression)) {
       const receivedClassLists = elements.map(e => e.classList);
       const received = receivedClassLists.map(String);
       if (receivedClassLists.length !== options.expectedText.length)
         return { received, matches: false };
       const matches = this._matchSequentially(options.expectedText, receivedClassLists, (matcher, r) =>
-        matcher.matchesClassList(this, r, options.expressionArg.partial)
+        matcher.matchesClassList(this, r, /* partial */ expression === 'to.contain.class.array')
       );
       return {
         received: received,
