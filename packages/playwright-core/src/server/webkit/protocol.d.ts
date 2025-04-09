@@ -801,7 +801,7 @@ export module Protocol {
     /**
      * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event";
+    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event"|"slot-assigned"|"slot-filled";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -1436,7 +1436,7 @@ export module Protocol {
     /**
      * Channels for different types of log messages.
      */
-    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"payment-request"|"other";
+    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"accessibility"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"payment-request"|"other";
     /**
      * Level of logging.
      */
@@ -2471,6 +2471,27 @@ export module Protocol {
       depth?: number;
     }
     export type requestChildNodesReturnValue = {
+    }
+    /**
+     * Requests the <code>HTMLSlotElement</code> that the node with the given id is assigned to.
+     */
+    export type requestAssignedSlotParameters = {
+      nodeId: NodeId;
+    }
+    export type requestAssignedSlotReturnValue = {
+      /**
+       * Not provided if the given node is not assigned to a <code>HTMLSlotElement</code>.
+       */
+      slotElementId?: NodeId;
+    }
+    /**
+     * Requests the list of assigned nodes for the <code>HTMLSlotElement</code> with the given id.
+     */
+    export type requestAssignedNodesParameters = {
+      slotElementId: NodeId;
+    }
+    export type requestAssignedNodesReturnValue = {
+      assignedNodeIds: NodeId[];
     }
     /**
      * Executes <code>querySelector</code> on a given node.
@@ -4233,11 +4254,11 @@ might return multiple quads for inline nodes.
       url: string;
       shouldBlackbox: boolean;
       /**
-       * If <code>true</code>, <code>url</code> is case sensitive.
+       * If <code>true</code>, <code>url</code> is case sensitive. Defaults to true.
        */
       caseSensitive?: boolean;
       /**
-       * If <code>true</code>, treat <code>url</code> as regular expression.
+       * If <code>true</code>, treat <code>url</code> as regular expression. Defaults to false.
        */
       isRegex?: boolean;
       /**
@@ -9238,6 +9259,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelParameters;
     "DOM.getDocument": DOM.getDocumentParameters;
     "DOM.requestChildNodes": DOM.requestChildNodesParameters;
+    "DOM.requestAssignedSlot": DOM.requestAssignedSlotParameters;
+    "DOM.requestAssignedNodes": DOM.requestAssignedNodesParameters;
     "DOM.querySelector": DOM.querySelectorParameters;
     "DOM.querySelectorAll": DOM.querySelectorAllParameters;
     "DOM.setNodeName": DOM.setNodeNameParameters;
@@ -9543,6 +9566,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelReturnValue;
     "DOM.getDocument": DOM.getDocumentReturnValue;
     "DOM.requestChildNodes": DOM.requestChildNodesReturnValue;
+    "DOM.requestAssignedSlot": DOM.requestAssignedSlotReturnValue;
+    "DOM.requestAssignedNodes": DOM.requestAssignedNodesReturnValue;
     "DOM.querySelector": DOM.querySelectorReturnValue;
     "DOM.querySelectorAll": DOM.querySelectorAllReturnValue;
     "DOM.setNodeName": DOM.setNodeNameReturnValue;
