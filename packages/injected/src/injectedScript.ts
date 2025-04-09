@@ -1644,7 +1644,7 @@ class ExpectedTextMatcher {
   matchesClassList(injectedScript: InjectedScript, classList: DOMTokenList, partial: boolean): boolean {
     if (partial) {
       if (this._regex)
-        return !!this._regex.test(classList.toString());
+        throw injectedScript.createStacklessError('Partial matching does not support regular expressions. Please provide a string value.');
       return this._string!.split(/\s+/g).filter(Boolean).every(className => classList.contains(className));
     }
     return this.matches(classList.toString());

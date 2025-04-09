@@ -8219,26 +8219,25 @@ interface LocatorAssertions {
    * ```
    *
    * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
-   * expected class values. Each element's class attribute is matched against the corresponding string or regular
-   * expression in the array:
+   * expected class lists. Each element's class attribute is matched against the corresponding class in the array:
    *
    * ```html
    * <div class='list'></div>
-   *   <div class='component'></div>
-   *   <div class='component selected active-element'></div>
-   *   <div class='component'></div>
+   *   <div class='component inactive'></div>
+   *   <div class='component active'></div>
+   *   <div class='component inactive'></div>
    * </div>
    * ```
    *
    * ```js
    * const locator = page.locator('list > .component');
-   * await expect(locator).toContainClass(['component', 'component selected', 'component']);
+   * await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
    * ```
    *
    * @param expected Expected class or RegExp or a list of those.
    * @param options
    */
-  toContainClass(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
+  toContainClass(expected: string|ReadonlyArray<string>, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -8452,8 +8451,7 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
-   * When a string is provided, it must fully match the element's `class` attribute. To match individual classes or
-   * perform partial matches use
+   * When a string is provided, it must fully match the element's `class` attribute. To match individual classes use
    * [expect(locator).toContainClass(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-contain-class).
    *
    * **Usage**
@@ -8465,8 +8463,7 @@ interface LocatorAssertions {
    * ```js
    * const locator = page.locator('#component');
    * await expect(locator).toHaveClass('middle selected row');
-   * await expect(locator).toHaveClass('selected', { partial: true });
-   * await expect(locator).toHaveClass('middle row', { partial: true });
+   * await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
    * ```
    *
    * When an array is passed, the method asserts that the list of elements located matches the corresponding list of

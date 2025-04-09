@@ -205,7 +205,7 @@ The opposite of [`method: LocatorAssertions.toContainClass`].
 
 ### param: LocatorAssertions.NotToContainClass.expected
 * since: v1.52
-- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
+- `expected` <[string]|[Array]<[string]>>
 
 Expected class or RegExp or a list of those.
 
@@ -1088,44 +1088,44 @@ When an array is passed, the method asserts that the list of elements located ma
 
 ```html
 <div class='list'></div>
-  <div class='component'></div>
-  <div class='component selected active-element'></div>
-  <div class='component'></div>
+  <div class='component inactive'></div>
+  <div class='component active'></div>
+  <div class='component inactive'></div>
 </div>
 ```
 
 ```js
 const locator = page.locator('list > .component');
-await expect(locator).toContainClass(['component', 'component selected', 'component']);
+await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
 ```
 
 ```java
-assertThat(page.locator("list > .component")).hasClass(new String[] {"component", "component selected", "component"});
+assertThat(page.locator("list > .component")).containsClass(new String[] {"inactive", "active", "inactive"});
 ```
 
 ```python async
 from playwright.async_api import expect
 
 locator = page.locator("list > .component")
-await expect(locator).to_have_class(["component", "component selected", "component"])
+await expect(locator).to_contain_class(["inactive", "active", "inactive"])
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
 locator = page.locator("list > .component")
-expect(locator).to_have_class(["component", "component selected", "component"])
+await expect(locator).to_contain_class(["inactive", "active", "inactive"])
 ```
 
 ```csharp
 var locator = Page.Locator("list > .component");
-await Expect(locator).ToContainClassAsync(new string[]{"component", "component selected", "component"});
+await Expect(locator).ToContainClassAsync(new string[]{"inactive", "active", "inactive"});
 ```
 
 ### param: LocatorAssertions.toContainClass.expected
 * since: v1.52
 * langs: js
-- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `expected` <[string]|[Array]<[string]>>
 
 Expected class or RegExp or a list of those.
 
@@ -1573,14 +1573,12 @@ Ensures the [Locator] points to an element with given CSS classes. When a string
 ```js
 const locator = page.locator('#component');
 await expect(locator).toHaveClass('middle selected row');
-await expect(locator).toHaveClass('selected', { partial: true });
-await expect(locator).toHaveClass('middle row', { partial: true });
+await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
 ```
 
 ```java
 assertThat(page.locator("#component")).hasClass("middle selected row");
-assertThat(page.locator("#component")).hasClass("selected", new LocatorAssertions.HasClassOptions().setPartial(true));
-assertThat(page.locator("#component")).hasClass("middle row", new LocatorAssertions.HasClassOptions().setPartial(true));
+assertThat(page.locator("#component")).hasClass(Pattern.compile("(^|\\s)selected(\\s|$)"));
 ```
 
 ```python async
@@ -1588,7 +1586,7 @@ from playwright.async_api import expect
 
 locator = page.locator("#component")
 await expect(locator).to_have_class("middle selected row")
-await expect(locator).to_have_class("middle row", partial=True)
+await expect(locator).to_have_class(re.compile(r"(^|\\s)selected(\\s|$)"))
 ```
 
 ```python sync
@@ -1596,15 +1594,13 @@ from playwright.sync_api import expect
 
 locator = page.locator("#component")
 expect(locator).to_have_class("middle selected row")
-expect(locator).to_have_class("selected", partial=True)
-expect(locator).to_have_class("middle row", partial=True)
+expect(locator).to_have_class(re.compile(r"(^|\\s)selected(\\s|$)"))
 ```
 
 ```csharp
 var locator = Page.Locator("#component");
 await Expect(locator).ToHaveClassAsync("middle selected row");
-await Expect(locator).ToHaveClassAsync("selected", new() { Partial = true });
-await Expect(locator).ToHaveClassAsync("middle row", new() { Partial = true });
+await Expect(locator).ToHaveClassAsync(new Regex("(^|\\s)selected(\\s|$)"));
 ```
 
 When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class values. Each element's class attribute is matched against the corresponding string or regular expression in the array:

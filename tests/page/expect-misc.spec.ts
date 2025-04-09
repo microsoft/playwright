@@ -231,6 +231,7 @@ test.describe('toContainClass', () => {
     await expect(locator).toContainClass('baz bar');
     await expect(locator).toContainClass('  bar   foo ');
     await expect(locator).not.toContainClass('  baz   not-matching '); // Strip whitespace and match individual classes
+    expect(() => expect(locator).toContainClass(/foo|bar/ as any)).toThrow(/"expected\" argument in toContainClass cannot be a RegExp value/);
   });
 
   test('pass with SVGs', async ({ page }) => {
@@ -248,8 +249,8 @@ test.describe('toContainClass', () => {
   test('pass with array', async ({ page }) => {
     await page.setContent('<div class="foo"></div><div class="hello bar"></div><div class="baz"></div>');
     const locator = page.locator('div');
-    await expect(locator).toContainClass(['foo', 'hello', /[a-z]az/]);
-    await expect(locator).toContainClass([/foo/, /hello/, /[a-z]az/]);
+    await expect(locator).toContainClass(['foo', 'hello', 'baz']);
+    expect(() => expect(locator).toContainClass(['foo', 'hello', /baz/] as any)).toThrow(/"expected" argument in toContainClass cannot contain RegExp values/);
     await expect(locator).not.toHaveClass(['not-there', 'hello', 'baz']); // Class not there
     await expect(locator).not.toHaveClass(['foo', 'hello']); // Length mismatch
   });
@@ -257,7 +258,7 @@ test.describe('toContainClass', () => {
   test('fail with array', async ({ page }) => {
     await page.setContent('<div class="foo"></div><div class="bar"></div><div class="bar"></div>');
     const locator = page.locator('div');
-    const error = await expect(locator).toContainClass(['foo', 'bar', /not-matching/], { timeout: 1000 }).catch(e => e);
+    const error = await expect(locator).toContainClass(['foo', 'bar', 'baz'], { timeout: 1000 }).catch(e => e);
     expect(error.message).toContain('expect.toContainClass with timeout 1000ms');
   });
 });
