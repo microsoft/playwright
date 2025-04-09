@@ -8234,7 +8234,8 @@ interface LocatorAssertions {
    * await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
    * ```
    *
-   * @param expected Expected class or RegExp or a list of those.
+   * @param expected A string containing expected class names, separated by spaces, or a list of such strings to assert multiple
+   * elements.
    * @param options
    */
   toContainClass(expected: string|ReadonlyArray<string>, options?: {

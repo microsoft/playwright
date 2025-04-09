@@ -1124,24 +1124,9 @@ await Expect(locator).ToContainClassAsync(new string[]{"inactive", "active", "in
 
 ### param: LocatorAssertions.toContainClass.expected
 * since: v1.52
-* langs: js
 - `expected` <[string]|[Array]<[string]>>
 
 A string containing expected class names, separated by spaces, or a list of such strings to assert multiple elements.
-
-### param: LocatorAssertions.toContainClass.expected
-* since: v1.52
-* langs: python
-- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
-
-Expected class or RegExp or a list of those.
-
-### param: LocatorAssertions.toContainClass.expected
-* since: v1.52
-* langs: java, csharp
-- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
-
-Expected class or RegExp or a list of those.
 
 ### option: LocatorAssertions.toContainClass.timeout = %%-js-assertions-timeout-%%
 * since: v1.52
