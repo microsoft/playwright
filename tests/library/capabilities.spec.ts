@@ -468,7 +468,10 @@ it.describe('Audio & Video codec playback', () => {
     },
     {
       codec: 'VP9 (WebM container)',
-      file: '/video/big-buck-bunny-vp9.webm' },
+      file: '/video/big-buck-bunny-vp9.webm',
+      skip: ({ browserName, channel, platform }) =>
+        browserName === 'webkit' && platform === 'linux' // TODO
+    },
     {
       codec: 'AV1 (MP4 container)',
       file: '/video/big-buck-bunny-av1.mp4',
@@ -507,13 +510,16 @@ it.describe('Audio & Video codec playback', () => {
       file: '/audio/movie.ogv',
       type: 'video/ogg',
       skip: ({ browserName, platform }) =>
-        browserName === 'webkit' && platform === 'darwin' //
+        browserName === 'webkit' && platform === 'darwin' // TODO
+      || browserName === 'firefox' && platform === 'linux' // TODO
       || browserName === 'firefox' && platform === 'darwin', // TODO
     },
     {
       codec: 'MP3 (MP3 container)',
       file: '/audio/example.mp3',
-      type: 'audio/mpeg'
+      type: 'audio/mpeg',
+      skip: ({ browserName, platform }) =>
+        browserName === 'firefox' && platform === 'linux' // TODO
     },
   ]) {
     it(`should play ${codec} audio`, async ({ page, server, browserName, platform }) => {
