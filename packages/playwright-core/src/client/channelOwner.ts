@@ -68,6 +68,12 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     this._isInternalType = true;
   }
 
+  _registerSelf(guid: string, ownerThis: ChannelOwner) {
+    this._connection._objects.set(guid, ownerThis);
+    this._parent?._objects.set(guid, ownerThis);
+    (this._channel as any)._object = ownerThis;
+  }
+
   _setEventToSubscriptionMapping(mapping: Map<string, string>) {
     this._eventToSubscriptionMapping = mapping;
   }

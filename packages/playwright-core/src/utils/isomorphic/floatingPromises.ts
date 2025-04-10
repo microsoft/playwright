@@ -49,46 +49,29 @@ export const wrapPromiseAPIResult = <T>(promise: Promise<T>, location: Location 
   return promiseProxy;
 };
 
-type Constructor<T = any> = new (...args: any[]) => T;
+type FunctionKeys<T extends ChannelOwner<any>> = {
+  [K in keyof T]: K extends `_${string}` ? never : K
+}[keyof T];
 
-type FunctionKeys<T extends Constructor> = {
-  [K in keyof InstanceType<T>]: InstanceType<T>[K] extends Function
-    // Exclude internal methods
-    ? K extends `_${string}` ? never : K
-    : never
-}[keyof InstanceType<T>];
-
-export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwner<any>>(APIClass: T, exclusions?: Array<Extract<FunctionKeys<T>, string>>): T => {
-  // Proxy class constructor
-  return new Proxy(APIClass, {
-    construct: (target, args: ConstructorParameters<T>, newTarget) => {
-      const api = Reflect.construct(target, args, newTarget) as ChannelOwner<any>;
-      // Proxy the actual implementation
-      const proxiedApi = new Proxy(api, {
-        get: (target, prop, receiver) => {
-          const member = Reflect.get(target, prop, receiver);
-          if (typeof prop !== 'string' || prop.startsWith('_'))
-            return member;
-          if (exclusions && exclusions.includes(prop as any))
-            return member;
-          if (typeof member === 'function') {
-            return (...args: any[]) => {
-              const result = Reflect.apply(member, receiver, args) as any;
-              // Specifically check for thenables, not Promises
-              if (result && typeof result === 'object' && typeof result.then === 'function') {
-                const stackTrace = captureLibraryStackTrace(api._platform);
-                return wrapPromiseAPIResult(result, stackTrace.frames[0], api._instrumentation.onRegisterApiPromise, api._instrumentation.onUnregisterApiPromise);
-              } else {
-                return result;
-              }
-            };
-          }
-          return member;
+export const wrapPromiseAPI = <T extends ChannelOwner<any>>(api: T, exclusions?: Array<Extract<FunctionKeys<T>, string>>) => new Proxy(api, {
+  get: (target, prop, receiver) => {
+    const member = Reflect.get(target, prop, receiver);
+    if (typeof prop !== 'string' || prop.startsWith('_'))
+      return member;
+    if (exclusions && exclusions.includes(prop as any))
+      return member;
+    if (typeof member === 'function') {
+      return (...args: any[]) => {
+        const result = Reflect.apply(member, receiver, args) as any;
+        // Specifically check for thenables, not Promises
+        if (result && typeof result === 'object' && typeof result.then === 'function') {
+          const stackTrace = captureLibraryStackTrace(api._platform);
+          return wrapPromiseAPIResult(result, stackTrace.frames[0], api._instrumentation.onRegisterApiPromise, api._instrumentation.onUnregisterApiPromise);
+        } else {
+          return result;
         }
-      });
-      // TODO: This is a workaround for channels retaining a reference to the original class
-      api._channel._object = proxiedApi;
-      return proxiedApi;
-    },
-  });
-};
+      };
+    }
+    return member;
+  }
+});

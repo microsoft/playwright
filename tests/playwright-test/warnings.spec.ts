@@ -350,9 +350,6 @@ test.describe('await', () => {
       'waitForTimeout',
       'waitForFunction',
       'pause',
-    ];
-
-    const ignoredCalls = [
       '$eval',
       '$$eval',
       'addLocatorHandler',
@@ -364,6 +361,9 @@ test.describe('await', () => {
       'screenshot',
       'bringToFront',
       'pdf',
+    ];
+
+    const ignoredCalls = [
       // Some random sync calls just in case
       'locator',
       'getByTestId'
