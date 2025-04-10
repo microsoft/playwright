@@ -390,6 +390,7 @@ class IdsPatcher {
       case 'onProject':
         this._onProject(params.project);
         return;
+      case 'onAttach':
       case 'onTestBegin':
       case 'onStepBegin':
       case 'onStepEnd':
