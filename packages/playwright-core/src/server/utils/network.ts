@@ -20,10 +20,11 @@ import http2 from 'http2';
 import https from 'https';
 import url from 'url';
 
-import { HttpsProxyAgent, getProxyForUrl } from '../../utilsBundle';
+import { HttpsProxyAgent, SocksProxyAgent, getProxyForUrl } from '../../utilsBundle';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';
 
 import type net from 'net';
+import type { ProxySettings } from '../types';
 
 export type HTTPRequestParams = {
   url: string,
@@ -107,6 +108,49 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
       response.on('end', () => resolve(body));
     }, reject);
   });
+}
+
+function shouldBypassProxy(url: URL, bypass?: string): boolean {
+  if (!bypass)
+    return false;
+  const domains = bypass.split(',').map(s => {
+    s = s.trim();
+    if (!s.startsWith('.'))
+      s = '.' + s;
+    return s;
+  });
+  const domain = '.' + url.hostname;
+  return domains.some(d => domain.endsWith(d));
+}
+
+export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
+  if (!proxy)
+    return;
+  if (forUrl && proxy.bypass && shouldBypassProxy(forUrl, proxy.bypass))
+    return;
+
+  // Browsers allow to specify proxy without a protocol, defaulting to http.
+  let proxyServer = proxy.server.trim();
+  if (!/^\w+:\/\//.test(proxyServer))
+    proxyServer = 'http://' + proxyServer;
+
+  const proxyOpts = url.parse(proxyServer);
+  if (proxyOpts.protocol?.startsWith('socks')) {
+    return new SocksProxyAgent({
+      host: proxyOpts.hostname,
+      port: proxyOpts.port || undefined,
+    });
+  }
+  if (proxy.username)
+    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+
+  if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
+    // Force CONNECT method for WebSockets.
+    return new HttpsProxyAgent(proxyOpts);
+  }
+
+  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(proxyOpts);
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
