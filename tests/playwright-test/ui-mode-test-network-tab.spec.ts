@@ -24,6 +24,7 @@ test('should filter network requests by resource type', async ({ runUITest, serv
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -64,6 +65,7 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -100,6 +102,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -142,6 +145,7 @@ test('should display list of query parameters (only if present)', async ({ runUI
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });

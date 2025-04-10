@@ -367,6 +367,7 @@ test('should filter network requests by resource type', async ({ page, runAndTra
   const traceViewer = await runAndTrace(async () => {
     server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
+    await page.evaluate(() => (window as any).donePromise);
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
@@ -399,6 +400,7 @@ test('should filter network requests by resource type', async ({ page, runAndTra
 test('should show font preview', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
+    await page.evaluate(() => (window as any).donePromise);
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
@@ -413,6 +415,7 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
 test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
+    await page.evaluate(() => (window as any).donePromise);
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
