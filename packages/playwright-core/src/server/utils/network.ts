@@ -71,10 +71,14 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
-    if (statusCode >= 300 && statusCode < 400 && res.headers.location)
+    if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
+      // Close the original socket before following the redirect. Otherwise
+      // it may stay idle and cause a timeout error.
+      request.destroy();
       httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError);
-    else
+    } else {
       onResponse(res);
+    }
   };
   const request = options.protocol === 'https:' ?
     https.request(options, requestCallback) :
