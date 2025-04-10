@@ -83,9 +83,7 @@ export type AttachmentPayload = {
   stepId?: string;
 };
 
-export type TestInfoErrorImpl = TestInfoError & {
-  matcherResult?: MatcherResultProperty;
-};
+export type TestInfoErrorImpl = TestInfoError;
 
 export type TestEndPayload = {
   testId: string;

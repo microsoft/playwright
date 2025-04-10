@@ -660,5 +660,5 @@ test('should report serialization error', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('Error: () => {} could not be cloned.');
+  expect(result.output).toContain('Expected: {\"a\": [Function a]}');
 });
