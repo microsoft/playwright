@@ -617,3 +617,48 @@ test('should fail when test.fail.only passes unexpectedly', async ({ runInlineTe
   expect(result.output).not.toContain('test1 should not run');
   expect(result.output).not.toContain('test3 should not run');
 });
+
+test('should serialize circular objects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'one-failure.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('circular dependency', () => {
+        const a = {};
+        a.b = a;
+        expect(1).toEqual(a);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Expected: {"b": [Circular]}');
+});
+
+test('should serialize BigInt', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'one-failure.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('BigInt', () => {
+        expect(1).toEqual(1n);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Expected: 1n');
+});
+
+test('should report serialization error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'one-failure.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('function', () => {
+        expect(1).toEqual({ a: () => {} });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('Expected: {\"a\": [Function a]}');
+});

@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import { ExpectError } from '../matchers/matcherHint';
 import { serializeError } from '../util';
 
 import type { TestInfoErrorImpl } from '../common/ipc';
 
 export function testInfoError(error: Error | any): TestInfoErrorImpl {
-  const result = serializeError(error);
-  if (error instanceof ExpectError)
-    result.matcherResult = error.matcherResult;
-  return result;
+  return serializeError(error);
 }
