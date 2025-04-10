@@ -289,36 +289,104 @@ test.describe('await', () => {
     ]);
   });
 
-  test('should warn about missing await in Page API', async ({ runInlineTest }) => {
+  test('should handle floating promises in Page API', async ({ runInlineTest }) => {
+    const prefix = 'page';
+
     const warningCalls = [
-      'page.waitForSelector("div")',
-      'page.dispatchEvent("div", "click")',
-      'page.evaluateHandle(() => {})',
-      'page.content()',
-      'page.setContent("<div>A</div>")',
-      'page.goto("about:blank")',
+      'waitForSelector',
+      'dispatchEvent',
+      'evaluateHandle',
+      '$$',
+      'addScriptTag',
+      'addStyleTag',
+      'exposeFunction',
+      'exposeBinding',
+      'setExtraHTTPHeaders',
+      'content',
+      'setContent',
+      'goto',
+      'reload',
+      'waitForLoadState',
+      'waitForNavigation',
+      'waitForURL',
+      'waitForRequest',
+      'waitForResponse',
+      'waitForEvent',
+      'goBack',
+      'goForward',
+      'setViewportSize',
+      'route',
+      'routeFromHAR',
+      'routeWebSocket',
+      'unrouteAll',
+      'unroute',
+      'title',
+      'close',
+      'click',
+      'dragAndDrop',
+      'dblclick',
+      'tap',
+      'fill',
+      'focus',
+      'textContent',
+      'innerText',
+      'innerHTML',
+      'getAttribute',
+      'inputValue',
+      'isChecked',
+      'isDisabled',
+      'isEditable',
+      'isEnabled',
+      'isHidden',
+      'isVisible',
+      'hover',
+      'selectOption',
+      'setInputFiles',
+      'type',
+      'press',
+      'check',
+      'uncheck',
+      'setChecked',
+      'waitForTimeout',
+      'waitForFunction',
+      'pause',
     ];
 
     const ignoredCalls = [
-      'page.$eval("div", () => {})',
-      'page.$$eval("div", () => {})',
+      '$eval',
+      '$$eval',
+      'addLocatorHandler',
+      'removeLocatorHandler',
+      'requestGC',
+      'emulateMedia',
+      'evaluate',
+      'addInitScript',
+      'screenshot',
+      'bringToFront',
+      'pdf',
+      // Some random sync calls just in case
+      'locator',
+      'getByTestId'
     ];
+
+    const insertedCalls = [...warningCalls, ...ignoredCalls].map(c => `try { ${prefix}.${c}() } catch { }\n`).join('');
 
     const { results } = await runInlineTest({
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
-        test('test', async ({ page }) => {
-${warningCalls.map(c => `${c};\n`).join('')}${ignoredCalls.map(c => `${c};\n`).join('')}
+        test('test', async ({ page }, testInfo) => {
+${insertedCalls}
           await new Promise(f => setTimeout(f, 1000));
         });
       `
     });
 
+    const column = `try { ${prefix}.`.length + 1;
+
     for (let i = 0; i < warningCalls.length; i++) {
       const call = warningCalls[i];
       const line = 4 + i;
-      const column = call.indexOf('.') + 2;
-      expect.soft(results[0].annotations[i]).toEqual(
+      expect.soft(results[0].annotations[i], `${prefix}.${call}`).toEqual(
           { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line, column }) },
       );
     }
@@ -326,8 +394,7 @@ ${warningCalls.map(c => `${c};\n`).join('')}${ignoredCalls.map(c => `${c};\n`).j
     for (let i = 0; i < ignoredCalls.length; i++) {
       const call = ignoredCalls[i];
       const line = 4 + warningCalls.length + i;
-      const column = call.indexOf('.') + 2;
-      expect.soft(results[0].annotations).not.toContainEqual(
+      expect.soft(results[0].annotations, `${prefix}.${call}`).not.toContainEqual(
           { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line, column }) },
       );
     }

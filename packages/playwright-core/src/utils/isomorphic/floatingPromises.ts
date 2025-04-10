@@ -49,7 +49,16 @@ export const wrapPromiseAPIResult = <T>(promise: Promise<T>, location: Location 
   return promiseProxy;
 };
 
-export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwner<any>>(APIClass: T): T => {
+type Constructor<T = any> = new (...args: any[]) => T;
+
+type FunctionKeys<T extends Constructor> = {
+  [K in keyof InstanceType<T>]: InstanceType<T>[K] extends Function
+    // Exclude internal methods
+    ? K extends `_${string}` ? never : K
+    : never
+}[keyof InstanceType<T>];
+
+export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwner<any>>(APIClass: T, exclusions?: Array<Extract<FunctionKeys<T>, string>>): T => {
   // Proxy class constructor
   return new Proxy(APIClass, {
     construct: (target, args: ConstructorParameters<T>, newTarget) => {
@@ -58,6 +67,10 @@ export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwn
       const proxiedApi = new Proxy(api, {
         get: (target, prop, receiver) => {
           const member = Reflect.get(target, prop, receiver);
+          if (typeof prop !== 'string' || prop.startsWith('_'))
+            return member;
+          if (exclusions && exclusions.includes(prop as any))
+            return member;
           if (typeof member === 'function') {
             return (...args: any[]) => {
               const result = Reflect.apply(member, receiver, args) as any;

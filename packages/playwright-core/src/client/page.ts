@@ -836,7 +836,19 @@ class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
 }
 
 module.exports = {
-  Page: wrapPromiseAPIClass(Page),
+  Page: wrapPromiseAPIClass(Page, [
+    '$eval',
+    '$$eval',
+    'addLocatorHandler',
+    'removeLocatorHandler',
+    'requestGC',
+    'emulateMedia',
+    'evaluate',
+    'addInitScript',
+    'screenshot',
+    'bringToFront',
+    'pdf'
+  ]),
 };
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
