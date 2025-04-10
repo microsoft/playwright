@@ -942,14 +942,22 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test('should have link for opening HTML attachments in new tab', async ({ runInlineTest, page, showReport }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32281' });
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35489' });
+
       const result = await runInlineTest({
         'a.test.js': `
+          import * as fs from 'fs/promises';
           import { test, expect } from '@playwright/test';
           test('passing', async ({ page }, testInfo) => {
             await testInfo.attach('axe-report.html', {
               contentType: 'text/html',
               body: '<h1>Axe Report</h1>',
             });
+
+            const attachmentFile = testInfo.outputPath('foo.html');
+            await fs.writeFile(attachmentFile, '<h1>Hello World</h1>');
+            await testInfo.attach('foo.html', { path: attachmentFile });
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
@@ -958,13 +966,20 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByText('passing', { exact: true }).click();
 
-      const [newTab] = await Promise.all([
+      const [axeTab] = await Promise.all([
         page.waitForEvent('popup'),
         page.getByText('axe-report.html', { exact: true }).click(),
       ]);
 
-      await expect(newTab).toHaveURL(/^blob:/);
-      await expect(newTab.getByText('Axe Report')).toBeVisible();
+      await expect(axeTab).toHaveURL(/^blob:/);
+      await expect(axeTab.getByText('Axe Report')).toBeVisible();
+
+      const [fooTab] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.getByText('foo.html', { exact: true }).click(),
+      ]);
+
+      await expect(fooTab.getByText('Hello World')).toBeVisible();
     });
 
     test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest, showReport, page }, testInfo) => {
