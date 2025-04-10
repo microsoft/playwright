@@ -67,6 +67,7 @@ export class ProcessHost extends EventEmitter {
         'ipc',
       ],
       ...(process.env.PW_TS_ESM_LEGACY_LOADER_ON ? { execArgv: execArgvWithExperimentalLoaderOptions() } : {}),
+      serialization: 'advanced',
     });
     this.process.on('exit', async (code, signal) => {
       this._processDidExit = true;

@@ -119,6 +119,14 @@ function sendMessageToParent(message: { method: string, params?: any }) {
   try {
     process.send!(message);
   } catch (e) {
+    try {
+      // The process is created with { serialization: 'advanced' }, so it uses
+      // structured clone to send messages.
+      structuredClone(message);
+    } catch {
+      // Always throw serialization errors.
+      throw e;
+    }
     // Can throw when closing.
   }
 }
