@@ -288,4 +288,48 @@ test.describe('await', () => {
       { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line: 7, column: 39 }) },
     ]);
   });
+
+  test('should warn about missing await in Page API', async ({ runInlineTest }) => {
+    const warningCalls = [
+      'page.waitForSelector("div")',
+      'page.dispatchEvent("div", "click")',
+      'page.evaluateHandle(() => {})',
+      'page.content()',
+      'page.setContent("<div>A</div>")',
+      'page.goto("about:blank")',
+    ];
+
+    const ignoredCalls = [
+      'page.$eval("div", () => {})',
+      'page.$$eval("div", () => {})',
+    ];
+
+    const { results } = await runInlineTest({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+${warningCalls.map(c => `${c};\n`).join('')}${ignoredCalls.map(c => `${c};\n`).join('')}
+          await new Promise(f => setTimeout(f, 1000));
+        });
+      `
+    });
+
+    for (let i = 0; i < warningCalls.length; i++) {
+      const call = warningCalls[i];
+      const line = 4 + i;
+      const column = call.indexOf('.') + 2;
+      expect.soft(results[0].annotations[i]).toEqual(
+          { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line, column }) },
+      );
+    }
+
+    for (let i = 0; i < ignoredCalls.length; i++) {
+      const call = ignoredCalls[i];
+      const line = 4 + warningCalls.length + i;
+      const column = call.indexOf('.') + 2;
+      expect.soft(results[0].annotations).not.toContainEqual(
+          { type: 'warning', description, location: expect.objectContaining({ file: expect.stringMatching(/a\.test\.ts$/), line, column }) },
+      );
+    }
+  });
 });

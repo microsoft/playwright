@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { captureLibraryStackTrace } from '../../client/clientStackTrace';
+
 import type { ChannelOwner } from '../../client/channelOwner';
 import type { Location } from '../../../../playwright/types/test';
 
@@ -48,6 +50,7 @@ export const wrapPromiseAPIResult = <T>(promise: Promise<T>, location: Location 
 };
 
 export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwner<any>>(APIClass: T): T => {
+  // Proxy class constructor
   return new Proxy(APIClass, {
     construct: (target, args: ConstructorParameters<T>, newTarget) => {
       const api = Reflect.construct(target, args, newTarget) as ChannelOwner<any>;
@@ -59,10 +62,12 @@ export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwn
             return (...args: any[]) => {
               const result = Reflect.apply(member, receiver, args) as any;
               // Specifically check for thenables, not Promises
-              return result && typeof result.then === 'function'
-                // TODO: Insert location
-                ? wrapPromiseAPIResult(result, undefined, api._instrumentation.onRegisterApiPromise, api._instrumentation.onUnregisterApiPromise)
-                : result;
+              if (result && typeof result === 'object' && typeof result.then === 'function') {
+                const stackTrace = captureLibraryStackTrace(api._platform);
+                return wrapPromiseAPIResult(result, stackTrace.frames[0], api._instrumentation.onRegisterApiPromise, api._instrumentation.onUnregisterApiPromise);
+              } else {
+                return result;
+              }
             };
           }
           return member;
