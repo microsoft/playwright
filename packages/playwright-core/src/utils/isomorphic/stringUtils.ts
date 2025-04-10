@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { Map } from './builtins';
+
 // NOTE: this function should not be used to escape any selectors.
 export function escapeWithQuotes(text: string, char: string = '\'') {
   const stringified = JSON.stringify(text);

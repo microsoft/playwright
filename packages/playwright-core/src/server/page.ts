@@ -24,7 +24,7 @@ import * as frames from './frames';
 import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
-import { ensureBuiltins } from '../utils/isomorphic/builtins';
+import { builtins } from '../utils/isomorphic/builtins';
 import { createPageBindingScript, deliverBindingResult, takeBindingHandle } from './pageBinding';
 import * as js from './javascript';
 import { ProgressController } from './progress';
@@ -918,7 +918,7 @@ export class InitScript {
   }
 }
 
-export const kBuiltinsScript = new InitScript(`(${ensureBuiltins})(globalThis)`, true /* internal */);
+export const kBuiltinsScript = new InitScript(`(${builtins})()`, true /* internal */);
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];

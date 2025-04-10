@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Set } from './builtins';
 import * as css from './cssTokenizer';
 
 export class InvalidSelectorError extends Error {

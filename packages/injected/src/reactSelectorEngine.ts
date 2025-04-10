@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+import { Set } from '@isomorphic/builtins';
 import { parseAttributeSelector } from '@isomorphic/selectorParser';
 
 import { isInsideScope } from './domUtils';
 import { matchesComponentAttribute } from './selectorUtils';
 
-import type { Builtins } from '@isomorphic/builtins';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 type ComponentNode = {
@@ -193,7 +193,7 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
   return roots;
 }
 
-export const createReactEngine = (builtins: Builtins): SelectorEngine => ({
+export const createReactEngine = (): SelectorEngine => ({
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const { name, attributes } = parseAttributeSelector(selector, false);
 
@@ -215,7 +215,7 @@ export const createReactEngine = (builtins: Builtins): SelectorEngine => ({
       }
       return true;
     })).flat();
-    const allRootElements: Builtins.Set<Element> = new builtins.Set();
+    const allRootElements: Set<Element> = new Set();
     for (const treeNode of treeNodes) {
       for (const domNode of treeNode.rootElements)
         allRootElements.add(domNode);

@@ -15,7 +15,7 @@
  */
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
-import { ensureBuiltins } from '@isomorphic/builtins';
+import { builtins, Set, Map, requestAnimationFrame, performance } from '@isomorphic/builtins';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
@@ -34,7 +34,6 @@ import { createVueEngine } from './vueSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
-import type { Builtins } from '@isomorphic/builtins';
 import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
@@ -65,17 +64,17 @@ interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
 }
 
 export class InjectedScript {
-  private _engines: Builtins.Map<string, SelectorEngine>;
+  private _engines: Map<string, SelectorEngine>;
   readonly _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _browserName: string;
-  readonly onGlobalListenersRemoved: Builtins.Set<() => void>;
+  readonly onGlobalListenersRemoved: Set<() => void>;
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
-  private _markedElements?: { callId: string, elements: Builtins.Set<Element> };
+  private _markedElements?: { callId: string, elements: Set<Element> };
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
@@ -95,31 +94,33 @@ export class InjectedScript {
     isInsideScope,
     normalizeWhiteSpace,
     parseAriaSnapshot,
+    builtins: builtins(),
   };
 
-  readonly builtins: Builtins;
-  private _autoClosingTags: Builtins.Set<string>;
-  private _booleanAttributes: Builtins.Set<string>;
-  private _eventTypes: Builtins.Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel' | 'deviceorientation' | 'devicemotion'>;
-  private _hoverHitTargetInterceptorEvents: Builtins.Set<string>;
-  private _tapHitTargetInterceptorEvents: Builtins.Set<string>;
-  private _mouseHitTargetInterceptorEvents: Builtins.Set<string>;
-  private _allHitTargetInterceptorEvents: Builtins.Set<string>;
+  private _autoClosingTags: Set<string>;
+  private _booleanAttributes: Set<string>;
+  private _eventTypes: Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel' | 'deviceorientation' | 'devicemotion'>;
+  private _hoverHitTargetInterceptorEvents: Set<string>;
+  private _tapHitTargetInterceptorEvents: Set<string>;
+  private _mouseHitTargetInterceptorEvents: Set<string>;
+  private _allHitTargetInterceptorEvents: Set<string>;
 
   // eslint-disable-next-line no-restricted-globals
   constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, inputFileRoleTextbox: boolean, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.window = window;
     this.document = window.document;
     this.isUnderTest = isUnderTest;
-    this.builtins = ensureBuiltins(window);
+    // Make sure builtins are created from "window". This is important for InjectedScript instantiated
+    // inside a trace viewer snapshot, where "window" differs from "globalThis".
+    this.utils.builtins = builtins(window);
     this._sdkLanguage = sdkLanguage;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
-    this._evaluator = new SelectorEvaluatorImpl(this.builtins);
+    this._evaluator = new SelectorEvaluatorImpl();
 
-    this.onGlobalListenersRemoved = new this.builtins.Set();
-    this._autoClosingTags = new this.builtins.Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-    this._booleanAttributes = new this.builtins.Set(['checked', 'selected', 'disabled', 'readonly', 'multiple']);
-    this._eventTypes = new this.builtins.Map([
+    this.onGlobalListenersRemoved = new Set();
+    this._autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+    this._booleanAttributes = new Set(['checked', 'selected', 'disabled', 'readonly', 'multiple']);
+    this._eventTypes = new Map([
       ['auxclick', 'mouse'],
       ['click', 'mouse'],
       ['dblclick', 'mouse'],
@@ -173,17 +174,17 @@ export class InjectedScript {
 
       ['devicemotion', 'devicemotion'],
     ]);
-    this._hoverHitTargetInterceptorEvents = new this.builtins.Set(['mousemove']);
-    this._tapHitTargetInterceptorEvents = new this.builtins.Set(['pointerdown', 'pointerup', 'touchstart', 'touchend', 'touchcancel']);
-    this._mouseHitTargetInterceptorEvents = new this.builtins.Set(['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'auxclick', 'dblclick', 'contextmenu']);
-    this._allHitTargetInterceptorEvents = new this.builtins.Set([...this._hoverHitTargetInterceptorEvents, ...this._tapHitTargetInterceptorEvents, ...this._mouseHitTargetInterceptorEvents]);
+    this._hoverHitTargetInterceptorEvents = new Set(['mousemove']);
+    this._tapHitTargetInterceptorEvents = new Set(['pointerdown', 'pointerup', 'touchstart', 'touchend', 'touchcancel']);
+    this._mouseHitTargetInterceptorEvents = new Set(['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'auxclick', 'dblclick', 'contextmenu']);
+    this._allHitTargetInterceptorEvents = new Set([...this._hoverHitTargetInterceptorEvents, ...this._tapHitTargetInterceptorEvents, ...this._mouseHitTargetInterceptorEvents]);
 
-    this._engines = new this.builtins.Map();
+    this._engines = new Map();
     this._engines.set('xpath', XPathEngine);
     this._engines.set('xpath:light', XPathEngine);
-    this._engines.set('_react', createReactEngine(this.builtins));
-    this._engines.set('_vue', createVueEngine(this.builtins));
-    this._engines.set('role', createRoleEngine(this.builtins, false));
+    this._engines.set('_react', createReactEngine());
+    this._engines.set('_vue', createVueEngine());
+    this._engines.set('role', createRoleEngine(false));
     this._engines.set('text', this._createTextEngine(true, false));
     this._engines.set('text:light', this._createTextEngine(false, false));
     this._engines.set('id', this._createAttributeEngine('id', true));
@@ -209,7 +210,7 @@ export class InjectedScript {
     this._engines.set('internal:has-not-text', this._createInternalHasNotTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
-    this._engines.set('internal:role', createRoleEngine(this.builtins, true));
+    this._engines.set('internal:role', createRoleEngine(true));
     this._engines.set('aria-ref', this._createAriaIdEngine());
 
     for (const { name, engine } of customEngines)
@@ -258,15 +259,15 @@ export class InjectedScript {
     return result[0];
   }
 
-  private _queryNth(elements: Builtins.Set<Element>, part: ParsedSelectorPart): Builtins.Set<Element> {
+  private _queryNth(elements: Set<Element>, part: ParsedSelectorPart): Set<Element> {
     const list = [...elements];
     let nth = +part.body;
     if (nth === -1)
       nth = list.length - 1;
-    return new this.builtins.Set<Element>(list.slice(nth, nth + 1));
+    return new Set<Element>(list.slice(nth, nth + 1));
   }
 
-  private _queryLayoutSelector(elements: Builtins.Set<Element>, part: ParsedSelectorPart, originalRoot: Node): Builtins.Set<Element> {
+  private _queryLayoutSelector(elements: Set<Element>, part: ParsedSelectorPart, originalRoot: Node): Set<Element> {
     const name = part.name as LayoutSelectorName;
     const body = part.body as NestedSelectorBody;
     const result: { element: Element, score: number }[] = [];
@@ -277,14 +278,14 @@ export class InjectedScript {
         result.push({ element, score });
     }
     result.sort((a, b) => a.score - b.score);
-    return new this.builtins.Set<Element>(result.map(r => r.element));
+    return new Set<Element>(result.map(r => r.element));
   }
 
   ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', ref?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     const generation = (this._lastAriaSnapshot?.generation || 0) + 1;
-    this._lastAriaSnapshot = generateAriaTree(this.builtins, node as Element, generation);
+    this._lastAriaSnapshot = generateAriaTree(node as Element, generation);
     return renderAriaTree(this._lastAriaSnapshot, options);
   }
 
@@ -293,7 +294,7 @@ export class InjectedScript {
   }
 
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
-    return getAllByAria(this.builtins, document.documentElement, template);
+    return getAllByAria(document.documentElement, template);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -325,20 +326,20 @@ export class InjectedScript {
 
     this._evaluator.begin();
     try {
-      let roots = new this.builtins.Set<Element>([root as Element]);
+      let roots = new Set<Element>([root as Element]);
       for (const part of selector.parts) {
         if (part.name === 'nth') {
           roots = this._queryNth(roots, part);
         } else if (part.name === 'internal:and') {
           const andElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
-          roots = new this.builtins.Set(andElements.filter(e => roots.has(e)));
+          roots = new Set(andElements.filter(e => roots.has(e)));
         } else if (part.name === 'internal:or') {
           const orElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
-          roots = new this.builtins.Set(sortInDOMOrder(this.builtins, new this.builtins.Set([...roots, ...orElements])));
+          roots = new Set(sortInDOMOrder(new Set([...roots, ...orElements])));
         } else if (kLayoutSelectorNames.includes(part.name as LayoutSelectorName)) {
           roots = this._queryLayoutSelector(roots, part, root);
         } else {
-          const next = new this.builtins.Set<Element>();
+          const next = new Set<Element>();
           for (const root of roots) {
             const all = this._queryEngineAll(part, root);
             for (const one of all)
@@ -542,7 +543,7 @@ export class InjectedScript {
       observer.observe(element);
       // Firefox doesn't call IntersectionObserver callback unless
       // there are rafs.
-      this.builtins.requestAnimationFrame(() => {});
+      requestAnimationFrame(() => {});
     });
   }
 
@@ -623,7 +624,7 @@ export class InjectedScript {
         return 'error:notconnected';
 
       // Drop frames that are shorter than 16ms - WebKit Win bug.
-      const time = this.builtins.performance.now();
+      const time = performance.now();
       if (this._stableRafCount > 1 && time - lastTime < 15)
         return continuePolling;
       lastTime = time;
@@ -651,12 +652,12 @@ export class InjectedScript {
         if (success !== continuePolling)
           fulfill(success);
         else
-          this.builtins.requestAnimationFrame(raf);
+          requestAnimationFrame(raf);
       } catch (e) {
         reject(e);
       }
     };
-    this.builtins.requestAnimationFrame(raf);
+    requestAnimationFrame(raf);
 
     return result;
   }
@@ -785,8 +786,8 @@ export class InjectedScript {
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      const kInputTypesToSetValue = new this.builtins.Set(['color', 'date', 'time', 'datetime-local', 'month', 'range', 'week']);
-      const kInputTypesToTypeInto = new this.builtins.Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime-local', 'month', 'range', 'week']);
+      const kInputTypesToTypeInto = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
       if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type))
         throw this.createStacklessError(`Input of type "${type}" cannot be filled`);
       if (type === 'number') {
@@ -1239,10 +1240,10 @@ export class InjectedScript {
     }
   }
 
-  markTargetElements(markedElements: Builtins.Set<Element>, callId: string) {
+  markTargetElements(markedElements: Set<Element>, callId: string) {
     if (this._markedElements?.callId !== callId)
       this._markedElements = undefined;
-    const previous = this._markedElements?.elements || new this.builtins.Set();
+    const previous = this._markedElements?.elements || new Set();
 
     const unmarkEvent = new CustomEvent('__playwright_unmark_target__', {
       bubbles: true,
@@ -1430,13 +1431,13 @@ export class InjectedScript {
         const received = [...(element as HTMLSelectElement).selectedOptions].map(o => o.value);
         if (received.length !== options.expectedText!.length)
           return { received, matches: false };
-        return { received, matches: received.map((r, i) => new ExpectedTextMatcher(this.builtins, options.expectedText![i]).matches(r)).every(Boolean) };
+        return { received, matches: received.map((r, i) => new ExpectedTextMatcher(options.expectedText![i]).matches(r)).every(Boolean) };
       }
     }
 
     {
       if (expression === 'to.match.aria') {
-        const result = matchesAriaTree(this.builtins, element, options.expectedValue);
+        const result = matchesAriaTree(element, options.expectedValue);
         return {
           received: result.received,
           matches: !!result.matches.length,
@@ -1457,20 +1458,20 @@ export class InjectedScript {
           throw this.createStacklessError('Expected text is not provided for ' + expression);
         return {
           received: element.classList.toString(),
-          matches: new ExpectedTextMatcher(this.builtins, options.expectedText[0]).matchesClassList(this, element.classList, /* partial */ expression === 'to.contain.class'),
+          matches: new ExpectedTextMatcher(options.expectedText[0]).matchesClassList(this, element.classList, /* partial */ expression === 'to.contain.class'),
         };
       } else if (expression === 'to.have.css') {
         received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
-        received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new this.builtins.Map(), element).full;
+        received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
       } else if (expression === 'to.have.accessible.name') {
-        received = getElementAccessibleName(this.builtins, element, false /* includeHidden */);
+        received = getElementAccessibleName(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.description') {
-        received = getElementAccessibleDescription(this.builtins, element, false /* includeHidden */);
+        received = getElementAccessibleDescription(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.error.message') {
-        received = getElementAccessibleErrorMessage(this.builtins, element);
+        received = getElementAccessibleErrorMessage(element);
       } else if (expression === 'to.have.role') {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {
@@ -1485,7 +1486,7 @@ export class InjectedScript {
       }
 
       if (received !== undefined && options.expectedText) {
-        const matcher = new ExpectedTextMatcher(this.builtins, options.expectedText[0]);
+        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
         return { received, matches: matcher.matches(received) };
       }
     }
@@ -1523,7 +1524,7 @@ export class InjectedScript {
     if (!['to.contain.text.array', 'to.have.text.array'].includes(expression))
       throw this.createStacklessError('Unknown expect matcher: ' + expression);
 
-    const received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new this.builtins.Map(), e).full);
+    const received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
     // "To match an array" is "to contain an array" + "equal length"
     const lengthShouldMatch = expression !== 'to.contain.text.array';
     const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
@@ -1539,7 +1540,7 @@ export class InjectedScript {
     received: T[],
     matchFn: (matcher: ExpectedTextMatcher, received: T) => boolean
   ): boolean {
-    const matchers = expectedText.map(e => new ExpectedTextMatcher(this.builtins, e));
+    const matchers = expectedText.map(e => new ExpectedTextMatcher(e));
     let mIndex = 0;
     let rIndex = 0;
     while (mIndex < matchers.length && rIndex < received.length) {
@@ -1614,13 +1615,13 @@ class ExpectedTextMatcher {
   private _normalizeWhiteSpace: boolean | undefined;
   private _ignoreCase: boolean | undefined;
 
-  constructor(builtins: Builtins, expected: channels.ExpectedTextValue) {
+  constructor(expected: channels.ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
     this._ignoreCase = expected.ignoreCase;
     this._string = expected.matchSubstring ? undefined : this.normalize(expected.string);
     this._substring = expected.matchSubstring ? this.normalize(expected.string) : undefined;
     if (expected.regexSource) {
-      const flags = new builtins.Set((expected.regexFlags || '').split(''));
+      const flags = new Set((expected.regexFlags || '').split(''));
       if (expected.ignoreCase === false)
         flags.delete('i');
       if (expected.ignoreCase === true)

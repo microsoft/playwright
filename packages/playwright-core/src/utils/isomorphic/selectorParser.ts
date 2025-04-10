@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Set } from './builtins';
 import { InvalidSelectorError, parseCSS } from './cssParser';
 
 import type { CSSComplexSelectorList } from './cssParser';

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+import { Map, Set } from '@isomorphic/builtins';
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
 
-import type { Builtins } from '@isomorphic/builtins';
 import type { InjectedScript } from './injectedScript';
 
 type SelectorToken = {
@@ -30,8 +30,8 @@ type SelectorToken = {
 };
 
 type Cache = {
-  allowText: Builtins.Map<Element, SelectorToken[] | null>;
-  disallowText: Builtins.Map<Element, SelectorToken[] | null>;
+  allowText: Map<Element, SelectorToken[] | null>;
+  disallowText: Map<Element, SelectorToken[] | null>;
 };
 
 const kTextScoreRange = 10;
@@ -77,8 +77,8 @@ export type GenerateSelectorOptions = {
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, selectors: string[], elements: Element[] } {
   injectedScript._evaluator.begin();
-  const cache: Cache = { allowText: new injectedScript.builtins.Map(), disallowText: new injectedScript.builtins.Map() };
-  beginAriaCaches(injectedScript.builtins);
+  const cache: Cache = { allowText: new Map(), disallowText: new Map() };
+  beginAriaCaches();
   try {
     let selectors: string[] = [];
     if (options.forTextExpect) {
@@ -122,7 +122,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
           if (hasCSSIdToken(css))
             tokens.push(cssFallback(injectedScript, targetElement, { ...options, noCSSId: true }));
         }
-        selectors = [...new injectedScript.builtins.Set(tokens.map(t => joinTokens(t!)))];
+        selectors = [...new Set(tokens.map(t => joinTokens(t!)))];
       } else {
         const targetTokens = generateSelectorFor(cache, injectedScript, targetElement, options) || cssFallback(injectedScript, targetElement, options);
         selectors = [joinTokens(targetTokens)];
@@ -342,7 +342,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
-    const ariaName = getElementAccessibleName(injectedScript.builtins, element, false);
+    const ariaName = getElementAccessibleName(element, false);
     if (ariaName) {
       const roleToken = { engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact };
       candidates.push([roleToken]);
