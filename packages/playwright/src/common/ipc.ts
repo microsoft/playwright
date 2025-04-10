@@ -20,7 +20,6 @@ import { serializeCompilationCache } from '../transform/compilationCache';
 
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
-import type { MatcherResultProperty } from '../matchers/matcherHint';
 import type { SerializedCompilationCache  } from '../transform/compilationCache';
 
 export type ConfigCLIOverrides = {
