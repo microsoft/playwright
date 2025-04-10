@@ -81,8 +81,7 @@ test(`playwright cdn should not timeout on redirect`, {
         'Connection': 'keep-alive',
         'location': `http://127.0.0.1:${(server.address() as AddressInfo).port}/foo.zip`,
       });
-      res.write('Hello!');
-      res.uncork();
+      res.flushHeaders();
       // Keep the connection open, the client is expected to close it.
       return;
     }
@@ -96,13 +95,19 @@ test(`playwright cdn should not timeout on redirect`, {
       0x00, 0x00, 0x00, 0x00, // Offset of start of central dir
       0x00, 0x00              // ZIP comment length
     ]);
+    res.socket.setNoDelay(true);
     res.writeHead(200, {
       'Content-Type': 'application/zip',
       'Content-Disposition': 'attachment; filename="empty.zip"',
       'Content-Length': emptyZip.length,
     });
-    res.write(emptyZip);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    res.flushHeaders();
+    // Send one byte at a time in small intervals (< 1000ms) during 2 seconds
+    // to keep the second connection slow but alive.
+    for (let i = 0; i < emptyZip.length; i ++) {
+      res.write(emptyZip.subarray(i, i + 1));
+      await new Promise(resolve => setTimeout(resolve, 2000 / emptyZip.length));
+    }
     res.end();
   });
   await new Promise<void>(resolve => server.listen(0, resolve));
