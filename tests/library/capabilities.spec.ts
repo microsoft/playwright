@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import os from 'os';
-import url from 'url';
+import os, { platform } from 'os';
+import path from 'path';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 
@@ -64,43 +64,6 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, isWindows, isLinux, mode }) => {
-  it.skip(browserName === 'webkit' && isWindows, 'passes locally but fails on GitHub Action bot, apparently due to a Media Pack issue in the Windows Server');
-  it.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/5721');
-  it.skip(mode.startsWith('service'));
-
-  // Safari only plays mp4 so we test WebKit with an .mp4 clip.
-  const fileName = browserName === 'webkit' ? 'video_mp4.html' : 'video.html';
-  const absolutePath = asset(fileName);
-  // Our test server doesn't support range requests required to play on Mac,
-  // so we load the page using a file url.
-  await page.goto(url.pathToFileURL(absolutePath).href);
-  await page.$eval('video', v => v.play());
-  await page.$eval('video', v => v.pause());
-});
-
-it('should play webm video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
-  it.skip(browserName === 'webkit' && platform === 'win32', 'not supported');
-  it.skip(mode.startsWith('service'));
-
-  const absolutePath = asset('video_webm.html');
-  // Our test server doesn't support range requests required to play on Mac,
-  // so we load the page using a file url.
-  await page.goto(url.pathToFileURL(absolutePath).href);
-  await page.$eval('video', v => v.play());
-  await page.$eval('video', v => v.pause());
-});
-
-it('should play audio @smoke', async ({ page, server, browserName, platform }) => {
-  it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
-  await page.$eval('audio', e => e.play());
-  await page.waitForTimeout(1000);
-  await page.$eval('audio', e => e.pause());
-  expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.2);
-});
-
 it('should support webgl @smoke', async ({ page, browserName, platform }) => {
   it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
   const hasWebGL = await page.evaluate(() => {
@@ -125,7 +88,7 @@ it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWind
 
 it('should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/11009, times out in setContent');
-  await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
+  await page.setContent(`<video><source src="${server.PREFIX}/video/big-buck-bunny-h264.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });
 
@@ -479,4 +442,99 @@ it('should not auto play audio', {
   });
   await page.goto('http://127.0.0.1/audio.html');
   await expect(page.locator('#log')).toHaveText('State: suspended');
+});
+
+it.describe('Audio & Video codec playback', () => {
+  for (const { codec, file, type, skip } of [
+    {
+      codec: 'H.264 (MKV container)',
+      file: '/video/big-buck-bunny-h264.mkv',
+      type: 'video/mp4',
+      skip: ({ browserName, channel }) =>
+        browserName === 'chromium' && !channel, // Prorietary codec
+    },
+    {
+      codec: 'H.264 (MP4 container)',
+      file: '/video/big-buck-bunny-h264.mp4',
+      skip: ({ browserName, channel }) =>
+        browserName === 'chromium' && !channel  // Prorietary codec
+    },
+    {
+      codec: 'HEVC (MP4 container)',
+      file: '/video/big-buck-bunny-hevc.mp4',
+      skip: ({ browserName, channel, platform }) =>
+        browserName === 'chromium' && !channel // Prorietary codec
+       || browserName === 'webkit' && platform === 'darwin' // TODO
+    },
+    {
+      codec: 'VP9 (WebM container)',
+      file: '/video/big-buck-bunny-vp9.webm' },
+    {
+      codec: 'AV1 (MP4 container)',
+      file: '/video/big-buck-bunny-av1.mp4',
+      skip: ({ browserName, platform }) =>
+        browserName === 'webkit' && platform === 'darwin',
+    },
+    {
+      codec: 'VP8 (WebM container)',
+      file: '/video/movie-vp8.webm' },
+  ] as const) {
+    it(`should play ${codec} video`, async ({ page, server, browserName, channel, platform }) => {
+      it.skip(skip?.({ browserName, channel, platform }));
+
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent(`
+        <video id="test-video" controls>
+          <source src="${server.PREFIX + file}" type="${type ?? `video/${path.extname(file).slice(1)}`}">
+        </video>
+      `);
+      const video = page.locator('#test-video');
+      await video.evaluate(async (v: HTMLVideoElement) => {
+        await v.play();
+        await new Promise((resolve, reject) => {
+          v.addEventListener('ended', resolve);
+          v.addEventListener('error', reject);
+        });
+      });
+      const currentTime = await video.evaluate((v: HTMLVideoElement) => v.currentTime);
+      expect(currentTime).toBeGreaterThan(0);
+    });
+  }
+
+  for (const { codec, file, type, skip } of [
+    {
+      codec: 'Theora (OGV container)',
+      file: '/audio/movie.ogv',
+      type: 'video/ogg',
+      skip: ({ browserName, platform }) =>
+        browserName === 'webkit' && platform === 'darwin' //
+      || browserName === 'firefox' && platform === 'darwin', // TODO
+    },
+    {
+      codec: 'MP3 (MP3 container)',
+      file: '/audio/example.mp3',
+      type: 'audio/mpeg'
+    },
+  ]) {
+    it(`should play ${codec} audio`, async ({ page, server, browserName, platform }) => {
+      it.skip(skip?.({ browserName, platform }));
+
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent(`
+        <audio id="test-audio" controls>
+          <source src="${server.PREFIX + file}" type="${type ?? `audio/${path.extname(file).slice(1)}`}">
+        </video>
+      `);
+      const audio = page.locator('#test-audio');
+      await audio.evaluate(async (a: HTMLAudioElement) => {
+        await a.play();
+        await new Promise((resolve, reject) => {
+          a.addEventListener('ended', resolve);
+          a.addEventListener('error', reject);
+        });
+      });
+      const currentTime = await audio.evaluate((a: HTMLAudioElement) => a.currentTime);
+      expect(currentTime).toBeGreaterThan(0);
+    });
+  }
 });
