@@ -1018,12 +1018,10 @@ export class Registry {
   }
 
   async install(executablesToInstall: Executable[], forceReinstall: boolean) {
-    if (!process.env.PLAYWRIGHT_USE_INSTALLATION_LOCK)
-      return await this._installImpl(executablesToInstall, forceReinstall);
-
-    // TODO: Remove the following if we have confidence that we don't need the lock anymore.
+    const executables = this._dedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
+    const linksDir = path.join(registryDirectory, '.links');
 
     let releaseLock;
     try {
@@ -1040,7 +1038,39 @@ export class Registry {
         },
         lockfilePath,
       });
-      await this._installImpl(executablesToInstall, forceReinstall);
+      // Create a link first, so that cache validation does not remove our own browsers.
+      await fs.promises.mkdir(linksDir, { recursive: true });
+      await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
+
+      // Remove stale browsers.
+      await this._validateInstallationCache(linksDir);
+
+      // Install browsers for this package.
+      for (const executable of executables) {
+        if (!executable._install)
+          throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
+
+        const { embedderName } = getEmbedderName();
+        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(embedderName)) {
+          const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
+          throw new Error('\n' + wrapInASCIIBox([
+            `ATTENTION: "${executable.name}" is already installed on the system!`,
+            ``,
+            `"${executable.name}" installation is not hermetic; installing newer version`,
+            `requires *removal* of a current installation first.`,
+            ``,
+            `To *uninstall* current version and re-install latest "${executable.name}":`,
+            ``,
+            `- Close all running instances of "${executable.name}", if any`,
+            `- Use "--force" to install browser:`,
+            ``,
+            `    ${command}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n'), 1));
+        }
+        await executable._install();
+      }
     } catch (e) {
       if (e.code === 'ELOCKED') {
         const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
@@ -1063,46 +1093,6 @@ export class Registry {
     } finally {
       if (releaseLock)
         await releaseLock();
-    }
-  }
-
-  async _installImpl(executablesToInstall: Executable[], forceReinstall: boolean) {
-    const executables = this._dedupe(executablesToInstall);
-    await fs.promises.mkdir(registryDirectory, { recursive: true });
-    const linksDir = path.join(registryDirectory, '.links');
-
-    // Create a link first, so that cache validation does not remove our own browsers.
-    await fs.promises.mkdir(linksDir, { recursive: true });
-    await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
-
-    // Remove stale browsers.
-    await this._validateInstallationCache(linksDir);
-
-    // Install browsers for this package.
-    for (const executable of executables) {
-      if (!executable._install)
-        throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
-
-      const { embedderName } = getEmbedderName();
-      if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(embedderName)) {
-        const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
-        throw new Error('\n' + wrapInASCIIBox([
-          `ATTENTION: "${executable.name}" is already installed on the system!`,
-          ``,
-          `"${executable.name}" installation is not hermetic; installing newer version`,
-          `requires *removal* of a current installation first.`,
-          ``,
-          `To *uninstall* current version and re-install latest "${executable.name}":`,
-          ``,
-          `- Close all running instances of "${executable.name}", if any`,
-          `- Use "--force" to install browser:`,
-          ``,
-          `    ${command}`,
-          ``,
-          `<3 Playwright Team`,
-        ].join('\n'), 1));
-      }
-      await executable._install();
     }
   }
 
