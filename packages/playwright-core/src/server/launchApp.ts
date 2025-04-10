@@ -44,7 +44,8 @@ export async function launchApp(browserType: BrowserType, options: {
         ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
         '--test-type=',
     );
-    channel ??= !options.persistentContextOptions?.executablePath ? findChromiumChannel(options.sdkLanguage) : undefined;
+    if (!channel && !options.persistentContextOptions?.executablePath)
+      channel = findChromiumChannel(options.sdkLanguage);
   }
 
   const context = await browserType.launchPersistentContext(serverSideCallMetadata(), '', {
