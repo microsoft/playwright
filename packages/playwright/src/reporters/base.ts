@@ -320,7 +320,7 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
   const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error' });
   lines.push(screen.colors.red(header));
   for (const result of test.results) {
-    const warnings = [...result.annotations, ...test.annotations].filter(a => a.type === 'warning');
+    const warnings = result.annotations.filter(a => a.type === 'warning');
     const resultLines: string[] = [];
     const errors = formatResultFailure(screen, test, result, '    ');
     if (!errors.length)

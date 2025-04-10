@@ -106,7 +106,7 @@ test('test modifiers should work', async ({ runInlineTest }) => {
     const test = spec.tests[0];
     expect(test.expectedStatus).toBe(expectedStatus);
     expect(test.results[0].status).toBe(status);
-    expect([...test.annotations, ...test.results.flatMap(r => r.annotations)]).toEqual(annotations);
+    expect(test.annotations).toEqual(annotations);
   };
   expectTest('passed1', 'passed', 'passed', []);
   expectTest('passed2', 'passed', 'passed', []);
@@ -407,7 +407,7 @@ test('should skip inside fixture', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 20 } }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 20 } }]);
 });
 
 test('modifier with a function should throw in the test', async ({ runInlineTest }) => {
@@ -460,8 +460,8 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
-  expect(result.report.suites[0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
-  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
+  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
   expect(result.outputLines).toEqual([
     'beforeEach',
     'passed',
@@ -598,8 +598,8 @@ test('should skip all tests from beforeAll', async ({ runInlineTest }) => {
     'beforeAll',
     'afterAll',
   ]);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 14 } }]);
-  expect(result.report.suites[0].specs[1].tests[0].results[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 14 } }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 14 } }]);
+  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 14 } }]);
 });
 
 test('should report skipped tests in-order with correct properties', async ({ runInlineTest }) => {
@@ -695,7 +695,7 @@ test('static modifiers should be added in serial mode', async ({ runInlineTest }
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(2);
   expect(result.didNotRun).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].annotations).toEqual([{ type: 'slow', location: { file: expect.any(String), line: 6, column: 14 } }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow', location: { file: expect.any(String), line: 6, column: 14 } }]);
   expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme', location: { file: expect.any(String), line: 9, column: 12 } }]);
   expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip', location: { file: expect.any(String), line: 11, column: 12 } }]);
   expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([]);

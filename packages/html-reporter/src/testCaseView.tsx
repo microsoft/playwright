@@ -49,10 +49,10 @@ export const TestCaseView: React.FC<{
   const visibleAnnotations = React.useMemo(() => {
     if (!test)
       return [];
-    const annotations = [...test.annotations];
-    if (test.results[selectedResultIndex])
-      annotations.push(...test.results[selectedResultIndex].annotations);
-    return annotations.filter(annotation => !annotation.type.startsWith('_'));
+    const result = test.results[selectedResultIndex];
+    if (!result)
+      return [];
+    return result.annotations.filter(annotation => !annotation.type.startsWith('_'));
   }, [test, selectedResultIndex]);
 
   return <div className='test-case-column vbox'>
