@@ -234,6 +234,7 @@ class RecordActionTool implements RecorderTool {
         name: checkbox.checked ? 'check' : 'uncheck',
         selector: this._hoveredModel!.selector,
         signals: [],
+        targetInfo: getTargetInfo(event)
       });
       return;
     }
@@ -250,7 +251,8 @@ class RecordActionTool implements RecorderTool {
           signals: [],
           button: buttonForEvent(event),
           modifiers: modifiersForEvent(event),
-          clickCount: event.detail
+          clickCount: event.detail,
+          targetInfo: getTargetInfo(event)
         },
         timeout: this._recorder.injectedScript.builtins.setTimeout(() => this._commitPendingClickAction(), 200)
       };
@@ -277,7 +279,8 @@ class RecordActionTool implements RecorderTool {
       signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
-      clickCount: event.detail
+      clickCount: event.detail,
+      targetInfo: getTargetInfo(event)
     });
   }
 
@@ -311,7 +314,8 @@ class RecordActionTool implements RecorderTool {
       signals: [],
       button: 'right',
       modifiers: 0,
-      clickCount: 0
+      clickCount: 0,
+      targetInfo: getTargetInfo(event)
     });
   }
 
@@ -385,6 +389,7 @@ class RecordActionTool implements RecorderTool {
         selector: this._hoveredModel!.selector,
         signals: [],
         text: target.value,
+        targetInfo: getTargetInfo(event)
       });
       return;
     }
@@ -403,6 +408,7 @@ class RecordActionTool implements RecorderTool {
         selector: this._activeModel!.selector,
         signals: [],
         text: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
+        targetInfo: getTargetInfo(event)
       });
     }
 
@@ -414,7 +420,8 @@ class RecordActionTool implements RecorderTool {
         name: 'select',
         selector: this._activeModel!.selector,
         options: [...selectElement.selectedOptions].map(option => option.value),
-        signals: []
+        signals: [],
+        targetInfo: getTargetInfo(event)
       });
     }
   }
@@ -436,6 +443,7 @@ class RecordActionTool implements RecorderTool {
           name: checkbox.checked ? 'uncheck' : 'check',
           selector: this._activeModel!.selector,
           signals: [],
+          targetInfo: getTargetInfo(event)
         });
         return;
       }
@@ -447,6 +455,7 @@ class RecordActionTool implements RecorderTool {
       signals: [],
       key: event.key,
       modifiers: modifiersForEvent(event),
+      targetInfo: getTargetInfo(event)
     });
   }
 
@@ -1453,6 +1462,152 @@ function positionForEvent(event: MouseEvent): Point |undefined {
     x: event.offsetX,
     y: event.offsetY,
   };
+}
+
+function getTargetInfo(event: Event): any {
+  // self.console.log('[Recorder] Getting target info for event:', event.type);
+
+  // Send detailed debug information to be captured by our monitoring tools
+  const targetElement = event.target as HTMLElement;
+  if (!targetElement)
+    return void 0;
+
+  // Get element path information
+  const elementPaths = getElementPaths(targetElement);
+
+  // const rect = targetElement.getBoundingClientRect();
+  const attributes: Record<string, string> = {};
+  for (let i = 0; i < targetElement.attributes.length; i++) {
+    const attr = targetElement.attributes[i];
+    attributes[attr.name] = attr.value;
+  }
+
+  const info: any = {
+    tagName: targetElement.tagName,
+    elementAttributes: attributes,
+    elementClasses: targetElement.className,
+    paths: elementPaths
+  };
+
+  // Add input type for form elements
+  if (targetElement.tagName === 'INPUT')
+    info.inputType = (targetElement as HTMLInputElement).type;
+  else if (targetElement.tagName === 'SELECT')
+    info.optionsCount = (targetElement as HTMLSelectElement).options.length;
+
+  return info;
+}
+
+// Helper function to get different path representations for an element
+function getElementPaths(element: Element): { xpath: string, fullXPath: string, jsPath: string, outerHTML: string } {
+
+  const xpath = getShortXPath(element);
+  const fullXPath = getXPath(element);
+  const jsPath = getJSPath(element);
+  const outerHTML = getOuterHTMLSample(element);
+
+  return { xpath, fullXPath, jsPath, outerHTML };
+}
+
+function getShortXPath(element: Element): string {
+  if (element.id)
+    return `//*[@id="${element.id}"]`;
+
+  const parts = [];
+  while (element && element.nodeType === Node.ELEMENT_NODE) {
+    let index = 1;
+    let sibling = element.previousElementSibling;
+    while (sibling) {
+      if (sibling.tagName === element.tagName)
+        index++;
+      sibling = sibling.previousElementSibling;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+    const part = (index > 1 || element.nextElementSibling) ? `${tagName}[${index}]` : tagName;
+    parts.unshift(part);
+
+    if (element.parentElement && element.parentElement.id) {
+      parts.unshift(`*[@id="${element.parentElement.id}"]`);
+      break;
+    }
+
+    element = element.parentElement as Element;
+  }
+
+  return '//' + parts.join('/');
+}
+
+// Function to generate XPath for an element
+function getXPath(element: Element): string {
+  if (element.nodeType !== Node.ELEMENT_NODE)
+    return '';
+
+  // Get the path to the element
+  const paths = [];
+  let current: Element | null = element;
+
+  while (current && current.nodeType === Node.ELEMENT_NODE) {
+    let index = 0;
+    let hasFollowingSiblings = false;
+    for (let sibling = current.previousSibling; sibling; sibling = sibling.previousSibling) {
+      if (sibling.nodeType !== Node.ELEMENT_NODE)
+        continue;
+      if (sibling.nodeName === current.nodeName)
+        index++;
+    }
+
+    hasFollowingSiblings = false;
+    for (let sibling = current.nextSibling; sibling && !hasFollowingSiblings; sibling = sibling.nextSibling) {
+      if (sibling.nodeName === current.nodeName)
+        hasFollowingSiblings = true;
+    }
+
+    const tagName = current.nodeName.toLowerCase();
+    const pathIndex = (index || hasFollowingSiblings) ? `[${index + 1}]` : '';
+    paths.unshift(tagName + pathIndex);
+
+    current = current.parentElement;
+  }
+
+  return '/' + paths.join('/');
+}
+
+// Function to generate JS Path for an element
+function getJSPath(element: Element): string {
+  if (element.id)
+    return `document.getElementById('${element.id}')`;
+
+  if (!element.parentElement)
+    return 'document.documentElement';
+
+  let current = element;
+  let path = '';
+
+  while (current && current.parentElement) {
+    // Calculate the index of the current element among its siblings
+    const index = Array.from(current.parentElement.children).indexOf(current);
+    path = `.children[${index}]${path}`;
+    current = current.parentElement;
+
+    if (current.id) {
+      path = `document.getElementById('${current.id}')${path}`;
+      break;
+    }
+  }
+
+  return path || 'document.documentElement';
+}
+
+// Get a sample of the outerHTML to avoid extremely large strings
+function getOuterHTMLSample(element: Element): string {
+  const html = element.outerHTML;
+  const maxLength = 1000; // Limit to 1000 characters to avoid huge objects
+
+  if (html.length <= maxLength)
+    return html;
+
+  return html.substring(0, maxLength) + '... [truncated]';
 }
 
 function consumeEvent(e: Event) {

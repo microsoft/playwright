@@ -122,6 +122,11 @@ export type MouseClickOptions = PointerActionOptions & {
   delay?: number;
   button?: MouseButton;
   clickCount?: number;
+  targetInfo?: {
+    tagName: string;
+    elementAttributes?: Record<string, string>;
+    elementClasses?: string;
+  };
 };
 
 export type MouseMultiClickOptions = PointerActionOptions & {
