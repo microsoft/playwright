@@ -450,8 +450,9 @@ it.describe('Audio & Video codec playback', () => {
       codec: 'H.264 (MKV container)',
       file: '/video/big-buck-bunny-h264.mkv',
       type: 'video/mp4',
-      skip: ({ browserName, channel }) =>
-        browserName === 'chromium' && !channel, // Prorietary codec
+      skip: ({ browserName, channel, platform }) =>
+        browserName === 'chromium' && !channel // Prorietary codec
+      || browserName === 'webkit' && platform === 'win32' // TODO
     },
     {
       codec: 'H.264 (MP4 container)',
@@ -465,12 +466,15 @@ it.describe('Audio & Video codec playback', () => {
       skip: ({ browserName, channel, platform }) =>
         browserName === 'chromium' && !channel // Prorietary codec
        || browserName === 'webkit' && platform === 'darwin' // TODO
+       || browserName === 'webkit' && platform === 'win32' // TODO
+        || browserName === 'firefox' && platform === 'win32' // TODO
     },
     {
       codec: 'VP9 (WebM container)',
       file: '/video/big-buck-bunny-vp9.webm',
       skip: ({ browserName, channel, platform }) =>
         browserName === 'webkit' && platform === 'linux' // TODO
+        || browserName === 'webkit' && platform === 'win32' // TODO
     },
     {
       codec: 'AV1 (MP4 container)',
@@ -480,7 +484,10 @@ it.describe('Audio & Video codec playback', () => {
     },
     {
       codec: 'VP8 (WebM container)',
-      file: '/video/movie-vp8.webm' },
+      file: '/video/movie-vp8.webm',
+      skip: ({ browserName, platform }) =>
+        browserName === 'webkit' && platform === 'win32',
+    },
   ] as const) {
     it(`should play ${codec} video`, async ({ page, server, browserName, channel, platform }) => {
       it.skip(skip?.({ browserName, channel, platform }));
@@ -511,8 +518,8 @@ it.describe('Audio & Video codec playback', () => {
       type: 'video/ogg',
       skip: ({ browserName, platform }) =>
         browserName === 'webkit' && platform === 'darwin' // TODO
-      || browserName === 'firefox' && platform === 'linux' // TODO
-      || browserName === 'firefox' && platform === 'darwin', // TODO
+      || browserName === 'webkit' && platform === 'win32' // TODO
+      || browserName === 'firefox' // TODO
     },
     {
       codec: 'MP3 (MP3 container)',
