@@ -1031,7 +1031,6 @@ it('should intercept when postData is more than 1MB', async ({ page, server }) =
 
 it('should be able to intercept every navigation to a page controlled by service worker', async ({ page, server, isElectron, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33561' });
-  it.fixme(browserName === 'firefox');
   it.skip(isElectron);
 
   let interceptions = 0;
