@@ -90,14 +90,12 @@ function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
   if (!firstTraces)
     return undefined;
 
-  const isFailed = test.outcome === 'unexpected' || test.outcome === 'flaky';
-
   return <Link
     href={generateTraceUrl(firstTraces)}
-    title={isFailed ? 'View Failing Trace' : 'View Trace'}
-    className={clsx('test-file-badge', isFailed && 'button')}>
+    title='View Trace'
+    className='button test-file-badge'>
     {trace()}
-    {isFailed && <span style={{ color: 'var(--color-fg-subtle)' }}>View Failing Trace</span>}
+    <span>View Trace</span>
   </Link>;
 }
 

@@ -706,7 +706,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   await page.goBack();
 
   // Check that trace loads.
-  await page.getByRole('link', { name: 'View Failing Trace' }).click();
+  await page.locator('.test-file-test').filter({ hasText: /failing 1/ }).getByRole('link', { name: 'View Trace' }).click();
   await expect(page).toHaveTitle('Playwright Trace Viewer');
   await expect(page.getByTestId('actions-tree').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
 });

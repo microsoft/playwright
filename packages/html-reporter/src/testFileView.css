@@ -53,6 +53,16 @@
 
 .test-file-badge {
   flex: none;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.test-file-badge span {
+  color: var(--color-fg-subtle);
+}
+
+.test-file-badge:hover {
+  cursor: pointer;
 }
 
 .test-file-badge svg {
@@ -61,10 +71,6 @@
 
 .test-file-badge:hover svg {
   fill: var(--color-fg-muted);
-}
-
-.test-file-badge.button {
-  background-color: transparent;
 }
 
 .test-file-test-outcome-skipped {
