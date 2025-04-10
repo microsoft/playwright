@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import os, { platform } from 'os';
+import os from 'os';
 import path from 'path';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
+import { Page } from 'packages/playwright/test';
+import { TestServer } from 'tests/config/testserver';
 
 it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
   const context = await contextFactory({ ignoreHTTPSErrors: true });
@@ -444,110 +446,89 @@ it('should not auto play audio', {
   await expect(page.locator('#log')).toHaveText('State: suspended');
 });
 
+async function testVideo(page: Page, server: TestServer, file: string, type?: string) {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <video id="test-video" controls>
+      <source src="${server.PREFIX + file}" type="${type ?? `video/${path.extname(file).slice(1)}`}">
+    </video>
+  `);
+  const video = page.locator('#test-video');
+  await video.evaluate(async (v: HTMLVideoElement) => {
+    await v.play();
+    await new Promise((resolve, reject) => {
+      v.addEventListener('ended', resolve);
+      v.addEventListener('error', reject);
+    });
+  });
+  const currentTime = await video.evaluate((v: HTMLVideoElement) => v.currentTime);
+  expect(currentTime).toBeGreaterThan(0);
+}
+
+async function testAudio(page: Page, server: TestServer, file: string, type?: string) {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <audio id="test-audio" controls>
+      <source src="${server.PREFIX + file}" type="${type ?? `audio/${path.extname(file).slice(1)}`}">
+    </video>
+  `);
+  const audio = page.locator('#test-audio');
+  await audio.evaluate(async (a: HTMLAudioElement) => {
+    await a.play();
+    await new Promise((resolve, reject) => {
+      a.addEventListener('ended', resolve);
+      a.addEventListener('error', reject);
+    });
+  });
+  const currentTime = await audio.evaluate((a: HTMLAudioElement) => a.currentTime);
+  expect(currentTime).toBeGreaterThan(0);
+}
+
 it.describe('Audio & Video codec playback', () => {
-  for (const { codec, file, type, skip } of [
-    {
-      codec: 'H.264 (MKV container)',
-      file: '/video/big-buck-bunny-h264.mkv',
-      type: 'video/mp4',
-      skip: ({ browserName, channel, platform }) =>
-        browserName === 'chromium' && !channel // Prorietary codec
-      || browserName === 'webkit' && platform === 'win32' // TODO
-    },
-    {
-      codec: 'H.264 (MP4 container)',
-      file: '/video/big-buck-bunny-h264.mp4',
-      skip: ({ browserName, channel }) =>
-        browserName === 'chromium' && !channel  // Prorietary codec
-    },
-    {
-      codec: 'HEVC (MP4 container)',
-      file: '/video/big-buck-bunny-hevc.mp4',
-      skip: ({ browserName, channel, platform }) =>
-        browserName === 'chromium' && !channel // Prorietary codec
-       || browserName === 'webkit' && platform === 'darwin' // TODO
-       || browserName === 'webkit' && platform === 'win32' // TODO
-        || browserName === 'firefox' && platform === 'win32' // TODO
-    },
-    {
-      codec: 'VP9 (WebM container)',
-      file: '/video/big-buck-bunny-vp9.webm',
-      skip: ({ browserName, channel, platform }) =>
-        browserName === 'webkit' && platform === 'linux' // TODO
-        || browserName === 'webkit' && platform === 'win32' // TODO
-    },
-    {
-      codec: 'AV1 (MP4 container)',
-      file: '/video/big-buck-bunny-av1.mp4',
-      skip: ({ browserName, platform }) =>
-        browserName === 'webkit' && platform === 'darwin',
-    },
-    {
-      codec: 'VP8 (WebM container)',
-      file: '/video/movie-vp8.webm',
-      skip: ({ browserName, platform }) =>
-        browserName === 'webkit' && platform === 'win32',
-    },
-  ] as const) {
-    it(`should play ${codec} video`, async ({ page, server, browserName, channel, platform }) => {
-      it.skip(skip?.({ browserName, channel, platform }));
+  it('H.264 (MKV container)', async ({ page, server, browserName, channel, platform }) => {
+    it.skip(browserName === 'chromium' && !channel, 'Prorietary codec');
+    it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
+    await testVideo(page, server, '/video/big-buck-bunny-h264.mkv', 'video/mp4');
+  });
 
-      await page.goto(server.EMPTY_PAGE);
-      await page.setContent(`
-        <video id="test-video" controls>
-          <source src="${server.PREFIX + file}" type="${type ?? `video/${path.extname(file).slice(1)}`}">
-        </video>
-      `);
-      const video = page.locator('#test-video');
-      await video.evaluate(async (v: HTMLVideoElement) => {
-        await v.play();
-        await new Promise((resolve, reject) => {
-          v.addEventListener('ended', resolve);
-          v.addEventListener('error', reject);
-        });
-      });
-      const currentTime = await video.evaluate((v: HTMLVideoElement) => v.currentTime);
-      expect(currentTime).toBeGreaterThan(0);
-    });
-  }
+  it('H.264 (MP4 container)', async ({ page, server, browserName, channel, platform }) => {
+    it.skip(browserName === 'chromium' && !channel, 'Prorietary codec');
+    await testVideo(page, server, '/video/big-buck-bunny-h264.mp4', 'video/mp4');
+  });
 
-  for (const { codec, file, type, skip } of [
-    {
-      codec: 'Theora (OGV container)',
-      file: '/audio/movie.ogv',
-      type: 'video/ogg',
-      skip: ({ browserName, platform }) =>
-        browserName === 'webkit' && platform === 'darwin' // TODO
-      || browserName === 'webkit' && platform === 'win32' // TODO
-      || browserName === 'firefox' // TODO
-    },
-    {
-      codec: 'MP3 (MP3 container)',
-      file: '/audio/example.mp3',
-      type: 'audio/mpeg',
-      skip: ({ browserName, platform }) =>
-        browserName === 'firefox' && platform === 'linux' // TODO
-    },
-  ]) {
-    it(`should play ${codec} audio`, async ({ page, server, browserName, platform }) => {
-      it.skip(skip?.({ browserName, platform }));
+  it('HEVC (MP4 container)', async ({ page, server, browserName, channel, platform }) => {
+    it.skip(browserName === 'chromium' && !channel, 'Prorietary codec');
+    it.skip(browserName === 'webkit' && platform === 'darwin', 'TODO');
+    it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
+    it.skip(browserName === 'firefox' && platform === 'win32', 'TODO');
+    await testVideo(page, server, '/video/big-buck-bunny-hevc.mp4', 'video/mp4');
+  });
 
-      await page.goto(server.EMPTY_PAGE);
-      await page.setContent(`
-        <audio id="test-audio" controls>
-          <source src="${server.PREFIX + file}" type="${type ?? `audio/${path.extname(file).slice(1)}`}">
-        </video>
-      `);
-      const audio = page.locator('#test-audio');
-      await audio.evaluate(async (a: HTMLAudioElement) => {
-        await a.play();
-        await new Promise((resolve, reject) => {
-          a.addEventListener('ended', resolve);
-          a.addEventListener('error', reject);
-        });
-      });
-      const currentTime = await audio.evaluate((a: HTMLAudioElement) => a.currentTime);
-      expect(currentTime).toBeGreaterThan(0);
-    });
-  }
+  it('VP9 (WebM container)', async ({ page, server, browserName, channel, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'linux', 'TODO');
+    it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
+    await testVideo(page, server, '/video/big-buck-bunny-vp9.webm', 'video/webm');
+  });
+
+  it('AV1 (MP4 container)', async ({ page, server, browserName, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'darwin', 'TODO');
+    await testVideo(page, server, '/video/big-buck-bunny-av1.mp4', 'video/mp4');
+  });
+
+  it('VP8 (WebM container)', async ({ page, server, browserName, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
+    await testVideo(page, server, '/video/movie-vp8.webm', 'video/webm');
+  });
+
+  it('Theora (OGV container)', async ({ page, server, browserName, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'darwin', 'TODO');
+    it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
+    it.skip(browserName === 'firefox', 'TODO');
+    await testAudio(page, server, '/audio/movie.ogv', 'video/ogg');
+  });
+
+  it('MP3 (MP3 container)', async ({ page, server, browserName, platform }) => {
+    it.skip(browserName === 'firefox' && platform === 'linux', 'TODO');
+    await testAudio(page, server, '/audio/example.mp3', 'audio/mpeg');
+  });
 });
