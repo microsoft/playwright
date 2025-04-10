@@ -41,6 +41,7 @@ import { trimStringWithEllipsis  } from '../utils/isomorphic/stringUtils';
 import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '../utils/isomorphic/rtti';
+import { wrapPromiseAPIClass } from '../utils/isomorphic/floatingPromises';
 
 import type { BrowserContext } from './browserContext';
 import type { Clock } from './clock';
@@ -75,7 +76,7 @@ export type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions,
   mask?: api.Locator[],
 };
 
-export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
+class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
 
@@ -833,6 +834,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 }
+
+module.exports = {
+  Page: wrapPromiseAPIClass(Page),
+};
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   static from(channel: channels.BindingCallChannel): BindingCall {

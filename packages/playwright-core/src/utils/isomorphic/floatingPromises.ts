@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { ChannelOwner } from '../../client/channelOwner';
 import type { Location } from '../../../../playwright/types/test';
 
 /**
@@ -44,4 +45,32 @@ export const wrapPromiseAPIResult = <T>(promise: Promise<T>, location: Location 
   register(promise, location);
 
   return promiseProxy;
+};
+
+export const wrapPromiseAPIClass = <T extends new (...args: any[]) => ChannelOwner<any>>(APIClass: T): T => {
+  return new Proxy(APIClass, {
+    construct: (target, args: ConstructorParameters<T>, newTarget) => {
+      const api = Reflect.construct(target, args, newTarget) as ChannelOwner<any>;
+      // Proxy the actual implementation
+      const proxiedApi = new Proxy(api, {
+        get: (target, prop, receiver) => {
+          const member = Reflect.get(target, prop, receiver);
+          if (typeof member === 'function') {
+            return (...args: any[]) => {
+              const result = Reflect.apply(member, receiver, args) as any;
+              // Specifically check for thenables, not Promises
+              return result && typeof result.then === 'function'
+                // TODO: Insert location
+                ? wrapPromiseAPIResult(result, undefined, api._instrumentation.onRegisterApiPromise, api._instrumentation.onUnregisterApiPromise)
+                : result;
+            };
+          }
+          return member;
+        }
+      });
+      // TODO: This is a workaround for channels retaining a reference to the original class
+      api._channel._object = proxiedApi;
+      return proxiedApi;
+    },
+  });
 };
