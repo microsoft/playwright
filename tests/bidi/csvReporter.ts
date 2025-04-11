@@ -46,8 +46,7 @@ class CsvReporter implements Reporter {
       for (const file of project.suites) {
         for (const test of file.allTests()) {
           // Report fixme tests as failing.
-          const annotations = [...test.annotations, ...test.results.map(r => r.annotations).flat()];
-          const fixme = annotations.find(a => a.type === 'fixme');
+          const fixme = test.annotations.find(a => a.type === 'fixme');
           if (test.ok() && !fixme)
             continue;
           const row = [];

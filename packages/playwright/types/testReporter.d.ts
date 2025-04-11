@@ -438,21 +438,8 @@ export interface TestCase {
   titlePath(): Array<string>;
 
   /**
-   * The list of annotations applicable to the current test. Includes:
-   * - annotations defined on the test or suite via
-   *   [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) and
-   *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe);
-   * - annotations implicitly added by methods
-   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip),
-   *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
-   *   and
-   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail)
-   *   prior to test execution.
-   *
-   * Annotations are available during test execution through
-   * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
-   *
-   * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   * [testResult.annotations](https://playwright.dev/docs/api/class-testresult#test-result-annotations) of the last test
+   * run.
    */
   annotations: Array<{
     /**
@@ -597,15 +584,18 @@ export interface TestError {
  */
 export interface TestResult {
   /**
-   * The list of annotations appended during test execution. Includes:
+   * The list of annotations applicable to the current test. Includes:
+   * - annotations defined on the test or suite via
+   *   [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) and
+   *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe);
    * - annotations implicitly added by methods
    *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip),
    *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    *   and
-   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail)
-   *   during test execution;
+   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail);
    * - annotations appended to
-   *   [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
+   *   [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations) during the test
+   *   execution.
    *
    * Annotations are available during test execution through
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).

@@ -60,7 +60,7 @@ test('should access annotations in fixture', async ({ runInlineTest }) => {
   });
   expect(exitCode).toBe(0);
   const test = report.suites[0].specs[0].tests[0];
-  expect(test.results[0].annotations).toEqual([
+  expect(test.annotations).toEqual([
     { type: 'slow', description: 'just slow', location: { file: expect.any(String), line: 10, column: 14 } },
     { type: 'myname', description: 'hello' }
   ]);

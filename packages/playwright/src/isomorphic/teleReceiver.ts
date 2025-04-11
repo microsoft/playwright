@@ -235,17 +235,16 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testEndPayload.testId)!;
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
-    // Should be empty array, but if it's not, it represents all annotations for that test
-    if (testEndPayload.annotations.length > 0)
-      test.annotations = this._absoluteAnnotationLocations(testEndPayload.annotations);
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
     result.errors = payload.errors;
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
-    if (payload.annotations)
+    if (payload.annotations) {
       result.annotations = this._absoluteAnnotationLocations(payload.annotations);
+      test.annotations = result.annotations;
+    }
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
