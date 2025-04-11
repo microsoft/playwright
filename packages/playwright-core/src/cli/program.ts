@@ -265,6 +265,7 @@ Examples:
 
 commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
     [
+      ['--paper-format <format>', 'paper format: Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6'],
       ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
       ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
     ]).action(function(url, filename, options) {
@@ -366,6 +367,7 @@ type CaptureOptions = {
   waitForSelector?: string;
   waitForTimeout?: string;
   fullPage: boolean;
+  paperFormat?: string;
 };
 
 async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext }> {
@@ -629,7 +631,7 @@ async function pdf(options: Options, captureOptions: CaptureOptions, url: string
   const page = await openPage(context, url);
   await waitForPage(page, captureOptions);
   console.log('Saving as pdf into ' + path);
-  await page.pdf!({ path });
+  await page.pdf!({ path, format: captureOptions.paperFormat });
   // launchContext takes care of closing the browser.
   await page.close();
 }
