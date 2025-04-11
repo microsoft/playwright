@@ -9735,7 +9735,8 @@ export interface Browser {
      */
     clientCertificates?: Array<{
       /**
-       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
+       * Exact origin or chromium enterprise policy style URL pattern that the certificate is valid for. Origin includes
+       * `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -14786,7 +14787,8 @@ export interface BrowserType<Unused = {}> {
      */
     clientCertificates?: Array<{
       /**
-       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
+       * Exact origin or chromium enterprise policy style URL pattern that the certificate is valid for. Origin includes
+       * `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -17490,7 +17492,8 @@ export interface APIRequest {
      */
     clientCertificates?: Array<{
       /**
-       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
+       * Exact origin or chromium enterprise policy style URL pattern that the certificate is valid for. Origin includes
+       * `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -21999,7 +22002,8 @@ export interface BrowserContextOptions {
    */
   clientCertificates?: Array<{
     /**
-     * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
+     * Exact origin or chromium enterprise policy style URL pattern that the certificate is valid for. Origin includes
+     * `https` protocol, a hostname and optionally a port.
      */
     origin: string;
 
