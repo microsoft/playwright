@@ -27,7 +27,7 @@ export type DownloadParams = {
   url: string;
   zipPath: string;
   executablePath: string | undefined;
-  connectionTimeout: number;
+  socketTimeout: number;
   userAgent: string;
 };
 
@@ -54,7 +54,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
     headers: {
       'User-Agent': options.userAgent,
     },
-    timeout: options.connectionTimeout,
+    timeout: options.socketTimeout,
   }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
