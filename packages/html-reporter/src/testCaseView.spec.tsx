@@ -42,7 +42,11 @@ const result: TestResult = {
     }],
     attachments: [],
   }],
-  annotations: [],
+  annotations: [
+    { type: 'annotation', description: 'Annotation text' },
+    { type: 'annotation', description: 'Another annotation text' },
+    { type: '_annotation', description: 'Hidden annotation' },
+  ],
   attachments: [],
   status: 'passed',
 };
@@ -53,11 +57,7 @@ const testCase: TestCase = {
   path: [],
   projectName: 'chromium',
   location: { file: 'test.spec.ts', line: 42, column: 0 },
-  annotations: [
-    { type: 'annotation', description: 'Annotation text' },
-    { type: 'annotation', description: 'Another annotation text' },
-    { type: '_annotation', description: 'Hidden annotation' },
-  ],
+  annotations: result.annotations,
   tags: [],
   outcome: 'expected',
   duration: 200,

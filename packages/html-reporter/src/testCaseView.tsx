@@ -68,6 +68,9 @@ export const TestCaseView: React.FC<{
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
+    {test?.results.length === 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
+      {test.annotations.filter(a => !a.type.startsWith('_')).map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
+    </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),
