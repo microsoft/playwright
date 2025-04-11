@@ -49,7 +49,7 @@ export const wrapPromiseAPIResult = <T>(promise: Promise<T>, location: Location 
   return promiseProxy;
 };
 
-type FunctionKeys<T extends ChannelOwner<any>> = {
+type FunctionKeys<T> = {
   [K in keyof T]: K extends `_${string}` ? never : K
 }[keyof T];
 
