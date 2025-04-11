@@ -18,6 +18,7 @@ import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers
 import { asLocator, escapeWithQuotes } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
+import type { CodegenEnhancer } from './codegenEnhancer';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 import type { BrowserContextOptions } from '../../../types/types';
 import type * as actions from '@recorder/actions';
@@ -28,14 +29,16 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'javascript' as Language;
   private _isTest: boolean;
+  private _enhancer?: CodegenEnhancer;
 
-  constructor(isTest: boolean) {
+  constructor(isTest: boolean, enhancer?: CodegenEnhancer) {
     this.id = isTest ? 'playwright-test' : 'javascript';
     this.name = isTest ? 'Test Runner' : 'Library';
     this._isTest = isTest;
+    this._enhancer = enhancer;
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  async generateAction(actionInContext: actions.ActionInContext): Promise<string> {
     const action = actionInContext.action;
     if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -66,7 +69,21 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (signals.download)
       formatter.add(`const download${signals.download.downloadAlias}Promise = ${pageAlias}.waitForEvent('download');`);
 
-    formatter.add(wrapWithStep(actionInContext.description, this._generateActionCall(subject, actionInContext)));
+    const actionCall = this._generateActionCall(subject, actionInContext);
+
+    // Only try to enhance if an enhancer with actionEnhancer is available
+    let enhancedActionCall = actionCall;
+
+    // Enhance with LLM if enabled
+    if (this._enhancer && !(['closePage', 'screenshot', 'fill', 'press'].includes(actionInContext.action.name))) {
+      try {
+        enhancedActionCall = await this._enhancer.enhanceActionWithLLM(enhancedActionCall, action, actionInContext);
+      } catch (error) {
+        process.stdout.write(error);
+      }
+    }
+
+    formatter.add(wrapWithStep(actionInContext.description, enhancedActionCall));
 
     if (signals.popup)
       formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
@@ -178,6 +195,10 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   await context.close();
   await browser.close();
 })();`;
+  }
+
+  setEnhancer(enhancer: CodegenEnhancer | undefined): void {
+    this._enhancer = enhancer;
   }
 }
 

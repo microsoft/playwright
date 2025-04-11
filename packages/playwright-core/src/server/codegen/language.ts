@@ -19,10 +19,16 @@ import type * as types from '../types';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './types';
 import type * as actions from '@recorder/actions';
 
-export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
+export async function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
-  const actionTexts = actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
+  const actionTexts = [];
+  // actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
+  for (const action of actions) {
+    const actionText = await Promise.resolve(languageGenerator.generateAction(action));
+    if (actionText && Boolean(actionText))
+      actionTexts.push(actionText);
+  }
   const text = [header, ...actionTexts, footer].join('\n');
   return { header, footer, actionTexts, text };
 }

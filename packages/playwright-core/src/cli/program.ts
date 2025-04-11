@@ -20,6 +20,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { CodegenEnhancerOptions } from 'playwright-core/types/types';
+import { loadConfigFromFileRestartIfNeeded } from 'playwright/lib/common/configLoader';
+
 import * as playwright from '../..';
 import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
 import { registry, writeDockerVersion } from '../server';
@@ -70,6 +73,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
+      ['--codegenEnhancer', 'use AI to enhance the codegn generated code'],
     ]).action(function(url, options) {
   codegen(options, url).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -360,6 +364,7 @@ type Options = {
   timezone?: string;
   viewportSize?: string;
   userAgent?: string;
+  codegenEnhancer?: boolean;
 };
 
 type CaptureOptions = {
@@ -585,6 +590,9 @@ async function codegen(options: Options & { target: string, output?: string, tes
     tracesDir,
   });
   dotenv.config({ path: 'playwright.env' });
+
+  const codegenEnhancerOptions: CodegenEnhancerOptions | undefined = await getCodegenEnhancerOptions(options.codegenEnhancer);
+
   await context._enableRecorder({
     language,
     launchOptions,
@@ -595,8 +603,26 @@ async function codegen(options: Options & { target: string, output?: string, tes
     testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
+    codegenEnhancerOptions: codegenEnhancerOptions,
   });
   await openPage(context, url);
+}
+
+async function getCodegenEnhancerOptions(enhancerEnabled: boolean | undefined): Promise<CodegenEnhancerOptions | undefined> {
+  if (!enhancerEnabled)
+    return undefined;
+
+  const config = await loadConfigFromFileRestartIfNeeded(undefined);
+  if (!config || !config.config.projects[0].use.codegenEnhancerOptions)
+    // TODO: Add a better error message
+    throw new Error('No config found');
+
+  const codegenEnhancerOptions = config.config.projects[0].use.codegenEnhancerOptions;
+  if (!codegenEnhancerOptions)
+    // TODO: Add a better error message
+    throw new Error('No codegenEnhancerOptions found in config');
+
+  return codegenEnhancerOptions;
 }
 
 async function waitForPage(page: Page, captureOptions: CaptureOptions) {

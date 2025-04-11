@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+
 import { EventEmitter } from 'events';
+
+import { CodegenEnhancerOptions } from 'packages/playwright-core';
 
 import { RecorderCollection } from './recorderCollection';
 import * as recorderSource from '../../generated/pollingRecorderSource';
@@ -26,6 +29,8 @@ import { Frame } from '../frames';
 import { Page } from '../page';
 import { ThrottledFile } from './throttledFile';
 import { generateCode } from '../codegen/language';
+import { JavaScriptLanguageGenerator } from '../codegen/javascript';
+import { CodegenEnhancer } from '../codegen/codegenEnhancer';
 
 import type { RegisteredListener } from '../../utils';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from '../codegen/types';
@@ -76,11 +81,13 @@ export class ContextRecorder extends EventEmitter {
       saveStorage: params.saveStorage,
     };
 
+    this.enableLLMEnhancer(params.codegenEnhancerOptions);
+
     this._collection = new RecorderCollection(this._pageAliases);
-    this._collection.on('change', (actions: actions.ActionInContext[]) => {
+    this._collection.on('change', async (actions: actions.ActionInContext[]) => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
-        const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, languageGeneratorOptions);
+        const { header, footer, actionTexts, text } = await generateCode(actions, languageGenerator, languageGeneratorOptions);
         const source: Source = {
           isRecorded: true,
           label: languageGenerator.name,
@@ -121,6 +128,16 @@ export class ContextRecorder extends EventEmitter {
     this._orderedLanguages = [primaryLanguage, ...languages];
     this._throttledOutputFile = outputFile ? new ThrottledFile(outputFile) : null;
     this._collection?.restart();
+  }
+
+  enableLLMEnhancer(codegenEnhancerOptions: CodegenEnhancerOptions | undefined) {
+    if (!codegenEnhancerOptions)
+      return;
+
+    // TODO : Currently adding llm enhancer only for javascript language.
+    this._orderedLanguages = [this._orderedLanguages[0]];
+    if (this._orderedLanguages[0] instanceof JavaScriptLanguageGenerator)
+      this._orderedLanguages[0].setEnhancer(new CodegenEnhancer(codegenEnhancerOptions));
   }
 
   languageName(id?: string): Language {

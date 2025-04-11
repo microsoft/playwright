@@ -33,6 +33,6 @@ export interface LanguageGenerator {
   name: string;
   highlighter: Language;
   generateHeader(options: LanguageGeneratorOptions): string;
-  generateAction(actionInContext: actions.ActionInContext): string;
+  generateAction(actionInContext: actions.ActionInContext): Promise<string> | string;
   generateFooter(saveStorage: string | undefined): string;
 }
