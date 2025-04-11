@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions, CodegenEnhancerOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription = Readonly<
@@ -6339,6 +6339,7 @@ export interface PlaywrightWorkerOptions {
    * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
+  codegenEnhancerOptions?: CodegenEnhancerOptions;
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';

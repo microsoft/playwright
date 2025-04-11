@@ -19,6 +19,7 @@ import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -16224,6 +16225,12 @@ export const _bidiFirefox: BrowserType;
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
+export interface CodegenEnhancerOptions {
+  actionEnhancer?: BaseChatModel;
+  completeScriptEnhancer?: BaseChatModel;
+  actionPrompt?: string;
+  scriptPrompt?: string;
+}
 
 /**
  * Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android
