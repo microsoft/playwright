@@ -46,6 +46,8 @@ export const TestCaseView: React.FC<{
     return test.tags;
   }, [test]);
 
+  const visibleTestAnnotations = test?.annotations.filter(a => !a.type.startsWith('_')) ?? [];
+
   return <div className='test-case-column vbox'>
     {test && <div className='hbox'>
       <div className='test-case-path'>{test.path.join(' › ')}</div>
@@ -68,8 +70,8 @@ export const TestCaseView: React.FC<{
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {test?.results.length === 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
-      {test.annotations.filter(a => !a.type.startsWith('_')).map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
+    {test?.results.length === 0 && visibleTestAnnotations.length !== 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
+      {visibleTestAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
