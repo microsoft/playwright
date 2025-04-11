@@ -46,15 +46,6 @@ export const TestCaseView: React.FC<{
     return test.tags;
   }, [test]);
 
-  const visibleAnnotations = React.useMemo(() => {
-    if (!test)
-      return [];
-    const result = test.results[selectedResultIndex];
-    if (!result)
-      return [];
-    return result.annotations.filter(annotation => !annotation.type.startsWith('_'));
-  }, [test, selectedResultIndex]);
-
   return <div className='test-case-column vbox'>
     {test && <div className='hbox'>
       <div className='test-case-path'>{test.path.join(' › ')}</div>
@@ -77,9 +68,6 @@ export const TestCaseView: React.FC<{
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
-      {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
-    </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),
@@ -87,7 +75,15 @@ export const TestCaseView: React.FC<{
           {statusIcon(result.status)} {retryLabel(index)}
           {(test.results.length > 1) && <span className='test-case-run-duration'>{msToString(result.duration)}</span>}
         </div>,
-        render: () => <TestResultView test={test!} result={result} />
+        render: () => {
+          const visibleAnnotations = result.annotations.filter(annotation => !annotation.type.startsWith('_'));
+          return <>
+            {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
+              {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
+            </AutoChip>}
+            <TestResultView test={test!} result={result} />
+          </>;
+        },
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };
