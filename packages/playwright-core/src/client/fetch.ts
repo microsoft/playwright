@@ -15,7 +15,7 @@
  */
 
 import { toClientCertificatesProtocol } from './browserContext';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { RawHeaders } from './network';
 import { Tracing } from './tracing';
@@ -270,6 +270,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     return state;
   }
 }
+
+wrapPromiseAPIPrototype(APIRequestContext);
 
 async function toFormField(platform: Platform, name: string, value: string | number | boolean | fs.ReadStream | FilePayload): Promise<channels.FormField> {
   const typeOfValue = typeof value;

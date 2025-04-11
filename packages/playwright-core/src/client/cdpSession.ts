@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 
 import type * as api from '../../types/types';
 import type { Protocol } from '../server/chromium/protocol';
@@ -51,3 +51,5 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
     return await this._channel.detach();
   }
 }
+
+wrapPromiseAPIPrototype(CDPSession);

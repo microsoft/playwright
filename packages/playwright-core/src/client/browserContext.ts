@@ -18,7 +18,7 @@
 import { Artifact } from './artifact';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
@@ -507,6 +507,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.enableRecorder(params);
   }
 }
+
+wrapPromiseAPIPrototype(BrowserContext);
 
 async function prepareStorageState(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
   if (typeof options.storageState !== 'string')

@@ -15,7 +15,7 @@
  */
 
 import { Artifact } from './artifact';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -129,3 +129,5 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     }
   }
 }
+
+wrapPromiseAPIPrototype(Tracing);

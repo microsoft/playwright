@@ -17,7 +17,7 @@
 import { Artifact } from './artifact';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { CDPSession } from './cdpSession';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';
 import { mkdirIfNeeded } from './fileUtils';
@@ -152,3 +152,5 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     this.emit(Events.Browser.Disconnected, this);
   }
 }
+
+wrapPromiseAPIPrototype(Browser);

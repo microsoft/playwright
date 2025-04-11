@@ -16,7 +16,7 @@
 
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { assert } from '../utils/isomorphic/assert';
@@ -222,3 +222,5 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     await this._instrumentation.runBeforeCloseBrowserContext(context);
   }
 }
+
+wrapPromiseAPIPrototype(BrowserType);

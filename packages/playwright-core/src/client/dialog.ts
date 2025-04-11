@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
 import { Page } from './page';
 
 import type * as api from '../../types/types';
@@ -59,3 +59,5 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
     await this._channel.dismiss();
   }
 }
+
+wrapPromiseAPIPrototype(Dialog);
