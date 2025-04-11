@@ -105,6 +105,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     const sdkLanguage = inspectedContext.attribution.playwright.options.sdkLanguage;
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
+    let channel = undefined;
+    // Use the same channel as the inspected context to guarantee that the browser is installed.
+    if (inspectedContext._browser.options.isChromium)
+      channel = inspectedContext._browser.options.channel;
     const { context, page } = await launchApp(recorderPlaywright.chromium, {
       sdkLanguage,
       windowSize: { width: 600, height: 600 },
@@ -115,6 +119,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         useWebSocket: isUnderTest(),
         handleSIGINT: recorder.handleSIGINT,
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
+        channel,
       }
     });
     const controller = new ProgressController(serverSideCallMetadata(), context._browser);
