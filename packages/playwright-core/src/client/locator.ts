@@ -106,8 +106,8 @@ export class Locator implements api.Locator {
     return await this._frame.check(this._selector, { strict: true, ...options });
   }
 
-  async click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
-    return await this._frame.click(this._selector, { strict: true, ...options });
+  click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
+    return this._frame.click(this._selector, { strict: true, ...options });
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions = {}): Promise<void> {

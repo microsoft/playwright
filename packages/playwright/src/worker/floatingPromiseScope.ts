@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { wrapPromiseAPIResult } from 'playwright-core/lib/utils';
+
 import type { Location } from '../../types/test';
 
 export class FloatingPromiseScope {
@@ -25,27 +27,15 @@ export class FloatingPromiseScope {
    * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
    */
   wrapPromiseAPIResult<T>(promise: Promise<T>, location: Location | undefined): Promise<T> {
-    if (process.env.PW_DISABLE_FLOATING_PROMISES_WARNING)
-      return promise;
+    return wrapPromiseAPIResult(promise, location, this.registerFloatingPromise.bind(this), this.unregisterFloatingPromise.bind(this));
+  }
 
-    const promiseProxy = new Proxy(promise, {
-      get: (target, prop, receiver) => {
-        if (prop === 'then') {
-          return (...args: any[]) => {
-            this._floatingCalls.delete(promise);
-
-            const originalThen = Reflect.get(target, prop, receiver) as Promise<T>['then'];
-            return originalThen.call(target, ...args);
-          };
-        } else {
-          return Reflect.get(target, prop, receiver);
-        }
-      }
-    });
-
+  registerFloatingPromise<T>(promise: Promise<T>, location: Location | undefined) {
     this._floatingCalls.set(promise, location);
+  }
 
-    return promiseProxy;
+  unregisterFloatingPromise<T>(promise: Promise<T>) {
+    this._floatingCalls.delete(promise);
   }
 
   clear() {

@@ -24,7 +24,7 @@ import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { attachErrorContext, attachErrorPrompts } from './prompt';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, Location, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -297,6 +297,18 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)
           currentTestInfo()?._setDebugMode();
+      },
+      onRegisterApiPromise: (promise: Promise<any>, location: Location) => {
+        const testInfo = currentTestInfo();
+        if (!testInfo)
+          return;
+        testInfo._floatingPromiseScope.registerFloatingPromise(promise, location);
+      },
+      onUnregisterApiPromise: (promise: Promise<any>) => {
+        const testInfo = currentTestInfo();
+        if (!testInfo)
+          return;
+        testInfo._floatingPromiseScope.unregisterFloatingPromise(promise);
       },
       runAfterCreateBrowserContext: async (context: BrowserContext) => {
         await artifactsRecorder?.didCreateBrowserContext(context);

@@ -42,6 +42,7 @@ import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
+import { wrapPromiseAPI } from '../utils/isomorphic/floatingPromises';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
@@ -229,7 +230,7 @@ export class Connection extends EventEmitter {
     throw new ValidationError(`${path}: expected channel ${names.toString()}`);
   }
 
-  private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
+  private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any) {
     const parent = this._objects.get(parentGuid);
     if (!parent)
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
@@ -335,7 +336,8 @@ export class Connection extends EventEmitter {
       default:
         throw new Error('Missing type ' + type);
     }
-    return result;
+    const proxiedResult = wrapPromiseAPI(result);
+    result._registerSelf(guid, proxiedResult);
   }
 }
 

@@ -180,7 +180,7 @@ export function errorWithFile(file: string, message: string) {
 }
 
 export function expectTypes(receiver: any, types: string[], matcherName: string) {
-  if (typeof receiver !== 'object' || !types.includes(receiver.constructor.name)) {
+  if (typeof receiver !== 'object' || (!types.includes(util.types.isProxy(receiver) ? receiver.className : receiver.constructor.name))) {
     const commaSeparated = types.slice();
     const lastType = commaSeparated.pop();
     const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
