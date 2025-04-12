@@ -553,7 +553,7 @@ export default defineConfig<MyOptions>({
 
 ## Execution order
 
-Each fixture has a setup and teardown phase separated by the `await use()` call in the fixture. Setup is executed before the fixture is used by the test/hook, and teardown is executed when the fixture will not be used by the test/hook anymore.
+Each fixture has a setup and teardown phase before and after the `await use()` call in the fixture. Setup is executed before the test/hook requiring it is run, and teardown is executed when the fixture is no longer being used by the test/hook.
 
 Fixtures follow these rules to determine the execution order:
 * When fixture A depends on fixture B: B is always set up before A and torn down after A.
