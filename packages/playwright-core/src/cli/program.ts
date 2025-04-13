@@ -134,9 +134,10 @@ program
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--dry-run', 'do not execute installation, only print information')
     .option('--force', 'force reinstall of stable browser channels')
+    .option('--list', 'list all browsers used by any Playwright installation.')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+    .action(async function(args: string[], options: { withDeps?: boolean, list?: boolean; force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
       if (options.shell === false)
         options.noShell = true;
@@ -159,6 +160,22 @@ program
           `    npx playwright install`,
           ``,
         ].join('\n'), 1));
+      }
+      if (options.list) {
+        await registry.list().then(browsersInfo => {
+          for (const info of browsersInfo) {
+            console.log(`Playwright${info.currentInstance ? ' (current)' : ''}: ${info.target}`);
+
+            for (const browser of info.browsers) {
+              console.log(`  Browser: ${browser.name}`);
+              console.log(`    Version: ${browser.version}`);
+              console.log(`    Location: ${browser.dir}`);
+              console.log(`    Installation completed: ${browser.installationCompleted}`);
+            }
+            console.log(``);
+          }
+        }).catch(logErrorAndExit);
+        return;
       }
       try {
         const hasNoArguments = !args.length;
@@ -198,29 +215,6 @@ Examples:
 
   - $ install chrome firefox
     Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
-
-program
-    .command('list')
-    .description('List browsers used by this installation of Playwright')
-    .option('--all', 'List all browsers used by any Playwright installation.')
-    .action(async (options: { all?: boolean }) => {
-      await registry.list(!!options.all).then(browsersInfo => {
-        for (const info of browsersInfo) {
-          const whichInstanceLog = ` (${info.currentInstance ? 'CURRENT' : 'OTHER'})`;
-          console.log(`Playwright${options.all ? whichInstanceLog : ''}: ${info.target}`);
-
-          for (const browser of info.browsers) {
-            console.log(`  Browser: ${browser.name}`);
-            console.log(`    Version: ${browser.version}`);
-            console.log(`    Location: ${browser.dir}`);
-            console.log(`    Installation completed: ${browser.installationCompleted}`);
-            console.log(``);
-          }
-          console.log(``);
-          console.log(``);
-        }
-      }).catch(logErrorAndExit);
-    });
 
 program
     .command('uninstall')

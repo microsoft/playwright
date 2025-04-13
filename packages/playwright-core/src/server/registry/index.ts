@@ -26,7 +26,7 @@ import { installDependenciesLinux, installDependenciesWindows, validateDependenc
 import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { debugLogger } from '../utils/debugLogger';
-import {  hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
+import { hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
 import { fetchData } from '../utils/network';
 import { spawnAsync } from '../utils/spawnAsync';
 import { getEmbedderName } from '../utils/userAgent';
@@ -1024,15 +1024,14 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
-  async list(all?: boolean) {
+  async list() {
     const linksDir = path.join(registryDirectory, '.links');
     const links = new Set<string>();
     links.add(calculateSha1(PACKAGE_PATH));
 
-    if (all)
-      (await fs.promises.readdir(linksDir)).forEach(link => links.add(link));
+    (await fs.promises.readdir(linksDir)).forEach(link => links.add(link));
 
-    const browsersInfo: { target: string;currentInstance: boolean; browsers: { name: string;  version: string; dir: string; installationCompleted: boolean}[] }[] = [];
+    const browsersInfo: { target: string; currentInstance: boolean; browsers: { name: string; version: string; dir: string; installationCompleted: boolean }[] }[] = [];
 
     for (const link of links) {
       try {
@@ -1041,7 +1040,7 @@ export class Registry {
         const descriptors = readDescriptors(browsersJSON);
         const currentTargetBrowsers = [];
 
-        for (const  descriptor of descriptors) {
+        for (const descriptor of descriptors) {
           const { name, browserVersion, dir } = descriptor;
           if (!isBrowserDirectory(dir))
             continue;
@@ -1063,7 +1062,7 @@ export class Registry {
           currentInstance: linkTarget === PACKAGE_PATH,
         });
 
-      } catch (e) {}
+      } catch (e) { }
     }
 
     return browsersInfo;
@@ -1203,7 +1202,7 @@ export class Registry {
       return [];
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
 
-    let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
+    let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`);
     let downloadHostEnv;
     if (descriptor.name.startsWith('chromium'))
       downloadHostEnv = 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST';
