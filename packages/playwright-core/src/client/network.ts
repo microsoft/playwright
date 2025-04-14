@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';
 import { APIResponse } from './fetch';
@@ -294,8 +294,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 }
 
-wrapPromiseAPIPrototype(Request);
-
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
   _context!: BrowserContext;
@@ -456,8 +454,6 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 }
 
-wrapPromiseAPIPrototype(Route);
-
 export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel> implements api.WebSocketRoute {
   static from(route: channels.WebSocketRouteChannel): WebSocketRoute {
     return (route as any)._object;
@@ -578,8 +574,6 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
     await this._channel.ensureOpened();
   }
 }
-
-wrapPromiseAPIPrototype(WebSocketRoute);
 
 export class WebSocketRouteHandler {
   private readonly _baseURL: string | undefined;
@@ -751,8 +745,6 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 }
 
-wrapPromiseAPIPrototype(Response);
-
 export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implements api.WebSocket {
   private _page: Page;
   private _isClosed: boolean;
@@ -809,8 +801,6 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
     });
   }
 }
-
-wrapPromiseAPIPrototype(WebSocket);
 
 export function validateHeaders(headers: Headers) {
   for (const key of Object.keys(headers)) {

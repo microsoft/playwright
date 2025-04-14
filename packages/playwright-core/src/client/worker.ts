@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
@@ -64,5 +64,3 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }
-
-wrapPromiseAPIPrototype(Worker);

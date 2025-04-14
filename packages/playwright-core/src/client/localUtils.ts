@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 
 import type { Size } from './types';
 import type * as channels from '@protocol/channels';
@@ -72,5 +72,3 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     return await this._channel.addStackToTracingNoReply(params);
   }
 }
-
-wrapPromiseAPIPrototype(LocalUtils);

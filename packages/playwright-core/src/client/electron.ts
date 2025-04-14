@@ -15,7 +15,7 @@
  */
 
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { ConsoleMessage } from './consoleMessage';
 import { TargetClosedError, isTargetClosedError } from './errors';
@@ -62,8 +62,6 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
     return app;
   }
 }
-
-wrapPromiseAPIPrototype(Electron);
 
 export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel> implements api.ElectronApplication {
   readonly _context: BrowserContext;
@@ -159,5 +157,3 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }
-
-wrapPromiseAPIPrototype(ElectronApplication);

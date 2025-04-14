@@ -16,7 +16,7 @@
 
 import { EventEmitter } from './eventEmitter';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
@@ -99,8 +99,6 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     });
   }
 }
-
-wrapPromiseAPIPrototype(Android);
 
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
@@ -285,8 +283,6 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 }
 
-wrapPromiseAPIPrototype(AndroidDevice);
-
 export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> implements api.AndroidSocket {
   static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
     return (androidDevice as any)._object;
@@ -310,8 +306,6 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
     await this.close();
   }
 }
-
-wrapPromiseAPIPrototype(AndroidSocket);
 
 async function loadFile(platform: Platform, file: string | Buffer): Promise<Buffer> {
   if (isString(file))

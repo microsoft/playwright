@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { Stream } from './stream';
 import { mkdirIfNeeded } from './fileUtils';
 
@@ -80,5 +80,3 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
     return await this._channel.delete();
   }
 }
-
-wrapPromiseAPIPrototype(Artifact);

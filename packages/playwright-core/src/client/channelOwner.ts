@@ -18,7 +18,6 @@ import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
 import { captureLibraryStackTrace } from './clientStackTrace';
 import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
-import { wrapPromiseAPIResult } from '../utils/isomorphic/floatingPromises';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
@@ -179,23 +178,20 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal?: boolean): Promise<R> {
+  _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal?: boolean, resultWrapper?: (apiZone: ApiZone, promise: Promise<R>) => Promise<R>): Promise<R> {
+    const existingApiZone = this._platform.zones.current().data<ApiZone>();
+    if (existingApiZone) {
+      const result = func(existingApiZone);
+      return resultWrapper ? resultWrapper(existingApiZone, result) : result;
+    }
+
     if (isInternal === undefined)
       isInternal = this._isInternalType;
-
-    // TODO: Only enable wrapping in some scenarios
-    const wrapPromise = (promise: Promise<R>, apiZone: ApiZone) => {
-      return !isInternal ? wrapPromiseAPIResult(promise, apiZone.frames[0], this._instrumentation.onRegisterApiPromise, this._instrumentation.onUnregisterApiPromise) : promise;
-    };
-
-    const existingApiZone = this._platform.zones.current().data<ApiZone>();
-    if (existingApiZone)
-      return wrapPromise(func(existingApiZone), existingApiZone);
-
     const stackTrace = captureLibraryStackTrace(this._platform);
     const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
 
-    return wrapPromise(this._internalWrapApiCall<R>(func, apiZone, isInternal), apiZone);
+    const promise = this._internalWrapApiCall<R>(func, apiZone, isInternal);
+    return resultWrapper ? resultWrapper(apiZone, promise) : promise;
   }
 
   private async _internalWrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, apiZone: ApiZone, isInternal: boolean): Promise<R> {
@@ -240,48 +236,6 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 }
-
-export const wrapPromiseAPIPrototype = <T extends new (...args: any[]) => ChannelOwner>(Class: T) => {
-  if (Class.prototype.__wrappedPromiseAPI)
-    throw new Error('Attempted to wrap a class promise API multiple times');
-  Class.prototype.__wrappedPromiseAPI = true;
-  const members = new Set<string>();
-
-  let currentPrototype = Class.prototype;
-  while (currentPrototype && currentPrototype !== Object.prototype) {
-    for (const prop of Object.getOwnPropertyNames(currentPrototype)) {
-      const descriptor = Object.getOwnPropertyDescriptor(currentPrototype, prop);
-      // Not constructor, not a getter/setter, and has not already been wrapped
-      if (prop !== 'constructor' && descriptor && typeof descriptor.value === 'function' && !descriptor.value.__wrappedPromiseAPI)
-        members.add(prop);
-    }
-
-    currentPrototype = Object.getPrototypeOf(currentPrototype);
-  }
-
-  for (const prop of members) {
-    if (prop.startsWith('_') || prop === 'on' || prop === 'off')
-      continue;
-    const original = Class.prototype[prop];
-    // Preserve the original function's `this`
-    const wrapper = function(this: T, ...args: any[]) {
-      const result = original.apply(this, args);
-      if (result && typeof result === 'object' && typeof result.then === 'function') {
-        // TODO: Integrate with `_wrapApiCall`
-        const stackTrace = captureLibraryStackTrace(this._platform);
-        return wrapPromiseAPIResult(result, stackTrace.frames[0], this._instrumentation.onRegisterApiPromise, this._instrumentation.onUnregisterApiPromise);
-      }
-      return result;
-    };
-    wrapper.__wrappedPromiseAPI = true;
-    Object.defineProperty(Class.prototype, prop, {
-      value: wrapper,
-      writable: true,
-      configurable: true,
-      enumerable: Object.getOwnPropertyDescriptor(Class.prototype, prop)?.enumerable ?? false
-    });
-  }
-};
 
 function logApiCall(platform: Platform, logger: Logger | undefined, message: string) {
   if (logger && logger.isEnabled('api', 'info'))

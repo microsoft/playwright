@@ -17,7 +17,7 @@
 
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Coverage } from './coverage';
 import { Download } from './download';
@@ -833,8 +833,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 }
-
-wrapPromiseAPIPrototype(Page);
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   static from(channel: channels.BindingCallChannel): BindingCall {

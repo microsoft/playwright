@@ -16,7 +16,7 @@
  */
 
 import { EventEmitter } from './eventEmitter';
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
 import { Events } from './events';
@@ -449,8 +449,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.title()).value;
   }
 }
-
-wrapPromiseAPIPrototype(Frame);
 
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')

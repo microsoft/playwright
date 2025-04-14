@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChannelOwner, wrapPromiseAPIPrototype } from './channelOwner';
+import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
@@ -84,8 +84,6 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     return this._preview;
   }
 }
-
-wrapPromiseAPIPrototype(JSHandle);
 
 // This function takes care of converting all JSHandles to their channels,
 // so that generic channel serializer converts them to guids.
