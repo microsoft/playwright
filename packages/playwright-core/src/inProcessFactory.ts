@@ -20,12 +20,9 @@ import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlayw
 import { nodePlatform } from './server/utils/nodePlatform';
 import { Connection } from './client/connection';
 import { setPlatformForSelectors } from './client/selectors';
-import { wrapAllApis } from './wrapApi';
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from './utils';
-
-wrapAllApis();
 
 export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });

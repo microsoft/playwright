@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { wrapAllApis } from '../wrapApi';
+
 export { Accessibility } from './accessibility';
 export { Android, AndroidDevice, AndroidInput, AndroidSocket, AndroidWebView } from './android';
 export { Browser } from './browser';
@@ -44,3 +46,5 @@ export { Worker } from './worker';
 export { CDPSession } from './cdpSession';
 export { Playwright } from './playwright';
 export { WebError } from './webError';
+
+wrapAllApis();
