@@ -25,3 +25,7 @@ protocol/
 utils/
 utils/isomorphic
 server/utils
+
+[wrapApi.ts]
+client/
+utils/
