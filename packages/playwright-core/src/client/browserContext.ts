@@ -508,6 +508,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 }
 
+ChannelOwner.wrapApiMethods('browserContext', BrowserContext.prototype);
+
 async function prepareStorageState(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
   if (typeof options.storageState !== 'string')
     return options.storageState as any;

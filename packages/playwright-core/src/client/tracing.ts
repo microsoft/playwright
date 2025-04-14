@@ -32,36 +32,35 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.TracingInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
   }
 
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean, _live?: boolean } = {}) {
-    this._includeSources = !!options.sources;
-    await this._channel.tracingStart({
-      name: options.name,
-      snapshots: options.snapshots,
-      screenshots: options.screenshots,
-      live: options._live,
-    });
-    const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
-    await this._startCollectingStacks(traceName);
+    await this._wrapApiCall(async () => {
+      this._includeSources = !!options.sources;
+      await this._channel.tracingStart({
+        name: options.name,
+        snapshots: options.snapshots,
+        screenshots: options.screenshots,
+        live: options._live,
+      });
+      const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
+      await this._startCollectingStacks(traceName);
+    }, true);
   }
 
   async startChunk(options: { name?: string, title?: string } = {}) {
-    const { traceName } = await this._channel.tracingStartChunk(options);
-    await this._startCollectingStacks(traceName);
+    await this._wrapApiCall(async () => {
+      const { traceName } = await this._channel.tracingStartChunk(options);
+      await this._startCollectingStacks(traceName);
+    }, true);
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
-    await this._wrapApiCall(async () => {
-      await this._channel.tracingGroup({ name, location: options.location });
-    }, false);
+    await this._channel.tracingGroup({ name, location: options.location });
   }
 
   async groupEnd() {
-    await this._wrapApiCall(async () => {
-      await this._channel.tracingGroupEnd();
-    }, false);
+    await this._channel.tracingGroupEnd();
   }
 
   private async _startCollectingStacks(traceName: string) {
@@ -74,12 +73,16 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async stopChunk(options: { path?: string } = {}) {
-    await this._doStopChunk(options.path);
+    await this._wrapApiCall(async () => {
+      await this._doStopChunk(options.path);
+    }, true);
   }
 
   async stop(options: { path?: string } = {}) {
-    await this._doStopChunk(options.path);
-    await this._channel.tracingStop();
+    await this._wrapApiCall(async () => {
+      await this._doStopChunk(options.path);
+      await this._channel.tracingStop();
+    }, true);
   }
 
   private async _doStopChunk(filePath: string | undefined) {
@@ -129,3 +132,5 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     }
   }
 }
+
+ChannelOwner.wrapApiMethods('tracing', Tracing.prototype);

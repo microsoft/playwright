@@ -56,7 +56,7 @@ type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHe
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
 
 export class APIRequest implements api.APIRequest {
-  private _playwright: Playwright;
+  readonly _playwright: Playwright;
   readonly _contexts = new Set<APIRequestContext>();
 
   constructor(playwright: Playwright) {
@@ -86,6 +86,8 @@ export class APIRequest implements api.APIRequest {
     return context;
   }
 }
+
+ChannelOwner.wrapApiMethods('apiRequest', APIRequest.prototype, (r: APIRequest) => r._playwright);
 
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
   _request?: APIRequest;
@@ -271,6 +273,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   }
 }
 
+ChannelOwner.wrapApiMethods('apiRequestContext', APIRequestContext.prototype);
+
 async function toFormField(platform: Platform, name: string, value: string | number | boolean | fs.ReadStream | FilePayload): Promise<channels.FormField> {
   const typeOfValue = typeof value;
   if (isFilePayload(value)) {
@@ -338,18 +342,16 @@ export class APIResponse implements api.APIResponse {
   }
 
   async body(): Promise<Buffer> {
-    return await this._request._wrapApiCall(async () => {
-      try {
-        const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-        if (result.binary === undefined)
-          throw new Error('Response has been disposed');
-        return result.binary;
-      } catch (e) {
-        if (isTargetClosedError(e))
-          throw new Error('Response has been disposed');
-        throw e;
-      }
-    }, true);
+    try {
+      const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
+      if (result.binary === undefined)
+        throw new Error('Response has been disposed');
+      return result.binary;
+    } catch (e) {
+      if (isTargetClosedError(e))
+        throw new Error('Response has been disposed');
+      throw e;
+    }
   }
 
   async text(): Promise<string> {
@@ -384,6 +386,8 @@ export class APIResponse implements api.APIResponse {
     return log;
   }
 }
+
+ChannelOwner.wrapApiMethods('apiResponse', APIResponse.prototype, (r: APIResponse) => r._request, 'internal');
 
 type ServerFilePayload = NonNullable<channels.FormField['file']>;
 

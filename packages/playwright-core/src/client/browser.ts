@@ -152,3 +152,5 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     this.emit(Events.Browser.Disconnected, this);
   }
 }
+
+ChannelOwner.wrapApiMethods('browser', Browser.prototype);

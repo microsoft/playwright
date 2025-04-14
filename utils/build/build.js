@@ -382,9 +382,19 @@ onChanges.push({
 // Generate channels.
 onChanges.push({
   inputs: [
-    'packages/protocol/src/protocol.yml'
+    'packages/protocol/src/protocol.yml',
+    'utils/generate_channels.js',
   ],
   script: 'utils/generate_channels.js',
+});
+
+// Generate api list.
+onChanges.push({
+  inputs: [
+    'docs/src/api/',
+    'utils/generate_api_list.js',
+  ],
+  script: 'utils/generate_api_list.js',
 });
 
 // Generate types.

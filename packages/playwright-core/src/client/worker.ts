@@ -64,3 +64,5 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }
+
+ChannelOwner.wrapApiMethods('worker', Worker.prototype);

@@ -869,3 +869,5 @@ function trimUrl(param: any): string | undefined {
   if (isString(param))
     return `"${trimStringWithEllipsis(param, 50)}"`;
 }
+
+ChannelOwner.wrapApiMethods('page', Page.prototype);

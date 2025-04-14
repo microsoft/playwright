@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+import { Page } from './page';
+
 import type { ElementHandle } from './elementHandle';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -40,7 +43,7 @@ function axNodeFromProtocol(axNode: channels.AXNode): SerializedAXNode {
 }
 
 export class Accessibility implements api.Accessibility {
-  private _channel: channels.PageChannel;
+  readonly _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {
     this._channel = channel;
@@ -52,3 +55,5 @@ export class Accessibility implements api.Accessibility {
     return result.rootAXNode ? axNodeFromProtocol(result.rootAXNode) : null;
   }
 }
+
+ChannelOwner.wrapApiMethods('accessibility', Accessibility.prototype, (a: Accessibility) => Page.from(a._channel));

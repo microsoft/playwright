@@ -100,6 +100,8 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 }
 
+ChannelOwner.wrapApiMethods('android', Android.prototype);
+
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<string, AndroidWebView>();
@@ -283,6 +285,8 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 }
 
+ChannelOwner.wrapApiMethods('androidDevice', AndroidDevice.prototype);
+
 export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> implements api.AndroidSocket {
   static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
     return (androidDevice as any)._object;
@@ -307,6 +311,8 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
   }
 }
 
+ChannelOwner.wrapApiMethods('androidSocket', AndroidSocket.prototype);
+
 async function loadFile(platform: Platform, file: string | Buffer): Promise<Buffer> {
   if (isString(file))
     return await platform.fs().promises.readFile(file);
@@ -314,7 +320,7 @@ async function loadFile(platform: Platform, file: string | Buffer): Promise<Buff
 }
 
 export class AndroidInput implements api.AndroidInput {
-  private _device: AndroidDevice;
+  readonly _device: AndroidDevice;
 
   constructor(device: AndroidDevice) {
     this._device = device;
@@ -340,6 +346,8 @@ export class AndroidInput implements api.AndroidInput {
     await this._device._channel.inputDrag({ from, to, steps });
   }
 }
+
+ChannelOwner.wrapApiMethods('androidInput', AndroidInput.prototype, (i: AndroidInput) => i._device);
 
 function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelector {
   const {
@@ -392,7 +400,7 @@ function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelec
 }
 
 export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
-  private _device: AndroidDevice;
+  readonly _device: AndroidDevice;
   private _data: channels.AndroidWebView;
   private _pagePromise: Promise<Page> | undefined;
 
@@ -425,3 +433,5 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
     return BrowserContext.from(context).pages()[0];
   }
 }
+
+ChannelOwner.wrapApiMethods('androidWebView', AndroidWebView.prototype, (a: AndroidWebView) => a._device);

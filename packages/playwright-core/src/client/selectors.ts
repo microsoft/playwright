@@ -31,7 +31,7 @@ export function setPlatformForSelectors(p: Platform) {
 }
 
 export class Selectors implements api.Selectors {
-  private _channels = new Set<SelectorsOwner>();
+  readonly _channels = new Set<SelectorsOwner>();
   private _registrations: channels.SelectorsRegisterParams[] = [];
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
@@ -61,6 +61,8 @@ export class Selectors implements api.Selectors {
     this._channels.delete(channel);
   }
 }
+
+ChannelOwner.wrapApiMethods('selectors', Selectors.prototype, (s: Selectors) => [...s._channels][0]);
 
 export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel> {
   static from(browser: channels.SelectorsChannel): SelectorsOwner {

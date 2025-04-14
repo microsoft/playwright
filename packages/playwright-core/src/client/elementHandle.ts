@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { assert } from '../utils/isomorphic/assert';
@@ -23,7 +24,6 @@ import { WritableStream } from './writableStream';
 import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
 import type { BrowserContext } from './browserContext';
-import type { ChannelOwner } from './channelOwner';
 import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions } from './types';
 import type * as structs from '../../types/structs';
@@ -236,6 +236,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 }
+
+ChannelOwner.wrapApiMethods('elementHandle', ElementHandle.prototype);
 
 export function convertSelectOptionValues(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
   if (values === null)

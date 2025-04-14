@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+
 import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
 
 export class Clock implements api.Clock {
-  private _browserContext: BrowserContext;
+  readonly _browserContext: BrowserContext;
 
   constructor(browserContext: BrowserContext) {
     this._browserContext = browserContext;
@@ -52,6 +54,8 @@ export class Clock implements api.Clock {
     await this._browserContext._channel.clockSetSystemTime(parseTime(time));
   }
 }
+
+ChannelOwner.wrapApiMethods('clock', Clock.prototype, (c: Clock) => c._browserContext);
 
 function parseTime(time: string | number | Date): { timeNumber?: number, timeString?: string } {
   if (typeof time === 'number')

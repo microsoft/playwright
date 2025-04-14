@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { parseResult, serializeArgument } from './jsHandle';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
@@ -462,3 +463,5 @@ export function testIdAttributeName(): string {
 export function setTestIdAttribute(attributeName: string) {
   _testIdAttributeName = attributeName;
 }
+
+ChannelOwner.wrapApiMethods('locator', Locator.prototype, (l: Locator) => l._frame);

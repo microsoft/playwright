@@ -102,7 +102,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RequestInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
@@ -294,6 +293,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 }
 
+ChannelOwner.wrapApiMethods('request', Request.prototype, undefined, 'internal');
+
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
   _context!: BrowserContext;
@@ -305,7 +306,6 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RouteInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
   }
 
   request(): Request {
@@ -454,6 +454,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 }
 
+ChannelOwner.wrapApiMethods('route', Route.prototype, undefined, 'internal');
+
 export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel> implements api.WebSocketRoute {
   static from(route: channels.WebSocketRouteChannel): WebSocketRoute {
     return (route as any)._object;
@@ -468,7 +470,6 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WebSocketRouteInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
 
     this._server = {
       onMessage: (handler: (message: string | Buffer) => any) => {
@@ -575,6 +576,8 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
   }
 }
 
+ChannelOwner.wrapApiMethods('webSocketRoute', WebSocketRoute.prototype, undefined, 'internal');
+
 export class WebSocketRouteHandler {
   private readonly _baseURL: string | undefined;
   readonly url: URLMatch;
@@ -651,7 +654,6 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
     this._provisionalHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(this._initializer.request);
     Object.assign(this._request._timing, this._initializer.timing);
@@ -745,6 +747,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 }
 
+ChannelOwner.wrapApiMethods('response', Response.prototype, undefined, 'internal');
+
 export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implements api.WebSocket {
   private _page: Page;
   private _isClosed: boolean;
@@ -801,6 +805,8 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
     });
   }
 }
+
+ChannelOwner.wrapApiMethods('webSocket', WebSocket.prototype);
 
 export function validateHeaders(headers: Headers) {
   for (const key of Object.keys(headers)) {

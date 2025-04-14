@@ -59,3 +59,5 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
     await this._channel.dismiss();
   }
 }
+
+ChannelOwner.wrapApiMethods('dialog', Dialog.prototype);

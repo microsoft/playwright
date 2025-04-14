@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+import { Page } from './page';
+
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
 export class Coverage implements api.Coverage {
-  private _channel: channels.PageChannel;
+  readonly _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {
     this._channel = channel;
@@ -40,3 +43,5 @@ export class Coverage implements api.Coverage {
     return (await this._channel.stopCSSCoverage()).entries;
   }
 }
+
+ChannelOwner.wrapApiMethods('coverage', Coverage.prototype, (c: Coverage) => Page.from(c._channel));

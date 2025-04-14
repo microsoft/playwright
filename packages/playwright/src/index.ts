@@ -273,9 +273,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         const step = testInfo._addStep({
           location: data.frames[0],
           category: 'pw:api',
-          title: renderApiCall(data.apiName, data.params),
+          title: renderApiCall(data),
           apiName: data.apiName,
-          params: data.params,
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         data.userData = step;
         data.stepId = step.stepId;
@@ -753,36 +752,31 @@ class ArtifactsRecorder {
   }
 }
 
-function paramsToRender(apiName: string) {
-  switch (apiName) {
-    case 'locator.fill':
-      return ['value'];
-    default:
-      return ['url', 'selector', 'text', 'key'];
-  }
-}
-function renderApiCall(apiName: string, params: any) {
-  if (apiName === 'tracing.group')
-    return params.name;
-  const paramsArray = [];
-  if (params) {
-    for (const name of paramsToRender(apiName)) {
-      if (!(name in params))
-        continue;
-      let value;
-      if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
-        const getter = asLocator('javascript', params[name]);
-        apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
-        apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
-        apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
-      } else {
-        value = params[name];
-        paramsArray.push(value);
-      }
+function renderApiCall(data: ApiCallData) {
+  if (!data.receiver || !data.params)
+    return data.apiName;
+  const firstParam = data.params[0];
+  if (data.apiName === 'tracing.group')
+    return firstParam;
+  if (data.apiName.startsWith('locator.')) {
+    const includeFirstParam = ['locator.fill', 'locator.type', 'locator.pressSequentially'].includes(data.apiName);
+    const selector = data.receiver?._selector || '';
+    if (isString(selector) && selector.startsWith('internal:')) {
+      const getter = asLocator('javascript', selector);
+      const apiName = data.apiName.replace(/^locator\./, 'page.' + getter + '.');
+      if (includeFirstParam)
+        return apiName + '(' + firstParam + ')';
+      return apiName;
     }
+    if (includeFirstParam)
+      return data.apiName + '(' + selector + ', ' + firstParam + ')';
+    return data.apiName + '(' + selector + ')';
   }
-  const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
-  return apiName + paramsText;
+  if (['page.click', 'page.fill', 'page.goto', 'frame.goto'].includes(data.apiName))
+    return data.apiName + '(' + firstParam + ')';
+  if (data.apiName.startsWith('apiRequestContext') && typeof firstParam === 'string')
+    return data.apiName + '(' + firstParam + ')';
+  return data.apiName;
 }
 
 function tracing() {

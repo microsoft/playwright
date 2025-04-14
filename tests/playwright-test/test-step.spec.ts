@@ -1201,7 +1201,7 @@ hook      |Before Hooks
 pw:api    |page.click(button) @ a.test.ts:25
 hook      |After Hooks
 hook      |Before Hooks
-pw:api    |locator.fill(foo) @ a.test.ts:28
+pw:api    |page.getByRole('textbox').fill(foo) @ a.test.ts:28
 hook      |After Hooks
 hook      |  afterAll hook @ a.test.ts:31
 pw:api    |    page.close @ a.test.ts:32
@@ -1217,7 +1217,7 @@ pw:api    |    apiRequest.newContext
 pw:api    |page.waitForNavigation @ a.test.ts:5
 pw:api    |page.goto(data:text/html,<button></button>) @ a.test.ts:6
 pw:api    |page.click(button) @ a.test.ts:8
-pw:api    |locator.getByRole('button').click @ a.test.ts:9
+pw:api    |page.getByRole('button').click @ a.test.ts:9
 pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:10
 pw:api    |↪ error: <error message>
 pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:11
