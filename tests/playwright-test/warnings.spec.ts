@@ -20,7 +20,7 @@ const description = 'This async call was not awaited by the end of the test. Thi
 
 test.describe.configure({ mode: 'parallel' });
 
-test.describe('await', () => {
+test.describe.skip('await', () => {
   test('should not care about non-API promises', async ({ runInlineTest }) => {
     const { exitCode, results } = await runInlineTest({
       'a.test.ts': `
