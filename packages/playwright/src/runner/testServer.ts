@@ -442,15 +442,31 @@ export async function runUIMode(configFile: string | undefined, configCLIOverrid
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser(server.urlPrefix('human-readable'));
     } else {
+      const channel = await installedChromiumChannelForUI(configLocation, configCLIOverrides);
       const page = await openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
         headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
         persistentContextOptions: {
           handleSIGINT: false,
+          channel,
         },
       });
       page.on('close', () => cancelPromise.resolve());
     }
   });
+}
+
+// Pick first channel that is used by one of the projects, to ensure it is installed on the machine.
+async function installedChromiumChannelForUI(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+  const config = await loadConfig(configLocation, configCLIOverrides).catch(e => null);
+  if (!config)
+    return undefined;
+  if (config.projects.some(p => (!p.project.use.browserName || p.project.use.browserName === 'chromium') && !p.project.use.channel))
+    return undefined;
+  for (const channel of ['chromium', 'chrome', 'msedge']) {
+    if (config.projects.some(p => p.project.use.channel === channel))
+      return channel;
+  }
+  return undefined;
 }
 
 export async function runTestServer(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
@@ -461,7 +477,7 @@ export async function runTestServer(configFile: string | undefined, configCLIOve
   });
 }
 
-async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   if (restartWithExperimentalTsEsm(undefined, true))
     return 'restarted';
   const testServer = new TestServer(configLocation, configCLIOverrides);
@@ -471,7 +487,7 @@ async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverr
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
     const server = await testServer.start(options);
-    await openUI(server, cancelPromise, configLocation);
+    await openUI(server, cancelPromise);
     await cancelPromise;
   } finally {
     await testServer.stop();
