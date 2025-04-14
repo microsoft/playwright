@@ -23,6 +23,7 @@
     "@actions/github": "^6.0.0"
   },
   "devDependencies": {
+    "@octokit/graphql-schema": "^15.26.0",
     "@playwright/test": "1.52.0-next"
   }
 }

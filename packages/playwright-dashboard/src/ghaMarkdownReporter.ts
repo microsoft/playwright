@@ -20,6 +20,7 @@ import * as core from '@actions/core';
 import MarkdownReporter from './markdownReporter';
 
 import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
+import type { IssueCommentEdge, Repository } from '@octokit/graphql-schema';
 
 function getGithubToken() {
   const token = process.env.GITHUB_TOKEN || core.getInput('github-token');
@@ -44,45 +45,75 @@ class GHAMarkdownReporter extends MarkdownReporter {
     }
     core.info(`Posting comment to PR ${prHref}`);
 
-    await this.collapsePreviousComments(prNumber);
-    await this.addNewReportComment(prNumber, report);
+    const prNodeId = await this.collapsePreviousComments(prNumber);
+    if (!prNodeId) {
+      core.warning(`No PR node ID found, skipping GHA comment. PR href: ${prHref}`);
+      return;
+    }
+    await this.addNewReportComment(prNodeId, report);
   }
 
   private async collapsePreviousComments(prNumber: number) {
-    const { data: comments } = await octokit.rest.issues.listComments({
-      ...context.repo,
-      issue_number: prNumber,
-    });
-    for (const comment of comments) {
-      if (comment.user?.login === 'github-actions[bot]' && comment.body?.includes(magicComment)) {
-        core.info(`Minimizing comment: ${comment.html_url}`);
-        await octokit.graphql(`
-          mutation {
-            minimizeComment(input: {subjectId: "${comment.node_id}", classifier: OUTDATED}) {
-              clientMutationId
+    const { owner, repo } = context.repo;
+    const data = await octokit.graphql<{ repository: Repository }>(`
+      query {
+        repository(owner: "${owner}", name: "${repo}") {
+          pullRequest(number: ${prNumber}) {
+            id
+            comments(last: 100) {
+              nodes {
+                id
+                body
+                author {
+                  login
+                }
+              }
             }
           }
-        `);
+        }
       }
-    }
+    `);
+    const comments = data.repository.pullRequest?.comments.nodes?.filter(
+        comment => comment?.author?.login === 'github-actions[bot]' && comment.body?.includes(magicComment));
+    const prId = data.repository.pullRequest?.id;
+    if (!comments?.length)
+      return prId;
+    const mutations = comments.map((comment, i) =>
+      `m${i}: minimizeComment(input: { subjectId: "${comment!.id}", classifier: OUTDATED }) { clientMutationId }`);
+    await octokit.graphql(`
+      mutation {
+        ${mutations.join('\n')}
+      }
+    `);
+    return prId;
   }
 
-  private async addNewReportComment(prNumber: number, report: string) {
+  private async addNewReportComment(prNodeId: string, report: string) {
     const reportUrl = process.env.HTML_REPORT_URL;
     const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
-    const { data: response } = await octokit.rest.issues.createComment({
-      ...context.repo,
-      issue_number: prNumber,
-      body: formatComment([
-        magicComment,
-        `### [Test results](${reportUrl}) for "${context.payload.workflow_run?.name}"`,
-        report,
-        '',
-        `Merge [workflow run](${mergeWorkflowUrl}).`
-      ]),
-    });
-    core.info(`Posted comment:  ${response.html_url}`);
+    const body = formatComment([
+      magicComment,
+      `### [Test results](${reportUrl}) for "${context.payload.workflow_run?.name}"`,
+      report,
+      '',
+      `Merge [workflow run](${mergeWorkflowUrl}).`
+    ]);
+
+    const response = await octokit.graphql<{ addComment: { commentEdge: IssueCommentEdge } }>(`
+      mutation {
+        addComment(input: {subjectId: "${prNodeId}", body: """${body}"""}) {
+          commentEdge {
+            node {
+              ... on IssueComment {
+                url
+              }
+            }
+          }
+        }
+      }
+    `);
+    core.info(`Posted comment:  ${response.addComment.commentEdge.node?.url}`);
   }
 
   private pullRequestFromMetadata() {
