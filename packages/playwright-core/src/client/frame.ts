@@ -282,8 +282,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return ElementHandle.from((await this._channel.addStyleTag({ ...copy })).element);
   }
 
-  click(selector: string, options: channels.FrameClickOptions = {}) {
-    return this._channel.click({ selector, ...options });
+  async click(selector: string, options: channels.FrameClickOptions = {}) {
+    return await this._channel.click({ selector, ...options });
   }
 
   async dblclick(selector: string, options: channels.FrameDblclickOptions = {}) {
