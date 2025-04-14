@@ -18,8 +18,10 @@ import { ChannelOwner } from './client/channelOwner';
 import { wrapPromiseAPIResult } from './utils';
 import * as api from './client/api';
 
-const apiMethods = new Map<string, { members: string[], channelOwner?: (instance: any) => ChannelOwner }>([
-  // ['Accessibility', { members: ['snapshot'] }],
+type ChannelOwnerExtractor = (instance: any) => ChannelOwner | undefined;
+
+const apiMethods = new Map<string, { members: string[], channelOwner?: ChannelOwnerExtractor }>([
+  ['Accessibility', { channelOwner: (instance: api.Accessibility) => api.Page.from(instance['_channel']), members: ['snapshot'] }],
   ['Android', { members: ['connect', 'devices', 'launchServer'] }],
   ['AndroidDevice', { members: ['close', 'drag', 'fill', 'fling', 'info', 'installApk', 'launchBrowser', 'longTap', 'open', 'pinchClose', 'pinchOpen', 'press', 'push', 'screenshot', 'scroll', 'shell', 'swipe', 'tap', 'wait', 'waitForEvent', 'webView'] }],
   ['AndroidInput', { members: ['drag', 'press', 'swipe', 'tap', 'type'] }],
@@ -35,7 +37,7 @@ const apiMethods = new Map<string, { members: string[], channelOwner?: (instance
   ['BrowserType', { members: ['connect', 'connectOverCDP', 'launch', 'launchPersistentContext', 'launchServer'] }],
   ['CdpSession', { members: ['detach', 'send'] }],
   ['Clock', { channelOwner: (instance: api.Clock) => instance['_browserContext'], members: ['fastForward', 'install', 'runFor', 'pauseAt', 'resume', 'setFixedTime', 'setSystemTime'] }],
-  // ['Coverage', { members: ['startCSSCoverage', 'startJSCoverage', 'stopCSSCoverage', 'stopJSCoverage'] }],
+  ['Coverage', { channelOwner: (instance: api.Coverage) => api.Page.from(instance['_channel']), members: ['startCSSCoverage', 'startJSCoverage', 'stopCSSCoverage', 'stopJSCoverage'] }],
   ['Dialog', { members: ['accept', 'dismiss'] }],
   ['Download', { channelOwner: (instance: api.Download) => instance['_page'], members: ['cancel', 'createReadStream', 'delete', 'failure', 'path', 'saveAs'] }],
   ['Electron', { members: ['launch'] }],
@@ -53,10 +55,10 @@ const apiMethods = new Map<string, { members: string[], channelOwner?: (instance
   ['Request', { members: ['allHeaders', 'headersArray', 'headerValue', 'response', 'sizes'] }],
   ['Response', { members: ['allHeaders', 'body', 'finished', 'headersArray', 'headerValue', 'headerValues', 'json', 'securityDetails', 'serverAddr', 'text'] }],
   ['Route', { members: ['abort', 'continue', 'fallback', 'fetch', 'fulfill'] }],
-  // ['Selectors', { members: ['register'] }],
+  ['Selectors', { channelOwner: (instance: api.Selectors) => instance['_channels'].size > 0 ? [...instance['_channels']][0] : undefined, members: ['register'] }],
   ['Touchscreen', { channelOwner: (instance: api.Touchscreen) => instance['_page'], members: ['tap'] }],
   ['Tracing', { members: ['start', 'startChunk', 'group', 'groupEnd', 'stop', 'stopChunk'] }],
-  // ['Video', { members: ['delete', 'path', 'saveAs'] }],
+  ['Video', { channelOwner: (instance: api.Video) => instance['_artifact'], members: ['delete', 'path', 'saveAs'] }],
   ['WebSocket', { members: ['waitForEvent'] }],
   ['WebSocketRoute', { members: ['close'] }],
   ['Worker', { members: ['evaluate', 'evaluateHandle'] }],
@@ -64,10 +66,10 @@ const apiMethods = new Map<string, { members: string[], channelOwner?: (instance
 
 type WrapPromiseAPIPrototype = {
   <T extends new (...args: any[]) => ChannelOwner>(Class: T, members: string[]): void;
-  <T extends new (...args: any[]) => unknown>(Class: T, members: string[], getChannelOwnerFromInstance: (instance: InstanceType<T>) => ChannelOwner): void;
+  <T extends new (...args: any[]) => unknown>(Class: T, members: string[], getChannelOwnerFromInstance: (instance: InstanceType<T>) => ChannelOwner | undefined): void;
 };
 
-const wrapPromiseAPIPrototype: WrapPromiseAPIPrototype = (Class: new (...args: any[]) => unknown, members: string[], getChannelOwnerFromInstance?: (instance: unknown) => ChannelOwner) => {
+const wrapPromiseAPIPrototype: WrapPromiseAPIPrototype = (Class: new (...args: any[]) => unknown, members: string[], getChannelOwnerFromInstance?: (instance: unknown) => ChannelOwner | undefined) => {
   if (Class.prototype.__wrappedPromiseAPI)
     throw new Error('Attempted to wrap a class promise API multiple times');
   Class.prototype.__wrappedPromiseAPI = true;
@@ -77,6 +79,8 @@ const wrapPromiseAPIPrototype: WrapPromiseAPIPrototype = (Class: new (...args: a
     // Preserve the original function's `this`
     const wrapper = function(this: unknown, ...args: any[]) {
       const channelOwner = getChannelOwnerFromInstance ? getChannelOwnerFromInstance(this) : this as ChannelOwner;
+      if (!channelOwner)
+        return original.apply(this, args);
       if (!channelOwner._wrapApiCall)
         throw new Error(`Cannot wrap API call for ${channelOwner.constructor.name} (source ${(this as any).constructor.name}): _wrapApiCall is not defined`);
       // Create a new apiZone (if necessary) no matter what
@@ -99,6 +103,6 @@ export const wrapAllApis = () => {
     const apiClass = api[className as keyof typeof api];
     if (!apiClass)
       continue;
-    wrapPromiseAPIPrototype(apiClass, members, channelOwner as (instance: unknown) => ChannelOwner);
+    wrapPromiseAPIPrototype(apiClass, members, channelOwner as ChannelOwnerExtractor);
   }
 };
