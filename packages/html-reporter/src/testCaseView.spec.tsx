@@ -98,16 +98,18 @@ const annotationLinkRenderingTestCase: TestCase = {
   path: [],
   projectName: 'chromium',
   location: { file: 'test.spec.ts', line: 42, column: 0 },
-  annotations: [
-    { type: 'more info', description: 'read https://playwright.dev/docs/intro and https://playwright.dev/docs/api/class-playwright' },
-    { type: 'related issues', description: 'https://github.com/microsoft/playwright/issues/23180, https://github.com/microsoft/playwright/issues/23181' },
-
-  ],
+  annotations: [],
   tags: [],
   outcome: 'expected',
   duration: 10,
   ok: true,
-  results: [result]
+  results: [{
+    ...result,
+    annotations: [
+      { type: 'more info', description: 'read https://playwright.dev/docs/intro and https://playwright.dev/docs/api/class-playwright' },
+      { type: 'related issues', description: 'https://github.com/microsoft/playwright/issues/23180, https://github.com/microsoft/playwright/issues/23181' },
+    ]
+  }]
 };
 
 test('should correctly render links in annotations', async ({ mount }) => {
