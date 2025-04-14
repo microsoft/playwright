@@ -7,7 +7,7 @@ git clone https://github.com/microsoft/playwright.git
 cd playwright
 npm run build # call `npm run watch` for watch mode
 npx playwright install chromium
-npm run biditest -- --project='bidi-firefox-beta-*'
+npm run biditest -- --project='moz-firefox-*'
 ```
 
 To install beta channel of Firefox, run the following command in the project root:
@@ -16,7 +16,7 @@ npx -y @puppeteer/browsers install firefox@beta
 ```
 After that you need to pass custom firefox binary path to the test runner via `BIDI_FFPATH`:
 ```sh
-BIDI_FFPATH='/Users/myself/playwright/firefox/mac_arm-beta_138.0b5/Firefox.app/Contents/MacOS/firefox' npm run biditest -- --project='bidi-firefox-beta-*'
+BIDI_FFPATH='/Users/myself/playwright/firefox/mac_arm-beta_138.0b5/Firefox.app/Contents/MacOS/firefox' npm run biditest -- --project='moz-firefox-*'
 ```
 
 For custom Chromium path use `BIDI_CRPATH`.

@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [bidi-chromium, bidi-firefox-nightly]
+        channel: [bidi-chromium, moz-firefox]
     steps:
     - uses: actions/checkout@v4
       if: github.event_name != 'workflow_dispatch'
@@ -47,7 +47,7 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
       if: matrix.channel == 'bidi-chromium'
-    - if: matrix.channel == 'bidi-firefox-nightly'
+    - if: matrix.channel == 'moz-firefox'
       id: install_firefox
       run: |
         npx -y @puppeteer/browsers install firefox@nightly |\
