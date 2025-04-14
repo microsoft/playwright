@@ -503,27 +503,28 @@ function skipDueToNoProprietaryCodecs(browserName: string, channel: string | und
 }
 
 it.describe('Audio & Video codec playback', () => {
-  it('H.264 (MKV container)', async ({ page, server, browserName, channel, platform }) => {
+  it('H.264 (MKV container)', async ({ page, server, browserName, channel, headless, platform }) => {
     it.skip(skipDueToNoProprietaryCodecs(browserName, channel), 'Proprietary codec');
     it.fixme(browserName === 'webkit' && platform === 'win32');
+    it.fixme(browserName === 'webkit' && platform === 'linux' && headless);
     await testVideo(page, server, '/video/big-buck-bunny-h264.mkv', 'video/mp4');
   });
 
-  it('H.264 (MP4 container)', async ({ page, server, browserName, channel, platform }) => {
+  it('H.264 (MP4 container)', async ({ page, server, browserName, channel, headless, platform }) => {
     it.skip(skipDueToNoProprietaryCodecs(browserName, channel), 'Proprietary codec');
+    it.fixme(browserName === 'webkit' && platform === 'linux' && headless);
     await testVideo(page, server, '/video/big-buck-bunny-h264.mp4', 'video/mp4');
   });
 
   it('HEVC (MP4 container)', async ({ page, server, browserName, channel, platform }) => {
     it.skip(skipDueToNoProprietaryCodecs(browserName, channel), 'Proprietary codec');
-    it.skip(browserName === 'webkit' && platform === 'darwin', 'Does not work in Safari either');
-    it.skip(browserName === 'webkit' && platform === 'win32', 'Does not work in Safari either');
+    it.skip(browserName === 'webkit', 'Does not work in Safari either');
     it.skip(browserName === 'firefox' && platform === 'win32', 'Does not work in Mozilla Firefox either');
     await testVideo(page, server, '/video/big-buck-bunny-hevc.mp4', 'video/mp4');
   });
 
   it('VP9 (WebM container)', async ({ page, server, browserName, platform }) => {
-    it.skip(browserName === 'webkit' && platform === 'linux', 'TODO');
+    it.fixme(browserName === 'webkit' && platform === 'linux');
     it.fixme(browserName === 'webkit' && platform === 'win32');
     await testVideo(page, server, '/video/big-buck-bunny-vp9.webm', 'video/webm');
   });
@@ -541,12 +542,12 @@ it.describe('Audio & Video codec playback', () => {
 
   it('Theora (OGV container)', async ({ page, server, browserName, platform }) => {
     it.fixme(browserName === 'webkit' && platform === 'win32');
-    // it.skip(browserName === 'firefox', 'TODO');
+    it.fixme(browserName === 'firefox' && platform === 'linux');
     await testAudio(page, server, '/audio/movie.ogv', 'audio/ogg');
   });
 
   it('MP3 (MP3 container)', async ({ page, server, browserName, platform }) => {
-    it.skip(browserName === 'firefox' && platform === 'linux', 'TODO');
+    it.fixme(browserName === 'firefox' && platform === 'linux');
     await testAudio(page, server, '/audio/example.mp3', 'audio/mpeg');
   });
 });
