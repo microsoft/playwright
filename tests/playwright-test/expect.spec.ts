@@ -762,11 +762,16 @@ test('should chain expect matchers and expose matcher utils (TSC)', async ({ run
         let pass: boolean;
         let matcherResult: any;
         try {
-          await baseExpect(baseAmount).toHaveAttribute('data-amount', expected, options);
+          const expectation = this.isNot ? baseExpect(baseAmount).not : baseExpect(baseAmount);
+          await expectation.toHaveAttribute('data-amount', expected, options);
           pass = true;
         } catch (e: any) {
           matcherResult = e.matcherResult;
           pass = false;
+        }
+
+        if (this.isNot) {
+            pass = !pass;
         }
 
         const expectOptions = {
@@ -842,11 +847,16 @@ test('should chain expect matchers and expose matcher utils', async ({ runInline
         let pass: boolean;
         let matcherResult: any;
         try {
-          await baseExpect(baseAmount).toHaveAttribute('data-amount', expected, options);
+          const expectation = this.isNot ? baseExpect(baseAmount).not : baseExpect(baseAmount);
+          await expectation.toHaveAttribute('data-amount', expected, options);
           pass = true;
         } catch (e: any) {
           matcherResult = e.matcherResult;
           pass = false;
+        }
+
+        if (this.isNot) {
+            pass = !pass;
         }
 
         const expectOptions = {
@@ -888,7 +898,7 @@ test('should chain expect matchers and expose matcher utils', async ({ runInline
   }, { workers: 1 });
   const output = stripAnsi(result.output);
   expect(output).toContain(`await expect(page.locator('div')).toHaveAmount('3', { timeout: 1000 });`);
-  expect(output).toContain('a.spec.ts:60');
+  expect(output).toContain('a.spec.ts:65');
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
