@@ -447,12 +447,15 @@ it('should not auto play audio', {
 });
 
 async function testVideo(page: Page, server: TestServer, file: string, type?: string) {
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`
-    <video id="test-video" controls>
-      <source src="${server.PREFIX + file}" type="${type ?? `video/${path.extname(file).slice(1)}`}">
-    </video>
-  `);
+  server.setRoute('/audio.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <video id="test-video" controls>
+        <source src="${server.PREFIX + file}" type="${type ?? `video/${path.extname(file).slice(1)}`}">
+      </video>
+    `);
+  });
+  await page.goto(server.PREFIX + '/audio.html');
   const video = page.locator('#test-video');
   await video.evaluate(async (v: HTMLVideoElement) => {
     await v.play();
@@ -466,12 +469,15 @@ async function testVideo(page: Page, server: TestServer, file: string, type?: st
 }
 
 async function testAudio(page: Page, server: TestServer, file: string, type?: string) {
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`
-    <audio id="test-audio" controls>
-      <source src="${server.PREFIX + file}" type="${type ?? `audio/${path.extname(file).slice(1)}`}">
-    </video>
-  `);
+  server.setRoute('/audio.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <audio id="test-audio" controls>
+        <source src="${server.PREFIX + file}" type="${type ?? `audio/${path.extname(file).slice(1)}`}">
+      </audio>
+    `);
+  });
+  await page.goto(server.PREFIX + '/audio.html');
   const audio = page.locator('#test-audio');
   await audio.evaluate(async (a: HTMLAudioElement) => {
     await a.play();
@@ -484,21 +490,33 @@ async function testAudio(page: Page, server: TestServer, file: string, type?: st
   expect(currentTime).toBeGreaterThan(0);
 }
 
+function skipDueToNoProprietaryCodecs(browserName: string, channel: string | undefined) {
+  return browserName === 'chromium' && ![
+    'chrome',
+    'chrome-beta',
+    'chrome-dev',
+    'chrome-canary',
+    'msedge',
+    'msedge-dev',
+    'msedge-beta',
+  ].includes(channel);
+}
+
 it.describe('Audio & Video codec playback', () => {
   it('H.264 (MKV container)', async ({ page, server, browserName, channel, platform }) => {
-    it.skip(browserName === 'chromium' && !channel, 'Prorietary codec');
+    it.skip(skipDueToNoProprietaryCodecs(browserName, channel), 'Proprietary codec');
     it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
     await testVideo(page, server, '/video/big-buck-bunny-h264.mkv', 'video/mp4');
   });
 
   it('H.264 (MP4 container)', async ({ page, server, browserName, channel, platform }) => {
-    it.skip(browserName === 'chromium' && !channel, 'Prorietary codec');
+    it.skip(skipDueToNoProprietaryCodecs(browserName, channel), 'Proprietary codec');
     await testVideo(page, server, '/video/big-buck-bunny-h264.mp4', 'video/mp4');
   });
 
   it('HEVC (MP4 container)', async ({ page, server, browserName, channel, platform }) => {
-    it.skip(browserName === 'chromium' && !channel, 'Prorietary codec');
-    it.skip(browserName === 'webkit' && platform === 'darwin', 'TODO');
+    it.skip(skipDueToNoProprietaryCodecs(browserName, channel), 'Proprietary codec');
+    it.skip(browserName === 'webkit' && platform === 'darwin', 'Does not work in Safari either');
     it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
     it.skip(browserName === 'firefox' && platform === 'win32', 'TODO');
     await testVideo(page, server, '/video/big-buck-bunny-hevc.mp4', 'video/mp4');
@@ -511,7 +529,7 @@ it.describe('Audio & Video codec playback', () => {
   });
 
   it('AV1 (MP4 container)', async ({ page, server, browserName, platform }) => {
-    it.skip(browserName === 'webkit' && platform === 'darwin', 'TODO');
+    it.skip(browserName === 'webkit' && platform === 'darwin', 'Does not work in Safari either');
     await testVideo(page, server, '/video/big-buck-bunny-av1.mp4', 'video/mp4');
   });
 
@@ -521,10 +539,9 @@ it.describe('Audio & Video codec playback', () => {
   });
 
   it('Theora (OGV container)', async ({ page, server, browserName, platform }) => {
-    it.skip(browserName === 'webkit' && platform === 'darwin', 'TODO');
-    it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
-    it.skip(browserName === 'firefox', 'TODO');
-    await testAudio(page, server, '/audio/movie.ogv', 'video/ogg');
+    // it.skip(browserName === 'webkit' && platform === 'win32', 'TODO');
+    // it.skip(browserName === 'firefox', 'TODO');
+    await testAudio(page, server, '/audio/movie.ogv', 'audio/ogg');
   });
 
   it('MP3 (MP3 container)', async ({ page, server, browserName, platform }) => {
