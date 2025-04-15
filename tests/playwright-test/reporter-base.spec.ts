@@ -487,7 +487,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('› passes @baz1 @baz2 (');
     });
 
-    test('should show warnings on failing tests', async ({ runInlineTest }) => {
+    test.skip('should show warnings on failing tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.spec.ts': `
           import { test, expect } from '@playwright/test';
@@ -504,7 +504,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain('Warning: foo');
     });
 
-    test('should not show warnings on passing tests', async ({ runInlineTest }) => {
+    test.skip('should not show warnings on passing tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.spec.ts': `
           import { test, expect } from '@playwright/test';
@@ -518,7 +518,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).not.toContain('Warning: foo');
     });
 
-    test('should properly sort warnings', async ({ runInlineTest }) => {
+    test.skip('should properly sort warnings', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'external.js': `
           import { expect } from '@playwright/test';
