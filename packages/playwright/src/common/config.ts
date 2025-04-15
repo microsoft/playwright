@@ -36,6 +36,7 @@ export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
 };
+export type Annotation = { type: string, description?: string };
 
 export const defaultTimeout = 30000;
 
