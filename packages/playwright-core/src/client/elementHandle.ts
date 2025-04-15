@@ -21,9 +21,9 @@ import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
 import { isString } from '../utils/isomorphic/rtti';
 import { WritableStream } from './writableStream';
 import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
+import { ChannelOwner } from './channelOwner';
 
 import type { BrowserContext } from './browserContext';
-import type { ChannelOwner } from './channelOwner';
 import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions } from './types';
 import type * as structs from '../../types/structs';
@@ -236,6 +236,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 }
+
+ChannelOwner.wrapApiMethods(ElementHandle);
 
 export function convertSelectOptionValues(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
   if (values === null)

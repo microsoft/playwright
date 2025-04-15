@@ -85,6 +85,8 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 }
 
+ChannelOwner.wrapApiMethods(JSHandle);
+
 // This function takes care of converting all JSHandles to their channels,
 // so that generic channel serializer converts them to guids.
 export function serializeArgument(arg: any): channels.SerializedArgument {

@@ -31,3 +31,5 @@ export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel> {
     return this._channel;
   }
 }
+
+ChannelOwner.wrapApiMethods(JsonPipe);

@@ -72,3 +72,5 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     return await this._channel.addStackToTracingNoReply(params);
   }
 }
+
+ChannelOwner.wrapApiMethods(LocalUtils);

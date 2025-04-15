@@ -129,3 +129,5 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     }
   }
 }
+
+ChannelOwner.wrapApiMethods(Tracing);

@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+import { Page } from './api';
+
 import type { ElementHandle } from './elementHandle';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -52,3 +55,5 @@ export class Accessibility implements api.Accessibility {
     return result.rootAXNode ? axNodeFromProtocol(result.rootAXNode) : null;
   }
 }
+
+ChannelOwner.wrapApiMethods(Accessibility, instance => Page.from(instance['_channel']));

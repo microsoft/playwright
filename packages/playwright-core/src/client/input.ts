@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+
 import type { Page } from './page';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -46,6 +48,8 @@ export class Keyboard implements api.Keyboard {
     await this._page._channel.keyboardPress({ key, ...options });
   }
 }
+
+ChannelOwner.wrapApiMethods(Keyboard, instance => instance['_page']);
 
 export class Mouse implements api.Mouse {
   private _page: Page;
@@ -79,6 +83,8 @@ export class Mouse implements api.Mouse {
   }
 }
 
+ChannelOwner.wrapApiMethods(Mouse, instance => instance['_page']);
+
 export class Touchscreen implements api.Touchscreen {
   private _page: Page;
 
@@ -90,3 +96,5 @@ export class Touchscreen implements api.Touchscreen {
     await this._page._channel.touchscreenTap({ x, y });
   }
 }
+
+ChannelOwner.wrapApiMethods(Touchscreen, instance => instance['_page']);

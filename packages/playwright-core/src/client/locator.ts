@@ -21,6 +21,7 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
 import { isString } from '../utils/isomorphic/rtti';
 import { monotonicTime } from '../utils/isomorphic/time';
+import { ChannelOwner } from './channelOwner';
 
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -387,6 +388,8 @@ export class Locator implements api.Locator {
   }
 }
 
+ChannelOwner.wrapApiMethods(Locator, instance => instance['_frame']);
+
 export class FrameLocator implements api.FrameLocator {
   private _frame: Frame;
   private _frameSelector: string;
@@ -452,6 +455,8 @@ export class FrameLocator implements api.FrameLocator {
     return new FrameLocator(this._frame, this._frameSelector + ` >> nth=${index}`);
   }
 }
+
+ChannelOwner.wrapApiMethods(FrameLocator, instance => instance['_frame']);
 
 let _testIdAttributeName: string = 'data-testid';
 

@@ -87,6 +87,8 @@ export class APIRequest implements api.APIRequest {
   }
 }
 
+ChannelOwner.wrapApiMethods(APIRequest, instance => instance['_contexts'].size > 0 ? [...instance['_contexts']][0] : undefined);
+
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
   _request?: APIRequest;
   readonly _tracing: Tracing;
@@ -271,6 +273,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   }
 }
 
+ChannelOwner.wrapApiMethods(APIRequestContext);
+
 async function toFormField(platform: Platform, name: string, value: string | number | boolean | fs.ReadStream | FilePayload): Promise<channels.FormField> {
   const typeOfValue = typeof value;
   if (isFilePayload(value)) {
@@ -384,6 +388,8 @@ export class APIResponse implements api.APIResponse {
     return log;
   }
 }
+
+ChannelOwner.wrapApiMethods(APIResponse, instance => instance['_request']);
 
 type ServerFilePayload = NonNullable<channels.FormField['file']>;
 

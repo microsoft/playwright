@@ -834,6 +834,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 }
 
+ChannelOwner.wrapApiMethods(Page);
+
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   static from(channel: channels.BindingCallChannel): BindingCall {
     return (channel as any)._object;
@@ -862,6 +864,8 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
     }
   }
 }
+
+ChannelOwner.wrapApiMethods(BindingCall);
 
 function trimUrl(param: any): string | undefined {
   if (isRegExp(param))

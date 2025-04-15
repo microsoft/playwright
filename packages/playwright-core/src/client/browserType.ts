@@ -222,3 +222,5 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     await this._instrumentation.runBeforeCloseBrowserContext(context);
   }
 }
+
+ChannelOwner.wrapApiMethods(BrowserType);

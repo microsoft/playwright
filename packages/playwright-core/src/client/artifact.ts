@@ -80,3 +80,5 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
     return await this._channel.delete();
   }
 }
+
+ChannelOwner.wrapApiMethods(Artifact);

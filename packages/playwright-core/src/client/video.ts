@@ -15,6 +15,7 @@
  */
 
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
+import { ChannelOwner } from './channelOwner';
 
 import type { Artifact } from './artifact';
 import type { Connection } from './connection';
@@ -60,3 +61,5 @@ export class Video implements api.Video {
       await artifact.delete();
   }
 }
+
+ChannelOwner.wrapApiMethods(Video, instance => instance['_artifact']);

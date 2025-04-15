@@ -18,6 +18,8 @@ import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
 import { captureLibraryStackTrace } from './clientStackTrace';
 import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
+import { apiMethods } from './apiMethods';
+import { wrapPromiseAPIResult } from '../utils';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
@@ -233,6 +235,65 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return {
       _type: this._type,
       _guid: this._guid,
+    };
+  }
+
+  private _applyFloatingPromiseDetection<T>(result: Promise<T>, apiZone: ApiZone): Promise<T> {
+    return wrapPromiseAPIResult(result, apiZone.frames[0], this._instrumentation.onRegisterApiPromise, this._instrumentation.onUnregisterApiPromise);
+  }
+
+  static wrapApiMethods<T extends new(...args: any[]) => ChannelOwner>(Class: T): void;
+  static wrapApiMethods<T extends new(...args: any[]) => unknown>(Class: T, channelOwnerAdapter: (instance: InstanceType<T>) => ChannelOwner | undefined): void;
+  static wrapApiMethods<T extends new(...args: any[]) => unknown>(Class: T, channelOwnerAdapter?: (instance: InstanceType<T>) => ChannelOwner | undefined) {
+    const members = apiMethods[Class.prototype.constructor.name as keyof typeof apiMethods];
+    if (!members)
+      throw new Error(`Class ${Class.prototype.constructor.name} is not a valid API class`);
+    for (const member of members)
+      Class.prototype[member] = this._createWrappedApiMethod(member, Class.prototype[member], channelOwnerAdapter);
+  }
+
+  private static _createWrappedApiMethod(methodName: string, sourceFunc: Function, channelOwnerAdapter: ((instance: any) => ChannelOwner | undefined) | undefined, internal?: 'internal') {
+    return function(this: any, ...args: any[]) {
+      const channelOwner = channelOwnerAdapter ? channelOwnerAdapter(this) : this as ChannelOwner;
+      if (!channelOwner)
+        return sourceFunc.apply(this, args);
+
+      // TODO: Apply core operations of wrapApiCall
+      const existingApiZone = channelOwner._platform.zones.current().data<ApiZone>();
+      if (existingApiZone) {
+        const result = sourceFunc.apply(this, args);
+        return channelOwner._applyFloatingPromiseDetection(result, existingApiZone);
+      }
+
+      const isInternal = internal !== undefined ? internal === 'internal' : this._isInternalType;
+      const stackTrace = captureLibraryStackTrace(this._platform);
+      const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
+
+      const logger = this._logger;
+      const zonePromise: Promise<unknown> = this._platform.zones.current().push(apiZone).run(() => sourceFunc.apply(this, args));
+      zonePromise.then(result => {
+        if (!isInternal) {
+          logApiCall(this._platform, logger, `<= ${apiZone.apiName} succeeded`);
+          this._instrumentation.onApiCallEnd(apiZone);
+        }
+        return result;
+      }).catch((e: Error) => {
+        const innerError = ((this._platform.showInternalStackFrames() || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
+        if (apiZone.apiName && !apiZone.apiName.includes('<anonymous>'))
+          e.message = apiZone.apiName + ': ' + e.message;
+        const stackFrames = '\n' + stringifyStackFrames(apiZone.frames).join('\n') + innerError;
+        if (stackFrames.trim())
+          e.stack = e.message + stackFrames;
+        else
+          e.stack = '';
+        if (!isInternal) {
+          apiZone.error = e;
+          logApiCall(this._platform, logger, `<= ${apiZone.apiName} failed`);
+          this._instrumentation.onApiCallEnd(apiZone);
+        }
+        throw e;
+      });
+      return channelOwner._applyFloatingPromiseDetection(zonePromise, apiZone);
     };
   }
 }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+
 import type { ElementHandle } from './elementHandle';
 import type { Page } from './page';
 import type { FilePayload } from './types';
@@ -47,3 +49,5 @@ export class FileChooser implements api.FileChooser {
     return await this._elementHandle.setInputFiles(files, options);
   }
 }
+
+ChannelOwner.wrapApiMethods(FileChooser, instance => instance['_page']);

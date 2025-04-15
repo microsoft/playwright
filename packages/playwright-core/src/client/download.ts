@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+
 import type { Artifact } from './artifact';
 import type { Page } from './page';
 import type * as api from '../../types/types';
@@ -68,3 +70,5 @@ export class Download implements api.Download {
     return await this._artifact.delete();
   }
 }
+
+ChannelOwner.wrapApiMethods(Download, instance => instance['_page']);

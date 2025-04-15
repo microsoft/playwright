@@ -33,3 +33,5 @@ export class Stream extends ChannelOwner<channels.StreamChannel> {
     return this._platform.streamReadable(this._channel);
   }
 }
+
+ChannelOwner.wrapApiMethods(Stream);

@@ -100,6 +100,8 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 }
 
+ChannelOwner.wrapApiMethods(Android);
+
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<string, AndroidWebView>();
@@ -283,6 +285,8 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 }
 
+ChannelOwner.wrapApiMethods(AndroidDevice);
+
 export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> implements api.AndroidSocket {
   static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
     return (androidDevice as any)._object;
@@ -340,6 +344,8 @@ export class AndroidInput implements api.AndroidInput {
     await this._device._channel.inputDrag({ from, to, steps });
   }
 }
+
+ChannelOwner.wrapApiMethods(AndroidSocket);
 
 function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelector {
   const {
@@ -425,3 +431,5 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
     return BrowserContext.from(context).pages()[0];
   }
 }
+
+ChannelOwner.wrapApiMethods(AndroidWebView, instance => instance['_device']);

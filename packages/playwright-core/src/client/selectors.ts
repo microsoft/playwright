@@ -62,8 +62,12 @@ export class Selectors implements api.Selectors {
   }
 }
 
+ChannelOwner.wrapApiMethods(Selectors, instance => instance['_channels'].size > 0 ? [...instance['_channels']][0] : undefined);
+
 export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel> {
   static from(browser: channels.SelectorsChannel): SelectorsOwner {
     return (browser as any)._object;
   }
 }
+
+ChannelOwner.wrapApiMethods(SelectorsOwner);

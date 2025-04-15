@@ -63,6 +63,8 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
   }
 }
 
+ChannelOwner.wrapApiMethods(Electron);
+
 export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel> implements api.ElectronApplication {
   readonly _context: BrowserContext;
   private _windows = new Set<Page>();
@@ -157,3 +159,5 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }
+
+ChannelOwner.wrapApiMethods(ElectronApplication);

@@ -51,3 +51,5 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
     return await this._channel.detach();
   }
 }
+
+ChannelOwner.wrapApiMethods(CDPSession);

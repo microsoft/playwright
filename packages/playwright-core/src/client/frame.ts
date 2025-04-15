@@ -450,6 +450,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 }
 
+ChannelOwner.wrapApiMethods(Frame);
+
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
