@@ -337,9 +337,9 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
     // }
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
-      if (attachment.name.startsWith('_prompt') && attachment.path) {
+      if (attachment.name.startsWith('_error-context') && attachment.path) {
         resultLines.push('');
-        resultLines.push(screen.colors.dim(`    Error Prompt: ${relativeFilePath(screen, config, attachment.path)}`));
+        resultLines.push(screen.colors.dim(`    Error Context: ${relativeFilePath(screen, config, attachment.path)}`));
         continue;
       }
       if (attachment.name.startsWith('_'))

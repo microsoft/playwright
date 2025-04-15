@@ -90,7 +90,7 @@ export const TestResultView: React.FC<{
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} prompt={error.prompt}></TestErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} context={error.context}></TestErrorView>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
@@ -165,8 +165,8 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: T
       }
     }
 
-    const prompt = attachments.find(a => a.name === `_prompt-${i}`);
-    return { type: 'regular', error, prompt };
+    const context = attachments.find(a => a.name === `_error-context-${i}`);
+    return { type: 'regular', error, context };
   });
 }
 
