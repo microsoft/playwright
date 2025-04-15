@@ -434,7 +434,7 @@ export function expectTestHelper(result: RunResult) {
     for (const test of tests) {
       expect(test.expectedStatus, `title: ${title}`).toBe(expectedStatus);
       expect(test.status, `title: ${title}`).toBe(status);
-      expect([...test.annotations, ...test.results.flatMap(r => r.annotations)].map(a => a.type), `title: ${title}`).toEqual(annotations);
+      expect(test.annotations.map(a => a.type), `title: ${title}`).toEqual(annotations);
     }
   };
 }
