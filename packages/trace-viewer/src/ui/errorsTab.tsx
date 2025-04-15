@@ -26,7 +26,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
-import { fixTestInstructions } from '@testIsomorphic/prompt';
+import { fixTestInstructions } from '@web/prompts';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (

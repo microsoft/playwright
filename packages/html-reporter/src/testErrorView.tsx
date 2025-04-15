@@ -20,7 +20,7 @@ import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import { TestAttachment } from './types';
-import { fixTestInstructions } from '@testIsomorphic/prompt';
+import { fixTestInstructions } from '@web/prompts';
 
 export const TestErrorView: React.FC<{
   error: string;
