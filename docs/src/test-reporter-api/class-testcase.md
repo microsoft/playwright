@@ -11,13 +11,7 @@
   - `description` ?<[string]> Optional description.
   - `location` ?<[Location]> Optional location in the source where the annotation is added.
 
-The list of annotations applicable to the current test. Includes:
-* annotations defined on the test or suite via [`method: Test.(call)`] and [`method: Test.describe`];
-* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`] prior to test execution.
-
-Annotations are available during test execution through [`property: TestInfo.annotations`].
-
-Learn more about [test annotations](../test-annotations.md).
+[`property: TestResult.annotations`] of the last test run.
 
 ## property: TestCase.expectedStatus
 * since: v1.10

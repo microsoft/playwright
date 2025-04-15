@@ -115,6 +115,8 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         useWebSocket: isUnderTest(),
         handleSIGINT: recorder.handleSIGINT,
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
+        // Use the same channel as the inspected context to guarantee that the browser is installed.
+        channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
       }
     });
     const controller = new ProgressController(serverSideCallMetadata(), context._browser);
