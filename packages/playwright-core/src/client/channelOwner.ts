@@ -21,7 +21,7 @@ import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 import { apiMethods } from './apiMethods';
 import { wrapPromiseAPIResult } from '../utils';
 
-import type { ClientInstrumentation } from './clientInstrumentation';
+import type { ApiCallData, ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 import type { ValidatorContext } from '../protocol/validator';
@@ -157,8 +157,20 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
           if (validator) {
-            return (params: any) => this._wrapApiCall(apiZone => {
+            // TODO
+            return (params: any) => {
+              // We are guaranteed to be inside an ApiZone due to wrapApiMethods
+              const apiZone = this._platform.zones.current().data<ApiZone>();
               const validatedParams = validator(params, '', this._validatorToWireContext());
+              if (apiZone && !apiZone.isInternal && !apiZone.reported) {
+                // Reporting/tracing/logging this api call for the first time.
+                apiZone.reported = true;
+                logApiCall(this._platform, this._logger, `=> ${apiZone.apiName} started`);
+                return this._connection.sendMessageToServer(this, prop, validatedParams, apiZone.apiName, apiZone.frames, apiZone.stepId);
+              }
+
+            }
+            return (params: any) => this._wrapApiCall(apiZone => {
               if (!apiZone.isInternal && !apiZone.reported) {
                 // Reporting/tracing/logging this api call for the first time.
                 apiZone.params = params;
@@ -252,7 +264,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       Class.prototype[member] = this._createWrappedApiMethod(member, Class.prototype[member], channelOwnerAdapter);
   }
 
-  private static _createWrappedApiMethod(methodName: string, sourceFunc: Function, channelOwnerAdapter: ((instance: any) => ChannelOwner | undefined) | undefined, internal?: 'internal') {
+  private static _createWrappedApiMethod(methodName: string, sourceFunc: (...args: any[]) => Promise<unknown>, channelOwnerAdapter: ((instance: any) => ChannelOwner | undefined) | undefined, internal?: 'internal') {
     return function(this: any, ...args: any[]) {
       const channelOwner = channelOwnerAdapter ? channelOwnerAdapter(this) : this as ChannelOwner;
       if (!channelOwner)
@@ -268,6 +280,12 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       const isInternal = internal !== undefined ? internal === 'internal' : this._isInternalType;
       const stackTrace = captureLibraryStackTrace(this._platform);
       const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
+      // TODO
+      const apiCallData: ApiCallData = { ...apiZone, receiver: this, params: args, userData: undefined };
+
+      if (!isInternal) {
+        channelOwner._instrumentation.onApiCallBegin(apiZone);
+      }
 
       const logger = this._logger;
       const zonePromise: Promise<unknown> = this._platform.zones.current().push(apiZone).run(() => sourceFunc.apply(this, args));
