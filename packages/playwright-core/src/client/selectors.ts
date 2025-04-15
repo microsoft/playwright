@@ -69,5 +69,3 @@ export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel> {
     return (browser as any)._object;
   }
 }
-
-ChannelOwner.wrapApiMethods(SelectorsOwner);

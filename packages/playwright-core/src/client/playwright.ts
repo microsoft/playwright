@@ -101,5 +101,3 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     return this._allContexts().flatMap(context => context.pages());
   }
 }
-
-ChannelOwner.wrapApiMethods(Playwright);

@@ -456,8 +456,6 @@ export class FrameLocator implements api.FrameLocator {
   }
 }
 
-ChannelOwner.wrapApiMethods(FrameLocator, instance => instance['_frame']);
-
 let _testIdAttributeName: string = 'data-testid';
 
 export function testIdAttributeName(): string {
