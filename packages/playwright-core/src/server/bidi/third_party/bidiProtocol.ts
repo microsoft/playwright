@@ -35,6 +35,7 @@ export type EventData =
 export type CommandData =
   | BrowserCommand
   | BrowsingContextCommand
+  | EmulationCommand
   | InputCommand
   | NetworkCommand
   | ScriptCommand
@@ -492,12 +493,15 @@ export namespace BrowsingContext {
   export type Navigation = string;
 }
 export namespace BrowsingContext {
-  export type NavigationInfo = {
+  export type BaseNavigationInfo = {
     context: BrowsingContext.BrowsingContext;
     navigation: BrowsingContext.Navigation | null;
     timestamp: JsUint;
     url: string;
   };
+}
+export namespace BrowsingContext {
+  export type NavigationInfo = BrowsingContext.BaseNavigationInfo;
 }
 export namespace BrowsingContext {
   export const enum ReadinessState {
@@ -874,8 +878,13 @@ export namespace BrowsingContext {
 export namespace BrowsingContext {
   export type DownloadWillBegin = {
     method: 'browsingContext.downloadWillBegin';
-    params: BrowsingContext.NavigationInfo;
+    params: BrowsingContext.DownloadWillBeginParams;
   };
+}
+export namespace BrowsingContext {
+  export type DownloadWillBeginParams = {
+    suggestedFilename: string;
+  } & BrowsingContext.BaseNavigationInfo;
 }
 export namespace BrowsingContext {
   export type NavigationAborted = {
@@ -922,6 +931,63 @@ export namespace BrowsingContext {
     message: string;
     type: BrowsingContext.UserPromptType;
     defaultValue?: string;
+  };
+}
+export type EmulationCommand = Emulation.SetGeolocationOverride;
+export namespace Emulation {
+  export type SetGeolocationOverride = {
+    method: 'emulation.setGeolocationOverride';
+    params: Emulation.SetGeolocationOverrideParameters;
+  };
+}
+export namespace Emulation {
+  export type SetGeolocationOverrideParameters = {
+    coordinates: Emulation.GeolocationCoordinates | null;
+    contexts?: [
+      BrowsingContext.BrowsingContext,
+      ...BrowsingContext.BrowsingContext[],
+    ];
+    userContexts?: [Browser.UserContext, ...Browser.UserContext[]];
+  };
+}
+export namespace Emulation {
+  export type GeolocationCoordinates = {
+    /**
+     * Must be between `-90` and `90`, inclusive.
+     */
+    latitude: number;
+    /**
+     * Must be between `-180` and `180`, inclusive.
+     */
+    longitude: number;
+    /**
+     * Must be greater than or equal to `0`.
+     *
+     * @defaultValue `1`
+     */
+    accuracy?: number;
+    /**
+     * @defaultValue `null`
+     */
+    altitude?: number | null;
+    /**
+     * Must be greater than or equal to `0`.
+     *
+     * @defaultValue `null`
+     */
+    altitudeAccuracy?: number | null;
+    /**
+     * Must be between `0` and `360`.
+     *
+     * @defaultValue `null`
+     */
+    heading?: number | null;
+    /**
+     * Must be greater than or equal to `0`.
+     *
+     * @defaultValue `null`
+     */
+    speed?: number | null;
   };
 }
 export type NetworkCommand =
