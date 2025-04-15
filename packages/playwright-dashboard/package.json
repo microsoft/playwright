@@ -24,6 +24,6 @@
   },
   "devDependencies": {
     "@octokit/graphql-schema": "^15.26.0",
-    "@playwright/test": "1.52.0-next"
+    "@playwright/test": "1.53.0-next"
   }
 }
