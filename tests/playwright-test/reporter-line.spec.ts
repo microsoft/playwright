@@ -190,7 +190,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
-    test('should show error prompt with relative path', async ({ runInlineTest, useIntermediateMergeReport }) => {
+    test('should show error context with relative path', async ({ runInlineTest, useIntermediateMergeReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           const { test, expect } = require('@playwright/test');
@@ -201,9 +201,9 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: 'line' });
       const text = result.output;
       if (useIntermediateMergeReport)
-        expect(text).toContain(`Error Prompt: ${path.join('blob-report', 'resources')}`);
+        expect(text).toContain(`Error Context: ${path.join('blob-report', 'resources')}`);
       else
-        expect(text).toContain(`Error Prompt: ${path.join('test-results', 'a-one', 'prompt.md')}`);
+        expect(text).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
       expect(result.exitCode).toBe(1);
     });
   });
