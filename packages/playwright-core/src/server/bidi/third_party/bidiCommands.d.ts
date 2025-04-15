@@ -113,6 +113,11 @@ export interface Commands {
     returnType: Bidi.EmptyResult;
   };
 
+  'emulation.setGeolocationOverride': {
+    params: Bidi.Emulation.SetGeolocationOverrideParameters;
+    returnType: Bidi.EmptyResult;
+  };
+
   'session.end': {
     params: Bidi.EmptyParams;
     returnType: Bidi.EmptyResult;
