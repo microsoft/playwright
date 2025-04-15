@@ -102,7 +102,7 @@ export interface TestServerInterface {
     projects?: string[];
     reuseContext?: boolean;
     connectWsEndpoint?: string;
-    attachErrorContext?: boolean;
+    errorContext?: { format: 'json' | 'markdown' };
   }): Promise<{
     status: reporterTypes.FullResult['status'];
   }>;
