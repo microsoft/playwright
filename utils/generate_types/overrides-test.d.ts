@@ -70,6 +70,8 @@ export type TestDetailsAnnotation = {
   description?: string;
 };
 
+export type TestAnnotation = TestDetailsAnnotation;
+
 export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
