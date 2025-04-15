@@ -170,7 +170,6 @@ program
               console.log(`  Browser: ${browser.name}`);
               console.log(`    Version: ${browser.version}`);
               console.log(`    Location: ${browser.dir}`);
-              console.log(`    Installation completed: ${browser.installationCompleted}`);
             }
             console.log(``);
           }
