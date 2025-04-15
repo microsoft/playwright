@@ -551,6 +551,30 @@ export default defineConfig<MyOptions>({
 });
 ```
 
+**Array as an option value**
+
+If the value of your option is an array, for example `[{ name: 'Alice' }, { name: 'Bob' }]`, you'll need to wrap it into an extra array when providing the value. This is best illustrated with an example.
+
+```js
+type Person = { name: string };
+const test = base.extend<{ persons: Person[] }>({
+  // Declare the option, default value is an empty array.
+  persons: [[], { option: true }],
+});
+
+// Option value is an array of persons.
+const actualPersons = [{ name: 'Alice' }, { name: 'Bob' }];
+test.use({
+  // CORRECT: Wrap the value into an array and pass the scope.
+  persons: [actualPersons, { scope: 'test' }],
+});
+
+test.use({
+  // WRONG: passing an array value directly will not work.
+  persons: actualPersons,
+});
+```
+
 ## Execution order
 
 Each fixture has a setup and teardown phase before and after the `await use()` call in the fixture. Setup is executed before the test/hook requiring it is run, and teardown is executed when the fixture is no longer being used by the test/hook.
