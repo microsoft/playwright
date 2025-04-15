@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestAnnotation, Metadata } from '@playwright/test';
+import type { Metadata } from '@playwright/test';
 
 export type Stats = {
   total: number;
@@ -58,6 +58,8 @@ export type TestFileSummary = {
   tests: TestCaseSummary[];
   stats: Stats;
 };
+
+export type TestAnnotation = { type: string, description?: string };
 
 export type TestCaseSummary = {
   testId: string,

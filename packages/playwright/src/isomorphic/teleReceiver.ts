@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { Metadata, TestAnnotation } from '../../types/test';
+import type { Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
+import type { Annotation } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type StringIntern = (s: string) => string;
@@ -67,7 +68,7 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
-  annotations?: TestAnnotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestEnd = {
@@ -94,7 +95,7 @@ export type JsonTestResultEnd = {
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
   attachments: JsonAttachment[];
-  annotations?: TestAnnotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestStepStart = {
@@ -111,7 +112,7 @@ export type JsonTestStepEnd = {
   duration: number;
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
-  annotations?: TestAnnotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonFullResult = {
@@ -242,7 +243,7 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     if (payload.annotations) {
-      result.annotations = this._absoluteAnnotationLocations(payload.annotations);
+      result.annotations = payload.annotations;
       test.annotations = result.annotations;
     }
     this._reporter.onTestEnd?.(test, result);
@@ -374,16 +375,8 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
-    test.annotations = this._absoluteAnnotationLocations(payload.annotations ?? []);
+    test.annotations = payload.annotations ?? [];
     return test;
-  }
-
-  private _absoluteAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
-    return annotations.map(annotation => {
-      if (annotation.location)
-        annotation.location = this._absoluteLocation(annotation.location);
-      return annotation;
-    });
   }
 
   private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;
@@ -486,7 +479,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: TestAnnotation[] = [];
+  annotations: Annotation[] = [];
   retries = 0;
   tags: string[] = [];
   repeatEachIndex = 0;
