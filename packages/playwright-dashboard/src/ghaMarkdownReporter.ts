@@ -65,6 +65,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
                 id
                 body
                 author {
+                  __typename
                   login
                 }
               }
@@ -73,8 +74,10 @@ class GHAMarkdownReporter extends MarkdownReporter {
         }
       }
     `);
-    const comments = data.repository.pullRequest?.comments.nodes?.filter(
-        comment => comment?.author?.login === 'github-actions[bot]' && comment.body?.includes(magicComment));
+    const comments = data.repository.pullRequest?.comments.nodes?.filter(comment =>
+      comment?.author?.__typename === 'Bot' &&
+      comment?.author?.login === 'github-actions' &&
+      comment.body?.includes(magicComment));
     const prId = data.repository.pullRequest?.id;
     if (!comments?.length)
       return prId;
