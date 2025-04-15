@@ -573,6 +573,7 @@ class TypesGenerator {
         'Matchers',
         'PlaywrightWorkerArgs.playwright',
         'PlaywrightWorkerOptions.defaultBrowserType',
+        'PlaywrightWorkerOptions.codegenEnhancerOptions',
         'Project',
       ]),
       doNotExportClassNames: assertionClasses,

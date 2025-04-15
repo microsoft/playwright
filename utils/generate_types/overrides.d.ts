@@ -18,6 +18,7 @@ import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -306,6 +307,13 @@ export type AndroidElementInfo = {
   longClickable: boolean;
   scrollable: boolean;
   selected: boolean;
+};
+
+export type CodegenEnhancerOptions = {
+  actionEnhancer?: BaseChatModel,
+  completeScriptEnhancer?: BaseChatModel,
+  actionPrompt?: string,
+  scriptPrompt?: string,
 };
 
 export type AndroidSelector = {

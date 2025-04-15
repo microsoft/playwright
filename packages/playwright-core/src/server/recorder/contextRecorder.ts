@@ -84,10 +84,10 @@ export class ContextRecorder extends EventEmitter {
     this.enableLLMEnhancer(params.codegenEnhancerOptions);
 
     this._collection = new RecorderCollection(this._pageAliases);
-    this._collection.on('change', (actions: actions.ActionInContext[]) => {
+    this._collection.on('change', async (actions: actions.ActionInContext[]) => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
-        const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, languageGeneratorOptions);
+        const { header, footer, actionTexts, text } = await generateCode(actions, languageGenerator, languageGeneratorOptions);
         const source: Source = {
           isRecorded: true,
           label: languageGenerator.name,
@@ -131,7 +131,6 @@ export class ContextRecorder extends EventEmitter {
   }
 
   enableLLMEnhancer(codegenEnhancerOptions: CodegenEnhancerOptions | undefined) {
-    console.log('enableLLMEnhancer', codegenEnhancerOptions);
     if (!codegenEnhancerOptions)
       return;
 

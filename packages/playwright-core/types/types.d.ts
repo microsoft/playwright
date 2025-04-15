@@ -16146,6 +16146,13 @@ export type AndroidElementInfo = {
   selected: boolean;
 };
 
+export type CodegenEnhancerOptions = {
+  actionEnhancer?: BaseChatModel,
+  completeScriptEnhancer?: BaseChatModel,
+  actionPrompt?: string,
+  scriptPrompt?: string,
+};
+
 export type AndroidSelector = {
   checkable?: boolean,
   checked?: boolean,
@@ -16225,12 +16232,6 @@ export const _bidiFirefox: BrowserType;
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
-export interface CodegenEnhancerOptions {
-  actionEnhancer?: BaseChatModel;
-  completeScriptEnhancer?: BaseChatModel;
-  actionPrompt?: string;
-  scriptPrompt?: string;
-}
 
 /**
  * Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android

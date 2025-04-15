@@ -38,7 +38,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     this._enhancer = enhancer;
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  async generateAction(actionInContext: actions.ActionInContext): Promise<string> {
     const action = actionInContext.action;
     if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -72,26 +72,15 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const actionCall = this._generateActionCall(subject, actionInContext);
 
     // Only try to enhance if an enhancer with actionEnhancer is available
-    const enhancedActionCall = actionCall;
-    try {
-      // const actionInfo = {
-      //   code: actionCall,
-      //   action
-      // };
+    let enhancedActionCall = actionCall;
 
-      // Since we can't make generateAction async without changing the interface,
-      // we'll use enhancer synchronously if available but will not await it
-      // if (this._enhancer?.actionEnhancer) {
-      //   this._enhancer.enhanceAction(actionInfo, action)
-      //       .then(enhanced => {
-      //         // This will be handled in a future update if needed
-      //       })
-      //       .catch(() => {
-      //         // Ignore enhancement errors
-      //       });
-      // }
-    } catch (e) {
-      // Fall back to unenhanced code
+    // Enhance with LLM if enabled
+    if (this._enhancer && !(['closePage', 'screenshot', 'fill', 'press'].includes(actionInContext.action.name))) {
+      try {
+        enhancedActionCall = await this._enhancer.enhanceActionWithLLM(enhancedActionCall, action, actionInContext);
+      } catch (error) {
+        process.stdout.write(error);
+      }
     }
 
     formatter.add(wrapWithStep(actionInContext.description, enhancedActionCall));

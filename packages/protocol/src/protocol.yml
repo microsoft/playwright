@@ -1296,6 +1296,7 @@ BrowserContext:
         outputFile: string?
         handleSIGINT: boolean?
         omitCallTracking: boolean?
+        codegenEnhancerOptions: json?
 
     newCDPSession:
       parameters:
