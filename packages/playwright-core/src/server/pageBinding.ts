@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ensureBuiltins } from '../utils/isomorphic/builtins';
+import { builtins } from '../utils/isomorphic/builtins';
 import { source } from '../utils/isomorphic/utilityScriptSerializers';
 
 import type { Builtins } from '../utils/isomorphic/builtins';
@@ -88,5 +88,5 @@ export function deliverBindingResult(arg: { name: string, seq: number, result?: 
 }
 
 export function createPageBindingScript(playwrightBinding: string, name: string, needsHandle: boolean) {
-  return `(${addPageBinding.toString()})(${JSON.stringify(playwrightBinding)}, ${JSON.stringify(name)}, ${needsHandle}, (${source}), (${ensureBuiltins})(globalThis))`;
+  return `(${addPageBinding.toString()})(${JSON.stringify(playwrightBinding)}, ${JSON.stringify(name)}, ${needsHandle}, (${source}), (${builtins})())`;
 }

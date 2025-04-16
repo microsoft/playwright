@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { Map } from './builtins';
+
 export class MultiMap<K, V> {
   private _map: Map<K, V[]>;
 

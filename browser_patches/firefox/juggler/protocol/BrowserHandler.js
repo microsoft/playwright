@@ -219,6 +219,10 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setForcedColors(nullToUndefined(forcedColors));
   }
 
+  async ['Browser.setContrast']({browserContextId, contrast}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setContrast(nullToUndefined(contrast));
+  }
+
   async ['Browser.setVideoRecordingOptions']({browserContextId, options}) {
     await this._targetRegistry.browserContextForId(browserContextId).setVideoRecordingOptions(options);
   }

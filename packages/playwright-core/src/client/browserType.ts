@@ -129,7 +129,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         exposeNetwork: params.exposeNetwork ?? params._exposeNetwork,
         slowMo: params.slowMo,
         timeout: params.timeout,
-        proxy: params.proxy,
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
@@ -189,8 +188,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       endpointURL,
       headers,
       slowMo: params.slowMo,
-      timeout: params.timeout,
-      proxy: params.proxy,
+      timeout: params.timeout
     });
     const browser = Browser.from(result.browser);
     this._didLaunchBrowser(browser, {}, params.logger);

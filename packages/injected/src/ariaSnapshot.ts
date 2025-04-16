@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
+import { Map, Set } from '@isomorphic/builtins';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { getElementComputedStyle } from './domUtils';
+import { getElementComputedStyle, getGlobalOptions } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
-import type { Builtins } from '@isomorphic/builtins';
 
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
@@ -33,19 +33,19 @@ export type AriaNode = AriaProps & {
 
 export type AriaSnapshot = {
   root: AriaNode;
-  elements: Builtins.Map<number, Element>;
+  elements: Map<number, Element>;
   generation: number;
-  ids: Builtins.Map<Element, number>;
+  ids: Map<Element, number>;
 };
 
-export function generateAriaTree(builtins: Builtins, rootElement: Element, generation: number, includeIframe: boolean): AriaSnapshot {
-  const visited = new builtins.Set<Node>();
+export function generateAriaTree(rootElement: Element, generation: number): AriaSnapshot {
+  const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {} },
-    elements: new builtins.Map<number, Element>(),
+    elements: new Map<number, Element>(),
     generation,
-    ids: new builtins.Map<Element, number>(),
+    ids: new Map<Element, number>(),
   };
 
   const addElement = (element: Element) => {
@@ -87,7 +87,7 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
     }
 
     addElement(element);
-    const childAriaNode = toAriaNode(builtins, element, includeIframe);
+    const childAriaNode = toAriaNode(element);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
     processElement(childAriaNode || ariaNode, element, ariaChildren);
@@ -133,7 +133,7 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
     }
   }
 
-  roleUtils.beginAriaCaches(builtins);
+  roleUtils.beginAriaCaches();
   try {
     visit(snapshot.root, rootElement);
   } finally {
@@ -144,15 +144,15 @@ export function generateAriaTree(builtins: Builtins, rootElement: Element, gener
   return snapshot;
 }
 
-function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean): AriaNode | null {
-  if (includeIframe && element.nodeName === 'IFRAME')
+function toAriaNode(element: Element): AriaNode | null {
+  if (element.nodeName === 'IFRAME')
     return { role: 'iframe', name: '', children: [], props: {}, element };
 
   const role = roleUtils.getAriaRole(element);
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
-  const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(builtins, element, false) || '');
+  const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(element, false) || '');
   const result: AriaNode = { role, name, children: [], props: {}, element };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
@@ -174,7 +174,7 @@ function toAriaNode(builtins: Builtins, element: Element, includeIframe: boolean
     result.selected = roleUtils.getAriaSelected(element);
 
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-    if (element.type !== 'checkbox' && element.type !== 'radio')
+    if (element.type !== 'checkbox' && element.type !== 'radio' && (element.type !== 'file' || getGlobalOptions().inputFileRoleTextbox))
       result.children = [element.value];
   }
 
@@ -234,8 +234,8 @@ export type MatcherReceived = {
   regex: string;
 };
 
-export function matchesAriaTree(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
-  const snapshot = generateAriaTree(builtins, rootElement, 0, false);
+export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
+  const snapshot = generateAriaTree(rootElement, 0);
   const matches = matchesNodeDeep(snapshot.root, template, false, false);
   return {
     matches,
@@ -246,8 +246,8 @@ export function matchesAriaTree(builtins: Builtins, rootElement: Element, templa
   };
 }
 
-export function getAllByAria(builtins: Builtins, rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(builtins, rootElement, 0, false).root;
+export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
+  const root = generateAriaTree(rootElement, 0).root;
   const matches = matchesNodeDeep(root, template, true, false);
   return matches.map(n => n.element);
 }

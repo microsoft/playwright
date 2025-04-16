@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { Map } from './builtins';
+
 export function isJsonMimeType(mimeType: string) {
   return !!mimeType.match(/^(application\/json|application\/.*?\+json|text\/(x-)?json)(;\s*charset=.*)?$/);
 }

@@ -19,7 +19,7 @@ Internally, Playwright connects to the browser using [Chrome DevTools Protocol](
 </details>
 :::
 
-Before connecting Playwright to your Selenium Grid, make sure that grid works with [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/). For example, run [one of the examples](https://github.com/SeleniumHQ/selenium/tree/trunk/javascript/node/selenium-webdriver/example) and pass `SELENIUM_REMOTE_URL` environment variable. If webdriver example does not work, look for any errors at your Selenium hub/node/standalone output and search [Selenium issues](https://github.com/SeleniumHQ/selenium/issues) for a possible solution.
+Before connecting Playwright to your Selenium Grid, make sure that grid works with [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/). For example, run [one of the examples](https://github.com/SeleniumHQ/selenium/tree/trunk/javascript/selenium-webdriver/example) and pass `SELENIUM_REMOTE_URL` environment variable. If webdriver example does not work, look for any errors at your Selenium hub/node/standalone output and search [Selenium issues](https://github.com/SeleniumHQ/selenium/issues) for a possible solution.
 
 ## Starting Selenium Grid
 

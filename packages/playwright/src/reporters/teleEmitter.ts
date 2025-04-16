@@ -22,7 +22,6 @@ import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 import type { ReporterV2 } from './reporterV2';
 import type * as reporterTypes from '../../types/testReporter';
-import type { TestAnnotation } from '../../types/test';
 import type * as teleReceiver from '../isomorphic/teleReceiver';
 
 export type TeleReporterEmitterOptions = {
@@ -223,7 +222,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retries: test.retries,
       tags: test.tags,
       repeatEachIndex: test.repeatEachIndex,
-      annotations: this._relativeAnnotationLocations(test.annotations),
+      annotations: test.annotations,
     };
   }
 
@@ -243,7 +242,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
+      annotations: result.annotations?.length ? result.annotations : undefined,
     };
   }
 
@@ -275,10 +274,11 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   _serializeAttachments(attachments: reporterTypes.TestResult['attachments']): teleReceiver.JsonAttachment[] {
     return attachments.map(a => {
+      const { body, ...rest } = a;
       return {
-        ...a,
+        ...rest,
         // There is no Buffer in the browser, so there is no point in sending the data there.
-        base64: (a.body && !this._emitterOptions.omitBuffers) ? a.body.toString('base64') : undefined,
+        base64: (body && !this._emitterOptions.omitBuffers) ? body.toString('base64') : undefined,
       };
     });
   }
@@ -300,16 +300,8 @@ export class TeleReporterEmitter implements ReporterV2 {
       duration: step.duration,
       error: step.error,
       attachments: step.attachments.length ? step.attachments.map(a => result.attachments.indexOf(a)) : undefined,
-      annotations: step.annotations.length ? this._relativeAnnotationLocations(step.annotations) : undefined,
+      annotations: step.annotations.length ? step.annotations : undefined,
     };
-  }
-
-  private _relativeAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
-    return annotations.map(annotation => {
-      if (annotation.location)
-        annotation.location = this._relativeLocation(annotation.location);
-      return annotation;
-    });
   }
 
   private _relativeLocation(location: reporterTypes.Location): reporterTypes.Location;

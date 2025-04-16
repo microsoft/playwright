@@ -323,7 +323,9 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
   await closeProxyServer();
 });
 
-it('should use http proxy for websocket requests', async ({ isWindows, browserName, browserType, server, proxyServer }) => {
+it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion }) => {
+  it.skip(isMac && macVersion === 13, 'Times out on Mac 13');
+
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const browser = await browserType.launch({
     proxy: { server: `localhost:${proxyServer.PORT}` }

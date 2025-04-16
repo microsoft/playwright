@@ -33,7 +33,6 @@ export type HTTPRequestParams = {
   data?: string | Buffer,
   timeout?: number,
   rejectUnauthorized?: boolean,
-  proxy?: ProxySettings,
 };
 
 export const NET_DEFAULT_TIMEOUT = 30_000;
@@ -51,35 +50,35 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const timeout = params.timeout ?? NET_DEFAULT_TIMEOUT;
 
-  if (params.proxy) {
-    options.agent = createProxyAgent(params.proxy, new URL(params.url));
-  } else {
-    const proxyURL = getProxyForUrl(params.url);
-    if (proxyURL) {
-      const parsedProxyURL = url.parse(proxyURL);
-      if (params.url.startsWith('http:')) {
-        options = {
-          path: parsedUrl.href,
-          host: parsedProxyURL.hostname,
-          port: parsedProxyURL.port,
-          headers: options.headers,
-          method: options.method
-        };
-      } else {
-        (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
+  const proxyURL = getProxyForUrl(params.url);
+  if (proxyURL) {
+    const parsedProxyURL = url.parse(proxyURL);
+    if (params.url.startsWith('http:')) {
+      options = {
+        path: parsedUrl.href,
+        host: parsedProxyURL.hostname,
+        port: parsedProxyURL.port,
+        headers: options.headers,
+        method: options.method
+      };
+    } else {
+      (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
 
-        options.agent = new HttpsProxyAgent(parsedProxyURL);
-        options.rejectUnauthorized = false;
-      }
+      options.agent = new HttpsProxyAgent(parsedProxyURL);
+      options.rejectUnauthorized = false;
     }
   }
 
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
-    if (statusCode >= 300 && statusCode < 400 && res.headers.location)
+    if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
+      // Close the original socket before following the redirect. Otherwise
+      // it may stay idle and cause a timeout error.
+      request.destroy();
       httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError);
-    else
+    } else {
       onResponse(res);
+    }
   };
   const request = options.protocol === 'https:' ?
     https.request(options, requestCallback) :
@@ -148,10 +147,12 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   }
   if (proxy.username)
     proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
     return new HttpsProxyAgent(proxyOpts);
   }
+
   // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
   return new HttpsProxyAgent(proxyOpts);
 }

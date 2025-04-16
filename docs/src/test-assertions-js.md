@@ -223,6 +223,17 @@ await expect.poll(async () => {
 }).toBe(200);
 ```
 
+You can combine expect.configure({ soft: true }) with expect.poll to perform soft assertions in polling logic.
+
+```js
+const softExpect = expect.configure({ soft: true });
+await softExpect.poll(async () => {
+  const response = await page.request.get('https://api.example.com');
+  return response.status();
+}, {}).toBe(200);
+```
+This allows the test to continue even if the assertion inside poll fails.
+
 ## expect.toPass
 
 You can retry blocks of code until they are passing successfully.
@@ -258,7 +269,7 @@ In this example we add a custom `toHaveAmount` function. Custom matcher should r
 
 ```js title="fixtures.ts"
 import { expect as baseExpect } from '@playwright/test';
-import type { Page, Locator } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 
 export { test } from '@playwright/test';
 
@@ -268,11 +279,16 @@ export const expect = baseExpect.extend({
     let pass: boolean;
     let matcherResult: any;
     try {
-      await baseExpect(locator).toHaveAttribute('data-amount', String(expected), options);
+      const expectation = this.isNot ? baseExpect(locator).not : baseExpect(locator);
+      await expectation.toHaveAttribute('data-amount', String(expected), options);
       pass = true;
     } catch (e: any) {
       matcherResult = e.matcherResult;
       pass = false;
+    }
+
+    if (this.isNot) {
+      pass =!pass;
     }
 
     const message = pass

@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { createProxyAgent, makeWaitForNextTask } from '../utils';
+import { makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './utils/happyEyeballs';
 import { ws } from '../utilsBundle';
 
 import type { WebSocket } from '../utilsBundle';
 import type { Progress } from './progress';
-import type { HeadersArray, ProxySettings } from './types';
+import type { HeadersArray } from './types';
 import type { ClientRequest, IncomingMessage } from 'http';
 
 export const perMessageDeflate = {
@@ -64,7 +64,6 @@ type WebSocketTransportOptions = {
   headers?: { [key: string]: string; };
   followRedirects?: boolean;
   debugLogHeader?: string;
-  proxy?: ProxySettings;
 };
 
 export class WebSocketTransport implements ConnectionTransport {
@@ -137,15 +136,13 @@ export class WebSocketTransport implements ConnectionTransport {
   constructor(progress: Progress|undefined, url: string, logUrl: string, options: WebSocketTransportOptions) {
     this.wsEndpoint = url;
     this._logUrl = logUrl;
-    const proxyAgent = createProxyAgent(options.proxy, new URL(url));
-    const happyEyeballsAgent = (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent;
     this._ws = new ws(url, [], {
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       // Prevent internal http client error when passing negative timeout.
       handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? 30_000, 1),
       headers: options.headers,
       followRedirects: options.followRedirects,
-      agent: proxyAgent || happyEyeballsAgent,
+      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
       perMessageDeflate,
     });
     this._ws.on('upgrade', response => {

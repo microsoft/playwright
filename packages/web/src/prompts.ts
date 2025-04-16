@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-import { performance } from './builtins';
+export const fixTestInstructions = `
+# Instructions
 
-let _timeOrigin = performance.timeOrigin;
-let _timeShift = 0;
-
-export function setTimeOrigin(origin: number) {
-  _timeOrigin = origin;
-  _timeShift = performance.timeOrigin - origin;
-}
-
-export function timeOrigin(): number {
-  return _timeOrigin;
-}
-
-export function monotonicTime(): number {
-  return Math.floor((performance.now() + _timeShift) * 1000) / 1000;
-}
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+`.trimStart();

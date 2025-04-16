@@ -119,6 +119,13 @@ function sendMessageToParent(message: { method: string, params?: any }) {
   try {
     process.send!(message);
   } catch (e) {
+    try {
+      // By default, the IPC messages are serialized as JSON.
+      JSON.stringify(message);
+    } catch {
+      // Always throw serialization errors.
+      throw e;
+    }
     // Can throw when closing.
   }
 }

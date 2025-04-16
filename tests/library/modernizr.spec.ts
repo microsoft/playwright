@@ -70,7 +70,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
     expected.peerconnection = false;
     expected.speechrecognition = false;
     expected.speechsynthesis = false;
-    expected.todataurljpeg = false;
+    expected.todataurlwebp = true;
     expected.webaudio = false;
     expected.gamepads = false;
 
@@ -133,7 +133,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
     expected.peerconnection = false;
     expected.speechrecognition = false;
     expected.speechsynthesis = false;
-    expected.todataurljpeg = false;
+    expected.todataurlwebp = true;
     expected.webaudio = false;
     expected.gamepads = false;
 

@@ -42,7 +42,6 @@ import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
-import type { TestAnnotation } from '@playwright/test';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -52,7 +51,7 @@ export const Workbench: React.FunctionComponent<{
   isLive?: boolean,
   hideTimeline?: boolean,
   status?: UITestStatus,
-  annotations?: TestAnnotation[];
+  annotations?: { type: string; description?: string; }[];
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,

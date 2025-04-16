@@ -22,6 +22,8 @@ const ALL_PERMISSIONS = [
 ];
 
 let globalTabAndWindowActivationChain = Promise.resolve();
+// This is a workaround for https://github.com/microsoft/playwright/issues/34586
+let globalNewPageChain = Promise.resolve();
 
 class DownloadInterceptor {
   constructor(registry) {
@@ -308,55 +310,59 @@ class TargetRegistry {
   }
 
   async newPage({browserContextId}) {
-    const browserContext = this.browserContextForId(browserContextId);
-    const features = "chrome,dialog=no,all";
-    // See _callWithURIToLoad in browser.js for the structure of window.arguments
-    // window.arguments[1]: unused (bug 871161)
-    //                 [2]: referrerInfo (nsIReferrerInfo)
-    //                 [3]: postData (nsIInputStream)
-    //                 [4]: allowThirdPartyFixup (bool)
-    //                 [5]: userContextId (int)
-    //                 [6]: originPrincipal (nsIPrincipal)
-    //                 [7]: originStoragePrincipal (nsIPrincipal)
-    //                 [8]: triggeringPrincipal (nsIPrincipal)
-    //                 [9]: allowInheritPrincipal (bool)
-    //                 [10]: csp (nsIContentSecurityPolicy)
-    //                 [11]: nsOpenWindowInfo
-    const args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
-    const urlSupports = Cc["@mozilla.org/supports-string;1"].createInstance(
-      Ci.nsISupportsString
-    );
-    urlSupports.data = 'about:blank';
-    args.appendElement(urlSupports); // 0
-    args.appendElement(undefined); // 1
-    args.appendElement(undefined); // 2
-    args.appendElement(undefined); // 3
-    args.appendElement(undefined); // 4
-    const userContextIdSupports = Cc[
-      "@mozilla.org/supports-PRUint32;1"
-    ].createInstance(Ci.nsISupportsPRUint32);
-    userContextIdSupports.data = browserContext.userContextId;
-    args.appendElement(userContextIdSupports); // 5
-    args.appendElement(undefined); // 6
-    args.appendElement(undefined); // 7
-    args.appendElement(Services.scriptSecurityManager.getSystemPrincipal()); // 8
+    const result = globalNewPageChain.then(async () => {
+      const browserContext = this.browserContextForId(browserContextId);
+      const features = "chrome,dialog=no,all";
+      // See _callWithURIToLoad in browser.js for the structure of window.arguments
+      // window.arguments[1]: unused (bug 871161)
+      //                 [2]: referrerInfo (nsIReferrerInfo)
+      //                 [3]: postData (nsIInputStream)
+      //                 [4]: allowThirdPartyFixup (bool)
+      //                 [5]: userContextId (int)
+      //                 [6]: originPrincipal (nsIPrincipal)
+      //                 [7]: originStoragePrincipal (nsIPrincipal)
+      //                 [8]: triggeringPrincipal (nsIPrincipal)
+      //                 [9]: allowInheritPrincipal (bool)
+      //                 [10]: csp (nsIContentSecurityPolicy)
+      //                 [11]: nsOpenWindowInfo
+      const args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
+      const urlSupports = Cc["@mozilla.org/supports-string;1"].createInstance(
+        Ci.nsISupportsString
+      );
+      urlSupports.data = 'about:blank';
+      args.appendElement(urlSupports); // 0
+      args.appendElement(undefined); // 1
+      args.appendElement(undefined); // 2
+      args.appendElement(undefined); // 3
+      args.appendElement(undefined); // 4
+      const userContextIdSupports = Cc[
+        "@mozilla.org/supports-PRUint32;1"
+      ].createInstance(Ci.nsISupportsPRUint32);
+      userContextIdSupports.data = browserContext.userContextId;
+      args.appendElement(userContextIdSupports); // 5
+      args.appendElement(undefined); // 6
+      args.appendElement(undefined); // 7
+      args.appendElement(Services.scriptSecurityManager.getSystemPrincipal()); // 8
 
-    const window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
-    await waitForWindowReady(window);
-    if (window.gBrowser.browsers.length !== 1)
-      throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
-    const browser = window.gBrowser.browsers[0];
-    let target = this._browserToTarget.get(browser);
-    while (!target) {
-      await helper.awaitEvent(this, TargetRegistry.Events.TargetCreated);
-      target = this._browserToTarget.get(browser);
-    }
-    browser.focus();
-    if (browserContext.crossProcessCookie.settings.timezoneId) {
-      if (await target.hasFailedToOverrideTimezone())
-        throw new Error('Failed to override timezone');
-    }
-    return target.id();
+      const window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
+      await waitForWindowReady(window);
+      if (window.gBrowser.browsers.length !== 1)
+        throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
+      const browser = window.gBrowser.browsers[0];
+      let target = this._browserToTarget.get(browser);
+      while (!target) {
+        await helper.awaitEvent(this, TargetRegistry.Events.TargetCreated);
+        target = this._browserToTarget.get(browser);
+      }
+      browser.focus();
+      if (browserContext.crossProcessCookie.settings.timezoneId) {
+        if (await target.hasFailedToOverrideTimezone())
+          throw new Error('Failed to override timezone');
+      }
+      return target.id();
+    });
+    globalNewPageChain = result.catch(error => { /* swallow errors to keep chain running */ });
+    return result;
   }
 
   targets() {
@@ -501,6 +507,7 @@ class PageTarget {
     this.updateEmulatedMedia(browsingContext);
     this.updateColorSchemeOverride(browsingContext);
     this.updateReducedMotionOverride(browsingContext);
+    this.updateContrastOverride(browsingContext);
     this.updateForcedColorsOverride(browsingContext);
     this.updateForceOffline(browsingContext);
     this.updateCacheDisabled(browsingContext);
@@ -638,6 +645,15 @@ class PageTarget {
 
   updateReducedMotionOverride(browsingContext = undefined) {
     (browsingContext || this._linkedBrowser.browsingContext).prefersReducedMotionOverride = this.reducedMotion || this._browserContext.reducedMotion || 'none';
+  }
+
+  setContrast(contrast) {
+    this.contrast = fromProtocolContrast(contrast);
+    this.updateContrastOverride();
+  }
+
+  updateContrastOverride(browsingContext = undefined) {
+    (browsingContext || this._linkedBrowser.browsingContext).prefersContrastOverride = this.contrast || this._browserContext.contrast || 'none';
   }
 
   setForcedColors(forcedColors) {
@@ -875,6 +891,14 @@ function fromProtocolReducedMotion(reducedMotion) {
   throw new Error('Unknown reduced motion: ' + reducedMotion);
 }
 
+function fromProtocolContrast(contrast) {
+  if (contrast === 'more' || contrast === 'less' || contrast === 'custom' || contrast === 'no-preference')
+    return contrast;
+  if (contrast === null)
+    return undefined;
+  throw new Error('Unknown contrast: ' + contrast);
+}
+
 function fromProtocolForcedColors(forcedColors) {
   if (forcedColors === 'active' || forcedColors === 'none')
     return forcedColors;
@@ -915,6 +939,7 @@ class BrowserContext {
     this.colorScheme = 'none';
     this.forcedColors = 'none';
     this.reducedMotion = 'none';
+    this.contrast = 'none';
     this.videoRecordingOptions = undefined;
     this.crossProcessCookie = {
       initScripts: [],
@@ -939,6 +964,12 @@ class BrowserContext {
     this.reducedMotion = fromProtocolReducedMotion(reducedMotion);
     for (const page of this.pages)
       page.updateReducedMotionOverride();
+  }
+
+  setContrast(contrast) {
+    this.contrast = fromProtocolContrast(contrast);
+    for (const page of this.pages)
+      page.updateContrastOverride();
   }
 
   setForcedColors(forcedColors) {

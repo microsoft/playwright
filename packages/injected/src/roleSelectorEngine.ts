@@ -20,7 +20,6 @@ import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { matchesAttributePart } from './selectorUtils';
 
-import type { Builtins } from '@isomorphic/builtins';
 import type { AttributeSelectorOperator, AttributeSelectorPart } from '@isomorphic/selectorParser';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 
@@ -128,7 +127,7 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
   return options;
 }
 
-function queryRole(builtins: Builtins, scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
+function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
   const result: Element[] = [];
   const match = (element: Element) => {
     if (getAriaRole(element) !== options.role)
@@ -152,7 +151,7 @@ function queryRole(builtins: Builtins, scope: SelectorRoot, options: RoleEngineO
     }
     if (options.name !== undefined) {
       // Always normalize whitespace in the accessible name.
-      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(builtins, element, !!options.includeHidden));
+      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden));
       if (typeof options.name === 'string')
         options.name = normalizeWhiteSpace(options.name);
       // internal:role assumes that [name="foo"i] also means substring.
@@ -180,7 +179,7 @@ function queryRole(builtins: Builtins, scope: SelectorRoot, options: RoleEngineO
   return result;
 }
 
-export function createRoleEngine(builtins: Builtins, internal: boolean): SelectorEngine {
+export function createRoleEngine(internal: boolean): SelectorEngine {
   return {
     queryAll: (scope: SelectorRoot, selector: string): Element[] => {
       const parsed = parseAttributeSelector(selector, true);
@@ -188,9 +187,9 @@ export function createRoleEngine(builtins: Builtins, internal: boolean): Selecto
       if (!role)
         throw new Error(`Role must not be empty`);
       const options = validateAttributes(parsed.attributes, role);
-      beginAriaCaches(builtins);
+      beginAriaCaches();
       try {
-        return queryRole(builtins, scope, options, internal);
+        return queryRole(scope, options, internal);
       } finally {
         endAriaCaches();
       }

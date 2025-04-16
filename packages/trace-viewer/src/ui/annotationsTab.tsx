@@ -18,10 +18,11 @@ import * as React from 'react';
 import './annotationsTab.css';
 import { PlaceholderPanel } from './placeholderPanel';
 import { linkifyText } from '@web/renderUtils';
-import type { TestAnnotation } from '@playwright/test';
+
+type Annotation = { type: string; description?: string; };
 
 export const AnnotationsTab: React.FunctionComponent<{
-  annotations: TestAnnotation[],
+  annotations: Annotation[],
 }> = ({ annotations }) => {
 
   if (!annotations.length)

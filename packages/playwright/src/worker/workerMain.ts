@@ -32,10 +32,9 @@ import { loadTestFile } from '../common/testLoader';
 
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
-import type { TestAnnotation } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -61,7 +60,7 @@ export class WorkerMain extends ProcessRunner {
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
-  private _activeSuites = new Map<Suite, TestAnnotation[]>();
+  private _activeSuites = new Map<Suite, Annotation[]>();
 
   constructor(params: WorkerInitParams) {
     super();
@@ -265,7 +264,7 @@ export class WorkerMain extends ProcessRunner {
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
 
-    const processAnnotation = (annotation: TestAnnotation) => {
+    const processAnnotation = (annotation: Annotation) => {
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
@@ -293,8 +292,6 @@ export class WorkerMain extends ProcessRunner {
     for (const annotation of test.annotations)
       processAnnotation(annotation);
 
-    const staticAnnotations = new Set(testInfo.annotations);
-
     // Process existing annotations dynamically set for parent suites.
     for (const suite of suites) {
       const extraAnnotations = this._activeSuites.get(suite) || [];
@@ -313,7 +310,7 @@ export class WorkerMain extends ProcessRunner {
     if (isSkipped && nextTest && !hasAfterAllToRunBeforeNextTest) {
       // Fast path - this test is skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
-      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, staticAnnotations));
+      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
       return;
     }
 
@@ -430,14 +427,25 @@ export class WorkerMain extends ProcessRunner {
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    // Create warning if any of the async calls were not awaited in various stages.
-    if (!process.env.PW_DISABLE_FLOATING_PROMISES_WARNING && testInfo._floatingPromiseScope.hasFloatingPromises()) {
-      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of the test. This can cause flakiness.` });
-      testInfo._floatingPromiseScope.clear();
-    }
-
-    if (testInfo._isFailure())
+    if (testInfo._isFailure()) {
       this._isStopped = true;
+
+      // Only if failed, create warning if any of the async calls were not awaited in various stages.
+      if (!process.env.PW_DISABLE_FLOATING_PROMISES_WARNING && testInfo._floatingPromiseScope.hasFloatingPromises()) {
+        // TODO: 1.53: Actually build annotations
+        // Dedupe by location
+        // const annotationLocations = new Map<string | undefined, Location | undefined>(testInfo._floatingPromiseScope.floatingPromises().map(
+        //     ({ location }) => {
+        //       const locationKey = location ? `${location.file}:${location.line}:${location.column}` : undefined;
+        //       return [locationKey, location];
+        //     }));
+
+        // testInfo.annotations.push(...[...annotationLocations.values()].map(location => ({
+        //   type: 'warning', description: `This async call was not awaited by the end of the test. This can cause flakiness. It is recommended to run ESLint with "@typescript-eslint/no-floating-promises" to verify.`, location
+        // })));
+        testInfo._floatingPromiseScope.clear();
+      }
+    }
 
     if (this._isStopped) {
       // Run all remaining "afterAll" hooks and teardown all fixtures when worker is shutting down.
@@ -485,7 +493,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = null;
     setCurrentTestInfo(null);
-    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo, staticAnnotations));
+    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
@@ -502,7 +510,7 @@ export class WorkerMain extends ProcessRunner {
         continue;
       const fn = async (fixtures: any) => {
         const result = await modifier.fn(fixtures);
-        testInfo._modifier(modifier.type, modifier.location, [!!result, modifier.description]);
+        testInfo[modifier.type](!!result, modifier.description);
       };
       inheritFixtureNames(modifier.fn, fn);
       runnables.push({
@@ -520,12 +528,12 @@ export class WorkerMain extends ProcessRunner {
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
-    const extraAnnotations: TestAnnotation[] = [];
+    const extraAnnotations: Annotation[] = [];
     this._activeSuites.set(suite, extraAnnotations);
     await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
   }
 
-  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
+  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: Annotation[]) {
     // Always run all the hooks, and capture the first error.
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
@@ -605,7 +613,7 @@ function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
   };
 }
 
-function buildTestEndPayload(testInfo: TestInfoImpl, staticAnnotations: Set<TestAnnotation>): TestEndPayload {
+function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
   return {
     testId: testInfo.testId,
     duration: testInfo.duration,
@@ -613,7 +621,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl, staticAnnotations: Set<Test
     errors: testInfo.errors,
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
-    annotations: testInfo.annotations.filter(a => !staticAnnotations.has(a)),
+    annotations: testInfo.annotations,
     timeout: testInfo.timeout,
   };
 }

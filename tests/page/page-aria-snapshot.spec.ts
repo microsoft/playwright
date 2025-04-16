@@ -416,13 +416,19 @@ it('should ignore presentation and none roles', async ({ page }) => {
   `);
 });
 
-it('should treat input value as text in templates', async ({ page }) => {
+it('should treat input value as text in templates, but not for checkbox/radio/file', async ({ page }) => {
   await page.setContent(`
     <input value='hello world'>
+    <input type=file>
+    <input type=checkbox checked>
+    <input type=radio checked>
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - textbox: hello world
+    - button "Choose File"
+    - checkbox [checked]
+    - radio [checked]
   `);
 });
 
@@ -678,17 +684,17 @@ it('should generate refs', async ({ page }) => {
   expect(e.message).toContain('Error: Stale aria-ref, expected s2e{number}, got s1e3');
 });
 
-it('ref mode should list iframes', async ({ page }) => {
+it('should list iframes', async ({ page }) => {
   await page.setContent(`
     <h1>Hello</h1>
     <iframe name="foo" src="data:text/html,<h1>World</h1>">
   `);
 
   const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot1).toContain('- iframe [ref=s1e4]');
+  expect(snapshot1).toContain('- iframe');
 
-  const frameSnapshot = await page.frameLocator(`aria-ref=s1e4`).locator('body').ariaSnapshot({ ref: true });
-  expect(frameSnapshot).toEqual('- heading "World" [level=1] [ref=s1e3]');
+  const frameSnapshot = await page.frameLocator(`iframe`).locator('body').ariaSnapshot();
+  expect(frameSnapshot).toEqual('- heading "World" [level=1]');
 });
 
 it('ref mode can be used to stitch all frame snapshots', async ({ page, server }) => {

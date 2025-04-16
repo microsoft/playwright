@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { Metadata, TestAnnotation } from '../../types/test';
+import type { Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
+import type { Annotation } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type StringIntern = (s: string) => string;
@@ -67,7 +68,7 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
-  annotations?: TestAnnotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestEnd = {
@@ -98,7 +99,7 @@ export type JsonTestResultEnd = {
   errors: reporterTypes.TestError[];
   /** No longer emitted, but kept for backwards compatibility */
   attachments?: JsonAttachment[];
-  annotations?: TestAnnotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestStepStart = {
@@ -115,7 +116,7 @@ export type JsonTestStepEnd = {
   duration: number;
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
-  annotations?: TestAnnotation[];
+  annotations?: Annotation[];
 };
 
 export type JsonTestResultOnAttach = {
@@ -250,9 +251,6 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testEndPayload.testId)!;
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
-    // Should be empty array, but if it's not, it represents all annotations for that test
-    if (testEndPayload.annotations.length > 0)
-      test.annotations = this._absoluteAnnotationLocations(testEndPayload.annotations);
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
@@ -261,8 +259,10 @@ export class TeleReporterReceiver {
     // Attachments are only present here from legacy blobs. These override all _onAttach events
     if (!!payload.attachments)
       result.attachments = this._parseAttachments(payload.attachments);
-    if (payload.annotations)
-      result.annotations = this._absoluteAnnotationLocations(payload.annotations);
+    if (payload.annotations) {
+      result.annotations = payload.annotations;
+      test.annotations = result.annotations;
+    }
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
@@ -403,16 +403,8 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
-    test.annotations = this._absoluteAnnotationLocations(payload.annotations ?? []);
+    test.annotations = payload.annotations ?? [];
     return test;
-  }
-
-  private _absoluteAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
-    return annotations.map(annotation => {
-      if (annotation.location)
-        annotation.location = this._absoluteLocation(annotation.location);
-      return annotation;
-    });
   }
 
   private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;
@@ -515,7 +507,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: TestAnnotation[] = [];
+  annotations: Annotation[] = [];
   retries = 0;
   tags: string[] = [];
   repeatEachIndex = 0;
@@ -635,7 +627,6 @@ export class TeleTestResult implements reporterTypes.TestResult {
 export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
-  failOnFlakyTests: false,
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,

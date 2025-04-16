@@ -26,6 +26,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
+import { fixTestInstructions } from '@web/prompts';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -67,10 +68,10 @@ function Error({ message, error, errorId, sdkLanguage, revealInSource }: { messa
   }
 
   const prompt = useAsyncMemo(async () => {
-    if (!error.prompt)
+    if (!error.context)
       return;
-    const response = await fetch(attachmentURL(error.prompt));
-    return await response.text();
+    const response = await fetch(attachmentURL(error.context));
+    return fixTestInstructions + await response.text();
   }, [error], undefined);
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>

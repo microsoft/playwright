@@ -101,6 +101,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
+          ${process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? 'true' : 'false'},
           [${custom.join(',\n')}]
         );
         })();
@@ -580,7 +581,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
     let resultingOptions: string[] = [];
-    await this._retryAction(progress, 'select option', async () => {
+    const result = await this._retryAction(progress, 'select option', async () => {
       await this.instrumentation.onBeforeInputAction(this, progress.metadata);
       if (!options.force)
         progress.log(`  waiting for element to be visible and enabled`);
@@ -600,6 +601,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       return result;
     }, options);
+    if (result === 'error:notconnected')
+      return result;
     return resultingOptions;
   }
 
