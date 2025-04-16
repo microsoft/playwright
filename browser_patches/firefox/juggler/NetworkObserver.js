@@ -204,11 +204,13 @@ class NetworkRequest {
       this._interceptedChannel.synthesizeHeader(header.name, header.value);
       if (header.name.toLowerCase() === 'set-cookie') {
         Services.cookies.QueryInterface(Ci.nsICookieService);
-        Services.cookies.setCookieStringFromHttp(this.httpChannel.URI, header.value, this.httpChannel);
+        for (const cookieString of header.value.split('\n'))
+          Services.cookies.setCookieStringFromHttp(this.httpChannel.URI, cookieString, this.httpChannel);
       }
     }
     const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-    synthesized.data = base64body ? atob(base64body) : '';
+    if (base64body)
+      synthesized.setByteStringData(atob(base64body));
     this._interceptedChannel.startSynthesizedResponse(synthesized, null, null, '', false);
     this._interceptedChannel.finishSynthesizedResponse();
     this._interceptedChannel = undefined;
@@ -870,7 +872,7 @@ function setPostData(httpChannel, postData, headers) {
     return;
   const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
   const body = atob(postData);
-  synthesized.setData(body, body.length);
+  synthesized.setByteStringData(body);
 
   const overriddenHeader = (lowerCaseName) => {
     if (headers) {
@@ -902,7 +904,7 @@ function convertString(s, source, dest) {
   const is = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(
     Ci.nsIStringInputStream
   );
-  is.setData(s, s.length);
+  is.setByteStringData(s);
   const listener = Cc["@mozilla.org/network/stream-loader;1"].createInstance(
     Ci.nsIStreamLoader
   );
