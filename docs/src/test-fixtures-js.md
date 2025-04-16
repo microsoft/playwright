@@ -21,7 +21,7 @@ test('basic test', async ({ page }) => {
 });
 ```
 
-The `{ page }` argument tells Playwright Test to setup the `page` fixture and provide it to your test function.
+The `{ page }` argument tells Playwright Test to set up the `page` fixture and provide it to your test function.
 
 Here is a list of the pre-defined fixtures that you are likely to use most of the time:
 
@@ -29,15 +29,15 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 |:----------|:------------------|:--------------------------------|
 |page       |[Page]             |Isolated page for this test run. |
 |context    |[BrowserContext]   |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
-|browser    |[Browser]          |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
+|browser    |[Browser]          |Browsers are shared across tests to optimize resources. Learn how to [configure browsers](./test-configuration.md). |
 |browserName|[string]           |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
 |request    |[APIRequestContext]|Isolated [APIRequestContext](./api/class-apirequestcontext.md) instance for this test run.|
 
 ### Without fixtures
 
-Here is how typical test environment setup differs between traditional test style and the fixture-based one.
+Here is how a typical test environment setup differs between the traditional test style and the fixture-based one.
 
-`TodoPage` is a class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](./pom.md) pattern. It uses Playwright's `page` internally.
+`TodoPage` is a class that helps us interact with a "todo list" page of the web app, following the [Page Object Model](./pom.md) pattern. It uses Playwright's `page` internally.
 
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
@@ -116,11 +116,11 @@ test.describe('todo tests', () => {
 
 Fixtures have a number of advantages over before/after hooks:
 - Fixtures **encapsulate** setup and teardown in the same place so it is easier to write. So if you have an after hook that tears down what was created in a before hook, consider turning them into a fixture.
-- Fixtures are **reusable** between test files - you can define them once and use in all your tests. That's how Playwright's built-in `page` fixture works. So if you have a helper function that is used in multiple tests, consider turning it into a fixture.
+- Fixtures are **reusable** between test files - you can define them once and use them in all your tests. That's how Playwright's built-in `page` fixture works. So if you have a helper function that is used in multiple tests, consider turning it into a fixture.
 - Fixtures are **on-demand** - you can define as many fixtures as you'd like, and Playwright Test will setup only the ones needed by your test and nothing else.
 - Fixtures are **composable** - they can depend on each other to provide complex behaviors.
-- Fixtures are **flexible**. Tests can use any combinations of the fixtures to tailor precise environment they need, without affecting other tests.
-- Fixtures simplify **grouping**. You no longer need to wrap tests in `describe`s that set up environment, and are free to group your tests by their meaning instead.
+- Fixtures are **flexible**. Tests can use any combination of fixtures to precisely tailor the environment to their needs, without affecting other tests.
+- Fixtures simplify **grouping**. You no longer need to wrap tests in `describe`s that set up their environment, and are free to group your tests by their meaning instead.
 
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
@@ -291,14 +291,14 @@ export { expect } from '@playwright/test';
 ```
 
 :::note
-Custom fixture names should start with a letter or underscore, and can contain only letters, numbers, underscores.
+Custom fixture names should start with a letter or underscore, and can contain only letters, numbers, and underscores.
 :::
 
 ## Using a fixture
 
-Just mention fixture in your test function argument, and test runner will take care of it. Fixtures are also available in hooks and other fixtures. If you use TypeScript, fixtures will have the right type.
+Just mention a fixture in your test function argument, and the test runner will take care of it. Fixtures are also available in hooks and other fixtures. If you use TypeScript, fixtures will be type safe.
 
-Below we use the `todoPage` and `settingsPage` fixtures defined above.
+Below we use the `todoPage` and `settingsPage` fixtures that we defined above.
 
 ```js
 import { test, expect } from './my-test';
@@ -315,7 +315,7 @@ test('basic test', async ({ todoPage, page }) => {
 
 ## Overriding fixtures
 
-In addition to creating your own fixtures, you can also override existing fixtures to fit your needs. Consider the following example which overrides the `page` fixture by automatically navigating to some `baseURL`:
+In addition to creating your own fixtures, you can also override existing fixtures to fit your needs. Consider the following example which overrides the `page` fixture by automatically navigating to the `baseURL`:
 
 ```js
 import { test as base } from '@playwright/test';
@@ -335,7 +335,7 @@ Notice that in this example, the `page` fixture is able to depend on other built
 test.use({ baseURL: 'https://playwright.dev' });
 ```
 
-Fixtures can also be overridden where the base fixture is completely replaced with something different. For example, we could override the [`property: TestOptions.storageState`] fixture to provide our own data.
+Fixtures can also be overridden, causing the base fixture to be completely replaced with something different. For example, we could override the [`property: TestOptions.storageState`] fixture to provide our own data.
 
 ```js
 import { test as base } from '@playwright/test';
@@ -350,9 +350,9 @@ export const test = base.extend({
 
 ## Worker-scoped fixtures
 
-Playwright Test uses [worker processes](./test-parallel.md) to run test files. Similarly to how test fixtures are set up for individual test runs, worker fixtures are set up for each worker process. That's where you can set up services, run servers, etc. Playwright Test will reuse the worker process for as many test files as it can, provided their worker fixtures match and hence environments are identical.
+Playwright Test uses [worker processes](./test-parallel.md) to run test files. Similar to how test fixtures are set up for individual test runs, worker fixtures are set up for each worker process. That's where you can set up services, run servers, etc. Playwright Test will reuse the worker process for as many test files as it can, provided their worker fixtures match and hence environments are identical.
 
-Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to login into this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets up this fixture once per worker.
+Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to log in to this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets this fixture up once per worker.
 
 ```js title="my-test.ts"
 import { test as base } from '@playwright/test';
@@ -404,7 +404,7 @@ export { expect } from '@playwright/test';
 
 Automatic fixtures are set up for each test/worker, even when the test does not list them directly. To create an automatic fixture, use the tuple syntax and pass `{ auto: true }`.
 
-Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
+Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses the [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
 ```js title="my-test.ts"
 import debug from 'debug';
@@ -434,7 +434,7 @@ export { expect } from '@playwright/test';
 
 ## Fixture timeout
 
-By default, fixture shares timeout with the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
+By default, the fixture inherits the timeout value of the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
 
 ```js
 import { test as base, expect } from '@playwright/test';
@@ -454,9 +454,9 @@ test('example test', async ({ slowFixture }) => {
 
 ## Fixtures-options
 
-Playwright Test supports running multiple test projects that can be separately configured. You can use "option" fixtures to make your configuration options declarative and type-checked. Learn more about [parametrizing tests](./test-parameterize.md).
+Playwright Test supports running multiple test projects that can be configured separately. You can use "option" fixtures to make your configuration options declarative and type safe. Learn more about [parameterizing tests](./test-parameterize.md).
 
-Below we'll create a `defaultItem` option in addition to the `todoPage` fixture from other examples. This option will be set in configuration file. Note the tuple syntax and `{ option: true }` argument.
+Below we'll create a `defaultItem` option in addition to the `todoPage` fixture from other examples. This option will be set in the configuration file. Note the tuple syntax and `{ option: true }` argument.
 
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
@@ -531,7 +531,7 @@ export const test = base.extend<MyOptions & MyFixtures>({
 export { expect } from '@playwright/test';
 ```
 
-We can now use `todoPage` fixture as usual, and set the `defaultItem` option in the config file.
+We can now use the `todoPage` fixture as usual, and set the `defaultItem` option in the configuration file.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -577,12 +577,12 @@ test.use({
 
 ## Execution order
 
-Each fixture has a setup and teardown phase separated by the `await use()` call in the fixture. Setup is executed before the fixture is used by the test/hook, and teardown is executed when the fixture will not be used by the test/hook anymore.
+Each fixture has a setup and teardown phase before and after the `await use()` call in the fixture. Setup is executed before the test/hook requiring it is run, and teardown is executed when the fixture is no longer being used by the test/hook.
 
 Fixtures follow these rules to determine the execution order:
 * When fixture A depends on fixture B: B is always set up before A and torn down after A.
 * Non-automatic fixtures are executed lazily, only when the test/hook needs them.
-* Test-scoped fixtures are torn down after each test, while worker-scoped fixtures are only torn down when the worker process executing tests is shutdown.
+* Test-scoped fixtures are torn down after each test, while worker-scoped fixtures are only torn down when the worker process executing tests is torn down.
 
 Consider the following example:
 
@@ -695,7 +695,7 @@ test('passes', async ({ database, page, a11y }) => {
 
 ## Box fixtures
 
-Usually, custom fixtures are reported as separate steps in the UI mode, Trace Viewer and various test reports. They also appear in error messages from the test runner. For frequently-used fixtures, this can mean lots of noise. You can stop the fixtures steps from being shown in the UI by "boxing" it.
+Usually, custom fixtures are reported as separate steps in the UI mode, Trace Viewer and various test reports. They also appear in error messages from the test runner. For frequently used fixtures, this can mean lots of noise. You can stop the fixtures steps from being shown in the UI by "boxing" it.
 
 ```js
 import { test as base } from '@playwright/test';
