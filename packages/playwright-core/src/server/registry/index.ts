@@ -1011,43 +1011,27 @@ export class Registry {
 
   async list() {
     const linksDir = path.join(registryDirectory, '.links');
-    const linkPaths = (await fs.promises.readdir(linksDir).catch(() => [])).map(link => path.join(linksDir, link));
-
-    const currentInstanceLinkPath = path.join(linksDir, calculateSha1(PACKAGE_PATH));
-    const currentInstanceLinkPosition = linkPaths.indexOf(currentInstanceLinkPath);
-    // make sure that current instance is first
-    if (currentInstanceLinkPosition > 0) {
-      const [element] = linkPaths.splice(currentInstanceLinkPosition, 1);
-      linkPaths.unshift(element);
-    }
-
     const browsersInfo: { target: string; currentInstance: boolean; browsers: { name: string; version: string; dir: string;  }[] }[] = [];
 
-    for (const linkPath of linkPaths) {
-      try {
-        const { linkTarget, descriptors } = await this._getValidDescriptors(linkPath);
-        const currentTargetBrowsers = [];
+    const traverseData = await this._traverse(linksDir);
 
-        for (const descriptor of descriptors) {
-          const { name, browserVersion, dir } = descriptor;
+    const currentInstanceIndex = traverseData.findIndex(data => data.linkTarget === PACKAGE_PATH);
+    // make sure that current instance is first
+    if (currentInstanceIndex > 0) {
+      const [element] = traverseData.splice(currentInstanceIndex, 1);
+      traverseData.unshift(element);
+    }
 
-          const doesExist = await existsAsync(dir);
-          if (!doesExist)
-            continue;
-
-          currentTargetBrowsers.push({
-            name,
-            version: browserVersion || '',
-            dir,
-          });
-        }
-        browsersInfo.push({
-          target: linkTarget,
-          browsers: currentTargetBrowsers,
-          currentInstance: linkTarget === PACKAGE_PATH,
-        });
-
-      } catch (e) {}
+    for (const { linkTarget, browsersDescriptors } of traverseData) {
+      browsersInfo.push({
+        target: linkTarget,
+        browsers: browsersDescriptors.map(browserDescriptor => ({
+          name: browserDescriptor.name,
+          version: browserDescriptor.browserVersion || '',
+          dir: browserDescriptor.dir,
+        })),
+        currentInstance: linkTarget === PACKAGE_PATH,
+      });
     }
 
     return browsersInfo;
@@ -1281,51 +1265,56 @@ export class Registry {
     }
   }
 
-  private async _getValidDescriptors(linkPath: string) {
-    const result: BrowsersJSONDescriptor[] = [];
+  private async _traverse(linksDir: string) {
+    const linkPaths = (await fs.promises.readdir(linksDir).catch(() => [])).map(link => path.join(linksDir, link));
+    const result: { linkTarget: string; browsersDescriptors: BrowsersJSONDescriptor[] }[] = [];
 
-    let linkTarget = '';
-    try {
-      linkTarget = (await fs.promises.readFile(linkPath)).toString();
-      const browsersJSON = require(path.join(linkTarget, 'browsers.json'));
-      const descriptors = readDescriptors(browsersJSON);
-      for (const browserName of allDownloadable) {
-        // We retain browsers if they are found in the descriptor.
-        // Note, however, that there are older versions out in the wild that rely on
-        // the "download" field in the browser descriptor and use its value
-        // to retain and download browsers.
-        // As of v1.10, we decided to abandon "download" field.
-        const descriptor = descriptors.find(d => d.name === browserName);
-        if (!descriptor)
-          continue;
+    for (const linkPath of linkPaths) {
+      let linkTarget = '';
+      const browserDescriptors: BrowsersJSONDescriptor[] = [];
+      try {
+        linkTarget = (await fs.promises.readFile(linkPath)).toString();
+        const browsersJSON = require(path.join(linkTarget, 'browsers.json'));
+        const descriptors = readDescriptors(browsersJSON);
+        for (const browserName of allDownloadable) {
+          // We retain browsers if they are found in the descriptor.
+          // Note, however, that there are older versions out in the wild that rely on
+          // the "download" field in the browser descriptor and use its value
+          // to retain and download browsers.
+          // As of v1.10, we decided to abandon "download" field.
+          const descriptor = descriptors.find(d => d.name === browserName);
+          if (!descriptor)
+            continue;
 
-        const usedBrowserPath = descriptor.dir;
-        const browserRevision = parseInt(descriptor.revision, 10);
-        // Old browser installations don't have marker file.
-        // We switched chromium from 999999 to 1000, 300000 is the new Y2K.
-        const shouldHaveMarkerFile = (browserName === 'chromium' && (browserRevision >= 786218 || browserRevision < 300000)) ||
-            (browserName === 'firefox' && browserRevision >= 1128) ||
-            (browserName === 'webkit' && browserRevision >= 1307) ||
-            // All new applications have a marker file right away.
-            (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
-        if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath))))
-          result.push(descriptor);
+          const usedBrowserPath = descriptor.dir;
+          const browserRevision = parseInt(descriptor.revision, 10);
+          // Old browser installations don't have marker file.
+          // We switched chromium from 999999 to 1000, 300000 is the new Y2K.
+          const shouldHaveMarkerFile = (browserName === 'chromium' && (browserRevision >= 786218 || browserRevision < 300000)) ||
+              (browserName === 'firefox' && browserRevision >= 1128) ||
+              (browserName === 'webkit' && browserRevision >= 1307) ||
+              // All new applications have a marker file right away.
+              (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
+          if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath))))
+            browserDescriptors.push(descriptor);
+        }
+
+        result.push({ linkTarget, browsersDescriptors: browserDescriptors });
+      } catch (e) {
+        await fs.promises.unlink(linkPath).catch(e => {});
       }
-    } catch (e) {
-      await fs.promises.unlink(linkPath).catch(e => {});
     }
 
-    return { linkTarget, descriptors: result };
+    return result;
   }
 
   private async _validateInstallationCache(linksDir: string) {
     // 1. Collect used downloads and package descriptors.
     const usedBrowserPaths: Set<string> = new Set();
-    const linkPaths = (await fs.promises.readdir(linksDir).catch(() => [])).map(link => path.join(linksDir, link));
-    for (const linkPath of linkPaths) {
-      const { descriptors } = await this._getValidDescriptors(linkPath);
-      descriptors.forEach(descriptor => usedBrowserPaths.add(descriptor.dir));
-    }
+    const traverseData = await this._traverse(linksDir);
+    traverseData.forEach(({ browsersDescriptors }) => {
+      browsersDescriptors.forEach(browserDescriptor => usedBrowserPaths.add(browserDescriptor.dir));
+    });
 
     // 2. Delete all unused browsers.
     if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC')) {
