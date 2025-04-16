@@ -30,7 +30,7 @@ import type { BlobReportMetadata } from './blob';
 import type { ReporterDescription, TestAnnotation } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultOnAttach, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import type * as blobV1 from './versions/blobV1';
 
 type StatusCallback = (message: string) => void;
@@ -448,9 +448,14 @@ class AttachmentPathPatcher {
   }
 
   patchEvent(event: JsonEvent) {
-    if (event.method !== 'onTestEnd')
-      return;
-    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
+    if (event.method === 'onAttach')
+      this._patchAttachments((event.params as JsonTestResultOnAttach).attachments);
+    else if (event.method === 'onTestEnd')
+      this._patchAttachments((event.params as JsonTestResultEnd).attachments ?? []);
+  }
+
+  private _patchAttachments(attachments: JsonAttachment[]) {
+    for (const attachment of attachments) {
       if (!attachment.path)
         continue;
 
@@ -480,7 +485,7 @@ class PathSeparatorPatcher {
       const testResult = jsonEvent.params.result as JsonTestResultEnd;
       testResult.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
       testResult.errors.forEach(error => this._updateErrorLocations(error));
-      testResult.attachments.forEach(attachment => {
+      (testResult.attachments ?? []).forEach(attachment => {
         if (attachment.path)
           attachment.path = this._updatePath(attachment.path);
       });
@@ -495,6 +500,14 @@ class PathSeparatorPatcher {
       const step = jsonEvent.params.step as JsonTestStepEnd;
       this._updateErrorLocations(step.error);
       step.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
+      return;
+    }
+    if (jsonEvent.method === 'onAttach') {
+      const attach = jsonEvent.params as JsonTestResultOnAttach;
+      attach.attachments.forEach(attachment => {
+        if (attachment.path)
+          attachment.path = this._updatePath(attachment.path);
+      });
       return;
     }
   }

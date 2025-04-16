@@ -86,14 +86,18 @@ export type JsonTestResultStart = {
   startTime: number;
 };
 
-export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & { base64?: string };
+export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & {
+  stepId?: string;
+  base64?: string;
+};
 
 export type JsonTestResultEnd = {
   id: string;
   duration: number;
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
-  attachments: JsonAttachment[];
+  /** No longer emitted, but kept for backwards compatibility */
+  attachments?: JsonAttachment[];
   annotations?: TestAnnotation[];
 };
 
@@ -112,6 +116,13 @@ export type JsonTestStepEnd = {
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
   annotations?: TestAnnotation[];
+};
+
+export type JsonTestResultOnAttach = {
+  testId: string;
+  resultId: string;
+  stepId?: string;
+  attachments: JsonAttachment[];
 };
 
 export type JsonFullResult = {
@@ -180,7 +191,7 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onAttach') {
-      this._onAttach(params.testId, params.resultId, params.stepId, params.attachments);
+      this._onAttach(params.testId, params.resultId, params.attachments);
       return;
     }
     if (method === 'onStepEnd') {
@@ -247,7 +258,9 @@ export class TeleReporterReceiver {
     result.status = payload.status;
     result.errors = payload.errors;
     result.error = result.errors?.[0];
-    result.attachments = this._parseAttachments(payload.attachments);
+    // Attachments are only present here from legacy blobs. These override all _onAttach events
+    if (!!payload.attachments)
+      result.attachments = this._parseAttachments(payload.attachments);
     if (payload.annotations)
       result.annotations = this._absoluteAnnotationLocations(payload.annotations);
     this._reporter.onTestEnd?.(test, result);
@@ -280,14 +293,14 @@ export class TeleReporterReceiver {
     this._reporter.onStepEnd?.(test, result, step);
   }
 
-  private _onAttach(testId: string, resultId: string, stepId: string, attachments: JsonAttachment[]) {
+  private _onAttach(testId: string, resultId: string, attachments: JsonAttachment[]) {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
     result.attachments.push(...attachments.map(a => ({
       name: a.name,
       contentType: a.contentType,
       path: a.path,
-      body: a.base64 ? Buffer.from(a.base64, 'base64') : undefined,
+      body: a.base64 && (globalThis as any).Buffer ? Buffer.from(a.base64, 'base64') : undefined,
     })));
   }
 

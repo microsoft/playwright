@@ -34,6 +34,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
+  private _resultKnownAttachmentCounts = new Map<string, number>();
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
   private readonly _idSymbol = Symbol('id');
@@ -77,6 +78,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       timeout: test.timeout,
       annotations: []
     };
+    this._sendNewAttachments(result, test.id);
     this._messageSink({
       method: 'onTestEnd',
       params: {
@@ -100,29 +102,14 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onStepEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
     // Create synthetic onAttach event so we serialize the entire attachment along with the step
-    // TODO: Attachment indices are still wrong after merge
-    this._messageSink({
-      method: 'onAttach',
-      params: {
-        testId: test.id,
-        resultId: (result as any)[this._idSymbol],
-        stepId: (step as any)[this._idSymbol],
-        attachments: step.attachments.flatMap((attachment: reporterTypes.TestResult['attachments'][number] | undefined) => {
-          // Due to an old bug in users' blobs, the blob may serialize the attachment index as -1,
-          // resulting an undefined attachment. We must preserve the order, but cannot perform normal
-          // serialization on the undefined value
-          if (!attachment)
-            return attachment;
-          return this._serializeAttachments([attachment]);
-        }),
-      }
-    });
+    const resultId = (result as any)[this._idSymbol] as string;
+    this._sendNewAttachments(result, test.id, (step as any)[this._idSymbol]);
 
     this._messageSink({
       method: 'onStepEnd',
       params: {
         testId: test.id,
-        resultId: (result as any)[this._idSymbol],
+        resultId,
         step: this._serializeStepEnd(step, result)
       }
     });
@@ -256,9 +243,34 @@ export class TeleReporterEmitter implements ReporterV2 {
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      attachments: this._serializeAttachments(result.attachments),
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
+  }
+
+  private _sendNewAttachments(result: reporterTypes.TestResult, testId: string, stepId?: string) {
+    const resultId = (result as any)[this._idSymbol] as string;
+    // Track whether this step (or something else since the last step) has added attachments and send them
+    const knownAttachmentCount = this._resultKnownAttachmentCounts.get(resultId) ?? 0;
+    if (result.attachments.length > knownAttachmentCount) {
+      this._messageSink({
+        method: 'onAttach',
+        params: {
+          testId,
+          resultId,
+          stepId,
+          attachments: result.attachments.slice(knownAttachmentCount).flatMap((attachment: reporterTypes.TestResult['attachments'][number] | undefined) => {
+            // Due to an old bug in users' blobs, the blob may serialize the attachment index as -1,
+            // resulting an undefined attachment. We must preserve the order, but cannot perform normal
+            // serialization on the undefined value
+            if (!attachment)
+              return attachment;
+            return this._serializeAttachments([attachment]);
+          }),
+        }
+      });
+    }
+
+    this._resultKnownAttachmentCounts.set(resultId, result.attachments.length);
   }
 
   _serializeAttachments(attachments: reporterTypes.TestResult['attachments']): teleReceiver.JsonAttachment[] {

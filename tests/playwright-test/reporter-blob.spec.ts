@@ -1855,7 +1855,12 @@ test('merge reports should preserve attachments', async ({ runInlineTest, mergeR
         const attachmentPath = test.info().outputPath('foo.txt');
         fs.writeFileSync(attachmentPath, 'hello!');
         await test.info().attach('file-attachment1', { path: attachmentPath });
-        await test.info().attach('file-attachment2', { path: attachmentPath });
+        await test.info().attachments.push({ name: 'file-attachment2', path: attachmentPath, contentType: 'text/html' });
+        await test.info().attach('file-attachment3', { path: attachmentPath });
+        await test.info().attach('file-attachment4', { path: attachmentPath });
+        await test.info().attachments.push({ name: 'file-attachment5', path: attachmentPath, contentType: 'text/html' });
+        await test.info().attachments.push({ name: 'file-attachment6', path: attachmentPath, contentType: 'text/html' });
+        await test.info().attach('file-attachment7', { path: attachmentPath });
       });
     `,
     'b.test.js': `
@@ -1864,8 +1869,8 @@ test('merge reports should preserve attachments', async ({ runInlineTest, mergeR
       test('attachment B', async ({}) => {
         const attachmentPath = test.info().outputPath('bar.txt');
         fs.writeFileSync(attachmentPath, 'goodbye!');
-        await test.info().attach('file-attachment3', { path: attachmentPath });
-        await test.info().attach('file-attachment4', { path: attachmentPath });
+        await test.info().attach('file-attachment8', { path: attachmentPath });
+        await test.info().attachments.push({ name: 'file-attachment9', path: attachmentPath, contentType: 'application/json' });
       });
     `
   };
@@ -1886,30 +1891,36 @@ test('merge reports should preserve attachments', async ({ runInlineTest, mergeR
   };
 
   const attachment1: Attachment = { name: 'file-attachment1', path: expect.stringContaining(''), contentType: 'text/plain' };
-  const attachment2: Attachment = { name: 'file-attachment2', path: expect.stringContaining(''), contentType: 'text/plain' };
+  const attachment2: Attachment = { name: 'file-attachment2', path: expect.stringContaining(''), contentType: 'text/html' };
   const attachment3: Attachment = { name: 'file-attachment3', path: expect.stringContaining(''), contentType: 'text/plain' };
   const attachment4: Attachment = { name: 'file-attachment4', path: expect.stringContaining(''), contentType: 'text/plain' };
+  const attachment5: Attachment = { name: 'file-attachment5', path: expect.stringContaining(''), contentType: 'text/html' };
+  const attachment6: Attachment = { name: 'file-attachment6', path: expect.stringContaining(''), contentType: 'text/html' };
+  const attachment7: Attachment = { name: 'file-attachment7', path: expect.stringContaining(''), contentType: 'text/plain' };
+  const attachment8: Attachment = { name: 'file-attachment8', path: expect.stringContaining(''), contentType: 'text/plain' };
+  const attachment9: Attachment = { name: 'file-attachment9', path: expect.stringContaining(''), contentType: 'application/json' };
+
+  const aAttachments = [attachment1, attachment2, attachment3, attachment4, attachment5, attachment6, attachment7];
+  const bAttachments = [attachment8, attachment9];
 
   const allStepAttachments = events.flatMap(e => e.method === 'onStepEnd' ? e?.params?.step?.attachments ?? [] : []);
+  expect(allStepAttachments).toEqual([0, 2, 3, 6, 0]);
 
-  expect(allStepAttachments).toEqual([0, 1, 0, 1]);
-
-  const allTestAttachments = events.flatMap(e => e.method === 'onTestEnd' ? e?.params?.result?.attachments ?? [] : []);
-
-  expect(allTestAttachments).toEqual([attachment1, attachment2, attachment3, attachment4]);
+  const allTestAttachments = events.flatMap(e => e.method === 'onAttach' ? e?.params?.attachments ?? [] : []);
+  expect(allTestAttachments).toEqual([...aAttachments, ...bAttachments]);
 
   await showReport();
 
   {
     await page.getByRole('link', { name: 'Attachment A' }).click();
-    await expect(page.getByRole('link', { name: 'file-attachment1' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'file-attachment2' })).toBeVisible();
+    for (const attachment of aAttachments)
+      await expect(page.getByRole('link', { name: attachment.name })).toBeVisible();
     await page.goBack();
   }
   {
     await page.getByRole('link', { name: 'Attachment B' }).click();
-    await expect(page.getByRole('link', { name: 'file-attachment3' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'file-attachment4' })).toBeVisible();
+    for (const attachment of bAttachments)
+      await expect(page.getByRole('link', { name: attachment.name })).toBeVisible();
     await page.goBack();
   }
 });
@@ -1950,15 +1961,14 @@ test('merge reports should allow missing step attachments', async ({ runInlineTe
 
   // Extract report and modify version.
   const reportZipFile = path.join(reportDir, reportFiles[1]);
-  let events = await extractReport(reportZipFile, test.info().outputPath('tmp'));
+  const events = (await extractReport(reportZipFile, test.info().outputPath('tmp'))).filter(e => e.method !== 'onAttach');
 
-  events = events.filter(e => e.method !== 'onAttach').map(e => {
-    if (e.method === 'onStepEnd') {
-      // Old blobs may have -1 as step attachment index
-      e.params.step.attachments = [-1];
+  for (const event of events) {
+    if (event.method === 'onStepEnd') {
+      // Old blobs may have -1 as step attachment index; test this
+      event.params.step.attachments = [-1];
     }
-    return e;
-  });
+  }
 
   // Zip it back.
   await fs.promises.rm(reportZipFile, { force: true });
