@@ -29,8 +29,14 @@ const pendingRequests = new Map<string, Promise<string>>();
 
 
 function debugLog(message: string) {
-  if (DEBUG_LLM)
-    process.stdout.write(`[LLM Debug] ${message}\n`);
+  if (DEBUG_LLM) {
+    try {
+      process.stdout.write(`[LLM Debug] ${message}\n`);
+    } catch (error) {
+      // Silently fail if writing to stdout fails
+      // This prevents errors from propagating while still allowing the main functionality to work
+    }
+  }
 }
 
 
@@ -132,15 +138,17 @@ export class CodegenEnhancer {
         // Convert action to string before modifying it for element context
         const actionData = JSON.stringify(action_modified, null, 2);
 
-        process.stdout.write(`Enhancing code with LLM for action: ${action.name}\n`);
+        try {
+          process.stdout.write(`Enhancing code with LLM for action: ${action.name}\n`);
 
-        // Prepare the context for the LLM
-        const systemPrompt = `You are a seasoned Playwright test automation expert. Your task is to transform individual action instructions into robust, production-ready JavaScript code. Each action will be provided sequentially, and your output for each should be modular, clean, and mergeable into a complete test suite. Follow these guidelines precisely:
+          // Prepare the context for the LLM
+          const systemPrompt = `You are a seasoned Playwright test automation expert. Your task is to transform individual action instructions into robust, production-ready JavaScript code. Each action will be provided sequentially, with action data, element context, and the generated code for the action. Your task is to impove the generated code for that action. All the code that you give sequentially will be merged to generate the final test script. Follow these guidelines precisely:
 **IMPORTANT**
   - Output only the improved Playwright code without any extra text. 
   ${this.actionPrompt}`;
 
-        const userPrompt = `Here's one Playwright action in JSON format:
+          const userPrompt = `Here's one Playwright action in JSON format:
+
   \`\`\`json
   ${actionData}
   \`\`\`
@@ -151,27 +159,32 @@ export class CodegenEnhancer {
   \`\`\`
   `;
 
-        debugLog(`[CodegenEnhancer][${requestId}] Sending request to LLM`);
-        const response = await this.actionEnhancer!.invoke([
-          new SystemMessage(systemPrompt),
-          new HumanMessage(userPrompt)
-        ]);
-        debugLog(`[CodegenEnhancer][${requestId}] Received LLM response`);
+          debugLog(`[CodegenEnhancer][${requestId}] Sending request to LLM`);
+          const response = await this.actionEnhancer!.invoke([
+            new SystemMessage(systemPrompt),
+            new HumanMessage(userPrompt)
+          ]);
+          debugLog(`[CodegenEnhancer][${requestId}] Received LLM response`);
 
-        let enhancedCode = response.content.toString();
+          let enhancedCode = response.content.toString();
 
-        if (enhancedCode.includes('```')) {
-          const codeBlockRegex = /```(?:javascript|js)?\n([\s\S]*?)```/;
-          const match = enhancedCode.match(codeBlockRegex);
-          if (match && match[1])
-            enhancedCode = match[1].trim();
+          if (enhancedCode.includes('```')) {
+            const codeBlockRegex = /```(?:javascript|js)?\n([\s\S]*?)```/;
+            const match = enhancedCode.match(codeBlockRegex);
+            if (match && match[1])
+              enhancedCode = match[1].trim();
+          }
+
+          processedActionCache.set(actionKey, enhancedCode);
+          pendingRequests.delete(actionKey);
+          debugLog(`[CodegenEnhancer] Cached result for action: ${action.name}`);
+
+          return enhancedCode;
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          debugLog(`[CodegenEnhancer][${requestId}] LLM request failed: ${errorMessage}`);
+          throw err;
         }
-
-        processedActionCache.set(actionKey, enhancedCode);
-        pendingRequests.delete(actionKey);
-        debugLog(`[CodegenEnhancer] Cached result for action: ${action.name}`);
-
-        return enhancedCode;
       };
 
       const requestPromise = performLLMRequest();
@@ -184,6 +197,10 @@ export class CodegenEnhancer {
       const actionKey = `${action.name}_${actionContext.startTime}`;
       pendingRequests.delete(actionKey);
 
+      // Log the error properly
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      debugLog(`[CodegenEnhancer] Error enhancing action ${action.name}: ${errorMessage}`);
+      
       // Fall back to original code if there's an error
       return generatedCode;
     }
@@ -200,7 +217,7 @@ export class CodegenEnhancer {
       debugLog(`Complete script length: ${completeScript.length} characters`);
 
       // Improved system prompt with stronger preservation instructions
-      const systemPrompt = `You are an expert Playwright test automation engineer improving a generated test script. 
+      const systemPrompt = `You are an expert Playwright test automation engineer improving a generated test script. each of the actions in the script is already enhanced by an LLM. Your job is to improve the script as a whole.
   
   CRITICAL REQUIREMENTS (HIGHEST PRIORITY):
   1. NEVER remove ANY existing functionality from the script.
@@ -239,7 +256,8 @@ export class CodegenEnhancer {
 
       return enhancedScript;
     } catch (error) {
-      debugLog(`Full error details: ${error && (error as Error).stack}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      debugLog(`Error enhancing complete script: ${errorMessage}`);
       // Fall back to original script if there's an error
       return completeScript;
     }

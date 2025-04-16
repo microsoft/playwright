@@ -593,7 +593,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
 
   const codegenEnhancerOptions: CodegenEnhancerOptions | undefined = await getCodegenEnhancerOptions(options.codegenEnhancer);
 
-  console.log('codegenEnhancerOptions -- codegen', codegenEnhancerOptions);
+
   await context._enableRecorder({
     language,
     launchOptions,
@@ -623,7 +623,6 @@ async function getCodegenEnhancerOptions(enhancerEnabled: boolean | undefined): 
     // TODO: Add a better error message
     throw new Error('No codegenEnhancerOptions found in config');
 
-  console.log('codegenEnhancerOptions -- getCodegenEnhancerOptions', codegenEnhancerOptions);
   return codegenEnhancerOptions;
 }
 
