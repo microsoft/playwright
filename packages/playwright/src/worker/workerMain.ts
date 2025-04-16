@@ -32,10 +32,9 @@ import { loadTestFile } from '../common/testLoader';
 
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
-import type { TestAnnotation } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -61,7 +60,7 @@ export class WorkerMain extends ProcessRunner {
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
-  private _activeSuites = new Map<Suite, TestAnnotation[]>();
+  private _activeSuites = new Map<Suite, Annotation[]>();
 
   constructor(params: WorkerInitParams) {
     super();
@@ -265,7 +264,7 @@ export class WorkerMain extends ProcessRunner {
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
 
-    const processAnnotation = (annotation: TestAnnotation) => {
+    const processAnnotation = (annotation: Annotation) => {
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
@@ -511,7 +510,7 @@ export class WorkerMain extends ProcessRunner {
         continue;
       const fn = async (fixtures: any) => {
         const result = await modifier.fn(fixtures);
-        testInfo._modifier(modifier.type, modifier.location, [!!result, modifier.description]);
+        testInfo[modifier.type](!!result, modifier.description);
       };
       inheritFixtureNames(modifier.fn, fn);
       runnables.push({
@@ -529,12 +528,12 @@ export class WorkerMain extends ProcessRunner {
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
-    const extraAnnotations: TestAnnotation[] = [];
+    const extraAnnotations: Annotation[] = [];
     this._activeSuites.set(suite, extraAnnotations);
     await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
   }
 
-  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
+  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: Annotation[]) {
     // Always run all the hooks, and capture the first error.
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
