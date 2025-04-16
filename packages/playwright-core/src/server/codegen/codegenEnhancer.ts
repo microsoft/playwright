@@ -27,6 +27,10 @@ const DEBUG_LLM = process.env.PW_DEBUG_LLM === '1';
 const processedActionCache = new Map<string, string>();
 const pendingRequests = new Map<string, Promise<string>>();
 
+// Export pendingRequests
+export function getPendingRequests(): Map<string, Promise<string>> {
+  return pendingRequests;
+}
 
 function debugLog(message: string) {
   if (DEBUG_LLM) {
@@ -62,6 +66,17 @@ export class CodegenEnhancer {
     if ((this.completeScriptEnhancer && !this.scriptPrompt) || (!this.completeScriptEnhancer && this.scriptPrompt))
       throw new Error('CompleteScriptEnhancer and scriptPrompt must be provided together');
 
+  }
+
+  // Method to wait for all pending requests to finish
+  async waitForPendingRequests(): Promise<void> {
+    if (pendingRequests.size === 0)
+      return;
+
+    debugLog('Waiting for all pending enhancement requests to complete...');
+    const promises = Array.from(pendingRequests.values());
+    await Promise.all(promises);
+    debugLog('All pending enhancement requests completed');
   }
 
   async enhanceActionWithLLM(
@@ -200,7 +215,7 @@ export class CodegenEnhancer {
       // Log the error properly
       const errorMessage = error instanceof Error ? error.message : String(error);
       debugLog(`[CodegenEnhancer] Error enhancing action ${action.name}: ${errorMessage}`);
-      
+
       // Fall back to original code if there's an error
       return generatedCode;
     }
@@ -210,6 +225,8 @@ export class CodegenEnhancer {
     completeScript: string,
   ): Promise<string> {
     try {
+      // First ensure all pending requests are completed
+      await this.waitForPendingRequests();
 
       if (!this.completeScriptEnhancer || !this.scriptPrompt)
         return completeScript;
@@ -219,13 +236,19 @@ export class CodegenEnhancer {
       // Improved system prompt with stronger preservation instructions
       const systemPrompt = `You are an expert Playwright test automation engineer improving a generated test script. each of the actions in the script is already enhanced by an LLM. Your job is to improve the script as a whole.
   
-  CRITICAL REQUIREMENTS (HIGHEST PRIORITY):
-  1. NEVER remove ANY existing functionality from the script.
-  2. NEVER remove or modify fallback locators - they are essential for test reliability.
-  3. NEVER combine or merge different fallback locator mechanisms.
-  4. ALWAYS preserve ALL retry logic, waits, assertions, and error handling.
-  5. DO NOT change the structure or flow of the test.
-  ${this.scriptPrompt}`;
+CRITICAL REQUIREMENTS (HIGHEST PRIORITY):
+1. NEVER remove ANY existing functionality from the script.
+2. NEVER remove or modify fallback locators - they are essential for test reliability.
+3. NEVER combine or merge different fallback locator mechanisms.
+4. ALWAYS preserve ALL retry logic, waits, assertions, and error handling.
+5. DO NOT change the structure or flow of the test.
+
+  ${this.scriptPrompt}
+  
+  The script already has good structure. Your task is MINIMAL refinement while strictly preserving ALL functionality.
+
+DO NOT add comments, explanations, or any text outside the JavaScript code.
+Output ONLY the improved code, preserving EVERY SINGLE existing functionality.`;
 
       const userPrompt = `Here is a complete Playwright test script that was auto-generated. Please improve it while STRICTLY PRESERVING ALL EXISTING FUNCTIONALITY:
   

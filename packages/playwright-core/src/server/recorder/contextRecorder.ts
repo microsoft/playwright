@@ -17,8 +17,7 @@
 
 import { EventEmitter } from 'events';
 
-import { CodegenEnhancerOptions } from 'packages/playwright-core';
-
+import { CodegenEnhancerOptions } from '../../../types/types';
 import { RecorderCollection } from './recorderCollection';
 import * as recorderSource from '../../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue  } from '../../utils';
@@ -62,6 +61,8 @@ export class ContextRecorder extends EventEmitter {
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
   private _listeners: RegisteredListener[] = [];
+  private _currentActions: actions.ActionInContext[] = [];
+  private _languageGeneratorOptions: LanguageGeneratorOptions;
 
   constructor(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, delegate: ContextRecorderDelegate) {
     super();
@@ -73,7 +74,7 @@ export class ContextRecorder extends EventEmitter {
     this.setOutput(language, params.outputFile);
 
     // Make a copy of options to modify them later.
-    const languageGeneratorOptions: LanguageGeneratorOptions = {
+    this._languageGeneratorOptions = {
       browserName: context._browser.options.name,
       launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
       contextOptions: { ...params.contextOptions },
@@ -85,9 +86,10 @@ export class ContextRecorder extends EventEmitter {
 
     this._collection = new RecorderCollection(this._pageAliases);
     this._collection.on('change', async (actions: actions.ActionInContext[]) => {
+      this._currentActions = actions;
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
-        const { header, footer, actionTexts, text } = await generateCode(actions, languageGenerator, languageGeneratorOptions);
+        const { header, footer, actionTexts, text } = await generateCode(actions, languageGenerator, this._languageGeneratorOptions);
         const source: Source = {
           isRecorded: true,
           label: languageGenerator.name,
@@ -177,7 +179,7 @@ export class ContextRecorder extends EventEmitter {
   private async _onPage(page: Page) {
     // First page is called page, others are called popup1, popup2, etc.
     const frame = page.mainFrame();
-    page.on('close', () => {
+    page.on('close', async () => {
       this._collection.addRecordedAction({
         frame: this._describeMainFrame(page),
         action: {
@@ -186,6 +188,40 @@ export class ContextRecorder extends EventEmitter {
         },
         startTime: monotonicTime()
       });
+      if (this._orderedLanguages[0] instanceof JavaScriptLanguageGenerator && this._params.codegenEnhancerOptions && this._params.codegenEnhancerOptions.completeScriptEnhancer) {
+        try {
+          let scriptToEnhance = '';
+
+          if (this._recorderSources.length > 0) {
+            // Get it from the primary source if available
+            scriptToEnhance = this._recorderSources[0].text;
+          } else if (this._throttledOutputFile?.getContent()) {
+            // Or from the throttled file if it has content
+            scriptToEnhance = this._throttledOutputFile?.getContent();
+          } else if (this._currentActions.length > 0) {
+            const { text } = await generateCode(this._currentActions, this._orderedLanguages[0], this._languageGeneratorOptions);
+            scriptToEnhance = text;
+          }
+          const enhancedScript = await this._orderedLanguages[0].enhanceCompleteScript(scriptToEnhance);
+
+          // Update the throttled output file
+          this._throttledOutputFile?.setContent(enhancedScript);
+          this._throttledOutputFile?.flush();
+
+          // Update sources if they exist
+          if (this._recorderSources.length > 0) {
+            this._recorderSources[0].text = enhancedScript;
+
+            // Emit change event with the updated sources
+            this.emit(ContextRecorder.Events.Change, {
+              sources: this._recorderSources,
+              actions: this._currentActions
+            });
+          }
+        } catch (error) {
+
+        }
+      }
       this._pageAliases.delete(page);
     });
     frame.on(Frame.Events.InternalNavigation, event => {

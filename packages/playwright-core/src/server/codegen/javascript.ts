@@ -23,6 +23,16 @@ import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './ty
 import type { BrowserContextOptions } from '../../../types/types';
 import type * as actions from '@recorder/actions';
 
+function debugLog(message: string) {
+  if (process.env.PW_DEBUG_LLM === '1') {
+    try {
+      process.stdout.write(`[LLM Debug] ${message}\n`);
+    } catch (error) {
+      // Silently fail if writing to stdout fails
+    }
+  }
+}
+
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;
   groupName = 'Node.js';
@@ -39,6 +49,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   }
 
   async generateAction(actionInContext: actions.ActionInContext): Promise<string> {
+
     const action = actionInContext.action;
     if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -75,7 +86,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     let enhancedActionCall = actionCall;
 
     // Enhance with LLM if enabled
-    if (this._enhancer && !(['closePage', 'screenshot', 'fill', 'press'].includes(actionInContext.action.name))) {
+    if (this._enhancer && this._enhancer.actionEnhancer && !(['closePage', 'screenshot', 'fill', 'press'].includes(actionInContext.action.name))) {
       try {
         enhancedActionCall = await this._enhancer.enhanceActionWithLLM(enhancedActionCall, action, actionInContext);
       } catch (error) {
@@ -199,6 +210,27 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
 
   setEnhancer(enhancer: CodegenEnhancer | undefined): void {
     this._enhancer = enhancer;
+  }
+
+  // Method to enhance the complete script
+  async enhanceCompleteScript(completeScript: string): Promise<string> {
+    if (!this._enhancer || !this._enhancer.completeScriptEnhancer)
+      return completeScript;
+
+    try {
+      // First wait for all pending enhancements to complete
+      await this._enhancer.waitForPendingRequests();
+
+      debugLog('Enhancing complete script...');
+      debugLog(completeScript);
+      const enhancedScript = await this._enhancer.enhanceCompleteScript(completeScript);
+      debugLog('Complete script enhancement finished');
+      return enhancedScript;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      debugLog(`Error enhancing complete script: ${errorMessage}`);
+      return completeScript;
+    }
   }
 }
 
