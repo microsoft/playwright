@@ -21,6 +21,7 @@ import { TerminalReporter, stepSuffix } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { ExtractReporterOptions } from './types';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -37,9 +38,9 @@ class ListReporter extends TerminalReporter {
   private _needNewLine = false;
   private _printSteps: boolean;
 
-  constructor(options: { printSteps?: boolean } = {}) {
+  constructor(options?: ExtractReporterOptions<'list'>) {
     super();
-    this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
+    this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
   }
 
   override onBegin(suite: Suite) {

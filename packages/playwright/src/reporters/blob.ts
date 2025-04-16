@@ -29,14 +29,7 @@ import { TeleReporterEmitter } from './teleEmitter';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import type { EventEmitter } from 'events';
-
-type BlobReporterOptions = {
-  configDir: string;
-  outputDir?: string;
-  fileName?: string;
-  outputFile?: string;
-  _commandHash: string;
-};
+import type { ExtractReporterOptions } from './types';
 
 export const currentBlobReportVersion = 2;
 
@@ -51,11 +44,11 @@ export type BlobReportMetadata = {
 export class BlobReporter extends TeleReporterEmitter {
   private readonly _messages: JsonEvent[] = [];
   private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
-  private readonly _options: BlobReporterOptions;
+  private readonly _options: ExtractReporterOptions<'blob'>;
   private readonly _salt: string;
   private _config!: FullConfig;
 
-  constructor(options: BlobReporterOptions) {
+  constructor(options: ExtractReporterOptions<'blob'>) {
     super(message => this._messages.push(message));
     this._options = options;
     if (this._options.fileName && !this._options.fileName.endsWith('.zip'))
