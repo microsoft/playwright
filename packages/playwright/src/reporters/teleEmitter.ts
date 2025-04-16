@@ -257,14 +257,7 @@ export class TeleReporterEmitter implements ReporterV2 {
           testId,
           resultId,
           stepId,
-          attachments: result.attachments.slice(knownAttachmentCount).flatMap((attachment: reporterTypes.TestResult['attachments'][number] | undefined) => {
-            // Due to an old bug in users' blobs, the blob may serialize the attachment index as -1,
-            // resulting an undefined attachment. We must preserve the order, but cannot perform normal
-            // serialization on the undefined value
-            if (!attachment)
-              return attachment;
-            return this._serializeAttachments([attachment]);
-          }),
+          attachments: this._serializeAttachments((result.attachments.slice(knownAttachmentCount))),
         }
       });
     }

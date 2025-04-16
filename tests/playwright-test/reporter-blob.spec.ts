@@ -1911,61 +1911,6 @@ test('merge reports should preserve attachments', async ({ runInlineTest, mergeR
   }
 });
 
-test('merge reports should allow missing step attachments', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  const reportDir = test.info().outputPath('blob-report-orig');
-  const files = {
-    'playwright.config.ts': `
-      module.exports = {
-        retries: 1,
-        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
-      };
-    `,
-    'a.test.js': `
-      import { test, expect } from '@playwright/test';
-      import * as fs from 'fs';
-      test('attachment A', async ({}) => {
-        const attachmentPath = test.info().outputPath('foo.txt');
-        fs.writeFileSync(attachmentPath, 'hello!');
-        await test.info().attach('file-attachment1', { path: attachmentPath });
-      });
-    `,
-    'b.test.js': `
-      import { test, expect } from '@playwright/test';
-      import * as fs from 'fs';
-      test('attachment B', async ({}) => {
-        const attachmentPath = test.info().outputPath('bar.txt');
-        fs.writeFileSync(attachmentPath, 'goodbye!');
-        await test.info().attach('file-attachment2', { path: attachmentPath });
-      });
-    `
-  };
-  await runInlineTest(files, { shard: `1/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
-  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
-
-  const reportFiles = await fs.promises.readdir(reportDir);
-  reportFiles.sort();
-
-  // Extract report and modify version.
-  const reportZipFile = path.join(reportDir, reportFiles[1]);
-  const events = (await extractReport(reportZipFile, test.info().outputPath('tmp'))).filter(e => e.method !== 'onAttach');
-
-  for (const event of events) {
-    if (event.method === 'onStepEnd') {
-      // Old blobs may have -1 as step attachment index; test this
-      event.params.step.attachments = [-1];
-    }
-  }
-
-  // Zip it back.
-  await fs.promises.rm(reportZipFile, { force: true });
-  await zipReport(events, reportZipFile);
-
-  const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', 'blob'] });
-  expect(exitCode).toBe(0);
-
-  expect(output).not.toContain('Error in reporter');
-});
-
 test('merge reports must not change test ids when there is no need to', async ({ runInlineTest, mergeReports }) => {
   const files = {
     'echo-test-id-reporter.js': `

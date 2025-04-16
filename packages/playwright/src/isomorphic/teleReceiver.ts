@@ -87,10 +87,7 @@ export type JsonTestResultStart = {
   startTime: number;
 };
 
-export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & {
-  stepId?: string;
-  base64?: string;
-};
+export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & { base64?: string; };
 
 export type JsonTestResultEnd = {
   id: string;
