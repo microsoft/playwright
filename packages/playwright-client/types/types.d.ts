@@ -12197,6 +12197,17 @@ export interface Locator {
    * rejects, this method throws.
    *
    * **Usage**
+   *
+   * Passing argument to
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression):
+   *
+   * ```js
+   * const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
+   *   return element.textContent + ' ' + x * y;
+   * }, [7, 8]);
+   * console.log(result); // prints "myId text 56"
+   * ```
+   *
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
@@ -12222,6 +12233,17 @@ export interface Locator {
    * rejects, this method throws.
    *
    * **Usage**
+   *
+   * Passing argument to
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression):
+   *
+   * ```js
+   * const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
+   *   return element.textContent + ' ' + x * y;
+   * }, [7, 8]);
+   * console.log(result); // prints "myId text 56"
+   * ```
+   *
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
