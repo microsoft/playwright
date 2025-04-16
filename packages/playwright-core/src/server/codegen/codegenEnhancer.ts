@@ -148,6 +148,7 @@ export class CodegenEnhancer {
   ${this.actionPrompt}`;
 
           const userPrompt = `Here's one Playwright action in JSON format:
+
   \`\`\`json
   ${actionData}
   \`\`\`
@@ -191,6 +192,7 @@ export class CodegenEnhancer {
 
       return requestPromise;
     } catch (error) {
+
       // Make sure to clean up the pending request on error
       const actionKey = `${action.name}_${actionContext.startTime}`;
       pendingRequests.delete(actionKey);
@@ -198,7 +200,7 @@ export class CodegenEnhancer {
       // Log the error properly
       const errorMessage = error instanceof Error ? error.message : String(error);
       debugLog(`[CodegenEnhancer] Error enhancing action ${action.name}: ${errorMessage}`);
-
+      
       // Fall back to original code if there's an error
       return generatedCode;
     }

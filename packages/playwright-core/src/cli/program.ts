@@ -593,6 +593,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
 
   const codegenEnhancerOptions: CodegenEnhancerOptions | undefined = await getCodegenEnhancerOptions(options.codegenEnhancer);
 
+
   await context._enableRecorder({
     language,
     launchOptions,
