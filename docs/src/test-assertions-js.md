@@ -223,6 +223,17 @@ await expect.poll(async () => {
 }).toBe(200);
 ```
 
+You can combine expect.configure({ soft: true }) with expect.poll to perform soft assertions in polling logic.
+
+```js
+const softExpect = expect.configure({ soft: true });
+await softExpect.poll(async () => {
+  const response = await page.request.get('https://api.example.com');
+  return response.status();
+}, {}).toBe(200);
+```
+This allows the test to continue even if the assertion inside poll fails.
+
 ## expect.toPass
 
 You can retry blocks of code until they are passing successfully.
