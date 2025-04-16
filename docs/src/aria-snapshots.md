@@ -284,7 +284,7 @@ By default, a template containing the subset of children will be matched:
 
 
 The `/children` property can be used to control how child elements are matched:
-- `contain` (default): Matches if all specified children are present in any order
+- `contain` (default): Matches if all specified children are present in order
 - `equal`: Matches if the children exactly match the specified list in order
 - `deep-equal`: Matches if the children exactly match the specified list in order, including nested children
 
@@ -296,7 +296,7 @@ The `/children` property can be used to control how child elements are matched:
 </ul>
 ```
 
-*aria snapshot will fail due Feature C not being in the template*
+*aria snapshot will fail due to Feature C not being in the template*
 
 ```yaml
 - list
