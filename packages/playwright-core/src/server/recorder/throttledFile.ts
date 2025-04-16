@@ -31,6 +31,10 @@ export class ThrottledFile {
       this._timer = setTimeout(() => this.flush(), 250);
   }
 
+  getContent(): string {
+    return this._text || '';
+  }
+
   flush(): void {
     if (this._timer) {
       clearTimeout(this._timer);
