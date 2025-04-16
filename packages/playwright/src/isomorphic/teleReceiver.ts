@@ -119,7 +119,6 @@ export type JsonTestStepEnd = {
 export type JsonTestResultOnAttach = {
   testId: string;
   resultId: string;
-  stepId?: string;
   attachments: JsonAttachment[];
 };
 

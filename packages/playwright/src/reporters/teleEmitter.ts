@@ -85,6 +85,8 @@ export class TeleReporterEmitter implements ReporterV2 {
         result: this._serializeResultEnd(result),
       }
     });
+
+    this._resultKnownAttachmentCounts.delete((result as any)[this._idSymbol]);
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
