@@ -104,7 +104,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   onStepEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
     // Create synthetic onAttach event so we serialize the entire attachment along with the step
     const resultId = (result as any)[this._idSymbol] as string;
-    this._sendNewAttachments(result, test.id, (step as any)[this._idSymbol]);
+    this._sendNewAttachments(result, test.id);
 
     this._messageSink({
       method: 'onStepEnd',
@@ -248,7 +248,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     };
   }
 
-  private _sendNewAttachments(result: reporterTypes.TestResult, testId: string, stepId?: string) {
+  private _sendNewAttachments(result: reporterTypes.TestResult, testId: string) {
     const resultId = (result as any)[this._idSymbol] as string;
     // Track whether this step (or something else since the last step) has added attachments and send them
     const knownAttachmentCount = this._resultKnownAttachmentCounts.get(resultId) ?? 0;
@@ -258,7 +258,6 @@ export class TeleReporterEmitter implements ReporterV2 {
         params: {
           testId,
           resultId,
-          stepId,
           attachments: this._serializeAttachments((result.attachments.slice(knownAttachmentCount))),
         }
       });
