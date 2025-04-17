@@ -223,7 +223,7 @@ await expect.poll(async () => {
 }).toBe(200);
 ```
 
-You can combine expect.configure({ soft: true }) with expect.poll to perform soft assertions in polling logic.
+You can combine `expect.configure({ soft: true })` with expect.poll to perform soft assertions in polling logic.
 
 ```js
 const softExpect = expect.configure({ soft: true });
