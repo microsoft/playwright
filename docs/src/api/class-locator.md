@@ -871,6 +871,37 @@ If [`param: expression`] throws or rejects, this method throws.
 
 **Usage**
 
+Passing argument to [`param: expression`]:
+
+```js
+const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
+  return element.textContent + ' ' + x * y;
+}, [7, 8]);
+console.log(result); // prints "myId text 56"
+```
+
+```java
+Object result = page.getByTestId("myId").evaluate("(element, [x, y]) => {\n" +
+  "  return element.textContent + ' ' + x * y;\n" +
+  "}", Arrays.asList(7, 8));
+System.out.println(result); // prints "myId text 56"
+```
+
+```python async
+result = await page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+print(result) # prints "myId text 56"
+```
+
+```python sync
+result = page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+print(result) # prints "myId text 56"
+```
+
+```csharp
+var result = await page.GetByTestId("myId").EvaluateAsync<string>("(element, [x, y]) => element.textContent + ' ' + x * y)", new[] { 7, 8 });
+Console.WriteLine(result); // prints "myId text 56"
+```
+
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.14
 
