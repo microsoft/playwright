@@ -367,9 +367,9 @@ type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAsserti
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
-type ToUserMatcher<F> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : void) : never;
-type ToUserMatcherObject<T, ArgType> = {
-  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K]>;
+type ToUserMatcher<F, DefaultReturnType> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType) : never;
+type ToUserMatcherObject<T, DefaultReturnType, ArgType> = {
+  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K], DefaultReturnType>;
 };
 
 type MatcherHintColor = (arg: string) => string;
@@ -438,14 +438,14 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
    * If the promise is fulfilled the assertion fails.
    */
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
-} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
+} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>>;
 
 type PollMatchers<R, T, ExtendedMatchers> = {
   /**
    * If you know how to test something, `.not` lets you test its opposite.
    */
   not: PollMatchers<R, T, ExtendedMatchers>;
-} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>;
+} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>;
 
 export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
