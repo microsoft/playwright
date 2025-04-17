@@ -703,7 +703,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   verifyGeolocation(options.geolocation);
 }
 
-export function verifyGeolocation(geolocation?: types.Geolocation) {
+export function verifyGeolocation(geolocation?: types.Geolocation): asserts geolocation is types.Geolocation {
   if (!geolocation)
     return;
   geolocation.accuracy = geolocation.accuracy || 0;
