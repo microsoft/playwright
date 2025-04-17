@@ -220,3 +220,24 @@ test('step.skip returns void ', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('calling custom matcher on expect.poll should return Promise', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35635' } }, async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect as baseExpect } from '@playwright/test';
+      const expect = baseExpect.extend({
+        toBeFoo(actual) {
+          return {
+            pass: actual === 'foo',
+            message: () => 'not foo!',
+          };
+        }
+      });
+      test('test', async () => {
+        const pollingPromise: Promise<any> = expect.poll(() => 'foo').toBeFoo();
+        await pollingPromise;
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
