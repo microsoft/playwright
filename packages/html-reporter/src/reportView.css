@@ -29,6 +29,10 @@ body {
   width: 100%;
 }
 
+.error {
+  margin-top: 10px;
+}
+
 .test-file-test:not(:first-child) {
   border-top: 1px solid var(--color-border-default);
 }

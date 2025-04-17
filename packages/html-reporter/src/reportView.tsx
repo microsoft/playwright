@@ -85,10 +85,21 @@ export const ReportView: React.FC<{
         />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
-        {!!report && <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} />}
+        {!!report ?
+          <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} /> :
+          <div className='error'>Report data could not be found</div>}
       </Route>
     </main>
   </div>;
+};
+
+type TestState = {
+  type: 'loading'
+} | {
+  type: 'test',
+  test: TestCase,
+} | {
+  type: 'error',
 };
 
 const TestCaseViewLoader: React.FC<{
@@ -97,7 +108,7 @@ const TestCaseViewLoader: React.FC<{
   testIdToFileIdMap: Map<string, string>,
 }> = ({ report, testIdToFileIdMap, tests }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const [test, setTest] = React.useState<TestCase | undefined>();
+  const [test, setTest] = React.useState<TestState>({ type: 'loading' });
   const testId = searchParams.get('testId');
   const run = +(searchParams.get('run') || '0');
 
@@ -110,28 +121,40 @@ const TestCaseViewLoader: React.FC<{
 
   React.useEffect(() => {
     (async () => {
-      if (!testId || testId === test?.testId)
+      if (test.type === 'test' && testId === test.test.testId)
         return;
+      if (!testId) {
+        setTest({ type: 'error' });
+        return;
+      }
       const fileId = testIdToFileIdMap.get(testId);
-      if (!fileId)
+      if (!fileId) {
+        setTest({ type: 'error' });
         return;
-      const file = await report.entry(`${fileId}.json`) as TestFile;
-      for (const t of file.tests) {
-        if (t.testId === testId) {
-          setTest(t);
-          break;
-        }
+      }
+      try {
+        const file = await report.entry(`${fileId}.json`) as TestFile;
+        const testCase = file.tests.find(t => t.testId === testId);
+        setTest(!!testCase ? { type: 'test', test: testCase } : { type: 'error' });
+      } catch (e) {
+        setTest({ type: 'error' });
       }
     })();
   }, [test, report, testId, testIdToFileIdMap]);
 
-  return <TestCaseView
-    projectNames={report.json().projectNames}
-    next={next}
-    prev={prev}
-    test={test}
-    run={run}
-  />;
+  switch (test.type) {
+    case 'loading':
+    case 'test':
+      return <TestCaseView
+        projectNames={report.json().projectNames}
+        next={next}
+        prev={prev}
+        test={test.type === 'test' ? test.test : undefined}
+        run={run}
+      />;
+    case 'error':
+      return <div className='error'>Test case not found</div>;
+  }
 };
 
 function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
