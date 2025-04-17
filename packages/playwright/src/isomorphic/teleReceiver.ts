@@ -94,7 +94,7 @@ export type JsonTestResultEnd = {
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
   /** No longer emitted, but kept for backwards compatibility */
-  attachments: JsonAttachment[];
+  attachments?: JsonAttachment[];
   annotations?: TestAnnotation[];
 };
 
