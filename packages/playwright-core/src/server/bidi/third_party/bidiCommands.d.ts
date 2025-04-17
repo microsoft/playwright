@@ -7,7 +7,7 @@
 
 // Copied from upstream: https://github.com/puppeteer/puppeteer/blob/main/packages/puppeteer-core/src/bidi/core/Connection.ts
 
-import * as Bidi from './bidiProtocol';
+import type * as Bidi from './bidiProtocol';
 
 export interface Commands {
   'script.evaluate': {
@@ -118,6 +118,11 @@ export interface Commands {
     returnType: Bidi.EmptyResult;
   };
 
+  'permissions.setPermission': {
+    params: Bidi.Permissions.SetPermissionParameters;
+    returnType: Bidi.EmptyResult;
+  };
+
   'session.end': {
     params: Bidi.EmptyParams;
     returnType: Bidi.EmptyResult;
@@ -146,10 +151,6 @@ export interface Commands {
   'storage.getCookies': {
     params: Bidi.Storage.GetCookiesParameters;
     returnType: Bidi.Storage.GetCookiesResult;
-  };
-  'network.setCacheBehavior': {
-    params: Bidi.Network.SetCacheBehaviorParameters;
-    returnType: Bidi.EmptyResult;
   };
   'storage.setCookie': {
     params: Bidi.Storage.SetCookieParameters;
