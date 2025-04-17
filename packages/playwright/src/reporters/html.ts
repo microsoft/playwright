@@ -324,12 +324,15 @@ class HtmlBuilder {
       async function redirect() {
         const hmrURL = new URL('http://localhost:44224'); // dev server, port is harcoded in build.js
         const popup = window.open(hmrURL);
-        window.addEventListener('message', evt => {
+        const listener = (evt: MessageEvent) => {
           if (evt.source === popup && evt.data === 'ready') {
             popup!.postMessage((window as any).playwrightReportBase64, hmrURL.origin);
+            window.removeEventListener('message', listener);
+            // This is generally not allowed
             window.close();
           }
-        }, { once: true });
+        };
+        window.addEventListener('message', listener);
       }
 
       fs.appendFileSync(redirectFile, `<script>(${redirect.toString()})()</script>`);
