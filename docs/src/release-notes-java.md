@@ -17,7 +17,7 @@ toc_max_heading_level: 2
 - [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and `/url` for links.
 
   ```java
-  assertThat(locator).toMatchAriaSnapshot(@"""
+  assertThat(locator).toMatchAriaSnapshot("""
     - list
       - /children: equal
       - listitem: Feature A

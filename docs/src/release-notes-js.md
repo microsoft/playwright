@@ -13,7 +13,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 - New method [`method: LocatorAssertions.toContainClass`] to ergonomically assert individual class names on the element.
 
   ```ts
-    await expect(page.getByRole('listitem', { name: 'Ship v1.52' })).toContainClass('done');
+  await expect(page.getByRole('listitem', { name: 'Ship v1.52' })).toContainClass('done');
   ```
 
 - [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and `/url` for links.
