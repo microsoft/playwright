@@ -152,6 +152,10 @@ export interface Commands {
     params: Bidi.Storage.GetCookiesParameters;
     returnType: Bidi.Storage.GetCookiesResult;
   };
+  'network.setCacheBehavior': {
+    params: Bidi.Network.SetCacheBehaviorParameters;
+    returnType: Bidi.EmptyResult;
+  };
   'storage.setCookie': {
     params: Bidi.Storage.SetCookieParameters;
     returnType: Bidi.Storage.SetCookieParameters;
