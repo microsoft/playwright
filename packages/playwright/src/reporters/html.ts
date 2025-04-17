@@ -31,7 +31,7 @@ import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import type { ReporterV2 } from './reporterV2';
 import type { Metadata } from '../../types/test';
 import type * as api from '../../types/testReporter';
-import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep, TestAnnotation } from '@html-reporter/types';
+import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep, TestAnnotation, Options } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
 
@@ -54,6 +54,7 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
+  title?: string,
   _mode?: 'test' | 'list';
   _isTestServer?: boolean;
 };
@@ -62,11 +63,7 @@ class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
   private _options: HtmlReporterOptions;
-  private _outputFolder!: string;
-  private _attachmentsBaseURL!: string;
-  private _open: string | undefined;
-  private _port: number | undefined;
-  private _host: string | undefined;
+  private _resolvedOptions!: { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined };
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
@@ -87,12 +84,8 @@ class HtmlReporter implements ReporterV2 {
   }
 
   onBegin(suite: api.Suite) {
-    const { outputFolder, open, attachmentsBaseURL, host, port } = this._resolveOptions();
-    this._outputFolder = outputFolder;
-    this._open = open;
-    this._host = host;
-    this._port = port;
-    this._attachmentsBaseURL = attachmentsBaseURL;
+    this._resolvedOptions = this._resolveOptions();
+    const outputFolder = this._resolvedOptions.outputFolder;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
       if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
@@ -112,7 +105,7 @@ class HtmlReporter implements ReporterV2 {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined } {
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined } {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
       outputFolder,
@@ -120,6 +113,7 @@ class HtmlReporter implements ReporterV2 {
       attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || this._options.attachmentsBaseURL || 'data/',
       host: process.env.PLAYWRIGHT_HTML_HOST || this._options.host,
       port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : this._options.port,
+      title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
     };
   }
 
@@ -134,8 +128,8 @@ class HtmlReporter implements ReporterV2 {
 
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
-    await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
+    await removeFolders([this._resolvedOptions.outputFolder]);
+    const builder = new HtmlBuilder(this.config, this._resolvedOptions.outputFolder, this._resolvedOptions.attachmentsBaseURL, this._resolvedOptions);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -143,14 +137,14 @@ class HtmlReporter implements ReporterV2 {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
+    const shouldOpen = !this._options._isTestServer && (this._resolvedOptions.open === 'always' || (!ok && this._resolvedOptions.open === 'on-failure'));
     if (shouldOpen) {
-      await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
+      await showHTMLReport(this._resolvedOptions.outputFolder, this._resolvedOptions.host, this._resolvedOptions.port, singleTestId);
     } else if (this._options._mode === 'test' && !this._options._isTestServer) {
       const packageManagerCommand = getPackageManagerExecCommand();
-      const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
-      const hostArg = this._host ? ` --host ${this._host}` : '';
-      const portArg = this._port ? ` --port ${this._port}` : '';
+      const relativeReportPath = this._resolvedOptions.outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._resolvedOptions.outputFolder);
+      const hostArg = this._resolvedOptions.host ? ` --host ${this._resolvedOptions.host}` : '';
+      const portArg = this._resolvedOptions.port ? ` --port ${this._resolvedOptions.port}` : '';
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
@@ -227,14 +221,16 @@ export function startHtmlReportServer(folder: string): HttpServer {
 
 class HtmlBuilder {
   private _config: api.FullConfig;
+  private _options?: Options;
   private _reportFolder: string;
   private _stepsInFile = new MultiMap<string, TestStep>();
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, options: Options | undefined) {
     this._config = config;
+    this._options = options;
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
@@ -295,6 +291,9 @@ class HtmlBuilder {
     }
     const htmlReport: HTMLReport = {
       metadata,
+      options: {
+        title: this._options?.title,
+      },
       startTime: result.startTime.getTime(),
       duration: result.duration,
       files: [...data.values()].map(e => e.testFileSummary),

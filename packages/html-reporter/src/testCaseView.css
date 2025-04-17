@@ -14,11 +14,6 @@
   limitations under the License.
 */
 
-.test-case-column {
-  border-radius: 6px;
-  margin: 12px 0 24px 0;
-}
-
 .test-case-column .tab-element.selected {
   font-weight: 600;
   border-bottom-color: var(--color-primer-border-active);
@@ -32,14 +27,6 @@
 
 .test-case-column .tab-element:hover {
   color: var(--color-fg-default);
-}
-
-.test-case-title {
-  flex: none;
-  padding: 8px;
-  font-weight: 400;
-  font-size: 32px !important;
-  line-height: 1.25 !important;
 }
 
 .test-case-location,

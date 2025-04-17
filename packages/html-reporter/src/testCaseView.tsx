@@ -55,7 +55,7 @@ export const TestCaseView: React.FC<{
       <div style={{ width: 10 }}></div>
       <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
     </div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && <div className='report-title'>{test?.title}</div>}
     {test && <div className='hbox'>
       <div className='test-case-location'>
         <CopyToClipboardContainer value={`${test?.location.file}:${test?.location.line}`}>

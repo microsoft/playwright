@@ -29,6 +29,24 @@ body {
   width: 100%;
 }
 
+.report-body {
+  border-radius: 6px;
+  margin: 12px 0 24px 0;
+}
+
+.report-title {
+  flex: none;
+  padding: 8px;
+  font-weight: 400;
+  font-size: 32px !important;
+  line-height: 1.25 !important;
+}
+
+.report-title.metadata-visible {
+  /* Mirror bottom margin from following chip (.chip-header) so the title appears aligned */
+  margin-top: 12px;
+}
+
 .test-file-test:not(:first-child) {
   border-top: 1px solid var(--color-border-default);
 }
