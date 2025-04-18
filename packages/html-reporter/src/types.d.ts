@@ -36,8 +36,13 @@ export type Location = {
   column: number;
 };
 
+export type Options = {
+  title?: string;
+}
+
 export type HTMLReport = {
   metadata: Metadata;
+  options: Options;
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
