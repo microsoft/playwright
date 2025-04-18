@@ -36,7 +36,6 @@ import { Page, PageBinding } from './page';
 import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
 import * as storageScript from './storageScript';
-import * as consoleApiSource from '../generated/consoleApiSource';
 import { Tracing } from './trace/recorder/tracing';
 
 import type { Artifact } from './artifact';
@@ -148,7 +147,7 @@ export abstract class BrowserContext extends SdkObject {
     });
 
     if (debugMode() === 'console')
-      await this.extendInjectedScript(consoleApiSource.source);
+      await this.extendInjectedScript('function Console(injectedScript) { injectedScript.consoleApi.install(); }');
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(`\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 

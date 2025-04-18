@@ -32,6 +32,7 @@ import { generateSelector } from './selectorGenerator';
 import { elementMatchesText, elementText, getElementLabels } from './selectorUtils';
 import { createVueEngine } from './vueSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
+import { ConsoleAPI } from './consoleApi';
 
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
@@ -78,6 +79,7 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
+  readonly consoleApi: ConsoleAPI;
   private _lastAriaSnapshot: AriaSnapshot | undefined;
 
   // Recorder must use any external dependencies through InjectedScript.
@@ -116,6 +118,7 @@ export class InjectedScript {
     this._sdkLanguage = sdkLanguage;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
     this._evaluator = new SelectorEvaluatorImpl();
+    this.consoleApi = new ConsoleAPI(this);
 
     this.onGlobalListenersRemoved = new Set();
     this._autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
