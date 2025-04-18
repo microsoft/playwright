@@ -30,49 +30,44 @@ import { CopyToClipboardContainer } from './copyToClipboard';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
-  test: TestCase | undefined,
+  test: TestCase,
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
   run: number,
 }> = ({ projectNames, test, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
+
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
+  const labels = React.useMemo(() => test.tags, [test]);
+  const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
 
-  const labels = React.useMemo(() => {
-    if (!test)
-      return undefined;
-    return test.tags;
-  }, [test]);
-
-  const visibleTestAnnotations = test?.annotations.filter(a => !a.type.startsWith('_')) ?? [];
-
-  return <div className='test-case-column vbox'>
-    {test && <div className='hbox'>
+  return <>
+    <div className='hbox'>
       <div className='test-case-path'>{test.path.join(' › ')}</div>
       <div style={{ flex: 'auto' }}></div>
       <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
       <div style={{ width: 10 }}></div>
       <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
-    </div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
-    {test && <div className='hbox'>
+    </div>
+    <div className='test-case-title'>{test.title}</div>
+    <div className='hbox'>
       <div className='test-case-location'>
-        <CopyToClipboardContainer value={`${test?.location.file}:${test?.location.line}`}>
+        <CopyToClipboardContainer value={`${test.location.file}:${test.location.line}`}>
           {test.location.file}:{test.location.line}
         </CopyToClipboardContainer>
       </div>
       <div style={{ flex: 'auto' }}></div>
       <div className='test-case-duration'>{msToString(test.duration)}</div>
-    </div>}
-    {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
-      {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+    </div>
+    {(!!test.projectName || labels) && <div className='test-case-project-labels-row'>
+      {!!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {test?.results.length === 0 && visibleTestAnnotations.length !== 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
+    {test.results.length === 0 && visibleTestAnnotations.length !== 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
       {visibleTestAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}
-    {test && <TabbedPane tabs={
+    <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -88,8 +83,8 @@ export const TestCaseView: React.FC<{
             <TestResultView test={test!} result={result} />
           </>;
         },
-      })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
-  </div>;
+      })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />
+  </>;
 };
 
 function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestAnnotation }) {
