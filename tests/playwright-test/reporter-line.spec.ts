@@ -206,5 +206,24 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(text).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
       expect(result.exitCode).toBe(1);
     });
+
+    test.fixme('should show error context if exception contains non-existent file', async ({ runInlineTest, useIntermediateMergeReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('one', async ({ page }) => {
+            await page.evaluate(() => {
+              throw new Error('error');
+            });
+          });
+        `,
+      }, { reporter: 'line' });
+      const text = result.output;
+      if (useIntermediateMergeReport)
+        expect(text).toContain(`Error Context: ${path.join('blob-report', 'resources')}`);
+      else
+        expect(text).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
+      expect(result.exitCode).toBe(1);
+    });
   });
 }
