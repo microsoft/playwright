@@ -14,7 +14,8 @@
   limitations under the License.
 */
 
-import type { TestCase, TestAnnotation, TestCaseSummary } from './types';
+import type { TestAnnotation } from '@playwright/test';
+import type { TestCase, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
