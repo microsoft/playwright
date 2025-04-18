@@ -47,23 +47,26 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return htmlReportOptions.includes(type);
 };
 
-type HtmlReporterOptions = {
-  configDir: string,
-  outputFolder?: string,
-  open?: HtmlReportOpenOption,
+type InternalResolvedOptions = {
+  outputFolder: string,
+  open: HtmlReportOpenOption,
+  attachmentsBaseURL: string,
   host?: string,
   port?: number,
-  attachmentsBaseURL?: string,
-  title?: string,
+  title?: string
+};
+
+type HtmlReporterOptions = {
+  configDir: string,
   _mode?: 'test' | 'list';
   _isTestServer?: boolean;
-};
+} & Partial<InternalResolvedOptions>;
 
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
   private _options: HtmlReporterOptions;
-  private _resolvedOptions!: { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined };
+  private _resolvedOptions!: InternalResolvedOptions;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
@@ -105,7 +108,7 @@ class HtmlReporter implements ReporterV2 {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined } {
+  _resolveOptions(): InternalResolvedOptions {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
       outputFolder,
