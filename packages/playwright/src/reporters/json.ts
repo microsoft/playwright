@@ -24,11 +24,7 @@ import { getProjectId } from '../common/config';
 
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, JSONReport, JSONReportError, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult, JSONReportTestStep, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-
-type JSONOptions = {
-  outputFile?: string,
-  configDir: string,
-};
+import type { ExtractReporterOptions } from './types';
 
 class JSONReporter implements ReporterV2 {
   config!: FullConfig;
@@ -36,7 +32,7 @@ class JSONReporter implements ReporterV2 {
   private _errors: TestError[] = [];
   private _resolvedOutputFile: string | undefined;
 
-  constructor(options: JSONOptions) {
+  constructor(options: ExtractReporterOptions<'json'>) {
     this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
   }
 

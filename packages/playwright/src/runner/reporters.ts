@@ -37,6 +37,7 @@ import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import type { Suite } from '../common/test';
 import type { Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import type { ErrorCollectingReporter, ReporterOptions } from '../reporters/types';
 
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean, descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
@@ -90,10 +91,6 @@ export async function createReporterForTestServer(file: string, messageSink: (me
   }));
 }
 
-interface ErrorCollectingReporter extends ReporterV2 {
-  errors(): TestError[];
-}
-
 export function createErrorCollectingReporter(screen: Screen, writeToConsole?: boolean): ErrorCollectingReporter {
   const errors: TestError[] = [];
   return {
@@ -107,7 +104,7 @@ export function createErrorCollectingReporter(screen: Screen, writeToConsole?: b
   };
 }
 
-function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean) {
+function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean): ReporterOptions {
   return {
     configDir: config.configDir,
     _mode: mode,
