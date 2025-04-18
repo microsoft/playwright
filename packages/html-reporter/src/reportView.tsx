@@ -97,7 +97,7 @@ const TestCaseViewLoader: React.FC<{
   testIdToFileIdMap: Map<string, string>,
 }> = ({ report, testIdToFileIdMap, tests }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const [test, setTest] = React.useState<TestCase | undefined>();
+  const [test, setTest] = React.useState<TestCase | 'loading' | 'not-found'>('loading');
   const testId = searchParams.get('testId');
   const run = +(searchParams.get('run') || '0');
 
@@ -110,28 +110,37 @@ const TestCaseViewLoader: React.FC<{
 
   React.useEffect(() => {
     (async () => {
-      if (!testId || testId === test?.testId)
+      if (!testId || (typeof test === 'object' && testId === test.testId))
         return;
       const fileId = testIdToFileIdMap.get(testId);
-      if (!fileId)
+      if (!fileId) {
+        setTest('not-found');
         return;
-      const file = await report.entry(`${fileId}.json`) as TestFile;
-      for (const t of file.tests) {
-        if (t.testId === testId) {
-          setTest(t);
-          break;
-        }
       }
+      const file = await report.entry(`${fileId}.json`) as TestFile;
+      setTest(file?.tests.find(t => t.testId === testId) || 'not-found');
     })();
   }, [test, report, testId, testIdToFileIdMap]);
 
-  return <TestCaseView
-    projectNames={report.json().projectNames}
-    next={next}
-    prev={prev}
-    test={test}
-    run={run}
-  />;
+  if (test === 'loading')
+    return <div className='test-case-column vbox'></div>;
+
+  if (test === 'not-found') {
+    return <div className='test-case-column vbox'>
+      <div className='test-case-title'>Test not found</div>
+      <div className='test-case-location'>Test ID: {testId}</div>
+    </div>;
+  }
+
+  return <div className='test-case-column vbox'>
+    <TestCaseView
+      projectNames={report.json().projectNames}
+      next={next}
+      prev={prev}
+      test={test}
+      run={run}
+    />;
+  </div>;
 };
 
 function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
