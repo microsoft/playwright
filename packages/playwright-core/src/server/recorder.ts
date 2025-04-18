@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 
-import * as consoleApiSource from '../generated/consoleApiSource';
 import { isUnderTest } from '../utils';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
@@ -204,8 +203,6 @@ export class Recorder implements InstrumentationListener, IRecorder {
     await this._context.exposeBinding('__pw_resume', false, () => {
       this._debugger.resume(false);
     });
-    await this._context.extendInjectedScript(consoleApiSource.source);
-
     await this._contextRecorder.install();
 
     if (this._debugger.isPaused())
