@@ -37,7 +37,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     return false;
   }
 
-  const zipPath = path.join(os.tmpdir(), downloadFileName);
+  const downloadFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-download-'));
+  const zipPath = path.join(downloadFolder, downloadFileName);
   try {
     const retryCount = 5;
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
