@@ -37,7 +37,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     return false;
   }
 
-  const zipPath = path.join(os.tmpdir(), downloadFileName);
+  const downloadFolder = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-download-'));
+  const zipPath = path.join(downloadFolder, downloadFileName);
   try {
     const retryCount = 5;
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
@@ -49,8 +50,9 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
         debugLogger.log('install', `SUCCESS installing ${title}`);
         break;
       }
-      if (await existsAsync(zipPath))
+      if (await existsAsync(zipPath)) {
         await fs.promises.unlink(zipPath);
+      }
       if (await existsAsync(browserDirectory))
         await fs.promises.rmdir(browserDirectory, { recursive: true });
       const errorMessage = error?.message || '';
@@ -65,6 +67,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   } finally {
     if (await existsAsync(zipPath))
       await fs.promises.unlink(zipPath);
+      await fs.promises.rmdir(downloadFolder, { recursive: true });
   }
   logPolitely(`${title} downloaded to ${browserDirectory}`);
   return true;
