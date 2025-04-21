@@ -17,7 +17,7 @@
 import { Map, Set } from '@isomorphic/builtins';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { getElementComputedStyle, getGlobalOptions } from './domUtils';
+import { getElementComputedStyle, getGlobalOptions, isElementVisible } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
@@ -85,6 +85,10 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
           ariaChildren.push(ownedElement);
       }
     }
+
+    // Skip all the leaf nodes that are not visible as they can't be interacted with.
+    if (!ariaChildren.length && !isElementVisible(element))
+      return;
 
     addElement(element);
     const childAriaNode = toAriaNode(element);

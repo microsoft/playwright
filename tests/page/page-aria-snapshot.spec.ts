@@ -730,3 +730,15 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   - text: Hi, I'm frame
   `.trim());
 });
+
+it('should not include hidden input elements', async ({ page }) => {
+  await page.setContent(`
+    <button>One</button>
+    <button style="width: 0; height: 0; appearance: none; border: 0; padding: 0;">Two</button>
+    <button>Three</button>
+  `);
+
+  const snapshot = await page.locator('body').ariaSnapshot();
+  expect(snapshot).toContain(`- button \"One\"
+- button \"Three\"`);
+});
