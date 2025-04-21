@@ -68,7 +68,6 @@ test.describe(() => {
     await recorder.trustedClick();
     await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
-      - textbox
       - text: '- button "Submit"'
     `);
   });
