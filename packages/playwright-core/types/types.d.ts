@@ -12501,6 +12501,11 @@ export interface Locator {
    */
   ariaSnapshot(options?: {
     /**
+     * Generate `generic` aria nodes for elements w/o roles (similar to Chrome DevTools).
+     */
+    emitGeneric?: boolean;
+
+    /**
      * Generate symbolic reference for each element. One can use `aria-ref=<ref>` locator immediately after capturing the
      * snapshot to perform actions on the element.
      */
