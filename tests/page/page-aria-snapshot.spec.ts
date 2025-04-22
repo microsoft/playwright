@@ -731,6 +731,19 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   `.trim());
 });
 
+it('should not include hidden input elements', async ({ page }) => {
+  await page.setContent(`
+    <button>One</button>
+    <button style="width: 0; height: 0; appearance: none; border: 0; padding: 0;">Two</button>
+    <button>Three</button>
+  `);
+
+  const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
+  expect(snapshot).toContain(`- button "One" [ref=s1e3]
+- button "Two"
+- button "Three" [ref=s1e5]`);
+});
+
 it('emit generic roles for nodes w/o roles', async ({ page }) => {
   await page.setContent(`
     <style>
@@ -742,21 +755,36 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
     </style>
     <div>
       <label>
+        <span>
+          <input type="radio" value="Apple" checked="">
+        </span>
         <span>Apple</span>
       </label>
       <label>
+        <span>
+          <input type="radio" value="Pear">
+        </span>
         <span>Pear</span>
       </label>
       <label>
+        <span>
+          <input type="radio" value="Orange">
+        </span>
         <span>Orange</span>
       </label>
     </div>
   `);
 
-  const snapshot = await page.locator('body').ariaSnapshot({ emitGeneric: true });
+  const snapshot = await page.locator('body').ariaSnapshot({ ref: true, emitGeneric: true });
 
-  expect(snapshot).toContain(`- generic:
-  - generic: Apple
-  - generic: Pear
-  - generic: Orange`);
+  expect(snapshot).toContain(`- generic [ref=s1e3]:
+  - generic [ref=s1e4]:
+    - radio "Apple" [checked]
+    - text: Apple
+  - generic [ref=s1e8]:
+    - radio "Pear"
+    - text: Pear
+  - generic [ref=s1e12]:
+    - radio "Orange"
+    - text: Orange`);
 });
