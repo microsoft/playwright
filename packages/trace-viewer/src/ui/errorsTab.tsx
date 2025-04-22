@@ -51,7 +51,7 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
   }, [model]);
 }
 
-function Error({ message, error, errorId, sdkLanguage, revealInSource }: { message: string, error: modelUtil.ErrorDescription, errorId: string, sdkLanguage: Language, revealInSource: (error: modelUtil.ErrorDescription) => void }) {
+function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: string, error: modelUtil.ErrorDescription, sdkLanguage: Language, revealInSource: (error: modelUtil.ErrorDescription) => void }) {
   let location: string | undefined;
   let longLocation: string | undefined;
   const stackFrame = error.stack?.[0];
@@ -102,7 +102,7 @@ export const ErrorsTab: React.FunctionComponent<{
   return <div className='fill' style={{ overflow: 'auto' }}>
     {[...errorsModel.errors.entries()].map(([message, error]) => {
       const errorId = `error-${wallTime}-${message}`;
-      return <Error key={errorId} errorId={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} />;
+      return <ErrorView key={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} />;
     })}
   </div>;
 };
