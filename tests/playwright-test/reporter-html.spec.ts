@@ -2933,6 +2933,25 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
     });
+
+    test('should show error if test ID not found', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({ browser }) => {
+            const page = await browser.newPage();
+            await page.setContent('<button>Click me</button>');
+            expect(2).toBe(2);
+          });
+        `,
+      }, { reporter: 'html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      await showReport();
+
+      await page.goto(`${page.url()}#?testId=non-existing-test-id`);
+
+      await expect(page.getByText('Test not found')).toBeVisible();
+    });
   });
 }
 

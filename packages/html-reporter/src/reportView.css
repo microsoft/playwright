@@ -29,7 +29,9 @@ body {
   width: 100%;
 }
 
-.error {
+.fatal-report-error {
+  display: flex;
+  justify-content: center;
   margin-top: 10px;
 }
 

@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
-import type { FilteredStats, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
+import type { AsyncResult, FilteredStats, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
 import { Filter } from './filter';
 import { HeaderView } from './headerView';
 import { Route, SearchParamsContext } from './links';
-import type { LoadedReport } from './loadedReport';
+import type { ParsedReport } from './parsedReport';
 import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
@@ -43,7 +43,17 @@ type TestModelSummary = {
 };
 
 export const ReportView: React.FC<{
-  report: LoadedReport | undefined,
+  report: AsyncResult<ParsedReport>,
+}> = ({ report }) => {
+  return <div className='htmlreport vbox px-4 pb-4'>
+    <main>
+      <RenderedReportResult report={report} />
+    </main>
+  </div>;
+};
+
+const LoadedReportView: React.FC<{
+  report: ParsedReport,
 }> = ({ report }) => {
   const searchParams = React.useContext(SearchParamsContext);
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
@@ -52,7 +62,7 @@ export const ReportView: React.FC<{
 
   const testIdToFileIdMap = React.useMemo(() => {
     const map = new Map<string, string>();
-    for (const file of report?.json().files || []) {
+    for (const file of report.json().files) {
       for (const test of file.tests)
         map.set(test.testId, file.fileId);
     }
@@ -60,10 +70,10 @@ export const ReportView: React.FC<{
   }, [report]);
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
-  const filteredStats = React.useMemo(() => filter.empty() ? undefined : computeStats(report?.json().files || [], filter), [report, filter]);
+  const filteredStats = React.useMemo(() => filter.empty() ? undefined : computeStats(report.json().files || [], filter), [report, filter]);
   const filteredTests = React.useMemo(() => {
     const result: TestModelSummary = { files: [], tests: [] };
-    for (const file of report?.json().files || []) {
+    for (const file of report.json().files) {
       const tests = file.tests.filter(t => filter.matches(t));
       if (tests.length)
         result.files.push({ ...file, tests });
@@ -74,41 +84,43 @@ export const ReportView: React.FC<{
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />
       <Route predicate={testFilesRoutePredicate}>
-        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
+        <TestFilesHeader report={report.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
           tests={filteredTests.files}
           expandedFiles={expandedFiles}
           setExpandedFiles={setExpandedFiles}
-          projectNames={report?.json().projectNames || []}
+          projectNames={report.json().projectNames}
         />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
-        {!!report ?
-          <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} /> :
-          <div className='error'>Report data could not be found</div>}
+        <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} />
       </Route>
     </main>
   </div>;
 };
 
-type TestState = {
-  type: 'loading'
-} | {
-  type: 'test',
-  test: TestCase,
-} | {
-  type: 'error',
+const RenderedReportResult: React.FC<{
+  report: AsyncResult<ParsedReport>
+}> = ({ report }) => {
+  switch (report.type) {
+    case 'loading':
+      return <div />;
+    case 'data':
+      return <LoadedReportView report={report.data} />;
+    case 'error':
+      return <div className='fatal-report-error'>Report data could not be found. Please reload the page or regenerate the HTML report</div>;
+  }
 };
 
 const TestCaseViewLoader: React.FC<{
-  report: LoadedReport,
+  report: ParsedReport,
   tests: TestCaseSummary[],
   testIdToFileIdMap: Map<string, string>,
 }> = ({ report, testIdToFileIdMap, tests }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const [test, setTest] = React.useState<TestState>({ type: 'loading' });
+  const [test, setTest] = React.useState<AsyncResult<TestCase>>({ type: 'loading' });
   const testId = searchParams.get('testId');
   const run = +(searchParams.get('run') || '0');
 
@@ -119,9 +131,11 @@ const TestCaseViewLoader: React.FC<{
     return { prev, next };
   }, [testId, tests]);
 
+  const currentTestId = test.type === 'data' ? test.data.testId : undefined;
+
   React.useEffect(() => {
     (async () => {
-      if (test.type === 'test' && testId === test.test.testId)
+      if (testId === currentTestId)
         return;
       if (!testId) {
         setTest({ type: 'error' });
@@ -135,25 +149,28 @@ const TestCaseViewLoader: React.FC<{
       try {
         const file = await report.entry(`${fileId}.json`) as TestFile;
         const testCase = file.tests.find(t => t.testId === testId);
-        setTest(!!testCase ? { type: 'test', test: testCase } : { type: 'error' });
+        setTest(!!testCase ? { type: 'data', data: testCase } : { type: 'error' });
       } catch (e) {
         setTest({ type: 'error' });
       }
     })();
-  }, [test, report, testId, testIdToFileIdMap]);
+  }, [report, testId, currentTestId, testIdToFileIdMap]);
 
   switch (test.type) {
     case 'loading':
-    case 'test':
+    case 'data':
       return <TestCaseView
         projectNames={report.json().projectNames}
         next={next}
         prev={prev}
-        test={test.type === 'test' ? test.test : undefined}
+        test={test.type === 'data' ? test.data : undefined}
         run={run}
       />;
     case 'error':
-      return <div className='error'>Test case not found</div>;
+      return <div className='test-case-column vbox'>
+        <div className='test-case-title'>Test not found</div>
+        <div className='test-case-location'>Test ID: {testId}</div>
+      </div>;
   }
 };
 

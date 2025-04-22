@@ -113,3 +113,12 @@ export type TestStep = {
   count: number;
   skipped?: boolean;
 };
+
+export type AsyncResult<T> = {
+  type: 'loading'
+} | {
+  type: 'data',
+  data: T,
+} | {
+  type: 'error',
+};

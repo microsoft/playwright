@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from './types';
+import type { AsyncResult, HTMLReport } from './types';
 import type * as zip from '@zip.js/zip.js';
 // @ts-ignore
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import './colors.css';
-import type { LoadedReport } from './loadedReport';
+import type { ParsedReport } from './parsedReport';
 import { ReportView } from './reportView';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
@@ -34,13 +34,17 @@ link.href = logo;
 document.head.appendChild(link);
 
 const ReportLoader: React.FC = () => {
-  const [report, setReport] = React.useState<LoadedReport | undefined>();
+  const [report, setReport] = React.useState<AsyncResult<ParsedReport>>({ type: 'loading' });
   React.useEffect(() => {
-    if (report)
-      return;
     const zipReport = new ZipReport();
-    zipReport.load().then(() => setReport(zipReport));
-  }, [report]);
+    zipReport.load()
+        .then(() => setReport({ type: 'data', data: zipReport }))
+        .catch(error => {
+          // eslint-disable-next-line no-console
+          console.error('Failed to load report', error);
+          setReport({ type: 'error' });
+        });
+  }, []);
   return <SearchParamsProvider>
     <ReportView report={report} />
   </SearchParamsProvider>;
@@ -52,7 +56,7 @@ window.onload = () => {
 
 const kPlaywrightReportStorageForHMR = 'playwrightReportStorageForHMR';
 
-class ZipReport implements LoadedReport {
+class ZipReport implements ParsedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
 

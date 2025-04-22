@@ -62,13 +62,11 @@ export const TestFilesView: React.FC<{
 };
 
 export const TestFilesHeader: React.FC<{
-  report: HTMLReport | undefined,
+  report: HTMLReport,
   filteredStats?: FilteredStats,
   metadataVisible: boolean,
   toggleMetadataVisible: () => void,
 }> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
-  if (!report)
-    return null;
   return <>
     <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
       <div className='test-file-header-info'>

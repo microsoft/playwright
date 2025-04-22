@@ -16,7 +16,7 @@
 
 import type { HTMLReport } from './types';
 
-export interface LoadedReport {
+export interface ParsedReport {
   json(): HTMLReport;
   entry(name: string): Promise<Object | undefined>;
 }
