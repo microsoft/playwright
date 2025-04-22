@@ -91,18 +91,14 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
 
     const parsedError = error.stack ? parseErrorStack(error.stack, path.sep) : undefined;
     const inlineMessage = stripAnsiEscapes(parsedError?.message || error.message || '').split('\n')[0];
-    const location = parsedError?.location || { file: testInfo.file, line: testInfo.line, column: testInfo.column };
-    let source = await loadSource(location.file, sourceCache);
-    // If the error location is not available on the disk (e.g. fake page.evaluate in-browser error), then fallback to the test file.
-    if (!source)
-      source = await loadSource(testInfo.file, sourceCache);
-    if (source) {
+    const loadedSource = await loadSource(parsedError?.location, testInfo, sourceCache);
+    if (loadedSource) {
       const codeFrame = codeFrameColumns(
-          source,
+          loadedSource.source,
           {
             start: {
-              line: location.line,
-              column: location.column
+              line: loadedSource.location.line,
+              column: loadedSource.location.column
             },
           },
           {
@@ -144,7 +140,30 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
   }
 }
 
-async function loadSource(file: string, sourceCache: Map<string, string>): Promise<string | undefined> {
+type Location = {
+  file: string,
+  line: number,
+  column: number,
+};
+
+async function loadSource(
+  errorLocation: Location | undefined,
+  testLocation: Location,
+  sourceCache: Map<string, string>
+): Promise<{ location: Location, source: string } | undefined> {
+  if (errorLocation) {
+    const source = await loadSourceCached(errorLocation.file, sourceCache);
+    if (source)
+      return { location: errorLocation, source };
+  }
+  // If the error location is not available on the disk (e.g. fake page.evaluate in-browser error), then fallback to the test file.
+  const source = await loadSourceCached(testLocation.file, sourceCache);
+  if (source)
+    return { location: testLocation, source };
+  return undefined;
+}
+
+async function loadSourceCached(file: string, sourceCache: Map<string, string>): Promise<string | undefined> {
   let source = sourceCache.get(file);
   if (!source) {
     try {
