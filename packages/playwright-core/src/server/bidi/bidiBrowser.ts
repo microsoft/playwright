@@ -336,29 +336,16 @@ export class BidiBrowserContext extends BrowserContext {
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     verifyGeolocation(geolocation);
     this._options.geolocation = geolocation;
-    const promises: Promise<unknown>[] = [
-      this._browser._browserSession.send('emulation.setGeolocationOverride', {
-        coordinates: {
-          latitude: geolocation?.latitude,
-          longitude: geolocation?.longitude,
-          accuracy: geolocation?.accuracy,
-        },
-        userContexts: [this._browserContextId || 'default'],
-      }),
-    ];
-    const pageIds = this.pages().map(page => (page._delegate as BidiPage)._session.sessionId);
-    if (pageIds.length) {
-      // TODO: we can't specify userContexts and contexts at the same time in Firefox.
-      promises.push(this._browser._browserSession.send('emulation.setGeolocationOverride', {
-        coordinates: {
-          latitude: geolocation?.latitude,
-          longitude: geolocation?.longitude,
-          accuracy: geolocation?.accuracy,
-        },
-        contexts: pageIds as [string, ...string[]],
-      }));
-    }
-    await Promise.all(promises);
+    // Setting geolocation on the user context automatically applies it to all existing
+    // pages in the context in Bidi.
+    await this._browser._browserSession.send('emulation.setGeolocationOverride', {
+      coordinates: {
+        latitude: geolocation?.latitude,
+        longitude: geolocation?.longitude,
+        accuracy: geolocation?.accuracy,
+      },
+      userContexts: [this._browserContextId || 'default'],
+    });
   }
 
   async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
