@@ -72,8 +72,7 @@ export const ReportView: React.FC<{
     return result;
   }, [report, filter]);
 
-  const json = report?.json();
-  const reportTitle = json?.options.title;
+  const reportTitle = report?.json()?.title;
 
   React.useEffect(() => {
     if (reportTitle)
@@ -84,26 +83,22 @@ export const ReportView: React.FC<{
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {json && <HeaderView stats={json.stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       <Route predicate={testFilesRoutePredicate}>
-        <Body>
-          <TestFilesHeader report={json} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
-          <TestFilesView
-            tests={filteredTests.files}
-            expandedFiles={expandedFiles}
-            setExpandedFiles={setExpandedFiles}
-            projectNames={json?.projectNames || []}
-          />
-        </Body>
+        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
+        <TestFilesView
+          tests={filteredTests.files}
+          expandedFiles={expandedFiles}
+          setExpandedFiles={setExpandedFiles}
+          projectNames={report?.json().projectNames || []}
+        />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
-        {!!report && <Body><TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} /></Body>}
+        {!!report && <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} />}
       </Route>
     </main>
   </div>;
 };
-
-const Body: React.FC<React.PropsWithChildren<{}>> = ({ children }) => <div className='report-body'>{children}</div>;
 
 const TestCaseViewLoader: React.FC<{
   report: LoadedReport,

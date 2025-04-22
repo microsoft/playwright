@@ -24,6 +24,7 @@ import { TestErrorView } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
 import { clsx } from '@web/uiUtils';
+import { HeaderTitleView } from './headerView';
 
 export const TestFilesView: React.FC<{
   tests: TestFileSummary[],
@@ -71,7 +72,7 @@ export const TestFilesHeader: React.FC<{
   if (!report)
     return null;
   return <>
-    <div className='mx-1' style={{ display: 'flex' }}>
+    <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
       <div className='test-file-header-info'>
         {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
           {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
@@ -84,9 +85,7 @@ export const TestFilesHeader: React.FC<{
       <div data-testid='overall-duration' style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report.duration ?? 0)}</div>
     </div>
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
-    {report.options.title && <div className={clsx('report-title', metadataVisible && 'metadata-visible')}>
-      {report.options.title}
-    </div>}
+    {report.title && <HeaderTitleView title={report.title} />}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}

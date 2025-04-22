@@ -453,7 +453,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.passed).toBe(1);
 
       await showReport();
-      await expect(page.locator('.report-title')).toHaveText('Custom report title');
+      await expect(page.locator('.header-title')).toHaveText('Custom report title');
     });
 
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {

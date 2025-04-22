@@ -27,6 +27,7 @@ import { linkifyText } from '@web/renderUtils';
 import { hashStringToInt, msToString } from './utils';
 import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
+import { HeaderTitleView } from './headerView';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -55,7 +56,7 @@ export const TestCaseView: React.FC<{
       <div style={{ width: 10 }}></div>
       <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
     </div>}
-    {test && <div className='report-title'>{test?.title}</div>}
+    {test && <HeaderTitleView title={test.title} />}
     {test && <div className='hbox'>
       <div className='test-case-location'>
         <CopyToClipboardContainer value={`${test?.location.file}:${test?.location.line}`}>
