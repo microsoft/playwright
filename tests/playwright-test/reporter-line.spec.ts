@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
@@ -218,11 +219,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           });
         `,
       }, { reporter: 'line' });
-      const text = result.output;
       if (useIntermediateMergeReport)
-        expect(text).toContain(`Error Context: ${path.join('blob-report', 'resources')}`);
+        expect(result.output).toContain(`Error Context: ${path.join('blob-report', 'resources')}`);
       else
-        expect(text).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
+        expect(result.output).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
+      const file = /Error Context: (.*)/.exec(result.output)?.[1];
+      const content = await fs.promises.readFile(path.join(result.report.config.rootDir, file), 'utf8');
+      expect(content).toContain('^ Error: page.evaluate: Error: error');
       expect(result.exitCode).toBe(1);
     });
   });
