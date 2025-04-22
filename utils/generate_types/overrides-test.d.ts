@@ -18,11 +18,10 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
-export type HtmlReporterOptions = { outputDir?: string, fileName?: string };
 export type ListReporterOptions = { printSteps?: boolean };
 export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean };
 export type JsonReporterOptions = { outputFile?: string };
-export type HtmlOptions = { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string };
+export type HtmlReporterOptions = { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string };
 
 export type ReporterDescription = Readonly<
   ['blob'] | ['blob', BlobReporterOptions] |
@@ -32,7 +31,7 @@ export type ReporterDescription = Readonly<
   ['github'] |
   ['junit'] | ['junit', JUnitReporterOptions] |
   ['json'] | ['json', JsonReporterOptions] |
-  ['html'] | ['html', HtmlOptions] |
+  ['html'] | ['html', HtmlReporterOptions] |
   ['null'] |
   [string] | [string, any]
 >;

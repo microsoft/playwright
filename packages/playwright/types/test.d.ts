@@ -32,7 +32,7 @@ export type ReporterDescription = Readonly<
   ['github'] |
   ['junit'] | ['junit', JUnitReporterOptions] |
   ['json'] | ['json', JsonReporterOptions] |
-  ['html'] | ['html', HtmlOptions] |
+  ['html'] | ['html', HtmlReporterOptions] |
   ['null'] |
   [string] | [string, any]
 >;
