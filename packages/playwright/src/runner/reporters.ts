@@ -39,7 +39,6 @@ import type { Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { ErrorCollectingReporter, ReporterOptions } from '../reporters/types';
 
-
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean, descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
   const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
     blob: BlobReporter,

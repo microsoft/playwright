@@ -26,10 +26,11 @@ import { yazl } from 'playwright-core/lib/zipBundle';
 import { resolveOutputFile } from './base';
 import { TeleReporterEmitter } from './teleEmitter';
 
+import type { ReporterOptions } from './types';
+import type { BlobReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import type { EventEmitter } from 'events';
-import type { ExtractReporterOptions } from './types';
 
 export const currentBlobReportVersion = 2;
 
@@ -41,14 +42,16 @@ export type BlobReportMetadata = {
   pathSeparator?: string;
 };
 
+type Options = BlobReporterOptions & ReporterOptions;
+
 export class BlobReporter extends TeleReporterEmitter {
   private readonly _messages: JsonEvent[] = [];
   private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
-  private readonly _options: ExtractReporterOptions<'blob'>;
+  private readonly _options: Options;
   private readonly _salt: string;
   private _config!: FullConfig;
 
-  constructor(options: ExtractReporterOptions<'blob'>) {
+  constructor(options: Options) {
     super(message => this._messages.push(message));
     this._options = options;
     if (this._options.fileName && !this._options.fileName.endsWith('.zip'))

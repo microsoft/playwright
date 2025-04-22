@@ -29,19 +29,21 @@ import { codeFrameColumns } from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
-import type { Metadata } from '../../types/test';
+import type { HtmlReporterOptions, Metadata } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep, TestAnnotation } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
-import type { ExtractReporterOptions } from './types';
+import type { ReporterOptions } from './types';
 
 type TestEntry = {
   testCase: TestCase;
   testCaseSummary: TestCaseSummary
 };
 
-type HtmlReportOpenOption = Exclude<ExtractReporterOptions<'html'>['open'], undefined>;
+type Options = HtmlReporterOptions & ReporterOptions;
+
+type HtmlReportOpenOption = Exclude<Options['open'], undefined>;
 const htmlReportOptions: HtmlReportOpenOption[] = ['always', 'never', 'on-failure'];
 
 const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
@@ -51,7 +53,7 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
-  private _options: ExtractReporterOptions<'html'>;
+  private _options: Options;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
   private _open: string | undefined;
@@ -60,7 +62,7 @@ class HtmlReporter implements ReporterV2 {
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
-  constructor(options: ExtractReporterOptions<'html'>) {
+  constructor(options: Options) {
     this._options = options;
   }
 

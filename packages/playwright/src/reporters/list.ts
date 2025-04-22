@@ -20,13 +20,16 @@ import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { TerminalReporter, stepSuffix } from './base';
 import { stripAnsiEscapes } from '../util';
 
+import type { ListReporterOptions } from '../../types/test';
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-import type { ExtractReporterOptions } from './types';
+import type { ReporterOptions } from './types';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓';
 const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
+
+type Options = ListReporterOptions & ReporterOptions;
 
 class ListReporter extends TerminalReporter {
   private _lastRow = 0;
@@ -38,7 +41,7 @@ class ListReporter extends TerminalReporter {
   private _needNewLine = false;
   private _printSteps: boolean;
 
-  constructor(options?: ExtractReporterOptions<'list'>) {
+  constructor(options?: Options) {
     super();
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
   }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
 import type { ReporterV2 } from './reporterV2';
 
@@ -24,10 +23,6 @@ export type ReporterOptions = {
   _isTestServer: boolean,
   _commandHash: string,
 };
-
-export type ExtractReporterSpecificOptions<T extends ReporterDescription[0]> = Extract<ReporterDescription, Readonly<[T, any]>>[1];
-
-export type ExtractReporterOptions<T extends ReporterDescription[0]> = ExtractReporterSpecificOptions<T> & ReporterOptions;
 
 export interface ErrorCollectingReporter extends ReporterV2 {
   errors(): TestError[];

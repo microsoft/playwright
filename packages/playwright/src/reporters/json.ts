@@ -23,8 +23,11 @@ import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile } 
 import { getProjectId } from '../common/config';
 
 import type { ReporterV2 } from './reporterV2';
+import type { JsonReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, JSONReport, JSONReportError, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult, JSONReportTestStep, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-import type { ExtractReporterOptions } from './types';
+import type { ReporterOptions } from './types';
+
+type Options = JsonReporterOptions & ReporterOptions;
 
 class JSONReporter implements ReporterV2 {
   config!: FullConfig;
@@ -32,7 +35,7 @@ class JSONReporter implements ReporterV2 {
   private _errors: TestError[] = [];
   private _resolvedOutputFile: string | undefined;
 
-  constructor(options: ExtractReporterOptions<'json'>) {
+  constructor(options: Options) {
     this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
   }
 
