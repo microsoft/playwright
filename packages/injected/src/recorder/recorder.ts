@@ -1055,6 +1055,7 @@ export class Recorder {
     injectedScript.utils.cacheNormalizedWhitespaces();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
+    injectedScript.consoleApi.install();
   }
 
   installListeners() {
