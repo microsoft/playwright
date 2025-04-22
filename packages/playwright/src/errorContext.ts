@@ -167,7 +167,7 @@ async function loadSourceCached(file: string, sourceCache: Map<string, string>):
   let source = sourceCache.get(file);
   if (!source) {
     try {
-    // A mild race is Ok here.
+      // A mild race is Ok here.
       source = await fs.readFile(file, 'utf8');
       sourceCache.set(file, source);
     } catch (e) {
