@@ -207,7 +207,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
-    test.fixme('should show error context if exception contains non-existent file', async ({ runInlineTest, useIntermediateMergeReport }) => {
+    test('should show error context if exception contains non-existent file', async ({ runInlineTest, useIntermediateMergeReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           const { test, expect } = require('@playwright/test');

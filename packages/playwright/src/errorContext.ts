@@ -17,7 +17,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { parseErrorStack } from 'playwright-core/lib/utils';
+import { existsAsync, parseErrorStack } from 'playwright-core/lib/utils';
 
 import { stripAnsiEscapes } from './util';
 import { codeFrameColumns } from './transform/babelBundle';
@@ -93,29 +93,31 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
     const inlineMessage = stripAnsiEscapes(parsedError?.message || error.message || '').split('\n')[0];
     const location = parsedError?.location || { file: testInfo.file, line: testInfo.line, column: testInfo.column };
     const source = await loadSource(location.file, sourceCache);
-    const codeFrame = codeFrameColumns(
-        source,
-        {
-          start: {
-            line: location.line,
-            column: location.column
+    if (source) {
+      const codeFrame = codeFrameColumns(
+          source,
+          {
+            start: {
+              line: location.line,
+              column: location.column
+            },
           },
-        },
-        {
-          highlightCode: false,
-          linesAbove: 100,
-          linesBelow: 100,
-          message: inlineMessage || undefined,
-        }
-    );
-    lines.push(
-        '',
-        '# Test source',
-        '',
-        '```ts',
-        codeFrame,
-        '```',
-    );
+          {
+            highlightCode: false,
+            linesAbove: 100,
+            linesBelow: 100,
+            message: inlineMessage || undefined,
+          }
+      ) ;
+      lines.push(
+          '',
+          '# Test source',
+          '',
+          '```ts',
+          codeFrame,
+          '```',
+      );
+    }
 
     if (metadata.gitDiff) {
       lines.push(
@@ -141,10 +143,12 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
 
 async function loadSource(file: string, sourceCache: Map<string, string>) {
   let source = sourceCache.get(file);
-  if (!source) {
-    // A mild race is Ok here.
-    source = await fs.readFile(file, 'utf8');
-    sourceCache.set(file, source);
-  }
+  if (source)
+    return source;
+  if (!await existsAsync(file))
+    return undefined;
+  // A mild race is Ok here.
+  source = await fs.readFile(file, 'utf8');
+  sourceCache.set(file, source);
   return source;
 }
