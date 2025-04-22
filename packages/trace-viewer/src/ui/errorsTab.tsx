@@ -21,9 +21,6 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
-import { AIConversation } from './aiConversation';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
 import { fixTestInstructions } from '@web/prompts';
@@ -55,9 +52,6 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 }
 
 function Error({ message, error, errorId, sdkLanguage, revealInSource }: { message: string, error: modelUtil.ErrorDescription, errorId: string, sdkLanguage: Language, revealInSource: (error: modelUtil.ErrorDescription) => void }) {
-  const [showLLM, setShowLLM] = React.useState(false);
-  const llmAvailable = useIsLLMAvailable();
-
   let location: string | undefined;
   let longLocation: string | undefined;
   const stackFrame = error.stack?.[0];
@@ -88,51 +82,12 @@ function Error({ message, error, errorId, sdkLanguage, revealInSource }: { messa
         @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
-        {prompt && (
-          llmAvailable
-            ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} prompt={prompt} />
-            : <CopyPromptButton prompt={prompt} />
-        )}
+        {prompt && <CopyPromptButton prompt={prompt} />}
       </span>
     </div>
 
     <ErrorMessage error={message} />
-
-    {showLLM && <AIConversation conversationId={errorId} />}
   </div>;
-}
-
-function FixWithAIButton({ conversationId, value, onChange, prompt }: { conversationId: string, value: boolean, onChange: React.Dispatch<React.SetStateAction<boolean>>, prompt: string }) {
-  const chat = useLLMChat();
-
-  return <ToolbarButton
-    onClick={() => {
-      if (!chat.getConversation(conversationId)) {
-        const conversation = chat.startConversation(conversationId, [
-          `My Playwright test failed. What's going wrong?`,
-          `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
-          `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
-        ].join('\n'));
-
-        let displayPrompt = `Help me with the error above.`;
-        const hasDiff = prompt.includes('Local changes:');
-        const hasSnapshot = prompt.includes('Page snapshot:');
-        if (hasDiff)
-          displayPrompt += ` Take the code diff${hasSnapshot ? ' and page snapshot' : ''} into account.`;
-        else if (hasSnapshot)
-          displayPrompt += ` Take the page snapshot into account.`;
-
-        conversation.send(prompt, displayPrompt);
-      }
-
-      onChange(v => !v);
-    }}
-    style={{ width: '96px', justifyContent: 'center' }}
-    title='Fix with AI'
-    className='copy-to-clipboard-text-button'
-  >
-    {value ? 'Hide AI' : 'Fix with AI'}
-  </ToolbarButton>;
 }
 
 export const ErrorsTab: React.FunctionComponent<{
