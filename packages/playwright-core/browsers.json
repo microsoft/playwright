@@ -3,27 +3,27 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1169",
+      "revision": "1170",
       "installByDefault": true,
-      "browserVersion": "136.0.7103.25"
+      "browserVersion": "136.0.7103.33"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1169",
+      "revision": "1170",
       "installByDefault": true,
-      "browserVersion": "136.0.7103.25"
+      "browserVersion": "136.0.7103.33"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1322",
+      "revision": "1324",
       "installByDefault": false,
-      "browserVersion": "137.0.7119.0"
+      "browserVersion": "137.0.7129.0"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1322",
+      "revision": "1324",
       "installByDefault": false,
-      "browserVersion": "137.0.7119.0"
+      "browserVersion": "137.0.7129.0"
     },
     {
       "name": "firefox",
@@ -39,7 +39,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2159",
+      "revision": "2160",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",

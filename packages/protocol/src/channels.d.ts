@@ -2688,11 +2688,13 @@ export type FrameAddStyleTagResult = {
 export type FrameAriaSnapshotParams = {
   selector: string,
   ref?: boolean,
+  emitGeneric?: boolean,
   mode?: 'raw' | 'regex',
   timeout?: number,
 };
 export type FrameAriaSnapshotOptions = {
   ref?: boolean,
+  emitGeneric?: boolean,
   mode?: 'raw' | 'regex',
   timeout?: number,
 };

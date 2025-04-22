@@ -38,7 +38,7 @@ export type AriaSnapshot = {
   ids: Map<Element, number>;
 };
 
-export function generateAriaTree(rootElement: Element, generation: number): AriaSnapshot {
+export function generateAriaTree(rootElement: Element, generation: number, options?: { emitGeneric?: boolean }): AriaSnapshot {
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
@@ -87,7 +87,7 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
     }
 
     addElement(element);
-    const childAriaNode = toAriaNode(element);
+    const childAriaNode = toAriaNode(element, options);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
     processElement(childAriaNode || ariaNode, element, ariaChildren);
@@ -141,14 +141,16 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
   }
 
   normalizeStringChildren(snapshot.root);
+  normalizeGenericRoles(snapshot.root);
   return snapshot;
 }
 
-function toAriaNode(element: Element): AriaNode | null {
+function toAriaNode(element: Element, options?: { emitGeneric?: boolean }): AriaNode | null {
   if (element.nodeName === 'IFRAME')
     return { role: 'iframe', name: '', children: [], props: {}, element };
 
-  const role = roleUtils.getAriaRole(element);
+  const defaultRole = options?.emitGeneric ? 'generic' : null;
+  const role = roleUtils.getAriaRole(element) ?? defaultRole;
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
@@ -179,6 +181,33 @@ function toAriaNode(element: Element): AriaNode | null {
   }
 
   return result;
+}
+
+function normalizeGenericRoles(rootA11yNode: AriaNode) {
+  const visit = (ariaNode: AriaNode) => {
+    const newChildren: (AriaNode | string)[] = [];
+    for (const child of ariaNode.children) {
+      if (typeof child === 'string') {
+        newChildren.push(child);
+        continue;
+      }
+      const isEmptyGeneric = child.role === 'generic' && child.children.length === 0;
+      const isSingleGenericChild = child.role === 'generic' && child.children.length === 1;
+      if (isSingleGenericChild) {
+        // Inline single child chains.
+        const newChild = child.children[0];
+        newChildren.push(newChild);
+        if (typeof newChild !== 'string')
+          visit(newChild);
+      } else if (!isEmptyGeneric) {
+        // Empty div
+        newChildren.push(child);
+        visit(child);
+      }
+    }
+    ariaNode.children = newChildren;
+  };
+  visit(rootA11yNode);
 }
 
 function normalizeStringChildren(rootA11yNode: AriaNode) {
