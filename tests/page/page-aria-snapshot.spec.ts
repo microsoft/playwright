@@ -730,3 +730,33 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   - text: Hi, I'm frame
   `.trim());
 });
+
+it('emit generic roles for nodes w/o roles', async ({ page }) => {
+  await page.setContent(`
+    <style>
+    input {
+      width: 0;
+      height: 0;
+      opacity: 0;
+    }
+    </style>
+    <div>
+      <label>
+        <span>Apple</span>
+      </label>
+      <label>
+        <span>Pear</span>
+      </label>
+      <label>
+        <span>Orange</span>
+      </label>
+    </div>
+  `);
+
+  const snapshot = await page.locator('body').ariaSnapshot({ emitGeneric: true });
+
+  expect(snapshot).toContain(`- generic:
+  - generic: Apple
+  - generic: Pear
+  - generic: Orange`);
+});
