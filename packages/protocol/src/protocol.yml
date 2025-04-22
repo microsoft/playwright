@@ -1975,6 +1975,7 @@ Frame:
       parameters:
         selector: string
         ref: boolean?
+        emitGeneric: boolean?
         mode:
           type: enum?
           literals:

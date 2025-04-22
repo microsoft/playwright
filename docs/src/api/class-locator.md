@@ -206,6 +206,12 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
+### option: Locator.ariaSnapshot.emitGeneric
+* since: v1.53
+- `emitGeneric` <[boolean]>
+
+Generate `generic` aria nodes for elements w/o roles (similar to Chrome DevTools).
+
 ### option: Locator.ariaSnapshot.ref
 * since: v1.52
 - `ref` <[boolean]>
