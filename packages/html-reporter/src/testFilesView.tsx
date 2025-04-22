@@ -23,7 +23,6 @@ import { AutoChip } from './chip';
 import { TestErrorView } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
-import { clsx } from '@web/uiUtils';
 import { HeaderTitleView } from './headerView';
 
 export const TestFilesView: React.FC<{
