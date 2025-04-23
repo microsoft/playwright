@@ -43,6 +43,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
+import { serializeLoadError } from '../common/testLoader';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -418,7 +419,7 @@ export class TestServerDispatcher implements TestServerInterface {
       }
       return { config };
     } catch (e) {
-      return { config: null, error: serializeError(e) };
+      return { config: null, error: this._configLocation.resolvedConfigFile ? serializeLoadError(this._configLocation.resolvedConfigFile, e) : serializeError(e) };
     }
   }
 

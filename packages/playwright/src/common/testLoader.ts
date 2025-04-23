@@ -82,7 +82,7 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   return suite;
 }
 
-function serializeLoadError(file: string, error: Error | any): TestError {
+export function serializeLoadError(file: string, error: Error | any): TestError {
   if (error instanceof Error) {
     const result: TestError = filterStackTrace(error);
     // Babel parse errors have location.
