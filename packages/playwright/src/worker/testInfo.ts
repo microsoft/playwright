@@ -25,9 +25,9 @@ import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
+import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
@@ -90,7 +90,7 @@ export class TestInfoImpl implements TestInfo {
   readonly fn: Function;
   expectedStatus: TestStatus;
   duration: number = 0;
-  readonly annotations: Annotation[] = [];
+  readonly annotations: TestAnnotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
   status: TestStatus = 'passed';
   snapshotSuffix: string = '';
@@ -501,7 +501,7 @@ export class TestInfoImpl implements TestInfo {
 }
 
 export class TestStepInfoImpl implements TestStepInfo {
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
 
   private _testInfo: TestInfoImpl;
   private _stepId: string;
