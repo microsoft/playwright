@@ -95,7 +95,7 @@ class SnapshotHelper {
 
   constructor(
     testInfo: TestInfoImpl,
-    matcherName: string,
+    matcherName: 'toMatchSnapshot' | 'toHaveScreenshot',
     locator: Locator | undefined,
     anonymousSnapshotExtension: string,
     configOptions: ToHaveScreenshotConfigOptions,
@@ -160,8 +160,7 @@ class SnapshotHelper {
       outputBasePath = testInfo._getOutputPath(sanitizedName);
       this.attachmentBaseName = sanitizedName;
     }
-    const defaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    this.expectedPath = testInfo._resolveSnapshotPath(configOptions.pathTemplate, defaultTemplate, expectedPathSegments, sanitizeFilePath);
+    this.expectedPath = testInfo._resolveSnapshotPath(matcherName === 'toHaveScreenshot' ? 'screenshot' : 'snapshot', expectedPathSegments, sanitizeFilePath);
     this.legacyExpectedPath = addSuffixToFilePath(outputBasePath, '-expected');
     this.previousPath = addSuffixToFilePath(outputBasePath, '-previous');
     this.actualPath = addSuffixToFilePath(outputBasePath, '-actual');

@@ -448,20 +448,33 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], sanitizeFilePath: boolean, extension?: string) {
+  _resolveSnapshotPath(kind: 'snapshot' | 'screenshot' | 'aria', pathSegments: string[], sanitizeFilePath: boolean) {
     let subPath = path.join(...pathSegments);
+    let ext = path.extname(subPath);
+
+    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
+    let template: string;
+    if (kind === 'screenshot') {
+      template = this._projectInternal.expect?.toHaveScreenshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || legacyTemplate;
+    } else if (kind === 'aria') {
+      const ariaDefaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}';
+      template = this._projectInternal.expect?.toMatchAriaSnapshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || ariaDefaultTemplate;
+      if (subPath.endsWith('.aria.yml'))
+        ext = '.aria.yml';
+    } else {
+      template = this._projectInternal.snapshotPathTemplate || legacyTemplate;
+    }
+
     if (sanitizeFilePath)
-      subPath = sanitizeFilePathBeforeExtension(subPath, extension);
+      subPath = sanitizeFilePathBeforeExtension(subPath, ext);
 
     const dir = path.dirname(subPath);
-    const ext = extension ?? path.extname(subPath);
     const name = path.basename(subPath, ext);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
-    const actualTemplate = (template || this._projectInternal.snapshotPathTemplate || defaultTemplate);
-    const snapshotPath = actualTemplate
+    const snapshotPath = template
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
@@ -477,12 +490,25 @@ export class TestInfoImpl implements TestInfo {
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }
 
-  snapshotPath(...pathSegments: string[]) {
+  snapshotPath(...name: string[]): string;
+  snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
+  snapshotPath(...args: any[]) {
+    let pathSegments: string[] = args;
+    let kind: 'snapshot' | 'screenshot' | 'aria' = 'snapshot';
+
+    const options = args[args.length - 1];
+    if (options && typeof options === 'object') {
+      kind = options.kind ?? kind;
+      pathSegments = args.slice(0, -1);
+    }
+
+    if (!['snapshot', 'screenshot', 'aria'].includes(kind))
+      throw new Error(`testInfo.snapshotPath: unknown kind "${kind}", must be one of "snapshot", "screenshot" or "aria"`);
+
     // Assume a single path segment corresponds to `toHaveScreenshot(name)` and sanitize it,
     // like we do in SnapshotHelper. See https://github.com/microsoft/playwright/pull/9156 for history.
     const sanitizeFilePath = pathSegments.length === 1;
-    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments, sanitizeFilePath);
+    return this._resolveSnapshotPath(kind, pathSegments, sanitizeFilePath);
   }
 
   skip(...args: [arg?: any, description?: string]) {

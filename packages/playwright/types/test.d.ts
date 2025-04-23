@@ -419,7 +419,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
-   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
+   * [testInfo.snapshotPath(...name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
    *
    * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
    * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir)
@@ -1621,7 +1621,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
-   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
+   * [testInfo.snapshotPath(...name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
    *
    * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
    * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir)
@@ -2040,6 +2040,526 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers).
    */
   workers: number;
+}
+
+/**
+ * `TestInfo` contains information about currently running test. It is available to test functions,
+ * [test.beforeEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-each),
+ * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each),
+ * [test.beforeAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-all) and
+ * [test.afterAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-all) hooks, and
+ * test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout,
+ * determine which test is currently running and whether it was retried, etc.
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('basic test', async ({ page }, testInfo) => {
+ *   expect(testInfo.title).toBe('basic test');
+ *   await page.screenshot(testInfo.outputPath('screenshot.png'));
+ * });
+ * ```
+ *
+ */
+export interface TestInfo {
+  /**
+   * Returns a path to a snapshot file with the given `name`. Pass
+   * [`kind`](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path-option-kind) to obtain a specific
+   * path:
+   * - `kind: 'screenshot'` for
+   *   [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1);
+   * - `kind: 'aria'` for
+   *   [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot);
+   * - `kind: 'snapshot'` for
+   *   [expect(value).toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await expect(page).toHaveScreenshot('header.png');
+   * // Screenshot assertion above expects screenshot at this path:
+   * const screenshotPath = test.info().snapshotPath('header.png', { kind: 'screenshot' });
+   *
+   * await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main.aria.yml' });
+   * // Aria snapshot assertion above expects snapshot at this path:
+   * const ariaSnapshotPath = test.info().snapshotPath('main.aria.yml', { kind: 'aria' });
+   *
+   * expect('some text').toMatchSnapshot('snapshot.txt');
+   * // Snapshot assertion above expects snapshot at this path:
+   * const snapshotPath = test.info().snapshotPath('snapshot.txt');
+   *
+   * expect('some text').toMatchSnapshot(['dir', 'subdir', 'snapshot.txt']);
+   * // Snapshot assertion above expects snapshot at this path:
+   * const nestedPath = test.info().snapshotPath('dir', 'subdir', 'snapshot.txt');
+   * ```
+   *
+   * @param name The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the
+   * same test file are expected to be the same.
+   *
+   * When passing [`kind`](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path-option-kind), multiple
+   * name segments are not supported.
+   * @param options
+   */
+  snapshotPath(...name: ReadonlyArray<string>): string;
+  /**
+   * Returns a path to a snapshot file with the given `name`. Pass
+   * [`kind`](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path-option-kind) to obtain a specific
+   * path:
+   * - `kind: 'screenshot'` for
+   *   [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1);
+   * - `kind: 'aria'` for
+   *   [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot);
+   * - `kind: 'snapshot'` for
+   *   [expect(value).toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await expect(page).toHaveScreenshot('header.png');
+   * // Screenshot assertion above expects screenshot at this path:
+   * const screenshotPath = test.info().snapshotPath('header.png', { kind: 'screenshot' });
+   *
+   * await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main.aria.yml' });
+   * // Aria snapshot assertion above expects snapshot at this path:
+   * const ariaSnapshotPath = test.info().snapshotPath('main.aria.yml', { kind: 'aria' });
+   *
+   * expect('some text').toMatchSnapshot('snapshot.txt');
+   * // Snapshot assertion above expects snapshot at this path:
+   * const snapshotPath = test.info().snapshotPath('snapshot.txt');
+   *
+   * expect('some text').toMatchSnapshot(['dir', 'subdir', 'snapshot.txt']);
+   * // Snapshot assertion above expects snapshot at this path:
+   * const nestedPath = test.info().snapshotPath('dir', 'subdir', 'snapshot.txt');
+   * ```
+   *
+   * @param name The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the
+   * same test file are expected to be the same.
+   *
+   * When passing [`kind`](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path-option-kind), multiple
+   * name segments are not supported.
+   * @param options
+   */
+  snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
+  /**
+   * Attach a value or a file from disk to the current test. Some reporters show test attachments. Either
+   * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path) or
+   * [`body`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-body) must be specified, but not
+   * both.
+   *
+   * For example, you can attach a screenshot to the test:
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('basic test', async ({ page }, testInfo) => {
+   *   await page.goto('https://playwright.dev');
+   *   const screenshot = await page.screenshot();
+   *   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+   * });
+   * ```
+   *
+   * Or you can attach files returned by your APIs:
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   * import { download } from './my-custom-helpers';
+   *
+   * test('basic test', async ({}, testInfo) => {
+   *   const tmpPath = await download('a');
+   *   await testInfo.attach('downloaded', { path: tmpPath });
+   * });
+   * ```
+   *
+   * **NOTE** [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
+   * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely
+   * remove the attachment after awaiting the attach call.
+   *
+   * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
+   * @param options
+   */
+  attach(name: string, options?: {
+    /**
+     * Attachment body. Mutually exclusive with
+     * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path).
+     */
+    body?: string|Buffer;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or
+     * `'image/png'`. If omitted, content type is inferred based on the
+     * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path), or defaults to `text/plain`
+     * for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+     */
+    contentType?: string;
+
+    /**
+     * Path on the filesystem to the attached file. Mutually exclusive with
+     * [`body`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-body).
+     */
+    path?: string;
+  }): Promise<void>;
+
+  /**
+   * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
+   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
+   * fixed. This is similar to
+   * [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   */
+  fail(): void;
+
+  /**
+   * Conditionally mark the currently running test as "should fail" with an optional description. This is similar to
+   * [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fail(condition: boolean, description?: string): void;
+
+  /**
+   * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to
+   * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   */
+  fixme(): void;
+
+  /**
+   * Conditionally mark the currently running test as "fixme" with an optional description. This is similar to
+   * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fixme(condition: boolean, description?: string): void;
+
+  /**
+   * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
+   * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with
+   * each other.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   * import fs from 'fs';
+   *
+   * test('example test', async ({}, testInfo) => {
+   *   const file = testInfo.outputPath('dir', 'temporary-file.txt');
+   *   await fs.promises.writeFile(file, 'Put some data to the dir/temporary-file.txt', 'utf8');
+   * });
+   * ```
+   *
+   * > Note that `pathSegments` accepts path segments to the test output directory such as
+   * `testInfo.outputPath('relative', 'path', 'to', 'output')`.
+   * > However, this path must stay within the
+   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) directory for each test
+   * (i.e. `test-results/a-test-title`), otherwise it will throw.
+   * @param pathSegments Path segments to append at the end of the resulting path.
+   */
+  outputPath(...pathSegments: ReadonlyArray<string>): string;
+
+  /**
+   * Changes the timeout for the currently running test. Zero means no timeout. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration), but it could be useful to
+   * change the timeout in certain scenarios:
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }, testInfo) => {
+   *   // Extend timeout for all tests running this hook by 30 seconds.
+   *   testInfo.setTimeout(testInfo.timeout + 30000);
+   * });
+   * ```
+   *
+   * @param timeout Timeout in milliseconds.
+   */
+  setTimeout(timeout: number): void;
+
+  /**
+   * Unconditionally skip the currently running test. Test is immediately aborted. This is similar to
+   * [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip).
+   */
+  skip(): void;
+
+  /**
+   * Conditionally skips the currently running test with an optional description. This is similar to
+   * [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip).
+   * @param condition A skip condition. Test is skipped when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  skip(condition: boolean, description?: string): void;
+
+  /**
+   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
+   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow).
+   */
+  slow(): void;
+
+  /**
+   * Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default
+   * timeout. This is similar to
+   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow).
+   * @param condition Test is marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  slow(condition: boolean, description?: string): void;
+
+  /**
+   * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
+   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups the
+   * test belongs to and file-level annotations for the test file.
+   *
+   * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   */
+  annotations: Array<{
+    /**
+     * Annotation type, for example `'skip'` or `'fail'`.
+     */
+    type: string;
+
+    /**
+     * Optional description.
+     */
+    description?: string;
+  }>;
+
+  /**
+   * The list of files or buffers attached to the current test. Some reporters show test attachments.
+   *
+   * To add an attachment, use
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) instead of
+   * directly pushing onto this array.
+   */
+  attachments: Array<{
+    /**
+     * Attachment name.
+     */
+    name: string;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or
+     * `'image/png'`.
+     */
+    contentType: string;
+
+    /**
+     * Optional path on the filesystem to the attached file.
+     */
+    path?: string;
+
+    /**
+     * Optional attachment body used instead of a file.
+     */
+    body?: Buffer;
+  }>;
+
+  /**
+   * Column number where the currently running test is declared.
+   */
+  column: number;
+
+  /**
+   * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
+   */
+  config: FullConfig;
+
+  /**
+   * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or
+   * not. Can be used in
+   * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) hook.
+   */
+  duration: number;
+
+  /**
+   * First error thrown during test execution, if any. This is equal to the first element in
+   * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
+   */
+  error?: TestInfoError;
+
+  /**
+   * Errors thrown during test execution, if any.
+   */
+  errors: Array<TestInfoError>;
+
+  /**
+   * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
+   * - `'skipped'` for skipped tests, e.g. with
+   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip);
+   * - `'failed'` for tests marked as failed with
+   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   *
+   * Expected status is usually compared with the actual
+   * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach(async ({}, testInfo) => {
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`${testInfo.title} did not run as expected!`);
+   * });
+   * ```
+   *
+   */
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
+
+  /**
+   * Absolute path to a file where the currently running test is declared.
+   */
+  file: string;
+
+  /**
+   * Test function as passed to `test(title, testFunction)`.
+   */
+  fn: Function;
+
+  /**
+   * Line number where the currently running test is declared.
+   */
+  line: number;
+
+  /**
+   * Absolute path to the output directory for this specific test run. Each test run gets its own directory so they
+   * cannot conflict.
+   */
+  outputDir: string;
+
+  /**
+   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
+   * a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has
+   * the same `parallelIndex`.
+   *
+   * Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about
+   * [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   */
+  parallelIndex: number;
+
+  /**
+   * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
+   */
+  project: FullProject;
+
+  /**
+   * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each`
+   * to the [command line](https://playwright.dev/docs/test-cli).
+   */
+  repeatEachIndex: number;
+
+  /**
+   * Specifies the retry number when the test is retried after a failure. The first test run has
+   * [testInfo.retry](https://playwright.dev/docs/api/class-testinfo#test-info-retry) equal to zero, the first retry has
+   * it equal to one, and so on. Learn more about [retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({}, testInfo) => {
+   *   // You can access testInfo.retry in any hook or fixture.
+   *   if (testInfo.retry > 0)
+   *     console.log(`Retrying!`);
+   * });
+   *
+   * test('my test', async ({ page }, testInfo) => {
+   *   // Here we clear some server-side state when retrying.
+   *   if (testInfo.retry)
+   *     await cleanSomeCachesOnTheServer();
+   *   // ...
+   * });
+   * ```
+   *
+   */
+  retry: number;
+
+  /**
+   * Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so
+   * they cannot conflict.
+   *
+   * This property does not account for the
+   * [testProject.snapshotPathTemplate](https://playwright.dev/docs/api/class-testproject#test-project-snapshot-path-template)
+   * configuration.
+   */
+  snapshotDir: string;
+
+  /**
+   * **NOTE** Use of [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix)
+   * is discouraged. Please use
+   * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
+   * to configure snapshot paths.
+   *
+   * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on
+   * the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
+   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more
+   * about [snapshots](https://playwright.dev/docs/test-snapshots).
+   */
+  snapshotSuffix: string;
+
+  /**
+   * Actual status for the currently running test. Available after the test has finished in
+   * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) hook and
+   * fixtures.
+   *
+   * Status is usually compared with the
+   * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach(async ({}, testInfo) => {
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`${testInfo.title} did not run as expected!`);
+   * });
+   * ```
+   *
+   */
+  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
+
+  /**
+   * Tags that apply to the test. Learn more about [tags](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * **NOTE** Any changes made to this list while the test is running will not be visible to test reporters.
+   *
+   */
+  tags: Array<string>;
+
+  /**
+   * Test id matching the test case id in the reporter API.
+   */
+  testId: string;
+
+  /**
+   * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration)
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }, testInfo) => {
+   *   // Extend timeout for all tests running this hook by 30 seconds.
+   *   testInfo.setTimeout(testInfo.timeout + 30000);
+   * });
+   * ```
+   *
+   */
+  timeout: number;
+
+  /**
+   * The title of the currently running test as passed to `test(title, testFunction)`.
+   */
+  title: string;
+
+  /**
+   * The full title path starting with the test file name.
+   */
+  titlePath: Array<string>;
+
+  /**
+   * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
+   * failure, the new worker process gets a new unique `workerIndex`.
+   *
+   * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
+   */
+  workerIndex: number;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -9226,461 +9746,6 @@ export interface Location {
    * Line number in the source file.
    */
   line: number;
-}
-
-/**
- * `TestInfo` contains information about currently running test. It is available to test functions,
- * [test.beforeEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-each),
- * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each),
- * [test.beforeAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-all) and
- * [test.afterAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-all) hooks, and
- * test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout,
- * determine which test is currently running and whether it was retried, etc.
- *
- * ```js
- * import { test, expect } from '@playwright/test';
- *
- * test('basic test', async ({ page }, testInfo) => {
- *   expect(testInfo.title).toBe('basic test');
- *   await page.screenshot(testInfo.outputPath('screenshot.png'));
- * });
- * ```
- *
- */
-export interface TestInfo {
-  /**
-   * Attach a value or a file from disk to the current test. Some reporters show test attachments. Either
-   * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path) or
-   * [`body`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-body) must be specified, but not
-   * both.
-   *
-   * For example, you can attach a screenshot to the test:
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('basic test', async ({ page }, testInfo) => {
-   *   await page.goto('https://playwright.dev');
-   *   const screenshot = await page.screenshot();
-   *   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
-   * });
-   * ```
-   *
-   * Or you can attach files returned by your APIs:
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   * import { download } from './my-custom-helpers';
-   *
-   * test('basic test', async ({}, testInfo) => {
-   *   const tmpPath = await download('a');
-   *   await testInfo.attach('downloaded', { path: tmpPath });
-   * });
-   * ```
-   *
-   * **NOTE** [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
-   * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely
-   * remove the attachment after awaiting the attach call.
-   *
-   * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
-   * @param options
-   */
-  attach(name: string, options?: {
-    /**
-     * Attachment body. Mutually exclusive with
-     * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path).
-     */
-    body?: string|Buffer;
-
-    /**
-     * Content type of this attachment to properly present in the report, for example `'application/json'` or
-     * `'image/png'`. If omitted, content type is inferred based on the
-     * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path), or defaults to `text/plain`
-     * for [string] attachments and `application/octet-stream` for [Buffer] attachments.
-     */
-    contentType?: string;
-
-    /**
-     * Path on the filesystem to the attached file. Mutually exclusive with
-     * [`body`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-body).
-     */
-    path?: string;
-  }): Promise<void>;
-
-  /**
-   * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
-   * fixed. This is similar to
-   * [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   */
-  fail(): void;
-
-  /**
-   * Conditionally mark the currently running test as "should fail" with an optional description. This is similar to
-   * [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(condition: boolean, description?: string): void;
-
-  /**
-   * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to
-   * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme).
-   */
-  fixme(): void;
-
-  /**
-   * Conditionally mark the currently running test as "fixme" with an optional description. This is similar to
-   * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme).
-   * @param condition Test is marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fixme(condition: boolean, description?: string): void;
-
-  /**
-   * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
-   * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with
-   * each other.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('dir', 'temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the dir/temporary-file.txt', 'utf8');
-   * });
-   * ```
-   *
-   * > Note that `pathSegments` accepts path segments to the test output directory such as
-   * `testInfo.outputPath('relative', 'path', 'to', 'output')`.
-   * > However, this path must stay within the
-   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) directory for each test
-   * (i.e. `test-results/a-test-title`), otherwise it will throw.
-   * @param pathSegments Path segments to append at the end of the resulting path.
-   */
-  outputPath(...pathSegments: ReadonlyArray<string>): string;
-
-  /**
-   * Changes the timeout for the currently running test. Zero means no timeout. Learn more about
-   * [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration), but it could be useful to
-   * change the timeout in certain scenarios:
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   testInfo.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   * @param timeout Timeout in milliseconds.
-   */
-  setTimeout(timeout: number): void;
-
-  /**
-   * Unconditionally skip the currently running test. Test is immediately aborted. This is similar to
-   * [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip).
-   */
-  skip(): void;
-
-  /**
-   * Conditionally skips the currently running test with an optional description. This is similar to
-   * [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip).
-   * @param condition A skip condition. Test is skipped when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  skip(condition: boolean, description?: string): void;
-
-  /**
-   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
-   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow).
-   */
-  slow(): void;
-
-  /**
-   * Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default
-   * timeout. This is similar to
-   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow).
-   * @param condition Test is marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(condition: boolean, description?: string): void;
-
-  /**
-   * Returns a path to a snapshot file with the given `pathSegments`. Learn more about
-   * [snapshots](https://playwright.dev/docs/test-snapshots).
-   *
-   * > Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative',
-   * 'path', 'to', 'snapshot.png')`.
-   * > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`),
-   * otherwise it will throw.
-   * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the
-   * same test file are expected to be the same.
-   */
-  snapshotPath(...pathSegments: ReadonlyArray<string>): string;
-
-  /**
-   * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups the
-   * test belongs to and file-level annotations for the test file.
-   *
-   * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
-   */
-  annotations: Array<{
-    /**
-     * Annotation type, for example `'skip'` or `'fail'`.
-     */
-    type: string;
-
-    /**
-     * Optional description.
-     */
-    description?: string;
-  }>;
-
-  /**
-   * The list of files or buffers attached to the current test. Some reporters show test attachments.
-   *
-   * To add an attachment, use
-   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) instead of
-   * directly pushing onto this array.
-   */
-  attachments: Array<{
-    /**
-     * Attachment name.
-     */
-    name: string;
-
-    /**
-     * Content type of this attachment to properly present in the report, for example `'application/json'` or
-     * `'image/png'`.
-     */
-    contentType: string;
-
-    /**
-     * Optional path on the filesystem to the attached file.
-     */
-    path?: string;
-
-    /**
-     * Optional attachment body used instead of a file.
-     */
-    body?: Buffer;
-  }>;
-
-  /**
-   * Column number where the currently running test is declared.
-   */
-  column: number;
-
-  /**
-   * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
-   */
-  config: FullConfig;
-
-  /**
-   * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or
-   * not. Can be used in
-   * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) hook.
-   */
-  duration: number;
-
-  /**
-   * First error thrown during test execution, if any. This is equal to the first element in
-   * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
-   */
-  error?: TestInfoError;
-
-  /**
-   * Errors thrown during test execution, if any.
-   */
-  errors: Array<TestInfoError>;
-
-  /**
-   * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-   * - `'skipped'` for skipped tests, e.g. with
-   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip);
-   * - `'failed'` for tests marked as failed with
-   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   *
-   * Expected status is usually compared with the actual
-   * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   */
-  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
-
-  /**
-   * Absolute path to a file where the currently running test is declared.
-   */
-  file: string;
-
-  /**
-   * Test function as passed to `test(title, testFunction)`.
-   */
-  fn: Function;
-
-  /**
-   * Line number where the currently running test is declared.
-   */
-  line: number;
-
-  /**
-   * Absolute path to the output directory for this specific test run. Each test run gets its own directory so they
-   * cannot conflict.
-   */
-  outputDir: string;
-
-  /**
-   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
-   * a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has
-   * the same `parallelIndex`.
-   *
-   * Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about
-   * [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
-   */
-  parallelIndex: number;
-
-  /**
-   * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
-   */
-  project: FullProject;
-
-  /**
-   * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each`
-   * to the [command line](https://playwright.dev/docs/test-cli).
-   */
-  repeatEachIndex: number;
-
-  /**
-   * Specifies the retry number when the test is retried after a failure. The first test run has
-   * [testInfo.retry](https://playwright.dev/docs/api/class-testinfo#test-info-retry) equal to zero, the first retry has
-   * it equal to one, and so on. Learn more about [retries](https://playwright.dev/docs/test-retries#retries).
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({}, testInfo) => {
-   *   // You can access testInfo.retry in any hook or fixture.
-   *   if (testInfo.retry > 0)
-   *     console.log(`Retrying!`);
-   * });
-   *
-   * test('my test', async ({ page }, testInfo) => {
-   *   // Here we clear some server-side state when retrying.
-   *   if (testInfo.retry)
-   *     await cleanSomeCachesOnTheServer();
-   *   // ...
-   * });
-   * ```
-   *
-   */
-  retry: number;
-
-  /**
-   * Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so
-   * they cannot conflict.
-   *
-   * This property does not account for the
-   * [testProject.snapshotPathTemplate](https://playwright.dev/docs/api/class-testproject#test-project-snapshot-path-template)
-   * configuration.
-   */
-  snapshotDir: string;
-
-  /**
-   * **NOTE** Use of [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix)
-   * is discouraged. Please use
-   * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
-   * to configure snapshot paths.
-   *
-   * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on
-   * the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
-   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more
-   * about [snapshots](https://playwright.dev/docs/test-snapshots).
-   */
-  snapshotSuffix: string;
-
-  /**
-   * Actual status for the currently running test. Available after the test has finished in
-   * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) hook and
-   * fixtures.
-   *
-   * Status is usually compared with the
-   * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   */
-  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
-
-  /**
-   * Tags that apply to the test. Learn more about [tags](https://playwright.dev/docs/test-annotations#tag-tests).
-   *
-   * **NOTE** Any changes made to this list while the test is running will not be visible to test reporters.
-   *
-   */
-  tags: Array<string>;
-
-  /**
-   * Test id matching the test case id in the reporter API.
-   */
-  testId: string;
-
-  /**
-   * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
-   * [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration)
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   testInfo.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   */
-  timeout: number;
-
-  /**
-   * The title of the currently running test as passed to `test(title, testFunction)`.
-   */
-  title: string;
-
-  /**
-   * The full title path starting with the test file name.
-   */
-  titlePath: Array<string>;
-
-  /**
-   * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
-   * failure, the new worker process gets a new unique `workerIndex`.
-   *
-   * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
-   * with Playwright Test.
-   */
-  workerIndex: number;
 }
 
 /**

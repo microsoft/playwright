@@ -54,8 +54,6 @@ export async function toMatchAriaSnapshot(
     return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
 
   const updateSnapshots = testInfo.config.updateSnapshots;
-  const pathTemplate = testInfo._projectInternal.expect?.toMatchAriaSnapshot?.pathTemplate;
-  const defaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}';
 
   const matcherOptions = {
     isNot: this.isNot,
@@ -70,8 +68,7 @@ export async function toMatchAriaSnapshot(
     timeout = options.timeout ?? this.timeout;
   } else {
     if (expectedParam?.name) {
-      const ext = expectedParam.name.endsWith('.aria.yml') ? '.aria.yml' : undefined;
-      expectedPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [expectedParam.name], true, ext);
+      expectedPath = testInfo._resolveSnapshotPath('aria', [expectedParam.name], true);
     } else {
       let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
       if (!snapshotNames) {
@@ -79,11 +76,11 @@ export async function toMatchAriaSnapshot(
         (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
       }
       const fullTitleWithoutSpec = [...testInfo.titlePath.slice(1), ++snapshotNames.anonymousSnapshotIndex].join(' ');
-      expectedPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [trimLongString(fullTitleWithoutSpec) + '.aria.yml'], true, '.aria.yml');
+      expectedPath = testInfo._resolveSnapshotPath('aria', [trimLongString(fullTitleWithoutSpec) + '.aria.yml'], true);
       // in 1.51, we changed the default template to use .aria.yml extension
       // for backwards compatibility, we check for the legacy .yml extension
       if (!(await fileExistsAsync(expectedPath))) {
-        const legacyPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [trimLongString(fullTitleWithoutSpec) + '.yml'], true, '.yml');
+        const legacyPath = testInfo._resolveSnapshotPath('aria', [trimLongString(fullTitleWithoutSpec) + '.yml'], true);
         if (await fileExistsAsync(legacyPath))
           expectedPath = legacyPath;
       }
