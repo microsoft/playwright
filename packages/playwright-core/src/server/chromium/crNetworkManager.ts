@@ -490,7 +490,7 @@ export class CRNetworkManager {
     // @see https://crbug.com/750469
     if (!request)
       return;
-    this._maybeUpdateOOPIFMainRequest(sessionInfo, request);
+    this._maybeUpdateRequestSession(sessionInfo, request);
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
@@ -525,7 +525,7 @@ export class CRNetworkManager {
     // @see https://crbug.com/750469
     if (!request)
       return;
-    this._maybeUpdateOOPIFMainRequest(sessionInfo, request);
+    this._maybeUpdateRequestSession(sessionInfo, request);
     const response = request.request._existingResponse();
     if (response) {
       response.setTransferSize(null);
@@ -540,11 +540,17 @@ export class CRNetworkManager {
     (this._page?._frameManager || this._serviceWorker)!.requestFailed(request.request, !!event.canceled);
   }
 
-  private _maybeUpdateOOPIFMainRequest(sessionInfo: SessionInfo, request: InterceptableRequest) {
+  private _maybeUpdateRequestSession(sessionInfo: SessionInfo, request: InterceptableRequest) {
     // OOPIF has a main request that starts in the parent session but finishes in the child session.
     // We check for the main request by matching loaderId and requestId, and if it now belongs to
     // a child session, migrate it there.
-    if (request.session !== sessionInfo.session && !sessionInfo.isMain && request._documentId === request._requestId)
+    //
+    // Same goes for the main worker script with PlzDedicatedWorker enabled, which is the default.
+    // Here we check the `workerFrame`.
+    //
+    // In theory, we can always update the session. However, we try to be conservative here
+    // to make sure we understand all the scenarios where the session should be updated.
+    if (request.session !== sessionInfo.session && !sessionInfo.isMain && (request._documentId === request._requestId || sessionInfo.workerFrame))
       request.session = sessionInfo.session;
   }
 }
