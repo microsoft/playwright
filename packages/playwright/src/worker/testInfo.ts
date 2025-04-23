@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 
@@ -448,8 +448,11 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], extension?: string) {
-    const subPath = path.join(...pathSegments);
+  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], sanitizeFilePath: boolean, extension?: string) {
+    let subPath = path.join(...pathSegments);
+    if (sanitizeFilePath)
+      subPath = sanitizeFilePathBeforeExtension(subPath, extension);
+
     const dir = path.dirname(subPath);
     const ext = extension ?? path.extname(subPath);
     const name = path.basename(subPath, ext);
@@ -475,8 +478,11 @@ export class TestInfoImpl implements TestInfo {
   }
 
   snapshotPath(...pathSegments: string[]) {
+    // Assume a single path segment corresponds to `toHaveScreenshot(name)` and sanitize it,
+    // like we do in SnapshotHelper. See https://github.com/microsoft/playwright/pull/9156 for history.
+    const sanitizeFilePath = pathSegments.length === 1;
     const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments);
+    return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments, sanitizeFilePath);
   }
 
   skip(...args: [arg?: any, description?: string]) {
