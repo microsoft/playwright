@@ -24,6 +24,7 @@ import { codeFrameColumns } from './transform/babelBundle';
 
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { TestInfoImpl } from './worker/testInfo';
+import type { Location } from '../types/test';
 
 export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdown' | 'json', sourceCache: Map<string, string>, ariaSnapshot: string | undefined) {
   if (format === 'json') {
@@ -139,12 +140,6 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
     }, undefined);
   }
 }
-
-type Location = {
-  file: string,
-  line: number,
-  column: number,
-};
 
 async function loadSource(
   errorLocation: Location | undefined,
