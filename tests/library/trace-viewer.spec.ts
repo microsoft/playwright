@@ -1840,3 +1840,39 @@ test("shouldn't render not-blob trace received from message", async ({ showTrace
   await expect(traceViewer.page.locator('.drop-target')).toBeVisible();
   await expect(traceViewer.actionTitles).not.toBeVisible();
 });
+
+test('should not trip over complex urls in style tags', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35681' },
+}, async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <html>
+        <head>
+          <style>
+          </style>
+        </head>
+        <body>
+          <div>hello</div>
+          <span>world</span>
+        </body>
+      </html>
+    `);
+    const css = `
+      div {
+        background-image: url(   'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><defs><style>.cls-1{fill:none}</style></defs><title>Custom Title</title><polyline class="cls-1" points="1 2 3 4"/></svg>');
+        color: rgb(1, 2, 3);
+      }
+      span {
+        color: rgb(4, 5, 6);
+        background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><style>.cls-1{fill:none}</style></defs><title>Custom Title</title><polyline class='cls-1' points='1 2 3 4'/></svg>" );
+      }
+    `;
+    await page.evaluate(css => document.querySelector('style').textContent = css, css);
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
+  // Just "hello world", no gibberish from the <style>.
+  await expect(snapshot.locator('body')).toHaveText('hello world');
+  await expect(snapshot.locator('div')).toHaveCSS('color', 'rgb(1, 2, 3)');
+  await expect(snapshot.locator('span')).toHaveCSS('color', 'rgb(4, 5, 6)');
+});
