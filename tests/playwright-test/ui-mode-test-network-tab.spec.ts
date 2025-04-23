@@ -112,7 +112,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
 
   await page.getByText('post-data-1').click();
 
-  await expect(page.locator('.CodeMirror-code .CodeMirror-line').allInnerTexts()).resolves.toEqual([
+  await expect(page.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "data": {',
     '    "key": "value",',
@@ -122,11 +122,11 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '    ]',
     '  }',
     '}',
-  ]);
+  ], { useInnerText: true });
 
   await page.getByText('post-data-2').click();
 
-  await expect(page.locator('.CodeMirror-code .CodeMirror-line').allInnerTexts()).resolves.toEqual([
+  await expect(page.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "data": {',
     '    "key": "value",',
@@ -136,7 +136,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '    ]',
     '  }',
     '}',
-  ]);
+  ], { useInnerText: true });
 });
 
 test('should display list of query parameters (only if present)', async ({ runUITest, server }) => {
