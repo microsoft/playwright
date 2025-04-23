@@ -364,6 +364,7 @@ export class WKBrowserContext extends BrowserContext {
       return;
 
     function polyfill() {
+      // https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential
       globalThis.PublicKeyCredential ??= {
         async getClientCapabilities() {
           return {};
