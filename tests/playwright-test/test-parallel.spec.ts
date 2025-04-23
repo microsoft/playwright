@@ -223,3 +223,27 @@ test('parallel mode should minimize running beforeAll/afterAll hooks 2', async (
   expect(countTimes(result.output, '%%beforeAll')).toBe(2);
   expect(countTimes(result.output, '%%afterAll')).toBe(2);
 });
+
+test('parallel mode should display worker count taking project workers into account', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        workers: 10,
+        fullyParallel: true,
+        projects: [
+          { name: 'project1', workers: 3 },
+        ],
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', () => {});
+      test('test2', () => {});
+      test('test3', () => {});
+      test('test4', () => {});
+    `,
+  }, { workers: 10 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  expect(result.output).toContain('Running 4 tests using 3 workers');
+});

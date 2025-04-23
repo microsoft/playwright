@@ -317,10 +317,13 @@ function createPhasesTask(): Task<TestRun> {
         teardownToSetupsDependents.set(teardown, [...closure]);
       }
 
+      let maxProjectWorkers = -1;
       for (let i = 0; i < projectToSuite.size; i++) {
         // Find all projects that have all their dependencies processed by previous phases.
         const phaseProjects: FullProjectInternal[] = [];
         for (const project of projectToSuite.keys()) {
+          if (!!project.workers && project.workers > maxProjectWorkers)
+            maxProjectWorkers = project.workers;
           if (processed.has(project))
             continue;
           const projectsThatShouldFinishFirst = [...project.deps, ...(teardownToSetupsDependents.get(project) || [])];
@@ -347,7 +350,8 @@ function createPhasesTask(): Task<TestRun> {
         }
       }
 
-      testRun.config.config.metadata.actualWorkers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
+      const configWorkers = maxProjectWorkers !== -1 ? maxProjectWorkers : testRun.config.config.workers;
+      testRun.config.config.metadata.actualWorkers = Math.min(configWorkers, maxConcurrentTestGroups);
     },
   };
 }
