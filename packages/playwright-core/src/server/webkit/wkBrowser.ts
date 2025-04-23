@@ -223,6 +223,7 @@ export class WKBrowserContext extends BrowserContext {
       downloadPath: this._browser.options.downloadsPath,
       browserContextId
     }));
+    promises.push(this._polyfillPublicKeyCredential());
     if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
@@ -356,5 +357,26 @@ export class WKBrowserContext extends BrowserContext {
       return;
     if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 240))
       throw new Error(`WebKit on Windows has a minimal viewport of 250x240.`);
+  }
+
+  private async _polyfillPublicKeyCredential() {
+    if (process.platform === 'darwin' || process.platform === 'win32')
+      return;
+
+    function polyfill() {
+      globalThis.PublicKeyCredential ??= {
+        async getClientCapabilities() {
+          return {};
+        },
+        async isConditionalMediationAvailable() {
+          return false;
+        },
+        async isUserVerifyingPlatformAuthenticatorAvailable() {
+          return false;
+        },
+      } as any;
+    }
+
+    await this.addInitScript(`(${polyfill})()`);
   }
 }
