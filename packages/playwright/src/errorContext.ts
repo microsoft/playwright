@@ -24,6 +24,7 @@ import { codeFrameColumns } from './transform/babelBundle';
 
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { TestInfoImpl } from './worker/testInfo';
+import type { Location } from '../types/test';
 
 export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdown' | 'json', sourceCache: Map<string, string>, ariaSnapshot: string | undefined) {
   if (format === 'json') {
@@ -91,31 +92,32 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
 
     const parsedError = error.stack ? parseErrorStack(error.stack, path.sep) : undefined;
     const inlineMessage = stripAnsiEscapes(parsedError?.message || error.message || '').split('\n')[0];
-    const location = parsedError?.location || { file: testInfo.file, line: testInfo.line, column: testInfo.column };
-    const source = await loadSource(location.file, sourceCache);
-    const codeFrame = codeFrameColumns(
-        source,
-        {
-          start: {
-            line: location.line,
-            column: location.column
+    const loadedSource = await loadSource(parsedError?.location, testInfo, sourceCache);
+    if (loadedSource) {
+      const codeFrame = codeFrameColumns(
+          loadedSource.source,
+          {
+            start: {
+              line: loadedSource.location.line,
+              column: loadedSource.location.column
+            },
           },
-        },
-        {
-          highlightCode: false,
-          linesAbove: 100,
-          linesBelow: 100,
-          message: inlineMessage || undefined,
-        }
-    );
-    lines.push(
-        '',
-        '# Test source',
-        '',
-        '```ts',
-        codeFrame,
-        '```',
-    );
+          {
+            highlightCode: false,
+            linesAbove: 100,
+            linesBelow: 100,
+            message: inlineMessage || undefined,
+          }
+      );
+      lines.push(
+          '',
+          '# Test source',
+          '',
+          '```ts',
+          codeFrame,
+          '```',
+      );
+    }
 
     if (metadata.gitDiff) {
       lines.push(
@@ -139,12 +141,33 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
   }
 }
 
-async function loadSource(file: string, sourceCache: Map<string, string>) {
+async function loadSource(
+  errorLocation: Location | undefined,
+  testLocation: Location,
+  sourceCache: Map<string, string>
+): Promise<{ location: Location, source: string } | undefined> {
+  if (errorLocation) {
+    const source = await loadSourceCached(errorLocation.file, sourceCache);
+    if (source)
+      return { location: errorLocation, source };
+  }
+  // If the error location is not available on the disk (e.g. fake page.evaluate in-browser error), then fallback to the test file.
+  const source = await loadSourceCached(testLocation.file, sourceCache);
+  if (source)
+    return { location: testLocation, source };
+  return undefined;
+}
+
+async function loadSourceCached(file: string, sourceCache: Map<string, string>): Promise<string | undefined> {
   let source = sourceCache.get(file);
   if (!source) {
-    // A mild race is Ok here.
-    source = await fs.readFile(file, 'utf8');
-    sourceCache.set(file, source);
+    try {
+      // A mild race is Ok here.
+      source = await fs.readFile(file, 'utf8');
+      sourceCache.set(file, source);
+    } catch (e) {
+      // Ignore errors.
+    }
   }
   return source;
 }
