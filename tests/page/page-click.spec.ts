@@ -57,7 +57,7 @@ it('should issue clicks in parallel in page and popup', async ({ page, server })
 it('should click svg', async ({ page }) => {
   await page.setContent(`
     <svg height="100" width="100">
-      <circle onclick="javascript:window.__CLICKED=42" cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+      <circle onclick="window.__CLICKED=42" cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
     </svg>
   `);
   await page.click('circle');
@@ -79,7 +79,7 @@ it('should click on a span with an inline element inside', async ({ page }) => {
       content: 'q';
     }
     </style>
-    <span onclick='javascript:window.CLICKED=42'></span>
+    <span onclick='window.CLICKED=42'></span>
   `);
   await page.click('span');
   expect(await page.evaluate('CLICKED')).toBe(42);
@@ -155,7 +155,7 @@ it('should click when one of inline box children is outside of viewport', async 
       top: -1000px;
     }
     </style>
-    <span onclick='javascript:window.CLICKED = 42;'><i>woof</i><b>doggo</b></span>
+    <span onclick='window.CLICKED = 42;'><i>woof</i><b>doggo</b></span>
   `);
   await page.click('span');
   expect(await page.evaluate('CLICKED')).toBe(42);
@@ -604,7 +604,7 @@ it('should fail when obscured and not waiting for hit target', async ({ page, se
 });
 
 it('should wait for button to be enabled', async ({ page }) => {
-  await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
+  await page.setContent('<button onclick="window.__CLICKED=true;" disabled><span>Click target</span></button>');
   let done = false;
   const clickPromise = page.click('text=Click target').then(() => done = true);
   await giveItAChanceToClick(page);
@@ -616,7 +616,7 @@ it('should wait for button to be enabled', async ({ page }) => {
 });
 
 it('should wait for input to be enabled', async ({ page }) => {
-  await page.setContent('<input onclick="javascript:window.__CLICKED=true;" disabled>');
+  await page.setContent('<input onclick="window.__CLICKED=true;" disabled>');
   let done = false;
   const clickPromise = page.click('input').then(() => done = true);
   await giveItAChanceToClick(page);
@@ -648,13 +648,13 @@ it('should wait for select to be enabled', async ({ page }) => {
 });
 
 it('should click disabled div', async ({ page }) => {
-  await page.setContent('<div onclick="javascript:window.__CLICKED=true;" disabled>Click target</div>');
+  await page.setContent('<div onclick="window.__CLICKED=true" disabled>Click target</div>');
   await page.click('text=Click target');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should wait for BUTTON to be clickable when it has pointer-events:none', async ({ page }) => {
-  await page.setContent('<button onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></button>');
+  await page.setContent('<button onclick="window.__CLICKED=true" style="pointer-events:none"><span>Click target</span></button>');
   let done = false;
   const clickPromise = page.click('text=Click target').then(() => done = true);
   await giveItAChanceToClick(page);
@@ -666,7 +666,7 @@ it('should wait for BUTTON to be clickable when it has pointer-events:none', asy
 });
 
 it('should wait for LABEL to be clickable when it has pointer-events:none', async ({ page }) => {
-  await page.setContent('<label onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></label>');
+  await page.setContent('<label onclick="window.__CLICKED=true" style="pointer-events:none"><span>Click target</span></label>');
   const clickPromise = page.click('text=Click target');
   // Do a few roundtrips to the page.
   for (let i = 0; i < 5; ++i)
@@ -911,13 +911,13 @@ it('should not hang when frame is detached', async ({ page, server, mode }) => {
 });
 
 it('should climb dom for inner label with pointer-events:none', async ({ page }) => {
-  await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
+  await page.setContent('<button onclick="window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
   await page.click('text=Click target');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should climb up to [role=button]', async ({ page }) => {
-  await page.setContent('<div role=button onclick="javascript:window.__CLICKED=true;"><div style="pointer-events:none"><span><div>Click target</div></span></div>');
+  await page.setContent('<div role=button onclick="window.__CLICKED=true;"><div style="pointer-events:none"><span><div>Click target</div></span></div>');
   await page.click('text=Click target');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
@@ -925,13 +925,13 @@ it('should climb up to [role=button]', async ({ page }) => {
 it('should climb up to a anchor', async ({ page }) => {
   // For Firefox its not allowed to return anything: https://bugzilla.mozilla.org/show_bug.cgi?id=1392046
   // Note the intermediate div - it is necessary, otherwise <a><non-clickable/></a> is not recognized as a clickable link.
-  await page.setContent(`<a href="javascript:(function(){window.__CLICKED=true})()" id="outer"><div id="intermediate"><div id="inner" style="pointer-events: none">Inner</div></div></a>`);
+  await page.setContent(`<a href="#" onclick="window.__CLICKED=true" id="outer"><div id="intermediate"><div id="inner" style="pointer-events: none">Inner</div></div></a>`);
   await page.click('#inner');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should climb up to a [role=link]', async ({ page }) => {
-  await page.setContent(`<div role=link onclick="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></div>`);
+  await page.setContent(`<div role=link onclick="window.__CLICKED=true" id="outer"><div id="inner" style="pointer-events: none">Inner</div></div>`);
   await page.click('#inner');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
@@ -1145,7 +1145,7 @@ it('should click if opened select covers the button', async ({ page }) => {
       </select>
     </div>
     <div>
-      <button onclick="javascript:window.__CLICKED=42">clickme</button>
+      <button onclick="window.__CLICKED=42">clickme</button>
     </div>
   `);
   await page.click('select');

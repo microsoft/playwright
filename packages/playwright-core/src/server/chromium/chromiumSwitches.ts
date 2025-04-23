@@ -26,11 +26,6 @@ const disabledFeatures = [
   'AvoidUnnecessaryBeforeUnloadCheckSync',
   // See https://github.com/microsoft/playwright/pull/12992
   'CertificateTransparencyComponentUpdater',
-  // This makes Page.frameScheduledNavigation arrive much later after a click,
-  // making our navigation auto-wait after click not working.
-  // Can be removed once we deperecate noWaitAfter.
-  // See https://github.com/microsoft/playwright/pull/34372.
-  'DeferRendererTasksAfterInput',
   'DestroyProfileOnBrowserClose',
   // See https://github.com/microsoft/playwright/pull/13854
   'DialMediaRouteProvider',
