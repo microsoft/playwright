@@ -122,6 +122,7 @@ class SnapshotHelper {
     }
 
     let expectedPathSegments: string[];
+    let sanitizeFilePath = true;
     let outputBasePath: string;
     if (!name) {
       // Consider the use case below. We should save actual to different paths.
@@ -135,17 +136,24 @@ class SnapshotHelper {
         ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
       // Note: expected path must not ever change for backwards compatibility.
-      expectedPathSegments = [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension];
+      expectedPathSegments = [trimLongString(fullTitleWithoutSpec) + '.' + anonymousSnapshotExtension];
       // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
       const sanitizedName = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength)) + '.' + anonymousSnapshotExtension;
       outputBasePath = testInfo._getOutputPath(sanitizedName);
       this.attachmentBaseName = sanitizedName;
     } else {
-      // We intentionally do not sanitize user-provided array of segments, assuming
-      // it is a file system path. See https://github.com/microsoft/playwright/pull/9156.
       // Note: expected path must not ever change for backwards compatibility.
-      expectedPathSegments = Array.isArray(name) ? name : [sanitizeFilePathBeforeExtension(name)];
-      const joinedName = Array.isArray(name) ? name.join(path.sep) : sanitizeFilePathBeforeExtension(trimLongString(name, windowsFilesystemFriendlyLength));
+      let joinedName: string;
+      if (Array.isArray(name)) {
+        // We intentionally do not sanitize user-provided array of segments, assuming
+        // it is a file system path. See https://github.com/microsoft/playwright/pull/9156.
+        sanitizeFilePath = false;
+        expectedPathSegments = name;
+        joinedName = name.join(path.sep);
+      } else {
+        expectedPathSegments = [name];
+        joinedName = sanitizeFilePathBeforeExtension(trimLongString(name, windowsFilesystemFriendlyLength));
+      }
       snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
       const index = snapshotNames.namedSnapshotIndex[joinedName];
       const sanitizedName = index > 1 ? addSuffixToFilePath(joinedName, `-${index - 1}`) : joinedName;
@@ -153,7 +161,7 @@ class SnapshotHelper {
       this.attachmentBaseName = sanitizedName;
     }
     const defaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    this.expectedPath = testInfo._resolveSnapshotPath(configOptions.pathTemplate, defaultTemplate, expectedPathSegments);
+    this.expectedPath = testInfo._resolveSnapshotPath(configOptions.pathTemplate, defaultTemplate, expectedPathSegments, sanitizeFilePath);
     this.legacyExpectedPath = addSuffixToFilePath(outputBasePath, '-expected');
     this.previousPath = addSuffixToFilePath(outputBasePath, '-previous');
     this.actualPath = addSuffixToFilePath(outputBasePath, '-actual');
