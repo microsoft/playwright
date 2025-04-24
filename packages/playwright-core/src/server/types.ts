@@ -155,6 +155,7 @@ export type EmulatedSize = { viewport: Size, screen: Size };
 export type LaunchOptions = channels.BrowserTypeLaunchOptions & {
   webSocketPort?: number,
   proxyOverride?: ProxySettings,
+  assistantMode?: boolean,
 };
 
 export type BrowserContextOptions = channels.BrowserNewContextOptions & {
