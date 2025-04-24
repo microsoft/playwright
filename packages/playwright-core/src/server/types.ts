@@ -153,7 +153,7 @@ export type NormalizedContinueOverrides = {
 export type EmulatedSize = { viewport: Size, screen: Size };
 
 export type LaunchOptions = channels.BrowserTypeLaunchOptions & {
-  useWebSocket?: boolean,
+  webSocketPort?: number,
   proxyOverride?: ProxySettings,
 };
 

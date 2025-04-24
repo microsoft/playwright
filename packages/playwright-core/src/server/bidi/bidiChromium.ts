@@ -16,7 +16,6 @@
 
 import os from 'os';
 
-import { assert } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
@@ -34,7 +33,6 @@ import type * as types from '../types';
 export class BidiChromium extends BrowserType {
   constructor(parent: SdkObject) {
     super(parent, 'bidi');
-    this._useBidi = true;
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
@@ -78,6 +76,10 @@ export class BidiChromium extends BrowserType {
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
   }
 
+  override supportsPipeTransport(): boolean {
+    return false;
+  }
+
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
@@ -90,7 +92,6 @@ export class BidiChromium extends BrowserType {
   }
 
   override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    assert(options.useWebSocket);
     return new ChromiumReadyState();
   }
 
