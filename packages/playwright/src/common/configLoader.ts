@@ -20,9 +20,9 @@ import path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
 
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
-import { errorWithFile } from '../util';
+import { errorWithFile, fileIsModule } from '../util';
 import { FullConfigInternal } from './config';
-import { configureESMLoader, configureESMLoaderTransformConfig } from './esmLoaderHost';
+import { configureESMLoader, configureESMLoaderTransformConfig, registerESMLoader } from './esmLoaderHost';
 import { addToCompilationCache } from '../transform/compilationCache';
 
 import type { ConfigLocation } from './config';
@@ -100,6 +100,14 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
 }
 
 export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
+  // 0. Setup ESM loader if needed.
+  if (!registerESMLoader()) {
+    // In Node.js < 18, complain if the config file is ESM. Historically, we would restart
+    // the process with --loader, but now we require newer Node.js.
+    if (location.resolvedConfigFile && fileIsModule(location.resolvedConfigFile))
+      throw errorWithFile(location.resolvedConfigFile, `Playwright requires Node.js 18 or higher to load esm modules. Please update your version of Node.js.`);
+  }
+
   // 1. Setup tsconfig; configure ESM loader with tsconfig and compilation cache.
   setSingleTSConfig(overrides?.tsconfig);
   await configureESMLoader();

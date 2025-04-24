@@ -17,7 +17,6 @@
 import { setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { serializeError } from '../util';
-import { registerESMLoader } from './esmLoaderHost';
 
 import type { EnvProducedPayload, ProcessInitParams, TestInfoErrorImpl } from './ipc';
 
@@ -52,8 +51,6 @@ sendMessageToParent({ method: 'ready' });
 process.on('disconnect', () => gracefullyCloseAndExit(true));
 process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
-
-registerESMLoader();
 
 let processRunner: ProcessRunner | undefined;
 let processName: string | undefined;

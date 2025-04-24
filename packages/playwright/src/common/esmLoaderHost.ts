@@ -25,18 +25,23 @@ let loaderChannel: PortTransport | undefined;
 export function registerESMLoader() {
   // Opt-out switch.
   if (process.env.PW_DISABLE_TS_ESM)
-    return;
+    return true;
 
   if (loaderChannel)
-    return;
+    return true;
+
+  const register = require('node:module').register;
+  if (!register)
+    return false;
 
   const { port1, port2 } = new MessageChannel();
   // register will wait until the loader is initialized.
-  require('node:module').register(url.pathToFileURL(require.resolve('../transform/esmLoader')), {
+  register(url.pathToFileURL(require.resolve('../transform/esmLoader')), {
     data: { port: port2 },
     transferList: [port2],
   });
   loaderChannel = createPortTransport(port1);
+  return true;
 }
 
 function createPortTransport(port: MessagePort) {
@@ -69,7 +74,6 @@ export async function incorporateCompilationCache() {
 }
 
 export async function configureESMLoader() {
-  registerESMLoader();
   if (!loaderChannel)
     return;
   await loaderChannel.send('setSingleTSConfig', { tsconfig: singleTSConfig() });
