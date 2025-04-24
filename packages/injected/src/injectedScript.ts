@@ -44,6 +44,7 @@ import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
 import type { ElementText, TextMatcher } from './selectorUtils';
+import type { Builtins } from '@isomorphic/builtins';
 
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
@@ -63,6 +64,18 @@ interface WebKitLegacyDeviceOrientationEvent extends DeviceOrientationEvent {
 interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
   readonly initDeviceMotionEvent: (type: string, bubbles: boolean, cancelable: boolean, acceleration: DeviceMotionEventAcceleration, accelerationIncludingGravity: DeviceMotionEventAcceleration, rotationRate: DeviceMotionEventRotationRate, interval: number) => void;
 }
+
+export type InjectedScriptOptions = {
+  isUnderTest: boolean;
+  sdkLanguage: Language;
+  // For strict error and codegen
+  testIdAttributeName: string;
+  stableRafCount: number;
+  browserName: string;
+  inputFileRoleTextbox: boolean;
+  customEngines: { name: string, source: string }[];
+  runtimeGuid: string;
+};
 
 export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
@@ -96,7 +109,7 @@ export class InjectedScript {
     isInsideScope,
     normalizeWhiteSpace,
     parseAriaSnapshot,
-    builtins: builtins(),
+    builtins: null as unknown as Builtins,
   };
 
   private _autoClosingTags: Set<string>;
@@ -108,15 +121,15 @@ export class InjectedScript {
   private _allHitTargetInterceptorEvents: Set<string>;
 
   // eslint-disable-next-line no-restricted-globals
-  constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, inputFileRoleTextbox: boolean, customEngines: { name: string, engine: SelectorEngine }[]) {
+  constructor(window: Window & typeof globalThis, options: InjectedScriptOptions) {
     this.window = window;
     this.document = window.document;
-    this.isUnderTest = isUnderTest;
+    this.isUnderTest = options.isUnderTest;
     // Make sure builtins are created from "window". This is important for InjectedScript instantiated
     // inside a trace viewer snapshot, where "window" differs from "globalThis".
-    this.utils.builtins = builtins(window);
-    this._sdkLanguage = sdkLanguage;
-    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
+    this.utils.builtins = builtins(options.runtimeGuid, window);
+    this._sdkLanguage = options.sdkLanguage;
+    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = options.testIdAttributeName;
     this._evaluator = new SelectorEvaluatorImpl();
     this.consoleApi = new ConsoleAPI(this);
 
@@ -216,17 +229,17 @@ export class InjectedScript {
     this._engines.set('internal:role', createRoleEngine(true));
     this._engines.set('aria-ref', this._createAriaIdEngine());
 
-    for (const { name, engine } of customEngines)
-      this._engines.set(name, engine);
+    for (const { name, source } of options.customEngines)
+      this._engines.set(name, this.eval(source));
 
-    this._stableRafCount = stableRafCount;
-    this._browserName = browserName;
-    setGlobalOptions({ browserNameForWorkarounds: browserName, inputFileRoleTextbox });
+    this._stableRafCount = options.stableRafCount;
+    this._browserName = options.browserName;
+    setGlobalOptions({ browserNameForWorkarounds: options.browserName, inputFileRoleTextbox: options.inputFileRoleTextbox });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
 
-    if (isUnderTest)
+    if (options.isUnderTest)
       (this.window as any).__injectedScript = this;
   }
 

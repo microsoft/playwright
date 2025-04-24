@@ -24,7 +24,7 @@ import * as frames from './frames';
 import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
-import { builtins } from '../utils/isomorphic/builtins';
+import { builtinsSource } from '../utils/isomorphic/builtins';
 import { createPageBindingScript, deliverBindingResult, takeBindingHandle } from './pageBinding';
 import * as js from './javascript';
 import { ProgressController } from './progress';
@@ -858,7 +858,7 @@ export class Worker extends SdkObject {
 }
 
 export class PageBinding {
-  static kPlaywrightBinding = '__playwright__binding__';
+  static kPlaywrightBinding = '__playwright__binding__' + js.runtimeGuid;
 
   readonly name: string;
   readonly playwrightFunction: frames.FunctionWithSource;
@@ -906,11 +906,15 @@ export class InitScript {
   constructor(source: string, internal?: boolean, name?: string) {
     const guid = createGuid();
     this.source = `(() => {
-      globalThis.__pwInitScripts = globalThis.__pwInitScripts || {};
-      const hasInitScript = globalThis.__pwInitScripts[${JSON.stringify(guid)}];
+      const name = '__pw_init_scripts__${js.runtimeGuid}';
+      if (!globalThis[name])
+        Object.defineProperty(globalThis, name, { value: {}, configurable: false, enumerable: false, writable: false });
+
+      const globalInitScripts = globalThis[name];
+      const hasInitScript = globalInitScripts[${JSON.stringify(guid)}];
       if (hasInitScript)
         return;
-      globalThis.__pwInitScripts[${JSON.stringify(guid)}] = true;
+      globalThis[name][${JSON.stringify(guid)}] = true;
       ${source}
     })();`;
     this.internal = !!internal;
@@ -918,7 +922,7 @@ export class InitScript {
   }
 }
 
-export const kBuiltinsScript = new InitScript(`(${builtins})()`, true /* internal */);
+export const kBuiltinsScript = new InitScript(builtinsSource(js.runtimeGuid), true /* internal */);
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];

@@ -41,31 +41,39 @@ export type Builtins = {
 // anything else happens in the page. This way, original builtins are saved on the global object
 // before page can temper with them. Later on, any call to builtins() will retrieve the stored
 // builtins instead of initializing them again.
-export function builtins(global?: typeof globalThis): Builtins {
+export function builtins(runtimeGuid: string, global?: typeof globalThis): Builtins {
   global = global ?? globalThis;
-  if (!(global as any)['__playwright_builtins__']) {
-    const builtins: Builtins = {
-      setTimeout: global.setTimeout?.bind(global),
-      clearTimeout: global.clearTimeout?.bind(global),
-      setInterval: global.setInterval?.bind(global),
-      clearInterval: global.clearInterval?.bind(global),
-      requestAnimationFrame: global.requestAnimationFrame?.bind(global),
-      cancelAnimationFrame: global.cancelAnimationFrame?.bind(global),
-      requestIdleCallback: global.requestIdleCallback?.bind(global),
-      cancelIdleCallback: global.cancelIdleCallback?.bind(global),
-      performance: global.performance,
-      eval: global.eval?.bind(global),
-      Intl: global.Intl,
-      Date: global.Date,
-      Map: global.Map,
-      Set: global.Set,
-    };
-    Object.defineProperty(global, '__playwright_builtins__', { value: builtins, configurable: false, enumerable: false, writable: false });
-  }
-  return (global as any)['__playwright_builtins__'];
+  const name = `__playwright_builtins__${runtimeGuid}`;
+  let builtins: Builtins = (global as any)[name];
+  if (builtins)
+    return builtins;
+
+  builtins = {
+    setTimeout: global.setTimeout?.bind(global),
+    clearTimeout: global.clearTimeout?.bind(global),
+    setInterval: global.setInterval?.bind(global),
+    clearInterval: global.clearInterval?.bind(global),
+    requestAnimationFrame: global.requestAnimationFrame?.bind(global),
+    cancelAnimationFrame: global.cancelAnimationFrame?.bind(global),
+    requestIdleCallback: global.requestIdleCallback?.bind(global),
+    cancelIdleCallback: global.cancelIdleCallback?.bind(global),
+    performance: global.performance,
+    eval: global.eval?.bind(global),
+    Intl: global.Intl,
+    Date: global.Date,
+    Map: global.Map,
+    Set: global.Set,
+  };
+  if (runtimeGuid)
+    Object.defineProperty(global, name, { value: builtins, configurable: false, enumerable: false, writable: false });
+  return builtins;
 }
 
-const instance = builtins();
+export function builtinsSource(runtimeGuid: string): string {
+  return `(${builtins})(${JSON.stringify(runtimeGuid)})`;
+}
+
+const instance = builtins('');
 export const setTimeout = instance.setTimeout;
 export const clearTimeout = instance.clearTimeout;
 export const setInterval = instance.setInterval;

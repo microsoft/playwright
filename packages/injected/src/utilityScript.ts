@@ -17,13 +17,19 @@
 import { builtins } from '@isomorphic/builtins';
 import { source } from '@isomorphic/utilityScriptSerializers';
 
+import type { Builtins } from '@isomorphic/builtins';
+
 export class UtilityScript {
-  constructor(isUnderTest: boolean) {
+
+  private _builtins: Builtins;
+
+  constructor(runtimeGuid: string, isUnderTest: boolean) {
     if (isUnderTest) {
       // eslint-disable-next-line no-restricted-globals
-      (globalThis as any).builtins = builtins();
+      (globalThis as any).builtins = builtins(runtimeGuid);
     }
-    const result = source(builtins());
+    this._builtins = builtins(runtimeGuid);
+    const result = source(this._builtins);
     this.serializeAsCallArgument = result.serializeAsCallArgument;
     this.parseEvaluationResultValue = result.parseEvaluationResultValue;
   }
@@ -38,7 +44,7 @@ export class UtilityScript {
     for (let i = 0; i < args.length; i++)
       parameters[i] = this.parseEvaluationResultValue(args[i], handles);
 
-    let result = builtins().eval(expression);
+    let result = this._builtins.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);
     } else if (isFunction === false) {

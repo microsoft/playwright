@@ -19,7 +19,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import { Page } from '../page';
+import { Page, PageBinding } from '../page';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
@@ -573,7 +573,7 @@ export class BidiPage implements PageDelegate {
 }
 
 export function addMainBinding(callback: (arg: any) => void) {
-  (globalThis as any)['__playwright__binding__'] = callback;
+  (globalThis as any)[PageBinding.kPlaywrightBinding] = callback;
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
