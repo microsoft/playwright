@@ -69,6 +69,7 @@ export async function incorporateCompilationCache() {
 }
 
 export async function configureESMLoader() {
+  registerESMLoader();
   if (!loaderChannel)
     return;
   await loaderChannel.send('setSingleTSConfig', { tsconfig: singleTSConfig() });

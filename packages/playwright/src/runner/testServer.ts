@@ -34,7 +34,6 @@ import { InternalReporter } from '../reporters/internalReporter';
 import ListReporter from '../reporters/list';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import { serializeError } from '../util';
-import { registerESMLoader } from '../common/esmLoaderHost';
 
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
@@ -479,7 +478,6 @@ export async function runTestServer(configFile: string | undefined, configCLIOve
 }
 
 async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
-  registerESMLoader();
   const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();

@@ -27,7 +27,6 @@ import { enquirer } from '../utilsBundle';
 import { TestServerDispatcher } from './testServer';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerConnection  } from '../isomorphic/testServerConnection';
-import { registerESMLoader } from '../common/esmLoaderHost';
 
 import type { FullResult } from '../../types/testReporter';
 import type { ConfigLocation } from '../common/config';
@@ -74,8 +73,6 @@ interface WatchModeOptions {
 }
 
 export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status']> {
-  registerESMLoader();
-
   const options: WatchModeOptions = { ...initialOptions };
   let bufferMode = false;
 

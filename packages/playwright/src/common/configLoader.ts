@@ -17,13 +17,12 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { isRegExp } from 'playwright-core/lib/utils';
 
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
-import { errorWithFile, fileIsModule } from '../util';
+import { errorWithFile } from '../util';
 import { FullConfigInternal } from './config';
-import { configureESMLoader, configureESMLoaderTransformConfig, registerESMLoader } from './esmLoaderHost';
+import { configureESMLoader, configureESMLoaderTransformConfig } from './esmLoaderHost';
 import { addToCompilationCache } from '../transform/compilationCache';
 
 import type { ConfigLocation } from './config';
@@ -359,7 +358,6 @@ function resolveConfigFile(configFileOrDirectory: string): string | undefined {
 }
 
 export async function loadConfigFromFile(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal> {
-  registerESMLoader();
   return await loadConfig(resolveConfigLocation(configFile), overrides, ignoreDeps);
 }
 
