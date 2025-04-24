@@ -112,7 +112,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       persistentContextOptions: {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
-        useWebSocket: isUnderTest(),
+        webSocketPort: isUnderTest() ? 0 : undefined,
         handleSIGINT: recorder.handleSIGINT,
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
         // Use the same channel as the inspected context to guarantee that the browser is installed.

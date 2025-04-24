@@ -556,6 +556,7 @@ scheme.BrowserTypeLaunchParams = tObject({
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
+  webSocketPort: tOptional(tNumber),
   slowMo: tOptional(tNumber),
 });
 scheme.BrowserTypeLaunchResult = tObject({
@@ -584,6 +585,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
+  webSocketPort: tOptional(tNumber),
   noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tNumber,
