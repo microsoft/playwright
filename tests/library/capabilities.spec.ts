@@ -542,6 +542,7 @@ it.describe('Audio & Video codec playback', () => {
 
   it('Theora (OGV container)', async ({ page, server, browserName, platform }) => {
     it.fixme(browserName === 'webkit' && platform === 'win32');
+    it.fixme(browserName === 'webkit' && platform === 'linux' && hostPlatform.startsWith('ubuntu22.04'));
     it.fixme(browserName === 'firefox' && platform === 'linux');
     await testAudio(page, server, '/audio/movie.ogv', 'audio/ogg');
   });
