@@ -82,7 +82,7 @@ export class SnapshotRenderer {
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
         // Old snapshotter was sending lower-case.
         if (parentTag === 'STYLE' || parentTag === 'style')
-          result.push(rewriteURLsInStyleSheetForCustomProtocol(n));
+          result.push(escapeURLsInStyleSheet(rewriteURLsInStyleSheetForCustomProtocol(n)));
         else
           result.push(escapeHTML(n));
         return;
@@ -616,6 +616,21 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
       return match;
     return match.replace(protocol + '//', `https://pw-${protocol.slice(0, -1)}--`);
   });
+}
+
+// url() inside a <style> tag can mess up with html parsing, so we encode some of them.
+// As an example, the following url will close the </style> tag:
+// url('data:image/svg+xml,<svg><defs><style>.a{fill:none}</style></defs><g class="a"></g></svg>')
+const urlToEscapeRegex1 = /url\(\s*'([^']*)'\s*\)/ig;
+const urlToEscapeRegex2 = /url\(\s*"([^"]*)"\s*\)/ig;
+function escapeURLsInStyleSheet(text: string): string {
+  const replacer = (match: string, url: string) => {
+    // Conservatively encode only urls with a closing tag.
+    if (url.includes('</'))
+      return match.replace(url, encodeURI(url));
+    return match;
+  };
+  return text.replace(urlToEscapeRegex1, replacer).replace(urlToEscapeRegex2, replacer);
 }
 
 // <base>/snapshot.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
