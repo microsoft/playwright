@@ -447,7 +447,7 @@ it('should not auto play audio', {
 });
 
 async function testVideo(page: Page, server: TestServer, file: string, type?: string) {
-  server.setRoute('/audio.html', (req, res) => {
+  server.setRoute('/video.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`
       <video id="test-video" controls>
@@ -455,7 +455,7 @@ async function testVideo(page: Page, server: TestServer, file: string, type?: st
       </video>
     `);
   });
-  await page.goto(server.PREFIX + '/audio.html');
+  await page.goto(server.PREFIX + '/video.html');
   const video = page.locator('#test-video');
   await video.evaluate(async (v: HTMLVideoElement) => {
     await v.play();
