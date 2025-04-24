@@ -782,8 +782,17 @@ test('should respect config.expect.toHaveScreenshot.pathTemplate', async ({ runI
     '__screenshots__/a.spec.js/snapshot.png': blueImage,
     'actual-screenshots/a.spec.js/snapshot.png': whiteImage,
     'a.spec.js': `
+      const path = require('path');
       const { test, expect } = require('@playwright/test');
       test('is a test', async ({ page }) => {
+        const testDir = test.info().project.testDir;
+
+        const screenshotPath = path.join(testDir, 'actual-screenshots/a.spec.js/snapshot.png');
+        expect(test.info().snapshotPath('snapshot.png', { kind: 'screenshot' })).toBe(screenshotPath);
+
+        const snapshotPath = path.join(testDir, '__screenshots__/a.spec.js/snapshot.png');
+        expect(test.info().snapshotPath('snapshot.png', { kind: 'snapshot' })).toBe(snapshotPath);
+
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `
