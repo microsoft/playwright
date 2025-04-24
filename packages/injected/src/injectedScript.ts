@@ -227,7 +227,7 @@ export class InjectedScript {
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
-    this._engines.set('aria-ref', this._createAriaIdEngine());
+    this._engines.set('aria-ref', this._createAriaRefEngine());
 
     for (const { name, source } of options.customEngines)
       this._engines.set(name, this.eval(source));
@@ -300,13 +300,8 @@ export class InjectedScript {
   ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', forAI?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    const generation = (this._lastAriaSnapshot?.generation || 0) + 1;
-    this._lastAriaSnapshot = generateAriaTree(node as Element, generation, options);
+    this._lastAriaSnapshot = generateAriaTree(node as Element, options);
     return renderAriaTree(this._lastAriaSnapshot, options);
-  }
-
-  ariaSnapshotElement(snapshot: AriaSnapshot, elementId: number): Element | null {
-    return snapshot.elements.get(elementId) || null;
   }
 
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
@@ -678,15 +673,12 @@ export class InjectedScript {
     return result;
   }
 
-  _createAriaIdEngine() {
+  _createAriaRefEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      const match = selector.match(/^s(\d+)e(\d+)$/);
-      if (!match)
-        throw this.createStacklessError('Invalid aria-ref selector, should be of form s<number>e<number>');
-      const [, generation, elementId] = match;
-      if (this._lastAriaSnapshot?.generation !== +generation)
-        throw this.createStacklessError(`Stale aria-ref, expected s${this._lastAriaSnapshot?.generation}e{number}, got ${selector}`);
-      const result = this._lastAriaSnapshot?.elements?.get(+elementId);
+      if (!selector.startsWith('e'))
+        throw this.createStacklessError(`Invalid aria-ref selector "${selector}"`);
+      const ref = +selector.substring(1);
+      const result = this._lastAriaSnapshot?.elements?.get(ref);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };
