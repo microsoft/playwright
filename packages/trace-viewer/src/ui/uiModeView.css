@@ -83,19 +83,22 @@
 }
 
 .status-line {
+  display: flex;
+  flex-direction: column;
   flex: auto;
-  white-space: nowrap;
+  height: 40px;
   line-height: 22px;
   padding-left: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 30px;
+  white-space: nowrap;
 }
 
 .status-line > div {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.status-line .test-results {
+  //
 }
 
 .ui-mode-sidebar input[type=search] {

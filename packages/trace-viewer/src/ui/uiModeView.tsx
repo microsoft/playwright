@@ -37,6 +37,7 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
+import { testStatusIcon } from './testUtils';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -461,11 +462,25 @@ export const UIModeView: React.FC<{}> = ({
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
-          {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
-          </div>}
-          {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
+          {progress && <div data-testid='status-line' className='status-line'>
+            <div>
+              {isRunningTest && <span className='codicon codicon-loading' />}
+              {(progress.passed + progress.failed + progress.skipped)}/{progress.total} complete ({((progress.passed + progress.failed + progress.skipped) / progress.total) * 100 | 0}%)
+            </div>
+            <div className='test-results'>
+              <span>
+                <span className='codicon codicon-check'/>
+                {progress.passed}
+              </span>
+              <span>
+                <span className='codicon codicon-error' />
+                {progress.failed}
+              </span>
+              <span>
+                <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped' />
+                {progress.skipped}
+              </span>
+            </div>
           </div>}
           <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
