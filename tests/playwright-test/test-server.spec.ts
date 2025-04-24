@@ -145,6 +145,51 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
   expect(onProject.use.testIdAttribute).toBe('testId');
 });
 
+test('should serialize exception if config throws error', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      throw new Error('Config error');
+    `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const events = await testServerConnection.listFiles({});
+  const error = events.report.find(e => e.method === 'onError').params.error;
+  expect(error).toEqual({
+    message: expect.stringContaining('Config error'),
+    location: {
+      file: expect.stringContaining('playwright.config.ts'),
+      line: 2,
+      column: 13,
+    },
+    snippet: expect.anything(),
+    stack: expect.stringContaining('Error: Config error'),
+  });
+});
+
+
+test('should serialize exception if config has SyntaxError', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      Invalid syntax
+    `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const events = await testServerConnection.listFiles({});
+  const error = events.report.find(e => e.method === 'onError').params.error;
+  expect(error).toEqual({
+    message: expect.stringMatching(/SyntaxError: .*playwright\.config\.ts: Missing semicolon/),
+    location: {
+      file: expect.stringContaining('playwright.config.ts'),
+      line: 2,
+      column: 13,
+    },
+    snippet: expect.anything(),
+    stack: expect.stringMatching(/SyntaxError: .*playwright\.config\.ts: Missing semicolon/),
+  });
+});
+
 test('stdio interception', async ({ startTestServer, writeFiles }) => {
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });

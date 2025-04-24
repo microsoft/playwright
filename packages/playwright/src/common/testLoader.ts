@@ -15,14 +15,13 @@
  */
 
 import path from 'path';
-import util from 'util';
 
 import * as esmLoaderHost from './esmLoaderHost';
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';
-import { filterStackTrace } from '../util';
+import { serializeLoadError } from '../util';
 
 import type { TestError } from '../../types/testReporter';
 
@@ -50,7 +49,7 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   } catch (e) {
     if (!testErrors)
       throw e;
-    testErrors.push(serializeLoadError(file, e));
+    testErrors.push(serializeLoadError(e, file));
   } finally {
     setCurrentlyLoadingFileSuite(undefined);
     if (!isWorkerProcess()) {
@@ -80,19 +79,4 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   }
 
   return suite;
-}
-
-export function serializeLoadError(file: string, error: Error | any): TestError {
-  if (error instanceof Error) {
-    const result: TestError = filterStackTrace(error);
-    // Babel parse errors have location.
-    const loc = (error as any).loc;
-    result.location = loc ? {
-      file,
-      line: loc.line || 0,
-      column: loc.column || 0,
-    } : undefined;
-    return result;
-  }
-  return { value: util.inspect(error) };
 }

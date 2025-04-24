@@ -22,7 +22,9 @@ import util from 'util';
 import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
 import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
-import type { Location } from './../types/testReporter';
+import { prepareErrorStack } from './reporters/base';
+
+import type { Location, TestError } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
 import type { RawStack } from 'playwright-core/lib/utils';
@@ -71,6 +73,25 @@ export function serializeError(error: Error | any): TestInfoErrorImpl {
   return {
     value: util.inspect(error)
   };
+}
+
+export function serializeLoadError(e: Error | any, resolvedConfigFile: string | undefined): TestError {
+  const error: TestError = serializeError(e);
+  if (e instanceof Error && e.name === 'SyntaxError' && (e as NodeJS.ErrnoException).code === 'BABEL_PARSE_ERROR' && resolvedConfigFile) {
+    // Babel parse errors are:
+    // - always SyntaxError
+    // - always have '.loc' property
+    // - always have error code BABEL_PARSE_ERROR
+    // @see https://github.com/babel/babel/blob/5c350eab83dd12268add44cce0eeda6c898211e3/packages/babel-parser/src/parse-error.ts#L97
+    error.location = {
+      file: resolvedConfigFile,
+      line: (e as any).loc?.line,
+      column: (e as any).loc?.column,
+    };
+  } else if (e instanceof Error && e.stack) {
+    error.location = prepareErrorStack(e.stack).location;
+  }
+  return error;
 }
 
 export type Matcher = (value: string) => boolean;

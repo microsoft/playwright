@@ -32,9 +32,8 @@ import { filterProjects } from './runner/projectUtils';
 import { Runner } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
-import { serializeError } from './util';
+import { serializeLoadError } from './util';
 
-import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
 import type { ReporterDescription } from '../types/test';
@@ -249,8 +248,7 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
       gracefullyProcessExitDoNotHang(0);
     });
   } catch (e) {
-    const error: TestError = serializeError(e);
-    error.location = prepareErrorStack(e.stack).location;
+    const error = serializeLoadError(e, resolveConfigLocation(configFile).resolvedConfigFile);
     stdoutWrite(JSON.stringify({ error }, undefined, 2), () => {
       gracefullyProcessExitDoNotHang(0);
     });
