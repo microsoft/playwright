@@ -668,20 +668,17 @@ it('should generate refs', async ({ page }) => {
   `);
 
   const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot1).toContain('- button "One" [ref=s1e3]');
-  expect(snapshot1).toContain('- button "Two" [ref=s1e4]');
-  expect(snapshot1).toContain('- button "Three" [ref=s1e5]');
+  expect(snapshot1).toContain('- button "One" [ref=2]');
+  expect(snapshot1).toContain('- button "Two" [ref=3]');
+  expect(snapshot1).toContain('- button "Three" [ref=4]');
 
-  await expect(page.locator('aria-ref=s1e3')).toHaveText('One');
-  await expect(page.locator('aria-ref=s1e4')).toHaveText('Two');
-  await expect(page.locator('aria-ref=s1e5')).toHaveText('Three');
+  await expect(page.locator('aria-ref=2')).toHaveText('One');
+  await expect(page.locator('aria-ref=3')).toHaveText('Two');
+  await expect(page.locator('aria-ref=4')).toHaveText('Three');
 
   const snapshot2 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot2).toContain('- button "One" [ref=s2e3]');
-  await expect(page.locator('aria-ref=s2e3')).toHaveText('One');
-
-  const e = await expect(page.locator('aria-ref=s1e3')).toHaveText('One').catch(e => e);
-  expect(e.message).toContain('Error: Stale aria-ref, expected s2e{number}, got s1e3');
+  expect(snapshot2).toContain('- button "One" [ref=2]');
+  await expect(page.locator('aria-ref=2')).toHaveText('One');
 });
 
 it('should list iframes', async ({ page }) => {
@@ -721,12 +718,12 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   }
 
   expect(await allFrameSnapshot(page)).toEqual(`
-- iframe [ref=s1e3]:
-  - iframe [ref=s1e3]:
+- iframe [ref=2]:
+  - iframe [ref=2]:
     - text: Hi, I'm frame
-  - iframe [ref=s1e4]:
+  - iframe [ref=3]:
     - text: Hi, I'm frame
-- iframe [ref=s1e4]:
+- iframe [ref=3]:
   - text: Hi, I'm frame
   `.trim());
 });
@@ -739,9 +736,9 @@ it('should not include hidden input elements', async ({ page }) => {
   `);
 
   const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot).toContain(`- button "One" [ref=s1e3]
+  expect(snapshot).toContain(`- button "One" [ref=2]
 - button "Two"
-- button "Three" [ref=s1e5]`);
+- button "Three" [ref=3]`);
 });
 
 it('emit generic roles for nodes w/o roles', async ({ page }) => {
@@ -777,14 +774,14 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
 
   const snapshot = await page.locator('body').ariaSnapshot({ ref: true, emitGeneric: true });
 
-  expect(snapshot).toContain(`- generic [ref=s1e3]:
-  - generic [ref=s1e4]:
+  expect(snapshot).toContain(`- generic [ref=3]:
+  - generic [ref=4]:
     - radio "Apple" [checked]
     - text: Apple
-  - generic [ref=s1e8]:
+  - generic [ref=7]:
     - radio "Pear"
     - text: Pear
-  - generic [ref=s1e12]:
+  - generic [ref=10]:
     - radio "Orange"
     - text: Orange`);
 });

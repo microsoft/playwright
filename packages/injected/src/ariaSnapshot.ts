@@ -36,27 +36,43 @@ export type AriaNode = AriaProps & {
 export type AriaSnapshot = {
   root: AriaNode;
   elements: Map<number, Element>;
-  generation: number;
-  ids: Map<Element, number>;
+  refs: Map<Element, number>;
 };
 
-export function generateAriaTree(rootElement: Element, generation: number, options?: { emitGeneric?: boolean }): AriaSnapshot {
+type AriaElementInfo = {
+  role: string;
+  name: string;
+  ref: number;
+};
+
+let lastRef = 0;
+
+export function generateAriaTree(rootElement: Element, options?: { emitGeneric?: boolean }): AriaSnapshot {
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement) },
     elements: new Map<number, Element>(),
-    generation,
-    ids: new Map<Element, number>(),
+    refs: new Map<Element, number>(),
   };
 
-  const addElement = (element: Element) => {
-    const id = snapshot.elements.size + 1;
-    snapshot.elements.set(id, element);
-    snapshot.ids.set(element, id);
+  const bindElement = (ariaNode: AriaNode, element: Element) => {
+    if (!ariaNode.box.visible)
+      return;
+    let ariaInfo = (element as any)._ariaInfo as AriaElementInfo | undefined;
+    if (!ariaInfo || !ariaNode.role || !ariaNode.name || ariaInfo.role !== ariaNode.role || ariaInfo.name !== ariaNode.name) {
+      ariaInfo = {
+        role: ariaNode.role,
+        name: ariaNode.name,
+        ref: ++lastRef,
+      };
+    }
+    (element as any)._ariaInfo = ariaInfo;
+    snapshot.elements.set(ariaInfo.ref, element);
+    snapshot.refs.set(element, ariaInfo.ref);
   };
 
-  addElement(rootElement);
+  bindElement(snapshot.root, rootElement);
 
   const visit = (ariaNode: AriaNode, node: Node) => {
     if (visited.has(node))
@@ -88,10 +104,11 @@ export function generateAriaTree(rootElement: Element, generation: number, optio
       }
     }
 
-    addElement(element);
     const childAriaNode = toAriaNode(element, options);
-    if (childAriaNode)
+    if (childAriaNode) {
+      bindElement(childAriaNode, element);
       ariaNode.children.push(childAriaNode);
+    }
     processElement(childAriaNode || ariaNode, element, ariaChildren);
   };
 
@@ -266,7 +283,7 @@ export type MatcherReceived = {
 };
 
 export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
-  const snapshot = generateAriaTree(rootElement, 0);
+  const snapshot = generateAriaTree(rootElement);
   const matches = matchesNodeDeep(snapshot.root, template, false, false);
   return {
     matches,
@@ -278,7 +295,7 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
 }
 
 export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(rootElement, 0).root;
+  const root = generateAriaTree(rootElement).root;
   const matches = matchesNodeDeep(root, template, true, false);
   return matches.map(n => n.element);
 }
@@ -407,10 +424,10 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.ref && ariaNode.box.visible) {
-      const id = ariaSnapshot.ids.get(ariaNode.element);
-      if (id)
-        key += ` [ref=s${ariaSnapshot.generation}e${id}]`;
+    if (options?.ref) {
+      const ref = ariaSnapshot.refs.get(ariaNode.element);
+      if (ref)
+        key += ` [ref=${ref}]`;
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
