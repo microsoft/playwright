@@ -24,7 +24,7 @@ import { isSessionClosedError } from './protocolError';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 
 import type * as frames from './frames';
-import type { ElementState, HitTargetInterceptionResult, InjectedScript } from '@injected/injectedScript';
+import type { ElementState, HitTargetInterceptionResult, InjectedScript, InjectedScriptOptions } from '@injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import type { Page } from './page';
 import type { Progress } from './progress';
@@ -85,25 +85,26 @@ export class FrameExecutionContext extends js.ExecutionContext {
 
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedScriptPromise) {
-      const custom: string[] = [];
+      const customEngines: InjectedScriptOptions['customEngines'] = [];
       const selectorsRegistry = this.frame._page.context().selectors();
       for (const [name, { source }] of selectorsRegistry._engines)
-        custom.push(`{ name: '${name}', engine: (${source}) }`);
+        customEngines.push({ name, source });
       const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
+      const options: InjectedScriptOptions = {
+        isUnderTest: isUnderTest(),
+        sdkLanguage,
+        testIdAttributeName: selectorsRegistry.testIdAttributeName(),
+        stableRafCount: this.frame._page._delegate.rafCountForStablePosition(),
+        browserName: this.frame._page._browserContext._browser.options.name,
+        inputFileRoleTextbox: process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? true : false,
+        customEngines,
+        runtimeGuid: js.runtimeGuid,
+      };
       const source = `
         (() => {
         const module = {};
         ${injectedScriptSource.source}
-        return new (module.exports.InjectedScript())(
-          globalThis,
-          ${isUnderTest()},
-          "${sdkLanguage}",
-          ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
-          ${this.frame._page._delegate.rafCountForStablePosition()},
-          "${this.frame._page._browserContext._browser.options.name}",
-          ${process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? 'true' : 'false'},
-          [${custom.join(',\n')}]
-        );
+        return new (module.exports.InjectedScript())(globalThis, ${JSON.stringify(options)});
         })();
       `;
       this._injectedScriptPromise = this.rawEvaluateHandle(source)

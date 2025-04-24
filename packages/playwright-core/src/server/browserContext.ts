@@ -28,7 +28,7 @@ import { mkdirIfNeeded } from './utils/fileUtils';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { SdkObject, serverSideCallMetadata } from './instrumentation';
-import { builtins } from '../utils/isomorphic/builtins';
+import { builtinsSource } from '../utils/isomorphic/builtins';
 import * as utilityScriptSerializers from '../utils/isomorphic/utilityScriptSerializers';
 import * as network from './network';
 import { InitScript } from './page';
@@ -37,6 +37,7 @@ import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
 import * as storageScript from './storageScript';
 import { Tracing } from './trace/recorder/tracing';
+import * as js from './javascript';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
@@ -518,7 +519,7 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
-    const collectScript = `(${storageScript.collect})(${utilityScriptSerializers.source}, (${builtins})(), ${this._browser.options.name === 'firefox'}, ${indexedDB})`;
+    const collectScript = `(${storageScript.collect})(${utilityScriptSerializers.source}, ${builtinsSource(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'}, ${indexedDB})`;
 
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
@@ -611,7 +612,7 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-          await frame.evaluateExpression(`(${storageScript.restore})(${utilityScriptSerializers.source}, (${builtins})(), ${JSON.stringify(originState)})`, { world: 'utility' });
+          await frame.evaluateExpression(`(${storageScript.restore})(${utilityScriptSerializers.source}, ${builtinsSource(js.runtimeGuid)}, ${JSON.stringify(originState)})`, { world: 'utility' });
         }
         await page.close(internalMetadata);
       }
