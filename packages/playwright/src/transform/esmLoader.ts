@@ -86,15 +86,6 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 
 let transport: PortTransport | undefined;
 
-// Node.js < 20
-function globalPreload(context: { port: MessagePort }) {
-  transport = createTransport(context.port);
-  return `
-    globalThis.__esmLoaderPortPreV20 = port;
-  `;
-}
-
-// Node.js >= 20
 function initialize(data: { port: MessagePort }) {
   transport = createTransport(data?.port);
 }
@@ -132,4 +123,4 @@ function createTransport(port: MessagePort) {
 }
 
 
-module.exports = { globalPreload, initialize, load, resolve };
+module.exports = { initialize, load, resolve };

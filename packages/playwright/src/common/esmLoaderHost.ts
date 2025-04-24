@@ -21,13 +21,15 @@ import { PortTransport } from '../transform/portTransport';
 import { singleTSConfig, transformConfig } from '../transform/transform';
 
 let loaderChannel: PortTransport | undefined;
-// Node.js < 20
-if ((globalThis as any).__esmLoaderPortPreV20)
-  loaderChannel = createPortTransport((globalThis as any).__esmLoaderPortPreV20);
 
-// Node.js >= 20
-export let esmLoaderRegistered = false;
 export function registerESMLoader() {
+  // Opt-out switch.
+  if (process.env.PW_DISABLE_TS_ESM)
+    return;
+
+  if (loaderChannel)
+    return;
+
   const { port1, port2 } = new MessageChannel();
   // register will wait until the loader is initialized.
   require('node:module').register(url.pathToFileURL(require.resolve('../transform/esmLoader')), {
@@ -35,7 +37,6 @@ export function registerESMLoader() {
     transferList: [port2],
   });
   loaderChannel = createPortTransport(port1);
-  esmLoaderRegistered = true;
 }
 
 function createPortTransport(port: MessagePort) {
