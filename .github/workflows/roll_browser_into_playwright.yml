@@ -3,27 +3,17 @@ name: Roll Browser into Playwright
 on:
   repository_dispatch:
     types: [roll_into_pw]
-  workflow_dispatch:
-    inputs:
-      browser:
-        description: 'Browser name, e.g. chromium'
-        required: true
-        type: string
-      revision:
-        description: 'Browser revision without v prefix, e.g. 1234'
-        required: true
-        type: string
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-  BROWSER: ${{ github.event.client_payload.browser || github.event.inputs.browser }}
-  REVISION: ${{ github.event.client_payload.revision || github.event.inputs.revision }}
+  BROWSER: ${{ github.event.client_payload.browser }}
+  REVISION: ${{ github.event.client_payload.revision }}
 
 permissions:
   contents: write
 
 concurrency: 
-  group: 'roll-browser-into-playwright-${{ github.event.client_payload.browser || github.event.inputs.browser }}-${{ github.event.client_payload.revision || github.event.inputs.revision }}'
+  group: 'roll-browser-into-playwright-${{ github.event.client_payload.browser }}-${{ github.event.client_payload.revision }}'
 
 jobs:
   roll:
