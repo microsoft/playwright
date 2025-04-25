@@ -650,9 +650,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._closed;
   }
 
-  async click(selector: string, options?: channels.FrameClickOptions) {
+  async click(selector: string, options?: channels.FrameClickOptions & { message?: string }): Promise<void> {
     return await this._mainFrame.click(selector, options);
-  }
+  }  
+  
 
   async dragAndDrop(source: string, target: string, options?: channels.FrameDragAndDropOptions) {
     return await this._mainFrame.dragAndDrop(source, target, options);
@@ -666,7 +667,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.tap(selector, options);
   }
 
-  async fill(selector: string, value: string, options?: channels.FrameFillOptions) {
+  async fill(selector: string, value: string, options?: channels.FrameFillOptions): Promise<void> {
     return await this._mainFrame.fill(selector, value, options);
   }
 
@@ -754,7 +755,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.isVisible(selector, options);
   }
 
-  async hover(selector: string, options?: channels.FrameHoverOptions) {
+  async hover(selector: string, options?: channels.FrameHoverOptions): Promise<void> {
     return await this._mainFrame.hover(selector, options);
   }
 

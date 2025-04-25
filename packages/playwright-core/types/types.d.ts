@@ -2255,6 +2255,12 @@ export interface Page {
      * are pressed.
      */
     trial?: boolean;
+
+    /**
+     * An optional human-readable message describing the intent of the action. 
+     * This message will appear in traces and logs to make it easier to understand the purpose of each step.
+     */
+     message?: string;
   }): Promise<void>;
 
   /**

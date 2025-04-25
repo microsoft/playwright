@@ -43,4 +43,5 @@ export type CallMetadata = {
   pageId?: string;
   frameId?: string;
   potentiallyClosesScope?: boolean;
+  message?: string;
 };

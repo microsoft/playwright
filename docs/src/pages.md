@@ -29,11 +29,11 @@ Page page = context.newPage();
 
 // Navigate explicitly, similar to entering a URL in the browser.
 page.navigate("http://example.com");
-// Fill an input.
-page.locator("#search").fill("query");
+// Fill an input with a message.
+page.locator("#search").fill("query", new FillOptions().setMessage("Filling search input"));
 
-// Navigate implicitly by clicking a link.
-page.locator("#submit").click();
+// Navigate implicitly by clicking a link with a message.
+page.locator("#submit").click(new ClickOptions().setMessage("Clicking submit button"));
 // Expect a new url.
 System.out.println(page.url());
 ```

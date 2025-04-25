@@ -130,7 +130,8 @@ export const renderAction = (
     time = '-';
   return <>
     <div className='action-title' title={action.apiName}>
-      <span>{action.apiName}</span>
+      <span>{action.apiName}</span>   
+     {action.message && <span className="action-message"> — {action.message}</span>}
       {parameterString &&
           (parameterString.type === 'locator' ? (
             <>

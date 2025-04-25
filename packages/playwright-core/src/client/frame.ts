@@ -28,6 +28,7 @@ import { Waiter } from './waiter';
 import { assert } from '../utils/isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 import { urlMatches } from '../utils/isomorphic/urlMatch';
+import type { CallMetadata } from '../server/instrumentation.ts'
 
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
@@ -281,10 +282,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     }
     return ElementHandle.from((await this._channel.addStyleTag({ ...copy })).element);
   }
+  
 
-  async click(selector: string, options: channels.FrameClickOptions = {}) {
-    return await this._channel.click({ selector, ...options });
+
+  async click(selector: string, options?: channels.FrameClickOptions & { message?: string }): Promise<void> {
+    return this._wrapApiCall(async metadata => {
+      const callMetadata = metadata as any as CallMetadata;
+      if (options?.message)
+        callMetadata.message = options.message;
+      return this._channel.click({ selector, ...options }, callMetadata);
+    }, false); 
   }
+  
+  
 
   async dblclick(selector: string, options: channels.FrameDblclickOptions = {}) {
     return await this._channel.dblclick({ selector, ...options });
@@ -298,8 +308,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.tap({ selector, ...options });
   }
 
-  async fill(selector: string, value: string, options: channels.FrameFillOptions = {}) {
-    return await this._channel.fill({ selector, value, ...options });
+  async fill(selector: string, value: string, options?: channels.FrameFillOptions): Promise<void> {
+    return this._wrapApiCall(async metadata => {
+      const callMetadata = metadata as any as CallMetadata;
+      if (options?.message) callMetadata.message = options.message;
+      return this._channel.fill({ selector, value, ...options }, callMetadata);
+    }, false);
   }
 
   async _highlight(selector: string) {
@@ -392,8 +406,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.isVisible({ selector, ...options })).value;
   }
 
-  async hover(selector: string, options: channels.FrameHoverOptions = {}) {
-    await this._channel.hover({ selector, ...options });
+  async hover(selector: string, options?: channels.FrameHoverOptions): Promise<void> {
+    return this._wrapApiCall(async metadata => {
+      const callMetadata = metadata as any as CallMetadata;
+      if (options?.message) callMetadata.message = options.message;
+      return this._channel.hover({ selector, ...options }, callMetadata);
+    }, false);
   }
 
   async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions & StrictOptions = {}): Promise<string[]> {

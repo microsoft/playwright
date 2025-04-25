@@ -2749,6 +2749,7 @@ export type FrameClickOptions = {
   clickCount?: number,
   timeout?: number,
   trial?: boolean,
+  message?: string
 };
 export type FrameClickResult = void;
 export type FrameContentParams = {};
@@ -2842,6 +2843,7 @@ export type FrameFillOptions = {
   strict?: boolean,
   force?: boolean,
   timeout?: number,
+  message: string,
 };
 export type FrameFillResult = void;
 export type FrameFocusParams = {
@@ -2909,6 +2911,7 @@ export type FrameHoverOptions = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
+  message: string,
 };
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
