@@ -33,17 +33,6 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
-    - name: Check if branch exists
-      id: check-branch
-      run: |
-        BRANCH_NAME="roll-into-pw-${BROWSER}/${REVISION}"
-        git fetch origin $BRANCH_NAME:$BRANCH_NAME || true
-        if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
-          echo "exists=1" >> $GITHUB_OUTPUT
-          echo "branch $BRANCH_NAME already exists, exiting"
-          exit 0
-        fi
-        echo "exists=0" >> $GITHUB_OUTPUT
     - run: npm ci
     - run: npm run build
     - name: Install dependencies
@@ -57,6 +46,15 @@ jobs:
       run: |
         BRANCH_NAME="roll-into-pw-${BROWSER}/${REVISION}"
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+        git fetch origin $BRANCH_NAME:$BRANCH_NAME || true
+        if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
+          echo "exists=1" >> $GITHUB_OUTPUT
+          echo "branch $BRANCH_NAME already exists, exiting"
+          exit 0
+        fi
+        echo "exists=0" >> $GITHUB_OUTPUT
+
         git config --global user.name microsoft-playwright-automation[bot]
         git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
         git checkout -b "$BRANCH_NAME"
@@ -70,7 +68,7 @@ jobs:
         private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
     - name: Create Pull Request
       uses: actions/github-script@v7
-      if: ${{ steps.check-branch.outputs.exists == '0' }}
+      if: ${{ steps.prepare-branch.outputs.exists == '0' }}
       with:
         github-token: ${{ steps.app-token.outputs.token }}
         script: |
