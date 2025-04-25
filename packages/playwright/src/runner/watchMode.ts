@@ -25,7 +25,6 @@ import { colors } from 'playwright-core/lib/utils';
 import { separator, terminalScreen } from '../reporters/base';
 import { enquirer } from '../utilsBundle';
 import { TestServerDispatcher } from './testServer';
-import { restartWithExperimentalTsEsm } from '../common/configLoader';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerConnection  } from '../isomorphic/testServerConnection';
 
@@ -73,10 +72,7 @@ interface WatchModeOptions {
   grep?: string;
 }
 
-export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status'] | 'restarted'> {
-  if (restartWithExperimentalTsEsm(undefined, true))
-    return 'restarted';
-
+export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status']> {
   const options: WatchModeOptions = { ...initialOptions };
   let bufferMode = false;
 
