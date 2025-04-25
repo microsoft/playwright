@@ -462,23 +462,26 @@ export const UIModeView: React.FC<{}> = ({
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
-          {progress && <div data-testid='status-line' className='status-line'>
-            <div>
-              {isRunningTest && <span className='codicon codicon-loading' />}
-              {(progress.passed + progress.failed + progress.skipped)}/{progress.total} complete ({((progress.passed + progress.failed + progress.skipped) / progress.total) * 100 | 0}%)
-            </div>
-            <div className='test-results'>
-              <span>
-                <span className='codicon codicon-check'/>
-                {progress.passed}
+          {progress && <div data-testid='status-line' className='status-line-wrapper'>
+            <div className='status-line'>
+              <span className='progress'>
+                {!isRunningTest && <span className='codicon codicon-clock'/>}
+                {isRunningTest && <span className='codicon codicon-loading' />}
+                <span>{(progress.passed + progress.failed + progress.skipped)}/{progress.total} complete ({((progress.passed + progress.failed + progress.skipped) / progress.total) * 100 | 0}%)</span>
               </span>
-              <span>
-                <span className='codicon codicon-error' />
-                {progress.failed}
-              </span>
-              <span>
-                <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped' />
-                {progress.skipped}
+              <span className='test-results'>
+                <span className='test-result'>
+                  <span className='codicon codicon-check'/>
+                  <span>{progress.passed}</span>
+                </span>
+                <span className='test-result'>
+                  <span className='codicon codicon-error'/>
+                  <span>{progress.failed}</span>
+                </span>
+                <span className='test-result'>
+                  <span className='codicon codicon-circle-slash' title='skipped'/>
+                  <span>{progress.skipped}</span>
+                </span>
               </span>
             </div>
           </div>}

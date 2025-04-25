@@ -82,23 +82,35 @@
   margin-bottom: 30px;
 }
 
-.status-line {
+.status-line-wrapper {
+  align-items: center;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   flex: auto;
-  height: 40px;
+  height: 30px;
   line-height: 22px;
   padding-left: 10px;
   white-space: nowrap;
 }
 
-.status-line > div {
+.status-line {
+  display: flex;
+  gap: 10px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.status-line .progress,
+.test-results .test-result {
+  align-items: center;
+  display: flex;
+  gap: 3px;
+}
+
 .status-line .test-results {
-  //
+  align-items: center;
+  display: flex;
+  gap: 7px;
 }
 
 .ui-mode-sidebar input[type=search] {
