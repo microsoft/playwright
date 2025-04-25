@@ -28,16 +28,14 @@ import { mkdirIfNeeded } from './utils/fileUtils';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { SdkObject, serverSideCallMetadata } from './instrumentation';
-import { builtinsSource } from '../utils/isomorphic/builtins';
-import * as utilityScriptSerializers from '../utils/isomorphic/utilityScriptSerializers';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
 import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
-import * as storageScript from './storageScript';
 import { Tracing } from './trace/recorder/tracing';
 import * as js from './javascript';
+import * as storageSource from '../generated/storageScriptSource';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
@@ -47,6 +45,7 @@ import type { CallMetadata } from './instrumentation';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import type { SerializedStorage } from './storageScript';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
@@ -519,7 +518,12 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
-    const collectScript = `(${storageScript.collect})(${utilityScriptSerializers.source}, ${builtinsSource(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'}, ${indexedDB})`;
+    const collectScript = `(() => {
+      const module = {};
+      ${storageSource.source}
+      const script = new (module.exports.StorageScript())(${JSON.stringify(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'});
+      return script.collect(${indexedDB});
+    })()`;
 
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
@@ -527,7 +531,7 @@ export abstract class BrowserContext extends SdkObject {
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
+        const storage: SerializedStorage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
@@ -547,7 +551,7 @@ export abstract class BrowserContext extends SdkObject {
       for (const origin of originsToSave) {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage: storageScript.Storage = await frame.evaluateExpression(collectScript, { world: 'utility' });
+        const storage: SerializedStorage = await frame.evaluateExpression(collectScript, { world: 'utility' });
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
@@ -612,7 +616,13 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-          await frame.evaluateExpression(`(${storageScript.restore})(${utilityScriptSerializers.source}, ${builtinsSource(js.runtimeGuid)}, ${JSON.stringify(originState)})`, { world: 'utility' });
+          const restoreScript = `(() => {
+            const module = {};
+            ${storageSource.source}
+            const script = new (module.exports.StorageScript())(${JSON.stringify(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'});
+            return script.restore(${JSON.stringify(originState)});
+          })()`;
+          await frame.evaluateExpression(restoreScript, { world: 'utility' });
         }
         await page.close(internalMetadata);
       }

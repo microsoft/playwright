@@ -14,80 +14,95 @@
  * limitations under the License.
  */
 
-import type { Builtins } from '../utils/isomorphic/builtins';
-import type { source } from '../utils/isomorphic/utilityScriptSerializers';
+import { builtins } from '@isomorphic/builtins';
+import { source } from '@isomorphic/utilityScriptSerializers';
+
+import type { Builtins } from '@isomorphic/builtins';
 import type * as channels from '@protocol/channels';
 
-export type Storage = Omit<channels.OriginStorage, 'origin'>;
+export type SerializedStorage = Omit<channels.OriginStorage, 'origin'>;
 
-export async function collect(serializersSource: typeof source, builtins: Builtins, isFirefox: boolean, recordIndexedDB: boolean): Promise<Storage> {
-  const { serializeAsCallArgument } = serializersSource(builtins);
+export class StorageScript {
+  private _builtins: Builtins;
+  private _isFirefox: boolean;
+  private _global;
+  private _serializeAsCallArgument;
+  private _parseEvaluationResultValue;
 
-  async function collectDB(dbInfo: IDBDatabaseInfo) {
+  constructor(runtimeGuid: string, isFirefox: boolean) {
+    this._builtins = builtins(runtimeGuid);
+    this._isFirefox = isFirefox;
+    // eslint-disable-next-line no-restricted-globals
+    this._global = globalThis;
+    const result = source(this._builtins);
+    this._serializeAsCallArgument = result.serializeAsCallArgument;
+    this._parseEvaluationResultValue = result.parseEvaluationResultValue;
+  }
+
+  private _idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
+    return new Promise<T['result']>((resolve, reject) => {
+      request.addEventListener('success', () => resolve(request.result));
+      request.addEventListener('error', () => reject(request.error));
+    });
+  }
+
+  private _isPlainObject(v: any) {
+    const ctor = v?.constructor;
+    if (this._isFirefox) {
+      const constructorImpl = ctor?.toString() as string | undefined;
+      if (constructorImpl?.startsWith('function Object() {') && constructorImpl?.includes('[native code]'))
+        return true;
+    }
+    return ctor === Object;
+  }
+
+  private _trySerialize(value: any): { trivial?: any, encoded?: any } {
+    let trivial = true;
+    const encoded = this._serializeAsCallArgument(value, v => {
+      const isTrivial = (
+        this._isPlainObject(v)
+        || Array.isArray(v)
+        || typeof v === 'string'
+        || typeof v === 'number'
+        || typeof v === 'boolean'
+        || Object.is(v, null)
+      );
+
+      if (!isTrivial)
+        trivial = false;
+
+      return { fallThrough: v };
+    });
+    if (trivial)
+      return { trivial: value };
+    return { encoded };
+  }
+
+  private async _collectDB(dbInfo: IDBDatabaseInfo) {
     if (!dbInfo.name)
       throw new Error('Database name is empty');
     if (!dbInfo.version)
       throw new Error('Database version is unset');
 
-    function idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
-      return new Promise<T['result']>((resolve, reject) => {
-        request.addEventListener('success', () => resolve(request.result));
-        request.addEventListener('error', () => reject(request.error));
-      });
-    }
-
-    function isPlainObject(v: any) {
-      const ctor = v?.constructor;
-      if (isFirefox) {
-        const constructorImpl = ctor?.toString() as string | undefined;
-        if (constructorImpl?.startsWith('function Object() {') && constructorImpl?.includes('[native code]'))
-          return true;
-      }
-
-      return ctor === Object;
-    }
-
-    function trySerialize(value: any): { trivial?: any, encoded?: any } {
-      let trivial = true;
-      const encoded = serializeAsCallArgument(value, v => {
-        const isTrivial = (
-          isPlainObject(v)
-          || Array.isArray(v)
-          || typeof v === 'string'
-          || typeof v === 'number'
-          || typeof v === 'boolean'
-          || Object.is(v, null)
-        );
-
-        if (!isTrivial)
-          trivial = false;
-
-        return { fallThrough: v };
-      });
-      if (trivial)
-        return { trivial: value };
-      return { encoded };
-    }
-
-    const db = await idbRequestToPromise(indexedDB.open(dbInfo.name));
+    const db = await this._idbRequestToPromise(indexedDB.open(dbInfo.name));
     const transaction = db.transaction(db.objectStoreNames, 'readonly');
     const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
       const objectStore = transaction.objectStore(storeName);
 
-      const keys = await idbRequestToPromise(objectStore.getAllKeys());
+      const keys = await this._idbRequestToPromise(objectStore.getAllKeys());
       const records = await Promise.all(keys.map(async key => {
         const record: channels.IndexedDBDatabase['stores'][0]['records'][0] = {};
 
         if (objectStore.keyPath === null) {
-          const { encoded, trivial } = trySerialize(key);
+          const { encoded, trivial } = this._trySerialize(key);
           if (trivial)
             record.key = trivial;
           else
             record.keyEncoded = encoded;
         }
 
-        const value = await idbRequestToPromise(objectStore.get(key));
-        const { encoded, trivial } = trySerialize(value);
+        const value = await this._idbRequestToPromise(objectStore.get(key));
+        const { encoded, trivial } = this._trySerialize(value);
         if (trivial)
           record.value = trivial;
         else
@@ -124,22 +139,21 @@ export async function collect(serializersSource: typeof source, builtins: Builti
     };
   }
 
-  return {
-    localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name)! })),
-    indexedDB: recordIndexedDB ? await Promise.all((await indexedDB.databases()).map(collectDB)).catch(e => {
+  async collect(recordIndexedDB: boolean): Promise<SerializedStorage> {
+    const localStorage = Object.keys(this._global.localStorage).map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
+    if (!recordIndexedDB)
+      return { localStorage };
+    try {
+      const databases = await this._global.indexedDB.databases();
+      const indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
+      return { localStorage, indexedDB };
+    } catch (e) {
       throw new Error('Unable to serialize IndexedDB: ' + e.message);
-    }) : undefined,
-  };
-}
+    }
+  }
 
-export async function restore(serializersSource: typeof source, builtins: Builtins, originState: channels.SetOriginStorage) {
-  const { parseEvaluationResultValue } = serializersSource(builtins);
-
-  for (const { name, value } of (originState.localStorage || []))
-    localStorage.setItem(name, value);
-
-  await Promise.all((originState.indexedDB ?? []).map(async dbInfo => {
-    const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
+  private async _restoreDB(dbInfo: channels.IndexedDBDatabase) {
+    const openRequest = this._global.indexedDB.open(dbInfo.name, dbInfo.version);
     openRequest.addEventListener('upgradeneeded', () => {
       const db = openRequest.result;
       for (const store of dbInfo.stores) {
@@ -149,28 +163,29 @@ export async function restore(serializersSource: typeof source, builtins: Builti
       }
     });
 
-    function idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
-      return new Promise<T['result']>((resolve, reject) => {
-        request.addEventListener('success', () => resolve(request.result));
-        request.addEventListener('error', () => reject(request.error));
-      });
-    }
-
     // after `upgradeneeded` finishes, `success` event is fired.
-    const db = await idbRequestToPromise(openRequest);
+    const db = await this._idbRequestToPromise(openRequest);
     const transaction = db.transaction(db.objectStoreNames, 'readwrite');
     await Promise.all(dbInfo.stores.map(async store => {
       const objectStore = transaction.objectStore(store.name);
       await Promise.all(store.records.map(async record => {
-        await idbRequestToPromise(
+        await this._idbRequestToPromise(
             objectStore.add(
-                record.value ?? parseEvaluationResultValue(record.valueEncoded),
-                record.key ?? parseEvaluationResultValue(record.keyEncoded),
+                record.value ?? this._parseEvaluationResultValue(record.valueEncoded),
+                record.key ?? this._parseEvaluationResultValue(record.keyEncoded),
             )
         );
       }));
     }));
-  })).catch(e => {
-    throw new Error('Unable to restore IndexedDB: ' + e.message);
-  });
+  }
+
+  async restore(originState: channels.SetOriginStorage) {
+    try {
+      await Promise.all((originState.indexedDB ?? []).map(dbInfo => this._restoreDB(dbInfo)));
+    } catch (e) {
+      throw new Error('Unable to restore IndexedDB: ' + e.message);
+    }
+    for (const { name, value } of (originState.localStorage || []))
+      this._global.localStorage.setItem(name, value);
+  }
 }
