@@ -10340,6 +10340,11 @@ export interface Worker {
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
   url(): string;
+
+  /**
+   * Garbage collects all weak references for the worker.
+   */
+  weakRefGC(): Promise<string>;
 }
 
 /**

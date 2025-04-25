@@ -299,3 +299,25 @@ it('should support offline', async ({ page, server, browserName }) => {
   await page.context().setOffline(false);
   await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(true);
 });
+
+it('weakRefGC should garbage collect all weakRefs', async ({ page }) => {
+  const [worker] = await Promise.all([
+    page.waitForEvent('worker'),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`console.log("worker created")`], { type: 'application/javascript' })))),
+  ]);
+  await worker.evaluate(() => {
+    globalThis.weakRefs = [];
+    globalThis.createWeakRefs = (elements) => {
+      for (const element of elements) {
+        globalThis.weakRefs.push(new WeakRef(Object(element)));
+      }
+    };
+    globalThis.createWeakRefs([1, 2, 3]);
+    globalThis.countWeakRefs = () => globalThis.weakRefs.filter(r => !!r.deref()).length;
+  })
+  expect(await worker.evaluate(() => globalThis.countWeakRefs())).toBe(3);
+
+  await worker.weakRefGC();
+  let finalWeakRefsCount = await worker.evaluate(() => globalThis.countWeakRefs())
+  expect(finalWeakRefsCount).toBe(0);
+})

@@ -123,3 +123,9 @@ Performs action and waits for the Worker to close.
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
+
+## async method: Worker.weakRefGC
+* since: v1.XX
+- returns: <[string]>
+
+Garbage collects all weak references for the worker.
