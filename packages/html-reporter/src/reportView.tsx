@@ -139,7 +139,7 @@ const TestCaseViewLoader: React.FC<{
       prev={prev}
       test={test}
       run={run}
-    />;
+    />
   </div>;
 };
 
