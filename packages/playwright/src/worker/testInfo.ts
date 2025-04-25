@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 
@@ -51,10 +51,17 @@ export interface TestStepInternal {
   box?: boolean;
 }
 
+type SnapshotNames = {
+  lastAnonymousSnapshotIndex: number;
+  lastNamedSnapshotIndex: { [key: string]: number };
+};
+
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
+  private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
+  private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
@@ -448,10 +455,57 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(kind: 'snapshot' | 'screenshot' | 'aria', pathSegments: string[], sanitizeFilePath: boolean) {
-    let subPath = path.join(...pathSegments);
-    let ext = path.extname(subPath);
+  _resolveSnapshotPaths(kind: 'snapshot' | 'screenshot' | 'aria', name: string | string[] | undefined, updateSnapshotIndex: 'updateSnapshotIndex' | 'dontUpdateSnapshotIndex', anonymousExtension?: string) {
+    // NOTE: snapshot path must not ever change for backwards compatibility!
 
+    const snapshotNames = kind === 'aria' ? this._ariaSnapshotNames : this._snapshotNames;
+    const defaultExtensions = { 'aria': '.aria.yml', 'screenshot': '.png', 'snapshot': '.txt' };
+    const ariaAwareExtname = (filePath: string) => kind === 'aria' && filePath.endsWith('.aria.yml') ? '.aria.yml' : path.extname(filePath);
+
+    let subPath: string;
+    let ext: string;
+    let relativeOutputPath: string;
+
+    if (!name) {
+      // Consider the use case below. We should save actual to different paths, so we use |nextAnonymousSnapshotIndex|.
+      //
+      //   expect.toMatchSnapshot('a.png')
+      //   // noop
+      //   expect.toMatchSnapshot('a.png')
+      const index = snapshotNames.lastAnonymousSnapshotIndex + 1;
+      if (updateSnapshotIndex === 'updateSnapshotIndex')
+        snapshotNames.lastAnonymousSnapshotIndex = index;
+      const fullTitleWithoutSpec = [...this.titlePath.slice(1), index].join(' ');
+      ext = anonymousExtension ?? defaultExtensions[kind];
+      subPath = sanitizeFilePathBeforeExtension(trimLongString(fullTitleWithoutSpec) + ext, ext);
+      // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
+      relativeOutputPath = sanitizeFilePathBeforeExtension(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength) + ext, ext);
+    } else {
+      if (Array.isArray(name)) {
+        // We intentionally do not sanitize user-provided array of segments,
+        // assuming it is a file system path.
+        // See https://github.com/microsoft/playwright/pull/9156.
+        subPath = path.join(...name);
+        relativeOutputPath = path.join(...name);
+        ext = ariaAwareExtname(subPath);
+      } else {
+        ext = ariaAwareExtname(name);
+        subPath = sanitizeFilePathBeforeExtension(name, ext);
+        // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
+        relativeOutputPath = sanitizeFilePathBeforeExtension(trimLongString(name, windowsFilesystemFriendlyLength), ext);
+      }
+      const index = (snapshotNames.lastNamedSnapshotIndex[relativeOutputPath] || 0) + 1;
+      if (updateSnapshotIndex === 'updateSnapshotIndex')
+        snapshotNames.lastNamedSnapshotIndex[relativeOutputPath] = index;
+      if (index > 1)
+        relativeOutputPath = addSuffixToFilePath(relativeOutputPath, `-${index - 1}`);
+    }
+
+    const absoluteSnapshotPath = this._applyPathTemplate(kind, subPath, ext);
+    return { absoluteSnapshotPath, relativeOutputPath };
+  }
+
+  private _applyPathTemplate(kind: 'snapshot' | 'screenshot' | 'aria', relativePath: string, ext: string) {
     const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     let template: string;
     if (kind === 'screenshot') {
@@ -459,17 +513,12 @@ export class TestInfoImpl implements TestInfo {
     } else if (kind === 'aria') {
       const ariaDefaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}';
       template = this._projectInternal.expect?.toMatchAriaSnapshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || ariaDefaultTemplate;
-      if (subPath.endsWith('.aria.yml'))
-        ext = '.aria.yml';
     } else {
       template = this._projectInternal.snapshotPathTemplate || legacyTemplate;
     }
 
-    if (sanitizeFilePath)
-      subPath = sanitizeFilePathBeforeExtension(subPath, ext);
-
-    const dir = path.dirname(subPath);
-    const name = path.basename(subPath, ext);
+    const dir = path.dirname(relativePath);
+    const name = path.basename(relativePath, ext);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
@@ -493,22 +542,21 @@ export class TestInfoImpl implements TestInfo {
   snapshotPath(...name: string[]): string;
   snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
   snapshotPath(...args: any[]) {
-    let pathSegments: string[] = args;
+    let name: string[] = args;
     let kind: 'snapshot' | 'screenshot' | 'aria' = 'snapshot';
 
     const options = args[args.length - 1];
     if (options && typeof options === 'object') {
       kind = options.kind ?? kind;
-      pathSegments = args.slice(0, -1);
+      name = args.slice(0, -1);
     }
 
     if (!['snapshot', 'screenshot', 'aria'].includes(kind))
       throw new Error(`testInfo.snapshotPath: unknown kind "${kind}", must be one of "snapshot", "screenshot" or "aria"`);
 
-    // Assume a single path segment corresponds to `toHaveScreenshot(name)` and sanitize it,
-    // like we do in SnapshotHelper. See https://github.com/microsoft/playwright/pull/9156 for history.
-    const sanitizeFilePath = pathSegments.length === 1;
-    return this._resolveSnapshotPath(kind, pathSegments, sanitizeFilePath);
+    // Assume a zero/single path segment corresponds to `toHaveScreenshot(name)`,
+    // while multiple path segments correspond to `toHaveScreenshot([...name])`.
+    return this._resolveSnapshotPaths(kind, name.length <= 1 ? name[0] : name, 'dontUpdateSnapshotIndex').absoluteSnapshotPath;
   }
 
   skip(...args: [arg?: any, description?: string]) {
