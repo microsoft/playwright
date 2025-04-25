@@ -35,7 +35,7 @@ import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
 import { Tracing } from './trace/recorder/tracing';
 import * as js from './javascript';
-import * as storageSource from '../generated/storageSource';
+import * as storageSource from '../generated/storageScriptSource';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
@@ -45,7 +45,7 @@ import type { CallMetadata } from './instrumentation';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
-import type { SerializedStorage } from '@injected/storage';
+import type { SerializedStorage } from './storageScript';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
@@ -521,8 +521,8 @@ export abstract class BrowserContext extends SdkObject {
     const collectScript = `(() => {
       const module = {};
       ${storageSource.source}
-      const serializer = new (module.exports.StorageSerializer())(${JSON.stringify(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'});
-      return serializer.collect(${indexedDB});
+      const script = new (module.exports.StorageScript())(${JSON.stringify(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'});
+      return script.collect(${indexedDB});
     })()`;
 
     // First try collecting storage stage from existing pages.
@@ -619,8 +619,8 @@ export abstract class BrowserContext extends SdkObject {
           const restoreScript = `(() => {
             const module = {};
             ${storageSource.source}
-            const serializer = new (module.exports.StorageSerializer())(${JSON.stringify(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'});
-            return serializer.restore(${JSON.stringify(originState)});
+            const script = new (module.exports.StorageScript())(${JSON.stringify(js.runtimeGuid)}, ${this._browser.options.name === 'firefox'});
+            return script.restore(${JSON.stringify(originState)});
           })()`;
           await frame.evaluateExpression(restoreScript, { world: 'utility' });
         }

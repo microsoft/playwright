@@ -22,7 +22,7 @@ import type * as channels from '@protocol/channels';
 
 export type SerializedStorage = Omit<channels.OriginStorage, 'origin'>;
 
-export class StorageSerializer {
+export class StorageScript {
   private _builtins: Builtins;
   private _isFirefox: boolean;
   private _global;
