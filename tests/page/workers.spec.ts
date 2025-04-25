@@ -307,17 +307,16 @@ it('weakRefGC should garbage collect all weakRefs', async ({ page }) => {
   ]);
   await worker.evaluate(() => {
     globalThis.weakRefs = [];
-    globalThis.createWeakRefs = (elements) => {
-      for (const element of elements) {
+    globalThis.createWeakRefs = elements => {
+      for (const element of elements)
         globalThis.weakRefs.push(new WeakRef(Object(element)));
-      }
     };
     globalThis.createWeakRefs([1, 2, 3]);
     globalThis.countWeakRefs = () => globalThis.weakRefs.filter(r => !!r.deref()).length;
-  })
+  });
   expect(await worker.evaluate(() => globalThis.countWeakRefs())).toBe(3);
 
   await worker.weakRefGC();
-  let finalWeakRefsCount = await worker.evaluate(() => globalThis.countWeakRefs())
+  const finalWeakRefsCount = await worker.evaluate(() => globalThis.countWeakRefs());
   expect(finalWeakRefsCount).toBe(0);
-})
+});

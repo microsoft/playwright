@@ -59,14 +59,13 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
   }
 
   async weakRefGC(): Promise<string> {
-    this.evaluate(`
+    await this.evaluate(`
        if (globalThis.weakRefs) {
               globalThis.weakRefs.forEach(ref => ref.deref());
               globalThis.weakRefs = [];
             }
       `);
-      
-    return "Fxn Success!";
+    return 'Fxn Success!';
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
