@@ -3,24 +3,17 @@ name: Roll Browser into Playwright
 on:
   repository_dispatch:
     types: [roll_into_pw]
-  workflow_dispatch:
-    inputs:
-      browser:
-        description: 'Browser name, e.g. chromium'
-        required: true
-        type: string
-      revision:
-        description: 'Browser revision without v prefix, e.g. 1234'
-        required: true
-        type: string
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-  BROWSER: ${{ github.event.client_payload.browser || github.event.inputs.browser }}
-  REVISION: ${{ github.event.client_payload.revision || github.event.inputs.revision }}
+  BROWSER: ${{ github.event.client_payload.browser }}
+  REVISION: ${{ github.event.client_payload.revision }}
 
 permissions:
   contents: write
+
+concurrency: 
+  group: 'roll-browser-into-playwright-${{ github.event.client_payload.browser }}-${{ github.event.client_payload.revision }}'
 
 jobs:
   roll:
@@ -43,6 +36,15 @@ jobs:
       run: |
         BRANCH_NAME="roll-into-pw-${BROWSER}/${REVISION}"
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+        git fetch origin $BRANCH_NAME:$BRANCH_NAME || true
+        if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
+          echo "exists=1" >> $GITHUB_OUTPUT
+          echo "branch $BRANCH_NAME already exists, exiting"
+          exit 0
+        fi
+        echo "exists=0" >> $GITHUB_OUTPUT
+
         git config --global user.name microsoft-playwright-automation[bot]
         git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
         git checkout -b "$BRANCH_NAME"
@@ -56,6 +58,7 @@ jobs:
         private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
     - name: Create Pull Request
       uses: actions/github-script@v7
+      if: ${{ steps.prepare-branch.outputs.exists == '0' }}
       with:
         github-token: ${{ steps.app-token.outputs.token }}
         script: |
