@@ -496,7 +496,7 @@ LaunchOptions:
     tracesDir: string?
     chromiumSandbox: boolean?
     firefoxUserPrefs: json?
-    webSocketPort: number?
+    cdpPort: number?
 
 
 ContextOptions:
