@@ -81,7 +81,7 @@ test('should run visible', async ({ runUITest }) => {
           - treeitem "[icon-circle-slash] skipped"
   `);
 
-  await expect(page.getByTestId('progress')).toHaveText('8/8 complete (50%)');
+  await expect(page.getByTestId('progress')).toHaveText('8/8 complete (100%)');
   await expect(page.getByTestId('test-result-passed')).toHaveText('4');
 });
 
@@ -97,10 +97,10 @@ test('should show running progress', async ({ runUITest }) => {
   });
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('progress')).toHaveText('Running 4/4 complete (25%)');
+  await expect(page.getByTestId('progress')).toHaveText('Running 4/4 complete (100%)');
   await expect(page.getByTestId('test-result-passed')).toHaveText('1');
   await page.getByTitle('Stop').click();
-  await expect(page.getByTestId('progress')).toHaveText('4/4 complete (25%)');
+  await expect(page.getByTestId('progress')).toHaveText('4/4 complete (100%)');
   await expect(page.getByTestId('test-result-passed')).toHaveText('1');
   await page.getByTitle('Reload').click();
   await expect(page.getByTestId('progress')).toBeHidden();
@@ -494,7 +494,7 @@ test('should show time', async ({ runUITest }) => {
           - treeitem "[icon-circle-slash] skipped"
   `);
 
-  await expect(page.getByTestId('progress')).toHaveText('8/8 complete (50%)');
+  await expect(page.getByTestId('progress')).toHaveText('8/8 complete (100%)');
   await expect(page.getByTestId('test-result-passed')).toHaveText('4');
 });
 
