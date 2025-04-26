@@ -37,7 +37,8 @@ test('should run tests', async ({ runUITest }) => {
   await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('test 3');
   await page.keyboard.press('F5');
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('progress')).toHaveText('1/1 complete (100%)');
+  await expect(page.getByTestId('test-result-passed')).toHaveText('1');
   await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('');
 
   // Only the filtered test was run.

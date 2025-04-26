@@ -250,7 +250,8 @@ test('should print beforeAll console messages once', async ({ runUITest }, testI
   await page.getByTitle('Run all').click();
   await page.getByText('Console').click();
   await page.getByText('print').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('progress')).toHaveText('1/1 complete (100%)');
+  await expect(page.getByTestId('test-result-passed')).toHaveText('1');
   await expect(page.locator('.console-tab .console-line-message')).toHaveText([
     'before all log',
     'test log',

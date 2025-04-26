@@ -32,7 +32,8 @@ test('should display annotations', async ({ runUITest }) => {
     `,
   });
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('progress')).toHaveText('1/1 complete (100%)');
+  await expect(page.getByTestId('test-result-passed')).toHaveText('1');
   await page.getByRole('treeitem', { name: 'suite' }).locator('.codicon-chevron-right').click();
   await page.getByText('annotation test').click();
   await page.getByText('Annotations', { exact: true }).click();
