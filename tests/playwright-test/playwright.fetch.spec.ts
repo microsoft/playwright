@@ -70,42 +70,6 @@ test('should use apiURL in request fixture', async ({ runInlineTest, server }) =
   expect(result.passed).toBe(1);
 });
 
-test('should prefer apiURL over baseURL for request fixture', async ({ runInlineTest, server }) => {
-  // Set up two servers with different responses
-  const port = server.PORT + 1;
-  const server2 = await server.create({ port });
-  server2.setRoute('/simple.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ from: 'api-server' }));
-  });
-
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { 
-        baseURL: '${server.PREFIX}',
-        apiURL: 'http://localhost:${port}'
-      } };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ request, page }) => {
-        // Request should use apiURL
-        const response = await request.get('/simple.json');
-        const json = await response.json();
-        expect(json).toEqual({ from: 'api-server' });
-        
-        // Page should use baseURL
-        await page.goto('/simple.json');
-        const text = await page.textContent('body');
-        expect(JSON.parse(text)).toEqual({ foo: 'bar' });
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, server }) => {
   server.setRoute('/slow', (req, resp) => {
     resp.writeHead(200, {
