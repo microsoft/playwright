@@ -74,7 +74,7 @@
     "chokidar": "^3.5.3",
     "chromium-bidi": "^3.2.1",
     "colors": "^1.4.0",
-    "concurrently": "^6.2.1",
+    "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "electron": "^30.1.2",
