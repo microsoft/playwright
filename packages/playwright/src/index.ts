@@ -434,7 +434,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   },
 
   request: async ({ playwright }, use) => {
-    const request = await playwright.request.newContext();
+    // We can't use apiUrl directly because of TypeScript limitations
+    // If you need to use apiUrl, extract it from process.env or use any as a workaround
+    const apiUrl = (globalThis as any).__testApiUrl;
+    const request = await playwright.request.newContext({ baseURL: apiUrl });
     await use(request);
     const hook = (test.info() as TestInfoImpl)._currentHookType();
     if (hook === 'beforeAll') {
