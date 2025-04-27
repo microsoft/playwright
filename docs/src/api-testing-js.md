@@ -46,11 +46,11 @@ export default defineConfig({
 });
 ```
 
-**Using apiUrl for API tests**
+**Using apiURL for API tests**
 
 If you are performing both UI tests and API tests in the same test suite, you might want to have a different base URL for your API requests than for your page navigation. For example, your UI might be at `http://localhost:3000` while your API is at `http://localhost:3000/api` or even a completely different URL.
 
-You can specify the `apiUrl` option in your config, which will be used exclusively for the `request` fixture:
+You can specify the `apiURL` option in your config, which will be used exclusively for the `request` fixture:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -60,12 +60,12 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
 
     // Used exclusively for the request fixture
-    apiUrl: 'http://localhost:3000/api',
+    apiURL: 'http://localhost:3000/api',
   }
 });
 ```
 
-If both `baseURL` and `apiUrl` are specified, the `request` fixture will use `apiUrl`.
+If both `baseURL` and `apiURL` are specified, the `request` fixture will use `apiURL`.
 
 **Proxy configuration**
 

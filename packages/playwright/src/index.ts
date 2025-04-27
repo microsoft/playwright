@@ -152,7 +152,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   baseURL: [async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true }],
-  apiUrl: [async ({ }, use) => {
+  apiURL: [async ({ }, use) => {
     await use(undefined);
   }, { option: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true }],
@@ -436,8 +436,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(page);
   },
 
-  request: async ({ playwright, apiUrl }, use) => {
-    const request = await playwright.request.newContext({ baseURL: apiUrl });
+  request: async ({ playwright, apiURL }, use) => {
+    const request = await playwright.request.newContext({ baseURL: apiURL });
     await use(request);
     const hook = (test.info() as TestInfoImpl)._currentHookType();
     if (hook === 'beforeAll') {

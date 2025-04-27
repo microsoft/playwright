@@ -7358,9 +7358,9 @@ export interface PlaywrightTestOptions {
   baseURL: string | undefined;
   /**
    * Base URL to use in API request fixtures like `request`. When using `request.get('/api/endpoint')`, the URL will be 
-   * resolved to `apiUrl/api/endpoint`. Takes precedence over baseURL for the request fixture.
+   * resolved to `apiURL/api/endpoint`. Takes precedence over baseURL for the request fixture.
    * 
-   * Unset by default. When both apiUrl and baseURL are set, request fixture will use apiUrl.
+   * Unset by default. When both apiURL and baseURL are set, request fixture will use apiURL.
    * 
    * **Usage**
    *
@@ -7370,13 +7370,13 @@ export interface PlaywrightTestOptions {
    * export default defineConfig({
    *   use: {
    *     // Base URL for the 'request' fixture to use in API tests
-   *     apiUrl: 'http://localhost:3000/api',
+   *     apiURL: 'http://localhost:3000/api',
    *   },
    * });
    * ```
    *
    */
-  apiUrl: string | undefined;
+  apiURL: string | undefined;
   /**
    * Options used to create the context, as passed to
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). Specific
