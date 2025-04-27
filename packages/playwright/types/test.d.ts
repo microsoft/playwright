@@ -1570,6 +1570,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
+   * When to run failed tests again.
+   * 'leading' runs them immediately, 'trailing' waits for the whole suite to complete and then retries.
+   * See [testConfig.retryStrategy](https://playwright.dev/docs/api/class-testconfig#test-config-retry-strategy).
+   */
+  retryStrategy: 'leading'|'trailing';
+  
+  /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
@@ -1999,6 +2006,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     threshold: number;
   };
+
+  /**
+   * When to run failed tests again.
+   * 'leading' runs them immediately, 'trailing' waits for the whole suite to complete and then retries.
+   * See [testConfig.retryStrategy](https://playwright.dev/docs/api/class-testconfig#test-config-retry-strategy).
+   */
+  retryStrategy: 'leading'|'trailing';
 
   /**
    * Base directory for all relative paths used in the reporters.
