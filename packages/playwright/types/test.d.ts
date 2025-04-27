@@ -6857,32 +6857,6 @@ export interface PlaywrightWorkerOptions {
    * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
-  /**
-   * When using [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) methods, for example via the
-   * [request fixture](https://playwright.dev/docs/api/class-fixtures#fixtures-request), it takes
-   * the API URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-   * Unset by default. Examples:
-   * - apiUrl: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
-   * - apiUrl: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
-   *   `http://localhost:3000/foo/bar.html`
-   * - apiUrl: `http://localhost:3000/foo` (without trailing slash) and sending request to `./bar.html` results in
-   *   `http://localhost:3000/bar.html`
-   *
-   * **Usage**
-   *
-   * ```js
-   * import { defineConfig, devices } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   use: {
-   *     /\* Base URL to use in API requests via the 'request' fixture. *\/
-   *     apiUrl: 'http://localhost:3000/api',
-   *   },
-   * });
-   * ```
-   *
-   */
-  apiUrl: string | undefined;
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
@@ -7383,24 +7357,19 @@ export interface PlaywrightTestOptions {
    */
   baseURL: string | undefined;
   /**
-   * When using [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) methods, for example via the
-   * [request fixture](https://playwright.dev/docs/api/class-fixtures#fixtures-request), it takes
-   * the API URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-   * Unset by default. Examples:
-   * - apiUrl: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
-   * - apiUrl: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
-   *   `http://localhost:3000/foo/bar.html`
-   * - apiUrl: `http://localhost:3000/foo` (without trailing slash) and sending request to `./bar.html` results in
-   *   `http://localhost:3000/bar.html`
-   *
+   * Base URL to use in API request fixtures like `request`. When using `request.get('/api/endpoint')`, the URL will be 
+   * resolved to `apiUrl/api/endpoint`. Takes precedence over baseURL for the request fixture.
+   * 
+   * Unset by default. When both apiUrl and baseURL are set, request fixture will use apiUrl.
+   * 
    * **Usage**
    *
    * ```js
-   * import { defineConfig, devices } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
    *   use: {
-   *     /\* Base URL to use in API requests via the 'request' fixture. *\/
+   *     // Base URL for the 'request' fixture to use in API tests
    *     apiUrl: 'http://localhost:3000/api',
    *   },
    * });

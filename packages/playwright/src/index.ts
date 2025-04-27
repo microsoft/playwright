@@ -152,6 +152,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   baseURL: [async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true }],
+  apiUrl: [async ({ }, use) => {
+    await use(undefined);
+  }, { option: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true }],
   contextOptions: [{}, { option: true }],
 
@@ -433,10 +436,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(page);
   },
 
-  request: async ({ playwright }, use) => {
-    // We can't use apiUrl directly because of TypeScript limitations
-    // If you need to use apiUrl, extract it from process.env or use any as a workaround
-    const apiUrl = (globalThis as any).__testApiUrl;
+  request: async ({ playwright, apiUrl }, use) => {
     const request = await playwright.request.newContext({ baseURL: apiUrl });
     await use(request);
     const hook = (test.info() as TestInfoImpl)._currentHookType();
