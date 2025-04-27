@@ -58,7 +58,7 @@ export default defineConfig({
   use: {
     // Used for page.goto() and other page navigation
     baseURL: 'http://localhost:3000',
-    
+
     // Used exclusively for the request fixture
     apiUrl: 'http://localhost:3000/api',
   }
