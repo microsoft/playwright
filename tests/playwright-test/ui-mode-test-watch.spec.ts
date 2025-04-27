@@ -290,7 +290,7 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
 
   // Now watches should not kick in.
   await new Promise(f => setTimeout(f, 1000));
-  await expect(page.getByTestId('progress')).toHaveText('Running 1/4 complete (100%)');
+  await expect(page.getByTestId('progress')).toHaveText('Running 4/4 complete (100%)');
   await expect(page.getByTestId('test-result-passed')).toHaveText('1');
 
   // Allow test to finish and new watch to  kick in.
