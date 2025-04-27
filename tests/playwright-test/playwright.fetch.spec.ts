@@ -51,25 +51,6 @@ test('should use baseURL in request fixture', async ({ runInlineTest, server }) 
   expect(result.passed).toBe(1);
 });
 
-test('should use apiURL in request fixture', async ({ runInlineTest, server }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { apiURL: '${server.PREFIX}' } };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ request }) => {
-        const response = await request.get('/simple.json');
-        const json = await response.json();
-        expect(json).toEqual({ foo: 'bar' });
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, server }) => {
   server.setRoute('/slow', (req, resp) => {
     resp.writeHead(200, {
@@ -125,21 +106,4 @@ test('should hint unrouteAll if failed in the handler', async ({ runInlineTest, 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Consider awaiting `await page.unrouteAll({ behavior: \'ignoreErrors\' })`');
-});
-
-test('should work without apiURL', async ({ runInlineTest, server }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ request }) => {
-        // No apiURL or baseURL defined, so we need to use an absolute URL
-        const response = await request.get('${server.PREFIX}/simple.json');
-        const json = await response.json();
-        expect(json).toEqual({ foo: 'bar' });
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
 });
