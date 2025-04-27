@@ -54,6 +54,7 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
+  snippets?: boolean,
   _mode?: 'test' | 'list';
   _isTestServer?: boolean;
 };
@@ -133,9 +134,9 @@ class HtmlReporter implements ReporterV2 {
   }
 
   async onEnd(result: api.FullResult) {
-    const projectSuites = this.suite.suites;
+    const projectSuites = this.suite.suites; 
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL,this._options.snippets !== undefined ? this._options.snippets : true);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -232,10 +233,12 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
+  private _snippets: boolean;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, snippets: boolean = true) {
     this._config = config;
     this._reportFolder = outputDir;
+    this._snippets = snippets;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
@@ -264,7 +267,9 @@ class HtmlBuilder {
         }
       }
     }
-    createSnippets(this._stepsInFile);
+    if (this._snippets) {
+      createSnippets(this._stepsInFile);
+    }
 
     let ok = true;
     for (const [fileId, { testFile, testFileSummary }] of data) {
@@ -301,6 +306,7 @@ class HtmlBuilder {
       projectNames: projectSuites.map(r => r.project()!.name),
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
       errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
+      snippets: this._snippets,
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;

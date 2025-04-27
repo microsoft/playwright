@@ -27,7 +27,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import { CodeSnippet, TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
-import { CheckBox } from './checkbox';
+// import { CheckBox } from './checkbox';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
@@ -68,11 +68,12 @@ function groupImageDiffs(screenshots: Set<TestAttachment>, result: TestResult): 
   return [...snapshotNameToImageDiff.values()];
 }
 
-export const TestResultView: React.FC<{
-  test: TestCase,
-  result: TestResult,
-}> = ({ test, result }) => {
-  const [showSnippets, setShowSnippets] = React.useState(true);
+export const TestResultView: React.FC<{test: TestCase; result: TestResult;}> = ({ test, result }) => {
+  const [showSnippets, setShowSnippets] = React.useState(() => {
+  const reportData = (window as any).__reportData;
+  return reportData?.snippets !== undefined ? reportData.snippets : true;
+  });
+
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -86,7 +87,6 @@ export const TestResultView: React.FC<{
     const errors = classifyErrors(result.errors, diffs, result.attachments);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
-
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
       {errors.map((error, index) => {
@@ -96,7 +96,7 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
-      <CheckBox checkBoxSettings={[{ value: showSnippets, set: setShowSnippets, name: 'Show Snippets' }]} />
+      {/* <CheckBox checkBoxSettings={[{ value: showSnippets, set: setShowSnippets, name: 'Show Snippets' }]} /> */}
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0} showSnippets={showSnippets}/>)}
     </AutoChip>}
 

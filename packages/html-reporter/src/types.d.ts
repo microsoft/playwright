@@ -44,6 +44,7 @@ export type HTMLReport = {
   startTime: number;
   duration: number;
   errors: string[];  // Top-level errors that are not attributed to any test.
+  snippets: boolean; // Snippets that are not attributed to any test.
 };
 
 export type TestFile = {
