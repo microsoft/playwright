@@ -55,8 +55,8 @@ type HtmlReporterResolvedConfig = {
   host: string | undefined,
   title: string | undefined,
 
-  mode: 'test' | 'list' | undefined;
-  isTestServer: boolean | undefined;
+  _mode: 'test' | 'list' | undefined;
+  _isTestServer: boolean | undefined;
 };
 
 type HtmlReporterOptions = HtmlReporterResolvedConfig & {
@@ -128,11 +128,11 @@ class HtmlReporter implements ReporterV2 {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const { open, outputFolder, host, port, isTestServer, mode } = this._resolvedConfig;
-    const shouldOpen = !isTestServer && (open === 'always' || (!ok && open === 'on-failure'));
+    const { open, outputFolder, host, port, _isTestServer, _mode } = this._resolvedConfig;
+    const shouldOpen = !_isTestServer && (open === 'always' || (!ok && open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(outputFolder, host, port, singleTestId);
-    } else if (mode === 'test' && !isTestServer) {
+    } else if (_mode === 'test' && !_isTestServer) {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), outputFolder);
       const hostArg = host ? ` --host ${host}` : '';
@@ -146,11 +146,12 @@ class HtmlReporter implements ReporterV2 {
   }
 }
 
-function resolveConfig({ configDir, outputFolder: optionOutputFolder, open, attachmentsBaseURL, host, port, title, ...otherOptions }: HtmlReporterOptions): HtmlReporterResolvedConfig {
+function resolveConfig({ configDir, outputFolder: optionOutputFolder, open, attachmentsBaseURL, host, port, title, _mode, _isTestServer }: HtmlReporterOptions): HtmlReporterResolvedConfig {
   const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', configDir, optionOutputFolder);
   return {
-    ...otherOptions,
     outputFolder,
+    _mode,
+    _isTestServer,
     open: getHtmlReportOptionProcessEnv() || open || 'on-failure',
     attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || attachmentsBaseURL || 'data/',
     host: process.env.PLAYWRIGHT_HTML_HOST || host,
