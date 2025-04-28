@@ -19,7 +19,7 @@ import * as React from 'react';
 import './colors.css';
 import './common.css';
 import { Filter } from './filter';
-import { HeaderView } from './headerView';
+import { HeaderTitleView, HeaderView } from './headerView';
 import { Route, SearchParamsContext } from './links';
 import type { LoadedReport } from './loadedReport';
 import './reportView.css';
@@ -71,6 +71,15 @@ export const ReportView: React.FC<{
     }
     return result;
   }, [report, filter]);
+
+  const reportTitle = report?.json()?.title;
+
+  React.useEffect(() => {
+    if (reportTitle)
+      document.title = reportTitle;
+    else
+      document.title = 'Playwright Test Report';
+  }, [reportTitle]);
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
@@ -127,7 +136,7 @@ const TestCaseViewLoader: React.FC<{
 
   if (test === 'not-found') {
     return <div className='test-case-column vbox'>
-      <div className='test-case-title'>Test not found</div>
+      <HeaderTitleView title='Test not found' />
       <div className='test-case-location'>Test ID: {testId}</div>
     </div>;
   }
