@@ -47,33 +47,31 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return htmlReportOptions.includes(type);
 };
 
-type HtmlReporterOptions = {
+type HtmlReporterResolvedConfig = {
+  outputFolder: string,
+  attachmentsBaseURL: string,
+  open: string | undefined,
+  port: number | undefined,
+  host: string | undefined,
+  title: string | undefined,
+
+  mode: 'test' | 'list' | undefined;
+  isTestServer: boolean | undefined;
+};
+
+type HtmlReporterOptions = HtmlReporterResolvedConfig & {
   configDir: string,
-  outputFolder?: string,
-  open?: HtmlReportOpenOption,
-  host?: string,
-  port?: number,
-  attachmentsBaseURL?: string,
-  title?: string,
-  _mode?: 'test' | 'list';
-  _isTestServer?: boolean;
 };
 
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
-  private _options: HtmlReporterOptions;
-  private _outputFolder!: string;
-  private _attachmentsBaseURL!: string;
-  private _open: string | undefined;
-  private _port: number | undefined;
-  private _host: string | undefined;
-  private _title: string | undefined;
+  private _resolvedConfig: HtmlReporterResolvedConfig;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
   constructor(options: HtmlReporterOptions) {
-    this._options = options;
+    this._resolvedConfig = resolveConfig(options);
   }
 
   version(): 'v2' {
@@ -89,13 +87,7 @@ class HtmlReporter implements ReporterV2 {
   }
 
   onBegin(suite: api.Suite) {
-    const { outputFolder, open, attachmentsBaseURL, host, port, title } = this._resolveOptions();
-    this._outputFolder = outputFolder;
-    this._open = open;
-    this._host = host;
-    this._port = port;
-    this._attachmentsBaseURL = attachmentsBaseURL;
-    this._title = title;
+    const outputFolder = this._resolvedConfig.outputFolder;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
       if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
@@ -115,18 +107,6 @@ class HtmlReporter implements ReporterV2 {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined } {
-    const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
-    return {
-      outputFolder,
-      open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
-      attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || this._options.attachmentsBaseURL || 'data/',
-      host: process.env.PLAYWRIGHT_HTML_HOST || this._options.host,
-      port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : this._options.port,
-      title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
-    };
-  }
-
   _isSubdirectory(parentDir: string, dir: string): boolean {
     const relativePath = path.relative(parentDir, dir);
     return !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
@@ -137,9 +117,10 @@ class HtmlReporter implements ReporterV2 {
   }
 
   async onEnd(result: api.FullResult) {
+    const { outputFolder, attachmentsBaseURL, title } = this._resolvedConfig;
     const projectSuites = this.suite.suites;
-    await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title);
+    await removeFolders([outputFolder]);
+    const builder = new HtmlBuilder(this.config, outputFolder, attachmentsBaseURL, title);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -147,14 +128,15 @@ class HtmlReporter implements ReporterV2 {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
+    const { open, outputFolder, host, port, isTestServer, mode } = this._resolvedConfig;
+    const shouldOpen = !isTestServer && (open === 'always' || (!ok && open === 'on-failure'));
     if (shouldOpen) {
-      await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
-    } else if (this._options._mode === 'test' && !this._options._isTestServer) {
+      await showHTMLReport(outputFolder, host, port, singleTestId);
+    } else if (mode === 'test' && !isTestServer) {
       const packageManagerCommand = getPackageManagerExecCommand();
-      const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
-      const hostArg = this._host ? ` --host ${this._host}` : '';
-      const portArg = this._port ? ` --port ${this._port}` : '';
+      const relativeReportPath = outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), outputFolder);
+      const hostArg = host ? ` --host ${host}` : '';
+      const portArg = port ? ` --port ${port}` : '';
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
@@ -162,6 +144,19 @@ class HtmlReporter implements ReporterV2 {
 `));
     }
   }
+}
+
+function resolveConfig({ configDir, outputFolder: optionOutputFolder, open, attachmentsBaseURL, host, port, title, ...otherOptions }: HtmlReporterOptions): HtmlReporterResolvedConfig {
+  const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', configDir, optionOutputFolder);
+  return {
+    ...otherOptions,
+    outputFolder,
+    open: getHtmlReportOptionProcessEnv() || open || 'on-failure',
+    attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || attachmentsBaseURL || 'data/',
+    host: process.env.PLAYWRIGHT_HTML_HOST || host,
+    port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : port,
+    title: process.env.PLAYWRIGHT_HTML_TITLE || title,
+  };
 }
 
 function reportFolderFromEnv(): string | undefined {
