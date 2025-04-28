@@ -44,7 +44,7 @@ export const TestCaseView: React.FC<{
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
 
   return <>
-    <div className='hbox'>
+    <div className='hbox test-case-header'>
       <div className='test-case-path'>{test.path.join(' › ')}</div>
       <div style={{ flex: 'auto' }}></div>
       <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
