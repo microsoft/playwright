@@ -20,7 +20,7 @@ import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } fro
 import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
-import { addMainBinding, BidiPage, kPlaywrightBindingChannel } from './bidiPage';
+import { addMainBindingSource, BidiPage, kPlaywrightBindingChannel } from './bidiPage';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -238,7 +238,6 @@ export class BidiBrowserContext extends BrowserContext {
 
   // TODO: consider calling this only when bindings are added.
   private async _installMainBinding() {
-    const functionDeclaration = addMainBinding.toString();
     const args: bidi.Script.ChannelValue[] = [{
       type: 'channel',
       value: {
@@ -247,7 +246,7 @@ export class BidiBrowserContext extends BrowserContext {
       }
     }];
     await this._browser._browserSession.send('script.addPreloadScript', {
-      functionDeclaration,
+      functionDeclaration: addMainBindingSource,
       arguments: args,
       userContexts: [this._userContextId()],
     });
