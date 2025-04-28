@@ -18,6 +18,14 @@
   float: right;
 }
 
+.header-title {
+  flex: none;
+  padding: 8px;
+  font-weight: 400;
+  font-size: 32px !important;
+  line-height: 1.25 !important;
+}
+
 @media only screen and (max-width: 600px) {
   .header-view-status-container {
     float: none;

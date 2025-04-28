@@ -38,6 +38,7 @@ export type Location = {
 
 export type HTMLReport = {
   metadata: Metadata;
+  title: string | undefined;
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];

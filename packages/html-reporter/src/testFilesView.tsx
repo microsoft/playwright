@@ -23,6 +23,7 @@ import { AutoChip } from './chip';
 import { TestErrorView } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
+import { HeaderTitleView } from './headerView';
 
 export const TestFilesView: React.FC<{
   tests: TestFileSummary[],
@@ -83,6 +84,7 @@ export const TestFilesHeader: React.FC<{
       <div data-testid='overall-duration' style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report.duration ?? 0)}</div>
     </div>
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
+    {report.title && <HeaderTitleView title={report.title} />}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
