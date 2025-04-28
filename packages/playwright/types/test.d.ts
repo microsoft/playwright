@@ -1570,12 +1570,35 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
-   * When to run failed tests again.
-   * 'leading' runs them immediately, 'trailing' waits for the whole suite to complete and then retries.
-   * See [testConfig.retryStrategy](https://playwright.dev/docs/api/class-testconfig#test-config-retry-strategy).
+   * When to run failed tests again. By default set to "leading".
+   * - "leading" - Retry failures immediately, continuing from the failed test.
+   * - "trailing" - Run all tests first, then retry all failed tests together at the end.
+   *
+   * See [test retries](https://playwright.dev/docs/test-retries#retries) to learn more about retries.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   retries: 3,
+   *   // Configure when to run retries
+   *   retryStrategy: 'trailing',
+   * });
+   * ```
+   *
+   * **Details**
+   *
+   * The two available retry strategies are: "leading" - Retry failures immediately, continuing from the failed test.
+   * "trailing" - Run all tests first, then retry all failed tests together at the end.
+   *
+   * The "trailing" strategy can be useful when you want to get a complete picture of all failing tests before starting
+   * retries, or when retries might take a long time and you want to collect as many failures as possible first.
    */
-  retryStrategy: 'leading'|'trailing';
-  
+  retryStrategy?: "leading"|"trailing";
+
   /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
@@ -2008,11 +2031,9 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
-   * When to run failed tests again.
-   * 'leading' runs them immediately, 'trailing' waits for the whole suite to complete and then retries.
    * See [testConfig.retryStrategy](https://playwright.dev/docs/api/class-testconfig#test-config-retry-strategy).
    */
-  retryStrategy: 'leading'|'trailing';
+  retryStrategy: "leading"|"trailing";
 
   /**
    * Base directory for all relative paths used in the reporters.

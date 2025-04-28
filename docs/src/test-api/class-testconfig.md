@@ -470,6 +470,37 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.retryStrategy
+* since: v1.54
+- type: ?<[RetryStrategy]<"leading"|"trailing">>
+
+When to run failed tests again. By default set to "leading".
+* "leading" - Retry failures immediately, continuing from the failed test.
+* "trailing" - Run all tests first, then retry all failed tests together at the end.
+
+See [test retries](../test-retries.md#retries) to learn more about retries.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  retries: 3,
+  // Configure when to run retries
+  retryStrategy: 'trailing',
+});
+```
+
+**Details**
+
+The two available retry strategies are:
+"leading" - Retry failures immediately, continuing from the failed test.
+"trailing" - Run all tests first, then retry all failed tests together at the end.
+
+The "trailing" strategy can be useful when you want to get a complete picture of all failing tests before starting retries, or when retries might take a long time and you want to collect as many failures as possible first.
+
+
 ## property: TestConfig.reportSlowTests
 * since: v1.10
 - type: ?<[null]|[Object]>
