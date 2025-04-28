@@ -128,4 +128,4 @@ Performs action and waits for the Worker to close.
 * since: v1.XX
 - returns: <[string]>
 
-Garbage collects all weak references for the worker.
+Garbage collects all weak references for the worker. WeakRefs within the worker must be set via:  globalThis.weakRefs.push(new WeakRef({ myWeakRef }));
