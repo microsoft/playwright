@@ -85,6 +85,9 @@ export class StorageScript {
       throw new Error('Database version is unset');
 
     const db = await this._idbRequestToPromise(indexedDB.open(dbInfo.name));
+    if (db.objectStoreNames.length === 0)
+      return { name: dbInfo.name, version: dbInfo.version, stores: [] };
+
     const transaction = db.transaction(db.objectStoreNames, 'readonly');
     const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
       const objectStore = transaction.objectStore(storeName);
@@ -165,6 +168,9 @@ export class StorageScript {
 
     // after `upgradeneeded` finishes, `success` event is fired.
     const db = await this._idbRequestToPromise(openRequest);
+
+    if (db.objectStoreNames.length === 0)
+      return;
     const transaction = db.transaction(db.objectStoreNames, 'readwrite');
     await Promise.all(dbInfo.stores.map(async store => {
       const objectStore = transaction.objectStore(store.name);
