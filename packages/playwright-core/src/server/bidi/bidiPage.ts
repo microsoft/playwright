@@ -328,7 +328,7 @@ export class BidiPage implements PageDelegate {
     // For non-persistent context, the main binding is installed during context creation.
     if (this._browserContext._browserContextId)
       return;
-    const functionDeclaration = addMainBinding.toString();
+    const functionDeclaration = addMainBindingSource;
     const args: bidi.Script.ChannelValue[] = [{
       type: 'channel',
       value: {
@@ -572,9 +572,8 @@ export class BidiPage implements PageDelegate {
   }
 }
 
-export function addMainBinding(callback: (arg: any) => void) {
-  (globalThis as any)[PageBinding.kPlaywrightBinding] = callback;
-}
+export const addMainBindingSource =
+  `function addMainBinding(callback) { globalThis['${PageBinding.kPlaywrightBinding}'] = callback; }`;
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
   return executionContext.delegate as BidiExecutionContext;
