@@ -217,24 +217,10 @@ const noBooleanCompareRules = {
   "@typescript-eslint/no-unnecessary-boolean-literal-compare": 2,
 };
 
-// This should contain every builtin from builtins.ts.
 const noWebGlobalsRuleList = [
   { name: "window", message: "Use InjectedScript.window instead" },
   { name: "document", message: "Use InjectedScript.document instead" },
   { name: "globalThis", message: "Use InjectedScript.window instead" },
-  { name: "setTimeout", message: "import { setTimeout } from './builtins' instead" },
-  { name: "clearTimeout", message: "import { clearTimeout } from './builtins' instead" },
-  { name: "setInterval", message: "import { setInterval } from './builtins' instead" },
-  { name: "clearInterval", message: "import { clearInterval } from './builtins' instead" },
-  { name: "requestAnimationFrame", message: "import { requestAnimationFrame } from './builtins' instead" },
-  { name: "cancelAnimationFrame", message: "import { cancelAnimationFrame } from './builtins' instead" },
-  { name: "requestIdleCallback", message: "import { requestIdleCallback } from './builtins' instead" },
-  { name: "cancelIdleCallback", message: "import { cancelIdleCallback } from './builtins' instead" },
-  { name: "performance", message: "import { performance } from './builtins' instead" },
-  { name: "eval", message: "Use builtins().eval instead" },
-  { name: "Date", message: "import { Date } from './builtins' instead" },
-  { name: "Map", message: "import { Map } from './builtins' instead" },
-  { name: "Set", message: "import { Set } from './builtins' instead" },
 ];
 
 const noNodeGlobalsRuleList = [{ name: "process" }];
@@ -380,7 +366,6 @@ export default [
   {
     files: [
       "packages/injected/src/**/*.ts",
-      "packages/playwright-core/src/server/pageBinding.ts",
       "packages/playwright-core/src/server/storageScript.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,

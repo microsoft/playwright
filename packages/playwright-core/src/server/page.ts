@@ -24,8 +24,6 @@ import * as frames from './frames';
 import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
-import { builtinsSource } from '../utils/isomorphic/builtins';
-import { createPageBindingScript, deliverBindingResult, takeBindingHandle } from './pageBinding';
 import * as js from './javascript';
 import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
@@ -37,7 +35,9 @@ import { getComparator } from './utils/comparators';
 import { debugLogger } from './utils/debugLogger';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
+import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
+import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
@@ -49,7 +49,7 @@ import type * as types from './types';
 import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
-import type { BindingPayload } from './pageBinding';
+import type { BindingPayload } from '@injected/utilityScript';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -772,7 +772,7 @@ export class Page extends SdkObject {
 
   allInitScripts() {
     const bindings = [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
-    return [kBuiltinsScript, ...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
+    return [getUtilityInitScript(), ...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
   }
 
   getBinding(name: string) {
@@ -858,7 +858,6 @@ export class Worker extends SdkObject {
 }
 
 export class PageBinding {
-  static kPlaywrightBinding = '__playwright__binding__' + js.runtimeGuid;
 
   readonly name: string;
   readonly playwrightFunction: frames.FunctionWithSource;
@@ -869,7 +868,7 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(createPageBindingScript(PageBinding.kPlaywrightBinding, name, needsHandle), true /* internal */);
+    this.initScript = new InitScript(`${js.accessUtilityScript()}.addBinding(${JSON.stringify(name)}, ${needsHandle})`, true /* internal */);
     this.needsHandle = needsHandle;
     this.internal = name.startsWith('__pw');
   }
@@ -883,17 +882,17 @@ export class PageBinding {
         throw new Error(`Function "${name}" is not exposed`);
       let result: any;
       if (binding.needsHandle) {
-        const handle = await context.evaluateHandle(takeBindingHandle, { name, seq }).catch(e => null);
+        const handle = await context.evaluateExpressionHandle(`arg => ${js.accessUtilityScript()}.takeBindingHandle(arg)`, { isFunction: true }, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
         if (!Array.isArray(serializedArgs))
           throw new Error(`serializedArgs is not an array. This can happen when Array.prototype.toJSON is defined incorrectly`);
-        const args = serializedArgs!.map(a => js.parseEvaluationResultValue(a));
+        const args = serializedArgs!.map(a => parseEvaluationResultValue(a));
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
-      context.evaluate(deliverBindingResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
+      context.evaluateExpressionHandle(`arg => ${js.accessUtilityScript()}.deliverBindingResult(arg)`, { isFunction: true }, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
-      context.evaluate(deliverBindingResult, { name, seq, error }).catch(e => debugLogger.log('error', e));
+      context.evaluateExpressionHandle(`arg => ${js.accessUtilityScript()}.deliverBindingResult(arg)`, { isFunction: true }, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
   }
 }
@@ -922,7 +921,19 @@ export class InitScript {
   }
 }
 
-export const kBuiltinsScript = new InitScript(builtinsSource(js.runtimeGuid), true /* internal */);
+let utilityInitScriptInstance: InitScript | undefined;
+export function getUtilityInitScript() {
+  if (!utilityInitScriptInstance) {
+    utilityInitScriptInstance = new InitScript(`
+      (() => {
+        const module = {};
+        ${js.prepareGeneratedScript(rawUtilityScriptSource.source)}
+        (module.exports.ensureUtilityScript())();
+      })();
+    `, true /* internal */);
+  }
+  return utilityInitScriptInstance;
+}
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];

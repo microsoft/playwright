@@ -376,6 +376,7 @@ onChanges.push({
     'packages/playwright-ct-core/src/injected/**',
     'packages/playwright-core/src/utils/isomorphic/**',
     'packages/playwright-core/src/server/storageScript.ts',
+    'utils/generate_injected_builtins.js',
     'utils/generate_injected.js',
   ],
   script: 'utils/generate_injected.js',
