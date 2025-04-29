@@ -356,7 +356,7 @@ test('should report parallelIndex', async ({ runInlineTest }, testInfo) => {
   expect(result.report.suites[0].specs[2].tests[0].results[0].parallelIndex).toBe(1);
 });
 
-test('attaches error context', async ({ runInlineTest }) => {
+test('attaches error context', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
           export default { use: { _optionErrorContext: { format: 'json' } } };
@@ -364,7 +364,7 @@ test('attaches error context', async ({ runInlineTest }) => {
     'a.test.js': `
       const { test, expect } = require('@playwright/test');
       test('one', async ({ page }, testInfo) => {
-        await page.setContent('<button>Click me</button>');
+        await page.goto('${server.PREFIX}/frames/nested-frames.html');
         throw new Error('kaboom');
       });
     `,
@@ -377,4 +377,15 @@ test('attaches error context', async ({ runInlineTest }) => {
   expect(json).toEqual({
     pageSnapshot: expect.any(String),
   });
+
+  const { pageSnapshot } = json;
+  expect(pageSnapshot).toEqual(`
+- iframe:
+  - iframe:
+    - text: Hi, I'm frame
+  - iframe:
+    - text: Hi, I'm frame
+- iframe:
+  - text: Hi, I'm frame
+`.trimStart());
 });

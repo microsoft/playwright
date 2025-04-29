@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { attachErrorContext } from './errorContext';
+import { attachErrorContext, takeAriaSnapshot } from './errorContext';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -683,7 +683,7 @@ class ArtifactsRecorder {
 
     try {
       // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
-      this._pageSnapshot = await page?.locator('body').ariaSnapshot({ timeout: 5000 });
+      this._pageSnapshot = await takeAriaSnapshot(page.mainFrame(), { timeout: 5000 });
     } catch {}
   }
 

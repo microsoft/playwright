@@ -18,6 +18,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import { parseErrorStack } from 'playwright-core/lib/utils';
+import { yaml } from 'playwright-core/lib/utilsBundle';
 
 import { stripAnsiEscapes } from './util';
 import { codeFrameColumns } from './transform/babelBundle';
@@ -25,6 +26,7 @@ import { codeFrameColumns } from './transform/babelBundle';
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { TestInfoImpl } from './worker/testInfo';
 import type { Location } from '../types/test';
+import type { Frame, FrameLocator } from 'playwright-core';
 
 export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdown' | 'json', sourceCache: Map<string, string>, ariaSnapshot: string | undefined) {
   if (format === 'json') {
@@ -170,4 +172,46 @@ async function loadSourceCached(file: string, sourceCache: Map<string, string>):
     }
   }
   return source;
+}
+
+export async function takeAriaSnapshot(frame: Frame | FrameLocator, { timeout }: { timeout: number }) {
+  const document = await _takeAriaSnapshot(frame);
+  return document.toString({ indentSeq: false });
+}
+
+async function _takeAriaSnapshot(frame: Frame | FrameLocator) {
+  const snapshotString = await frame.locator('body').ariaSnapshot({ ref: true });
+  const snapshot = yaml.parseDocument(snapshotString);
+
+  const visit = async (node: any): Promise<unknown> => {
+    if (yaml.isPair(node)) {
+      await Promise.all([
+        visit(node.key).then(k => node.key = k),
+        visit(node.value).then(v => node.value = v)
+      ]);
+    } else if (yaml.isSeq(node) || yaml.isMap(node)) {
+      node.items = await Promise.all(node.items.map(visit));
+    } else if (yaml.isScalar(node)) {
+      if (typeof node.value === 'string') {
+        const value = node.value;
+        node.value = node.value.replace(/ \[ref=(.*)\]/, '');
+        if (value.startsWith('iframe ')) {
+          const ref = value.match(/\[ref=(.*)\]/)?.[1];
+          if (ref) {
+            try {
+              // TODO: race against deadline
+              const childSnapshot = await _takeAriaSnapshot(frame.frameLocator(`aria-ref=${ref}`));
+              return snapshot.createPair(node.value, childSnapshot);
+            } catch (error) {
+              return snapshot.createPair(node.value, '<could not take iframe snapshot>');
+            }
+          }
+        }
+      }
+    }
+
+    return node;
+  };
+  await visit(snapshot.contents);
+  return snapshot;
 }
