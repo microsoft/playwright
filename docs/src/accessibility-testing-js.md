@@ -44,7 +44,7 @@ test.describe('homepage', () => { // 2
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze(); // 4
 
-    expect(accessibilityScanResults.violations).toEqual([]); // 5
+    expect(accessibilityScanResults.violations).toStrictEqual([]); // 5
   });
 });
 ```
@@ -59,7 +59,7 @@ test.describe('homepage', () => { // 2
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze(); // 4
 
-    expect(accessibilityScanResults.violations).toEqual([]); // 5
+    expect(accessibilityScanResults.violations).toStrictEqual([]); // 5
   });
 });
 ```
@@ -89,7 +89,7 @@ test('navigation menu should not have automatically detectable accessibility vio
       .include('#navigation-menu-flyout')
       .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
+  expect(accessibilityScanResults.violations).toStrictEqual([]);
 });
 ```
 
@@ -109,7 +109,7 @@ test('should not have any automatically detectable WCAG A or AA violations', asy
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
+  expect(accessibilityScanResults.violations).toStrictEqual([]);
 });
 ```
 
@@ -139,7 +139,7 @@ test('should not have any accessibility violations outside of elements with know
       .exclude('#element-with-known-issue')
       .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
+  expect(accessibilityScanResults.violations).toStrictEqual([]);
 });
 ```
 
@@ -161,7 +161,7 @@ test('should not have any accessibility violations outside of rules with known i
       .disableRules(['duplicate-id'])
       .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
+  expect(accessibilityScanResults.violations).toStrictEqual([]);
 });
 ```
 
@@ -214,7 +214,7 @@ test('example with attachment', async ({ page }, testInfo) => {
     contentType: 'application/json'
   });
 
-  expect(accessibilityScanResults.violations).toEqual([]);
+  expect(accessibilityScanResults.violations).toStrictEqual([]);
 });
 ```
 
@@ -291,6 +291,6 @@ test('example using custom fixture', async ({ page, makeAxeBuilder }) => {
       .include('#specific-element-under-test')
       .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
+  expect(accessibilityScanResults.violations).toStrictEqual([]);
 });
 ```
