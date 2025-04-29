@@ -183,7 +183,7 @@ async function _takeAriaSnapshot(frame: Frame | FrameLocator, deadline: number) 
   if (monotonicTime() > deadline)
     return;
 
-  const snapshotString = await raceAgainstDeadline(() => frame.locator('body').ariaSnapshot({ ref: true, timeout: 1000 }), deadline);
+  const snapshotString = await raceAgainstDeadline(() => frame.locator('body').ariaSnapshot({ ref: true, timeout: 5000 }), deadline);
   if (snapshotString.timedOut)
     return;
 
@@ -205,8 +205,9 @@ async function _takeAriaSnapshot(frame: Frame | FrameLocator, deadline: number) 
           const ref = value.match(/\[ref=(.*)\]/)?.[1];
           if (ref) {
             try {
-              // TODO: race against deadline
               const childSnapshot = await _takeAriaSnapshot(frame.frameLocator(`aria-ref=${ref}`), deadline);
+              if (!childSnapshot)
+                return snapshot.createPair(node.value, '<snapshot timed out>');
               return snapshot.createPair(node.value, childSnapshot);
             } catch (error) {
               return snapshot.createPair(node.value, '<could not take iframe snapshot>');
