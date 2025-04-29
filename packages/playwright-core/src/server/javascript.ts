@@ -15,17 +15,40 @@
  */
 
 import { SdkObject } from './instrumentation';
-import * as utilityScriptSource from '../generated/utilityScriptSource';
+import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
 import { createGuid, isUnderTest } from '../utils';
-import { builtins } from '../utils/isomorphic/builtins';
-import { source } from '../utils/isomorphic/utilityScriptSerializers';
+import { serializeAsCallArgument } from '../utils/isomorphic/utilityScriptSerializers';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type * as dom from './dom';
 import type { UtilityScript } from '@injected/utilityScript';
 
+// --- This section should match utilityScript.ts and generated_injected_builtins.js ---
+
 // Use in the web-facing names to avoid leaking Playwright to the pages.
 export const runtimeGuid = createGuid();
+
+// Preprocesses any generated script to include the runtime guid.
+const preparedSources = new Map<string, string>();
+export function prepareGeneratedScript(source: string) {
+  // We do this lazily to pickup late changes to isUnderTest().
+  let prepared = preparedSources.get(source);
+  if (!prepared) {
+    prepared = source.replaceAll('$runtime_guid$', runtimeGuid).replace('kUtilityScriptIsUnderTest = false', `kUtilityScriptIsUnderTest = ${isUnderTest()}`);
+    preparedSources.set(source, prepared);
+  }
+  return prepared;
+}
+
+// Include this code in any evaluated source to get access to the UtilityScript instance.
+export function accessUtilityScript() {
+  return `globalThis['__playwright_utility_script__${runtimeGuid}']`;
+}
+
+// The name of the global playwright binding, accessed by UtilityScript.
+export const kPlaywrightBinding = '__playwright__binding__' + runtimeGuid;
+
+// --- End of the matching section ---
 
 interface TaggedAsJSHandle<T> {
   __jshandle: T;
@@ -48,10 +71,6 @@ export type Func0<R> = string | (() => R | Promise<R>);
 export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
 export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>;
-
-const utilityScriptSerializers = source(builtins(runtimeGuid));
-export const parseEvaluationResultValue = utilityScriptSerializers.parseEvaluationResultValue;
-export const serializeAsCallArgument = utilityScriptSerializers.serializeAsCallArgument;
 
 export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
@@ -111,8 +130,8 @@ export class ExecutionContext extends SdkObject {
       const source = `
       (() => {
         const module = {};
-        ${utilityScriptSource.source}
-        return new (module.exports.UtilityScript())(${JSON.stringify(runtimeGuid)}, ${isUnderTest()});
+        ${prepareGeneratedScript(rawUtilityScriptSource.source)}
+        return (module.exports.ensureUtilityScript())();
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))
           .then(handle => {

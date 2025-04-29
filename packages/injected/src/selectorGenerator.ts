@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Map, Set } from '@isomorphic/builtins';
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';

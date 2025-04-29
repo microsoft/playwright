@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import type { Date, Map, Builtins } from './builtins';
-
 type TypedArrayKind = 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64';
 
 export type SerializedValue =
@@ -39,7 +37,7 @@ type VisitorInfo = {
   lastId: number;
 };
 
-export function source(builtins: Builtins) {
+function source() {
 
   function isRegExp(obj: any): obj is RegExp {
     try {
@@ -51,7 +49,7 @@ export function source(builtins: Builtins) {
 
   function isDate(obj: any): obj is Date {
     try {
-      return obj instanceof builtins.Date || Object.prototype.toString.call(obj) === '[object Date]';
+      return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
     } catch (error) {
       return false;
     }
@@ -115,7 +113,7 @@ export function source(builtins: Builtins) {
     return new TypedArrayConstructor(bytes.buffer);
   }
 
-  function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Map<number, object> = new builtins.Map()): any {
+  function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Map<number, object> = new Map()): any {
     if (Object.is(value, undefined))
       return undefined;
     if (typeof value === 'object' && value) {
@@ -137,7 +135,7 @@ export function source(builtins: Builtins) {
         return undefined;
       }
       if ('d' in value)
-        return new builtins.Date(value.d);
+        return new Date(value.d);
       if ('u' in value)
         return new URL(value.u);
       if ('bi' in value)
@@ -173,7 +171,7 @@ export function source(builtins: Builtins) {
   }
 
   function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
-    return serialize(value, handleSerializer, { visited: new builtins.Map(), lastId: 0 });
+    return serialize(value, handleSerializer, { visited: new Map(), lastId: 0 });
   }
 
   function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -289,3 +287,6 @@ export function source(builtins: Builtins) {
 
   return { parseEvaluationResultValue, serializeAsCallArgument };
 }
+
+const { parseEvaluationResultValue, serializeAsCallArgument } = source();
+export { parseEvaluationResultValue, serializeAsCallArgument };

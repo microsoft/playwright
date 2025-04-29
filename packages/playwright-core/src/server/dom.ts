@@ -18,10 +18,10 @@ import fs from 'fs';
 
 import * as js from './javascript';
 import { ProgressController } from './progress';
-import { asLocator, isUnderTest } from '../utils';
+import { asLocator } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { isSessionClosedError } from './protocolError';
-import * as injectedScriptSource from '../generated/injectedScriptSource';
+import * as rawInjectedScriptSource from '../generated/injectedScriptSource';
 
 import type * as frames from './frames';
 import type { ElementState, HitTargetInterceptionResult, InjectedScript, InjectedScriptOptions } from '@injected/injectedScript';
@@ -32,7 +32,6 @@ import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
 import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
-
 
 export type InputFilesItems = {
   filePayloads?: types.FilePayload[],
@@ -91,19 +90,17 @@ export class FrameExecutionContext extends js.ExecutionContext {
         customEngines.push({ name, source });
       const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
       const options: InjectedScriptOptions = {
-        isUnderTest: isUnderTest(),
         sdkLanguage,
         testIdAttributeName: selectorsRegistry.testIdAttributeName(),
         stableRafCount: this.frame._page._delegate.rafCountForStablePosition(),
         browserName: this.frame._page._browserContext._browser.options.name,
         inputFileRoleTextbox: process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? true : false,
         customEngines,
-        runtimeGuid: js.runtimeGuid,
       };
       const source = `
         (() => {
         const module = {};
-        ${injectedScriptSource.source}
+        ${js.prepareGeneratedScript(rawInjectedScriptSource.source)}
         return new (module.exports.InjectedScript())(globalThis, ${JSON.stringify(options)});
         })();
       `;

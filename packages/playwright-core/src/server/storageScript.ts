@@ -14,29 +14,20 @@
  * limitations under the License.
  */
 
-import { builtins } from '@isomorphic/builtins';
-import { source } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument } from '../utils/isomorphic/utilityScriptSerializers';
 
-import type { Builtins } from '@isomorphic/builtins';
 import type * as channels from '@protocol/channels';
 
 export type SerializedStorage = Omit<channels.OriginStorage, 'origin'>;
 
 export class StorageScript {
-  private _builtins: Builtins;
   private _isFirefox: boolean;
   private _global;
-  private _serializeAsCallArgument;
-  private _parseEvaluationResultValue;
 
-  constructor(runtimeGuid: string, isFirefox: boolean) {
-    this._builtins = builtins(runtimeGuid);
+  constructor(isFirefox: boolean) {
     this._isFirefox = isFirefox;
     // eslint-disable-next-line no-restricted-globals
     this._global = globalThis;
-    const result = source(this._builtins);
-    this._serializeAsCallArgument = result.serializeAsCallArgument;
-    this._parseEvaluationResultValue = result.parseEvaluationResultValue;
   }
 
   private _idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
@@ -58,7 +49,7 @@ export class StorageScript {
 
   private _trySerialize(value: any): { trivial?: any, encoded?: any } {
     let trivial = true;
-    const encoded = this._serializeAsCallArgument(value, v => {
+    const encoded = serializeAsCallArgument(value, v => {
       const isTrivial = (
         this._isPlainObject(v)
         || Array.isArray(v)
@@ -177,8 +168,8 @@ export class StorageScript {
       await Promise.all(store.records.map(async record => {
         await this._idbRequestToPromise(
             objectStore.add(
-                record.value ?? this._parseEvaluationResultValue(record.valueEncoded),
-                record.key ?? this._parseEvaluationResultValue(record.keyEncoded),
+                record.value ?? parseEvaluationResultValue(record.valueEncoded),
+                record.key ?? parseEvaluationResultValue(record.keyEncoded),
             )
         );
       }));

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { requestAnimationFrame, cancelAnimationFrame } from '@isomorphic/builtins';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { stringifySelector } from '@isomorphic/selectorParser';
 

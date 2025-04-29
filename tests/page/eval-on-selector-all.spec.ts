@@ -84,7 +84,7 @@ it('should work with bogus Array.from', async ({ page, server }) => {
   expect(divsCount).toBe(3);
 });
 
-it.fixme('should work with broken Map', async ({ page, server }) => {
+it('should work with broken Map', async ({ page, server }) => {
   await page.setContent(`
     <script>
       window.Map = () => {};

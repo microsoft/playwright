@@ -19,7 +19,8 @@ import { eventsHelper } from '../utils/eventsHelper';
 import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import { Page, PageBinding } from '../page';
+import { kPlaywrightBinding } from '../javascript';
+import { Page } from '../page';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
@@ -573,7 +574,7 @@ export class BidiPage implements PageDelegate {
 }
 
 export const addMainBindingSource =
-  `function addMainBinding(callback) { globalThis['${PageBinding.kPlaywrightBinding}'] = callback; }`;
+  `function addMainBinding(callback) { globalThis['${kPlaywrightBinding}'] = callback; }`;
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
   return executionContext.delegate as BidiExecutionContext;
