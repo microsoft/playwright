@@ -23,7 +23,7 @@ import { AutoChip } from './chip';
 import { TestErrorView } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
-import { HeaderTitleView } from './headerView';
+import { HeaderView } from './headerView';
 
 export const TestFilesView: React.FC<{
   tests: TestFileSummary[],
@@ -70,21 +70,23 @@ export const TestFilesHeader: React.FC<{
 }> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
   if (!report)
     return null;
+
+  const leftSuperHeader = <div className='test-file-header-info'>
+    {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
+    {filteredStats && <div data-testid='filtered-tests-count'>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
+  </div>;
+
+  const rightSuperHeader = <>
+    <div data-testid='overall-time' style={{ marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
+    <div data-testid='overall-duration'>Total time: {msToString(report.duration ?? 0)}</div>
+  </>;
+
   return <>
-    <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
-      <div className='test-file-header-info'>
-        {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
-          {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
-        </div>}
-        {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
-        {filteredStats && <div data-testid='filtered-tests-count'>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
-      </div>
-      <div style={{ flex: 'auto' }}></div>
-      <div data-testid='overall-time' style={{ color: 'var(--color-fg-subtle)', marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
-      <div data-testid='overall-duration' style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report.duration ?? 0)}</div>
-    </div>
+    <HeaderView title={report.title} leftSuperHeader={leftSuperHeader} rightSuperHeader={rightSuperHeader} />
+    {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
+      {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
+    </div>}
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
-    {report.title && <HeaderTitleView title={report.title} />}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}

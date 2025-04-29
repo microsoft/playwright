@@ -15,14 +15,14 @@
  */
 
 import { test, expect } from '@playwright/experimental-ct-react';
-import { HeaderView } from './headerView';
+import { GlobalFilterView } from './headerView';
 import { SearchParamsProvider } from './links';
 
 test.use({ viewport: { width: 720, height: 200 } });
 
 test('should render counters', async ({ mount }) => {
   const component = await mount(<SearchParamsProvider>
-    <HeaderView stats={{
+    <GlobalFilterView stats={{
       total: 100,
       expected: 42,
       unexpected: 31,
@@ -46,7 +46,7 @@ test('should render counters', async ({ mount }) => {
 test('should toggle filters', async ({ page, mount }) => {
   const filters: string[] = [];
   const component = await mount(<SearchParamsProvider>
-    <HeaderView
+    <GlobalFilterView
       stats={{
         total: 100,
         expected: 42,

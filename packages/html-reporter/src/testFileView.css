@@ -85,5 +85,5 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
 }

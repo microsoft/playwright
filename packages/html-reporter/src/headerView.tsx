@@ -25,6 +25,21 @@ import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
 
 export const HeaderView: React.FC<{
+  title: string | undefined,
+  leftSuperHeader?: React.ReactNode,
+  rightSuperHeader?: React.ReactNode,
+}> = ({ title, leftSuperHeader, rightSuperHeader }) => {
+  return <div className='header-view'>
+    <div className='hbox header-superheader'>
+      {leftSuperHeader}
+      <div style={{ flex: 'auto' }}></div>
+      {rightSuperHeader}
+    </div>
+    {title && <div className='header-title'>{title}</div>}
+  </div>;
+};
+
+export const GlobalFilterView: React.FC<{
   stats: Stats,
   filterText: string,
   setFilterText: (filterText: string) => void,
@@ -58,8 +73,6 @@ export const HeaderView: React.FC<{
     </div>
   </>);
 };
-
-export const HeaderTitleView: React.FC<{ title: string }> = ({ title }) => <div className='header-title'>{title}</div>;
 
 const StatsNavView: React.FC<{
   stats: Stats
