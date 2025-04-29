@@ -192,7 +192,7 @@ export default defineConfig({
 
 ### More browser and context options
 
-Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
+Any options accepted by [`method: BrowserType.launch`], [`method: Browser.newContext`] or [`method: BrowserType.connect`] can be put into `launchOptions`, `contextOptions` or `connectOptions` respectively in the `use` section.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -294,5 +294,56 @@ test.describe('french language block', () => {
   test('example', async ({ page }) => {
     // ...
   });
+});
+```
+
+### Reset an option
+
+You can reset an option to the value defined in the config file. Consider the following config that sets a `baseURL`:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    baseURL: 'https://playwright.dev',
+  },
+});
+```
+
+You can now configure `baseURL` for a file, and also opt-out for a single test.
+
+```js title="intro.spec.ts"
+import { test } from '@playwright/test';
+
+// Configure baseURL for this file.
+test.use({ baseURL: 'https://playwright.dev/docs/intro' });
+
+test('check intro contents', async ({ page }) => {
+  // This test will use "https://playwright.dev/docs/intro" base url as defined above.
+});
+
+test.describe(() => {
+  // Reset the value to a config-defined one.
+  test.use({ baseURL: undefined });
+
+  test('can navigate to intro from the home page', async ({ page }) => {
+    // This test will use "https://playwright.dev" base url as defined in the config.
+  });
+});
+```
+
+If you would like to completely reset the value to `undefined`, use a long-form fixture notation.
+
+```js title="intro.spec.ts"
+import { test } from '@playwright/test';
+
+// Completely unset baseURL for this file.
+test.use({
+  baseURL: [async ({}, use) => use(undefined), { scope: 'test' }],
+});
+
+test('no base url', async ({ page }) => {
+  // This test will not have a base url.
 });
 ```
