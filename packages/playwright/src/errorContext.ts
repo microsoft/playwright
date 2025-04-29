@@ -17,7 +17,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { parseErrorStack } from 'playwright-core/lib/utils';
+import { monotonicTime, parseErrorStack, raceAgainstDeadline } from 'playwright-core/lib/utils';
 import { yaml } from 'playwright-core/lib/utilsBundle';
 
 import { stripAnsiEscapes } from './util';
@@ -175,13 +175,19 @@ async function loadSourceCached(file: string, sourceCache: Map<string, string>):
 }
 
 export async function takeAriaSnapshot(frame: Frame | FrameLocator, { timeout }: { timeout: number }) {
-  const document = await _takeAriaSnapshot(frame);
-  return document.toString({ indentSeq: false });
+  const result = await _takeAriaSnapshot(frame, monotonicTime() + timeout);
+  return result?.toString({ indentSeq: false });
 }
 
-async function _takeAriaSnapshot(frame: Frame | FrameLocator) {
-  const snapshotString = await frame.locator('body').ariaSnapshot({ ref: true });
-  const snapshot = yaml.parseDocument(snapshotString);
+async function _takeAriaSnapshot(frame: Frame | FrameLocator, deadline: number) {
+  if (monotonicTime() > deadline)
+    return;
+
+  const snapshotString = await raceAgainstDeadline(() => frame.locator('body').ariaSnapshot({ ref: true, timeout: 1000 }), deadline);
+  if (snapshotString.timedOut)
+    return;
+
+  const snapshot = yaml.parseDocument(snapshotString.result);
 
   const visit = async (node: any): Promise<unknown> => {
     if (yaml.isPair(node)) {
@@ -200,7 +206,7 @@ async function _takeAriaSnapshot(frame: Frame | FrameLocator) {
           if (ref) {
             try {
               // TODO: race against deadline
-              const childSnapshot = await _takeAriaSnapshot(frame.frameLocator(`aria-ref=${ref}`));
+              const childSnapshot = await _takeAriaSnapshot(frame.frameLocator(`aria-ref=${ref}`), deadline);
               return snapshot.createPair(node.value, childSnapshot);
             } catch (error) {
               return snapshot.createPair(node.value, '<could not take iframe snapshot>');
