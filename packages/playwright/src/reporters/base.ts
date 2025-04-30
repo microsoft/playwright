@@ -46,6 +46,13 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
+export type CommonReporterOptions = {
+  configDir: string,
+  _mode: 'list' | 'test' | 'merge',
+  _isTestServer: boolean,
+  _commandHash: string,
+};
+
 export type Screen = {
   resolveFiles: 'cwd' | 'rootDir';
   colors: Colors;

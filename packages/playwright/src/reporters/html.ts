@@ -24,7 +24,7 @@ import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
-import { formatError, formatResultFailure, internalScreen } from './base';
+import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
@@ -34,16 +34,13 @@ import type * as api from '../../types/testReporter';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep, TestAnnotation } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
-import type { ReporterOptions } from './types';
 
 type TestEntry = {
   testCase: TestCase;
   testCaseSummary: TestCaseSummary
 };
 
-type Options = HtmlReporterOptions & ReporterOptions;
-
-type HtmlReportOpenOption = Exclude<Options['open'], undefined>;
+type HtmlReportOpenOption = NonNullable<HtmlReporterOptions['open']>;
 const htmlReportOptions: HtmlReportOpenOption[] = ['always', 'never', 'on-failure'];
 
 const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
@@ -53,7 +50,7 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
-  private _options: Options;
+  private _options: HtmlReporterOptions & CommonReporterOptions;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
   private _open: string | undefined;
@@ -62,7 +59,7 @@ class HtmlReporter implements ReporterV2 {
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
-  constructor(options: Options) {
+  constructor(options: HtmlReporterOptions & CommonReporterOptions) {
     this._options = options;
   }
 
