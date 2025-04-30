@@ -146,7 +146,7 @@ export abstract class Browser extends SdkObject {
     this._idToVideo.set(videoId, { context, artifact });
     pageOrError.then(page => {
       if (page instanceof Page) {
-        page._video = artifact;
+        page.video = artifact;
         page.emitOnContext(BrowserContext.Events.VideoStarted, artifact);
         page.emit(Page.Events.Video, artifact);
       }

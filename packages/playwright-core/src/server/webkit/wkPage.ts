@@ -109,12 +109,12 @@ export class WKPage implements PageDelegate {
       const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
       opener._nextWindowOpenPopupFeatures = undefined;
       if (viewportSize)
-        this._page._emulatedSize = { viewport: viewportSize, screen: viewportSize };
+        this._page.setEmulatedSize({ viewport: viewportSize, screen: viewportSize });
     }
   }
 
   private async _initializePageProxySession() {
-    if (this._page._browserContext.isSettingStorageState())
+    if (this._page.browserContext.isSettingStorageState())
       return;
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),
@@ -187,7 +187,7 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
     }
-    if (this._page._browserContext.isSettingStorageState()) {
+    if (this._page.browserContext.isSettingStorageState()) {
       await Promise.all(promises);
       return;
     }
@@ -290,7 +290,7 @@ export class WKPage implements PageDelegate {
     let errorText = event.error;
     if (errorText.includes('cancelled'))
       errorText += '; maybe frame was detached?';
-    this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, errorText, event.loaderId);
+    this._page.frameManager.frameAbortedNavigation(this._page.mainFrame()._id, errorText, event.loaderId);
   }
 
   handleWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
@@ -368,8 +368,8 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.willCheckNavigationPolicy', event => this._onWillCheckNavigationPolicy(event.frameId)),
       eventsHelper.addEventListener(this._session, 'Page.didCheckNavigationPolicy', event => this._onDidCheckNavigationPolicy(event.frameId, event.cancel)),
       eventsHelper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId, event.delay, event.targetIsCurrentFrame)),
-      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'load')),
-      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded')),
+      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page.frameManager.frameLifecycleEvent(event.frameId, 'load')),
+      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page.frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded')),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
       eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
@@ -381,13 +381,13 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page._frameManager.webSocketClosed(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page._frameManager.webSocketError(e.requestId, e.errorMessage)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
   }
   private async _updateState<T extends keyof Protocol.CommandParameters>(
@@ -420,7 +420,7 @@ export class WKPage implements PageDelegate {
     //   one.
     if (this._provisionalPage)
       return;
-    this._page._frameManager.frameRequestedNavigation(frameId);
+    this._page.frameManager.frameRequestedNavigation(frameId);
   }
 
   private _onDidCheckNavigationPolicy(frameId: string, cancel?: boolean) {
@@ -430,19 +430,19 @@ export class WKPage implements PageDelegate {
     // the provisional page. Bail out as we are tracking it.
     if (this._provisionalPage)
       return;
-    this._page._frameManager.frameAbortedNavigation(frameId, 'Navigation canceled by policy check');
+    this._page.frameManager.frameAbortedNavigation(frameId, 'Navigation canceled by policy check');
   }
 
   private _onFrameScheduledNavigation(frameId: string, delay: number, targetIsCurrentFrame: boolean) {
     if (targetIsCurrentFrame)
-      this._page._frameManager.frameRequestedNavigation(frameId);
+      this._page.frameManager.frameRequestedNavigation(frameId);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
     this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
-    this._page._frameManager.frameLifecycleEvent(frameTree.frame.id, 'domcontentloaded');
-    this._page._frameManager.frameLifecycleEvent(frameTree.frame.id, 'load');
+    this._page.frameManager.frameLifecycleEvent(frameTree.frame.id, 'domcontentloaded');
+    this._page.frameManager.frameLifecycleEvent(frameTree.frame.id, 'load');
 
     if (!frameTree.childFrames)
       return;
@@ -451,26 +451,26 @@ export class WKPage implements PageDelegate {
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null): frames.Frame {
-    return this._page._frameManager.frameAttached(frameId, parentFrameId);
+    return this._page.frameManager.frameAttached(frameId, parentFrameId);
   }
 
   private _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-    const frame = this._page._frameManager.frame(framePayload.id);
+    const frame = this._page.frameManager.frame(framePayload.id);
     assert(frame);
     this._removeContextsForFrame(frame, true);
     if (!framePayload.parentId)
       this._workers.clear();
-    this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
+    this._page.frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
   }
 
   private _onFrameNavigatedWithinDocument(frameId: string, url: string) {
-    this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
+    this._page.frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
   private _onFrameDetached(frameId: string) {
-    this._page._frameManager.frameDetached(frameId);
+    this._page.frameManager.frameDetached(frameId);
   }
 
   private _removeContextsForFrame(frame: frames.Frame, notifyFrame: boolean) {
@@ -486,7 +486,7 @@ export class WKPage implements PageDelegate {
   private _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     if (this._contextIdToContext.has(contextPayload.id))
       return;
-    const frame = this._page._frameManager.frame(contextPayload.frameId);
+    const frame = this._page.frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
     const delegate = new WKExecutionContext(this._session, contextPayload.id);
@@ -506,7 +506,7 @@ export class WKPage implements PageDelegate {
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(contextId);
       if (context)
-        await this._page._onBindingCalled(argument, context);
+        await this._page.onBindingCalled(argument, context);
     }
   }
 
@@ -587,7 +587,7 @@ export class WKPage implements PageDelegate {
         location
       } = this._lastConsoleMessage;
       for (let i = count; i < event.count; ++i)
-        this._page._addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
+        this._page.addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
       this._lastConsoleMessage.count = event.count;
     }
   }
@@ -600,7 +600,7 @@ export class WKPage implements PageDelegate {
         async (accept: boolean, promptText?: string) => {
           // TODO: this should actually be a RDP event that notifies about a cancelled navigation attempt.
           if (event.type === 'beforeunload' && !accept)
-            this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, 'navigation cancelled by beforeunload dialog');
+            this._page.frameManager.frameAbortedNavigation(this._page.mainFrame()._id, 'navigation cancelled by beforeunload dialog');
           await this._pageProxySession.send('Dialog.handleJavaScriptDialog', { accept, promptText });
         },
         event.defaultPrompt));
@@ -609,7 +609,7 @@ export class WKPage implements PageDelegate {
   private async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
     let handle;
     try {
-      const context = await this._page._frameManager.frame(event.frameId)!._mainContext();
+      const context = await this._page.frameManager.frame(event.frameId)!._mainContext();
       handle =  createHandle(context, event.element).asElement()!;
     } catch (e) {
       // During async processing, frame/context may go away. We should not throw.
@@ -774,7 +774,7 @@ export class WKPage implements PageDelegate {
 
   private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
-    if (!this._page.context()._options.isMobile) {
+    if (!this._page.browserContext._options.isMobile) {
       scripts.push('delete window.orientation');
       scripts.push('delete window.ondevicemotion');
       scripts.push('delete window.ondeviceorientation');
@@ -802,7 +802,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _toolbarHeight(): number {
-    if (this._page._browserContext._browser?.options.headful)
+    if (this._page.browserContext._browser?.options.headful)
       return hostPlatform === 'mac10.15' ? 55 : 59;
     return 0;
   }
@@ -831,8 +831,8 @@ export class WKPage implements PageDelegate {
     // (see https://github.com/microsoft/playwright/issues/16727).
     if (process.platform === 'darwin')
       return;
-    if (!omitDeviceScaleFactor && this._page._browserContext._options.deviceScaleFactor)
-      side = Math.ceil(side * this._page._browserContext._options.deviceScaleFactor);
+    if (!omitDeviceScaleFactor && this._page.browserContext._options.deviceScaleFactor)
+      side = Math.ceil(side * this._page.browserContext._options.deviceScaleFactor);
     if (side > 32767)
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
@@ -856,7 +856,7 @@ export class WKPage implements PageDelegate {
     });
     if (!nodeInfo.contentFrameId)
       return null;
-    return this._page._frameManager.frame(nodeInfo.contentFrameId);
+    return this._page.frameManager.frame(nodeInfo.contentFrameId);
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
@@ -1035,7 +1035,7 @@ export class WKPage implements PageDelegate {
         redirectedFrom = request;
       }
     }
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page._frameManager.frame(event.frameId);
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
     // sometimes we get stray network events for detached frames
     // TODO(einbinder) why?
     if (!frame)
@@ -1053,7 +1053,7 @@ export class WKPage implements PageDelegate {
       request.request.setRawRequestHeaders(null);
     }
     this._requestIdToRequest.set(event.requestId, request);
-    this._page._frameManager.requestStarted(request.request, route);
+    this._page.frameManager.requestStarted(request.request, route);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, requestId: string, responsePayload: Protocol.Network.Response, timestamp: number) {
@@ -1064,8 +1064,8 @@ export class WKPage implements PageDelegate {
     response.setEncodedBodySize(null);
     response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1);
     this._requestIdToRequest.delete(requestId);
-    this._page._frameManager.requestReceivedResponse(response);
-    this._page._frameManager.reportRequestFinished(request.request, response);
+    this._page.frameManager.requestReceivedResponse(response);
+    this._page.frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
@@ -1095,7 +1095,7 @@ export class WKPage implements PageDelegate {
 
     this._requestIdToResponseReceivedPayloadEvent.set(event.requestId, event);
     const response = request.createResponse(event.response);
-    this._page._frameManager.requestReceivedResponse(response);
+    this._page.frameManager.requestReceivedResponse(response);
 
     if (response.status() === 204 && request.request.isNavigationRequest()) {
       this._onLoadingFailed(session, {
@@ -1138,7 +1138,7 @@ export class WKPage implements PageDelegate {
 
     this._requestIdToResponseReceivedPayloadEvent.delete(event.requestId);
     this._requestIdToRequest.delete(event.requestId);
-    this._page._frameManager.reportRequestFinished(request.request, response);
+    this._page.frameManager.reportRequestFinished(request.request, response);
   }
 
   _onLoadingFailed(session: WKSession, event: Protocol.Network.loadingFailedPayload) {
@@ -1169,7 +1169,7 @@ export class WKPage implements PageDelegate {
     }
     this._requestIdToRequest.delete(event.requestId);
     request.request._setFailureText(event.errorText);
-    this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
+    this._page.frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {

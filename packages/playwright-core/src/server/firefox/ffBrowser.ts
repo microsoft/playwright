@@ -17,7 +17,7 @@
 
 import { assert } from '../../utils';
 import { Browser } from '../browser';
-import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
+import { BrowserContext, verifyGeolocation } from '../browserContext';
 import { TargetClosedError } from '../errors';
 import { kPlaywrightBinding } from '../javascript';
 import * as network from '../network';
@@ -137,7 +137,7 @@ export class FFBrowser extends Browser {
       return;
 
     // Abort the navigation that turned into download.
-    ffPage._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
+    ffPage._page.frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
 
     let originPage = ffPage._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
@@ -282,7 +282,6 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   override async doCreateNewPage(): Promise<Page> {
-    assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser.session.send('Browser.newPage', {
       browserContextId: this._browserContextId
     }).catch(e =>  {

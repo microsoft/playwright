@@ -23,18 +23,18 @@ import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
 
 export class CRServiceWorker extends Worker {
-  readonly _browserContext: CRBrowserContext;
-  readonly _networkManager?: CRNetworkManager;
+  readonly browserContext: CRBrowserContext;
+  private readonly _networkManager?: CRNetworkManager;
   private _session: CRSession;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
     this._session = session;
-    this._browserContext = browserContext;
+    this.browserContext = browserContext;
     if (!!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS)
       this._networkManager = new CRNetworkManager(null, this);
     session.once('Runtime.executionContextCreated', event => {
-      this._createExecutionContext(new CRExecutionContext(session, event.context));
+      this.createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
     if (this._networkManager && this._isNetworkInspectionEnabled()) {
@@ -62,19 +62,19 @@ export class CRServiceWorker extends Worker {
   async updateOffline(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-    await this._networkManager?.setOffline(!!this._browserContext._options.offline).catch(() => {});
+    await this._networkManager?.setOffline(!!this.browserContext._options.offline).catch(() => {});
   }
 
   async updateHttpCredentials(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-    await this._networkManager?.authenticate(this._browserContext._options.httpCredentials || null).catch(() => {});
+    await this._networkManager?.authenticate(this.browserContext._options.httpCredentials || null).catch(() => {});
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-    await this._networkManager?.setExtraHTTPHeaders(this._browserContext._options.extraHTTPHeaders || []).catch(() => {});
+    await this._networkManager?.setExtraHTTPHeaders(this.browserContext._options.extraHTTPHeaders || []).catch(() => {});
   }
 
   async updateRequestInterception(): Promise<void> {
@@ -84,32 +84,32 @@ export class CRServiceWorker extends Worker {
   }
 
   needsRequestInterception(): boolean {
-    return this._isNetworkInspectionEnabled() && !!this._browserContext._requestInterceptor;
+    return this._isNetworkInspectionEnabled() && !!this.browserContext._requestInterceptor;
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
-    this._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
+    this.browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
   }
 
   requestFailed(request: network.Request, _canceled: boolean) {
-    this._browserContext.emit(BrowserContext.Events.RequestFailed, request);
+    this.browserContext.emit(BrowserContext.Events.RequestFailed, request);
   }
 
   requestReceivedResponse(response: network.Response) {
-    this._browserContext.emit(BrowserContext.Events.Response, response);
+    this.browserContext.emit(BrowserContext.Events.Response, response);
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    this._browserContext.emit(BrowserContext.Events.Request, request);
+    this.browserContext.emit(BrowserContext.Events.Request, request);
     if (route) {
       const r = new network.Route(request, route);
-      if (this._browserContext._requestInterceptor?.(r, request))
+      if (this.browserContext._requestInterceptor?.(r, request))
         return;
       r.continue({ isFallback: true }).catch(() => {});
     }
   }
 
   private _isNetworkInspectionEnabled(): boolean {
-    return this._browserContext._options.serviceWorkers !== 'block';
+    return this.browserContext._options.serviceWorkers !== 'block';
   }
 }

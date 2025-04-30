@@ -79,7 +79,7 @@ export class CRPage implements PageDelegate {
   readonly _nextWindowOpenPopupFeatures: string[][] = [];
 
   static mainFrameSession(page: Page): FrameSession {
-    const crPage = page._delegate as CRPage;
+    const crPage = page.delegate as CRPage;
     return crPage._mainFrameSession;
   }
 
@@ -108,7 +108,7 @@ export class CRPage implements PageDelegate {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
       if (viewportSize)
-        this._page._emulatedSize = { viewport: viewportSize, screen: viewportSize };
+        this._page.setEmulatedSize({ viewport: viewportSize, screen: viewportSize });
     }
 
     const createdEvent = this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page;
@@ -441,7 +441,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    const isSettingStorageState = this._page._browserContext.isSettingStorageState();
+    const isSettingStorageState = this._page.browserContext.isSettingStorageState();
     if (!isSettingStorageState && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
@@ -480,7 +480,7 @@ class FrameSession {
           this._addRendererListeners();
         }
 
-        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
+        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page.frameManager.frame(this._targetId)!];
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
           this._client._sendMayFail('Page.createIsolatedWorld', {
@@ -574,9 +574,9 @@ class FrameSession {
     if (this._eventBelongsToStaleFrame(event.frameId))
       return;
     if (event.name === 'load')
-      this._page._frameManager.frameLifecycleEvent(event.frameId, 'load');
+      this._page.frameManager.frameLifecycleEvent(event.frameId, 'load');
     else if (event.name === 'DOMContentLoaded')
-      this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded');
+      this._page.frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded');
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameTree) {
@@ -590,7 +590,7 @@ class FrameSession {
   }
 
   private _eventBelongsToStaleFrame(frameId: string)  {
-    const frame = this._page._frameManager.frame(frameId);
+    const frame = this._page.frameManager.frame(frameId);
     // Subtree may be already gone because some ancestor navigation destroyed the oopif.
     if (!frame)
       return true;
@@ -607,26 +607,26 @@ class FrameSession {
     if (frameSession && frameId !== this._targetId) {
       // This is a remote -> local frame transition.
       frameSession._swappedIn = true;
-      const frame = this._page._frameManager.frame(frameId);
+      const frame = this._page.frameManager.frame(frameId);
       // Frame or even a whole subtree may be already gone, because some ancestor did navigate.
       if (frame)
-        this._page._frameManager.removeChildFramesRecursively(frame);
+        this._page.frameManager.removeChildFramesRecursively(frame);
       return;
     }
-    if (parentFrameId && !this._page._frameManager.frame(parentFrameId)) {
+    if (parentFrameId && !this._page.frameManager.frame(parentFrameId)) {
       // Parent frame may be gone already because some ancestor frame navigated and
       // destroyed the whole subtree of some oopif, while oopif's process is still sending us events.
       // Be careful to not confuse this with "main frame navigated cross-process" scenario
       // where parentFrameId is null.
       return;
     }
-    this._page._frameManager.frameAttached(frameId, parentFrameId);
+    this._page.frameManager.frameAttached(frameId, parentFrameId);
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     if (this._eventBelongsToStaleFrame(framePayload.id))
       return;
-    this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
+    this._page.frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
   }
@@ -635,13 +635,13 @@ class FrameSession {
     if (this._eventBelongsToStaleFrame(payload.frameId))
       return;
     if (payload.disposition === 'currentTab')
-      this._page._frameManager.frameRequestedNavigation(payload.frameId);
+      this._page.frameManager.frameRequestedNavigation(payload.frameId);
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
     if (this._eventBelongsToStaleFrame(frameId))
       return;
-    this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
+    this._page.frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
   _onFrameDetached(frameId: string, reason: 'remove' | 'swap') {
@@ -655,17 +655,17 @@ class FrameSession {
       // This is a local -> remote frame transition, where
       // Page.frameDetached arrives before Target.attachedToTarget.
       // We should keep the frame in the tree, and it will be used for the new target.
-      const frame = this._page._frameManager.frame(frameId);
+      const frame = this._page.frameManager.frame(frameId);
       if (frame)
-        this._page._frameManager.removeChildFramesRecursively(frame);
+        this._page.frameManager.removeChildFramesRecursively(frame);
       return;
     }
     // Just a regular frame detach.
-    this._page._frameManager.frameDetached(frameId);
+    this._page.frameManager.frameDetached(frameId);
   }
 
   _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
-    const frame = contextPayload.auxData ? this._page._frameManager.frame(contextPayload.auxData.frameId) : null;
+    const frame = contextPayload.auxData ? this._page.frameManager.frame(contextPayload.auxData.frameId) : null;
     if (!frame || this._eventBelongsToStaleFrame(frame._id))
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
@@ -699,10 +699,10 @@ class FrameSession {
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
-      const frame = this._page._frameManager.frame(targetId);
+      const frame = this._page.frameManager.frame(targetId);
       if (!frame)
         return; // Subtree may be already gone due to renderer/browser race.
-      this._page._frameManager.removeChildFramesRecursively(frame);
+      this._page.frameManager.removeChildFramesRecursively(frame);
       for (const [contextId, context] of this._contextIdToContext) {
         if (context.frame === frame)
           this._onExecutionContextDestroyed(contextId);
@@ -720,22 +720,22 @@ class FrameSession {
 
     const url = event.targetInfo.url;
     const worker = new Worker(this._page, url);
-    this._page._addWorker(event.sessionId, worker);
+    this._page.addWorker(event.sessionId, worker);
     this._workerSessions.set(event.sessionId, session);
     session.once('Runtime.executionContextCreated', async event => {
-      worker._createExecutionContext(new CRExecutionContext(session, event.context));
+      worker.createExecutionContext(new CRExecutionContext(session, event.context));
     });
     // This might fail if the target is closed before we initialize.
     session._sendMayFail('Runtime.enable');
     // TODO: attribute workers to the right frame.
-    this._crPage._networkManager.addSession(session, this._page._frameManager.frame(this._targetId) ?? undefined).catch(() => {});
+    this._crPage._networkManager.addSession(session, this._page.frameManager.frame(this._targetId) ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
     session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
     session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
-      const args = event.args.map(o => createHandle(worker._existingExecutionContext!, o));
-      this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
+      const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
+      this._page.addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
   }
@@ -745,7 +745,7 @@ class FrameSession {
     const workerSession = this._workerSessions.get(event.sessionId);
     if (workerSession) {
       workerSession.dispose();
-      this._page._removeWorker(event.sessionId);
+      this._page.removeWorker(event.sessionId);
       return;
     }
 
@@ -768,7 +768,7 @@ class FrameSession {
       // Child was not swapped in - that means frameAttached did not happen and
       // this is remote detach rather than remote -> local swap.
       if (!childFrameSession._swappedIn)
-        this._page._frameManager.frameDetached(event.targetId!);
+        this._page.frameManager.frameDetached(event.targetId!);
       childFrameSession.dispose();
     });
   }
@@ -798,7 +798,7 @@ class FrameSession {
     if (!context)
       return;
     const values = event.args.map(arg => createHandle(context, arg));
-    this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
+    this._page.addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
@@ -806,12 +806,12 @@ class FrameSession {
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(event.executionContextId);
       if (context)
-        await this._page._onBindingCalled(event.payload, context);
+        await this._page.onBindingCalled(event.payload, context);
     }
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
-    if (!this._page._frameManager.frame(this._targetId))
+    if (!this._page.frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
     this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
         this._page,
@@ -820,7 +820,7 @@ class FrameSession {
         async (accept: boolean, promptText?: string) => {
           // TODO: this should actually be a CDP event that notifies about a cancelled navigation attempt.
           if (this._isMainFrame() && event.type === 'beforeunload' && !accept)
-            this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, 'navigation cancelled by beforeunload dialog');
+            this._page.frameManager.frameAbortedNavigation(this._page.mainFrame()._id, 'navigation cancelled by beforeunload dialog');
           await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
         },
         event.defaultPrompt));
@@ -845,14 +845,14 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page._addConsoleMessage(level, [], location, text);
+      this._page.addConsoleMessage(level, [], location, text);
     }
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
     if (!event.backendNodeId)
       return;
-    const frame = this._page._frameManager.frame(event.frameId);
+    const frame = this._page.frameManager.frame(event.frameId);
     if (!frame)
       return;
     let handle;
@@ -1070,7 +1070,7 @@ class FrameSession {
     });
     if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string')
       return null;
-    return this._page._frameManager.frame(nodeInfo.node.frameId);
+    return this._page.frameManager.frame(nodeInfo.node.frameId);
   }
 
   async _getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
@@ -1112,7 +1112,7 @@ class FrameSession {
   }
 
   private async _framePosition(): Promise<types.Point | null> {
-    const frame = this._page._frameManager.frame(this._targetId);
+    const frame = this._page.frameManager.frame(this._targetId);
     if (!frame)
       return null;
     if (frame === this._page.mainFrame())
