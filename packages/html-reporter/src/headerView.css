@@ -38,6 +38,15 @@
 }
 
 @media only screen and (max-width: 600px) {
+  .header-view {
+    padding: 0;
+  }
+
+  .header-view div {
+    /* Allow all header elements to wrap */
+    flex-shrink: 1;
+  }
+
   .header-view-status-container {
     float: none;
     margin: 0 0 10px 0 !important;
