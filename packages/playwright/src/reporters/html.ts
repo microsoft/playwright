@@ -47,14 +47,8 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return htmlReportOptions.includes(type as HtmlReportOpenOption);
 };
 
-type HtmlReporterOptions = {
+type HtmlReporterOptions = HtmlReporterConfigOptions & {
   configDir: string,
-  outputFolder?: string,
-  open?: HtmlReportOpenOption,
-  host?: string,
-  port?: number,
-  attachmentsBaseURL?: string,
-  title?: string,
   _mode?: 'test' | 'list';
   _isTestServer?: boolean;
 };
