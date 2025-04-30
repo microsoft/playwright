@@ -21,7 +21,7 @@ import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } fro
 import { TargetClosedError } from '../errors';
 import { kPlaywrightBinding } from '../javascript';
 import * as network from '../network';
-import { getUtilityInitScript } from '../page';
+import { kUtilityInitScript } from '../page';
 import { ConnectionEvents, FFConnection  } from './ffConnection';
 import { FFPage } from './ffPage';
 
@@ -379,7 +379,7 @@ export class FFBrowserContext extends BrowserContext {
   private async _updateInitScripts() {
     const bindingScripts = [...this._pageBindings.values()].map(binding => binding.initScript.source);
     const initScripts = this.initScripts.map(script => script.source);
-    await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [getUtilityInitScript().source, ...bindingScripts, ...initScripts].map(script => ({ script })) });
+    await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [kUtilityInitScript.source, ...bindingScripts, ...initScripts].map(script => ({ script })) });
   }
 
   async doUpdateRequestInterception(): Promise<void> {

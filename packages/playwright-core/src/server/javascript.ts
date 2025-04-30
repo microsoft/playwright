@@ -29,16 +29,11 @@ import type { UtilityScript } from '@injected/utilityScript';
 export const runtimeGuid = createGuid();
 
 // Preprocesses any generated script to include the runtime guid.
-const preparedSources = new Map<string, string>();
 export function prepareGeneratedScript(source: string) {
-  // We do this lazily to pickup late changes to isUnderTest().
-  let prepared = preparedSources.get(source);
-  if (!prepared) {
-    prepared = source.replaceAll('$runtime_guid$', runtimeGuid).replace('kUtilityScriptIsUnderTest = false', `kUtilityScriptIsUnderTest = ${isUnderTest()}`);
-    preparedSources.set(source, prepared);
-  }
-  return prepared;
+  return source.replaceAll('$runtime_guid$', runtimeGuid).replace('kUtilityScriptIsUnderTest = false', `kUtilityScriptIsUnderTest = ${isUnderTest()}`);
 }
+
+export const kUtilityScriptSource = prepareGeneratedScript(rawUtilityScriptSource.source);
 
 // Include this code in any evaluated source to get access to the UtilityScript instance.
 export function accessUtilityScript() {
@@ -130,7 +125,7 @@ export class ExecutionContext extends SdkObject {
       const source = `
       (() => {
         const module = {};
-        ${prepareGeneratedScript(rawUtilityScriptSource.source)}
+        ${kUtilityScriptSource}
         return (module.exports.ensureUtilityScript())();
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))

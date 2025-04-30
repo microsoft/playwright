@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getFromENV } from './env';
+import { getFromENV, getAsBooleanFromENV } from './env';
 
 const _debugMode = getFromENV('PWDEBUG') || '';
 
@@ -26,11 +26,7 @@ export function debugMode() {
   return _debugMode ? 'inspector' : '';
 }
 
-let _isUnderTest = !!process.env.PWTEST_UNDER_TEST;
-export function setUnderTest() {
-  _isUnderTest = true;
-}
-
+const _isUnderTest = getAsBooleanFromENV('PWTEST_UNDER_TEST');
 export function isUnderTest(): boolean {
   return _isUnderTest;
 }

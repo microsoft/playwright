@@ -42,7 +42,6 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
       'service-grid': new DefaultTestMode(),
       'driver': new DriverTestMode(),
     }[mode];
-    require('playwright-core/lib/utils').setUnderTest();
     const playwright = await testMode.setup();
     playwright._setSelectors(playwrightLibrary.selectors);
     await run(playwright);

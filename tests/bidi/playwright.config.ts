@@ -16,6 +16,7 @@
 
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env'), override: true });
+process.env.PWTEST_UNDER_TEST = '1';
 
 import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, type ReporterDescription } from '@playwright/test';
 import * as path from 'path';
