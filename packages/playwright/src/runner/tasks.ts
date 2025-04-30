@@ -317,13 +317,10 @@ function createPhasesTask(): Task<TestRun> {
         teardownToSetupsDependents.set(teardown, [...closure]);
       }
 
-      let maxProjectWorkers = -1;
       for (let i = 0; i < projectToSuite.size; i++) {
         // Find all projects that have all their dependencies processed by previous phases.
         const phaseProjects: FullProjectInternal[] = [];
         for (const project of projectToSuite.keys()) {
-          if (!!project.workers && project.workers > maxProjectWorkers)
-            maxProjectWorkers = project.workers;
           if (processed.has(project))
             continue;
           const projectsThatShouldFinishFirst = [...project.deps, ...(teardownToSetupsDependents.get(project) || [])];
@@ -343,15 +340,14 @@ function createPhasesTask(): Task<TestRun> {
             const projectSuite = projectToSuite.get(project)!;
             const testGroups = createTestGroups(projectSuite, testRun.config.config.workers);
             phase.projects.push({ project, projectSuite, testGroups });
-            testGroupsInPhase += testGroups.length;
+            testGroupsInPhase += Math.min(project.workers ?? Number.MAX_SAFE_INTEGER, testGroups.length);
           }
           debug('pw:test:task')(`created phase #${testRun.phases.length} with ${phase.projects.map(p => p.project.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
           maxConcurrentTestGroups = Math.max(maxConcurrentTestGroups, testGroupsInPhase);
         }
       }
 
-      const configWorkers = maxProjectWorkers !== -1 ? maxProjectWorkers : testRun.config.config.workers;
-      testRun.config.config.metadata.actualWorkers = Math.min(configWorkers, maxConcurrentTestGroups);
+      testRun.config.config.metadata.actualWorkers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
     },
   };
 }
