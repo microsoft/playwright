@@ -93,13 +93,7 @@ export class BidiPage implements PageDelegate {
     await Promise.all([
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
-      this._installMainBinding(),
-      this._addAllInitScripts(),
     ]);
-  }
-
-  private async _addAllInitScripts() {
-    return Promise.all(this._page.allInitScripts().map(initScript => this.addInitScript(initScript)));
   }
 
   didClose() {
@@ -321,35 +315,6 @@ export class BidiPage implements PageDelegate {
 
   async requestGC(): Promise<void> {
     throw new Error('Method not implemented.');
-  }
-
-  // TODO: consider calling this only when bindings are added.
-  // TODO: delete this method once we can add preload script for persistent context.
-  private async _installMainBinding() {
-    // For non-persistent context, the main binding is installed during context creation.
-    if (this._browserContext._browserContextId)
-      return;
-    const functionDeclaration = addMainBindingSource;
-    const args: bidi.Script.ChannelValue[] = [{
-      type: 'channel',
-      value: {
-        channel: kPlaywrightBindingChannel,
-        ownership: bidi.Script.ResultOwnership.Root,
-      }
-    }];
-    const promises = [];
-    promises.push(this._session.send('script.addPreloadScript', {
-      functionDeclaration,
-      arguments: args,
-    }));
-    promises.push(this._session.send('script.callFunction', {
-      functionDeclaration,
-      arguments: args,
-      target: toBidiExecutionContext(await this._page.mainFrame()._mainContext())._target,
-      awaitPromise: false,
-      userActivation: false,
-    }));
-    await Promise.all(promises);
   }
 
   private async _onScriptMessage(event: bidi.Script.MessageParameters) {

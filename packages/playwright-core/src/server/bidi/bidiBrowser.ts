@@ -21,6 +21,7 @@ import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 import { addMainBindingSource, BidiPage, kPlaywrightBindingChannel } from './bidiPage';
+import { kUtilityInitScript } from '../page';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -220,6 +221,7 @@ export class BidiBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [
       super._initialize(),
       this._installMainBinding(),
+      this._installUtilityScript(),
     ];
     if (this._options.viewport) {
       promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
@@ -248,6 +250,13 @@ export class BidiBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('script.addPreloadScript', {
       functionDeclaration: addMainBindingSource,
       arguments: args,
+      userContexts: [this._userContextId()],
+    });
+  }
+
+  private async _installUtilityScript() {
+    await this._browser._browserSession.send('script.addPreloadScript', {
+      functionDeclaration: `() => { return${kUtilityInitScript.source} }`,
       userContexts: [this._userContextId()],
     });
   }
