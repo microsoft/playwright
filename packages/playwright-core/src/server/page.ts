@@ -164,7 +164,6 @@ export class Page extends SdkObject {
   readonly coverage: any;
   clientRequestInterceptor: network.RouteHandler | undefined;
   serverRequestInterceptor: network.RouteHandler | undefined;
-  private _ownedContext: BrowserContext | undefined;
   video: Artifact | null = null;
   private _opener: Page | undefined;
   private _isServerSideOnly = false;
@@ -717,8 +716,6 @@ export class Page extends SdkObject {
     }
     if (!runBeforeUnload)
       await this._closedPromise;
-    if (this._ownedContext)
-      await this._ownedContext.close(options);
   }
 
   isClosed(): boolean {
