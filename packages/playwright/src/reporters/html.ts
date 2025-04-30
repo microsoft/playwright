@@ -47,16 +47,10 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return htmlReportOptions.includes(type as HtmlReportOpenOption);
 };
 
-type HtmlReporterOptions = HtmlReporterConfigOptions & {
-  configDir: string,
-  _mode?: 'test' | 'list';
-  _isTestServer?: boolean;
-};
-
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
-  private _options: HtmlReporterOptions & CommonReporterOptions;
+  private _options: HtmlReporterConfigOptions & CommonReporterOptions;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
   private _open: string | undefined;
@@ -66,7 +60,7 @@ class HtmlReporter implements ReporterV2 {
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
-  constructor(options: HtmlReporterOptions & CommonReporterOptions) {
+  constructor(options: HtmlReporterConfigOptions & CommonReporterOptions) {
     this._options = options;
   }
 
