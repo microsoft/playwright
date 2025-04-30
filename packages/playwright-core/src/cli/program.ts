@@ -29,7 +29,6 @@ import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
 
-import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
 import type { BrowserType } from '../client/browserType';
 import type { Page } from '../client/page';
@@ -70,6 +69,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
+      ['--user-data-dir <directory>', 'use the specified user data directory instead of a new context'],
     ]).action(function(url, options) {
   codegen(options, url).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -361,6 +361,7 @@ type Options = {
   timezone?: string;
   viewportSize?: string;
   userAgent?: string;
+  userDataDir?: string
 };
 
 type CaptureOptions = {
@@ -370,7 +371,7 @@ type CaptureOptions = {
   paperFormat?: string;
 };
 
-async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext }> {
+async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext }> {
   validateOptions(options);
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = extraOptions;
@@ -408,33 +409,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     };
     if (options.proxyBypass)
       launchOptions.proxy.bypass = options.proxyBypass;
-  }
-
-  const browser = await browserType.launch(launchOptions);
-
-  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
-    (process as any)._didSetSourcesForTest = (text: string) => {
-      process.stdout.write('\n-------------8<-------------\n');
-      process.stdout.write(text);
-      process.stdout.write('\n-------------8<-------------\n');
-      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
-        closeBrowser();
-    };
-    // Make sure we exit abnormally when browser crashes.
-    const logs: string[] = [];
-    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
-      const line = require('util').format(...args) + '\n';
-      logs.push(line);
-      process.stderr.write(line);
-    };
-    browser.on('disconnected', () => {
-      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
-      if (hasCrashLine) {
-        process.stderr.write('Detected browser crash.\n');
-        gracefullyProcessExitDoNotHang(1);
-      }
-    });
   }
 
   // Viewport size
@@ -501,9 +475,40 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     contextOptions.serviceWorkers = 'block';
   }
 
-  // Close app when the last window closes.
+  const context = await createContext(browserType, launchOptions, contextOptions, options.userDataDir);
 
-  const context = await browser.newContext(contextOptions);
+  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
+    (process as any)._didSetSourcesForTest = (text: string) => {
+      process.stdout.write('\n-------------8<-------------\n');
+      process.stdout.write(text);
+      process.stdout.write('\n-------------8<-------------\n');
+      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
+      if (autoExitCondition && text.includes(autoExitCondition))
+        closeBrowser();
+    };
+    // Make sure we exit abnormally when browser crashes.
+    const logs: string[] = [];
+    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+      const line = require('util').format(...args) + '\n';
+      logs.push(line);
+      process.stderr.write(line);
+    };
+    const crashHandler = () => {
+      console.log('Crash handler');
+      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
+      if (hasCrashLine) {
+        process.stderr.write('Detected browser crash.\n');
+        gracefullyProcessExitDoNotHang(1);
+      } else {
+        gracefullyProcessExitDoNotHang(0);
+      }
+    };
+    const browser = context.browser();
+    if (browser)
+      browser.on('disconnected', crashHandler);
+    else
+      context.on('close', crashHandler);
+  }
 
   let closingBrowser = false;
   async function closeBrowser() {
@@ -514,20 +519,30 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     closingBrowser = true;
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
-    if (options.saveHar)
+    const browser = context.browser();
+    // Close the context no matter what if we don't have a browser, as context must be a persistent context
+    if (options.saveHar || !browser)
       await context.close();
-    await browser.close();
+    await browser?.close();
   }
 
-  context.on('page', page => {
+  function listenToPage(page: Page) {
     page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
     page.on('close', () => {
-      const hasPage = browser.contexts().some(context => context.pages().length > 0);
-      if (hasPage)
+      if (context.pages().length > 0)
         return;
       // Avoid the error when the last page is closed because the browser has been closed.
       closeBrowser().catch(() => {});
     });
+  }
+
+  // launchPersistentContext creates an initial page, so we need to listen to it
+  for (const page of context.pages())
+    listenToPage(page);
+
+  context.on('page', listenToPage);
+  context.on('close', () => {
+    closeBrowser().catch(() => {});
   });
   process.on('SIGINT', async () => {
     await closeBrowser();
@@ -543,11 +558,20 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   delete launchOptions.executablePath;
   delete launchOptions.handleSIGINT;
   delete contextOptions.deviceScaleFactor;
-  return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
+  return { browserName: browserType.name(), context, contextOptions, launchOptions };
 }
 
-async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
-  const page = await context.newPage();
+async function createContext(browserType: BrowserType, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, userDataDir: string | undefined): Promise<BrowserContext> {
+  if (userDataDir)
+    return await browserType.launchPersistentContext(userDataDir, { ...launchOptions, ...contextOptions });
+  const browser = await browserType.launch(launchOptions);
+  return await browser.newContext(contextOptions);
+}
+
+async function openPageIfNeeded(context: BrowserContext, url: string | undefined): Promise<Page> {
+  let page = context.pages()[0];
+  if (!page)
+    page = await context.newPage();
   if (url) {
     if (fs.existsSync(url))
       url = 'file://' + path.resolve(url);
@@ -575,7 +599,7 @@ async function open(options: Options, url: string | undefined, language: string)
     saveStorage: options.saveStorage,
     handleSIGINT: false,
   });
-  await openPage(context, url);
+  await openPageIfNeeded(context, url);
 }
 
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
@@ -598,7 +622,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
   });
-  await openPage(context, url);
+  await openPageIfNeeded(context, url);
 }
 
 async function waitForPage(page: Page, captureOptions: CaptureOptions) {
@@ -615,7 +639,7 @@ async function waitForPage(page: Page, captureOptions: CaptureOptions) {
 async function screenshot(options: Options, captureOptions: CaptureOptions, url: string, path: string) {
   const { context } = await launchContext(options, { headless: true });
   console.log('Navigating to ' + url);
-  const page = await openPage(context, url);
+  const page = await openPageIfNeeded(context, url);
   await waitForPage(page, captureOptions);
   console.log('Capturing screenshot into ' + path);
   await page.screenshot({ path, fullPage: !!captureOptions.fullPage });
@@ -628,7 +652,7 @@ async function pdf(options: Options, captureOptions: CaptureOptions, url: string
     throw new Error('PDF creation is only working with Chromium');
   const { context } = await launchContext({ ...options, browser: 'chromium' }, { headless: true });
   console.log('Navigating to ' + url);
-  const page = await openPage(context, url);
+  const page = await openPageIfNeeded(context, url);
   await waitForPage(page, captureOptions);
   console.log('Saving as pdf into ' + path);
   await page.pdf!({ path, format: captureOptions.paperFormat });
