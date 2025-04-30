@@ -109,7 +109,7 @@ export class ExecutionContext extends SdkObject {
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], handles: JSHandle[]): Promise<any> {
-    const utilityScript = await this._utilityScript();
+    const utilityScript = await this.utilityScript();
     return this._raceAgainstContextDestroyed(this.delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, handles));
   }
 
@@ -125,7 +125,7 @@ export class ExecutionContext extends SdkObject {
     return null;
   }
 
-  private _utilityScript(): Promise<JSHandle<UtilityScript>> {
+  utilityScript(): Promise<JSHandle<UtilityScript>> {
     if (!this._utilityScriptPromise) {
       const source = `
       (() => {

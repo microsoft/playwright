@@ -45,7 +45,7 @@ import type { CallMetadata } from './instrumentation';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
-import type { SerializedStorage } from './storageScript';
+import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
