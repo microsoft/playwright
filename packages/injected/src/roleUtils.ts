@@ -1051,6 +1051,40 @@ function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement
   })).filter(accessibleName => !!accessibleName).join(' ');
 }
 
+export function receivesPointerEvents(element: Element): boolean {
+  const cache = cachePointerEvents!;
+  let e: Element | undefined = element;
+  let result: boolean | undefined;
+  const parents: Element[] = [];
+  for (; e; e = parentElementOrShadowHost(e!)) {
+    const cached = cache.get(e);
+    if (cached !== undefined) {
+      result = cached;
+      break;
+    }
+
+    parents.push(e);
+    const style = getElementComputedStyle(e);
+    if (!style) {
+      result = true;
+      break;
+    }
+
+    const value = style.pointerEvents;
+    if (value) {
+      result = value !== 'none';
+      break;
+    }
+  }
+
+  if (result === undefined)
+    result = true;
+
+  for (const parent of parents)
+    cache.set(parent, result);
+  return result;
+}
+
 let cacheAccessibleName: Map<Element, string> | undefined;
 let cacheAccessibleNameHidden: Map<Element, string> | undefined;
 let cacheAccessibleDescription: Map<Element, string> | undefined;
@@ -1059,6 +1093,7 @@ let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContentBefore: Map<Element, string> | undefined;
 let cachePseudoContentAfter: Map<Element, string> | undefined;
+let cachePointerEvents: Map<Element, boolean> | undefined;
 let cachesCounter = 0;
 
 export function beginAriaCaches() {
@@ -1071,6 +1106,7 @@ export function beginAriaCaches() {
   cacheIsHidden ??= new Map();
   cachePseudoContentBefore ??= new Map();
   cachePseudoContentAfter ??= new Map();
+  cachePointerEvents ??= new Map();
 }
 
 export function endAriaCaches() {
@@ -1083,6 +1119,7 @@ export function endAriaCaches() {
     cacheIsHidden = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;
+    cachePointerEvents = undefined;
   }
 }
 

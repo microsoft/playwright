@@ -731,7 +731,7 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   `.trim());
 });
 
-it('should not include hidden input elements', async ({ page }) => {
+it('should not generate refs for hidden elements', async ({ page }) => {
   await page.setContent(`
     <button>One</button>
     <button style="width: 0; height: 0; appearance: none; border: 0; padding: 0;">Two</button>
@@ -742,6 +742,37 @@ it('should not include hidden input elements', async ({ page }) => {
   expect(snapshot).toContain(`- button "One" [ref=s1e3]
 - button "Two"
 - button "Three" [ref=s1e5]`);
+});
+
+it('should not generate refs for elements with pointer-events:none', async ({ page }) => {
+  await page.setContent(`
+    <button style="pointer-events: none">no-ref</button>
+    <div style="pointer-events: none">
+      <button style="pointer-events: auto">with-ref</button>
+    </div>
+    <div style="pointer-events: none">
+      <div style="pointer-events: initial">
+        <button>with-ref</button>
+      </div>
+    </div>
+    <div style="pointer-events: none">
+      <div style="pointer-events: auto">
+        <button>with-ref</button>
+      </div>
+    </div>
+    <div style="pointer-events: auto">
+      <div style="pointer-events: none">
+        <button>no-ref</button>
+      </div>
+    </div>
+  `);
+
+  const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
+  expect(snapshot).toContain(`- button "no-ref"
+- button "with-ref" [ref=s1e5]
+- button "with-ref" [ref=s1e8]
+- button "with-ref" [ref=s1e11]
+- button "no-ref"`);
 });
 
 it('emit generic roles for nodes w/o roles', async ({ page }) => {
