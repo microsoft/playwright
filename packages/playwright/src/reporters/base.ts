@@ -46,6 +46,13 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
+export type CommonReporterOptions = {
+  configDir: string,
+  _mode: 'list' | 'test' | 'merge',
+  _isTestServer: boolean,
+  _commandHash: string,
+};
+
 export type Screen = {
   resolveFiles: 'cwd' | 'rootDir';
   colors: Colors;
@@ -591,7 +598,7 @@ export function resolveOutputFile(reporterName: string, options: {
       fileName: string,
       outputDir: string,
     }
-  }):  { outputFile: string, outputDir?: string } |undefined {
+  }): { outputFile: string, outputDir?: string } | undefined {
   const name = reporterName.toUpperCase();
   let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
   if (!outputFile && options.outputFile)

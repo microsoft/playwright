@@ -23,20 +23,13 @@ import { ManualPromise, calculateSha1, createGuid, getUserAgent } from 'playwrig
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
-import { resolveOutputFile } from './base';
+import { resolveOutputFile, CommonReporterOptions } from './base';
 import { TeleReporterEmitter } from './teleEmitter';
 
+import type { BlobReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import type { EventEmitter } from 'events';
-
-type BlobReporterOptions = {
-  configDir: string;
-  outputDir?: string;
-  fileName?: string;
-  outputFile?: string;
-  _commandHash: string;
-};
 
 export const currentBlobReportVersion = 2;
 
@@ -51,11 +44,11 @@ export type BlobReportMetadata = {
 export class BlobReporter extends TeleReporterEmitter {
   private readonly _messages: JsonEvent[] = [];
   private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
-  private readonly _options: BlobReporterOptions;
+  private readonly _options: BlobReporterOptions & CommonReporterOptions;
   private readonly _salt: string;
   private _config!: FullConfig;
 
-  constructor(options: BlobReporterOptions) {
+  constructor(options: BlobReporterOptions & CommonReporterOptions) {
     super(message => this._messages.push(message));
     this._options = options;
     if (this._options.fileName && !this._options.fileName.endsWith('.zip'))

@@ -18,15 +18,21 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
+export type BlobReporterOptions = { outputDir?: string, fileName?: string };
+export type ListReporterOptions = { printSteps?: boolean };
+export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean };
+export type JsonReporterOptions = { outputFile?: string };
+export type HtmlReporterOptions = { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string, title?: string };
+
 export type ReporterDescription = Readonly<
-  ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
+  ['blob'] | ['blob', BlobReporterOptions] |
   ['dot'] |
   ['line'] |
-  ['list'] | ['list', { printSteps?: boolean }] |
+  ['list'] | ['list', ListReporterOptions] |
   ['github'] |
-  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean }] |
-  ['json'] | ['json', { outputFile?: string }] |
-  ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string, title?: string }] |
+  ['junit'] | ['junit', JUnitReporterOptions] |
+  ['json'] | ['json', JsonReporterOptions] |
+  ['html'] | ['html', HtmlReporterOptions] |
   ['null'] |
   [string] | [string, any]
 >;

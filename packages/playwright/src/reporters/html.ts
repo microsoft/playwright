@@ -24,12 +24,12 @@ import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
-import { formatError, formatResultFailure, internalScreen } from './base';
+import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
-import type { Metadata, TestAnnotation } from '../../types/test';
+import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -40,29 +40,17 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-const htmlReportOptions = ['always', 'never', 'on-failure'];
-type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
+type HtmlReportOpenOption = NonNullable<HtmlReporterConfigOptions['open']>;
+const htmlReportOptions: HtmlReportOpenOption[] = ['always', 'never', 'on-failure'];
 
 const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
-  return htmlReportOptions.includes(type);
-};
-
-type HtmlReporterOptions = {
-  configDir: string,
-  outputFolder?: string,
-  open?: HtmlReportOpenOption,
-  host?: string,
-  port?: number,
-  attachmentsBaseURL?: string,
-  title?: string,
-  _mode?: 'test' | 'list';
-  _isTestServer?: boolean;
+  return htmlReportOptions.includes(type as HtmlReportOpenOption);
 };
 
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
   private suite!: api.Suite;
-  private _options: HtmlReporterOptions;
+  private _options: HtmlReporterConfigOptions & CommonReporterOptions;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
   private _open: string | undefined;
@@ -72,7 +60,7 @@ class HtmlReporter implements ReporterV2 {
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
-  constructor(options: HtmlReporterOptions) {
+  constructor(options: HtmlReporterConfigOptions & CommonReporterOptions) {
     this._options = options;
   }
 
