@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import { Map, Set } from '@isomorphic/builtins';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { getElementComputedStyle, getGlobalOptions } from './domUtils';
+import { box, getElementComputedStyle, getGlobalOptions } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
+import type { Box } from './domUtils';
 
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
   name: string;
   children: (AriaNode | string)[];
   element: Element;
+  box: Box;
   props: Record<string, string>;
 };
 
@@ -38,11 +39,11 @@ export type AriaSnapshot = {
   ids: Map<Element, number>;
 };
 
-export function generateAriaTree(rootElement: Element, generation: number): AriaSnapshot {
+export function generateAriaTree(rootElement: Element, generation: number, options?: { emitGeneric?: boolean }): AriaSnapshot {
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
-    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {} },
+    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement) },
     elements: new Map<number, Element>(),
     generation,
     ids: new Map<Element, number>(),
@@ -87,7 +88,7 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
     }
 
     addElement(element);
-    const childAriaNode = toAriaNode(element);
+    const childAriaNode = toAriaNode(element, options);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
     processElement(childAriaNode || ariaNode, element, ariaChildren);
@@ -141,19 +142,21 @@ export function generateAriaTree(rootElement: Element, generation: number): Aria
   }
 
   normalizeStringChildren(snapshot.root);
+  normalizeGenericRoles(snapshot.root);
   return snapshot;
 }
 
-function toAriaNode(element: Element): AriaNode | null {
+function toAriaNode(element: Element, options?: { emitGeneric?: boolean }): AriaNode | null {
   if (element.nodeName === 'IFRAME')
-    return { role: 'iframe', name: '', children: [], props: {}, element };
+    return { role: 'iframe', name: '', children: [], props: {}, element, box: box(element) };
 
-  const role = roleUtils.getAriaRole(element);
+  const defaultRole = options?.emitGeneric ? 'generic' : null;
+  const role = roleUtils.getAriaRole(element) ?? defaultRole;
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
   const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(element, false) || '');
-  const result: AriaNode = { role, name, children: [], props: {}, element };
+  const result: AriaNode = { role, name, children: [], props: {}, element, box: box(element) };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
     result.checked = roleUtils.getAriaChecked(element);
@@ -179,6 +182,33 @@ function toAriaNode(element: Element): AriaNode | null {
   }
 
   return result;
+}
+
+function normalizeGenericRoles(rootA11yNode: AriaNode) {
+  const visit = (ariaNode: AriaNode) => {
+    const newChildren: (AriaNode | string)[] = [];
+    for (const child of ariaNode.children) {
+      if (typeof child === 'string') {
+        newChildren.push(child);
+        continue;
+      }
+      const isEmptyGeneric = child.role === 'generic' && child.children.length === 0;
+      const isSingleGenericChild = child.role === 'generic' && child.children.length === 1;
+      if (isSingleGenericChild) {
+        // Inline single child chains.
+        const newChild = child.children[0];
+        newChildren.push(newChild);
+        if (typeof newChild !== 'string')
+          visit(newChild);
+      } else if (!isEmptyGeneric) {
+        // Empty div
+        newChildren.push(child);
+        visit(child);
+      }
+    }
+    ariaNode.children = newChildren;
+  };
+  visit(rootA11yNode);
 }
 
 function normalizeStringChildren(rootA11yNode: AriaNode) {
@@ -376,7 +406,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.ref) {
+    if (options?.ref && ariaNode.box.visible) {
       const id = ariaSnapshot.ids.get(ariaNode.element);
       if (id)
         key += ` [ref=s${ariaSnapshot.generation}e${id}]`;

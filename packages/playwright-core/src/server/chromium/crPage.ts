@@ -26,7 +26,7 @@ import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
-import {  PageBinding  } from '../page';
+import { kPlaywrightBinding } from '../javascript';
 import { Page, Worker } from '../page';
 import { registry } from '../registry';
 import { getAccessibilityTree } from './crAccessibility';
@@ -508,7 +508,7 @@ class FrameSession {
       this._client.send('Log.enable', {}),
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
-      this._client.send('Runtime.addBinding', { name: PageBinding.kPlaywrightBinding }),
+      this._client.send('Runtime.addBinding', { name: kPlaywrightBinding }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: '',
         worldName: UTILITY_WORLD_NAME,

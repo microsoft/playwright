@@ -18,13 +18,13 @@ import fs from 'fs';
 
 import * as js from './javascript';
 import { ProgressController } from './progress';
-import { asLocator, isUnderTest } from '../utils';
+import { asLocator } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { isSessionClosedError } from './protocolError';
-import * as injectedScriptSource from '../generated/injectedScriptSource';
+import * as rawInjectedScriptSource from '../generated/injectedScriptSource';
 
 import type * as frames from './frames';
-import type { ElementState, HitTargetInterceptionResult, InjectedScript } from '@injected/injectedScript';
+import type { ElementState, HitTargetInterceptionResult, InjectedScript, InjectedScriptOptions } from '@injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import type { Page } from './page';
 import type { Progress } from './progress';
@@ -32,7 +32,6 @@ import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
 import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
-
 
 export type InputFilesItems = {
   filePayloads?: types.FilePayload[],
@@ -85,25 +84,24 @@ export class FrameExecutionContext extends js.ExecutionContext {
 
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedScriptPromise) {
-      const custom: string[] = [];
+      const customEngines: InjectedScriptOptions['customEngines'] = [];
       const selectorsRegistry = this.frame._page.context().selectors();
       for (const [name, { source }] of selectorsRegistry._engines)
-        custom.push(`{ name: '${name}', engine: (${source}) }`);
+        customEngines.push({ name, source });
       const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
+      const options: InjectedScriptOptions = {
+        sdkLanguage,
+        testIdAttributeName: selectorsRegistry.testIdAttributeName(),
+        stableRafCount: this.frame._page._delegate.rafCountForStablePosition(),
+        browserName: this.frame._page._browserContext._browser.options.name,
+        inputFileRoleTextbox: process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? true : false,
+        customEngines,
+      };
       const source = `
         (() => {
         const module = {};
-        ${injectedScriptSource.source}
-        return new (module.exports.InjectedScript())(
-          globalThis,
-          ${isUnderTest()},
-          "${sdkLanguage}",
-          ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
-          ${this.frame._page._delegate.rafCountForStablePosition()},
-          "${this.frame._page._browserContext._browser.options.name}",
-          ${process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? 'true' : 'false'},
-          [${custom.join(',\n')}]
-        );
+        ${js.prepareGeneratedScript(rawInjectedScriptSource.source)}
+        return new (module.exports.InjectedScript())(globalThis, ${JSON.stringify(options)});
         })();
       `;
       this._injectedScriptPromise = this.rawEvaluateHandle(source)
@@ -813,7 +811,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async ariaSnapshot(options: { id?: boolean, mode?: 'raw' | 'regex' }): Promise<string> {
+  async ariaSnapshot(options: { ref?: boolean, emitGeneric?: boolean, mode?: 'raw' | 'regex' }): Promise<string> {
     return await this.evaluateInUtility(([injected, element, options]) => injected.ariaSnapshot(element, options), options);
   }
 

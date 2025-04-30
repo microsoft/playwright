@@ -450,3 +450,25 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
 
   expect(await context.storageState()).toEqual({ cookies: [], origins: [] });
 });
+
+it('should support empty indexedDB', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35760' } }, async ({ page, server, contextFactory }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => new Promise<void>(resolve => {
+    const openRequest = indexedDB.open('unused-db');
+    openRequest.onsuccess = () => resolve();
+    openRequest.onerror = () => resolve();
+  }));
+  const storageState = await page.context().storageState({ indexedDB: true });
+  expect(storageState.origins).toEqual([{
+    origin: server.PREFIX,
+    localStorage: [],
+    indexedDB: [{
+      name: 'unused-db',
+      version: 1,
+      stores: [],
+    }]
+  }]);
+
+  const context = await contextFactory({ storageState });
+  expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
+});

@@ -539,6 +539,7 @@ scheme.BrowserTypeLaunchParams = tObject({
   args: tOptional(tArray(tString)),
   ignoreAllDefaultArgs: tOptional(tBoolean),
   ignoreDefaultArgs: tOptional(tArray(tString)),
+  assistantMode: tOptional(tBoolean),
   handleSIGINT: tOptional(tBoolean),
   handleSIGTERM: tOptional(tBoolean),
   handleSIGHUP: tOptional(tBoolean),
@@ -556,6 +557,7 @@ scheme.BrowserTypeLaunchParams = tObject({
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
+  webSocketPort: tOptional(tNumber),
   slowMo: tOptional(tNumber),
 });
 scheme.BrowserTypeLaunchResult = tObject({
@@ -567,6 +569,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   args: tOptional(tArray(tString)),
   ignoreAllDefaultArgs: tOptional(tBoolean),
   ignoreDefaultArgs: tOptional(tArray(tString)),
+  assistantMode: tOptional(tBoolean),
   handleSIGINT: tOptional(tBoolean),
   handleSIGTERM: tOptional(tBoolean),
   handleSIGHUP: tOptional(tBoolean),
@@ -584,6 +587,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
+  webSocketPort: tOptional(tNumber),
   noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tNumber,
@@ -1481,6 +1485,7 @@ scheme.FrameAddStyleTagResult = tObject({
 scheme.FrameAriaSnapshotParams = tObject({
   selector: tString,
   ref: tOptional(tBoolean),
+  emitGeneric: tOptional(tBoolean),
   mode: tOptional(tEnum(['raw', 'regex'])),
   timeout: tOptional(tNumber),
 });

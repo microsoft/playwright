@@ -570,6 +570,7 @@ test('fails', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
   await page.locator('.tab-errors').getByRole('button', { name: 'Copy prompt' }).click();
+  await page.waitForFunction(() => navigator.clipboard.readText());
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
   expect(prompt.replaceAll('\r\n', '\n'), 'contains test sources').toContain(`

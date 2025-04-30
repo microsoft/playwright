@@ -32,9 +32,10 @@ import { loadTestFile } from '../common/testLoader';
 
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
+import type { TestAnnotation } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -60,7 +61,7 @@ export class WorkerMain extends ProcessRunner {
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
-  private _activeSuites = new Map<Suite, Annotation[]>();
+  private _activeSuites = new Map<Suite, TestAnnotation[]>();
 
   constructor(params: WorkerInitParams) {
     super();
@@ -264,7 +265,7 @@ export class WorkerMain extends ProcessRunner {
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
 
-    const processAnnotation = (annotation: Annotation) => {
+    const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
@@ -427,25 +428,8 @@ export class WorkerMain extends ProcessRunner {
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    if (testInfo._isFailure()) {
+    if (testInfo._isFailure())
       this._isStopped = true;
-
-      // Only if failed, create warning if any of the async calls were not awaited in various stages.
-      if (!process.env.PW_DISABLE_FLOATING_PROMISES_WARNING && testInfo._floatingPromiseScope.hasFloatingPromises()) {
-        // TODO: 1.53: Actually build annotations
-        // Dedupe by location
-        // const annotationLocations = new Map<string | undefined, Location | undefined>(testInfo._floatingPromiseScope.floatingPromises().map(
-        //     ({ location }) => {
-        //       const locationKey = location ? `${location.file}:${location.line}:${location.column}` : undefined;
-        //       return [locationKey, location];
-        //     }));
-
-        // testInfo.annotations.push(...[...annotationLocations.values()].map(location => ({
-        //   type: 'warning', description: `This async call was not awaited by the end of the test. This can cause flakiness. It is recommended to run ESLint with "@typescript-eslint/no-floating-promises" to verify.`, location
-        // })));
-        testInfo._floatingPromiseScope.clear();
-      }
-    }
 
     if (this._isStopped) {
       // Run all remaining "afterAll" hooks and teardown all fixtures when worker is shutting down.
@@ -528,12 +512,12 @@ export class WorkerMain extends ProcessRunner {
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
-    const extraAnnotations: Annotation[] = [];
+    const extraAnnotations: TestAnnotation[] = [];
     this._activeSuites.set(suite, extraAnnotations);
     await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
   }
 
-  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: Annotation[]) {
+  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
     // Always run all the hooks, and capture the first error.
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {

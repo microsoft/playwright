@@ -387,16 +387,44 @@ Optional description that will be reflected in a test report.
 * since: v1.10
 - returns: <[string]>
 
-Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](../test-snapshots.md).
+Returns a path to a snapshot file with the given `name`. Pass [`option: kind`] to obtain a specific path:
+* `kind: 'screenshot'` for [`method: PageAssertions.toHaveScreenshot#1`];
+* `kind: 'aria'` for [`method: LocatorAssertions.toMatchAriaSnapshot`];
+* `kind: 'snapshot'` for [`method: SnapshotAssertions.toMatchSnapshot#1`].
 
-> Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path', 'to', 'snapshot.png')`.
-> However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
+**Usage**
 
-### param: TestInfo.snapshotPath.pathSegments
+```js
+await expect(page).toHaveScreenshot('header.png');
+// Screenshot assertion above expects screenshot at this path:
+const screenshotPath = test.info().snapshotPath('header.png', { kind: 'screenshot' });
+
+await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main.aria.yml' });
+// Aria snapshot assertion above expects snapshot at this path:
+const ariaSnapshotPath = test.info().snapshotPath('main.aria.yml', { kind: 'aria' });
+
+expect('some text').toMatchSnapshot('snapshot.txt');
+// Snapshot assertion above expects snapshot at this path:
+const snapshotPath = test.info().snapshotPath('snapshot.txt');
+
+expect('some text').toMatchSnapshot(['dir', 'subdir', 'snapshot.txt']);
+// Snapshot assertion above expects snapshot at this path:
+const nestedPath = test.info().snapshotPath('dir', 'subdir', 'snapshot.txt');
+```
+
+### param: TestInfo.snapshotPath.name
 * since: v1.10
-- `...pathSegments` <[Array]<[string]>>
+- `...name` <[Array]<[string]>>
 
 The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
+
+When passing [`option: kind`], multiple name segments are not supported.
+
+### option: TestInfo.snapshotPath.kind
+* since: v1.53
+- `kind` <[SnapshotKind]<"snapshot"|"screenshot"|"aria">>
+
+The snapshot kind controls which snapshot path template is used. See [`property: TestConfig.snapshotPathTemplate`] for more details. Defaults to `'snapshot'`.
 
 ## property: TestInfo.snapshotSuffix
 * since: v1.10

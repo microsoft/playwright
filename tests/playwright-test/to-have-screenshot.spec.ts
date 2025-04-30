@@ -742,6 +742,37 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
   expect(comparePNGs(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
 });
 
+test('should respect config.snapshotPathTemplate and sanitize the name', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35669' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/my-name.png': whiteImage,
+    '__screenshots__/a.spec.js/my_name/bar.png': whiteImage,
+    'a.spec.js': `
+      const path = require('path');
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        const testDir = test.info().project.testDir;
+
+        // A single name is sanitized to a valid file name.
+        const expectedPath1 = path.join(testDir, '__screenshots__/a.spec.js/my-name.png');
+        expect(test.info().snapshotPath('my_name.png')).toBe(expectedPath1);
+        await expect(page).toHaveScreenshot('my_name.png');
+
+        // An array is not sanitized - see https://github.com/microsoft/playwright/pull/9156.
+        const expectedPath2 = path.join(testDir, '__screenshots__/a.spec.js/my_name/bar.png');
+        expect(test.info().snapshotPath('my_name', 'bar.png')).toBe(expectedPath2);
+        await expect(page).toHaveScreenshot(['my_name', 'bar.png']);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should respect config.expect.toHaveScreenshot.pathTemplate', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
@@ -751,8 +782,17 @@ test('should respect config.expect.toHaveScreenshot.pathTemplate', async ({ runI
     '__screenshots__/a.spec.js/snapshot.png': blueImage,
     'actual-screenshots/a.spec.js/snapshot.png': whiteImage,
     'a.spec.js': `
+      const path = require('path');
       const { test, expect } = require('@playwright/test');
       test('is a test', async ({ page }) => {
+        const testDir = test.info().project.testDir;
+
+        const screenshotPath = path.join(testDir, 'actual-screenshots/a.spec.js/snapshot.png');
+        expect(test.info().snapshotPath('snapshot.png', { kind: 'screenshot' })).toBe(screenshotPath);
+
+        const snapshotPath = path.join(testDir, '__screenshots__/a.spec.js/snapshot.png');
+        expect(test.info().snapshotPath('snapshot.png', { kind: 'snapshot' })).toBe(snapshotPath);
+
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `

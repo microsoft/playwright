@@ -20,15 +20,14 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { FloatingPromiseScope } from './floatingPromiseScope';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
+import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
@@ -60,7 +59,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
-  readonly _floatingPromiseScope: FloatingPromiseScope = new FloatingPromiseScope();
   readonly _uniqueSymbol;
 
   _wasInterrupted = false;
@@ -92,7 +90,7 @@ export class TestInfoImpl implements TestInfo {
   readonly fn: Function;
   expectedStatus: TestStatus;
   duration: number = 0;
-  readonly annotations: Annotation[] = [];
+  readonly annotations: TestAnnotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
   status: TestStatus = 'passed';
   snapshotSuffix: string = '';
@@ -450,17 +448,33 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], extension?: string) {
-    const subPath = path.join(...pathSegments);
+  _resolveSnapshotPath(kind: 'snapshot' | 'screenshot' | 'aria', pathSegments: string[], sanitizeFilePath: boolean) {
+    let subPath = path.join(...pathSegments);
+    let ext = path.extname(subPath);
+
+    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
+    let template: string;
+    if (kind === 'screenshot') {
+      template = this._projectInternal.expect?.toHaveScreenshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || legacyTemplate;
+    } else if (kind === 'aria') {
+      const ariaDefaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}';
+      template = this._projectInternal.expect?.toMatchAriaSnapshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || ariaDefaultTemplate;
+      if (subPath.endsWith('.aria.yml'))
+        ext = '.aria.yml';
+    } else {
+      template = this._projectInternal.snapshotPathTemplate || legacyTemplate;
+    }
+
+    if (sanitizeFilePath)
+      subPath = sanitizeFilePathBeforeExtension(subPath, ext);
+
     const dir = path.dirname(subPath);
-    const ext = extension ?? path.extname(subPath);
     const name = path.basename(subPath, ext);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
-    const actualTemplate = (template || this._projectInternal.snapshotPathTemplate || defaultTemplate);
-    const snapshotPath = actualTemplate
+    const snapshotPath = template
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
@@ -476,9 +490,25 @@ export class TestInfoImpl implements TestInfo {
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }
 
-  snapshotPath(...pathSegments: string[]) {
-    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments);
+  snapshotPath(...name: string[]): string;
+  snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
+  snapshotPath(...args: any[]) {
+    let pathSegments: string[] = args;
+    let kind: 'snapshot' | 'screenshot' | 'aria' = 'snapshot';
+
+    const options = args[args.length - 1];
+    if (options && typeof options === 'object') {
+      kind = options.kind ?? kind;
+      pathSegments = args.slice(0, -1);
+    }
+
+    if (!['snapshot', 'screenshot', 'aria'].includes(kind))
+      throw new Error(`testInfo.snapshotPath: unknown kind "${kind}", must be one of "snapshot", "screenshot" or "aria"`);
+
+    // Assume a single path segment corresponds to `toHaveScreenshot(name)` and sanitize it,
+    // like we do in SnapshotHelper. See https://github.com/microsoft/playwright/pull/9156 for history.
+    const sanitizeFilePath = pathSegments.length === 1;
+    return this._resolveSnapshotPath(kind, pathSegments, sanitizeFilePath);
   }
 
   skip(...args: [arg?: any, description?: string]) {
@@ -503,7 +533,7 @@ export class TestInfoImpl implements TestInfo {
 }
 
 export class TestStepInfoImpl implements TestStepInfo {
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
 
   private _testInfo: TestInfoImpl;
   private _stepId: string;

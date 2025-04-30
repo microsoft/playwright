@@ -23,7 +23,6 @@ import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Set, Map } from '@isomorphic/builtins';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',
@@ -1055,6 +1054,7 @@ export class Recorder {
     injectedScript.utils.cacheNormalizedWhitespaces();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
+    injectedScript.consoleApi.install();
   }
 
   installListeners() {

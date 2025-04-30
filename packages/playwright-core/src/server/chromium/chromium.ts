@@ -276,8 +276,8 @@ export class Chromium extends BrowserType {
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    if (options.useWebSocket)
-      chromeArguments.push('--remote-debugging-port=0');
+    if (options.webSocketPort !== undefined)
+      chromeArguments.push(`--remote-debugging-port=${options.webSocketPort}`);
     else
       chromeArguments.push('--remote-debugging-pipe');
     if (isPersistent)
@@ -296,7 +296,7 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...chromiumSwitches];
+    const chromeArguments = [...chromiumSwitches(options.assistantMode)];
 
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
@@ -345,7 +345,7 @@ export class Chromium extends BrowserType {
   }
 
   override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
+    if (options.webSocketPort !== undefined || options.args?.some(a => a.startsWith('--remote-debugging-port')))
       return new ChromiumReadyState();
     return undefined;
   }

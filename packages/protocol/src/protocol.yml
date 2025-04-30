@@ -475,6 +475,7 @@ LaunchOptions:
     ignoreDefaultArgs:
       type: array?
       items: string
+    assistantMode: boolean?
     handleSIGINT: boolean?
     handleSIGTERM: boolean?
     handleSIGHUP: boolean?
@@ -495,6 +496,7 @@ LaunchOptions:
     tracesDir: string?
     chromiumSandbox: boolean?
     firefoxUserPrefs: json?
+    webSocketPort: number?
 
 
 ContextOptions:
@@ -1975,6 +1977,7 @@ Frame:
       parameters:
         selector: string
         ref: boolean?
+        emitGeneric: boolean?
         mode:
           type: enum?
           literals:

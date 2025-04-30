@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { Map } from './builtins';
-
 import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
 
 export type SerializedStackFrame = [number, number, number, string];

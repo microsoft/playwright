@@ -61,12 +61,14 @@ class ZipReport implements LoadedReport {
       if (window.playwrightReportBase64)
         return resolve(window.playwrightReportBase64);
       if (window.opener) {
-        window.addEventListener('message', event => {
+        const listener = (event: MessageEvent) => {
           if (event.source === window.opener) {
             localStorage.setItem(kPlaywrightReportStorageForHMR, event.data);
             resolve(event.data);
+            window.removeEventListener('message', listener);
           }
-        }, { once: true });
+        };
+        window.addEventListener('message', listener);
         window.opener.postMessage('ready', '*');
       } else {
         const oldReport = localStorage.getItem(kPlaywrightReportStorageForHMR);

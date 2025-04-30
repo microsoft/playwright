@@ -949,6 +949,7 @@ export type BrowserTypeLaunchParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -966,6 +967,7 @@ export type BrowserTypeLaunchParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  webSocketPort?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
@@ -974,6 +976,7 @@ export type BrowserTypeLaunchOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -991,6 +994,7 @@ export type BrowserTypeLaunchOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  webSocketPort?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
@@ -1002,6 +1006,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -1019,6 +1024,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  webSocketPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1083,6 +1089,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -1100,6 +1107,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  webSocketPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -2688,11 +2696,13 @@ export type FrameAddStyleTagResult = {
 export type FrameAriaSnapshotParams = {
   selector: string,
   ref?: boolean,
+  emitGeneric?: boolean,
   mode?: 'raw' | 'regex',
   timeout?: number,
 };
 export type FrameAriaSnapshotOptions = {
   ref?: boolean,
+  emitGeneric?: boolean,
   mode?: 'raw' | 'regex',
   timeout?: number,
 };

@@ -63,6 +63,7 @@ const copyFiles = [];
 const watchMode = process.argv.slice(2).includes('--watch');
 const lintMode = process.argv.slice(2).includes('--lint');
 const withSourceMaps = process.argv.slice(2).includes('--sourcemap') || watchMode;
+const installMode = process.argv.slice(2).includes('--install');
 const ROOT = path.join(__dirname, '..', '..');
 
 /**
@@ -374,6 +375,8 @@ onChanges.push({
     'packages/playwright-core/src/third_party/**',
     'packages/playwright-ct-core/src/injected/**',
     'packages/playwright-core/src/utils/isomorphic/**',
+    'packages/playwright-core/src/server/storageScript.ts',
+    'utils/generate_injected_builtins.js',
     'utils/generate_injected.js',
   ],
   script: 'utils/generate_injected.js',
@@ -404,6 +407,15 @@ onChanges.push({
   ],
   script: 'utils/generate_types/index.js',
 });
+
+if (installMode) {
+  // Keep browser installs up to date.
+  onChanges.push({
+    inputs: ['packages/playwright-core/browsers.json'],
+    command: 'npx',
+    args: ['playwright', 'install'],
+  });
+}
 
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Map } from './builtins';
 import { captureRawStack } from './stackTrace';
 
 export class ManualPromise<T = void> extends Promise<T> {

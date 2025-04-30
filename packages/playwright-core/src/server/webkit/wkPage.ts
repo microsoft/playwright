@@ -30,7 +30,7 @@ import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
 import { helper } from '../helper';
 import * as network from '../network';
-import {  PageBinding  } from '../page';
+import { kPlaywrightBinding } from '../javascript';
 import { Page } from '../page';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKSession } from './wkConnection';
@@ -176,7 +176,7 @@ export class WKPage implements PageDelegate {
     const promises: Promise<any>[] = [
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
-      session.send('Runtime.addBinding', { name: PageBinding.kPlaywrightBinding }),
+      session.send('Runtime.addBinding', { name: kPlaywrightBinding }),
       session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
       session.send('Console.enable'),
       session.send('Network.enable'),

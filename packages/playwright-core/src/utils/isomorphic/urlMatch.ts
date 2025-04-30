@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Map, Set } from './builtins';
 import { isString } from './stringUtils';
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
