@@ -40,17 +40,17 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-const htmlReportOptions = ['always', 'never', 'on-failure'];
+const htmlReportOptions = ['always', 'never', 'on-failure'] as const;
 type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
 
 const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
-  return htmlReportOptions.includes(type);
+  return htmlReportOptions.includes(type as HtmlReportOpenOption);
 };
 
 type HtmlReporterResolvedConfig = {
   outputFolder: string,
   attachmentsBaseURL: string,
-  open: string | undefined,
+  open: HtmlReportOpenOption,
   port: number | undefined,
   host: string | undefined,
   title: string | undefined,
@@ -59,8 +59,9 @@ type HtmlReporterResolvedConfig = {
   _isTestServer: boolean | undefined;
 };
 
-type HtmlReporterOptions = HtmlReporterResolvedConfig & {
+type HtmlReporterOptions = Partial<HtmlReporterResolvedConfig> & {
   configDir: string,
+  outputFolder: string
 };
 
 class HtmlReporter implements ReporterV2 {
