@@ -37,7 +37,6 @@ import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
-import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
@@ -772,7 +771,7 @@ export class Page extends SdkObject {
 
   allInitScripts() {
     const bindings = [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
-    return [getUtilityInitScript(), ...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
+    return [kUtilityInitScript, ...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
   }
 
   getBinding(name: string) {
@@ -921,19 +920,13 @@ export class InitScript {
   }
 }
 
-let utilityInitScriptInstance: InitScript | undefined;
-export function getUtilityInitScript() {
-  if (!utilityInitScriptInstance) {
-    utilityInitScriptInstance = new InitScript(`
-      (() => {
-        const module = {};
-        ${js.prepareGeneratedScript(rawUtilityScriptSource.source)}
-        (module.exports.ensureUtilityScript())();
-      })();
-    `, true /* internal */);
-  }
-  return utilityInitScriptInstance;
-}
+export const kUtilityInitScript = new InitScript(`
+  (() => {
+    const module = {};
+    ${js.kUtilityScriptSource}
+    (module.exports.ensureUtilityScript())();
+  })();
+`, true /* internal */);
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];
