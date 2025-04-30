@@ -494,13 +494,10 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stderr.write(line);
     };
     const crashHandler = () => {
-      console.log('Crash handler');
       const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
       if (hasCrashLine) {
         process.stderr.write('Detected browser crash.\n');
         gracefullyProcessExitDoNotHang(1);
-      } else {
-        gracefullyProcessExitDoNotHang(0);
       }
     };
     const browser = context.browser();
