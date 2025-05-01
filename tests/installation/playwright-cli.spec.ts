@@ -32,24 +32,6 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
     expect(result).toContain(`{ page }`);
   });
 
-  await test.step('codegen with user data dir', async () => {
-    const userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-'));
-
-    try {
-      const result = await exec(`npx playwright codegen --user-data-dir ${userDataDir}`, {
-        env: {
-          PWTEST_CLI_IS_UNDER_TEST: '1',
-          PWTEST_CLI_AUTO_EXIT_WHEN: '@playwright/test',
-          DEBUG: 'pw:browser,pw:channel'
-        }
-      });
-      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-      expect(result).toContain(`{ page }`);
-    } finally {
-      fs.rmdirSync(userDataDir, { recursive: true });
-    }
-  });
-
   await test.step('codegen --target=javascript', async () => {
     const result = await exec('npx playwright codegen --target=javascript', {
       env: {
@@ -58,6 +40,24 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
       }
     });
     expect(result).toContain(`playwright`);
+  });
+
+  await test.step('codegen with user data dir', async () => {
+    const userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-'));
+
+    try {
+      const result = await exec(`npx playwright codegen --target=javascript --user-data-dir ${userDataDir}`, {
+        env: {
+          PWTEST_CLI_IS_UNDER_TEST: '1',
+          PWTEST_CLI_AUTO_EXIT_WHEN: 'context.close',
+          DEBUG: 'pw:browser,pw:channel'
+        }
+      });
+      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+      expect(result).toContain(`browser.close`);
+    } finally {
+      fs.rmdirSync(userDataDir, { recursive: true });
+    }
   });
 
   await test.step('codegen --target=python', async () => {
