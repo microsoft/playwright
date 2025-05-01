@@ -95,7 +95,7 @@ it('should be callable from-inside addInitScript', async ({ page, server }) => {
   });
   await page.addInitScript(() => window['woof']());
   await page.reload();
-  expect(called).toBe(true);
+  await expect.poll(() => called).toBe(true);
 });
 
 it('should survive navigation', async ({ page, server }) => {
