@@ -16,10 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, isUnderTest, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { open } from 'playwright-core/lib/utilsBundle';
+import { open, debug } from 'playwright-core/lib/utilsBundle';
 
 import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -387,6 +388,11 @@ export class TestServerDispatcher implements TestServerInterface {
     if (process.env.PWTEST_DEBUG)
       return;
     if (intercept) {
+      // Don't intercept any DEBUG=* logging
+      debug.log = (...args) => {
+        const string = util.format(...args) + '\n';
+        return (originalStderrWrite as any).apply(process.stderr, [string]);
+      };
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
         return true;
