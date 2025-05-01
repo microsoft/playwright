@@ -513,6 +513,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     // a temporary page and we call closeBrowser again when that page closes.
     if (closingBrowser)
       return;
+    console.log('Closing browser...');
     closingBrowser = true;
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
@@ -526,6 +527,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   function listenToPage(page: Page) {
     page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
     page.on('close', () => {
+      console.log('Page closed');
       if (context.pages().length > 0)
         return;
       // Avoid the error when the last page is closed because the browser has been closed.
@@ -539,6 +541,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 
   context.on('page', listenToPage);
   context.on('close', () => {
+    console.log('Context closed');
     closeBrowser().catch(() => {});
   });
   process.on('SIGINT', async () => {
@@ -566,6 +569,7 @@ async function createContext(browserType: BrowserType, launchOptions: LaunchOpti
 }
 
 async function openPageIfNeeded(context: BrowserContext, url: string | undefined): Promise<Page> {
+  console.log('Opening page...');
   let page = context.pages()[0];
   if (!page)
     page = await context.newPage();
