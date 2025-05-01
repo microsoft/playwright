@@ -366,7 +366,6 @@ export default [
   {
     files: [
       "packages/injected/src/**/*.ts",
-      "packages/playwright-core/src/server/storageScript.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,
     rules: {
