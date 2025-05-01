@@ -1,5 +1,4 @@
 [*]
-@injected/**
 @isomorphic/**
 @trace/**
 @web/**

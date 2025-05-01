@@ -16,6 +16,9 @@
 
 import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
 
+import * as injectedScriptSource from '../generated/injectedScriptSource';
+import * as recorderSource from '../generated/recorderSource';
+
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
 import type { PageEntry } from '../types/entries';
 import type { LRUCache } from './lruCache';
@@ -558,7 +561,25 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
+  const injectedSource = `(() => {
+    function createInjectedScript(isUnderTest) {
+      const module = {};
+      ${injectedScriptSource.source}
+      return new (module.exports.InjectedScript())(globalThis, { isUnderTest });
+    }
+
+    function createRecorder(injectedScript) {
+      const module = {};
+      ${recorderSource.source}
+      return new (module.exports.Recorder())(injectedScript);
+    }
+
+    const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';
+    globalThis._injectedScript = createInjectedScript(isUnderTest);
+    globalThis._recorder = createRecorder(globalThis._injectedScript);
+  })();`;
+
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')});\n\n${injectedSource}`;
 }
 
 

@@ -39,9 +39,21 @@ const injectedScripts = [
     true,
   ],
   [
+    path.join(ROOT, 'packages', 'injected', 'src', 'injectedScript.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'trace-viewer', 'src', 'generated'),
+    true,
+  ],
+  [
     path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'pollingRecorder.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'recorder.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'trace-viewer', 'src', 'generated'),
     true,
   ],
   [

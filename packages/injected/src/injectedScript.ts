@@ -44,7 +44,6 @@ import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
 import type { ElementText, TextMatcher } from './selectorUtils';
-import type { Builtins } from './utilityScript';
 
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
@@ -67,25 +66,25 @@ interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
 
 export type InjectedScriptOptions = {
   isUnderTest?: boolean;
-  sdkLanguage: Language;
+  sdkLanguage?: Language;
   // For strict error and codegen
-  testIdAttributeName: string;
-  stableRafCount: number;
-  browserName: string;
-  inputFileRoleTextbox: boolean;
-  customEngines: { name: string, source: string }[];
+  testIdAttributeName?: string;
+  stableRafCount?: number;
+  browserName?: string;
+  inputFileRoleTextbox?: boolean;
+  customEngines?: { name: string, source: string }[];
 };
 
 export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
   readonly _evaluator: SelectorEvaluatorImpl;
-  private _stableRafCount: number;
-  private _browserName: string;
+  private _stableRafCount!: number;
+  private _browserName!: string;
   readonly onGlobalListenersRemoved: Set<() => void>;
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
-  private _sdkLanguage: Language;
+  private _sdkLanguage!: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
   private _markedElements?: { callId: string, elements: Set<Element> };
   // eslint-disable-next-line no-restricted-globals
@@ -108,7 +107,10 @@ export class InjectedScript {
     isInsideScope,
     normalizeWhiteSpace,
     parseAriaSnapshot,
-    builtins: null as unknown as Builtins,
+
+    // Guaranteed builtins used by ad-hoc evaluates.
+    setTimeout,
+    requestAnimationFrame,
   };
 
   private _autoClosingTags: Set<string>;
@@ -123,13 +125,8 @@ export class InjectedScript {
   constructor(window: Window & typeof globalThis, options: InjectedScriptOptions) {
     this.window = window;
     this.document = window.document;
-    // Make sure builtins are created from "window". This is important for InjectedScript instantiated
-    // inside a trace viewer snapshot, where "window" differs from "globalThis".
-    const utilityScript = ensureUtilityScript(window);
-    this.isUnderTest = options.isUnderTest ?? utilityScript.isUnderTest;
-    this.utils.builtins = utilityScript.builtins;
-    this._sdkLanguage = options.sdkLanguage;
-    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = options.testIdAttributeName;
+    this.isUnderTest = options.isUnderTest ?? ensureUtilityScript().isUnderTest;
+    this.updateOptions(options);
     this._evaluator = new SelectorEvaluatorImpl();
     this.consoleApi = new ConsoleAPI(this);
 
@@ -229,18 +226,22 @@ export class InjectedScript {
     this._engines.set('internal:role', createRoleEngine(true));
     this._engines.set('aria-ref', this._createAriaIdEngine());
 
-    for (const { name, source } of options.customEngines)
+    for (const { name, source } of options.customEngines || [])
       this._engines.set(name, this.eval(source));
-
-    this._stableRafCount = options.stableRafCount;
-    this._browserName = options.browserName;
-    setGlobalOptions({ browserNameForWorkarounds: options.browserName, inputFileRoleTextbox: options.inputFileRoleTextbox });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
 
     if (this.isUnderTest)
       (this.window as any).__injectedScript = this;
+  }
+
+  updateOptions(options: Omit<InjectedScriptOptions, 'customEngines' | 'isUnderTest'>) {
+    this._sdkLanguage = options.sdkLanguage ?? 'javascript';
+    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = options.testIdAttributeName ?? 'data-testid';
+    this._stableRafCount = options.stableRafCount ?? 1;
+    this._browserName = options.browserName ?? 'chromium';
+    setGlobalOptions({ browserNameForWorkarounds: this._browserName, inputFileRoleTextbox: options.inputFileRoleTextbox });
   }
 
   eval(expression: string): any {

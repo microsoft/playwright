@@ -193,11 +193,11 @@ class RecordActionTool implements RecorderTool {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModelWithSelector | null = null;
   private _expectProgrammaticKeyUp = false;
-  private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
+  private _pendingClickAction: { action: actions.ClickAction, timeout: NodeJS.Timeout } | undefined;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
-    this._performingActions = new recorder.injectedScript.utils.builtins.Set();
+    this._performingActions = new Set();
   }
 
   cursor() {
@@ -251,7 +251,7 @@ class RecordActionTool implements RecorderTool {
           modifiers: modifiersForEvent(event),
           clickCount: event.detail
         },
-        timeout: this._recorder.injectedScript.utils.builtins.setTimeout(() => this._commitPendingClickAction(), 200)
+        timeout: setTimeout(() => this._commitPendingClickAction(), 200)
       };
     }
   }
@@ -288,7 +288,7 @@ class RecordActionTool implements RecorderTool {
 
   private _cancelPendingClickAction() {
     if (this._pendingClickAction)
-      this._recorder.injectedScript.utils.builtins.clearTimeout(this._pendingClickAction.timeout);
+      clearTimeout(this._pendingClickAction.timeout);
     this._pendingClickAction = undefined;
   }
 
@@ -599,7 +599,7 @@ class TextAssertionTool implements RecorderTool {
 
   constructor(recorder: Recorder, kind: 'text' | 'value' | 'snapshot') {
     this._recorder = recorder;
-    this._textCache = new recorder.injectedScript.utils.builtins.Map();
+    this._textCache = new Map();
     this._kind = kind;
     this._dialog = new Dialog(recorder);
   }
@@ -948,7 +948,7 @@ class Overlay {
     else
       element = this._assertValuesToggle;
     element.classList.add('succeeded');
-    this._recorder.injectedScript.utils.builtins.setTimeout(() => element.classList.remove('succeeded'), 2000);
+    setTimeout(() => element.classList.remove('succeeded'), 2000);
   }
 
   private _hideOverlay() {
@@ -1081,13 +1081,13 @@ export class Recorder {
 
     this.highlight.install();
     // some frameworks erase the DOM on hydration, this ensures it's reattached
-    let recreationInterval: number | undefined;
+    let recreationInterval: NodeJS.Timeout | undefined;
     const recreate = () => {
       this.highlight.install();
-      recreationInterval = this.injectedScript.utils.builtins.setTimeout(recreate, 500);
+      recreationInterval = setTimeout(recreate, 500);
     };
-    recreationInterval = this.injectedScript.utils.builtins.setTimeout(recreate, 500);
-    this._listeners.push(() => this.injectedScript.utils.builtins.clearTimeout(recreationInterval));
+    recreationInterval = setTimeout(recreate, 500);
+    this._listeners.push(() => clearTimeout(recreationInterval));
 
     this.highlight.appendChild(createSvgElement(this.document, clipPaths));
     this.overlay?.install();

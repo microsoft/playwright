@@ -69,16 +69,14 @@ type BindingData = {
 };
 
 export class UtilityScript {
-  // eslint-disable-next-line no-restricted-globals
-  readonly global: typeof globalThis;
   readonly builtins: Builtins;
   readonly isUnderTest: boolean;
 
   private _bindings = new Map<string, BindingData>();
 
-  // eslint-disable-next-line no-restricted-globals
-  constructor(global: typeof globalThis) {
-    this.global = global;
+  constructor() {
+    // eslint-disable-next-line no-restricted-globals
+    const global = globalThis;
     this.isUnderTest = kUtilityScriptIsUnderTest;
     // UtilityScript is evaluated in every page as an InitScript, and saves builtins
     // from the global object, before the page has a chance to temper with them.
@@ -141,7 +139,8 @@ export class UtilityScript {
       handles: new Map(),
     };
     this._bindings.set(bindingName, data);
-    (this.global as any)[bindingName] = (...args: any[]) => {
+    // eslint-disable-next-line no-restricted-globals
+    (globalThis as any)[bindingName] = (...args: any[]) => {
       if (needsHandle && args.slice(1).some(arg => arg !== undefined))
         throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
       const seq = ++data.lastSeq;
@@ -159,7 +158,8 @@ export class UtilityScript {
         }
         payload = { name: bindingName, seq, serializedArgs };
       }
-      (this.global as any)[kPlaywrightBinding](JSON.stringify(payload));
+      // eslint-disable-next-line no-restricted-globals
+      (globalThis as any)[kPlaywrightBinding](JSON.stringify(payload));
       return promise;
     };
   }
@@ -203,15 +203,14 @@ export class UtilityScript {
   }
 }
 
-// eslint-disable-next-line no-restricted-globals
-export function ensureUtilityScript(global?: typeof globalThis): UtilityScript {
+export function ensureUtilityScript(): UtilityScript {
   // eslint-disable-next-line no-restricted-globals
-  global = global ?? globalThis;
-  let utilityScript: UtilityScript = (global as any)[kUtilityScriptGlobalProperty];
+  let utilityScript: UtilityScript = (globalThis as any)[kUtilityScriptGlobalProperty];
   if (utilityScript)
     return utilityScript;
 
-  utilityScript = new UtilityScript(global);
-  Object.defineProperty(global, kUtilityScriptGlobalProperty, { value: utilityScript, configurable: false, enumerable: false, writable: false });
+  utilityScript = new UtilityScript();
+  // eslint-disable-next-line no-restricted-globals
+  Object.defineProperty(globalThis, kUtilityScriptGlobalProperty, { value: utilityScript, configurable: false, enumerable: false, writable: false });
   return utilityScript;
 }

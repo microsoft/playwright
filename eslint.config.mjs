@@ -49,6 +49,7 @@ const ignores = [
   "packages/playwright-core/src/third_party/",
   "packages/playwright-core/types/*",
   "packages/playwright-ct-core/src/generated/*",
+  "packages/trace-viewer/src/generated/*",
   "packages/html-reporter/bundle.ts",
   "packages/html-reporter/playwright.config.ts",
   "packages/html-reporter/playwright/*",
@@ -220,7 +221,7 @@ const noBooleanCompareRules = {
 const noWebGlobalsRuleList = [
   { name: "window", message: "Use InjectedScript.window instead" },
   { name: "document", message: "Use InjectedScript.document instead" },
-  { name: "globalThis", message: "Use InjectedScript.window instead" },
+  { name: "globalThis", message: "Instead of using 'globalThis.Foo', use 'Foo'. Generated code ensures a builtin version." },
 ];
 
 const noNodeGlobalsRuleList = [{ name: "process" }];

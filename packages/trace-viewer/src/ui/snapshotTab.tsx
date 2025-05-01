@@ -21,8 +21,8 @@ import { context, type MultiTraceModel, nextActionByStartTime, previousActionByE
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
-import { InjectedScript } from '@injected/injectedScript';
-import { Recorder } from '@injected/recorder/recorder';
+import type { InjectedScript } from '@injected/injectedScript';
+import type { Recorder } from '@injected/recorder/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
@@ -75,10 +75,10 @@ export const SnapshotTabsView: React.FunctionComponent<{
       })}
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
-        const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
+        const win = window.open(snapshotUrls?.popoutUrl || '', '_blank') as SnapshotWindow | null;
         win?.addEventListener('DOMContentLoaded', () => {
-          const injectedScript = new InjectedScript(win as any, { isUnderTest, sdkLanguage, testIdAttributeName, stableRafCount: 1, browserName: 'chromium', inputFileRoleTextbox: false, customEngines: [] });
-          injectedScript.consoleApi.install();
+          win._injectedScript.updateOptions({ sdkLanguage, testIdAttributeName });
+          win._injectedScript.consoleApi.install();
         });
       }} />
     </Toolbar>
@@ -236,9 +236,8 @@ export const InspectModeController: React.FunctionComponent<{
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedElement, setHighlightedElement, iteration }) => {
   React.useEffect(() => {
     const recorders: { recorder: Recorder, frameSelector: string }[] = [];
-    const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';
     try {
-      createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
+      createRecorders(recorders, sdkLanguage, testIdAttributeName, '', iframe?.contentWindow as SnapshotWindow | null | undefined);
     } catch {
       // Potential cross-origin exceptions.
     }
@@ -275,26 +274,31 @@ export const InspectModeController: React.FunctionComponent<{
   return <></>;
 };
 
-function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
-  if (!frameWindow)
+type SnapshotWindow = Window & {
+  _injectedScript: InjectedScript;
+  _recorder: Recorder;
+  _frameSelector: string;
+
+  frames: SnapshotWindow[];
+};
+
+function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, parentFrameSelector: string, win: SnapshotWindow | null | undefined) {
+  if (!win)
     return;
-  const win = frameWindow as any;
-  if (!win._recorder) {
-    const injectedScript = new InjectedScript(frameWindow as any, { isUnderTest, sdkLanguage, testIdAttributeName, stableRafCount: 1, browserName: 'chromium', inputFileRoleTextbox: false, customEngines: [] });
-    const recorder = new Recorder(injectedScript);
-    win._injectedScript = injectedScript;
-    win._recorder = { recorder, frameSelector: parentFrameSelector };
-    if (isUnderTest) {
+  if (!win._frameSelector) {
+    win._injectedScript.updateOptions({ sdkLanguage, testIdAttributeName });
+    win._frameSelector = parentFrameSelector;
+    if (win._injectedScript.isUnderTest) {
       (window as any)._weakRecordersForTest = (window as any)._weakRecordersForTest || new Set();
-      (window as any)._weakRecordersForTest.add(new WeakRef(recorder));
+      (window as any)._weakRecordersForTest.add(new WeakRef(win._recorder));
     }
   }
-  recorders.push(win._recorder);
+  recorders.push({ recorder: win._recorder, frameSelector: parentFrameSelector });
 
-  for (let i = 0; i < frameWindow.frames.length; ++i) {
-    const childFrame = frameWindow.frames[i];
+  for (let i = 0; i < win.frames.length; ++i) {
+    const childFrame = win.frames[i];
     const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelectorSimple(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
-    createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
+    createRecorders(recorders, sdkLanguage, testIdAttributeName, parentFrameSelector + frameSelector, childFrame);
   }
 }
 
