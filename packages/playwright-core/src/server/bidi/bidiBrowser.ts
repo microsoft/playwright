@@ -16,7 +16,7 @@
 
 import { eventsHelper } from '../utils/eventsHelper';
 import { Browser } from '../browser';
-import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
+import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
@@ -151,12 +151,12 @@ export class BidiBrowser extends Browser {
     if (event.parent) {
       const parentFrameId = event.parent;
       for (const page of this._bidiPages.values()) {
-        const parentFrame = page._page._frameManager.frame(parentFrameId);
+        const parentFrame = page._page.frameManager.frame(parentFrameId);
         if (!parentFrame)
           continue;
         page._session.addFrameBrowsingContext(event.context);
-        page._page._frameManager.frameAttached(event.context, parentFrameId);
-        const frame = page._page._frameManager.frame(event.context);
+        page._page.frameManager.frameAttached(event.context, parentFrameId);
+        const frame = page._page.frameManager.frame(event.context);
         if (frame)
           frame._url = event.url;
         return;
@@ -180,10 +180,10 @@ export class BidiBrowser extends Browser {
       this._browserSession.removeFrameBrowsingContext(event.context);
       const parentFrameId = event.parent;
       for (const page of this._bidiPages.values()) {
-        const parentFrame = page._page._frameManager.frame(parentFrameId);
+        const parentFrame = page._page.frameManager.frame(parentFrameId);
         if (!parentFrame)
           continue;
-        page._page._frameManager.frameDetached(event.context);
+        page._page.frameManager.frameDetached(event.context);
         return;
       }
       return;
@@ -266,7 +266,6 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   override async doCreateNewPage(): Promise<Page> {
-    assertBrowserContextIsNotOwned(this);
     const { context } = await this._browser._browserSession.send('browsingContext.create', {
       type: bidi.BrowsingContext.CreateType.Window,
       userContext: this._browserContextId,
@@ -368,7 +367,7 @@ export class BidiBrowserContext extends BrowserContext {
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
-      await (page._delegate as BidiPage).updateHttpCredentials();
+      await (page.delegate as BidiPage).updateHttpCredentials();
   }
 
   async doAddInitScript(initScript: InitScript) {

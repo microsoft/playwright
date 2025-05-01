@@ -75,7 +75,7 @@ export async function launchApp(browserType: BrowserType, options: {
 
 async function installAppIcon(page: Page) {
   const icon = await fs.promises.readFile(require.resolve('./chromium/appIcon.png'));
-  const crPage = page._delegate as CRPage;
+  const crPage = page.delegate as CRPage;
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
     image: icon.toString('base64')
   });

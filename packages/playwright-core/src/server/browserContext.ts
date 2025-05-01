@@ -216,11 +216,11 @@ export abstract class BrowserContext extends SdkObject {
     }
 
     // Unless dialogs are dismissed, setting extra http headers below does not respond.
-    page?._frameManager.setCloseAllOpeningDialogs(true);
-    await page?._frameManager.closeOpenDialogs();
+    page?.frameManager.setCloseAllOpeningDialogs(true);
+    await page?.frameManager.closeOpenDialogs();
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
-    page?._frameManager.setCloseAllOpeningDialogs(false);
+    page?.frameManager.setCloseAllOpeningDialogs(false);
 
     await this._resetStorage();
     await this._removeExposedBindings();
@@ -544,7 +544,7 @@ export abstract class BrowserContext extends SdkObject {
     if (originsToSave.size)  {
       const internalMetadata = serverSideCallMetadata();
       const page = await this.newPage(internalMetadata);
-      await page._setServerRequestInterceptor(handler => {
+      await page.setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
         return true;
       });
@@ -574,7 +574,7 @@ export abstract class BrowserContext extends SdkObject {
       // as a user-visible page.
       isServerSide: false,
     });
-    await page._setServerRequestInterceptor(handler => {
+    await page.setServerRequestInterceptor(handler => {
       handler.fulfill({ body: '<html></html>' }).catch(() => {});
       return true;
     });
@@ -585,7 +585,7 @@ export abstract class BrowserContext extends SdkObject {
       await frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin));
     }
 
-    await page._setServerRequestInterceptor(undefined);
+    await page.setServerRequestInterceptor(undefined);
 
     this._origins = new Set([...newOrigins.keys()]);
     // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
@@ -609,7 +609,7 @@ export abstract class BrowserContext extends SdkObject {
       if (state.origins && state.origins.length)  {
         const internalMetadata = serverSideCallMetadata();
         const page = await this.newPage(internalMetadata);
-        await page._setServerRequestInterceptor(handler => {
+        await page.setServerRequestInterceptor(handler => {
           handler.fulfill({ body: '<html></html>' }).catch(() => {});
           return true;
         });
@@ -667,13 +667,6 @@ export abstract class BrowserContext extends SdkObject {
   async _cancelAllRoutesInFlight() {
     await Promise.all([...this._routesInFlight].map(r => r.abort())).catch(() => {});
     this._routesInFlight.clear();
-  }
-}
-
-export function assertBrowserContextIsNotOwned(context: BrowserContext) {
-  for (const page of context.pages()) {
-    if (page._ownedContext)
-      throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
   }
 }
 

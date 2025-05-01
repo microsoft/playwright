@@ -59,7 +59,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
 
   static async installIfNeeded(target: Page | BrowserContext) {
     const kBindingName = '__pwWebSocketBinding';
-    const context = target instanceof Page ? target.context() : target;
+    const context = target instanceof Page ? target.browserContext : target;
     if (!context.hasBinding(kBindingName)) {
       await context.exposeBinding(kBindingName, false, (source, payload: ws.BindingPayload) => {
         if (payload.type === 'onCreate') {

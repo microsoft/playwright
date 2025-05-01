@@ -39,7 +39,7 @@ export class Dialog extends SdkObject {
     this._message = message;
     this._onHandle = onHandle;
     this._defaultValue = defaultValue || '';
-    this._page._frameManager.dialogDidOpen(this);
+    this._page.frameManager.dialogDidOpen(this);
     this.instrumentation.onDialog(this);
   }
 
@@ -62,14 +62,14 @@ export class Dialog extends SdkObject {
   async accept(promptText?: string) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
-    this._page._frameManager.dialogWillClose(this);
+    this._page.frameManager.dialogWillClose(this);
     await this._onHandle(true, promptText);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
-    this._page._frameManager.dialogWillClose(this);
+    this._page.frameManager.dialogWillClose(this);
     await this._onHandle(false);
   }
 
