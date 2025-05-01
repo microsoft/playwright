@@ -40,6 +40,7 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
         env: {
           PWTEST_CLI_IS_UNDER_TEST: '1',
           PWTEST_CLI_AUTO_EXIT_WHEN: '@playwright/test',
+          DEBUG: 'pw:browser,pw:channel'
         }
       });
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
