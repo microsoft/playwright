@@ -29,6 +29,7 @@ export type AriaNode = AriaProps & {
   children: (AriaNode | string)[];
   element: Element;
   box: Box;
+  receivesPointerEvents: boolean;
   props: Record<string, string>;
 };
 
@@ -43,7 +44,7 @@ export function generateAriaTree(rootElement: Element, generation: number, optio
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
-    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement) },
+    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
     elements: new Map<number, Element>(),
     generation,
     ids: new Map<Element, number>(),
@@ -148,7 +149,7 @@ export function generateAriaTree(rootElement: Element, generation: number, optio
 
 function toAriaNode(element: Element, options?: { emitGeneric?: boolean }): AriaNode | null {
   if (element.nodeName === 'IFRAME')
-    return { role: 'iframe', name: '', children: [], props: {}, element, box: box(element) };
+    return { role: 'iframe', name: '', children: [], props: {}, element, box: box(element), receivesPointerEvents: true };
 
   const defaultRole = options?.emitGeneric ? 'generic' : null;
   const role = roleUtils.getAriaRole(element) ?? defaultRole;
@@ -156,7 +157,8 @@ function toAriaNode(element: Element, options?: { emitGeneric?: boolean }): Aria
     return null;
 
   const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(element, false) || '');
-  const result: AriaNode = { role, name, children: [], props: {}, element, box: box(element) };
+  const receivesPointerEvents = roleUtils.receivesPointerEvents(element);
+  const result: AriaNode = { role, name, children: [], props: {}, element, box: box(element), receivesPointerEvents };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
     result.checked = roleUtils.getAriaChecked(element);
@@ -406,7 +408,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.ref && ariaNode.box.visible) {
+    if (options?.ref && ariaNode.box.visible && ariaNode.receivesPointerEvents) {
       const id = ariaSnapshot.ids.get(ariaNode.element);
       if (id)
         key += ` [ref=s${ariaSnapshot.generation}e${id}]`;
