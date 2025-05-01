@@ -48,7 +48,7 @@ import type * as types from './types';
 import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
-import type { BindingPayload } from '@injected/utilityScript';
+import type { BindingPayload, UtilityScript } from '@injected/utilityScript';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -867,14 +867,16 @@ export class PageBinding {
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const { name, seq, serializedArgs } = JSON.parse(payload) as BindingPayload;
+    let utilityScript: js.JSHandle<UtilityScript> | undefined;
     try {
+      utilityScript = await context.utilityScript();
       assert(context.world);
       const binding = page.getBinding(name);
       if (!binding)
         throw new Error(`Function "${name}" is not exposed`);
       let result: any;
       if (binding.needsHandle) {
-        const handle = await context.evaluateExpressionHandle(`arg => ${js.accessUtilityScript()}.takeBindingHandle(arg)`, { isFunction: true }, { name, seq }).catch(e => null);
+        const handle = await utilityScript.evaluateHandle((utility, arg) => utility.takeBindingHandle(arg), { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page.browserContext }, handle);
       } else {
         if (!Array.isArray(serializedArgs))
@@ -882,9 +884,9 @@ export class PageBinding {
         const args = serializedArgs!.map(a => parseEvaluationResultValue(a));
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page.browserContext }, ...args);
       }
-      context.evaluateExpressionHandle(`arg => ${js.accessUtilityScript()}.deliverBindingResult(arg)`, { isFunction: true }, { name, seq, result }).catch(e => debugLogger.log('error', e));
+      utilityScript.evaluate((utility, arg) => utility.deliverBindingResult(arg), { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
-      context.evaluateExpressionHandle(`arg => ${js.accessUtilityScript()}.deliverBindingResult(arg)`, { isFunction: true }, { name, seq, error }).catch(e => debugLogger.log('error', e));
+      utilityScript?.evaluate((utility, arg) => utility.deliverBindingResult(arg), { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
   }
 }
