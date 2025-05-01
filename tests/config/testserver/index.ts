@@ -55,6 +55,7 @@ export class TestServer {
   readonly PREFIX: string;
   readonly CROSS_PROCESS_PREFIX: string;
   readonly EMPTY_PAGE: string;
+  private _disableRequestBodyConsumption: boolean;
 
   static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback);
@@ -185,7 +186,12 @@ export class TestServer {
     return promise;
   }
 
+  disableRequestBodyConsumption() {
+    this._disableRequestBodyConsumption = true;
+  }
+
   reset() {
+    this._disableRequestBodyConsumption = false;
     this._routes.clear();
     this._auths.clear();
     this._csp.clear();
@@ -207,13 +213,15 @@ export class TestServer {
       else
         throw error;
     });
-    (request as any).postBody = new Promise(resolve => {
-      const chunks: Buffer[] = [];
-      request.on('data', chunk => {
-        chunks.push(chunk);
+    if (!this._disableRequestBodyConsumption) {
+      (request as any).postBody = new Promise(resolve => {
+        const chunks: Buffer[] = [];
+        request.on('data', chunk => {
+          chunks.push(chunk);
+        });
+        request.on('end', () => resolve(Buffer.concat(chunks)));
       });
-      request.on('end', () => resolve(Buffer.concat(chunks)));
-    });
+    }
     const path = url.parse(request.url!).path;
     this.debugServer(`request ${request.method} ${path}`);
     if (this._auths.has(path)) {
