@@ -792,7 +792,7 @@ export class WKPage implements PageDelegate {
        * Some sites don't check existance of PublicKeyCredentials because all browsers except Webkit on Linux implement it.
        * We polyfill the subset that's used for feature detection, so that login flows that'd work in Safari don't crash with "PublicKeyCredential is not defined" in CI.
        * https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential
-       */ 
+       */
       window.PublicKeyCredential ??= {
         async getClientCapabilities() {
           return {};
