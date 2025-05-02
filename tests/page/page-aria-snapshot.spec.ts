@@ -16,7 +16,30 @@
  */
 
 import type { Locator, FrameLocator, Page } from '@playwright/test';
-import { test as it, expect } from './pageTest';
+import { test as it, expect as baseExpect } from './pageTest';
+
+const expect = baseExpect.extend({
+  toContainYaml(received: string, expected: string) {
+    const trimmed = expected.split('\n').filter(a => !!a.trim());
+    const maxPrefixLength = Math.min(...trimmed.map(line => line.match(/^\s*/)[0].length));
+    const trimmedExpected = trimmed.map(line => line.substring(maxPrefixLength)).join('\n');
+    try {
+      if (this.isNot)
+        expect(received).not.toContain(trimmedExpected);
+      else
+        expect(received).toContain(trimmedExpected);
+      return {
+        pass: !this.isNot,
+        message: () => '',
+      };
+    } catch (e) {
+      return {
+        pass: this.isNot,
+        message: () => e.message,
+      };
+    }
+  }
+});
 
 function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
@@ -720,15 +743,15 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
     return result.join('\n');
   }
 
-  expect(await allFrameSnapshot(page)).toEqual(`
-- iframe [ref=s1e3]:
-  - iframe [ref=s1e3]:
-    - text: Hi, I'm frame
-  - iframe [ref=s1e4]:
-    - text: Hi, I'm frame
-- iframe [ref=s1e4]:
-  - text: Hi, I'm frame
-  `.trim());
+  expect(await allFrameSnapshot(page)).toContainYaml(`
+    - iframe [ref=s1e3]:
+      - iframe [ref=s1e3]:
+        - text: Hi, I'm frame
+      - iframe [ref=s1e4]:
+        - text: Hi, I'm frame
+    - iframe [ref=s1e4]:
+      - text: Hi, I'm frame
+  `);
 });
 
 it('should not generate refs for hidden elements', async ({ page }) => {
@@ -739,9 +762,11 @@ it('should not generate refs for hidden elements', async ({ page }) => {
   `);
 
   const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot).toContain(`- button "One" [ref=s1e3]
-- button "Two"
-- button "Three" [ref=s1e5]`);
+  expect(snapshot).toContainYaml(`
+    - button "One" [ref=s1e3]
+    - button "Two"
+    - button "Three" [ref=s1e5]
+  `);
 });
 
 it('should not generate refs for elements with pointer-events:none', async ({ page }) => {
@@ -768,11 +793,13 @@ it('should not generate refs for elements with pointer-events:none', async ({ pa
   `);
 
   const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot).toContain(`- button "no-ref"
-- button "with-ref" [ref=s1e5]
-- button "with-ref" [ref=s1e8]
-- button "with-ref" [ref=s1e11]
-- button "no-ref"`);
+  expect(snapshot).toContainYaml(`
+    - button "no-ref"
+    - button "with-ref" [ref=s1e5]
+    - button "with-ref" [ref=s1e8]
+    - button "with-ref" [ref=s1e11]
+    - button "no-ref"
+  `);
 });
 
 it('emit generic roles for nodes w/o roles', async ({ page }) => {
@@ -808,14 +835,32 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
 
   const snapshot = await page.locator('body').ariaSnapshot({ ref: true, emitGeneric: true });
 
-  expect(snapshot).toContain(`- generic [ref=s1e3]:
-  - generic [ref=s1e4]:
-    - radio "Apple" [checked]
-    - text: Apple
-  - generic [ref=s1e8]:
-    - radio "Pear"
-    - text: Pear
-  - generic [ref=s1e12]:
-    - radio "Orange"
-    - text: Orange`);
+  expect(snapshot).toContainYaml(`
+    - generic [ref=s1e5]:
+      - radio "Apple" [checked]
+    - generic [ref=s1e7]: Apple
+    - generic [ref=s1e9]:
+      - radio "Pear"
+    - generic [ref=s1e11]: Pear
+    - generic [ref=s1e13]:
+      - radio "Orange"
+    - generic [ref=s1e15]: Orange
+  `);
+});
+
+it('should collapse generic nodes', async ({ page }) => {
+  await page.setContent(`
+    <div>
+      <div>
+        <div>
+          <button>Button</button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  const snapshot = await page.locator('body').ariaSnapshot({ ref: true, emitGeneric: true });
+  expect(snapshot).toContainYaml(`
+    - button \"Button\" [ref=s1e6]
+  `);
 });

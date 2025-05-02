@@ -186,31 +186,25 @@ function toAriaNode(element: Element, options?: { emitGeneric?: boolean }): Aria
   return result;
 }
 
-function normalizeGenericRoles(rootA11yNode: AriaNode) {
-  const visit = (ariaNode: AriaNode) => {
-    const newChildren: (AriaNode | string)[] = [];
-    for (const child of ariaNode.children) {
+function normalizeGenericRoles(node: AriaNode) {
+  const normalizeChildren = (node: AriaNode) => {
+    const result: (AriaNode | string)[] = [];
+    for (const child of node.children || []) {
       if (typeof child === 'string') {
-        newChildren.push(child);
+        result.push(child);
         continue;
       }
-      const isEmptyGeneric = child.role === 'generic' && child.children.length === 0;
-      const isSingleGenericChild = child.role === 'generic' && child.children.length === 1;
-      if (isSingleGenericChild) {
-        // Inline single child chains.
-        const newChild = child.children[0];
-        newChildren.push(newChild);
-        if (typeof newChild !== 'string')
-          visit(newChild);
-      } else if (!isEmptyGeneric) {
-        // Empty div
-        newChildren.push(child);
-        visit(child);
-      }
+      const normalized = normalizeChildren(child);
+      result.push(...normalized);
     }
-    ariaNode.children = newChildren;
+    const removeSelf = node.role === 'generic' && result.every(c => typeof c !== 'string' && canRef(c));
+    if (removeSelf)
+      return result;
+    node.children = result;
+    return [node];
   };
-  visit(rootA11yNode);
+
+  normalizeChildren(node);
 }
 
 function normalizeStringChildren(rootA11yNode: AriaNode) {
@@ -408,7 +402,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.ref && ariaNode.box.visible && ariaNode.receivesPointerEvents) {
+    if (options?.ref && canRef(ariaNode)) {
       const id = ariaSnapshot.ids.get(ariaNode.element);
       if (id)
         key += ` [ref=s${ariaSnapshot.generation}e${id}]`;
@@ -500,4 +494,8 @@ function textContributesInfo(node: AriaNode, text: string): boolean {
   while (substr && filtered.includes(substr))
     filtered = filtered.replace(substr, '');
   return filtered.trim().length / text.length > 0.1;
+}
+
+function canRef(ariaNode: AriaNode): boolean {
+  return ariaNode.box.visible && ariaNode.receivesPointerEvents;
 }
