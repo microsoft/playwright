@@ -781,8 +781,27 @@ export class WKPage implements PageDelegate {
     }
     scripts.push('if (!window.safari) window.safari = { pushNotification: { toString() { return "[object SafariRemoteNotification]"; } } };');
     scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
+    scripts.push(this._publicKeyCredentialScript());
     scripts.push(...this._page.allInitScripts().map(script => script.source));
     return scripts.join(';\n');
+  }
+
+  private _publicKeyCredentialScript(): string {
+    function polyfill() {
+      // https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential
+      globalThis.PublicKeyCredential ??= {
+        async getClientCapabilities() {
+          return {};
+        },
+        async isConditionalMediationAvailable() {
+          return false;
+        },
+        async isUserVerifyingPlatformAuthenticatorAvailable() {
+          return false;
+        },
+      } as any;
+    }
+    return `(${polyfill.toString()})();`;
   }
 
   async _updateBootstrapScript(): Promise<void> {
