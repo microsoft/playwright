@@ -39,11 +39,11 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
       const result = await exec(`npx playwright codegen --user-data-dir ${userDataDir} https://playwright.dev`, {
         env: {
           PWTEST_CLI_IS_UNDER_TEST: '1',
-          PWTEST_CLI_AUTO_EXIT_WHEN: `await page.goto('https://playwright.dev/')`,
+          PWTEST_CLI_AUTO_EXIT_WHEN: `goto('https://playwright.dev/')`,
         }
       });
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-      expect(result).toContain(`browser.close`);
+      expect(result).toContain(`{ page }`);
     } finally {
       fs.rmdirSync(userDataDir, { recursive: true });
     }
