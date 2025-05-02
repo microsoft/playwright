@@ -1561,7 +1561,7 @@ test('should show baseURL in metadata pane', {
 
 test('should not leak recorders', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33086' },
-}, async ({ showTraceViewer }) => {
+}, async ({ showTraceViewer, platform }) => {
   const traceViewer = await showTraceViewer([traceFile]);
 
   const aliveCount = async () => {
@@ -1573,24 +1573,45 @@ test('should not leak recorders', {
     });
   };
 
+  await traceViewer.page.getByRole('tab', { name: 'Locator' }).click();
+
+  const forceRecorder = async (action: string) => {
+    const frame = await traceViewer.snapshotFrame(action);
+
+    await test.step(`highlighting "body" in "${action}"`, async () => {
+      await traceViewer.page.locator('.CodeMirror').first().click();
+      if (platform === 'darwin')
+        await traceViewer.page.keyboard.press('Meta+a');
+      else
+        await traceViewer.page.keyboard.press('Control+a');
+      await traceViewer.page.keyboard.press('Backspace');
+
+      await expect(frame.locator('x-pw-highlight')).not.toBeVisible();
+      await traceViewer.page.keyboard.type('body');
+      await expect(frame.locator('x-pw-highlight')).toBeVisible();
+    });
+
+    return frame;
+  };
+
   await expect(traceViewer.snapshotContainer.contentFrame().locator('body')).toContainText(`Hi, I'm frame`);
 
-  const frame1 = await traceViewer.snapshotFrame('page.goto');
+  const frame1 = await forceRecorder('page.goto');
   await expect(frame1.locator('body')).toContainText('Hello world');
 
-  const frame2 = await traceViewer.snapshotFrame('page.evaluate');
+  const frame2 = await forceRecorder('page.evaluate');
   await expect(frame2.locator('button')).toBeVisible();
 
   await traceViewer.page.requestGC();
   await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
 
-  const frame3 = await traceViewer.snapshotFrame('page.setViewportSize');
+  const frame3 = await forceRecorder('page.setViewportSize');
   await expect(frame3.locator('body')).toContainText(`Hi, I'm frame`);
 
-  const frame4 = await traceViewer.snapshotFrame('page.goto');
+  const frame4 = await forceRecorder('page.goto');
   await expect(frame4.locator('body')).toContainText('Hello world');
 
-  const frame5 = await traceViewer.snapshotFrame('page.evaluate');
+  const frame5 = await forceRecorder('page.evaluate');
   await expect(frame5.locator('button')).toBeVisible();
 
   await traceViewer.page.requestGC();

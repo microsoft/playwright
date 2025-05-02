@@ -235,16 +235,20 @@ export const InspectModeController: React.FunctionComponent<{
   iteration: number,
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedElement, setHighlightedElement, iteration }) => {
   React.useEffect(() => {
+    const highlightedAriaSnapshot = highlightedElement.lastEdited === 'ariaSnapshot' ? highlightedElement.ariaSnapshot : undefined;
+    const highlightedLocator = highlightedElement.lastEdited === 'locator' ? highlightedElement.locator : undefined;
+    const forceRecorders = !!highlightedAriaSnapshot || !!highlightedLocator || isInspecting;
+
     const recorders: { recorder: Recorder, frameSelector: string }[] = [];
     const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';
     try {
-      createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
+      createRecorders(recorders, forceRecorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
     } catch {
       // Potential cross-origin exceptions.
     }
 
-    const parsedSnapshot = highlightedElement.lastEdited === 'ariaSnapshot' && highlightedElement.ariaSnapshot ? parseAriaSnapshot(yaml, highlightedElement.ariaSnapshot) : undefined;
-    const fullSelector = highlightedElement.lastEdited === 'locator' && highlightedElement.locator ? locatorOrSelectorAsSelector(sdkLanguage, highlightedElement.locator, testIdAttributeName) : undefined;
+    const parsedSnapshot = highlightedAriaSnapshot ? parseAriaSnapshot(yaml, highlightedAriaSnapshot) : undefined;
+    const fullSelector = highlightedLocator ? locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName) : undefined;
     for (const { recorder, frameSelector } of recorders) {
       const actionSelector = fullSelector?.startsWith(frameSelector) ? fullSelector.substring(frameSelector.length).trim() : undefined;
       const ariaTemplate = parsedSnapshot?.errors.length === 0 ? parsedSnapshot.fragment : undefined;
@@ -275,11 +279,11 @@ export const InspectModeController: React.FunctionComponent<{
   return <></>;
 };
 
-function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
+function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], force: boolean, sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
   if (!frameWindow)
     return;
   const win = frameWindow as any;
-  if (!win._recorder) {
+  if (!win._recorder && force) {
     const injectedScript = new InjectedScript(frameWindow as any, { isUnderTest, sdkLanguage, testIdAttributeName, stableRafCount: 1, browserName: 'chromium', inputFileRoleTextbox: false, customEngines: [] });
     const recorder = new Recorder(injectedScript);
     win._injectedScript = injectedScript;
@@ -289,12 +293,13 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
       (window as any)._weakRecordersForTest.add(new WeakRef(recorder));
     }
   }
-  recorders.push(win._recorder);
+  if (win._recorder)
+    recorders.push(win._recorder);
 
   for (let i = 0; i < frameWindow.frames.length; ++i) {
     const childFrame = frameWindow.frames[i];
     const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelectorSimple(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
-    createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
+    createRecorders(recorders, force, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
   }
 }
 
