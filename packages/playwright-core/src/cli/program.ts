@@ -483,10 +483,8 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stdout.write(text);
       process.stdout.write('\n-------------8<-------------\n');
       const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition)) {
-        console.error('Test auto exiting');
+      if (autoExitCondition && text.includes(autoExitCondition))
         closeBrowser();
-      }
     };
     // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
@@ -515,7 +513,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     // a temporary page and we call closeBrowser again when that page closes.
     if (closingBrowser)
       return;
-    console.error('Closing browser...');
     closingBrowser = true;
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
@@ -529,7 +526,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   function listenToPage(page: Page) {
     page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
     page.on('close', () => {
-      console.error('Page closed');
       if (context.pages().length > 0)
         return;
       // Avoid the error when the last page is closed because the browser has been closed.
@@ -543,11 +539,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 
   context.on('page', listenToPage);
   context.on('close', () => {
-    console.error('Context closed');
     closeBrowser().catch(() => {});
   });
   process.on('SIGINT', async () => {
-    console.error('SIGINT received');
     await closeBrowser();
     gracefullyProcessExitDoNotHang(130);
   });
@@ -572,7 +566,6 @@ async function createContext(browserType: BrowserType, launchOptions: LaunchOpti
 }
 
 async function openPageIfNeeded(context: BrowserContext, url: string | undefined): Promise<Page> {
-  console.error('Opening page...');
   let page = context.pages()[0];
   if (!page)
     page = await context.newPage();
@@ -615,7 +608,6 @@ async function codegen(options: Options & { target: string, output?: string, tes
     tracesDir,
   });
   dotenv.config({ path: 'playwright.env' });
-  console.error('Creating recorder');
   await context._enableRecorder({
     language,
     launchOptions,
