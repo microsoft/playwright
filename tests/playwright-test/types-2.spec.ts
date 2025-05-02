@@ -29,6 +29,11 @@ test('basics should work', async ({ runTSC }) => {
           expect(testInfo.title).toBe('my test');
           testInfo.annotations[0].type;
           test.setTimeout(123);
+          testInfo.snapshotPath('a', 'b');
+          testInfo.snapshotPath();
+          testInfo.snapshotPath('foo.png', { kind: 'screenshot' });
+          // @ts-expect-error
+          testInfo.snapshotPath('a', 'b', { kind: 'aria' });
         });
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});

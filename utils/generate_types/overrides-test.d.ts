@@ -25,7 +25,7 @@ export type ReporterDescription = Readonly<
   ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
-  ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string }] |
+  ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string, title?: string }] |
   ['null'] |
   [string] | [string, any]
 >;
@@ -63,12 +63,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   webServer: TestConfigWebServer | null;
 }
 
+export interface TestInfo {
+  snapshotPath(...name: ReadonlyArray<string>): string;
+  snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
+}
+
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
 export type TestDetailsAnnotation = {
   type: string;
   description?: string;
 };
+
+export type TestAnnotation = TestDetailsAnnotation;
 
 export type TestDetails = {
   tag?: string | string[];

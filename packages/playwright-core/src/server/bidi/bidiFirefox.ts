@@ -17,7 +17,6 @@
 import os from 'os';
 import path from 'path';
 
-import { assert } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
@@ -35,7 +34,6 @@ import type * as types from '../types';
 export class BidiFirefox extends BrowserType {
   constructor(parent: SdkObject) {
     super(parent, 'bidi');
-    this._useBidi = true;
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
@@ -77,6 +75,10 @@ export class BidiFirefox extends BrowserType {
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
   }
 
+  override supportsPipeTransport(): boolean {
+    return false;
+  }
+
   override async prepareUserDataDir(options: types.LaunchOptions, userDataDir: string): Promise<void> {
     await createProfile({
       path: userDataDir,
@@ -100,7 +102,6 @@ export class BidiFirefox extends BrowserType {
   }
 
   override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    assert(options.useWebSocket);
     return new FirefoxReadyState();
   }
 }

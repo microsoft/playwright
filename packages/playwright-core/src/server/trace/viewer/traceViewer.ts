@@ -174,7 +174,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     windowSize: { width: 1280, height: 800 },
     persistentContextOptions: {
       ...options?.persistentContextOptions,
-      useWebSocket: isUnderTest(),
+      webSocketPort: isUnderTest() ? 0 : undefined,
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
     },

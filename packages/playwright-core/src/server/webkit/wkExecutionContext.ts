@@ -19,6 +19,7 @@ import * as js from '../javascript';
 import * as dom from '../dom';
 import { isSessionClosedError } from '../protocolError';
 import { assert } from '../../utils/isomorphic/assert';
+import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 
 import type { Protocol } from './protocol';
 import type { WKSession } from './wkConnection';
@@ -79,7 +80,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       if (response.wasThrown)
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
       if (returnByValue)
-        return js.parseEvaluationResultValue(response.result.value);
+        return parseEvaluationResultValue(response.result.value);
       return createHandle(utilityScript._context, response.result);
     } catch (error) {
       throw rewriteError(error);

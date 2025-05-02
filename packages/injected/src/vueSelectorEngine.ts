@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Set } from '@isomorphic/builtins';
 import { parseAttributeSelector } from '@isomorphic/selectorParser';
 
 import { isInsideScope } from './domUtils';

@@ -152,7 +152,8 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
   if (ci?.prBaseHash) {
-    await runGit(`git fetch origin ${ci.prBaseHash}`, gitDir);
+    // https://git-scm.com/docs/git-fetch
+    await runGit(`git fetch origin ${ci.prBaseHash} --depth=1 --no-auto-maintenance --no-auto-gc --no-tags --no-recurse-submodules`, gitDir);
     const diff = await runGit(`git diff ${ci.prBaseHash} HEAD`, gitDir);
     if (diff)
       return diff.substring(0, diffLimit);

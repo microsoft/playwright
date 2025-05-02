@@ -18,6 +18,7 @@
 import { assert } from '../../utils/isomorphic/assert';
 import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
+import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import { isSessionClosedError } from '../protocolError';
@@ -70,7 +71,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     }).catch(rewriteError);
     if (exceptionDetails)
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
-    return returnByValue ? js.parseEvaluationResultValue(remoteObject.value) : createHandle(utilityScript._context, remoteObject);
+    return returnByValue ? parseEvaluationResultValue(remoteObject.value) : createHandle(utilityScript._context, remoteObject);
   }
 
   async getProperties(object: js.JSHandle): Promise<Map<string, js.JSHandle>> {

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { performance } from './builtins';
-
 let _timeOrigin = performance.timeOrigin;
 let _timeShift = 0;
 

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { Map, Set } from '@isomorphic/builtins';
-
 import { getGlobalOptions, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';

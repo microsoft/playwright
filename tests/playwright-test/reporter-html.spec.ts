@@ -435,6 +435,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
     });
 
+    test('should display title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['html', { title: 'Custom report title' }], ['line']]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ page }) => {
+            await page.evaluate('2 + 2');
+          });
+        `
+      }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await expect(page.locator('.header-title')).toHaveText('Custom report title');
+    });
+
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
@@ -1819,7 +1840,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
           const testTitle = page.locator('.test-file-test .test-file-title', { hasText: `${tag} passes` });
           await testTitle.click();
-          await expect(page.locator('.test-case-title', { hasText: `${tag} passes` })).toBeVisible();
+          await expect(page.locator('.header-title', { hasText: `${tag} passes` })).toBeVisible();
           await expect(page.locator('.label', { hasText: tag })).toBeVisible();
 
           await page.goBack();
@@ -2341,7 +2362,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await notificationsChromiumTestCase.locator('.test-file-title').click();
         await expect(page).toHaveURL(/testId/);
         await expect(page.locator('.test-case-path')).toHaveText('Root describe › @Notifications');
-        await expect(page.locator('.test-case-title')).toHaveText('Test failed -- @call @call-details @e2e @regression #VQ458');
+        await expect(page.locator('.header-title')).toHaveText('Test failed -- @call @call-details @e2e @regression #VQ458');
         await expect(page.locator('.label')).toHaveText(['chromium', 'Notifications', 'call', 'call-details', 'e2e', 'regression']);
 
         await page.goBack();
@@ -2353,7 +2374,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await monitoringFirefoxTestCase.locator('.test-file-title').click();
         await expect(page).toHaveURL(/testId/);
         await expect(page.locator('.test-case-path')).toHaveText('Root describe › @Monitoring');
-        await expect(page.locator('.test-case-title')).toHaveText('Test passed -- @call @call-details @e2e @regression #VQ457');
+        await expect(page.locator('.header-title')).toHaveText('Test passed -- @call @call-details @e2e @regression #VQ457');
         await expect(page.locator('.label')).toHaveText(['firefox', 'Monitoring', 'call', 'call-details', 'e2e', 'regression']);
       });
     });
@@ -2890,6 +2911,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await page.getByRole('link', { name: 'sample' }).click();
       await page.getByRole('button', { name: 'Copy prompt' }).click();
+      await page.waitForFunction(() => navigator.clipboard.readText());
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
       expect(prompt, 'first line').toContain(`Playwright test failed.`);
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
@@ -2930,6 +2952,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
       await page.getByRole('link', { name: 'sample' }).click();
       await page.getByRole('button', { name: 'Copy prompt' }).click();
+      await page.waitForFunction(() => navigator.clipboard.readText());
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
     });

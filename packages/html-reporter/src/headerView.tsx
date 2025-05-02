@@ -59,6 +59,8 @@ export const HeaderView: React.FC<{
   </>);
 };
 
+export const HeaderTitleView: React.FC<{ title: string }> = ({ title }) => <div className='header-title'>{title}</div>;
+
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
