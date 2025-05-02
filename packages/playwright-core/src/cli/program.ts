@@ -483,8 +483,10 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stdout.write(text);
       process.stdout.write('\n-------------8<-------------\n');
       const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
+      if (autoExitCondition && text.includes(autoExitCondition)) {
+        console.error('Test auto exiting');
         closeBrowser();
+      }
     };
     // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
@@ -545,6 +547,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     closeBrowser().catch(() => {});
   });
   process.on('SIGINT', async () => {
+    console.error('SIGINT received');
     await closeBrowser();
     gracefullyProcessExitDoNotHang(130);
   });
@@ -612,6 +615,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     tracesDir,
   });
   dotenv.config({ path: 'playwright.env' });
+  console.error('Creating recorder');
   await context._enableRecorder({
     language,
     launchOptions,
