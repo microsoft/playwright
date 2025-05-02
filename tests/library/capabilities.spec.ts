@@ -480,3 +480,17 @@ it('should not auto play audio', {
   await page.goto('http://127.0.0.1/audio.html');
   await expect(page.locator('#log')).toHaveText('State: suspended');
 });
+
+it('should not crash on feature detection for PublicKeyCredential', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/35433'
+  }
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    await PublicKeyCredential.getClientCapabilities();
+    await PublicKeyCredential.isConditionalMediationAvailable();
+    await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  });
+});
