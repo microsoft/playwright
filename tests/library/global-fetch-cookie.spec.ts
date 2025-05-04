@@ -145,10 +145,11 @@ it('should send secure cookie over http for subdomains of localhost', async ({ r
     res.setHeader('Set-Cookie', ['a=v; secure', 'b=v']);
     res.end();
   });
-  await request.get(`${`http://a.b.localhost:${server.PORT}`}/setcookie.html`);
+  const prefix = `http://a.b.localhost:${server.PORT}`;
+  await request.get(`${prefix}/setcookie.html`);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    request.get(server.EMPTY_PAGE)
+    request.get(`${prefix}/empty.html`)
   ]);
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
