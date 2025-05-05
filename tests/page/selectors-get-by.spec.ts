@@ -127,6 +127,33 @@ it('getByLabel should prioritize aria-labelledby over aria-label', async ({ page
   expect(await page.getByLabel('Other').evaluate(e => e.id)).toBe('target');
 });
 
+it('getByLabel should work with slot', async ({ page }) => {
+  await page.setContent(`<div>
+    <template shadowrootmode=open>
+      <label for=target>
+        <slot></slot>
+      </label>
+      <input id=target type=checkbox>
+    </template>
+    Slotted Text
+  </div>`);
+  await expect(page.getByLabel('Slotted Text')).toBeVisible();
+});
+
+it('getByLabel should work with multiple slots', async ({ page }) => {
+  await page.setContent(`<div>
+    <template shadowrootmode=open>
+      <label for=target>
+        <slot name=foo></slot>
+        <slot name=bar></slot>
+      </label>
+      <input id=target type=text>
+    </template>
+    <span slot=foo>Foo</span><span slot=bar>Bar</span>
+  </div>`);
+  await expect(page.getByLabel('Foo Bar')).toBeVisible();
+});
+
 it('getByPlaceholder should work', async ({ page }) => {
   await page.setContent(`<div>
     <input placeholder='Hello'>

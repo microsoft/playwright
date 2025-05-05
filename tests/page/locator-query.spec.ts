@@ -144,6 +144,20 @@ it('should filter by regex with special symbols', async ({ page }) => {
   await expect(page.locator('div', { hasText: /^first\/".*"second\\$/si })).toHaveClass('test');
 });
 
+it('should filter by slotted content', async ({ page }) => {
+  await page.setContent(`
+    <div>
+      <template shadowrootmode="open">
+        <label for="input"><slot name="foo"></slot> & <slot name="bar"></slot></label>
+        <input id="input" type="text">
+      </template>
+      <span slot="foo">Foo</span><span slot="bar">Bar</span>
+    </div>
+  `);
+  await expect(page.locator('label', { hasText: 'Foo & Bar' })).toHaveCount(1);
+  await expect(page.locator('label', { hasText: 'Foo' })).toHaveText('Foo & Bar');
+});
+
 it('should support has:locator', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
@@ -198,6 +212,25 @@ it('should support locator.filter', async ({ page, trace }) => {
   await expect(page.locator(`div`).filter({ hasNot: page.locator('span') })).toHaveCount(0);
   await expect(page.locator(`div`).filter({ hasNotText: 'hello' })).toHaveCount(1);
   await expect(page.locator(`div`).filter({ hasNotText: 'foo' })).toHaveCount(2);
+});
+
+it('should exclude elements by slotted', async ({ page }) => {
+  await page.setContent(`
+    <div>
+      <template shadowrootmode="open">
+        <label for="input"><slot name="foo"></slot></label>
+        <input id="input" type="text">
+      </template>
+      <span slot="foo">Foo</span>
+      <template shadowrootmode="open">
+        <label for="input2"><slot name="bar"></slot></label>
+        <input id="input2" type="text">
+      </template>
+      <span slot="bar">Bar</span>
+    </div>
+  `);
+  await expect(page.locator('label', { hasNotText: 'Bar' })).toHaveCount(1);
+  await expect(page.locator('label', { hasNotText: 'Bar' })).toHaveText('Foo');
 });
 
 it('should support locator.and', async ({ page }) => {
