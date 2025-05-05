@@ -81,8 +81,26 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
             if (currentImmediate)
               value.immediate.push(currentImmediate);
             currentImmediate = '';
-            if (child.nodeType === Node.ELEMENT_NODE)
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              const el = child as Element;
+              if (el.tagName === 'SLOT') {
+                for (const assigned of (el as HTMLSlotElement).assignedNodes({ flatten: true })) {
+                  if (assigned.nodeType === Node.TEXT_NODE) {
+                    const txt = assigned.nodeValue || '';
+                    value.full += txt;
+                    currentImmediate += txt;
+                  } else if (assigned.nodeType === Node.ELEMENT_NODE) {
+                    if (currentImmediate) {
+                      value.immediate.push(currentImmediate);
+                      currentImmediate = '';
+                    }
+                    value.full += elementText(cache, assigned as Element).full;
+                  }
+                }
+                continue;
+              }
               value.full += elementText(cache, child as Element).full;
+            }
           }
         }
         if (currentImmediate)
