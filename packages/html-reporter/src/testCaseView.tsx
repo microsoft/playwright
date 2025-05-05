@@ -28,7 +28,7 @@ import { linkifyText } from '@web/renderUtils';
 import { hashStringToInt, msToString } from './utils';
 import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
-import { HeaderTitleView } from './headerView';
+import { HeaderView } from './headerView';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -45,14 +45,15 @@ export const TestCaseView: React.FC<{
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
 
   return <>
-    <div className='hbox'>
-      <div className='test-case-path'>{test.path.join(' › ')}</div>
-      <div style={{ flex: 'auto' }}></div>
-      <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
-      <div style={{ width: 10 }}></div>
-      <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
-    </div>
-    <HeaderTitleView title={test.title} />
+    <HeaderView
+      title={test.title}
+      leftSuperHeader={<div className='test-case-path'>{test.path.join(' › ')}</div>}
+      rightSuperHeader={<>
+        <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
+        <div style={{ width: 10 }}></div>
+        <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
+      </>}
+    />
     <div className='hbox'>
       <div className='test-case-location'>
         <CopyToClipboardContainer value={`${test.location.file}:${test.location.line}`}>

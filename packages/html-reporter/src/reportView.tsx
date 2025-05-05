@@ -19,7 +19,7 @@ import * as React from 'react';
 import './colors.css';
 import './common.css';
 import { Filter } from './filter';
-import { HeaderTitleView, HeaderView } from './headerView';
+import { HeaderView, GlobalFilterView } from './headerView';
 import { Route, SearchParamsContext } from './links';
 import type { LoadedReport } from './loadedReport';
 import './reportView.css';
@@ -83,7 +83,7 @@ export const ReportView: React.FC<{
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      {report?.json() && <GlobalFilterView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
@@ -136,7 +136,7 @@ const TestCaseViewLoader: React.FC<{
 
   if (test === 'not-found') {
     return <div className='test-case-column vbox'>
-      <HeaderTitleView title='Test not found' />
+      <HeaderView title='Test not found' />
       <div className='test-case-location'>Test ID: {testId}</div>
     </div>;
   }
