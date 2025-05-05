@@ -145,15 +145,13 @@ it('should filter by regex with special symbols', async ({ page }) => {
 });
 
 it('should filter by slotted content', async ({ page }) => {
-  await page.setContent(`
-    <div>
-      <template shadowrootmode="open">
-        <label for="input"><slot name="foo"></slot> & <slot name="bar"></slot></label>
-        <input id="input" type="text">
-      </template>
-      <span slot="foo">Foo</span><span slot="bar">Bar</span>
-    </div>
-  `);
+  await page.setContent(`<div>
+    <template shadowrootmode="open">
+      <label for="input"><slot name="foo"></slot> & <slot name="bar"></slot></label>
+      <input id="input" type="text">
+    </template>
+    <span slot="foo">Foo</span><span slot="bar">Bar</span>
+  </div>`);
   await expect(page.locator('label', { hasText: 'Foo & Bar' })).toHaveCount(1);
   await expect(page.locator('label', { hasText: 'Foo' })).toHaveText('Foo & Bar');
 });
@@ -215,20 +213,18 @@ it('should support locator.filter', async ({ page, trace }) => {
 });
 
 it('should exclude elements by slotted', async ({ page }) => {
-  await page.setContent(`
-    <div>
-      <template shadowrootmode="open">
-        <label for="input"><slot name="foo"></slot></label>
-        <input id="input" type="text">
-      </template>
-      <span slot="foo">Foo</span>
-      <template shadowrootmode="open">
-        <label for="input2"><slot name="bar"></slot></label>
-        <input id="input2" type="text">
-      </template>
-      <span slot="bar">Bar</span>
-    </div>
-  `);
+  await page.setContent(`<div>
+    <template shadowrootmode="open">
+      <label for="input"><slot name="foo"></slot></label>
+      <input id="input" type="text">
+    </template>
+    <span slot="foo">Foo</span>
+    <template shadowrootmode="open">
+      <label for="input2"><slot name="bar"></slot></label>
+      <input id="input2" type="text">
+    </template>
+    <span slot="bar">Bar</span>
+  </div>`);
   await expect(page.locator('label', { hasNotText: 'Bar' })).toHaveCount(1);
   await expect(page.locator('label', { hasNotText: 'Bar' })).toHaveText('Foo');
 });

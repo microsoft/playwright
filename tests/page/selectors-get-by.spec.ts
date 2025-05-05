@@ -135,23 +135,22 @@ it('getByLabel should work with slot', async ({ page }) => {
       </label>
       <input id=target type=checkbox>
     </template>
-    Slotted Text
+    Foo
   </div>`);
-  await expect(page.getByLabel('Slotted Text')).toBeVisible();
+  await expect(page.getByLabel('Foo')).toBeVisible();
 });
 
 it('getByLabel should work with multiple slots', async ({ page }) => {
   await page.setContent(`<div>
     <template shadowrootmode=open>
       <label for=target>
-        <slot name=foo></slot>
-        <slot name=bar></slot>
+        <slot name=foo></slot> & <slot name=bar></slot>
       </label>
       <input id=target type=text>
     </template>
     <span slot=foo>Foo</span><span slot=bar>Bar</span>
   </div>`);
-  await expect(page.getByLabel('Foo Bar')).toBeVisible();
+  await expect(page.getByLabel('Foo & Bar')).toBeVisible();
 });
 
 it('getByPlaceholder should work', async ({ page }) => {
