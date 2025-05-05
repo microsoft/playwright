@@ -416,7 +416,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/m
 
 #### Use existing userDataDir
 
-Run `codegen` with `--user-data-dir` to set a fixed [user data directory](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-user-data-dir) for the browser session. If you point this at your existing browser's user data directory, codegen will use your existing browser profile and have access to your authentication state. Remember that any authentication that codegen receives from using your browser configuration must be replicated at test time using fixtures or `before*` hooks, otherwise the UI you're trying to evaluate might not be available when executing the test.
+Run `codegen` with `--user-data-dir` to set a fixed [user data directory](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-user-data-dir) for the browser session. If you provide your existing browser's user data directory, codegen will use your existing browser profile and have access to your authentication state.
 
 ```bash js
 npx playwright codegen --user-data-dir=/path/to/your/browser/data/ github.com/microsoft/playwright
