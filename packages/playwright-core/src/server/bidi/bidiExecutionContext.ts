@@ -15,6 +15,7 @@
  */
 
 import { assert } from '../../utils';
+import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import { BidiDeserializer } from './third_party/bidiDeserializer';
@@ -97,7 +98,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
     if (response.type === 'success') {
       if (returnByValue)
-        return js.parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
+        return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
       return createHandle(utilityScript._context, response.result);
     }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));

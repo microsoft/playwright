@@ -15,7 +15,6 @@
  */
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
-import { builtins, Set, Map, requestAnimationFrame, performance } from '@isomorphic/builtins';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
@@ -33,6 +32,7 @@ import { elementMatchesText, elementText, getElementLabels } from './selectorUti
 import { createVueEngine } from './vueSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ConsoleAPI } from './consoleApi';
+import { ensureUtilityScript } from './utilityScript';
 
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
@@ -44,7 +44,7 @@ import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
 import type { ElementText, TextMatcher } from './selectorUtils';
-import type { Builtins } from '@isomorphic/builtins';
+import type { Builtins } from './utilityScript';
 
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
@@ -66,7 +66,7 @@ interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
 }
 
 export type InjectedScriptOptions = {
-  isUnderTest: boolean;
+  isUnderTest?: boolean;
   sdkLanguage: Language;
   // For strict error and codegen
   testIdAttributeName: string;
@@ -74,7 +74,6 @@ export type InjectedScriptOptions = {
   browserName: string;
   inputFileRoleTextbox: boolean;
   customEngines: { name: string, source: string }[];
-  runtimeGuid: string;
 };
 
 export class InjectedScript {
@@ -124,10 +123,11 @@ export class InjectedScript {
   constructor(window: Window & typeof globalThis, options: InjectedScriptOptions) {
     this.window = window;
     this.document = window.document;
-    this.isUnderTest = options.isUnderTest;
     // Make sure builtins are created from "window". This is important for InjectedScript instantiated
     // inside a trace viewer snapshot, where "window" differs from "globalThis".
-    this.utils.builtins = builtins(options.runtimeGuid, window);
+    const utilityScript = ensureUtilityScript(window);
+    this.isUnderTest = options.isUnderTest ?? utilityScript.isUnderTest;
+    this.utils.builtins = utilityScript.builtins;
     this._sdkLanguage = options.sdkLanguage;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = options.testIdAttributeName;
     this._evaluator = new SelectorEvaluatorImpl();
@@ -239,7 +239,7 @@ export class InjectedScript {
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
 
-    if (options.isUnderTest)
+    if (this.isUnderTest)
       (this.window as any).__injectedScript = this;
   }
 

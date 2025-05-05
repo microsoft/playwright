@@ -45,8 +45,8 @@ export class FrameSelectors {
   }
 
   private _parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
-    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.context()._options.strictSelectors;
-    return this.frame._page.context().selectors().parseSelector(selector, strict);
+    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.browserContext._options.strictSelectors;
+    return this.frame._page.browserContext.selectors().parseSelector(selector, strict);
   }
 
   async query(selector: string, options?: types.StrictOptions, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
@@ -137,7 +137,7 @@ export class FrameSelectors {
       const element = handle.asElement() as ElementHandle<Element> | null;
       if (!element)
         return null;
-      const maybeFrame = await frame._page._delegate.getContentFrame(element);
+      const maybeFrame = await frame._page.delegate.getContentFrame(element);
       element.dispose();
       if (!maybeFrame)
         return null;
@@ -163,7 +163,7 @@ export class FrameSelectors {
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
   if (handle._context === context)
     return handle;
-  const adopted = await handle._page._delegate.adoptElementHandle(handle, context);
+  const adopted = await handle._page.delegate.adoptElementHandle(handle, context);
   handle.dispose();
   return adopted;
 }

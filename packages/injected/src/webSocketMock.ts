@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { Map } from '@isomorphic/builtins';
-
 export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
 export type WSData = { data: string, isBase64: boolean };
 

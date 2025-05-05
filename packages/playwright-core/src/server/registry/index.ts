@@ -1053,7 +1053,7 @@ export class Registry {
         const { embedderName } = getEmbedderName();
         if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(embedderName)) {
           const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
-          throw new Error('\n' + wrapInASCIIBox([
+          process.stderr.write('\n' + wrapInASCIIBox([
             `ATTENTION: "${executable.name}" is already installed on the system!`,
             ``,
             `"${executable.name}" installation is not hermetic; installing newer version`,
@@ -1067,7 +1067,8 @@ export class Registry {
             `    ${command}`,
             ``,
             `<3 Playwright Team`,
-          ].join('\n'), 1));
+          ].join('\n'), 1) + '\n\n');
+          return;
         }
         await executable._install();
       }

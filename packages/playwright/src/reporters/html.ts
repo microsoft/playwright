@@ -24,12 +24,12 @@ import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
-import { formatError, formatResultFailure, internalScreen } from './base';
+import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
-import type { Metadata, TestAnnotation } from '../../types/test';
+import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -40,29 +40,23 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-const htmlReportOptions = ['always', 'never', 'on-failure'] as const;
-type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
+type HtmlReportOpenOption = NonNullable<HtmlReporterConfigOptions['open']>;
+const htmlReportOptions: HtmlReportOpenOption[] = ['always', 'never', 'on-failure'];
 
 const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return htmlReportOptions.includes(type as HtmlReportOpenOption);
 };
 
-type HtmlReporterResolvedConfig = {
+type HtmlReporterResolvedConfig = CommonReporterOptions & {
   outputFolder: string,
   attachmentsBaseURL: string,
   open: HtmlReportOpenOption,
   port: number | undefined,
   host: string | undefined,
   title: string | undefined,
-
-  _mode: 'test' | 'list' | undefined;
-  _isTestServer: boolean | undefined;
 };
 
-type HtmlReporterOptions = Partial<HtmlReporterResolvedConfig> & {
-  configDir: string,
-  outputFolder: string
-};
+type HtmlReporterOptions = Partial<HtmlReporterResolvedConfig> & CommonReporterOptions;
 
 class HtmlReporter implements ReporterV2 {
   private config!: api.FullConfig;
@@ -147,12 +141,12 @@ class HtmlReporter implements ReporterV2 {
   }
 }
 
-function resolveConfig({ configDir, outputFolder: optionOutputFolder, open, attachmentsBaseURL, host, port, title, _mode, _isTestServer }: HtmlReporterOptions): HtmlReporterResolvedConfig {
+function resolveConfig({ configDir, outputFolder: optionOutputFolder, open, attachmentsBaseURL, host, port, title, ...options }: HtmlReporterOptions): HtmlReporterResolvedConfig {
   const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', configDir, optionOutputFolder);
   return {
+    ...options,
+    configDir,
     outputFolder,
-    _mode,
-    _isTestServer,
     open: getHtmlReportOptionProcessEnv() || open || 'on-failure',
     attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || attachmentsBaseURL || 'data/',
     host: process.env.PLAYWRIGHT_HTML_HOST || host,

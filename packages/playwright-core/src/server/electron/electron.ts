@@ -142,7 +142,7 @@ export class ElectronApplication extends SdkObject {
 
   async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
     // Assume CRPage as Electron is always Chromium.
-    const targetId = (page._delegate as CRPage)._targetId;
+    const targetId = (page.delegate as CRPage)._targetId;
     const electronHandle = await this._nodeElectronHandlePromise;
     return await electronHandle.evaluateHandle(({ BrowserWindow, webContents }, targetId) => {
       const wc = webContents.fromDevToolsTargetId(targetId);

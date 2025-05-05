@@ -37,9 +37,9 @@ it('should have correct execution contexts @smoke', async ({ page, server }) => 
 
 function expectContexts(pageImpl, count, browserName) {
   if (browserName === 'chromium')
-    expect(pageImpl._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
+    expect(pageImpl.delegate._mainFrameSession._contextIdToContext.size).toBe(count);
   else
-    expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
+    expect(pageImpl.delegate._contextIdToContext.size).toBe(count);
 }
 
 it('should dispose context on navigation', async ({ page, server, toImpl, browserName, isElectron }) => {

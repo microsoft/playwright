@@ -19,16 +19,12 @@ import path from 'path';
 
 import { toPosixPath, MultiMap } from 'playwright-core/lib/utils';
 
-import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile } from './base';
+import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile, CommonReporterOptions } from './base';
 import { getProjectId } from '../common/config';
 
 import type { ReporterV2 } from './reporterV2';
+import type { JsonReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, JSONReport, JSONReportError, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult, JSONReportTestStep, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-
-type JSONOptions = {
-  outputFile?: string,
-  configDir: string,
-};
 
 class JSONReporter implements ReporterV2 {
   config!: FullConfig;
@@ -36,7 +32,7 @@ class JSONReporter implements ReporterV2 {
   private _errors: TestError[] = [];
   private _resolvedOutputFile: string | undefined;
 
-  constructor(options: JSONOptions) {
+  constructor(options: JsonReporterOptions & CommonReporterOptions) {
     this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
   }
 

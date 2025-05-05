@@ -17,6 +17,7 @@
 
 import { assert } from '../../utils/isomorphic/assert';
 import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
+import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import { isSessionClosedError } from '../protocolError';
@@ -66,7 +67,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     }).catch(rewriteError);
     checkException(payload.exceptionDetails);
     if (returnByValue)
-      return js.parseEvaluationResultValue(payload.result!.value);
+      return parseEvaluationResultValue(payload.result!.value);
     return createHandle(utilityScript._context, payload.result!);
   }
 

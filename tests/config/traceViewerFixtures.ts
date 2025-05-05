@@ -142,7 +142,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
     const contextImpls: any[] = [];
     await use(async (traces: string[], { host, port } = {}) => {
       const pageImpl = await runTraceViewerApp(traces, browserName, { headless, host, port });
-      const contextImpl = pageImpl.context();
+      const contextImpl = pageImpl.browserContext;
       const browser = await playwright.chromium.connectOverCDP(contextImpl._browser.options.wsEndpoint);
       browsers.push(browser);
       contextImpls.push(contextImpl);

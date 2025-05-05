@@ -17,7 +17,7 @@
 
 import { assert } from '../../utils';
 import { Browser } from '../browser';
-import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
+import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { WKConnection, WKSession, kPageProxyMessageReceived } from './wkConnection';
 import { WKPage } from './wkPage';
@@ -121,7 +121,7 @@ export class WKBrowser extends Browser {
     // TODO: this is racy, because download might be unrelated any navigation, and we will
     // abort navigation that is still running. We should be able to fix this by
     // instrumenting policy decision start/proceed/cancel.
-    page._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
+    page._page.frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
     let originPage = page._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
@@ -245,7 +245,6 @@ export class WKBrowserContext extends BrowserContext {
   }
 
   override async doCreateNewPage(): Promise<Page> {
-    assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
     return this._browser._wkPages.get(pageProxyId)!._page;
   }
@@ -274,11 +273,11 @@ export class WKBrowserContext extends BrowserContext {
   }
 
   async doGrantPermissions(origin: string, permissions: string[]) {
-    await Promise.all(this.pages().map(page => (page._delegate as WKPage)._grantPermissions(origin, permissions)));
+    await Promise.all(this.pages().map(page => (page.delegate as WKPage)._grantPermissions(origin, permissions)));
   }
 
   async doClearPermissions() {
-    await Promise.all(this.pages().map(page => (page._delegate as WKPage)._clearPermissions()));
+    await Promise.all(this.pages().map(page => (page.delegate as WKPage)._clearPermissions()));
   }
 
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
@@ -291,40 +290,40 @@ export class WKBrowserContext extends BrowserContext {
   async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
     this._options.extraHTTPHeaders = headers;
     for (const page of this.pages())
-      await (page._delegate as WKPage).updateExtraHTTPHeaders();
+      await (page.delegate as WKPage).updateExtraHTTPHeaders();
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     this._options.userAgent = userAgent;
     for (const page of this.pages())
-      await (page._delegate as WKPage).updateUserAgent();
+      await (page.delegate as WKPage).updateUserAgent();
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     for (const page of this.pages())
-      await (page._delegate as WKPage).updateOffline();
+      await (page.delegate as WKPage).updateOffline();
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
-      await (page._delegate as WKPage).updateHttpCredentials();
+      await (page.delegate as WKPage).updateHttpCredentials();
   }
 
   async doAddInitScript(initScript: InitScript) {
     for (const page of this.pages())
-      await (page._delegate as WKPage)._updateBootstrapScript();
+      await (page.delegate as WKPage)._updateBootstrapScript();
   }
 
   async doRemoveNonInternalInitScripts() {
     for (const page of this.pages())
-      await (page._delegate as WKPage)._updateBootstrapScript();
+      await (page.delegate as WKPage)._updateBootstrapScript();
   }
 
   async doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
-      await (page._delegate as WKPage).updateRequestInterception();
+      await (page.delegate as WKPage).updateRequestInterception();
   }
 
   onClosePersistent() {}

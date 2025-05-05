@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Map, Set } from '@isomorphic/builtins';
 import { customCSSNames } from '@isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 

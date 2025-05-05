@@ -93,10 +93,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
     this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
     this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
-    if (page._video)
-      this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(this.parentScope(), page._video) });
+    if (page.video)
+      this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(this.parentScope(), page.video) });
     // Ensure client knows about all frames.
-    const frames = page._frameManager.frames();
+    const frames = page.frameManager.frames();
     for (let i = 1; i < frames.length; i++)
       this._onFrameAttached(frames[i]);
   }
@@ -183,7 +183,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     }
     const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
     await this._page.setClientRequestInterceptor((route, request) => {
-      const matchesSome = urlMatchers.some(urlMatch => urlMatches(this._page._browserContext._options.baseURL, request.url(), urlMatch));
+      const matchesSome = urlMatchers.some(urlMatch => urlMatches(this._page.browserContext._options.baseURL, request.url(), urlMatch));
       if (!matchesSome)
         return false;
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
@@ -347,7 +347,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
 
   constructor(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker) {
     super(scope, worker, 'Worker', {
-      url: worker.url()
+      url: worker.url
     });
     this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
   }

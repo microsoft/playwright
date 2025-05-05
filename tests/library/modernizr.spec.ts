@@ -55,7 +55,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
 
   if (platform === 'linux') {
     expected.speechrecognition = false;
-    expected.publickeycredential = false;
     expected.mediastream = false;
     if (headless)
       expected.todataurlwebp = true;
@@ -76,7 +75,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
 
     delete expected.datalistelem;
 
-    expected.publickeycredential = false;
     expected.mediastream = false;
     expected.mediasource = false;
     expected.datachannel = false;
@@ -118,7 +116,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
 
   if (platform === 'linux') {
     expected.speechrecognition = false;
-    expected.publickeycredential = false;
     expected.mediastream = false;
     if (headless)
       expected.todataurlwebp = true;
@@ -139,7 +136,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
 
     delete expected.datalistelem;
 
-    expected.publickeycredential = false;
     expected.mediastream = false;
     expected.mediasource = false;
     expected.datachannel = false;

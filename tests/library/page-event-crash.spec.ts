@@ -23,9 +23,9 @@ const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
       if (browserName === 'chromium')
         page.goto('chrome://crash').catch(e => {});
       else if (browserName === 'webkit')
-        toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
+        toImpl(page).delegate._session.send('Page.crash', {}).catch(e => {});
       else if (browserName === 'firefox')
-        toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
+        toImpl(page).delegate._session.send('Page.crash', {}).catch(e => {});
     });
   },
   // Force a separate worker to avoid messing up with other tests.
