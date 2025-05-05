@@ -37,6 +37,7 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
+import { testStatusIcon } from './testUtils';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -461,11 +462,18 @@ export const UIModeView: React.FC<{}> = ({
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
-          {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
+          {!isRunningTest && progress && <div data-testid='status-line' className='status-line' title={`${progress.passed} passed, ${progress.failed} failed, ${progress.skipped} skipped`}>
+            <span data-testid='test-count'>{progress.passed + progress.failed + progress.skipped}/{progress.total}</span>
+            <div className='status-passed'><span className={clsx('codicon', testStatusIcon('passed'))}/>{progress.passed}</div>
+            <div className='status-failed'><span className={clsx('codicon', testStatusIcon('failed'))}/>{progress.failed}</div>
+            <div className='status-skipped'><span className={clsx('codicon', testStatusIcon('skipped'))}/>{progress.skipped}</div>
           </div>}
-          {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
+          {isRunningTest && progress && <div data-testid='status-line' className='status-line' title={`${progress.passed} passed, ${progress.failed} failed, ${progress.skipped} skipped`}>
+            <span className={clsx('codicon', testStatusIcon('running'))}/>
+            <span data-testid='test-count'>{progress.passed + progress.failed + progress.skipped}/{runningState.testIds.size}</span>
+            <div className='status-passed'><span className={clsx('codicon', testStatusIcon('passed'))}/>{progress.passed}</div>
+            <div className='status-failed'><span className={clsx('codicon', testStatusIcon('failed'))}/>{progress.failed}</div>
+            <div className='status-skipped'><span className={clsx('codicon', testStatusIcon('skipped'))}/>{progress.skipped}</div>
           </div>}
           <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>

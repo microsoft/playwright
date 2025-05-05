@@ -91,11 +91,17 @@
   flex-direction: row;
   align-items: center;
   height: 30px;
+  overflow: hidden;
+  gap: 6px;
+}
+
+.status-line > * {
+  flex-shrink: 0;
 }
 
 .status-line > div {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
 }
 
 .ui-mode-sidebar input[type=search] {
@@ -107,4 +113,18 @@
   border: none;
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
+}
+
+.status-passed {
+  color: var(--vscode-debugIcon-restartForeground);
+  gap: 2px;
+}
+
+.status-failed {
+  color: var(--vscode-list-errorForeground);
+  gap: 3px;
+}
+
+.status-skipped {
+  gap: 3px;
 }
