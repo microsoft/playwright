@@ -21175,6 +21175,10 @@ export interface Touchscreen {
  * API for collecting and saving Playwright traces. Playwright traces can be opened in
  * [Trace Viewer](https://playwright.dev/docs/trace-viewer) after Playwright script runs.
  *
+ * **NOTE** The `context.tracing` API records different information than the automatic tracing enabled through
+ * [Playwright Test configuration](https://playwright.dev/docs/api/class-testoptions#test-options-trace). This API
+ * records browser operations and network activity, but does not capture test assertions (`expect` calls).
+ *
  * Start recording a trace before performing actions. At the end, stop tracing and save it to a file.
  *
  * ```js
@@ -21183,6 +21187,8 @@ export interface Touchscreen {
  * await context.tracing.start({ screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
+ * // Not captured
+ * expect(page.url()).toBe('https://playwright.dev');
  * await context.tracing.stop({ path: 'trace.zip' });
  * ```
  *
@@ -21230,12 +21236,17 @@ export interface Tracing {
   /**
    * Start tracing.
    *
+   * **NOTE** This API records browser operations and network activity, but does not capture test assertions (`expect`
+   * calls).
+   *
    * **Usage**
    *
    * ```js
    * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev');
+   * // Not captured
+   * expect(page.url()).toBe('https://playwright.dev');
    * await context.tracing.stop({ path: 'trace.zip' });
    * ```
    *
