@@ -751,6 +751,8 @@ test('should respect config.snapshotPathTemplate and sanitize the name', {
     }),
     '__screenshots__/a.spec.js/my-name.png': whiteImage,
     '__screenshots__/a.spec.js/my_name/bar.png': whiteImage,
+    '__screenshots__/a.spec.js/is-a-test-1.png': whiteImage,
+    '__screenshots__/a.spec.js/is-a-test-2.png': whiteImage,
     'a.spec.js': `
       const path = require('path');
       const { test, expect } = require('@playwright/test');
@@ -766,6 +768,16 @@ test('should respect config.snapshotPathTemplate and sanitize the name', {
         const expectedPath2 = path.join(testDir, '__screenshots__/a.spec.js/my_name/bar.png');
         expect(test.info().snapshotPath('my_name', 'bar.png')).toBe(expectedPath2);
         await expect(page).toHaveScreenshot(['my_name', 'bar.png']);
+
+        // Auto-generated name is sanitized.
+        const expectedPath3 = path.join(testDir, '__screenshots__/a.spec.js/is-a-test-1.png');
+        expect(test.info().snapshotPath('', { kind: 'screenshot' })).toBe(expectedPath3);
+        await expect(page).toHaveScreenshot();
+
+        // Auto-generated name is incremented.
+        const expectedPath4 = path.join(testDir, '__screenshots__/a.spec.js/is-a-test-2.png');
+        expect(test.info().snapshotPath('', { kind: 'screenshot' })).toBe(expectedPath4);
+        await expect(page).toHaveScreenshot();
       });
     `
   });
