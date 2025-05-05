@@ -16,10 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, isUnderTest, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { open } from 'playwright-core/lib/utilsBundle';
+import { open, debug } from 'playwright-core/lib/utilsBundle';
 
 import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -44,6 +45,7 @@ import type { ReporterV2 } from '../reporters/reporterV2';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
 
+const originalDebugLog = debug.log;
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
 
@@ -387,6 +389,13 @@ export class TestServerDispatcher implements TestServerInterface {
     if (process.env.PWTEST_DEBUG)
       return;
     if (intercept) {
+      if (debug.log === originalDebugLog) {
+        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
+        debug.log = (...args) => {
+          const string = util.format(...args) + '\n';
+          return (originalStderrWrite as any).apply(process.stderr, [string]);
+        };
+      }
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
         return true;
@@ -396,6 +405,7 @@ export class TestServerDispatcher implements TestServerInterface {
         return true;
       };
     } else {
+      debug.log = originalDebugLog;
       process.stdout.write = originalStdoutWrite;
       process.stderr.write = originalStderrWrite;
     }
