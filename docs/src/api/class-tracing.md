@@ -4,7 +4,9 @@
 API for collecting and saving Playwright traces. Playwright traces can be opened in [Trace Viewer](../trace-viewer.md) after Playwright script runs.
 
 :::note
-The `context.tracing` API records different information than the automatic tracing enabled through [Playwright Test configuration](https://playwright.dev/docs/api/class-testoptions#test-options-trace). This API records browser operations and network activity, but does not capture test assertions (`expect` calls).
+You probably want to [enable tracing in your config file](https://playwright.dev/docs/api/class-testoptions#test-options-trace) instead of using `context.tracing`.
+
+The `context.tracing` API captures browser operations and network activity, but it doesn't record test assertions (like `expect` calls). We recommend [enabling tracing through Playwright Test configuration](https://playwright.dev/docs/api/class-testoptions#test-options-trace), which includes those assertions and provides a more complete trace for debugging test failures.
 :::
 
 Start recording a trace before performing actions. At the end, stop tracing and save it to a file.
@@ -15,7 +17,6 @@ const context = await browser.newContext();
 await context.tracing.start({ screenshots: true, snapshots: true });
 const page = await context.newPage();
 await page.goto('https://playwright.dev');
-// Not captured
 expect(page.url()).toBe('https://playwright.dev');
 await context.tracing.stop({ path: 'trace.zip' });
 ```
@@ -73,7 +74,9 @@ await context.Tracing.StopAsync(new()
 Start tracing.
 
 :::note
-This API records browser operations and network activity, but does not capture test assertions (`expect` calls).
+You probably want to [enable tracing in your config file](https://playwright.dev/docs/api/class-testoptions#test-options-trace) instead of using `context.tracing`.
+
+The `context.tracing` API captures browser operations and network activity, but it doesn't record test assertions (like `expect` calls). We recommend [enabling tracing through Playwright Test configuration](https://playwright.dev/docs/api/class-testoptions#test-options-trace), which includes those assertions and provides a more complete trace for debugging test failures.
 :::
 
 **Usage**
@@ -82,7 +85,6 @@ This API records browser operations and network activity, but does not capture t
 await context.tracing.start({ screenshots: true, snapshots: true });
 const page = await context.newPage();
 await page.goto('https://playwright.dev');
-// Not captured
 expect(page.url()).toBe('https://playwright.dev');
 await context.tracing.stop({ path: 'trace.zip' });
 ```
