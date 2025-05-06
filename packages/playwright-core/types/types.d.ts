@@ -21242,7 +21242,7 @@ export interface Tracing {
    *
    * **NOTE** You probably want to
    * [enable tracing in your config file](https://playwright.dev/docs/api/class-testoptions#test-options-trace) instead
-   * of using `context.tracing`.
+   * of using `Tracing.start`.
    *
    * The `context.tracing` API captures browser operations and network activity, but it doesn't record test assertions
    * (like `expect` calls). We recommend
