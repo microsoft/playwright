@@ -281,7 +281,7 @@ export class FFBrowserContext extends BrowserContext {
     return this._ffPages().map(ffPage => ffPage._page);
   }
 
-  override async doCreateNewPage(): Promise<Page> {
+  override async doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page> {
     const { targetId } = await this._browser.session.send('Browser.newPage', {
       browserContextId: this._browserContextId
     }).catch(e =>  {
@@ -289,7 +289,11 @@ export class FFBrowserContext extends BrowserContext {
         throw new Error(`Invalid timezone ID: ${this._options.timezoneId}`);
       throw e;
     });
-    return this._browser._ffPages.get(targetId)!._page;
+    const page = this._browser._ffPages.get(targetId)!._page;
+    if (markAsServerSideOnly)
+      page.markAsServerSideOnly();
+    return page;
+
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {

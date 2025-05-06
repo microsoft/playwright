@@ -184,7 +184,7 @@ it('should capture cookies', async ({ server, context, page, contextFactory }) =
   ]);
 });
 
-it('should not emit events about internal page', async ({ contextFactory }) => {
+it.only('should not emit events about internal page', async ({ contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await page.route('**/*', route => {

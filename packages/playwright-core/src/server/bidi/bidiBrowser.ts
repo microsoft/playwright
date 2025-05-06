@@ -207,6 +207,7 @@ export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _initScriptIds: bidi.Script.PreloadScript[] = [];
   private _originToPermissions = new Map<string, string[]>();
+  private _blockingPageCreationCommands: Set<Promise<unknown>> = new Set();
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -265,12 +266,26 @@ export class BidiBrowserContext extends BrowserContext {
     return this._bidiPages().map(bidiPage => bidiPage._page);
   }
 
-  override async doCreateNewPage(): Promise<Page> {
-    const { context } = await this._browser._browserSession.send('browsingContext.create', {
+  override async doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page> {
+    const command = this._browser._browserSession.send('browsingContext.create', {
       type: bidi.BrowsingContext.CreateType.Window,
       userContext: this._browserContextId,
     });
-    return this._browser._bidiPages.get(context)!._page;
+    if (markAsServerSideOnly)
+      this._blockingPageCreationCommands.add(command);
+    try {
+      const { context } = await command;
+      const page = this._browser._bidiPages.get(context)!._page;
+      if (markAsServerSideOnly)
+        page.markAsServerSideOnly();
+      return page;
+    } finally {
+      this._blockingPageCreationCommands.delete(command);
+    }
+  }
+
+  async waitForBlockingPageCreationCommands() {
+    await Promise.all([...this._blockingPageCreationCommands].map(command => command.catch(() => {})));
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {

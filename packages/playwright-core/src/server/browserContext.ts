@@ -267,7 +267,7 @@ export abstract class BrowserContext extends SdkObject {
 
   // BrowserContext methods.
   abstract possiblyUninitializedPages(): Page[];
-  abstract doCreateNewPage(): Promise<Page>;
+  abstract doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
@@ -495,7 +495,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async newPage(metadata: CallMetadata): Promise<Page> {
-    const page = await this.doCreateNewPage();
+    const page = await this.doCreateNewPage(metadata.isServerSide);
     if (metadata.isServerSide)
       page.markAsServerSideOnly();
     const pageOrError = await page.waitForInitializedOrError();
