@@ -1176,8 +1176,9 @@ it('should fire contextmenu event on right click in correct order', async ({ pag
   ]);
 });
 
-it('should set PointerEvent.pressure on pointerdown', async ({ page }) => {
+it('should set PointerEvent.pressure on pointerdown', async ({ page, isLinux, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35844' });
+  it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
   await page.setContent(`
     <button id="target">Click me</button>
     <script>
@@ -1193,8 +1194,9 @@ it('should set PointerEvent.pressure on pointerdown', async ({ page }) => {
   ]);
 });
 
-it('should set PointerEvent.pressure on pointermove', async ({ page }) => {
+it('should set PointerEvent.pressure on pointermove', async ({ page, isLinux, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35844' });
+  it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
   await page.setContent(`
     <body style="margin: 0; padding: 0;">
       <div id="target" style="width: 500px; height: 500px; background-color: red;"></div>
