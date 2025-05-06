@@ -41,7 +41,11 @@ test('should render html report git info metadata', async ({ runUITest }) => {
   });
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
   await page.getByTitle('Toggle output').click();
 
   await expect(page.getByTestId('output')).toContainText('ci.link: https://playwright.dev');

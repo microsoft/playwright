@@ -128,7 +128,10 @@ test('should batch watch updates', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('4/4 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.locator('.status-passed')).toHaveText('4');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts 👁
@@ -167,7 +170,11 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('2/2');
+  await expect(statusLine.locator('.status-passed')).toHaveText('2');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
@@ -210,7 +217,11 @@ test('should watch new file', async ({ runUITest, writeFiles }) => {
     'b.test.ts': ` import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
@@ -276,7 +287,11 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   await page.getByTitle('Watch all').click();
   await page.getByTitle('Run all').click();
 
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/4');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   await writeFiles({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
@@ -286,12 +301,18 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
 
   // Now watches should not kick in.
   await new Promise(f => setTimeout(f, 1000));
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/4');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   // Allow test to finish and new watch to  kick in.
   latch.open();
 
-  await expect(page.getByTestId('status-line')).toHaveText('3/3 passed (100%)');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('3/3');
+  await expect(statusLine.locator('.status-passed')).toHaveText('3');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 });
 
 test('should not watch output', async ({ runUITest }) => {
@@ -316,7 +337,11 @@ test('should not watch output', async ({ runUITest }) => {
 
   await page.getByTitle('Run all').click();
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
   expect(commands).toContain('runTests');
   expect(commands).not.toContain('listTests');
 });
