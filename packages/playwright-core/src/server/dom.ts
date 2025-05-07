@@ -811,7 +811,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page.delegate.getBoundingBox(this);
   }
 
-  async ariaSnapshot(options: { ref?: boolean, emitGeneric?: boolean, mode?: 'raw' | 'regex' }): Promise<string> {
+  async ariaSnapshot(options: { forAI?: boolean }): Promise<string> {
     return await this.evaluateInUtility(([injected, element, options]) => injected.ariaSnapshot(element, options), options);
   }
 

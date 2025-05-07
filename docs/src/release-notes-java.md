@@ -30,7 +30,7 @@ toc_max_heading_level: 2
 ### Miscellaneous
 
 - New option [`option: APIRequest.newContext.maxRedirects`] in [`method: APIRequest.newContext`] to control the maximum number of redirects.
-- New option [`option: Locator.ariaSnapshot.ref`] in [`method: Locator.ariaSnapshot`] to generate reference for each element in the snapshot which can later be used to locate the element.
+- New option `ref` in [`method: Locator.ariaSnapshot`] to generate reference for each element in the snapshot which can later be used to locate the element.
 
 ### Breaking Changes
 

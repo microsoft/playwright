@@ -1484,9 +1484,7 @@ scheme.FrameAddStyleTagResult = tObject({
 });
 scheme.FrameAriaSnapshotParams = tObject({
   selector: tString,
-  ref: tOptional(tBoolean),
-  emitGeneric: tOptional(tBoolean),
-  mode: tOptional(tEnum(['raw', 'regex'])),
+  forAI: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.FrameAriaSnapshotResult = tObject({

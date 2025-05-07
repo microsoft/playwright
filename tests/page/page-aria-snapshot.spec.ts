@@ -41,6 +41,8 @@ const expect = baseExpect.extend({
   }
 });
 
+const forAI = { _forAI: true } as any;
+
 function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
@@ -690,7 +692,7 @@ it('should generate refs', async ({ page }) => {
     <button>Three</button>
   `);
 
-  const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
+  const snapshot1 = await page.locator('body').ariaSnapshot(forAI);
   expect(snapshot1).toContain('- button "One" [ref=s1e3]');
   expect(snapshot1).toContain('- button "Two" [ref=s1e4]');
   expect(snapshot1).toContain('- button "Three" [ref=s1e5]');
@@ -699,7 +701,7 @@ it('should generate refs', async ({ page }) => {
   await expect(page.locator('aria-ref=s1e4')).toHaveText('Two');
   await expect(page.locator('aria-ref=s1e5')).toHaveText('Three');
 
-  const snapshot2 = await page.locator('body').ariaSnapshot({ ref: true });
+  const snapshot2 = await page.locator('body').ariaSnapshot(forAI);
   expect(snapshot2).toContain('- button "One" [ref=s2e3]');
   await expect(page.locator('aria-ref=s2e3')).toHaveText('One');
 
@@ -713,7 +715,7 @@ it('should list iframes', async ({ page }) => {
     <iframe name="foo" src="data:text/html,<h1>World</h1>">
   `);
 
-  const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
+  const snapshot1 = await page.locator('body').ariaSnapshot(forAI);
   expect(snapshot1).toContain('- iframe');
 
   const frameSnapshot = await page.frameLocator(`iframe`).locator('body').ariaSnapshot();
@@ -724,7 +726,7 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
 
   async function allFrameSnapshot(frame: Page | FrameLocator): Promise<string> {
-    const snapshot = await frame.locator('body').ariaSnapshot({ ref: true });
+    const snapshot = await frame.locator('body').ariaSnapshot(forAI);
     const lines = snapshot.split('\n');
     const result = [];
     for (const line of lines) {
@@ -746,11 +748,11 @@ it('ref mode can be used to stitch all frame snapshots', async ({ page, server }
   expect(await allFrameSnapshot(page)).toContainYaml(`
     - iframe [ref=s1e3]:
       - iframe [ref=s1e3]:
-        - text: Hi, I'm frame
+        - generic [ref=s1e3]: Hi, I'm frame
       - iframe [ref=s1e4]:
-        - text: Hi, I'm frame
+        - generic [ref=s1e3]: Hi, I'm frame
     - iframe [ref=s1e4]:
-      - text: Hi, I'm frame
+      - generic [ref=s1e3]: Hi, I'm frame
   `);
 });
 
@@ -761,11 +763,12 @@ it('should not generate refs for hidden elements', async ({ page }) => {
     <button>Three</button>
   `);
 
-  const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
+  const snapshot = await page.locator('body').ariaSnapshot(forAI);
   expect(snapshot).toContainYaml(`
-    - button "One" [ref=s1e3]
-    - button "Two"
-    - button "Three" [ref=s1e5]
+    - generic [ref=s1e2]:
+      - button "One" [ref=s1e3]
+      - button "Two"
+      - button "Three" [ref=s1e5]
   `);
 });
 
@@ -792,13 +795,16 @@ it('should not generate refs for elements with pointer-events:none', async ({ pa
     </div>
   `);
 
-  const snapshot = await page.locator('body').ariaSnapshot({ ref: true });
+  const snapshot = await page.locator('body').ariaSnapshot(forAI);
   expect(snapshot).toContainYaml(`
-    - button "no-ref"
-    - button "with-ref" [ref=s1e5]
-    - button "with-ref" [ref=s1e8]
-    - button "with-ref" [ref=s1e11]
-    - button "no-ref"
+    - generic [ref=s1e2]:
+      - button "no-ref"
+      - button "with-ref" [ref=s1e5]
+      - button "with-ref" [ref=s1e8]
+      - button "with-ref" [ref=s1e11]
+      - generic [ref=s1e12]:
+        - generic:
+          - button "no-ref"
   `);
 });
 
@@ -833,7 +839,7 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
     </div>
   `);
 
-  const snapshot = await page.locator('body').ariaSnapshot({ ref: true, emitGeneric: true });
+  const snapshot = await page.locator('body').ariaSnapshot(forAI);
 
   expect(snapshot).toContainYaml(`
     - generic [ref=s1e5]:
@@ -859,7 +865,7 @@ it('should collapse generic nodes', async ({ page }) => {
     </div>
   `);
 
-  const snapshot = await page.locator('body').ariaSnapshot({ ref: true, emitGeneric: true });
+  const snapshot = await page.locator('body').ariaSnapshot(forAI);
   expect(snapshot).toContainYaml(`
     - button \"Button\" [ref=s1e6]
   `);

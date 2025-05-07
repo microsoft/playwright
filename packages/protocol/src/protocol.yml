@@ -1976,13 +1976,7 @@ Frame:
     ariaSnapshot:
       parameters:
         selector: string
-        ref: boolean?
-        emitGeneric: boolean?
-        mode:
-          type: enum?
-          literals:
-          - raw
-          - regex
+        forAI: boolean?
         timeout: number?
       returns:
         snapshot: string
