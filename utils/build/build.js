@@ -24,17 +24,6 @@ const { workspace } = require('../workspace');
 
 /**
  * @typedef {{
- *   command: string,
- *   args: string[],
- *   shell: boolean,
- *   env?: NodeJS.ProcessEnv,
- *   cwd?: string,
- *   concurrent?: boolean,
- * }} Step
- */
-
-/**
- * @typedef {{
  *   files: string,
  *   from: string,
  *   to: string,
@@ -46,11 +35,25 @@ const { workspace } = require('../workspace');
  * @typedef {{
  *   inputs: string[],
  *   mustExist?: string[],
- *   script?: string,
- *   command?: string,
- *   args?: string[],
  *   cwd?: string,
- * }} OnChange
+ * }} BaseOnChange
+ */
+
+/**
+ * @typedef {BaseOnChange & {
+ *   command: string,
+ *   args?: string[],
+ * }} CommandOnChange
+ */
+
+/**
+ * @typedef {BaseOnChange & {
+ *   script: string,
+ * }} ScriptOnChange
+ */
+
+/**
+ * @typedef {CommandOnChange|ScriptOnChange} OnChange
  */
 
 /** @type {Step[]} */
@@ -82,22 +85,80 @@ function quotePath(path) {
   return "\"" + path + "\"";
 }
 
+class Step {
+  /**
+   * @param {{
+   *   concurrent?: boolean,
+   * }} options
+   */
+  constructor(options) {
+    this.concurrent = options.concurrent;
+  }
+
+  runSync() {
+    throw new Error('Not implemented');
+  }
+
+  async runAsync() {
+    throw new Error('Not implemented');
+  }
+}
+
+class ProgramStep extends Step {
+  /**
+   * @param {{
+   *   command: string,
+   *   args: string[],
+   *   shell: boolean,
+   *   env?: NodeJS.ProcessEnv,
+   *   cwd?: string,
+   *   concurrent?: boolean,
+   * }} options
+   */
+  constructor(options) {
+    super(options);
+    this._options = options;
+  }
+
+  runSync() {
+    const step = this._options;
+    console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
+    const out = child_process.spawnSync(step.command, step.args, {
+      stdio: 'inherit',
+      shell: step.shell,
+      env: {
+        ...process.env,
+        ...step.env
+      },
+      cwd: step.cwd,
+    });
+    if (out.status)
+      process.exit(out.status);
+  }
+
+  async runAsync() {
+    const step = this._options;
+    const child = child_process.spawn(step.command, step.args, {
+      stdio: 'inherit',
+      shell: step.shell,
+      env: {
+        ...process.env,
+        ...step.env,
+      },
+      cwd: step.cwd,
+    });
+    process.on('exit', () => child.kill());
+  }
+}
+
 /**
- * @param {Step} step
+ * @param {OnChange} onChange
  */
-function runStep(step) {
-  console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
-  const out = child_process.spawnSync(step.command, step.args, {
-    stdio: 'inherit',
-    shell: step.shell,
-    env: {
-      ...process.env,
-      ...step.env
-    },
-    cwd: step.cwd,
-  });
-  if (out.status)
-    process.exit(out.status);
+function runOnChangeSyncStep(onChange) {
+  const step = ('script' in onChange)
+    ? new ProgramStep({ command: 'node', args: [filePath(onChange.script)], shell: false })
+    : new ProgramStep({ command: onChange.command, args: onChange.args || [], shell: true, cwd: onChange.cwd });
+  step.runSync();
 }
 
 async function runWatch() {
@@ -112,10 +173,7 @@ async function runWatch() {
         if (!fs.existsSync(filePath(fileMustExist)))
           return;
       }
-      if (onChange.script)
-        child_process.spawnSync('node', [onChange.script], { stdio: 'inherit' });
-      else
-        child_process.spawnSync(onChange.command, onChange.args || [], { stdio: 'inherit', cwd: onChange.cwd, shell: true });
+      runOnChangeSyncStep(onChange);
     }
     // chokidar will report all files as added in a sync loop, throttle those.
     const reschedule = () => {
@@ -136,25 +194,13 @@ async function runWatch() {
 
   for (const step of steps) {
     if (!step.concurrent)
-      runStep(step);
+      step.runSync();
   }
 
-  /** @type{import('child_process').ChildProcess[]} */
-  const spawns = [];
   for (const step of steps) {
-    if (!step.concurrent)
-      continue;
-    spawns.push(child_process.spawn(step.command, step.args, {
-      stdio: 'inherit',
-      shell: step.shell,
-      env: {
-        ...process.env,
-        ...step.env,
-      },
-      cwd: step.cwd,
-    }));
+    if (step.concurrent)
+      step.runAsync();
   }
-  process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChange(onChange);
 }
@@ -171,13 +217,9 @@ async function runBuild() {
     watcher.close();
   }
   for (const step of steps)
-    runStep(step);
-  for (const onChange of onChanges) {
-    if (onChange.script)
-      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
-    else
-      runStep({ command: onChange.command, args: onChange.args, shell: true, cwd: onChange.cwd });
-  }
+    step.runSync();
+  for (const onChange of onChanges)
+    runOnChangeSyncStep(onChange);
 }
 
 /**
@@ -203,43 +245,43 @@ for (const pkg of workspace.packages()) {
 }
 
 // Update test runner.
-steps.push({
+steps.push(new ProgramStep({
   command: 'npm',
   args: ['ci', '--save=false', '--fund=false', '--audit=false'],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'tests', 'playwright-test', 'stable-test-runner'),
-});
+}));
 
 // Update bundles.
 for (const bundle of bundles) {
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npm',
     args: ['ci', '--save=false', '--fund=false', '--audit=false', '--omit=optional'],
     shell: true,
     cwd: bundle,
-  });
+  }));
 }
 
 // Generate third party licenses for bundles.
-steps.push({
+steps.push(new ProgramStep({
   command: 'node',
   args: [path.resolve(__dirname, '../generate_third_party_notice.js')],
   shell: true,
-});
+}));
 
 // Build injected icons.
-steps.push({
+steps.push(new ProgramStep({
   command: 'node',
   args: ['utils/generate_clip_paths.js'],
   shell: true,
-});
+}));
 
 // Build injected scripts.
-steps.push({
+steps.push(new ProgramStep({
   command: 'node',
   args: ['utils/generate_injected.js'],
   shell: true,
-});
+}));
 
 // Run esbuild.
 for (const pkg of workspace.packages()) {
@@ -248,7 +290,7 @@ for (const pkg of workspace.packages()) {
   // These packages have their own build step.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npx',
     args: [
       'esbuild',
@@ -258,15 +300,15 @@ for (const pkg of workspace.packages()) {
       ...(watchMode ? ['--watch'] : []),
       '--platform=node',
       '--format=cjs',
-      ],
+    ],
     shell: true,
     concurrent: true,
-  });
+  }));
 }
 
 // Build/watch bundles.
 for (const bundle of bundles) {
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npm',
     args: [
       'run',
@@ -276,11 +318,11 @@ for (const bundle of bundles) {
     shell: true,
     cwd: bundle,
     concurrent: true,
-  });
+  }));
 }
 
 // Build/watch playwright-client.
-steps.push({
+steps.push(new ProgramStep({
   command: 'npm',
   args: [
     'run',
@@ -290,10 +332,10 @@ steps.push({
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-client'),
   concurrent: true,
-});
+}));
 
 // Build/watch trace viewer service worker.
-steps.push({
+steps.push(new ProgramStep({
   command: 'npx',
   args: [
     'vite',
@@ -306,14 +348,14 @@ steps.push({
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
   concurrent: watchMode, // feeds into trace-viewer's `public` directory, so it needs to be finished before trace-viewer build starts
-});
+}));
 
 if (watchMode) {
   // the build above outputs into `packages/trace-viewer/public`, where the `vite build` for `packages/trace-viewer` is supposed to pick it up.
   // there's a bug in `vite build --watch` though where the public dir is only copied over initially, but its not watched.
   // to work around this, we run a second watch build of the service worker into the final output.
   // bug: https://github.com/vitejs/vite/issues/18655
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npx',
     args: [
       'vite', '--config', 'vite.sw.config.ts',
@@ -324,12 +366,12 @@ if (watchMode) {
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
     concurrent: true
-  });
+  }));
 }
 
 // Build/watch web packages.
 for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npx',
     args: [
       'vite',
@@ -340,32 +382,32 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
     concurrent: true,
-  });
+  }));
 }
 
 // web packages dev server
 if (watchMode) {
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npx',
     args: ['vite', '--port', '44223', '--base', '/trace/'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
     concurrent: true,
-  });
-  steps.push({
+  }));
+  steps.push(new ProgramStep({
     command: 'npx',
     args: ['vite', '--port', '44224'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'html-reporter'),
     concurrent: true,
-  });
-  steps.push({
+  }));
+  steps.push(new ProgramStep({
     command: 'npx',
     args: ['vite', '--port', '44225'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'recorder'),
     concurrent: true,
-  });
+  }));
 }
 
 // Generate injected.
@@ -443,19 +485,19 @@ copyFiles.push({
 
 if (lintMode) {
   // Run TypeScript for type checking.
-  steps.push({
+  steps.push(new ProgramStep({
     command: 'npx',
     args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
     shell: true,
     concurrent: true,
-  });
+  }));
   for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
-    steps.push({
+    steps.push(new ProgramStep({
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath(`packages/${webPackage}`))],
       shell: true,
       concurrent: true,
-    });
+    }));
   }
 }
 
