@@ -1175,3 +1175,47 @@ it('should fire contextmenu event on right click in correct order', async ({ pag
     'contextmenu',
   ]);
 });
+
+it('should set PointerEvent.pressure on pointerdown', async ({ page, isLinux, headless }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35844' });
+  it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
+  await page.setContent(`
+    <button id="target">Click me</button>
+    <script>
+      window['pressures'] = [];
+      document.addEventListener('pointerdown', e => window['pressures'].push(['pointerdown', e.pressure]));
+      document.addEventListener('pointerup', e => window['pressures'].push(['pointerup', e.pressure]));
+    </script>
+  `);
+  await page.click('button');
+  expect(await page.evaluate(() => window['pressures'])).toEqual([
+    ['pointerdown', 0.5],
+    ['pointerup', 0],
+  ]);
+});
+
+it('should set PointerEvent.pressure on pointermove', async ({ page, isLinux, headless }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35844' });
+  it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
+  await page.setContent(`
+    <body style="margin: 0; padding: 0;">
+      <div id="target" style="width: 500px; height: 500px; background-color: red;"></div>
+      <script>
+        window['pressures'] = [];
+        document.addEventListener('pointermove', e => window['pressures'].push([e.pressure, e.clientX, e.clientY]));
+      </script>
+    </body>
+  `);
+  await page.click('div#target');
+  await page.mouse.move(10, 10);
+  await page.mouse.down();
+  await page.mouse.move(250, 250);
+  await page.mouse.up();
+  await page.mouse.move(50, 50);
+  expect(await page.evaluate(() => window['pressures'])).toEqual([
+    [0, 250, 250],
+    [0, 10, 10],
+    [0.5, 250, 250],
+    [0, 50, 50],
+  ]);
+});
