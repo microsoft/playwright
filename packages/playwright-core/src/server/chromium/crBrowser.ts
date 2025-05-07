@@ -371,9 +371,12 @@ export class CRBrowserContext extends BrowserContext {
     return this._crPages().map(crPage => crPage._page);
   }
 
-  override async doCreateNewPage(): Promise<Page> {
+  override async doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page> {
     const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
-    return this._browser._crPages.get(targetId)!._page;
+    const page = this._browser._crPages.get(targetId)!._page;
+    if (markAsServerSideOnly)
+      page.markAsServerSideOnly();
+    return page;
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
