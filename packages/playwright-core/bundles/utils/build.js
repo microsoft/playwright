@@ -43,8 +43,7 @@ if (!fs.existsSync(outdir))
   await ctx.rebuild();
   if (process.argv.includes('--watch'))
     await ctx.watch();
-  else
-    await ctx.dispose();
+  await ctx.dispose();
 })().catch(error => {
   console.error(error);
   process.exit(1);
