@@ -21,6 +21,7 @@ const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
 const { workspace } = require('../workspace');
+const { build, context } = require('esbuild');
 
 /**
  * @typedef {{
@@ -95,11 +96,13 @@ class Step {
     this.concurrent = options.concurrent;
   }
 
+  /** @returns {Promise<void>|void} */
   runSync() {
     throw new Error('Not implemented');
   }
 
-  async runAsync() {
+  /** @returns {Promise<void>|void} */
+  runConcurrently() {
     throw new Error('Not implemented');
   }
 }
@@ -120,6 +123,7 @@ class ProgramStep extends Step {
     this._options = options;
   }
 
+  /** @override */
   runSync() {
     const step = this._options;
     console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
@@ -136,7 +140,8 @@ class ProgramStep extends Step {
       process.exit(out.status);
   }
 
-  async runAsync() {
+  /** @override */
+  runConcurrently() {
     const step = this._options;
     const child = child_process.spawn(step.command, step.args, {
       stdio: 'inherit',
@@ -194,12 +199,12 @@ async function runWatch() {
 
   for (const step of steps) {
     if (!step.concurrent)
-      step.runSync();
+      await step.runSync();
   }
 
   for (const step of steps) {
     if (step.concurrent)
-      step.runAsync();
+      await step.runConcurrently();
   }
   for (const onChange of onChanges)
     runOnChange(onChange);
@@ -217,7 +222,7 @@ async function runBuild() {
     watcher.close();
   }
   for (const step of steps)
-    step.runSync();
+    await step.runSync();
   for (const onChange of onChanges)
     runOnChangeSyncStep(onChange);
 }
@@ -283,6 +288,61 @@ steps.push(new ProgramStep({
   shell: true,
 }));
 
+class EsbuildStep extends Step {
+  concurrent = true;
+
+  /** @type {import('esbuild').BuildOptions} */
+  constructor(options) {
+    super(options);
+    this._options = options;
+  }
+
+  /** @override */
+  async runSync() {
+    if (watchMode) {
+      await this._ensureWatching();
+    } else {
+      console.log('=== Running esbuild', this._options.entryPoints);
+      const start = Date.now();
+      await build(this._options);
+      console.log('=== Done in', Date.now() - start, 'ms');
+    }
+  }
+
+  /** @override */
+  async runConcurrently() {
+    // Running esbuild steps in parallel showed longer overall time.
+    await this.runSync();
+  }
+
+  async _ensureWatching() {
+    const start = Date.now();
+    if (this._context)
+      return;
+    this._context = await context(this._options);
+
+    const watcher = chokidar.watch(this._options.entryPoints);
+    await new Promise(x => watcher.once('ready', x));
+    watcher.on('all', () => this._rebuild());
+
+    await this._rebuild();
+    console.log('=== Esbuild watching', this._options.entryPoints, `(stared in ${Date.now() - start}ms)`);
+  }
+
+  async _rebuild() {
+    if (this._rebuilding) {
+      this._sourcesChanged = true;
+      return;
+    }
+    do {
+      this._sourcesChanged = false;
+      this._rebuilding = true;
+      await this._context?.rebuild();
+      this._rebuilding = false;
+    } while (this._sourcesChanged);
+  }
+}
+
 // Run esbuild.
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
@@ -290,19 +350,13 @@ for (const pkg of workspace.packages()) {
   // These packages have their own build step.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: [
-      'esbuild',
-      quotePath(path.join(pkg.path, 'src/**/*.ts')),
-      `--outdir=${quotePath(path.join(pkg.path, 'lib'))}`,
-      ...(withSourceMaps ? [`--sourcemap=linked`] : []),
-      ...(watchMode ? ['--watch'] : []),
-      '--platform=node',
-      '--format=cjs',
-    ],
-    shell: true,
-    concurrent: true,
+
+  steps.push(new EsbuildStep({
+    entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
+    outdir: `${path.join(pkg.path, 'lib')}`,
+    sourcemap: withSourceMaps ? 'linked' : false,
+    platform: 'node',
+    format: 'cjs',
   }));
 }
 
