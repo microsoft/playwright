@@ -25,17 +25,6 @@ const { build, context } = require('esbuild');
 
 /**
  * @typedef {{
- *   command: string,
- *   args: string[],
- *   shell: boolean,
- *   env?: NodeJS.ProcessEnv,
- *   cwd?: string,
- *   concurrent?: boolean,
- * } | EsbuildStep} Step
- */
-
-/**
- * @typedef {{
  *   files: string,
  *   from: string,
  *   to: string,
@@ -206,15 +195,12 @@ async function runWatch() {
 
   for (const step of steps) {
     if (!step.concurrent)
-      step.runSync();
+      await step.runSync();
   }
-
-  const esbuildSteps = steps.filter(step => step instanceof EsbuildStep);
-  await Promise.all(esbuildSteps.map(step => step.runEsbuild()));
 
   for (const step of steps) {
     if (step.concurrent)
-      step.runAsync();
+      step.runAsync().catch(e => console.error(e));
   }
   for (const onChange of onChanges)
     runOnChange(onChange);
@@ -232,7 +218,7 @@ async function runBuild() {
     watcher.close();
   }
   for (const step of steps)
-    step.runSync();
+    await step.runSync();
   for (const onChange of onChanges)
     runOnChangeSyncStep(onChange);
 }
@@ -298,15 +284,20 @@ steps.push(new ProgramStep({
   shell: true,
 }));
 
-class EsbuildStep {
+class EsbuildStep extends Step {
   concurrent = true;
 
   /** @type {import('esbuild').BuildOptions} */
   constructor(options) {
+    super(options);
     this._options = options;
   }
 
-  async runEsbuild() {
+  async runSync() {
+    await this.runAsync();
+  }
+
+  async runAsync() {
     if (watchMode) {
       await this._ensureWatching();
     } else {
