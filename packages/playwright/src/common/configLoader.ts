@@ -105,7 +105,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
     // In Node.js < 18, complain if the config file is ESM. Historically, we would restart
     // the process with --loader, but now we require newer Node.js.
     if (location.resolvedConfigFile && fileIsModule(location.resolvedConfigFile))
-      throw errorWithFile(location.resolvedConfigFile, `Playwright requires Node.js 18 or higher to load esm modules. Please update your version of Node.js.`);
+      throw errorWithFile(location.resolvedConfigFile, `Playwright requires Node.js 18.19 or higher to load esm modules. Please update your version of Node.js.`);
   }
 
   // 1. Setup tsconfig; configure ESM loader with tsconfig and compilation cache.
