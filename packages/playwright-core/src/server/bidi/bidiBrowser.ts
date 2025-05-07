@@ -346,11 +346,11 @@ export class BidiBrowserContext extends BrowserContext {
     // Setting geolocation on the user context automatically applies it to all existing
     // pages in the context in Bidi.
     await this._browser._browserSession.send('emulation.setGeolocationOverride', {
-      coordinates: {
-        latitude: geolocation?.latitude,
-        longitude: geolocation?.longitude,
-        accuracy: geolocation?.accuracy,
-      },
+      coordinates: geolocation ? {
+        latitude: geolocation.latitude,
+        longitude: geolocation.longitude,
+        accuracy: geolocation.accuracy,
+      } : null,
       userContexts: [this._browserContextId || 'default'],
     });
   }
