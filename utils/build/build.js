@@ -96,11 +96,13 @@ class Step {
     this.concurrent = options.concurrent;
   }
 
+  /** @returns {Promise<void>|void} */
   runSync() {
     throw new Error('Not implemented');
   }
 
-  async runAsync() {
+  /** @returns {Promise<void>|void} */
+  runConcurrently() {
     throw new Error('Not implemented');
   }
 }
@@ -121,6 +123,7 @@ class ProgramStep extends Step {
     this._options = options;
   }
 
+  /** @override */
   runSync() {
     const step = this._options;
     console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
@@ -137,7 +140,8 @@ class ProgramStep extends Step {
       process.exit(out.status);
   }
 
-  async runAsync() {
+  /** @override */
+  runConcurrently() {
     const step = this._options;
     const child = child_process.spawn(step.command, step.args, {
       stdio: 'inherit',
@@ -200,7 +204,7 @@ async function runWatch() {
 
   for (const step of steps) {
     if (step.concurrent)
-      step.runAsync().catch(e => console.error(e));
+      await step.runConcurrently();
   }
   for (const onChange of onChanges)
     runOnChange(onChange);
@@ -293,11 +297,8 @@ class EsbuildStep extends Step {
     this._options = options;
   }
 
+  /** @override */
   async runSync() {
-    await this.runAsync();
-  }
-
-  async runAsync() {
     if (watchMode) {
       await this._ensureWatching();
     } else {
@@ -308,7 +309,14 @@ class EsbuildStep extends Step {
     }
   }
 
+  /** @override */
+  async runConcurrently() {
+    // Running esbuild steps in parallel showed longer overall time.
+    await this.runSync();
+  }
+
   async _ensureWatching() {
+    const start = Date.now();
     if (this._context)
       return;
     this._context = await context(this._options);
@@ -316,9 +324,9 @@ class EsbuildStep extends Step {
     const watcher = chokidar.watch(this._options.entryPoints);
     await new Promise(x => watcher.once('ready', x));
     watcher.on('all', () => this._rebuild());
-    console.log('=== Esbuild watching', this._options.entryPoints);
 
     await this._rebuild();
+    console.log('=== Esbuild watching', this._options.entryPoints, `(stared in ${Date.now() - start}ms)`);
   }
 
   async _rebuild() {
