@@ -33,7 +33,8 @@ const esbuild = require('esbuild');
   await ctx.rebuild();
   if (process.argv.includes('--watch'))
     await ctx.watch();
-  await ctx.dispose();
+  else
+    await ctx.dispose();
 })().catch(error => {
   console.error(error);
   process.exit(1);
