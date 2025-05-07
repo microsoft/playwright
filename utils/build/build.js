@@ -21,6 +21,18 @@ const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
 const { workspace } = require('../workspace');
+const { build, context } = require('esbuild');
+
+/**
+ * @typedef {{
+ *   command: string,
+ *   args: string[],
+ *   shell: boolean,
+ *   env?: NodeJS.ProcessEnv,
+ *   cwd?: string,
+ *   concurrent?: boolean,
+ * } | EsbuildStep} Step
+ */
 
 /**
  * @typedef {{
@@ -197,6 +209,9 @@ async function runWatch() {
       step.runSync();
   }
 
+  const esbuildSteps = steps.filter(step => step instanceof EsbuildStep);
+  await Promise.all(esbuildSteps.map(step => step.runEsbuild()));
+
   for (const step of steps) {
     if (step.concurrent)
       step.runAsync();
@@ -283,6 +298,52 @@ steps.push(new ProgramStep({
   shell: true,
 }));
 
+class EsbuildStep {
+  concurrent = true;
+
+  /** @type {import('esbuild').BuildOptions} */
+  constructor(options) {
+    this._options = options;
+  }
+
+  async runEsbuild() {
+    if (watchMode) {
+      await this._ensureWatching();
+    } else {
+      console.log('=== Running esbuild', this._options.entryPoints);
+      const start = Date.now();
+      await build(this._options);
+      console.log('=== Done in', Date.now() - start, 'ms');
+    }
+  }
+
+  async _ensureWatching() {
+    if (this._context)
+      return;
+    this._context = await context(this._options);
+
+    const watcher = chokidar.watch(this._options.entryPoints);
+    await new Promise(x => watcher.once('ready', x));
+    watcher.on('all', () => this._rebuild());
+    console.log('=== Esbuild watching', this._options.entryPoints);
+
+    await this._rebuild();
+  }
+
+  async _rebuild() {
+    if (this._rebuilding) {
+      this._sourcesChanged = true;
+      return;
+    }
+    do {
+      this._sourcesChanged = false;
+      this._rebuilding = true;
+      await this._context?.rebuild();
+      this._rebuilding = false;
+    } while (this._sourcesChanged);
+  }
+}
+
 // Run esbuild.
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
@@ -290,19 +351,13 @@ for (const pkg of workspace.packages()) {
   // These packages have their own build step.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: [
-      'esbuild',
-      quotePath(path.join(pkg.path, 'src/**/*.ts')),
-      `--outdir=${quotePath(path.join(pkg.path, 'lib'))}`,
-      ...(withSourceMaps ? [`--sourcemap=linked`] : []),
-      ...(watchMode ? ['--watch'] : []),
-      '--platform=node',
-      '--format=cjs',
-    ],
-    shell: true,
-    concurrent: true,
+
+  steps.push(new EsbuildStep({
+    entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
+    outdir: `${path.join(pkg.path, 'lib')}`,
+    sourcemap: withSourceMaps ? 'linked' : false,
+    platform: 'node',
+    format: 'cjs',
   }));
 }
 
