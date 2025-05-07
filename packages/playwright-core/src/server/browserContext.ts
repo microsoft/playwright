@@ -496,8 +496,6 @@ export abstract class BrowserContext extends SdkObject {
 
   async newPage(metadata: CallMetadata): Promise<Page> {
     const page = await this.doCreateNewPage(metadata.isServerSide);
-    if (metadata.isServerSide)
-      page.markAsServerSideOnly();
     const pageOrError = await page.waitForInitializedOrError();
     if (pageOrError instanceof Page) {
       if (pageOrError.isClosed())

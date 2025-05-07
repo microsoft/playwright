@@ -98,7 +98,7 @@ export class BidiPage implements PageDelegate {
       //
       // TODO: ideally we'd wait only for the commands that created this page, but currently
       // there is no way in Bidi to track which command created this page.
-      this._browserContext.waitForBlockingPageCreationCommands(),
+      this._browserContext.waitForBlockingPageCreations(),
     ]);
   }
 

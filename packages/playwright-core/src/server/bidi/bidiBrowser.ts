@@ -207,7 +207,7 @@ export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _initScriptIds: bidi.Script.PreloadScript[] = [];
   private _originToPermissions = new Map<string, string[]>();
-  private _blockingPageCreationCommands: Set<Promise<unknown>> = new Set();
+  private _blockingPageCreations: Set<Promise<unknown>> = new Set();
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -267,25 +267,29 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   override async doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page> {
-    const command = this._browser._browserSession.send('browsingContext.create', {
-      type: bidi.BrowsingContext.CreateType.Window,
-      userContext: this._browserContextId,
-    });
+    const promise = this._createNewPageImpl(markAsServerSideOnly);
     if (markAsServerSideOnly)
-      this._blockingPageCreationCommands.add(command);
+      this._blockingPageCreations.add(promise);
     try {
-      const { context } = await command;
-      const page = this._browser._bidiPages.get(context)!._page;
-      if (markAsServerSideOnly)
-        page.markAsServerSideOnly();
-      return page;
+      return await promise;
     } finally {
-      this._blockingPageCreationCommands.delete(command);
+      this._blockingPageCreations.delete(promise);
     }
   }
 
-  async waitForBlockingPageCreationCommands() {
-    await Promise.all([...this._blockingPageCreationCommands].map(command => command.catch(() => {})));
+  private async _createNewPageImpl(markAsServerSideOnly?: boolean): Promise<Page> {
+    const { context } = await this._browser._browserSession.send('browsingContext.create', {
+      type: bidi.BrowsingContext.CreateType.Window,
+      userContext: this._browserContextId,
+    });
+    const page = this._browser._bidiPages.get(context)!._page;
+    if (markAsServerSideOnly)
+      page.markAsServerSideOnly();
+    return page;
+  }
+
+  async waitForBlockingPageCreations() {
+    await Promise.all([...this._blockingPageCreations].map(command => command.catch(() => {})));
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
