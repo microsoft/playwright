@@ -271,4 +271,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   async ariaSnapshot(params: channels.FrameAriaSnapshotParams, metadata: CallMetadata): Promise<channels.FrameAriaSnapshotResult> {
     return { snapshot: await this._frame.ariaSnapshot(metadata, params.selector, params) };
   }
+
+  async snapshotForAI(params: channels.FrameSnapshotForAIParams, metadata: CallMetadata): Promise<channels.FrameSnapshotForAIResult> {
+    return { snapshot: await this._frame.snapshotForAI(metadata, params.selector) };
+  }
 }
