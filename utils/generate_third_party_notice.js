@@ -53,7 +53,6 @@ This project incorporates components from the projects listed below. The origina
       if (!bundle.isDirectory())
         continue;
       const dir = path.join(bundlesDir, bundle.name);
-      execSync('npm ci', { cwd: dir });
       const packages = await checkDir(dir);
       for (const [key, value] of Object.entries(packages)) {
         if (value.licenseText)
