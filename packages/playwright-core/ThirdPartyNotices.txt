@@ -4,8 +4,6 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
--	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
--	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	agent-base@6.0.2 (https://github.com/TooTallNate/node-agent-base)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 -	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
@@ -15,12 +13,11 @@ This project incorporates components from the projects listed below. The origina
 -	commander@8.3.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
 -	debug@4.3.4 (https://github.com/debug-js/debug)
+-	debug@4.4.0 (https://github.com/debug-js/debug)
 -	define-lazy-prop@2.0.0 (https://github.com/sindresorhus/define-lazy-prop)
 -	diff@7.0.0 (https://github.com/kpdecker/jsdiff)
 -	dotenv@16.4.5 (https://github.com/motdotla/dotenv)
 -	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
--	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
--	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
 -	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
 -	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
 -	https-proxy-agent@5.0.1 (https://github.com/TooTallNate/node-https-proxy-agent)
@@ -32,13 +29,14 @@ This project incorporates components from the projects listed below. The origina
 -	mime@3.0.0 (https://github.com/broofa/mime)
 -	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
+-	ms@2.1.3 (https://github.com/vercel/ms)
 -	once@1.4.0 (https://github.com/isaacs/once)
 -	open@8.4.0 (https://github.com/sindresorhus/open)
 -	pend@1.2.0 (https://github.com/andrewrk/node-pend)
 -	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
 -	progress@2.0.3 (https://github.com/visionmedia/node-progress)
 -	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
--	pump@3.0.0 (https://github.com/mafintosh/pump)
+-	pump@3.0.2 (https://github.com/mafintosh/pump)
 -	retry@0.12.0 (https://github.com/tim-kos/node-retry)
 -	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
 -	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
@@ -48,60 +46,8 @@ This project incorporates components from the projects listed below. The origina
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.17.1 (https://github.com/websockets/ws)
 -	yaml@2.6.0 (https://github.com/eemeli/yaml)
--	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
+-	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
-
-%% @types/node@17.0.24 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-    Copyright (c) Microsoft Corporation.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE
-=========================================
-END OF @types/node@17.0.24 AND INFORMATION
-
-%% @types/yauzl@2.10.0 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-    Copyright (c) Microsoft Corporation.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE
-=========================================
-END OF @types/yauzl@2.10.0 AND INFORMATION
 
 %% agent-base@6.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -459,6 +405,30 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF debug@4.3.4 AND INFORMATION
 
+%% debug@4.4.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+(The MIT License)
+
+Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2018-2021 Josh Junon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the 'Software'), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF debug@4.4.0 AND INFORMATION
+
 %% define-lazy-prop@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -560,60 +530,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
 END OF end-of-stream@1.4.4 AND INFORMATION
-
-%% extract-zip@2.0.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-Copyright (c) 2014 Max Ogden and other contributors
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-=========================================
-END OF extract-zip@2.0.1 AND INFORMATION
-
-%% fd-slicer@1.1.0 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-Copyright (c) 2014 Andrew Kelley
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software,
-and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-=========================================
-END OF fd-slicer@1.1.0 AND INFORMATION
 
 %% get-stream@5.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -990,6 +906,32 @@ SOFTWARE.
 =========================================
 END OF ms@2.1.2 AND INFORMATION
 
+%% ms@2.1.3 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2020 Vercel, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF ms@2.1.3 AND INFORMATION
+
 %% once@1.4.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
@@ -1129,7 +1071,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF proxy-from-env@1.1.0 AND INFORMATION
 
-%% pump@3.0.0 NOTICES AND INFORMATION BEGIN HERE
+%% pump@3.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -1153,7 +1095,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF pump@3.0.0 AND INFORMATION
+END OF pump@3.0.2 AND INFORMATION
 
 %% retry@0.12.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1501,7 +1443,7 @@ THIS SOFTWARE.
 =========================================
 END OF yaml@2.6.0 AND INFORMATION
 
-%% yauzl@2.10.0 NOTICES AND INFORMATION BEGIN HERE
+%% yauzl@3.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -1525,7 +1467,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF yauzl@2.10.0 AND INFORMATION
+END OF yauzl@3.2.0 AND INFORMATION
 
 %% yazl@2.5.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1555,6 +1497,6 @@ END OF yazl@2.5.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 46
+Total Packages: 44
 =========================================
 END OF SUMMARY

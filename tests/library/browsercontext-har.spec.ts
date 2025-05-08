@@ -17,7 +17,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
-import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
+import extractZip from '../../packages/playwright-core/bundles/zip/src/third_party/extract-zip';
 
 it('should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
