@@ -17,7 +17,6 @@
 const checker = require('license-checker');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 async function checkDir(dir) {
   return await new Promise((f, r) => {
