@@ -16,7 +16,7 @@
 
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { box, getElementComputedStyle, getGlobalOptions } from './domUtils';
+import { box, getElementComputedStyle, getGlobalOptions, isElementVisible } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
@@ -75,7 +75,10 @@ export function generateAriaTree(rootElement: Element, generation: number, optio
       return;
 
     const element = node as Element;
-    if (roleUtils.isElementHiddenForAria(element))
+    let isVisible = !roleUtils.isElementHiddenForAria(element);
+    if (options?.forAI)
+      isVisible = isVisible || isElementVisible(element);
+    if (!isVisible)
       return;
 
     const ariaChildren: Element[] = [];
@@ -197,7 +200,9 @@ function normalizeGenericRoles(node: AriaNode) {
       const normalized = normalizeChildren(child);
       result.push(...normalized);
     }
-    const removeSelf = node.role === 'generic' && result.every(c => typeof c !== 'string' && canRef(c));
+
+    // Only remove generic that encloses one element, logical grouping still makes sense, even if it is not ref-able.
+    const removeSelf = node.role === 'generic' && result.length <= 1 && result.every(c => typeof c !== 'string' && receivesPointerEvents(c));
     if (removeSelf)
       return result;
     node.children = result;
@@ -402,10 +407,11 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.forAI && canRef(ariaNode)) {
+    if (options?.forAI && receivesPointerEvents(ariaNode)) {
       const id = ariaSnapshot.ids.get(ariaNode.element);
+      const cursor = hasPointerCursor(ariaNode) ? ' [cursor=pointer]' : '';
       if (id)
-        key += ` [ref=s${ariaSnapshot.generation}e${id}]`;
+        key += ` [ref=s${ariaSnapshot.generation}e${id}]${cursor}`;
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
@@ -496,6 +502,10 @@ function textContributesInfo(node: AriaNode, text: string): boolean {
   return filtered.trim().length / text.length > 0.1;
 }
 
-function canRef(ariaNode: AriaNode): boolean {
+function receivesPointerEvents(ariaNode: AriaNode): boolean {
   return ariaNode.box.visible && ariaNode.receivesPointerEvents;
+}
+
+function hasPointerCursor(ariaNode: AriaNode): boolean {
+  return ariaNode.box.style?.cursor === 'pointer';
 }
