@@ -96,13 +96,7 @@ class Step {
     this.concurrent = options.concurrent;
   }
 
-  /** @returns {Promise<void>|void} */
-  runSync() {
-    throw new Error('Not implemented');
-  }
-
-  /** @returns {Promise<void>|void} */
-  runConcurrently() {
+  async run() {
     throw new Error('Not implemented');
   }
 }
@@ -124,10 +118,10 @@ class ProgramStep extends Step {
   }
 
   /** @override */
-  runSync() {
+  async run() {
     const step = this._options;
     console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
-    const out = child_process.spawnSync(step.command, step.args, {
+    const child = child_process.spawn(step.command, step.args, {
       stdio: 'inherit',
       shell: step.shell,
       env: {
@@ -136,34 +130,26 @@ class ProgramStep extends Step {
       },
       cwd: step.cwd,
     });
-    if (out.status)
-      process.exit(out.status);
-  }
-
-  /** @override */
-  runConcurrently() {
-    const step = this._options;
-    const child = child_process.spawn(step.command, step.args, {
-      stdio: 'inherit',
-      shell: step.shell,
-      env: {
-        ...process.env,
-        ...step.env,
-      },
-      cwd: step.cwd,
-    });
     process.on('exit', () => child.kill());
+    return new Promise((resolve, reject) => {
+      child.on('close', (code, signal) => {
+        if (code || signal)
+          reject(new Error(`'${step.command} ${step.args.join(' ')}' exited with code ${code}, signal ${signal}`));
+        else
+          resolve({ });
+      });
+    });
   }
 }
 
 /**
  * @param {OnChange} onChange
  */
-function runOnChangeSyncStep(onChange) {
+async function runOnChangeStep(onChange) {
   const step = ('script' in onChange)
     ? new ProgramStep({ command: 'node', args: [filePath(onChange.script)], shell: false })
     : new ProgramStep({ command: onChange.command, args: onChange.args || [], shell: true, cwd: onChange.cwd });
-  step.runSync();
+  await step.run();
 }
 
 async function runWatch() {
@@ -178,7 +164,7 @@ async function runWatch() {
         if (!fs.existsSync(filePath(fileMustExist)))
           return;
       }
-      runOnChangeSyncStep(onChange);
+      runOnChangeStep(onChange).catch(e => console.error(e));
     }
     // chokidar will report all files as added in a sync loop, throttle those.
     const reschedule = () => {
@@ -199,12 +185,12 @@ async function runWatch() {
 
   for (const step of steps) {
     if (!step.concurrent)
-      await step.runSync();
+      await step.run();
   }
 
   for (const step of steps) {
     if (step.concurrent)
-      await step.runConcurrently();
+      step.run().catch(e => console.error(e));
   }
   for (const onChange of onChanges)
     runOnChange(onChange);
@@ -222,9 +208,9 @@ async function runBuild() {
     watcher.close();
   }
   for (const step of steps)
-    await step.runSync();
+    await step.run();
   for (const onChange of onChanges)
-    runOnChangeSyncStep(onChange);
+    runOnChangeStep(onChange);
 }
 
 /**
@@ -289,30 +275,23 @@ steps.push(new ProgramStep({
 }));
 
 class EsbuildStep extends Step {
-  concurrent = true;
-
   /** @type {import('esbuild').BuildOptions} */
   constructor(options) {
-    super(options);
+    // Starting esbuild steps in parallel showed longer overall time.
+    super({ concurrent: false });
     this._options = options;
   }
 
   /** @override */
-  async runSync() {
+  async run() {
     if (watchMode) {
       await this._ensureWatching();
     } else {
-      console.log('=== Running esbuild', this._options.entryPoints);
+      console.log('==== Running esbuild', this._options.entryPoints);
       const start = Date.now();
       await build(this._options);
-      console.log('=== Done in', Date.now() - start, 'ms');
+      console.log('==== Done in', Date.now() - start, 'ms');
     }
-  }
-
-  /** @override */
-  async runConcurrently() {
-    // Running esbuild steps in parallel showed longer overall time.
-    await this.runSync();
   }
 
   async _ensureWatching() {
@@ -326,7 +305,7 @@ class EsbuildStep extends Step {
     watcher.on('all', () => this._rebuild());
 
     await this._rebuild();
-    console.log('=== Esbuild watching', this._options.entryPoints, `(stared in ${Date.now() - start}ms)`);
+    console.log('==== Esbuild watching', this._options.entryPoints, `(started in ${Date.now() - start}ms)`);
   }
 
   async _rebuild() {
