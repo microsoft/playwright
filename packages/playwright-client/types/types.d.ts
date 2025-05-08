@@ -12501,17 +12501,6 @@ export interface Locator {
    */
   ariaSnapshot(options?: {
     /**
-     * Generate `generic` aria nodes for elements w/o roles (similar to Chrome DevTools).
-     */
-    emitGeneric?: boolean;
-
-    /**
-     * Generate symbolic reference for each element. One can use `aria-ref=<ref>` locator immediately after capturing the
-     * snapshot to perform actions on the element.
-     */
-    ref?: boolean;
-
-    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
