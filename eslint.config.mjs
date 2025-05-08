@@ -45,6 +45,7 @@ const ignores = [
   "output/",
   "**/playwright-report/",
   "packages/*/lib/",
+  "packages/playwright-core/bundles/zip/src/third_party/",
   "packages/playwright-core/src/generated/*",
   "packages/playwright-core/src/third_party/",
   "packages/playwright-core/types/*",
