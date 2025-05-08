@@ -102,7 +102,7 @@ export function generateAriaTree(rootElement: Element, generation: number, optio
     if (treatAsBlock)
       ariaNode.children.push(treatAsBlock);
 
-    ariaNode.children.push(roleUtils.getPseudoContent(element, '::before'));
+    ariaNode.children.push(roleUtils.getCSSContent(element, '::before') || '');
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
@@ -121,7 +121,7 @@ export function generateAriaTree(rootElement: Element, generation: number, optio
     for (const child of ariaChildren)
       visit(ariaNode, child);
 
-    ariaNode.children.push(roleUtils.getPseudoContent(element, '::after'));
+    ariaNode.children.push(roleUtils.getCSSContent(element, '::after') || '');
 
     if (treatAsBlock)
       ariaNode.children.push(treatAsBlock);
