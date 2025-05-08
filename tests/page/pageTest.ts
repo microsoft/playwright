@@ -23,7 +23,7 @@ import { electronTest } from '../electron/electronTest';
 import { webView2Test } from '../webview2/webView2Test';
 import type { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
-export { expect } from '@playwright/test';
+import { expect as baseExpect } from '@playwright/test';
 
 let impl: TestType<PageTestFixtures & ServerFixtures & TestModeTestFixtures, PageWorkerFixtures & PlatformWorkerFixtures & TestModeWorkerFixtures & TestModeWorkerOptions & ServerWorkerOptions> = browserTest;
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
@@ -53,3 +53,26 @@ export function roundBox(box: BoundingBox): BoundingBox {
     height: Math.round(box.height),
   };
 }
+
+export const expect = baseExpect.extend({
+  toContainYaml(received: string, expected: string) {
+    const trimmed = expected.split('\n').filter(a => !!a.trim());
+    const maxPrefixLength = Math.min(...trimmed.map(line => line.match(/^\s*/)[0].length));
+    const trimmedExpected = trimmed.map(line => line.substring(maxPrefixLength)).join('\n');
+    try {
+      if (this.isNot)
+        expect(received).not.toContain(trimmedExpected);
+      else
+        expect(received).toContain(trimmedExpected);
+      return {
+        pass: !this.isNot,
+        message: () => '',
+      };
+    } catch (e) {
+      return {
+        pass: this.isNot,
+        message: () => e.message,
+      };
+    }
+  }
+});
