@@ -1087,7 +1087,7 @@ await Expect(locator).ToContainClassAsync("row middle");
 When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class lists. Each element's class attribute is matched against the corresponding class in the array:
 
 ```html
-<div class='list'></div>
+<div class='list'>
   <div class='component inactive'></div>
   <div class='component active'></div>
   <div class='component inactive'></div>
@@ -1095,30 +1095,30 @@ When an array is passed, the method asserts that the list of elements located ma
 ```
 
 ```js
-const locator = page.locator('list > .component');
+const locator = page.locator('.list > .component');
 await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
 ```
 
 ```java
-assertThat(page.locator("list > .component")).containsClass(new String[] {"inactive", "active", "inactive"});
+assertThat(page.locator(".list > .component")).containsClass(new String[] {"inactive", "active", "inactive"});
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator("list > .component")
+locator = page.locator(".list > .component")
 await expect(locator).to_contain_class(["inactive", "active", "inactive"])
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator("list > .component")
+locator = page.locator(".list > .component")
 await expect(locator).to_contain_class(["inactive", "active", "inactive"])
 ```
 
 ```csharp
-var locator = Page.Locator("list > .component");
+var locator = Page.Locator(".list > .component");
 await Expect(locator).ToContainClassAsync(new string[]{"inactive", "active", "inactive"});
 ```
 
@@ -1591,30 +1591,30 @@ await Expect(locator).ToHaveClassAsync(new Regex("(^|\\s)selected(\\s|$)"));
 When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class values. Each element's class attribute is matched against the corresponding string or regular expression in the array:
 
 ```js
-const locator = page.locator('list > .component');
+const locator = page.locator('.list > .component');
 await expect(locator).toHaveClass(['component', 'component selected', 'component']);
 ```
 
 ```java
-assertThat(page.locator("list > .component")).hasClass(new String[] {"component", "component selected", "component"});
+assertThat(page.locator(".list > .component")).hasClass(new String[] {"component", "component selected", "component"});
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator("list > .component")
+locator = page.locator(".list > .component")
 await expect(locator).to_have_class(["component", "component selected", "component"])
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator("list > .component")
+locator = page.locator(".list > .component")
 expect(locator).to_have_class(["component", "component selected", "component"])
 ```
 
 ```csharp
-var locator = Page.Locator("list > .component");
+var locator = Page.Locator(".list > .component");
 await Expect(locator).ToHaveClassAsync(new string[]{"component", "component selected", "component"});
 ```
 

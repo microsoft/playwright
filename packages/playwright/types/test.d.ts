@@ -8746,7 +8746,7 @@ interface LocatorAssertions {
    * expected class lists. Each element's class attribute is matched against the corresponding class in the array:
    *
    * ```html
-   * <div class='list'></div>
+   * <div class='list'>
    *   <div class='component inactive'></div>
    *   <div class='component active'></div>
    *   <div class='component inactive'></div>
@@ -8754,7 +8754,7 @@ interface LocatorAssertions {
    * ```
    *
    * ```js
-   * const locator = page.locator('list > .component');
+   * const locator = page.locator('.list > .component');
    * await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
    * ```
    *
@@ -8996,7 +8996,7 @@ interface LocatorAssertions {
    * expression in the array:
    *
    * ```js
-   * const locator = page.locator('list > .component');
+   * const locator = page.locator('.list > .component');
    * await expect(locator).toHaveClass(['component', 'component selected', 'component']);
    * ```
    *
