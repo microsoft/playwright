@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "esbuild": "node build.js",
-    "build": "npm run esbuild -- --minify",
-    "watch": "npm run esbuild -- --watch --sourcemap",
+    "build": "npm run esbuild",
+    "watch": "npm run esbuild -- --watch",
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
   "dependencies": {

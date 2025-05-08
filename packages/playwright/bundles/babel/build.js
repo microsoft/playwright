@@ -24,9 +24,10 @@ const esbuild = require('esbuild');
  */
 function esbuildOptions(watchMode) {
   return {
-    entryPoints: [path.join(__dirname, 'src/zipBundleImpl.ts')],
+    entryPoints: [path.join(__dirname, 'src/babelBundleImpl.ts')],
+    external: ['playwright'],
     bundle: true,
-    outdir: path.join(__dirname, '../../lib'),
+    outdir: path.join(__dirname, '../../lib/transform'),
     format: 'cjs',
     platform: 'node',
     target: 'ES2019',
