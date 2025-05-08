@@ -967,7 +967,7 @@ export type BrowserTypeLaunchParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
-  webSocketPort?: number,
+  cdpPort?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
@@ -994,7 +994,7 @@ export type BrowserTypeLaunchOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
-  webSocketPort?: number,
+  cdpPort?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
@@ -1024,7 +1024,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
-  webSocketPort?: number,
+  cdpPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1107,7 +1107,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
-  webSocketPort?: number,
+  cdpPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
