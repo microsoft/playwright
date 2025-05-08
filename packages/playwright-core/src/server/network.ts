@@ -51,7 +51,7 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
   });
 }
 
-function isLocalHostname(hostname: string): boolean {
+export function isLocalHostname(hostname: string): boolean {
   return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
