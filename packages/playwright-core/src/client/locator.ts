@@ -303,8 +303,13 @@ export class Locator implements api.Locator {
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), options.timeout);
   }
 
-  async ariaSnapshot(options?: { _forAI?: boolean } & TimeoutOptions): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ ...options, forAI: options?._forAI, selector: this._selector });
+  async ariaSnapshot(options?: TimeoutOptions): Promise<string> {
+    const result = await this._frame._channel.ariaSnapshot({ ...options, selector: this._selector });
+    return result.snapshot;
+  }
+
+  async _snapshotForAI(): Promise<string> {
+    const result = await this._frame._channel.snapshotForAI({ selector: this._selector });
     return result.snapshot;
   }
 
