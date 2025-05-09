@@ -175,6 +175,7 @@ export class Page extends SdkObject {
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
   closeReason: string | undefined;
+  lastSnapshotFrameIds: string[] = [];
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -807,6 +808,13 @@ export class Page extends SdkObject {
   markAsServerSideOnly() {
     this._isServerSideOnly = true;
   }
+
+  async snapshotForAI(metadata: CallMetadata): Promise<string> {
+    const frameIds: string[] = [];
+    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, frameIds);
+    this.lastSnapshotFrameIds = frameIds;
+    return snapshot.join('\n');
+  }
 }
 
 export class Worker extends SdkObject {
@@ -987,4 +995,37 @@ class FrameThrottler {
       this._timeoutId = setTimeout(() => this._tick(), this._defaultInterval);
     }
   }
+}
+
+async function snapshotFrameForAI(frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
+  const context = await frame._utilityContext();
+  const injectedScript = await context.injectedScript();
+  const snapshot = await injectedScript.evaluate((injected, refPrefix) => {
+    return injected.ariaSnapshot(injected.document.body, { forAI: true, refPrefix });
+  }, frameOrdinal ? 'f' + frameOrdinal : '');
+
+  const lines = snapshot.split('\n');
+  const result = [];
+  for (const line of lines) {
+    const match = line.match(/^(\s*)- iframe \[ref=(.*)\]/);
+    if (!match) {
+      result.push(line);
+      continue;
+    }
+
+    const leadingSpace = match[1];
+    const ref = match[2];
+    const frameSelector = `aria-ref=${ref} >> internal:control=enter-frame`;
+    const frameBodySelector = `${frameSelector} >> body`;
+    const child = await frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true });
+    if (!child) {
+      result.push(line);
+      continue;
+    }
+    const frameOrdinal = frameIds.length + 1;
+    frameIds.push(child.frame._id);
+    const childSnapshot = await snapshotFrameForAI(child.frame, frameOrdinal, frameIds);
+    result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
+  }
+  return result;
 }

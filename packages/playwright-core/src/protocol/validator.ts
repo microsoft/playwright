@@ -1386,6 +1386,10 @@ scheme.PagePdfParams = tObject({
 scheme.PagePdfResult = tObject({
   pdf: tBinary,
 });
+scheme.PageSnapshotForAIParams = tOptional(tObject({}));
+scheme.PageSnapshotForAIResult = tObject({
+  snapshot: tString,
+});
 scheme.PageStartJSCoverageParams = tObject({
   resetOnNavigation: tOptional(tBoolean),
   reportAnonymousScripts: tOptional(tBoolean),

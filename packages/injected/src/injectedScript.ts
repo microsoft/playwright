@@ -297,7 +297,7 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', forAI?: boolean }): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', forAI?: boolean, refPrefix?: string }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     this._lastAriaSnapshot = generateAriaTree(node as Element, options);
@@ -675,10 +675,7 @@ export class InjectedScript {
 
   _createAriaRefEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      if (!selector.startsWith('e'))
-        throw this.createStacklessError(`Invalid aria-ref selector "${selector}"`);
-      const ref = +selector.substring(1);
-      const result = this._lastAriaSnapshot?.elements?.get(ref);
+      const result = this._lastAriaSnapshot?.elements?.get(selector);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };

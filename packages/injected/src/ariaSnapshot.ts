@@ -26,7 +26,7 @@ import type { Box } from './domUtils';
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
   name: string;
-  ref?: number;
+  ref?: string;
   children: (AriaNode | string)[];
   element: Element;
   box: Box;
@@ -36,23 +36,23 @@ export type AriaNode = AriaProps & {
 
 export type AriaSnapshot = {
   root: AriaNode;
-  elements: Map<number, Element>;
+  elements: Map<string, Element>;
 };
 
 type AriaRef = {
   role: string;
   name: string;
-  ref: number;
+  ref: string;
 };
 
 let lastRef = 0;
 
-export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean }): AriaSnapshot {
+export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
-    elements: new Map<number, Element>(),
+    elements: new Map<string, Element>(),
   };
 
   const visit = (ariaNode: AriaNode, node: Node) => {
@@ -149,20 +149,20 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
   return snapshot;
 }
 
-function ariaRef(element: Element, role: string, name: string, options?: { forAI?: boolean }): number | undefined {
+function ariaRef(element: Element, role: string, name: string, options?: { forAI?: boolean, refPrefix?: string }): string | undefined {
   if (!options?.forAI)
     return undefined;
 
   let ariaRef: AriaRef | undefined;
   ariaRef = (element as any)._ariaRef;
   if (!ariaRef || ariaRef.role !== role || ariaRef.name !== name) {
-    ariaRef = { role, name, ref: ++lastRef };
+    ariaRef = { role, name, ref: (options?.refPrefix ?? '') + 'e' + (++lastRef) };
     (element as any)._ariaRef = ariaRef;
   }
   return ariaRef.ref;
 }
 
-function toAriaNode(element: Element, options?: { forAI?: boolean }): AriaNode | null {
+function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaNode | null {
   if (element.nodeName === 'IFRAME') {
     return {
       role: 'iframe',
@@ -443,7 +443,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       const ref = ariaNode.ref;
       const cursor = hasPointerCursor(ariaNode) ? ' [cursor=pointer]' : '';
       if (ref)
-        key += ` [ref=e${ref}]${cursor}`;
+        key += ` [ref=${ref}]${cursor}`;
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
