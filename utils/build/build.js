@@ -287,7 +287,7 @@ class EsbuildStep extends Step {
     if (watchMode) {
       await this._ensureWatching();
     } else {
-      console.log('==== Running esbuild', this._options.entryPoints);
+      console.log('==== Running esbuild', this._options.entryPoints.map(e => path.relative(ROOT, e)).join(', '));
       const start = Date.now();
       await build(this._options);
       console.log('==== Done in', Date.now() - start, 'ms');
