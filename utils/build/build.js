@@ -323,9 +323,10 @@ class EsbuildStep extends Step {
       this._rebuilding = true;
       try {
         await this._context?.rebuild();
+        console.log('==== Esbuild succeeded.');
       } catch (e) {
-
-        console.error('Rebuild failed:', e);
+        // Ignore. Esbuild inherits stderr and already logs nicely formatted errors
+        // before throwing.
       }
 
       this._rebuilding = false;
@@ -409,7 +410,8 @@ if (watchMode) {
       'vite', '--config', 'vite.sw.config.ts',
       'build', '--watch', '--minify=false',
       '--outDir', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'vite', 'traceViewer'),
-      '--emptyOutDir=false'
+      '--emptyOutDir=false',
+      '--clearScreen=false',
     ],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
@@ -426,6 +428,7 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
       'build',
       ...(watchMode ? ['--watch', '--minify=false'] : []),
       ...(withSourceMaps ? ['--sourcemap=inline'] : []),
+      '--clearScreen=false',
     ],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
@@ -437,21 +440,21 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
 if (watchMode) {
   steps.push(new ProgramStep({
     command: 'npx',
-    args: ['vite', '--port', '44223', '--base', '/trace/'],
+    args: ['vite', '--port', '44223', '--base', '/trace/', '--clearScreen=false'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
     concurrent: true,
   }));
   steps.push(new ProgramStep({
     command: 'npx',
-    args: ['vite', '--port', '44224'],
+    args: ['vite', '--port', '44224', '--clearScreen=false'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'html-reporter'),
     concurrent: true,
   }));
   steps.push(new ProgramStep({
     command: 'npx',
-    args: ['vite', '--port', '44225'],
+    args: ['vite', '--port', '44225', '--clearScreen=false'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'recorder'),
     concurrent: true,
@@ -535,14 +538,14 @@ if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
     command: 'npx',
-    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath('.'))],
     shell: true,
     concurrent: true,
   }));
   for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     steps.push(new ProgramStep({
       command: 'npx',
-      args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath(`packages/${webPackage}`))],
+      args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath(`packages/${webPackage}`))],
       shell: true,
       concurrent: true,
     }));
