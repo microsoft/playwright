@@ -560,6 +560,9 @@ function cleanup() {
   }
 }
 process.on('exit', cleanup);
-process.on('SIGINT', cleanup);
+process.on('SIGINT', () => {
+  cleanup();
+  process.exit(0);
+});
 
 watchMode ? runWatch() : runBuild();
