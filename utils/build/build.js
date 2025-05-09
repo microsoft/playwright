@@ -57,6 +57,8 @@ const { build, context } = require('esbuild');
  * @typedef {CommandOnChange|ScriptOnChange} OnChange
  */
 
+/** @type {(() => void)[]} */
+const disposables = [];
 /** @type {Step[]} */
 const steps = [];
 /** @type {OnChange[]} */
@@ -117,9 +119,6 @@ class ProgramStep extends Step {
     this._options = options;
   }
 
-  /** @type {import('child_process').ChildProcess[]} */
-  static activeChildren = [];
-
   /** @override */
   async run() {
     const step = this._options;
@@ -133,16 +132,7 @@ class ProgramStep extends Step {
       },
       cwd: step.cwd,
     });
-
-    if (ProgramStep.activeChildren.length === 0) {
-      process.on('exit', () => {
-        for (const child of ProgramStep.activeChildren) {
-          child.kill();
-        }
-      });
-    }
-    ProgramStep.activeChildren.push(child);
-
+    disposables.push(() => child.kill());
     return new Promise((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code || signal)
@@ -311,6 +301,7 @@ class EsbuildStep extends Step {
     if (this._context)
       return;
     this._context = await context(this._options);
+    disposables.push(() => this._context?.dispose());
 
     const watcher = chokidar.watch(this._options.entryPoints);
     await new Promise(x => watcher.once('ready', x));
@@ -545,5 +536,15 @@ if (lintMode) {
     }));
   }
 }
+
+process.on('exit', () => {
+  for (const disposable of disposables) {
+    try {
+      disposable();
+    } catch (e) {
+      console.error('Error during cleanup:', e);
+    }
+  }
+});
 
 watchMode ? runWatch() : runBuild();
