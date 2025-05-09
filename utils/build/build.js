@@ -287,7 +287,7 @@ class EsbuildStep extends Step {
     if (watchMode) {
       await this._ensureWatching();
     } else {
-      console.log('==== Running esbuild', this._options.entryPoints);
+      console.log('==== Running esbuild', this._options.entryPoints.map(e => path.relative(ROOT, e)).join(', '));
       const start = Date.now();
       await build(this._options);
       console.log('==== Done in', Date.now() - start, 'ms');
@@ -316,7 +316,13 @@ class EsbuildStep extends Step {
     do {
       this._sourcesChanged = false;
       this._rebuilding = true;
-      await this._context?.rebuild();
+      try {
+        await this._context?.rebuild();
+      } catch (e) {
+
+        console.error('Rebuild failed:', e);
+      }
+
       this._rebuilding = false;
     } while (this._sourcesChanged);
   }
