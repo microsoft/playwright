@@ -132,7 +132,10 @@ class ProgramStep extends Step {
       },
       cwd: step.cwd,
     });
-    disposables.push(() => child.kill());
+    disposables.push(() => {
+      if (child.exitCode === null)
+        child.kill();
+    });
     return new Promise((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code || signal)
