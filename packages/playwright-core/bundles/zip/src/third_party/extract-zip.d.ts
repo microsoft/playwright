@@ -49,7 +49,7 @@ declare namespace extract {
 }
 
 declare function extract(
-  zipPath: string,
+  zipPath: Buffer,
   opts: extract.Options,
 ): Promise<void>;
 

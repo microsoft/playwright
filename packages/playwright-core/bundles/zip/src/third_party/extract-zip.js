@@ -33,20 +33,21 @@ const { promisify } = require('util')
 const stream = require('stream')
 const yauzl = require('yauzl')
 
-const openZip = promisify(yauzl.open)
+const openZipFromBuffer = promisify(yauzl.fromBuffer)
 const pipeline = promisify(stream.pipeline)
 
 class Extractor {
-  constructor (zipPath, opts) {
-    this.zipPath = zipPath
+  constructor (zipFile, opts) {
+    /** @type {Buffer} */
+    this.zipFile = zipFile
     this.opts = opts
   }
 
   async extract () {
-    debug('opening', this.zipPath, 'with opts', this.opts)
+    debug('opening', `${this.zipFile.byteLength} bytes`, 'with opts', this.opts);
 
-    this.zipfile = await openZip(this.zipPath, { lazyEntries: true })
-    this.canceled = false
+    this.zipfile = await openZipFromBuffer(this.zipFile, { lazyEntries: true });
+    this.canceled = false;
 
     return new Promise((resolve, reject) => {
       this.zipfile.on('error', err => {
@@ -55,7 +56,7 @@ class Extractor {
       })
       this.zipfile.readEntry()
 
-      this.zipfile.on('close', () => {
+      this.zipfile.on('end', () => {
         if (!this.canceled) {
           debug('zip extraction complete')
           resolve()
@@ -186,7 +187,7 @@ class Extractor {
   }
 }
 
-module.exports = async function (zipPath, opts) {
+module.exports = async function (zipFile, opts) {
   debug('creating target directory', opts.dir)
 
   if (!path.isAbsolute(opts.dir)) {
@@ -195,5 +196,5 @@ module.exports = async function (zipPath, opts) {
 
   await fs.mkdir(opts.dir, { recursive: true })
   opts.dir = await fs.realpath(opts.dir)
-  return new Extractor(zipPath, opts).extract()
+  return new Extractor(zipFile, opts).extract()
 }

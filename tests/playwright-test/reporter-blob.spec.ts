@@ -1438,7 +1438,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
 });
 
 async function extractReport(reportZipFile: string, unzippedReportDir: string): Promise<any[]> {
-  await extractZip(reportZipFile, { dir: unzippedReportDir });
+  await extractZip(await fs.promises.readFile(reportZipFile), { dir: unzippedReportDir });
   const reportFile = path.join(unzippedReportDir, 'report.jsonl');
   const data = await fs.promises.readFile(reportFile, 'utf8');
   const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
