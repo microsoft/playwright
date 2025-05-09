@@ -95,7 +95,6 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.addScriptTag',
   'Frame.addStyleTag',
   'Frame.ariaSnapshot',
-  'Frame.snapshotForAI',
   'Frame.blur',
   'Frame.check',
   'Frame.click',

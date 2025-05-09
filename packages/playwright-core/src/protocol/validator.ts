@@ -1484,15 +1484,10 @@ scheme.FrameAddStyleTagResult = tObject({
 });
 scheme.FrameAriaSnapshotParams = tObject({
   selector: tString,
+  forAI: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.FrameAriaSnapshotResult = tObject({
-  snapshot: tString,
-});
-scheme.FrameSnapshotForAIParams = tObject({
-  selector: tString,
-});
-scheme.FrameSnapshotForAIResult = tObject({
   snapshot: tString,
 });
 scheme.FrameBlurParams = tObject({

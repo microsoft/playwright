@@ -1411,39 +1411,11 @@ export class Frame extends SdkObject {
     });
   }
 
-  async ariaSnapshot(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+  async ariaSnapshot(metadata: CallMetadata, selector: string, options: { forAI?: boolean } & types.TimeoutOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot());
+      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot(options));
     }, this._page.timeoutSettings.timeout(options));
-  }
-
-  async snapshotForAI(metadata: CallMetadata, selector: string): Promise<string> {
-    const allFrameSnapshot = async (selector: string): Promise<string> => {
-      const controller = new ProgressController(metadata, this);
-      const snapshot = await controller.run(async progress => {
-        return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot({ forAI: true }));
-      }, this._page.timeoutSettings.defaultTimeout());
-
-      const lines = snapshot.split('\n');
-      const result = [];
-      for (const line of lines) {
-        const match = line.match(/^(\s*)- iframe \[ref=(.*)\]/);
-        if (!match) {
-          result.push(line);
-          continue;
-        }
-
-        const leadingSpace = match[1];
-        const ref = match[2];
-        const childSelector = `${selector} >> aria-ref=${ref} >> internal:control=enter-frame >> body`;
-        const childSnapshot = await allFrameSnapshot(childSelector);
-        result.push(line + ':', childSnapshot.split('\n').map(l => leadingSpace + '  ' + l).join('\n'));
-      }
-      return result.join('\n');
-    };
-
-    return await allFrameSnapshot(selector);
   }
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
