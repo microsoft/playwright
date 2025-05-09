@@ -3,7 +3,7 @@
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
-::: tip
+:::tip
 If you want to debug where the mouse moved, you can use the [Trace viewer](/trace-viewer-intro). A red dot showing the location of the mouse will be shown for every mouse action
 :::
 
