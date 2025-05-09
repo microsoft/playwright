@@ -999,6 +999,48 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
   ]);
 });
 
+test('should not produce an action entry for calling a binding', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({ page }) => {
+          let wasCalled = false;
+          await page.exposeBinding('customBinding', () => {
+            wasCalled = true;
+            return 'foo';
+          });
+        
+          const output = await page.evaluate(() => window['customBinding']());
+          expect(wasCalled).toBe(true);
+          expect(output).toBe('foo');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'page.exposeBinding',
+    'page.evaluate',
+    'expect.toBe',
+    'expect.toBe',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
+});
+
 test('should attribute worker fixture teardown to the right test', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
