@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { defineProperty } from '@isomorphic/rtti';
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
 import type { SerializedValue } from '@isomorphic/utilityScriptSerializers';
@@ -74,6 +75,7 @@ export class UtilityScript {
   readonly builtins: Builtins;
   readonly isUnderTest: boolean;
 
+  private _playwrightBinding: Function | undefined;
   private _bindings = new Map<string, BindingData>();
 
   // eslint-disable-next-line no-restricted-globals
@@ -105,6 +107,8 @@ export class UtilityScript {
     };
     if (this.isUnderTest)
       (global as any).builtins = this.builtins;
+    this._playwrightBinding = (global as any)[kPlaywrightBinding];
+    delete (global as any)[kPlaywrightBinding];
   }
 
   evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
@@ -159,7 +163,7 @@ export class UtilityScript {
         }
         payload = { name: bindingName, seq, serializedArgs };
       }
-      (this.global as any)[kPlaywrightBinding](JSON.stringify(payload));
+      this._playwrightBinding?.(JSON.stringify(payload));
       return promise;
     };
   }
@@ -207,11 +211,5 @@ export class UtilityScript {
 export function ensureUtilityScript(global?: typeof globalThis): UtilityScript {
   // eslint-disable-next-line no-restricted-globals
   global = global ?? globalThis;
-  let utilityScript: UtilityScript = (global as any)[kUtilityScriptGlobalProperty];
-  if (utilityScript)
-    return utilityScript;
-
-  utilityScript = new UtilityScript(global);
-  Object.defineProperty(global, kUtilityScriptGlobalProperty, { value: utilityScript, configurable: false, enumerable: false, writable: false });
-  return utilityScript;
+  return defineProperty(kUtilityScriptGlobalProperty, () => new UtilityScript(global));
 }

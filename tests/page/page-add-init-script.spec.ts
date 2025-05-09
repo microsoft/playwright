@@ -109,3 +109,18 @@ it('init script should run only once in popup', async ({ page, browserName }) =>
   ]);
   expect(await popup.evaluate('callCount')).toEqual(1);
 });
+
+it('init script should not observe playwright internals', async ({ server, page }) => {
+  await page.exposeBinding('exposed', () => {});
+  await page.addInitScript(() => {
+    window['check'] = () => {
+      const toString = (prop: string | symbol) => typeof prop === 'string' ? prop : prop.toString();
+      const keys = Reflect.ownKeys(globalThis).concat(Reflect.ownKeys(WeakSet.prototype.delete));
+      return keys.map(toString).find(name => name.includes('playwright') || name.includes('_pw')) || 'none';
+    };
+    window['found'] = window['check']();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => window['found'])).toBe('none');
+  expect(await page.evaluate(() => window['check']())).toBe('none');
+});
