@@ -316,7 +316,13 @@ class EsbuildStep extends Step {
     do {
       this._sourcesChanged = false;
       this._rebuilding = true;
-      await this._context?.rebuild();
+      try {
+        await this._context?.rebuild();
+      } catch (e) {
+
+        console.error('Rebuild failed:', e);
+      }
+
       this._rebuilding = false;
     } while (this._sourcesChanged);
   }
