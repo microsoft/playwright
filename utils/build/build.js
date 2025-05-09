@@ -323,7 +323,6 @@ class EsbuildStep extends Step {
       this._rebuilding = true;
       try {
         await this._context?.rebuild();
-        console.log('==== Esbuild succeeded.');
       } catch (e) {
         // Ignore. Esbuild inherits stderr and already logs nicely formatted errors
         // before throwing.
