@@ -21,31 +21,47 @@ const fs = require('fs');
 
 const outdir = path.join(__dirname, '../../lib/utilsBundleImpl');
 
-if (!fs.existsSync(outdir))
-  fs.mkdirSync(outdir);
+function copyXdgOpen() {
+  if (!fs.existsSync(outdir))
+    fs.mkdirSync(outdir, { recursive: true });
 
-{
   // 'open' package requires 'xdg-open' binary to be present, which does not get bundled by esbuild.
   fs.copyFileSync(path.join(__dirname, 'node_modules/open/xdg-open'), path.join(outdir, 'xdg-open'));
+  console.log('==== Copied xdg-open to', path.join(outdir, 'xdg-open'));
 }
 
-(async () => {
-  const ctx = await esbuild.context({
+/**
+ * @param {boolean} watchMode
+ * @returns {import('esbuild').BuildOptions}
+ */
+function esbuildOptions(watchMode) {
+  return {
     entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
     bundle: true,
     outfile: path.join(outdir, 'index.js'),
     format: 'cjs',
     platform: 'node',
     target: 'ES2019',
-    sourcemap: process.argv.includes('--sourcemap'),
-    minify: process.argv.includes('--minify'),
-  });
+    sourcemap: watchMode,
+    minify: !watchMode,
+  };
+}
+
+async function main() {
+  copyXdgOpen();
+  const watchMode = process.argv.includes('--watch');
+  const ctx = await esbuild.context(esbuildOptions(watchMode));
   await ctx.rebuild();
-  if (process.argv.includes('--watch'))
+  if (watchMode)
     await ctx.watch();
   else
     await ctx.dispose();
-})().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+}
+
+module.exports = {
+  beforeEsbuild: copyXdgOpen,
+  esbuildOptions,
+};
+
+if (require.main === module)
+  main();

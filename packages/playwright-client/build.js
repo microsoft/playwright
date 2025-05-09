@@ -18,20 +18,20 @@
 const path = require('path');
 const esbuild = require('esbuild');
 
+
 /**
  * @param {boolean} watchMode
  * @returns {import('esbuild').BuildOptions}
  */
 function esbuildOptions(watchMode) {
   return {
-    entryPoints: [path.join(__dirname, 'src/zipBundleImpl.ts')],
+    entryPoints: [path.join(__dirname, 'src/index.ts')],
     bundle: true,
-    outdir: path.join(__dirname, '../../lib'),
+    outdir: path.join(__dirname, 'lib'),
     format: 'cjs',
     platform: 'node',
     target: 'ES2019',
     sourcemap: watchMode,
-    minify: !watchMode,
   };
 }
 

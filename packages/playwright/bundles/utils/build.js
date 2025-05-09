@@ -18,8 +18,12 @@
 const path = require('path');
 const esbuild = require('esbuild');
 
-(async () => {
-  const ctx = await esbuild.context({
+/**
+ * @param {boolean} watchMode
+ * @returns {import('esbuild').BuildOptions}
+ */
+function esbuildOptions(watchMode) {
+  return {
     entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
     external: ['fsevents'],
     bundle: true,
@@ -27,15 +31,22 @@ const esbuild = require('esbuild');
     format: 'cjs',
     platform: 'node',
     target: 'ES2019',
-    sourcemap: process.argv.includes('--sourcemap'),
-    minify: process.argv.includes('--minify'),
-  });
+    sourcemap: watchMode,
+    minify: !watchMode,
+  };
+}
+
+async function main() {
+  const watchMode = process.argv.includes('--watch');
+  const ctx = await esbuild.context(esbuildOptions(watchMode));
   await ctx.rebuild();
-  if (process.argv.includes('--watch'))
+  if (watchMode)
     await ctx.watch();
   else
     await ctx.dispose();
-})().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+}
+
+module.exports = { esbuildOptions };
+
+if (require.main === module)
+  main();

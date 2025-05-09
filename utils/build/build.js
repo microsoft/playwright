@@ -67,8 +67,7 @@ const onChanges = [];
 const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
-const lintMode = process.argv.slice(2).includes('--lint');
-const withSourceMaps = process.argv.slice(2).includes('--sourcemap') || watchMode;
+const withSourceMaps = watchMode;
 const installMode = process.argv.slice(2).includes('--install');
 const ROOT = path.join(__dirname, '..', '..');
 
@@ -292,7 +291,7 @@ class EsbuildStep extends Step {
     if (watchMode) {
       await this._ensureWatching();
     } else {
-      console.log('==== Running esbuild', this._options.entryPoints.map(e => path.relative(ROOT, e)).join(', '));
+      console.log('==== Running esbuild:', this._relativeEntryPoints().join(', '));
       const start = Date.now();
       await build(this._options);
       console.log('==== Done in', Date.now() - start, 'ms');
@@ -311,7 +310,7 @@ class EsbuildStep extends Step {
     watcher.on('all', () => this._rebuild());
 
     await this._rebuild();
-    console.log('==== Esbuild watching', this._options.entryPoints, `(started in ${Date.now() - start}ms)`);
+    console.log('==== Esbuild watching:', this._relativeEntryPoints().join(', '), `(started in ${Date.now() - start}ms)`);
   }
 
   async _rebuild() {
@@ -332,15 +331,32 @@ class EsbuildStep extends Step {
       this._rebuilding = false;
     } while (this._sourcesChanged);
   }
+
+  _relativeEntryPoints() {
+    return this._options.entryPoints.map(e => path.relative(ROOT, e));
+  }
+}
+
+class CustomCallbackStep extends Step {
+  constructor(callback) {
+    super({ concurrent: false });
+    this._callback = callback;
+  }
+
+  async run() {
+    await this._callback();
+  }
 }
 
 // Run esbuild.
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
-  // These packages have their own build step.
-  if (['@playwright/client'].includes(pkg.name))
+  // playwright-client has its own build step.
+  if (['@playwright/client'].includes(pkg.name)) {
+    loadBundleEsbuildStep(pkg.path);
     continue;
+  }
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
@@ -352,32 +368,19 @@ for (const pkg of workspace.packages()) {
 }
 
 // Build/watch bundles.
-for (const bundle of bundles) {
-  steps.push(new ProgramStep({
-    command: 'npm',
-    args: [
-      'run',
-      watchMode ? 'watch' : 'build',
-      ...(withSourceMaps ? ['--', '--sourcemap'] : [])
-    ],
-    shell: true,
-    cwd: bundle,
-    concurrent: true,
-  }));
-}
+for (const bundle of bundles)
+  loadBundleEsbuildStep(bundle);
 
-// Build/watch playwright-client.
-steps.push(new ProgramStep({
-  command: 'npm',
-  args: [
-    'run',
-    watchMode ? 'watch' : 'build',
-    ...(withSourceMaps ? ['--', '--sourcemap'] : [])
-  ],
-  shell: true,
-  cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-client'),
-  concurrent: true,
-}));
+function loadBundleEsbuildStep(bundle) {
+  const buildFile = path.join(bundle, 'build.js');
+  if (!fs.existsSync(buildFile))
+    throw new Error(`Build file ${buildFile} does not exist`);
+  const { esbuildOptions, beforeEsbuild } = require(buildFile);
+  if (beforeEsbuild)
+    steps.push(new CustomCallbackStep(beforeEsbuild));
+  const options = esbuildOptions(watchMode);
+  steps.push(new EsbuildStep(options));
+}
 
 // Build/watch trace viewer service worker.
 steps.push(new ProgramStep({
@@ -528,7 +531,7 @@ copyFiles.push({
   to: 'packages/playwright-core/lib',
 });
 
-if (lintMode) {
+if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
     command: 'npx',

@@ -24,9 +24,9 @@ const esbuild = require('esbuild');
  */
 function esbuildOptions(watchMode) {
   return {
-    entryPoints: [path.join(__dirname, 'src/zipBundleImpl.ts')],
+    entryPoints: [path.join(__dirname, 'src/expectBundleImpl.ts')],
     bundle: true,
-    outdir: path.join(__dirname, '../../lib'),
+    outdir: path.join(__dirname, '../../lib/common'),
     format: 'cjs',
     platform: 'node',
     target: 'ES2019',

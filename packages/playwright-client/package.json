@@ -25,8 +25,9 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "esbuild ./src/index.ts --outdir=lib --format=cjs --bundle --platform=node --target=ES2019",
-    "watch": "esbuild ./src/index.ts --outdir=lib --format=cjs --bundle --platform=node --target=ES2019 --watch"
+    "esbuild": "node build.js",
+    "build": "npm run esbuild",
+    "watch": "npm run esbuild -- --watch"
   },
   "dependencies": {
     "playwright-core": "1.53.0-next"
