@@ -540,7 +540,11 @@ if (lintMode) {
   }
 }
 
-process.on('exit', () => {
+let cleanupCalled = false;
+function cleanup() {
+  if (cleanupCalled)
+    return;
+  cleanupCalled = true;
   for (const disposable of disposables) {
     try {
       disposable();
@@ -548,6 +552,8 @@ process.on('exit', () => {
       console.error('Error during cleanup:', e);
     }
   }
-});
+}
+process.on('exit', cleanup);
+process.on('SIGINT', cleanup);
 
 watchMode ? runWatch() : runBuild();
