@@ -111,7 +111,31 @@ export class FrameSelectors {
     return Promise.all(result);
   }
 
+  private _resolveForLastAISnapshot(selector: string, options: types.StrictOptions = {}): SelectorInFrame | null {
+    const match = selector.match(/^aria-ref=f(\d+)e\d+$/);
+    if (!match)
+      return null;
+
+    const frameIndex = +match[1];
+    const page = this.frame._page;
+    const frameId = page.lastSnapshotFrameIds[frameIndex - 1];
+    if (!frameId)
+      return null;
+    const frameManager = page.frameManager;
+    const frame = frameManager.frame(frameId);
+    if (!frame)
+      return null;
+    return {
+      frame,
+      info: frame.selectors._parseSelector(selector, options),
+    };
+  }
+
   async resolveFrameForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame | null> {
+    const resolvedForSnapshot = this._resolveForLastAISnapshot(selector, options);
+    if (resolvedForSnapshot)
+      return resolvedForSnapshot;
+
     let frame: Frame = this.frame;
     const frameChunks = splitSelectorByFrame(selector);
 

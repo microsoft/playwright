@@ -295,6 +295,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { pdf: buffer };
   }
 
+  async snapshotForAI(params: channels.PageSnapshotForAIParams, metadata: CallMetadata): Promise<channels.PageSnapshotForAIResult> {
+    return { snapshot: await this._page.snapshotForAI(metadata) };
+  }
+
   async bringToFront(params: channels.PageBringToFrontParams, metadata: CallMetadata): Promise<void> {
     await this._page.bringToFront();
   }

@@ -90,6 +90,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Page.mouseWheel',
   'Page.touchscreenTap',
   'Page.accessibilitySnapshot',
+  'Page.snapshotForAI',
   'Frame.evalOnSelector',
   'Frame.evalOnSelectorAll',
   'Frame.addScriptTag',

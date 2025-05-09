@@ -832,6 +832,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
     return result.pdf;
   }
+
+  async _snapshotForAI(): Promise<string> {
+    const result = await this._channel.snapshotForAI();
+    return result.snapshot;
+  }
 }
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
