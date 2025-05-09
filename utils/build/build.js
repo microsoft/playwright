@@ -352,9 +352,11 @@ class CustomCallbackStep extends Step {
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
-  // These packages have their own build step.
-  if (['@playwright/client'].includes(pkg.name))
+  // playwright-client has its own build step.
+  if (['@playwright/client'].includes(pkg.name)) {
+    loadBundleEsbuildStep(pkg.path);
     continue;
+  }
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
@@ -366,7 +368,10 @@ for (const pkg of workspace.packages()) {
 }
 
 // Build/watch bundles.
-for (const bundle of bundles) {
+for (const bundle of bundles)
+  loadBundleEsbuildStep(bundle);
+
+function loadBundleEsbuildStep(bundle) {
   const buildFile = path.join(bundle, 'build.js');
   if (!fs.existsSync(buildFile))
     throw new Error(`Build file ${buildFile} does not exist`);
@@ -376,19 +381,6 @@ for (const bundle of bundles) {
   const options = esbuildOptions(watchMode);
   steps.push(new EsbuildStep(options));
 }
-
-// Build/watch playwright-client.
-steps.push(new ProgramStep({
-  command: 'npm',
-  args: [
-    'run',
-    watchMode ? 'watch' : 'build',
-    ...(withSourceMaps ? ['--', '--sourcemap'] : [])
-  ],
-  shell: true,
-  cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-client'),
-  concurrent: true,
-}));
 
 // Build/watch trace viewer service worker.
 steps.push(new ProgramStep({
