@@ -117,6 +117,9 @@ class ProgramStep extends Step {
     this._options = options;
   }
 
+  /** @type {import('child_process').ChildProcess[]} */
+  static activeChildren = [];
+
   /** @override */
   async run() {
     const step = this._options;
@@ -130,7 +133,16 @@ class ProgramStep extends Step {
       },
       cwd: step.cwd,
     });
-    process.on('exit', () => child.kill());
+
+    if (ProgramStep.activeChildren.length === 0) {
+      process.on('exit', () => {
+        for (const child of ProgramStep.activeChildren) {
+          child.kill();
+        }
+      });
+    }
+    ProgramStep.activeChildren.push(child);
+
     return new Promise((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code || signal)
