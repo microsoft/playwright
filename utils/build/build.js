@@ -57,6 +57,8 @@ const { build, context } = require('esbuild');
  * @typedef {CommandOnChange|ScriptOnChange} OnChange
  */
 
+/** @type {(() => void)[]} */
+const disposables = [];
 /** @type {Step[]} */
 const steps = [];
 /** @type {OnChange[]} */
@@ -130,7 +132,10 @@ class ProgramStep extends Step {
       },
       cwd: step.cwd,
     });
-    process.on('exit', () => child.kill());
+    disposables.push(() => {
+      if (child.exitCode === null)
+        child.kill();
+    });
     return new Promise((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code || signal)
@@ -299,6 +304,7 @@ class EsbuildStep extends Step {
     if (this._context)
       return;
     this._context = await context(this._options);
+    disposables.push(() => this._context?.dispose());
 
     const watcher = chokidar.watch(this._options.entryPoints);
     await new Promise(x => watcher.once('ready', x));
@@ -539,5 +545,21 @@ if (lintMode) {
     }));
   }
 }
+
+let cleanupCalled = false;
+function cleanup() {
+  if (cleanupCalled)
+    return;
+  cleanupCalled = true;
+  for (const disposable of disposables) {
+    try {
+      disposable();
+    } catch (e) {
+      console.error('Error during cleanup:', e);
+    }
+  }
+}
+process.on('exit', cleanup);
+process.on('SIGINT', cleanup);
 
 watchMode ? runWatch() : runBuild();
