@@ -28,7 +28,7 @@ import * as js from './javascript';
 import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from './timeoutSettings';
-import { LongStandingScope, assert, trimStringWithEllipsis } from '../utils';
+import { LongStandingScope, assert, defineProperty, trimStringWithEllipsis } from '../utils';
 import { createGuid } from './utils/crypto';
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
@@ -899,15 +899,11 @@ export class InitScript {
   constructor(source: string, internal?: boolean, name?: string) {
     const guid = createGuid();
     this.source = `(() => {
-      const name = '__pw_init_scripts__${js.runtimeGuid}';
-      if (!globalThis[name])
-        Object.defineProperty(globalThis, name, { value: {}, configurable: false, enumerable: false, writable: false });
-
-      const globalInitScripts = globalThis[name];
+      const globalInitScripts = (${defineProperty.toString()})('__pw_init_scripts__${js.runtimeGuid}', () => ({}));
       const hasInitScript = globalInitScripts[${JSON.stringify(guid)}];
       if (hasInitScript)
         return;
-      globalThis[name][${JSON.stringify(guid)}] = true;
+      globalInitScripts[${JSON.stringify(guid)}] = true;
       ${source}
     })();`;
     this.internal = !!internal;

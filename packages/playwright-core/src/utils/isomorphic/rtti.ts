@@ -27,3 +27,21 @@ export function isObject(obj: any): obj is NonNullable<object> {
 export function isError(obj: any): obj is Error {
   return obj instanceof Error || (obj && Object.getPrototypeOf(obj)?.name === 'Error');
 }
+
+export function defineProperty<T>(name: string, create: () => T): T {
+  const sym = Symbol.for(name);
+  if ((WeakSet.prototype.delete as any)[sym])
+    return (WeakSet.prototype.delete as any)[sym];
+  const value = create();
+  (WeakSet.prototype.delete as any)[sym] = value;
+  WeakSet.prototype.delete = new Proxy(WeakSet.prototype.delete, {
+    ownKeys(target) { return Reflect.ownKeys(target).filter(key => key !== sym); },
+    has(target, prop) { return prop === sym ? false : Reflect.has(target, prop); },
+    getOwnPropertyDescriptor(target, prop) { return prop === sym ? undefined : Reflect.getOwnPropertyDescriptor(target, prop); },
+  });
+  return value;
+}
+
+export function accessDefinedProperty(name: string) {
+  return `WeakSet.prototype.delete[Symbol.for('${name}')]`;
+}

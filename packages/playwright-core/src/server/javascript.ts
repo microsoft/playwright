@@ -16,7 +16,7 @@
 
 import { SdkObject } from './instrumentation';
 import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
-import { createGuid, isUnderTest } from '../utils';
+import { accessDefinedProperty, createGuid, isUnderTest } from '../utils';
 import { serializeAsCallArgument } from '../utils/isomorphic/utilityScriptSerializers';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
@@ -37,7 +37,7 @@ export const kUtilityScriptSource = prepareGeneratedScript(rawUtilityScriptSourc
 
 // Include this code in any evaluated source to get access to the UtilityScript instance.
 export function accessUtilityScript() {
-  return `globalThis['__playwright_utility_script__${runtimeGuid}']`;
+  return accessDefinedProperty(`__playwright_utility_script__${runtimeGuid}`);
 }
 
 // The name of the global playwright binding, accessed by UtilityScript.

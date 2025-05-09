@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-// IMPORTANT: This file should match javascript.ts and utilityScript.ts
-const gSetTimeout = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.setTimeout ?? globalThis.setTimeout;
-const gClearTimeout = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.clearTimeout ?? globalThis.clearTimeout;
-const gSetInterval = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.setInterval ?? globalThis.setInterval;
-const gClearInterval = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.clearInterval ?? globalThis.clearInterval;
-const gRequestAnimationFrame = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.requestAnimationFrame ?? globalThis.requestAnimationFrame;
-const gCancelAnimationFrame = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.cancelAnimationFrame ?? globalThis.cancelAnimationFrame;
-const gRequestIdleCallback = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.requestIdleCallback ?? globalThis.requestIdleCallback;
-const gCancelIdleCallback = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.cancelIdleCallback ?? globalThis.cancelIdleCallback;
-const gPerformance = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.performance ?? globalThis.performance;
-const gEval = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.eval ?? globalThis.eval;
-const gIntl = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.Intl ?? globalThis.Intl;
-const gDate = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.Date ?? globalThis.Date;
-const gMap = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.Map ?? globalThis.Map;
-const gSet = globalThis.__playwright_utility_script__$runtime_guid$?.builtins.Set ?? globalThis.Set;
+// IMPORTANT: This file should mirror accessUtilityScript() function.
+const builtins = WeakSet.prototype.delete[Symbol.for('__playwright_utility_script__$runtime_guid$')]?.builtins;
+const gSetTimeout = builtins?.setTimeout ?? globalThis.setTimeout;
+const gClearTimeout = builtins?.clearTimeout ?? globalThis.clearTimeout;
+const gSetInterval = builtins?.setInterval ?? globalThis.setInterval;
+const gClearInterval = builtins?.clearInterval ?? globalThis.clearInterval;
+const gRequestAnimationFrame = builtins?.requestAnimationFrame ?? globalThis.requestAnimationFrame;
+const gCancelAnimationFrame = builtins?.cancelAnimationFrame ?? globalThis.cancelAnimationFrame;
+const gRequestIdleCallback = builtins?.requestIdleCallback ?? globalThis.requestIdleCallback;
+const gCancelIdleCallback = builtins?.cancelIdleCallback ?? globalThis.cancelIdleCallback;
+const gPerformance = builtins?.performance ?? globalThis.performance;
+const gEval = builtins?.eval ?? globalThis.eval;
+const gIntl = builtins?.Intl ?? globalThis.Intl;
+const gDate = builtins?.Date ?? globalThis.Date;
+const gMap = builtins?.Map ?? globalThis.Map;
+const gSet = builtins?.Set ?? globalThis.Set;
 
 export {
   gSetTimeout as 'setTimeout',
