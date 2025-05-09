@@ -716,13 +716,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await input.setInputFiles(uploadFile);
       expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('200MB.zip');
       expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+      server.disableRequestBodyConsumption();
       const serverFilePromise = new Promise<formidable.File>(fulfill => {
         server.setRoute('/upload', async (req, res) => {
-          const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
+          const form = formidable({ uploadDir: testInfo.outputPath() });
           form.parse(req, function(err, fields, f) {
             res.end();
-            const files = f as Record<string, formidable.File>;
-            fulfill(files.file1);
+            const files = f;
+            fulfill(files.file1[0]);
           });
         });
       });

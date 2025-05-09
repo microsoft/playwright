@@ -996,12 +996,13 @@ it('should encode to application/json by default', async function({ context, pag
 });
 
 it('should support multipart/form-data', async function({ context, server }) {
-  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: IncomingMessage}>(resolve => {
+  server.disableRequestBodyConsumption();
+  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: formidable.Files, serverRequest: IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
-      const form = new formidable.IncomingForm();
+      const form = formidable();
       form.parse(serverRequest, (error, fields, files) => {
         server.serveFile(serverRequest, res);
-        resolve({ error, fields, files: files as Record<string, formidable.File>, serverRequest });
+        resolve({ error, fields, files, serverRequest });
       });
     });
   });
@@ -1024,21 +1025,22 @@ it('should support multipart/form-data', async function({ context, server }) {
   expect(error).toBeFalsy();
   expect(serverRequest.method).toBe('POST');
   expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
-  expect(fields['firstName']).toBe('John');
-  expect(fields['lastName']).toBe('Doe');
-  expect(files['file'].originalFilename).toBe(file.name);
-  expect(files['file'].mimetype).toBe(file.mimeType);
-  expect(fs.readFileSync(files['file'].filepath).toString()).toBe(file.buffer.toString('utf8'));
+  expect(fields['firstName']).toEqual(['John']);
+  expect(fields['lastName']).toEqual(['Doe']);
+  expect(files['file'][0].originalFilename).toBe(file.name);
+  expect(files['file'][0].mimetype).toBe(file.mimeType);
+  expect(fs.readFileSync(files['file'][0].filepath).toString()).toBe(file.buffer.toString('utf8'));
   expect(response.status()).toBe(200);
 });
 
 it('should support multipart/form-data with ReadStream values', async function({ context, page, asset, server }) {
-  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: IncomingMessage}>(resolve => {
+  server.disableRequestBodyConsumption();
+  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: formidable.Files, serverRequest: IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
-      const form = new formidable.IncomingForm();
+      const form = formidable();
       form.parse(serverRequest, (error, fields, files) => {
         server.serveFile(serverRequest, res);
-        resolve({ error, fields, files: files as Record<string, formidable.File>, serverRequest });
+        resolve({ error, fields, files: files, serverRequest });
       });
     });
   });
@@ -1057,11 +1059,11 @@ it('should support multipart/form-data with ReadStream values', async function({
   expect(serverRequest.method).toBe('POST');
   expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
   expect(serverRequest.headers['content-length']).toContain('5498');
-  expect(fields['firstName']).toBe('John');
-  expect(fields['lastName']).toBe('Doe');
-  expect(files['readStream'].originalFilename).toBe('simplezip.json');
-  expect(files['readStream'].mimetype).toBe('application/json');
-  expect(fs.readFileSync(files['readStream'].filepath).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
+  expect(fields['firstName']).toEqual(['John']);
+  expect(fields['lastName']).toEqual(['Doe']);
+  expect(files['readStream'][0].originalFilename).toBe('simplezip.json');
+  expect(files['readStream'][0].mimetype).toBe('application/json');
+  expect(fs.readFileSync(files['readStream'][0].filepath).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
   expect(response.status()).toBe(200);
 });
 
@@ -1073,9 +1075,10 @@ it('should support multipart/form-data and keep the order', async function({ con
   };
   given['foo']  = 'bar';
   const givenKeys = Object.keys(given);
+  server.disableRequestBodyConsumption();
   const formReceived = new Promise<{error: any, fields: formidable.Fields}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
-      const form = new formidable.IncomingForm();
+      const form = formidable();
       form.parse(serverRequest, (error, fields, files) => {
         server.serveFile(serverRequest, res);
         resolve({ error, fields });
