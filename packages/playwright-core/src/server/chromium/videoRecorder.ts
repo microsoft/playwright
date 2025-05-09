@@ -37,6 +37,8 @@ export class VideoRecorder {
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
+  private _firstFrameTimestamp: number | null = null;
+  private _framesWritten: number = 0;
 
   static async launch(page: Page, ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
@@ -132,13 +134,27 @@ export class VideoRecorder {
     if (this._isStopped)
       return;
 
+    if (this._firstFrameTimestamp === null) {
+      this._firstFrameTimestamp = timestamp;
+      this._lastFrameBuffer = frame;
+      this._lastFrameTimestamp = timestamp;
+      this._lastWriteTimestamp = monotonicTime();
+      return;
+    }
+
+    const expectedFrames = Math.round(fps * (timestamp - this._firstFrameTimestamp));
+
+    const repeatCount = Math.max(0, expectedFrames - this._framesWritten);
+
     if (this._lastFrameBuffer) {
-      const durationSec = timestamp - this._lastFrameTimestamp;
-      const repeatCount = Math.max(1, Math.round(fps * durationSec));
       for (let i = 0; i < repeatCount; ++i)
         this._frameQueue.push(this._lastFrameBuffer);
-      this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
+      this._framesWritten += repeatCount;
     }
+
+    if (repeatCount > 0)
+      this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
+
 
     this._lastFrameBuffer = frame;
     this._lastFrameTimestamp = timestamp;
@@ -160,9 +176,32 @@ export class VideoRecorder {
   async stop() {
     if (this._isStopped)
       return;
-    this.writeFrame(Buffer.from([]), this._lastFrameTimestamp + (monotonicTime() - this._lastWriteTimestamp) / 1000);
+
     this._isStopped = true;
+
+    if (this._firstFrameTimestamp === null || !this._lastFrameBuffer) {
+      if (this._gracefullyClose)
+        await this._gracefullyClose();
+      return;
+    }
+
+    const finalTimestamp = this._lastFrameTimestamp + (monotonicTime() - this._lastWriteTimestamp) / 1000;
+
+    const expectedFrames = Math.round(fps * (finalTimestamp - this._firstFrameTimestamp));
+
+    const repeatCount = Math.max(0, expectedFrames - this._framesWritten);
+
+    for (let i = 0; i < repeatCount; ++i)
+      this._frameQueue.push(this._lastFrameBuffer);
+
+    this._framesWritten += repeatCount;
+
+    if (repeatCount > 0 || this._frameQueue.length > 0)
+      this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
+
+
     await this._lastWritePromise;
+
     await this._gracefullyClose!();
   }
 }
