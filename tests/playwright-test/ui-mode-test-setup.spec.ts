@@ -47,7 +47,11 @@ test('should run global setup and teardown', async ({ runUITest }, testInfo) => 
     `
   }, undefined, { additionalArgs: ['--output=foo'] });
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   await page.getByTitle('Toggle output').click();
   const output = page.getByTestId('output');
@@ -85,7 +89,11 @@ test('should teardown on sigint', async ({ runUITest, nodeVersion }) => {
     `
   });
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
   await page.getByTitle('Toggle output').click();
   await expect(page.getByTestId('output')).toContainText('from-global-setup');
 
@@ -335,7 +343,11 @@ for (const useWeb of [true, false]) {
         `
       }, null, { useWeb });
       await page.getByTitle('Run all').click();
-      await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+      const statusLine = page.getByTestId('status-line');
+      await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+      await expect(statusLine.locator('.status-passed')).toHaveText('1');
+      await expect(statusLine.locator('.status-failed')).toHaveText('0');
+      await expect(statusLine.locator('.status-skipped')).toHaveText('0');
       await testProcess.kill('SIGINT');
       await expect.poll(() => testProcess.outputLines()).toEqual([
         'from-global-teardown0000',
@@ -368,7 +380,11 @@ test('should restart webserver on reload', async ({ runUITest }) => {
     `
   }, { DEBUG: 'pw:webserver' });
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  const statusLine = page.getByTestId('status-line');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 
   await page.getByTitle('Toggle output').click();
   await expect(page.getByTestId('output')).toContainText('[WebServer] listening');
@@ -381,5 +397,8 @@ test('should restart webserver on reload', async ({ runUITest }) => {
   await expect(page.getByTestId('output')).not.toContainText('set reuseExistingServer:true');
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(statusLine.getByTestId('test-count')).toHaveText('1/1');
+  await expect(statusLine.locator('.status-passed')).toHaveText('1');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 });
