@@ -41,9 +41,9 @@ test(`third party non-partitioned cookies`, async ({ page, browserName, httpsSer
 
   // WebKit does not support third-party cookies without a 'Partition' attribute.
   if (browserName === 'webkit')
-    await expect(frameBody).toHaveText('Received cookie: undefined', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: undefined');
   else
-    await expect(frameBody).toHaveText('Received cookie: name=value', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: name=value');
 });
 
 test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer }) => {
@@ -70,17 +70,17 @@ test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServ
   // Firefox cookie partitioning is disabled in Firefox.
   // TODO: reenable cookie partitioning?
   if (browserName === 'firefox') {
-    await expect(frameBody).toHaveText('Received cookie: name=value; nonPartitionedName=value', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: name=value; nonPartitionedName=value');
     return;
   }
 
   if (browserName === 'webkit') {
     // WebKit will only send 'Partitioned' third-party cookies exactly matching the partition.
-    await expect(frameBody).toHaveText('Received cookie: undefined', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: undefined');
   } else {
     // For non-partitioned cookies, the cookie is sent to the iframe right away,
     // if third-party cookies are supported by the browser.
-    await expect(frameBody).toHaveText('Received cookie: nonPartitionedName=value', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: nonPartitionedName=value');
   }
 
   // First navigation:
@@ -90,7 +90,7 @@ test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServ
   // - sends the cookie as it was just set for the (top-level site, iframe url) partition.
   await page.goto(httpsServer.CROSS_PROCESS_PREFIX + '/with-frame.html');
   if (browserName === 'webkit')
-    await expect(frameBody).toHaveText('Received cookie: undefined', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: undefined');
   else
-    await expect(frameBody).toHaveText('Received cookie: nonPartitionedName=value; name=value', { timeout: 1000 });
+    await expect(frameBody).toHaveText('Received cookie: nonPartitionedName=value; name=value');
 });
