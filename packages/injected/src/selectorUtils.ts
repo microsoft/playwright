@@ -77,30 +77,16 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
             currentImmediate += child.nodeValue || '';
           } else if (child.nodeType === Node.COMMENT_NODE) {
             continue;
-          } else {
-            if (currentImmediate)
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (currentImmediate) {
               value.immediate.push(currentImmediate);
-            currentImmediate = '';
-            if (child.nodeType === Node.ELEMENT_NODE) {
-              const el = child as Element;
-              if (el.tagName === 'SLOT') {
-                for (const assigned of (el as HTMLSlotElement).assignedNodes({ flatten: true })) {
-                  if (assigned.nodeType === Node.TEXT_NODE) {
-                    const txt = assigned.nodeValue || '';
-                    value.full += txt;
-                    currentImmediate += txt;
-                  } else if (assigned.nodeType === Node.ELEMENT_NODE) {
-                    if (currentImmediate) {
-                      value.immediate.push(currentImmediate);
-                      currentImmediate = '';
-                    }
-                    value.full += elementText(cache, assigned as Element).full;
-                  }
-                }
-                continue;
-              }
-              value.full += elementText(cache, child as Element).full;
+              currentImmediate = '';
             }
+            if (child.nodeName === 'SLOT') {
+              currentImmediate = processSlotText(child as HTMLSlotElement, cache, value, currentImmediate);
+              continue;
+            }
+            value.full += elementText(cache, child as Element).full;
           }
         }
         if (currentImmediate)
@@ -114,6 +100,22 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
     cache.set(root, value);
   }
   return value;
+}
+
+function processSlotText(slot: HTMLSlotElement, cache: Map<Element | ShadowRoot, ElementText>, value: ElementText, currentImmediate: string): string {
+  for (const assigned of slot.assignedNodes({ flatten: true })) {
+    if (assigned.nodeType === Node.TEXT_NODE) {
+      value.full += assigned.nodeValue || '';
+      currentImmediate += assigned.nodeValue || '';
+    } else if (assigned.nodeType === Node.ELEMENT_NODE) {
+      if (currentImmediate) {
+        value.immediate.push(currentImmediate);
+        currentImmediate = '';
+      }
+      value.full += elementText(cache, assigned as Element).full;
+    }
+  }
+  return currentImmediate;
 }
 
 export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
