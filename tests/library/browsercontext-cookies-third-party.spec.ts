@@ -20,7 +20,7 @@ test.use({
   ignoreHTTPSErrors: true,
 });
 
-test(`third party non-partitioned cookies`, async ({ page, browserName, httpsServer }) => {
+test(`third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac }) => {
   httpsServer.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', `name=value; SameSite=None; Path=/; Secure;`);
     res.setHeader('Content-Type', 'text/html');
@@ -39,13 +39,13 @@ test(`third party non-partitioned cookies`, async ({ page, browserName, httpsSer
   const frameBody = page.locator('iframe').contentFrame().locator('body');
 
   // WebKit does not support third-party cookies without a 'Partition' attribute.
-  if (browserName === 'webkit')
+  if (browserName === 'webkit' && isMac)
     await expect(frameBody).toHaveText('Received cookie: undefined');
   else
     await expect(frameBody).toHaveText('Received cookie: name=value');
 });
 
-test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer }) => {
+test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac }) => {
   httpsServer.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       `name=value; SameSite=None; Path=/; Secure; Partitioned;`,
@@ -69,6 +69,12 @@ test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServ
   // Firefox cookie partitioning is disabled in Firefox.
   // TODO: reenable cookie partitioning?
   if (browserName === 'firefox') {
+    await expect(frameBody).toHaveText('Received cookie: name=value; nonPartitionedName=value');
+    return;
+  }
+
+  // Linux and Windows WebKit builds do not partition third-party cookies at all.
+  if (browserName === 'webkit' && !isMac) {
     await expect(frameBody).toHaveText('Received cookie: name=value; nonPartitionedName=value');
     return;
   }
