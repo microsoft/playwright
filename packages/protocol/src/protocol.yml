@@ -1796,6 +1796,8 @@ Page:
         pdf: binary
 
     snapshotForAI:
+      parameters:
+        timeout: number?
       returns:
         snapshot: string
       flags:

@@ -809,11 +809,14 @@ export class Page extends SdkObject {
     this._isServerSideOnly = true;
   }
 
-  async snapshotForAI(metadata: CallMetadata): Promise<string> {
-    const frameIds: string[] = [];
-    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, frameIds);
-    this.lastSnapshotFrameIds = frameIds;
-    return snapshot.join('\n');
+  async snapshotForAI(options: types.TimeoutOptions, metadata: CallMetadata): Promise<string> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      const frameIds: string[] = [];
+      const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, frameIds);
+      this.lastSnapshotFrameIds = frameIds;
+      return snapshot.join('\n');
+    }, this.timeoutSettings.timeout(options));
   }
 }
 
@@ -1000,9 +1003,11 @@ class FrameThrottler {
 async function snapshotFrameForAI(frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
   const context = await frame._utilityContext();
   const injectedScript = await context.injectedScript();
+  console.log('taking snapshot', frameOrdinal);
   const snapshot = await injectedScript.evaluate((injected, refPrefix) => {
     return injected.ariaSnapshot(injected.document.body, { forAI: true, refPrefix });
   }, frameOrdinal ? 'f' + frameOrdinal : '');
+  console.log('done taking snapshot', frameOrdinal);
 
   const lines = snapshot.split('\n');
   const result = [];
@@ -1017,7 +1022,9 @@ async function snapshotFrameForAI(frame: frames.Frame, frameOrdinal: number, fra
     const ref = match[2];
     const frameSelector = `aria-ref=${ref} >> internal:control=enter-frame`;
     const frameBodySelector = `${frameSelector} >> body`;
+    console.log('resolving');
     const child = await frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true });
+    console.log('done resolving');
     if (!child) {
       result.push(line);
       continue;

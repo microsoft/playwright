@@ -48,7 +48,7 @@ import type { APIRequestContext } from './fetch';
 import type { WaitForNavigationOptions } from './frame';
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
 import type { Request, RouteHandlerCallback, WebSocketRouteHandlerCallback } from './network';
-import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, WaitForEventOptions, WaitForFunctionOptions } from './types';
+import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, TimeoutOptions, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
@@ -833,8 +833,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async _snapshotForAI(): Promise<string> {
-    const result = await this._channel.snapshotForAI();
+  async _snapshotForAI(options: TimeoutOptions = {}): Promise<string> {
+    const result = await this._channel.snapshotForAI(options);
     return result.snapshot;
   }
 }
