@@ -291,6 +291,34 @@ it('should work with offline option', async ({ browser, server, browserName }) =
   await context.close();
 });
 
+it('fetch with keepalive should throw when offline', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35701' },
+}, async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const url = server.PREFIX + '/fetch';
+  server.setRoute('/fetch', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify('hello'));
+  });
+
+  const okResponse = await page.evaluate(url => fetch(url, { cache: 'no-store', keepalive: true }).then(response => response.json()), url);
+  expect(okResponse).toEqual('hello');
+
+  await context.setOffline(true);
+  const offlineResponse = await page.evaluate(async url => {
+    try {
+      const response = await fetch(url, { cache: 'no-store', keepalive: true });
+      return await response.json();
+    } catch {
+      return 'error';
+    }
+  }, url);
+  expect(offlineResponse).toEqual('error');
+});
+
 it('should emulate navigator.onLine', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
