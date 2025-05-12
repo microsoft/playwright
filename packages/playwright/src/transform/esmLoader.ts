@@ -72,8 +72,12 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   const transformed = transformHook(code, filename, moduleUrl);
 
   // Flush the source maps to the main thread, so that errors during import() are source-mapped.
+  // Under certain conditions with ESM -> CJS -> CJS imports, we can enter deadlock awaiting the
+  // MessagePort transfer simultaneously with the Node.js worker thread that is performing the load().
+  // Purposefully do not await
   if (transformed.serializedCache)
-    await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
+    transport?.send('pushToCompilationCache', { cache: transformed.serializedCache })
+      .catch(e => console.error('Failed to push compilation cache', e));
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
