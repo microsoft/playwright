@@ -248,7 +248,10 @@ class GroupStep extends Step {
       throw new Error('Composite step cannot contain non-concurrent steps');
   }
   async run() {
+    console.log('==== Starting parallel group');
+    const start = Date.now();
     await Promise.all(this._steps.map(step => step.run()));
+    console.log('==== Parallel group finished in', Date.now() - start, 'ms');
   }
 }
 
