@@ -545,6 +545,10 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
+    // IME can generate keyboard events that don't provide a value for the key property (e.g. chrome autofill)
+    if (typeof event.key !== 'string')
+      return false;
+
     // Enter aka. new line is handled in input event.
     if (event.key === 'Enter' && (this._recorder.deepEventTarget(event).nodeName === 'TEXTAREA' || this._recorder.deepEventTarget(event).isContentEditable))
       return false;
