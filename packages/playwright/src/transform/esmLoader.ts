@@ -75,9 +75,11 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   // Under certain conditions with ESM -> CJS -> CJS imports, we can enter deadlock awaiting the
   // MessagePort transfer simultaneously with the Node.js worker thread that is performing the load().
   // Purposefully do not await
-  if (transformed.serializedCache)
+  if (transformed.serializedCache) {
     transport?.send('pushToCompilationCache', { cache: transformed.serializedCache })
-      .catch(e => console.error('Failed to push compilation cache', e));
+        // eslint-disable-next-line no-console
+        .catch(e => console.error('Failed to push compilation cache', e));
+  }
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
