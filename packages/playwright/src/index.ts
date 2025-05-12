@@ -683,7 +683,7 @@ class ArtifactsRecorder {
 
     try {
       // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
-      this._pageSnapshot = await page?.locator('body').ariaSnapshot({ timeout: 5000 });
+      this._pageSnapshot = await (page as any)._snapshotForAI();
     } catch {}
   }
 
