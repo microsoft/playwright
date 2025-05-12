@@ -424,6 +424,7 @@ it('should return undefined for non-serializable objects', async ({ page }) => {
 it('should throw for too deep reference chain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33997' }
 }, async ({ page, browserName }) => {
+  it.fixme(browserName === 'firefox', 'Firefox Juggler -> Playwright serialiser does not throw for deep references.\nThis causes large objects to get serialised back to the Playwright client.\nThere our validators throw \'Maximum call stack size exceeded\'.');
   await expect(page.evaluate(depth => {
     const obj = {};
     let temp = obj;
@@ -432,9 +433,7 @@ it('should throw for too deep reference chain', {
       temp = temp[i];
     }
     return obj;
-  }, 1000)).rejects.toThrow(browserName === 'firefox'
-    ? 'Maximum call stack size exceeded'
-    : 'Cannot serialize result: object reference chain is too long.');
+  }, 1000)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
 });
 
 it('should throw usable message for unserializable shallow function', async ({ page }) => {
