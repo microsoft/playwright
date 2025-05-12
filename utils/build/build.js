@@ -239,23 +239,46 @@ for (const pkg of workspace.packages()) {
   }
 }
 
+class GroupStep extends Step {
+  /** @param {Step[]} steps */
+  constructor(steps) {
+    super({ concurrent: false });
+    this._steps = steps;
+    if (steps.some(s => !s.concurrent))
+      throw new Error('Composite step cannot contain non-concurrent steps');
+  }
+  async run() {
+    console.log('==== Starting parallel group');
+    const start = Date.now();
+    await Promise.all(this._steps.map(step => step.run()));
+    console.log('==== Parallel group finished in', Date.now() - start, 'ms');
+  }
+}
+
+/** @type {Step[]} */
+const updateSteps = [];
+
 // Update test runner.
-steps.push(new ProgramStep({
+updateSteps.push(new ProgramStep({
   command: 'npm',
   args: ['ci', '--save=false', '--fund=false', '--audit=false'],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'tests', 'playwright-test', 'stable-test-runner'),
+  concurrent: true,
 }));
 
 // Update bundles.
 for (const bundle of bundles) {
-  steps.push(new ProgramStep({
+  updateSteps.push(new ProgramStep({
     command: 'npm',
     args: ['ci', '--save=false', '--fund=false', '--audit=false', '--omit=optional'],
     shell: true,
     cwd: bundle,
+    concurrent: true,
   }));
 }
+
+steps.push(new GroupStep(updateSteps));
 
 // Generate third party licenses for bundles.
 steps.push(new ProgramStep({
