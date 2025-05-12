@@ -17,8 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import { filterProjects } from './projectUtils';
-
 import type { FullResult, Suite } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -35,7 +33,7 @@ export class LastRunReporter implements ReporterV2 {
 
   constructor(config: FullConfigInternal) {
     this._config = config;
-    const [project] = filterProjects(config.projects, config.cliProjectFilter);
+    const [project] = config.projects;
     if (project)
       this._lastRunFile = path.join(project.project.outputDir, '.last-run.json');
   }

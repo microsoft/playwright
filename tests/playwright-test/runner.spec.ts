@@ -873,3 +873,56 @@ test('should run last failed tests in a shard', async ({ runInlineTest }) => {
   expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
 });
+
+test('should run last failed tests across projects', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35919' } }, async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          {
+            name: "a",
+            testMatch: "a.spec.ts",
+            outputDir: "test-results/a",
+          },
+          {
+            name: "b",
+            testMatch: "b.spec.ts",
+            outputDir: "test-results/b",
+          },
+        ],
+      };
+    `,
+    'a.spec.ts': `
+      import { expect, test } from "@playwright/test";
+      test("a-fail", () => {
+        expect(1).toBe(0);
+      });
+      test("a-pass", () => {
+        expect(1).toBe(1);
+      });
+    `,
+    'b.spec.ts': `
+      import { expect, test } from "@playwright/test";
+      test("b-fail", () => {
+        expect(1).toBe(0);
+      });
+      test("b-pass", () => {
+        expect(1).toBe(1);
+      });
+    `,
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(2);
+  expect(result1.failed).toBe(2);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(2);
+
+  const result3 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed', '--project', 'b'] });
+  expect(result3.exitCode).toBe(1);
+  expect(result3.passed).toBe(0);
+  expect(result3.failed).toBe(1);
+});
