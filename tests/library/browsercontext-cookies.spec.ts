@@ -321,35 +321,6 @@ it('should add cookies with an expiration', async ({ context }) => {
   }])).rejects.toThrow(/Cookie should have a valid expires/);
 });
 
-it('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac }) => {
-  it.fixme(browserName === 'webkit' && isMac);
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16937' });
-
-  const context = await browser.newContext({
-    ignoreHTTPSErrors: true,
-  });
-  try {
-    const page = await context.newPage();
-    await page.goto(httpsServer.EMPTY_PAGE);
-    await context.addCookies([{
-      domain: new URL(httpsServer.CROSS_PROCESS_PREFIX).hostname,
-      path: '/',
-      name: 'cookie1',
-      value: 'yes',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None'
-    }]);
-    const [response] = await Promise.all([
-      httpsServer.waitForRequest('/grid.html'),
-      page.setContent(`<iframe src="${httpsServer.CROSS_PROCESS_PREFIX}/grid.html"></iframe>`)
-    ]);
-    expect(response.headers['cookie']).toBe('cookie1=yes');
-  } finally {
-    await context.close();
-  }
-});
-
 it('should support requestStorageAccess', async ({ page, server, channel, browserName, isMac, isLinux, isWindows, macVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
   it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');

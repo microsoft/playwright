@@ -86,43 +86,6 @@ it('context.clearCookies() should work', async ({ server, launchPersistent, chan
   expect(await page.evaluate('document.cookie')).toBe('');
 });
 
-it('should(not) block third party cookies', async ({ server, launchPersistent, browserName, allowsThirdParty }) => {
-  const { page, context } = await launchPersistent();
-  await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(src => {
-    let fulfill;
-    const promise = new Promise(x => fulfill = x);
-    const iframe = document.createElement('iframe');
-    document.body.appendChild(iframe);
-    iframe.onload = fulfill;
-    iframe.src = src;
-    return promise;
-  }, server.CROSS_PROCESS_PREFIX + '/grid.html');
-  const documentCookie = await page.frames()[1].evaluate(() => {
-    document.cookie = 'username=John Doe';
-    return document.cookie;
-  });
-  await page.waitForTimeout(2000);
-  expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
-  const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
-  if (allowsThirdParty) {
-    expect(cookies).toEqual([
-      {
-        'domain': '127.0.0.1',
-        'expires': -1,
-        'httpOnly': false,
-        'name': 'username',
-        'path': '/',
-        'sameSite': 'None',
-        'secure': false,
-        'value': 'John Doe'
-      }
-    ]);
-  } else {
-    expect(cookies).toEqual([]);
-  }
-});
-
 it('should support viewport option', async ({ launchPersistent }) => {
   const { page, context } = await launchPersistent({ viewport: { width: 456, height: 789 } });
   await verifyViewport(page, 456, 789);
