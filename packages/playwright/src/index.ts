@@ -261,7 +261,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       onApiCallBegin: (data: ApiCallData) => {
         const testInfo = currentTestInfo();
         // Some special calls do not get into steps.
-        if (!testInfo || !data.apiName || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
+        if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
         const zone = currentZone().data<TestStepInternal>('stepZone');
         if (zone && zone.category === 'expect') {

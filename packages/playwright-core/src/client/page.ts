@@ -841,6 +841,7 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BindingCallInitializer) {
     super(parent, type, guid, initializer);
+    this.markAsInternalType();
   }
 
   async call(func: (source: structs.BindingSource, ...args: any[]) => any) {
