@@ -21,7 +21,6 @@ import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCa
 import { PortTransport } from './portTransport';
 import { resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
 import { debugTest, fileIsModule } from '../util';
-import { threadId } from 'worker_threads';
 
 // See note on pushToCompilationCache()
 // Once we enter a deadlock scenario, we will fallback to unawaited IPC
@@ -30,7 +29,6 @@ let workerShouldFallbackCompilationCache = false;
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
 async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
-  debugTest('Requiring', specifier, threadId);
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
@@ -78,9 +76,8 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   const transformed = transformHook(code, filename, moduleUrl);
 
   // Flush the source maps to the main thread, so that errors during import() are source-mapped.
-  if (transformed.serializedCache && transport) {
+  if (transformed.serializedCache && transport)
     await pushToCompilationCache(transport, transformed.serializedCache);
-  }
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
@@ -108,7 +105,7 @@ async function pushToCompilationCache(transport: PortTransport, cache: any) {
       if (didComplete)
         return;
       workerShouldFallbackCompilationCache = true;
-      debugTest('Falling back to unawaited compilation cache', threadId);
+      debugTest('Falling back to unawaited compilation cache');
       resolve();
     }, 1000)),
     transport.send('pushToCompilationCache', { cache })
