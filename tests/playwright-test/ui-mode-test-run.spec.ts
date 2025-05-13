@@ -111,10 +111,10 @@ test('should show running progress', async ({ runUITest }) => {
   await expect(statusLine.locator('.status-failed')).toHaveText('0');
   await expect(statusLine.locator('.status-skipped')).toHaveText('0');
   await page.getByTitle('Reload').click();
-  await expect(statusLine.getByTestId('test-count')).toBeHidden();
-  await expect(statusLine.locator('.status-passed')).toBeHidden();
-  await expect(statusLine.locator('.status-failed')).toBeHidden();
-  await expect(statusLine.locator('.status-skipped')).toBeHidden();
+  await expect(statusLine.getByTestId('test-count')).toHaveText('0/4');
+  await expect(statusLine.locator('.status-passed')).toHaveText('0');
+  await expect(statusLine.locator('.status-failed')).toHaveText('0');
+  await expect(statusLine.locator('.status-skipped')).toHaveText('0');
 });
 
 test('should run on hover', async ({ runUITest }) => {
