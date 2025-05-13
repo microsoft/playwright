@@ -315,6 +315,19 @@ The contents of the `$web` storage container can be accessed from a browser by u
 This step will not work for pull requests created from a forked repository because such workflow [doesn't have access to the secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow).
 :::
 
+## Properly handling Secrets
+* langs: js
+
+Artifacts like trace files, HTML reports or even the console logs contain information about your test execution.
+They can contain sensitive data like user credentials for a test user, access tokens to a staging backend, testing source code or sometimes even your application source code. Treat these files just as careful as you treat that sensitive data.
+If you upload reports and traces as part of your CI workflow, make sure that you only upload them to trusted artifact stores, or that you encrypt the files before upload. The same is true for sharing artifacts with team members: Use a trusted file share or encrypt the files before sharing.
+
+## Properly handling Secrets
+* langs: python, java, csharp
+
+Artifacts like trace files or console logs contain information about your test execution.
+They can contain sensitive data like user credentials for a test user, access tokens to a staging backend, testing source code or sometimes even your application source code. Treat these files just as careful as you treat that sensitive data.
+If you upload reports and traces as part of your CI workflow, make sure that you only upload them to trusted artifact stores, or that you encrypt the files before upload. The same is true for sharing artifacts with team members: Use a trusted file share or encrypt the files before sharing.
 
 ## What's Next
 
