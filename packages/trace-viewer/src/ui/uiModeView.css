@@ -82,28 +82,6 @@
   margin-bottom: 30px;
 }
 
-.status-line {
-  flex: auto;
-  white-space: nowrap;
-  line-height: 22px;
-  padding-left: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 30px;
-  overflow: hidden;
-  gap: 6px;
-}
-
-.status-line > * {
-  flex-shrink: 0;
-}
-
-.status-line > div {
-  display: flex;
-  align-items: center;
-}
-
 .ui-mode-sidebar input[type=search] {
   flex: auto;
   padding: 0 5px;
@@ -113,18 +91,4 @@
   border: none;
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
-}
-
-.status-passed {
-  color: var(--vscode-debugIcon-restartForeground);
-  gap: 2px;
-}
-
-.status-failed {
-  color: var(--vscode-list-errorForeground);
-  gap: 3px;
-}
-
-.status-skipped {
-  gap: 3px;
 }

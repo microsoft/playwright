@@ -1,0 +1,44 @@
+
+.status-line {
+  flex: auto;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 22px;
+  display: flex;
+  flex-direction: row;
+  height: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 5px;
+  gap: 8px;
+}
+
+.status-line > * {
+  flex-shrink: 0;
+}
+
+.status-line > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.status-line-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-passed {
+  color: var(--vscode-debugIcon-restartForeground);
+}
+
+.status-failed {
+  color: var(--vscode-list-errorForeground);
+}
+
+.status-skipped {
+  color: var(--vscode-foreground);
+}
