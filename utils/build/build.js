@@ -228,16 +228,60 @@ function copyFile(file, from, to) {
   fs.copyFileSync(file, destination);
 }
 
+/**
+ * @typedef {{
+ *   modulePath: string,
+ *   entryPoints: string[],
+ *   external?: string[],
+ *   outdir?: string,
+ *   outfile?: string,
+ *   minify?: boolean,
+ * }} BundleOptions
+ */
+
+/** @type {BundleOptions[]} */
 const bundles = [];
-for (const pkg of workspace.packages()) {
-  const bundlesDir = path.join(pkg.path, 'bundles');
-  if (!fs.existsSync(bundlesDir))
-    continue;
-  for (const bundle of fs.readdirSync(bundlesDir)) {
-    if (fs.existsSync(path.join(bundlesDir, bundle, 'package.json')))
-      bundles.push(path.join(bundlesDir, bundle));
-  }
-}
+
+bundles.push({
+  modulePath: 'packages/playwright/bundles/babel',
+  outdir: 'packages/playwright/lib/transform',
+  entryPoints: ['src/babelBundleImpl.ts'],
+  external: ['playwright'],
+});
+
+bundles.push({
+  modulePath: 'packages/playwright/bundles/expect',
+  outdir: 'packages/playwright/lib/common',
+  entryPoints: ['src/expectBundleImpl.ts'],
+});
+
+bundles.push({
+  modulePath: 'packages/playwright/bundles/utils',
+  outdir: 'packages/playwright/lib',
+  entryPoints: ['src/utilsBundleImpl.ts'],
+  external: ['fsevents'],
+});
+
+bundles.push({
+  modulePath: 'packages/playwright-core/bundles/utils',
+  outfile: 'packages/playwright-core/lib/utilsBundleImpl/index.js',
+  entryPoints: ['src/utilsBundleImpl.ts'],
+});
+
+bundles.push({
+  modulePath: 'packages/playwright-core/bundles/zip',
+  outdir: 'packages/playwright-core/lib',
+  entryPoints: ['src/zipBundleImpl.ts'],
+});
+
+
+// @playwright/client
+bundles.push({
+  modulePath: 'packages/playwright-client',
+  outdir: 'packages/playwright-client/lib',
+  entryPoints: ['src/index.ts'],
+  minify: false,
+});
 
 class GroupStep extends Step {
   /** @param {Step[]} steps */
@@ -269,11 +313,18 @@ updateSteps.push(new ProgramStep({
 
 // Update bundles.
 for (const bundle of bundles) {
+  // Do not update @playwright/client, it has not its own deps.
+  if (bundle.modulePath === 'packages/playwright-client')
+    continue;
+
+  const packageJson = path.join(filePath(bundle.modulePath), 'package.json');
+  if (!fs.existsSync(packageJson))
+    throw new Error(`${packageJson} does not exist`);
   updateSteps.push(new ProgramStep({
     command: 'npm',
     args: ['ci', '--save=false', '--fund=false', '--audit=false', '--omit=optional'],
     shell: true,
-    cwd: bundle,
+    cwd: filePath(bundle.modulePath),
     concurrent: true,
   }));
 }
@@ -375,11 +426,9 @@ class CustomCallbackStep extends Step {
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
-  // playwright-client has its own build step.
-  if (['@playwright/client'].includes(pkg.name)) {
-    loadBundleEsbuildStep(pkg.path);
+  // playwright-client is built as a bundle.
+  if (['@playwright/client'].includes(pkg.name))
     continue;
-  }
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
@@ -390,18 +439,36 @@ for (const pkg of workspace.packages()) {
   }));
 }
 
-// Build/watch bundles.
-for (const bundle of bundles)
-  loadBundleEsbuildStep(bundle);
+function copyXdgOpen() {
+  const outdir = filePath('packages/playwright-core/lib/utilsBundleImpl');
+  if (!fs.existsSync(outdir))
+    fs.mkdirSync(outdir, { recursive: true });
 
-function loadBundleEsbuildStep(bundle) {
-  const buildFile = path.join(bundle, 'build.js');
-  if (!fs.existsSync(buildFile))
-    throw new Error(`Build file ${buildFile} does not exist`);
-  const { esbuildOptions, beforeEsbuild } = require(buildFile);
-  if (beforeEsbuild)
-    steps.push(new CustomCallbackStep(beforeEsbuild));
-  const options = esbuildOptions(watchMode);
+  // 'open' package requires 'xdg-open' binary to be present, which does not get bundled by esbuild.
+  fs.copyFileSync(filePath('packages/playwright-core/bundles/utils/node_modules/open/xdg-open'), path.join(outdir, 'xdg-open'));
+  console.log('==== Copied xdg-open to', path.join(outdir, 'xdg-open'));
+}
+
+// Copy xdg-open after bundles 'npm ci' has finished.
+steps.push(new CustomCallbackStep(copyXdgOpen));
+
+// Build/watch bundles.
+for (const bundle of bundles) {
+  /** @type {import('esbuild').BuildOptions} */
+  const options = {
+    bundle: true,
+    format: 'cjs',
+    platform: 'node',
+    target: 'ES2019',
+    sourcemap: watchMode,
+    minify: !watchMode,
+
+    entryPoints: bundle.entryPoints.map(e => path.join(filePath(bundle.modulePath), e)),
+    ...(bundle.outdir ? { outdir: filePath(bundle.outdir) } : {}),
+    ...(bundle.outfile ? { outfile: filePath(bundle.outfile) } : {}),
+    ...(bundle.external ? { external: bundle.external } : {}),
+    ...(bundle.minify !== undefined ? { minify: bundle.minify } : {}),
+  };
   steps.push(new EsbuildStep(options));
 }
 
