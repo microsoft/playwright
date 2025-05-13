@@ -20,7 +20,7 @@ import url from 'url';
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
 import { resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
-import { fileIsModule } from '../util';
+import { debugTest, fileIsModule } from '../util';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
@@ -77,8 +77,7 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   // Purposefully do not await
   if (transformed.serializedCache) {
     transport?.send('pushToCompilationCache', { cache: transformed.serializedCache })
-        // eslint-disable-next-line no-console
-        .catch(e => console.error('Failed to push compilation cache', e));
+        .catch(e => debugTest('Failed to push compilation cache', e));
   }
 
   // Output format is required, so we determine it manually when unknown.
