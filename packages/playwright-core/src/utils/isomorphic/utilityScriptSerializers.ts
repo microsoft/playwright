@@ -156,8 +156,11 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
     if ('o' in value) {
       const result: any = {};
       refs.set(value.id, result);
-      for (const { k, v } of value.o)
+      for (const { k, v } of value.o) {
+        if (k === '__proto__')
+          continue;
         result[k] = parseEvaluationResultValue(v, handles, refs);
+      }
       return result;
     }
     if ('h' in value)
