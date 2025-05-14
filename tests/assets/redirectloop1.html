@@ -1,8 +1,9 @@
 <script>
   setTimeout(() => {
+    const depth = new URLSearchParams(window.location.hash).get('depth') ?? '10';
     const iter = window.localStorage.iter || '';
     window.localStorage.iter = iter + 'a';
-    if (iter.length === 10)
+    if (iter.length === +depth)
       return;
     window.location.href = window.location.href.replace('loop1', 'loop2');
   }, 1);

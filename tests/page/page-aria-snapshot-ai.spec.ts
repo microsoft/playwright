@@ -218,3 +218,16 @@ it('should include cursor pointer hint', async ({ page }) => {
     - button \"Button\" [ref=e2] [cursor=pointer]
   `);
 });
+
+it('should gracefully fallback when child frame cant be captured', async ({ page, server }) => {
+  await page.setContent(`
+    <p>Test</p>
+    <iframe src="${server.PREFIX}/redirectloop1.html#depth=100000"></iframe>
+  `, { waitUntil: 'domcontentloaded' });
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - paragraph [ref=e2]: Test
+      - iframe [ref=e3]
+  `);
+});
