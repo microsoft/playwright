@@ -22,7 +22,7 @@
   text-overflow: ellipsis;
   line-height: 30px;
   height: 30px;
-  padding-left: 5px;
+  margin-left: 5px;
   cursor: pointer;
 }
 
