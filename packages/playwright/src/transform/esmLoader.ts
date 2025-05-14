@@ -17,7 +17,7 @@
 import fs from 'fs';
 import url from 'url';
 
-import { raceAgainstDeadline } from 'playwright-core/lib/utils';
+import { monotonicTime, raceAgainstDeadline } from 'playwright-core/lib/utils';
 
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
@@ -100,7 +100,7 @@ async function pushToCompilationCache(transport: PortTransport, cache: any) {
     return;
   }
 
-  const { timedOut } = await raceAgainstDeadline(() => transport.send('pushToCompilationCache', { cache }), 1000);
+  const { timedOut } = await raceAgainstDeadline(() => transport.send('pushToCompilationCache', { cache }), monotonicTime() + 1000);
   if (timedOut) {
     debugTest('Falling back to unawaited compilation cache');
     workerShouldFallbackCompilationCache = true;
