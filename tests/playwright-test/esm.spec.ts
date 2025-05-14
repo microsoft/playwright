@@ -35,6 +35,35 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
+test('should load esm -> cjs -> cjs require tree', async ({ runInlineTest }) => {
+  test.setTimeout(10000);
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.esm.test.js': `
+      import { test, expect } from '@playwright/test';
+      import * as root from './nested/root_require.js';
+      test('check project name', ({}, testInfo) => {
+        console.log('root', root);
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+    'nested/package.json': JSON.stringify({ type: 'commonjs' }),
+    'nested/root_require.js': `
+      const nested = require('./nested_require.js');
+      console.log(nested);
+    `,
+    'nested/nested_require.js': `
+      console.log('nested require');
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should support import attributes', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

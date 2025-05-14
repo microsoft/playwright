@@ -17,10 +17,16 @@
 import fs from 'fs';
 import url from 'url';
 
+import { monotonicTime, raceAgainstDeadline } from 'playwright-core/lib/utils';
+
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
 import { resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
-import { fileIsModule } from '../util';
+import { debugTest, fileIsModule } from '../util';
+
+// See note on pushToCompilationCache()
+// Once we enter a deadlock scenario, we will fallback to unawaited IPC
+let workerShouldFallbackCompilationCache = false;
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
@@ -72,8 +78,8 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   const transformed = transformHook(code, filename, moduleUrl);
 
   // Flush the source maps to the main thread, so that errors during import() are source-mapped.
-  if (transformed.serializedCache)
-    await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
+  if (transformed.serializedCache && transport)
+    await pushToCompilationCache(transport, transformed.serializedCache);
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
@@ -82,6 +88,23 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
     source: transformed.code,
     shortCircuit: true,
   };
+}
+
+// Under certain conditions with ESM -> CJS -> any imports, we can enter deadlock awaiting the
+// MessagePort transfer simultaneously with the Node.js worker thread that is performing the load().
+// Attempt to await the IPC transfer, and if it takes too long, fallback to a non-awaiting transfer
+async function pushToCompilationCache(transport: PortTransport, cache: any) {
+  if (workerShouldFallbackCompilationCache) {
+    transport.send('pushToCompilationCache', { cache })
+        .catch(e => debugTest('Failed to push compilation cache', e));
+    return;
+  }
+
+  const { timedOut } = await raceAgainstDeadline(() => transport.send('pushToCompilationCache', { cache }), monotonicTime() + 1000);
+  if (timedOut) {
+    debugTest('Falling back to unawaited compilation cache');
+    workerShouldFallbackCompilationCache = true;
+  }
 }
 
 let transport: PortTransport | undefined;
