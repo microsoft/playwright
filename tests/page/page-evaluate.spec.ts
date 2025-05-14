@@ -881,3 +881,12 @@ it('should work with deleted Map', {
   await page.goto(server.PREFIX + '/page');
   expect(await page.evaluate(x => ({ value: 2 * x }), 17)).toEqual({ value: 34 });
 });
+
+it('should ignore dangerous object keys', async ({ page }) => {
+  const input = {
+    __proto__: { polluted: true },
+    safeKey: 'safeValue'
+  };
+  const result = await page.evaluate(arg => arg, input);
+  expect(result).toEqual({ safeKey: 'safeValue' });
+});
