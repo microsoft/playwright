@@ -14899,6 +14899,9 @@ export interface BrowserType<Unused = {}> {
     /**
      * Firefox user preferences. Learn more about the Firefox user preferences at
      * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+     *
+     * You can also provide a path to a custom [`policies.json` file](https://mozilla.github.io/policy-templates/) via
+     * `PLAYWRIGHT_FIREFOX_POLICIES_JSON` environment variable.
      */
     firefoxUserPrefs?: { [key: string]: string|number|boolean; };
 
@@ -15323,6 +15326,9 @@ export interface BrowserType<Unused = {}> {
     /**
      * Firefox user preferences. Learn more about the Firefox user preferences at
      * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+     *
+     * You can also provide a path to a custom [`policies.json` file](https://mozilla.github.io/policy-templates/) via
+     * `PLAYWRIGHT_FIREFOX_POLICIES_JSON` environment variable.
      */
     firefoxUserPrefs?: { [key: string]: string|number|boolean; };
 
@@ -21730,6 +21736,9 @@ export interface LaunchOptions {
   /**
    * Firefox user preferences. Learn more about the Firefox user preferences at
    * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   *
+   * You can also provide a path to a custom [`policies.json` file](https://mozilla.github.io/policy-templates/) via
+   * `PLAYWRIGHT_FIREFOX_POLICIES_JSON` environment variable.
    */
   firefoxUserPrefs?: { [key: string]: string|number|boolean; };
 

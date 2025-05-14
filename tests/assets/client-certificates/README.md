@@ -16,7 +16,7 @@ openssl req \
 
 ## Trusted client-certificate (server signed/valid)
 
-```
+```bash
 mkdir -p client/trusted
 # generate server-signed (valid) certifcate
 openssl req \
@@ -40,9 +40,39 @@ openssl x509 \
 openssl pkcs12 -export -out client/trusted/cert.pfx -inkey client/trusted/key.pem -in client/trusted/cert.pem -passout pass:secure
 ```
 
+## Trusted certificate for localhost (server signed/valid)
+
+```bash
+mkdir -p client/localhost
+
+# generate server-signed (valid) certifcate
+openssl req \
+	-newkey rsa:4096 \
+	-keyout client/localhost/localhost.key \
+	-out client/localhost/localhost.csr \
+	-nodes \
+	-days 365 \
+	-subj "/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,DNS:127.0.0.1"
+
+# put extensions
+echo "subjectAltName=DNS:localhost,DNS:127.0.0.1" > client/localhost/localhost.ext
+
+# sign with server_cert.pem
+openssl x509 \
+	-req \
+	-in client/localhost/localhost.csr \
+	-CA server/server_cert.pem \
+	-CAkey server/server_key.pem \
+	-set_serial 01 \
+	-out client/localhost/localhost.pem \
+	-days 365 \
+  -extfile client/localhost/localhost.ext
+```
+
 ## Self-signed certificate (invalid)
 
-```
+```bash
 mkdir -p client/self-signed
 openssl req \
 	-newkey rsa:4096 \
