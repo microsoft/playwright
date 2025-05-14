@@ -1024,8 +1024,12 @@ async function snapshotFrameForAI(frame: frames.Frame, frameOrdinal: number, fra
     }
     const frameOrdinal = frameIds.length + 1;
     frameIds.push(child.frame._id);
-    const childSnapshot = await snapshotFrameForAI(child.frame, frameOrdinal, frameIds);
-    result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
+    try {
+      const childSnapshot = await snapshotFrameForAI(child.frame, frameOrdinal, frameIds);
+      result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
+    } catch {
+      result.push(line);
+    }
   }
   return result;
 }
