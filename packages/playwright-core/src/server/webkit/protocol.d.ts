@@ -2171,6 +2171,8 @@ export module Protocol {
        * The native width of the video track in CSS pixels
        */
       width: number;
+      spatialVideoMetadata?: SpatialVideoMetadata;
+      videoProjectionMetadata?: VideoProjectionMetadata;
     }
     /**
      * WebCodecs VideoColorSpace
@@ -2209,6 +2211,38 @@ export module Protocol {
        * The total number of frames enqueued for display by the media element.
        */
       totalVideoFrames: number;
+    }
+    /**
+     * A structure containing metadata describing spatial video properties.
+     */
+    export interface SpatialVideoMetadata {
+      width: number;
+      height: number;
+      /**
+       * The horizontal field-of-view measurement, in degrees
+       */
+      horizontalFOVDegrees: number;
+      /**
+       * The distance between the centers of the lenses in a camera system, in micrometers
+       */
+      baseline: number;
+      /**
+       * The relative shift of the left and right eye images, as a percentage.
+       */
+      disparityAdjustment: number;
+    }
+    /**
+     * Video Projection Metadata Kind.
+     */
+    export type VideoProjectionMetadataKind = "unknown"|"equirectangular"|"half-equirectangular"|"equi-angular-cubemap"|"parametric"|"pyramid"|"apple-immersive-video";
+    /**
+     * A structure containing metadata describing video projections.
+     */
+    export interface VideoProjectionMetadata {
+      /**
+       * The kind of video projection.
+       */
+      kind: VideoProjectionMetadataKind;
     }
     export interface ViewportSize {
       width: number;
