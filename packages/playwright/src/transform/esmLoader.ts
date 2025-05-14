@@ -17,6 +17,8 @@
 import fs from 'fs';
 import url from 'url';
 
+import { raceAgainstDeadline } from 'playwright-core/lib/utils';
+
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
 import { resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
@@ -98,20 +100,11 @@ async function pushToCompilationCache(transport: PortTransport, cache: any) {
     return;
   }
 
-  let didComplete = false;
-
-  await Promise.race([
-    new Promise<void>(resolve => setTimeout(() => {
-      if (didComplete)
-        return;
-      workerShouldFallbackCompilationCache = true;
-      debugTest('Falling back to unawaited compilation cache');
-      resolve();
-    }, 1000)),
-    transport.send('pushToCompilationCache', { cache })
-  ]);
-
-  didComplete = true;
+  const { timedOut } = await raceAgainstDeadline(() => transport.send('pushToCompilationCache', { cache }), 1000);
+  if (timedOut) {
+    debugTest('Falling back to unawaited compilation cache');
+    workerShouldFallbackCompilationCache = true;
+  }
 }
 
 let transport: PortTransport | undefined;
