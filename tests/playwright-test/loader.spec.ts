@@ -1085,7 +1085,7 @@ test('should remove import css', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test.fixme('should dynamically import re-exported cjs namespace', {
+test('should dynamically import re-exported cjs namespace', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35812' },
 }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
