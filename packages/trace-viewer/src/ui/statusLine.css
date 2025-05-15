@@ -23,7 +23,7 @@
   line-height: 30px;
   height: 30px;
   margin-left: 5px;
-  cursor: pointer;
+  cursor: default;
 }
 
 .status-line > span:not(:first-child) {
