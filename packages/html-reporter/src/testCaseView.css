@@ -43,7 +43,7 @@
 }
 
 .test-case-run-duration {
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
   padding-left: 8px;
 }
 
