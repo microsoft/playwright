@@ -461,20 +461,13 @@ export const UIModeView: React.FC<{}> = ({
           testModel={testModel}
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
-          {!progress ? (<StatusLine
-            passed={0}
-            failed={0}
-            skipped={0}
-            total={visibleTestIds.size}
-            isRunning={false}
-          />) : (<StatusLine
-            passed={progress.passed}
-            failed={progress.failed}
-            skipped={progress.skipped}
-            total={isRunningTest ? runningState.testIds.size : progress.total}
+          <StatusLine
+            passed={progress?.passed ?? 0}
+            failed={progress?.failed ?? 0}
+            skipped={progress?.skipped ?? 0}
+            total={progress ? (isRunningTest ? runningState.testIds.size : progress.total) : visibleTestIds.size}
             isRunning={!!isRunningTest}
           />
-          )}
           <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
