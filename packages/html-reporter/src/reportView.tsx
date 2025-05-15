@@ -132,16 +132,16 @@ const TestCaseViewLoader: React.FC<{
   }, [test, report, testId, testIdToFileIdMap]);
 
   if (test === 'loading')
-    return <div className='test-case-column vbox'></div>;
+    return <div className='test-case-column'></div>;
 
   if (test === 'not-found') {
-    return <div className='test-case-column vbox'>
+    return <div className='test-case-column'>
       <HeaderView title='Test not found' />
       <div className='test-case-location'>Test ID: {testId}</div>
     </div>;
   }
 
-  return <div className='test-case-column vbox'>
+  return <div className='test-case-column'>
     <TestCaseView
       projectNames={report.json().projectNames}
       next={next}
