@@ -37,6 +37,14 @@ export interface LocatorFactory {
   chainLocators(locators: string[]): string;
 }
 
+export function asLocatorDescription(selector: string): string | undefined {
+  const parsed = parseSelector(selector);
+  const describe = parsed.parts.findLast(part => part.name === 'internal:describe');
+  if (describe)
+    return JSON.parse(describe.body as string);
+  return undefined;
+}
+
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
   return asLocators(lang, selector, isFrameLocator, 1)[0];
 }
@@ -59,6 +67,8 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     const base = nextBase;
     nextBase = 'locator';
 
+    if (part.name === 'internal:describe')
+      continue;
     if (part.name === 'nth') {
       if (part.body === '0')
         tokens.push([factory.generateLocator(base, 'first', ''), factory.generateLocator(base, 'nth', '0')]);

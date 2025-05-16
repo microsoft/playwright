@@ -12911,6 +12911,13 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Describes the locator, description is used in the trace viewer and reports. Returns the locator pointing to the
+   * same element.
+   * @param description Locator description.
+   */
+  describe(description: string): Locator;
+
+  /**
    * Programmatically dispatch an event on the matching element.
    *
    * **Usage**

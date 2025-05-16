@@ -227,6 +227,7 @@ export class InjectedScript {
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
+    this._engines.set('internal:describe', this._createDescribeEngine());
     this._engines.set('aria-ref', this._createAriaRefEngine());
 
     for (const { name, source } of options.customEngines)
@@ -475,6 +476,15 @@ export class InjectedScript {
         matcher = s => s.toLowerCase().includes(lowerCaseValue!);
       const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, `[${name}]`);
       return elements.filter(e => matcher(e.getAttribute(name)!));
+    };
+    return { queryAll };
+  }
+
+  private _createDescribeEngine(): SelectorEngine {
+    const queryAll = (root: SelectorRoot): Element[] => {
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+        return [];
+      return [root as Element];
     };
     return { queryAll };
   }

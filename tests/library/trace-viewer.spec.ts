@@ -1897,3 +1897,14 @@ test('should not trip over complex urls in style tags', {
   await expect(snapshot.locator('div')).toHaveCSS('color', 'rgb(1, 2, 3)');
   await expect(snapshot.locator('span')).toHaveCSS('color', 'rgb(4, 5, 6)');
 });
+
+test('should render locator descriptions', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<input type="text" />');
+    await page.locator('input').describe('main input').click({ button: 'right' });
+  });
+
+  await expect(traceViewer.page.locator('body')).toMatchAriaSnapshot(`
+    - treeitem /locator\\.clickmain input/
+  `);
+});

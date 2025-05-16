@@ -210,6 +210,10 @@ export class Locator implements api.Locator {
     return new FrameLocator(this._frame, this._selector);
   }
 
+  describe(description: string) {
+    return new Locator(this._frame, this._selector + ' >> internal:describe=' + JSON.stringify(description));
+  }
+
   first(): Locator {
     return new Locator(this._frame, this._selector + ' >> nth=0');
   }
