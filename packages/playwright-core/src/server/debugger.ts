@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import { commandsWithTracingSnapshots, pausesBeforeInputActions, slowMoActions } from '../protocol/debug';
+import { methodMetainfo } from '../protocol/debug';
 
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 
@@ -141,9 +141,11 @@ function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
   const step = metadata.type + '.' + metadata.method;
   // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
   // since we stop in them on a separate instrumentation signal.
-  return commandsWithTracingSnapshots.has(step) && !pausesBeforeInputActions.has(metadata.type + '.' + metadata.method);
+  const metainfo = methodMetainfo.get(step);
+  return !!metainfo?.snapshot && !metainfo.pausesBeforeInput;
 }
 
 export function shouldSlowMo(metadata: CallMetadata): boolean {
-  return slowMoActions.has(metadata.type + '.' + metadata.method);
+  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
+  return !!metainfo?.slowMo;
 }

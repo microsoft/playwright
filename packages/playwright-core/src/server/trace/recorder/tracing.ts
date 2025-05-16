@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { Snapshotter } from './snapshotter';
-import { commandsWithTracingSnapshots } from '../../../protocol/debug';
+import { methodMetainfo } from '../../../protocol/debug';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
@@ -639,7 +639,8 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
 }
 
 export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
-  return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
+  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
+  return !!metainfo?.snapshot;
 }
 
 function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string): trace.BeforeActionTraceEvent | null {

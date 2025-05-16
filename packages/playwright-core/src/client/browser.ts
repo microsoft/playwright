@@ -71,9 +71,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _stopPendingOperations(reason: string) {
-    return await this._wrapApiCall(async () => {
-      await this._channel.stopPendingOperations({ reason });
-    }, true);
+    await this._channel.stopPendingOperations({ reason });
   }
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
