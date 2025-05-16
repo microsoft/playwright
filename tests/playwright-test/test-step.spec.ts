@@ -1217,7 +1217,7 @@ pw:api    |    apiRequest.newContext
 pw:api    |page.waitForNavigation @ a.test.ts:5
 pw:api    |page.goto(data:text/html,<button></button>) @ a.test.ts:6
 pw:api    |page.click(button) @ a.test.ts:8
-pw:api    |locator.getByRole('button').click @ a.test.ts:9
+pw:api    |getByRole('button').click @ a.test.ts:9
 pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:10
 pw:api    |↪ error: <error message>
 pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:11

@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII, asLocator, asLocatorDescription } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
@@ -761,6 +761,7 @@ function paramsToRender(apiName: string) {
       return ['url', 'selector', 'text', 'key'];
   }
 }
+
 function renderApiCall(apiName: string, params: any) {
   if (apiName === 'tracing.group')
     return params.name;
@@ -769,14 +770,24 @@ function renderApiCall(apiName: string, params: any) {
     for (const name of paramsToRender(apiName)) {
       if (!(name in params))
         continue;
-      let value;
-      if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
-        const getter = asLocator('javascript', params[name]);
-        apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
-        apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
-        apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
+      if (name === 'selector' && isString(params[name])) {
+        const description = asLocatorDescription(params[name]);
+        if (description) {
+          const replacement = JSON.stringify(description);
+          apiName = apiName.replace(/^locator\.(.*)/, `$1 ${replacement}`);
+          apiName = apiName.replace(/^page\.(.*)/, `$1 ${replacement}`);
+          apiName = apiName.replace(/^frame\.(.*)/, `$1 ${replacement}`);
+        } else if (params[name].startsWith('internal:')) {
+          const replacement = asLocator('javascript', params[name]) + '.';
+          apiName = apiName.replace(/^locator\./, replacement);
+          apiName = apiName.replace(/^page\./, replacement);
+          apiName = apiName.replace(/^frame\./, replacement);
+        } else {
+          const value = params[name];
+          paramsArray.push(value);
+        }
       } else {
-        value = params[name];
+        const value = params[name];
         paramsArray.push(value);
       }
     }

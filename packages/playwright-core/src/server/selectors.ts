@@ -41,7 +41,9 @@ export class Selectors {
       'internal:has', 'internal:has-not',
       'internal:has-text', 'internal:has-not-text',
       'internal:and', 'internal:or', 'internal:chain',
-      'role', 'internal:attr', 'internal:label', 'internal:text', 'internal:role', 'internal:testid', 'aria-ref'
+      'role', 'internal:attr', 'internal:label', 'internal:text',
+      'internal:role', 'internal:testid', 'internal:describe',
+      'aria-ref'
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',

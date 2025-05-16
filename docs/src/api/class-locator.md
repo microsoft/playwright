@@ -580,6 +580,19 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
+## method: Locator.describe
+* since: v1.53
+- returns: <[Locator]>
+
+Describes the locator, description is used in the trace viewer and reports.
+Returns the locator pointing to the same element.
+
+### param: Locator.describe.description
+* since: v1.53
+- `description` <[string]>
+
+Locator description.
+
 ## async method: Locator.dispatchEvent
 * since: v1.14
 

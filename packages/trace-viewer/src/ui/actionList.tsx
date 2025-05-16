@@ -19,7 +19,7 @@ import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
-import { asLocator, type Language } from '@isomorphic/locatorGenerators';
+import { asLocatorDescription, asLocator, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
@@ -297,7 +297,7 @@ const actionParameterDisplayString = (
   if (!ignoreLocator && params.selector !== undefined) {
     return {
       type: 'locator',
-      value: asLocator(sdkLanguage, params.selector),
+      value: asLocatorDescription(params.selector) ?? asLocator(sdkLanguage, params.selector),
       childDisplayString: actionParameterDisplayString(
           action,
           sdkLanguage,
