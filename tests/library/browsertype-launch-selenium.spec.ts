@@ -45,7 +45,7 @@ test.beforeAll(() => {
 test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
-  const port = testInfo.workerIndex + 15123;
+  const port = (testInfo.workerIndex * 5) + 15123;
   const grid = childProcess({
     command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', standalone_3_141_59, '-config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
@@ -68,7 +68,7 @@ test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childPr
 test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
-  const port = testInfo.workerIndex + 15123;
+  const port = (testInfo.workerIndex * 5) + 15123;
   const hub = childProcess({
     command: ['java', '-jar', standalone_3_141_59, '-role', 'hub', '-port', String(port)],
     cwd: __dirname,
@@ -101,7 +101,7 @@ test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childPr
 test('selenium grid 4.8.3 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
-  const port = testInfo.workerIndex + 15123;
+  const port = (testInfo.workerIndex * 5) + 15123;
   const grid = childProcess({
     command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_8_3, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
@@ -124,7 +124,7 @@ test('selenium grid 4.8.3 standalone chromium', async ({ browserName, childProce
 test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
-  const port = testInfo.workerIndex + 15123;
+  const port = (testInfo.workerIndex * 5) + 15123;
   const hub = childProcess({
     command: ['java', '-jar', selenium_4_8_3, 'hub', '--port', String(port)],
     cwd: __dirname,
@@ -156,7 +156,7 @@ test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProce
 test('selenium grid 4.8.3 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
-  const port = testInfo.workerIndex + 15123;
+  const port = (testInfo.workerIndex * 5) + 15123;
   const grid = childProcess({
     command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium_4_8_3, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
@@ -181,7 +181,7 @@ test('selenium grid 3.141.59 standalone non-chromium', async ({ browserName, bro
 test('selenium grid 3.141.59 standalone chromium through run-driver', async ({ browserName, childProcess, waitForPort }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
-  const port = testInfo.workerIndex + 15123;
+  const port = (testInfo.workerIndex * 5) + 15123;
   const grid = childProcess({
     command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', standalone_3_141_59, '-config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
