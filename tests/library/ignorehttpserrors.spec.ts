@@ -47,6 +47,29 @@ it('should isolate contexts', async ({ browser, httpsServer }) => {
   }
 });
 
+it('should isolated contexts that share network process', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35870' }
+}, async ({ browser, httpsServer, browserName, isLinux }) => {
+  it.fixme(browserName === 'webkit' && isLinux, 'See https://bugs.webkit.org/show_bug.cgi?id=293148');
+  {
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const page = await context.newPage();
+    const response = await page.goto(httpsServer.EMPTY_PAGE);
+    expect(response.ok()).toBe(true);
+    // Closing the context will remove WebsiteDataStore and stop the network process
+    // which will make the test pass.
+    // await context.close();
+  }
+  {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    let error = null;
+    await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+    expect(error, 'A TLS error expected, but the request succeeded.').not.toBe(null);
+    await context.close();
+  }
+});
+
 it('should work with mixed content', async ({ browser, server, httpsServer }) => {
   httpsServer.setRoute('/mixedcontent.html', (req, res) => {
     res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
