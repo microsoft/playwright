@@ -29,8 +29,8 @@ npx playwright test tests/todo-page.spec.ts
 # Run a set of test files
 npx playwright test tests/todo-page/ tests/landing-page/
 
-# Run files by name pattern
-npx playwright test my-spec my-spec-2
+# Run files that have `my-spec` or `another-spec` in the file name
+npx playwright test my-spec another-spec-2
 
 # Run tests at a specific line
 npx playwright test my-spec.ts:42
@@ -81,7 +81,6 @@ npx playwright test --ui
 | `-g <grep>` or `--grep <grep>` | Only run tests matching this regular expression (default: ".*"). |
 | `--project <project-name...>` | Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects). |
 | `--ui` | Run tests in interactive UI mode. |
-| `-u` or `--update-snapshots [mode]` | Update snapshots with actual results. Possible values are "all", "changed", "missing", and "none". Running tests without the flag defaults to "missing"; running tests with the flag but without a value defaults to "changed". |
 | `-j <workers>` or `--workers <workers>` | Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%). |
 
 #### All Options
@@ -155,7 +154,7 @@ npx playwright show-report --port 8080
 
 ### Install Browsers
 
-Install browsers required by Playwright.
+Install browsers required by Playwright. [Read more about Playwright's browser support](./browsers.md).
 
 #### Syntax
 
@@ -238,7 +237,7 @@ Analyze and view test traces for debugging. [Read more about Trace Viewer](./tra
 #### Syntax
 
 ```bash
-npx playwright show-trace [options] [trace...]
+npx playwright show-trace [options] <trace>
 ```
 
 #### Examples
@@ -268,7 +267,7 @@ Read [blob](./test-reporters#blob-reporter) reports and combine them. [Read more
 #### Syntax
 
 ```bash
-npx playwright merge-reports [options] [blob dir]
+npx playwright merge-reports [options] <blob dir>
 ```
 
 #### Examples
