@@ -791,3 +791,62 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
           - listitem: 1.1
   `);
 });
+
+test(`should only highlight regex patterns that don't match`, async ({ page }) => {
+  await test.step('simple regex', async () => {
+    await page.setContent(`
+      <h1>Title 123</h1>
+      <div>Content with value 456</div>
+    `);
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Title \\d+/
+      - text: /Content with value \\d+/
+      - text: "This text doesn't exist"
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+- - heading Title 123
++ - heading "Title 123"
+  - text: Content with value 456
+- - text: "This text doesn't exist"`);
+  });
+
+  await test.step('nested regex', async () => {
+    await page.setContent(`
+      <ul>
+        <li>
+          <a href='about:blank'>Link 123</a>
+        </li>
+        <li>Another row</li>
+        <li>One more row</li>
+      </ul>
+    `);
+
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - list:
+        - listitem:
+          - link /Link \\d+/:
+            - /url: about:blank
+        - listitem: "One more row"
+    `, { timeout: 1000 });
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - list:
+        - listitem:
+          - link /Link2 \\d+/:
+            - /url: about:blank
+        - listitem: "One more row"
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+  - list:
+    - listitem:
+-     - link /Link2 \\d+/:
++     - link "Link 123":
+        - /url: about:blank
+-   - listitem: "One more row"
++   - listitem: Another row
++   - listitem: One more row`);
+  });
+});
