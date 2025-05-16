@@ -2640,7 +2640,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
    *
    * You can also filter tests by their tags during test execution:
-   * - in the [command line](https://playwright.dev/docs/test-cli#reference);
+   * - in the [command line](https://playwright.dev/docs/test-cli#all-options);
    * - in the config with [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep) and
    *   [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep);
    *
@@ -2717,7 +2717,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
    *
    * You can also filter tests by their tags during test execution:
-   * - in the [command line](https://playwright.dev/docs/test-cli#reference);
+   * - in the [command line](https://playwright.dev/docs/test-cli#all-options);
    * - in the config with [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep) and
    *   [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep);
    *
