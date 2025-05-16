@@ -354,6 +354,7 @@ APIRequestContext:
   commands:
 
     fetch:
+      title: Fetch
       parameters:
         url: string
         encodedParams: string?
@@ -381,12 +382,14 @@ APIRequestContext:
         response: APIResponse
 
     fetchResponseBody:
+      internal: true
       parameters:
         fetchUid: string
       returns:
         binary: binary?
 
     fetchLog:
+      internal: true
       parameters:
         fetchUid: string
       returns:
@@ -395,6 +398,7 @@ APIRequestContext:
           items: string
 
     storageState:
+      internal: true
       parameters:
         indexedDB: boolean?
       returns:
@@ -406,10 +410,12 @@ APIRequestContext:
           items: OriginStorage
 
     disposeAPIResponse:
+      internal: true
       parameters:
         fetchUid: string
 
     dispose:
+      internal: true
       parameters:
         reason: string?
 
@@ -642,6 +648,7 @@ LocalUtils:
   commands:
 
     zip:
+      internal: true
       parameters:
         zipFile: string
         entries:
@@ -656,6 +663,7 @@ LocalUtils:
         includeSources: boolean
 
     harOpen:
+      internal: true
       parameters:
         file: string
       returns:
@@ -663,6 +671,7 @@ LocalUtils:
         error: string?
 
     harLookup:
+      internal: true
       parameters:
         harId: string
         url: string
@@ -689,15 +698,18 @@ LocalUtils:
         body: binary?
 
     harClose:
+      internal: true
       parameters:
         harId: string
 
     harUnzip:
+      internal: true
       parameters:
         zipFile: string
         harFile: string
 
     connect:
+      internal: true
       parameters:
         wsEndpoint: string
         headers: json?
@@ -712,6 +724,7 @@ LocalUtils:
           items: NameValue
 
     tracingStarted:
+      internal: true
       parameters:
         tracesDir: string?
         traceName: string
@@ -719,14 +732,17 @@ LocalUtils:
         stacksId: string
 
     addStackToTracingNoReply:
+      internal: true
       parameters:
         callData: ClientSideCallMetadata
 
     traceDiscarded:
+      internal: true
       parameters:
         stacksId: string
 
     globToRegex:
+      internal: true
       parameters:
         glob: string
         baseURL: string?
@@ -740,6 +756,7 @@ Root:
   commands:
 
     initialize:
+      internal: true
       parameters:
         sdkLanguage:
           type: enum
@@ -773,6 +790,7 @@ Playwright:
 
   commands:
     newRequest:
+      title: Create request context
       parameters:
         baseURL: string?
         userAgent: string?
@@ -848,6 +866,7 @@ DebugController:
 
   commands:
     initialize:
+      internal: true
       parameters:
         codegenId: string
         sdkLanguage:
@@ -859,16 +878,20 @@ DebugController:
           - csharp
 
     setReportStateChanged:
+      internal: true
       parameters:
         enabled: boolean
 
     resetForReuse:
+      internal: true
 
     navigate:
+      internal: true
       parameters:
         url: string
 
     setRecorderMode:
+      internal: true
       parameters:
         mode:
           type: enum
@@ -879,17 +902,22 @@ DebugController:
         testIdAttributeName: string?
 
     highlight:
+      internal: true
       parameters:
         selector: string?
         ariaTemplate: string?
 
     hideHighlight:
+      internal: true
 
     resume:
+      internal: true
 
     kill:
+      internal: true
 
     closeAllBrowsers:
+      internal: true
 
   events:
     inspectRequested:
@@ -924,27 +952,32 @@ SocksSupport:
 
   commands:
     socksConnected:
+      internal: true
       parameters:
         uid: string
         host: string
         port: number
 
     socksFailed:
+      internal: true
       parameters:
         uid: string
         errorCode: string
 
     socksData:
+      internal: true
       parameters:
         uid: string
         data: binary
 
     socksError:
+      internal: true
       parameters:
         uid: string
         error: string
 
     socksEnd:
+      internal: true
       parameters:
         uid: string
 
@@ -970,12 +1003,14 @@ Selectors:
   commands:
 
     register:
+      internal: true
       parameters:
         name: string
         source: string
         contentScript: boolean?
 
     setTestIdAttributeName:
+      internal: true
       parameters:
         testIdAttributeName: string
 
@@ -989,6 +1024,7 @@ BrowserType:
   commands:
 
     launch:
+      title: Launch browser
       parameters:
         $mixin: LaunchOptions
         slowMo: number?
@@ -996,6 +1032,7 @@ BrowserType:
         browser: Browser
 
     launchPersistentContext:
+      title: Launch persistent context
       parameters:
         $mixin1: LaunchOptions
         $mixin2: ContextOptions
@@ -1005,6 +1042,7 @@ BrowserType:
         context: BrowserContext
 
     connectOverCDP:
+      title: Connect over CDP
       parameters:
         endpointURL: string
         headers:
@@ -1026,16 +1064,20 @@ Browser:
   commands:
 
     close:
+      title: Close browser
       parameters:
         reason: string?
 
     killForTests:
+      internal: true
 
     defaultUserAgentForTest:
+      internal: true
       returns:
         userAgent: string
 
     newContext:
+      title: Create new context
       parameters:
         $mixin: ContextOptions
         proxy:
@@ -1058,6 +1100,7 @@ Browser:
         context: BrowserContext
 
     newContextForReuse:
+      internal: true
       parameters:
         $mixin: ContextOptions
         proxy:
@@ -1080,14 +1123,19 @@ Browser:
         context: BrowserContext
 
     stopPendingOperations:
+      internal: true
+      title: Stop pending operations
       parameters:
         reason: string
 
     newBrowserCDPSession:
+      title: Create CDP session
+      internal: true
       returns:
         session: CDPSession
 
     startTracing:
+      internal: true
       parameters:
         page: Page?
         screenshots: boolean?
@@ -1096,9 +1144,9 @@ Browser:
           items: string
 
     stopTracing:
+      internal: true
       returns:
         artifact: Artifact
-
 
   events:
 
@@ -1125,6 +1173,7 @@ EventTarget:
 
   commands:
     waitForEventInfo:
+      internal: true
       parameters:
         info:
           type: object
@@ -1155,16 +1204,19 @@ BrowserContext:
   commands:
 
     addCookies:
+      title: Add cookies
       parameters:
         cookies:
           type: array
           items: SetNetworkCookie
 
     addInitScript:
+      title: Add init script
       parameters:
         source: string
 
     clearCookies:
+      title: Clear cookies
       parameters:
         name: string?
         nameRegexSource: string?
@@ -1177,12 +1229,15 @@ BrowserContext:
         pathRegexFlags: string?
 
     clearPermissions:
+      title: Clear permissions
 
     close:
+      title: Close context
       parameters:
         reason: string?
 
     cookies:
+      title: Get cookies
       parameters:
         urls:
           type: array
@@ -1193,11 +1248,13 @@ BrowserContext:
           items: NetworkCookie
 
     exposeBinding:
+      title: Expose binding
       parameters:
         name: string
         needsHandle: boolean?
 
     grantPermissions:
+      title: Grant permissions
       parameters:
         permissions:
           type: array
@@ -1205,24 +1262,29 @@ BrowserContext:
         origin: string?
 
     newPage:
+      title: Create new page
       returns:
         page: Page
 
     setDefaultNavigationTimeoutNoReply:
+      internal: true
       parameters:
         timeout: number?
 
     setDefaultTimeoutNoReply:
+      internal: true
       parameters:
         timeout: number?
 
     setExtraHTTPHeaders:
+      title: Set extra HTTP headers
       parameters:
         headers:
           type: array
           items: NameValue
 
     setGeolocation:
+      title: Set geolocation
       parameters:
         geolocation:
           type: object?
@@ -1232,6 +1294,7 @@ BrowserContext:
             accuracy: number?
 
     setHTTPCredentials:
+      title: Set HTTP credentials
       parameters:
         httpCredentials:
           type: object?
@@ -1241,6 +1304,7 @@ BrowserContext:
             origin: string?
 
     setNetworkInterceptionPatterns:
+      tite: Route
       parameters:
         patterns:
           type: array
@@ -1252,6 +1316,7 @@ BrowserContext:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
+      title: Route web sockets
       parameters:
         patterns:
           type: array
@@ -1263,10 +1328,12 @@ BrowserContext:
               regexFlags: string?
 
     setOffline:
+      title: Set offline mode
       parameters:
         offline: boolean
 
     storageState:
+      title: Get storage state
       parameters:
         indexedDB: boolean?
       returns:
@@ -1278,10 +1345,10 @@ BrowserContext:
           items: OriginStorage
 
     pause:
-      experimental: True
+      title: Pause
 
     enableRecorder:
-      experimental: True
+      internal: true
       parameters:
         language: string?
         mode:
@@ -1300,6 +1367,7 @@ BrowserContext:
         omitCallTracking: boolean?
 
     newCDPSession:
+      internal: true
       parameters:
         page: Page?
         frame: Frame?
@@ -1307,6 +1375,7 @@ BrowserContext:
         session: CDPSession
 
     harStart:
+      internal: true
       parameters:
         page: Page?
         options: RecordHarOptions
@@ -1314,12 +1383,14 @@ BrowserContext:
         harId: string
 
     harExport:
+      internal: true
       parameters:
         harId: string?
       returns:
         artifact: Artifact
 
     createTempFiles:
+      internal: true
       parameters:
         rootDirName: string?
         items:
@@ -1336,6 +1407,7 @@ BrowserContext:
           items: WritableStream
 
     updateSubscription:
+      internal: true
       parameters:
         event:
           type: enum
@@ -1349,33 +1421,40 @@ BrowserContext:
         enabled: boolean
 
     clockFastForward:
+      title: Fast forward clock
       parameters:
         ticksNumber: number?
         ticksString: string?
 
     clockInstall:
+      title: Install clock
       parameters:
         timeNumber: number?
         timeString: string?
 
     clockPauseAt:
+      title: Pause clock
       parameters:
         timeNumber: number?
         timeString: string?
 
     clockResume:
+      title: Resume clock
 
     clockRunFor:
+      title: Run clock
       parameters:
         ticksNumber: number?
         ticksString: string?
 
     clockSetFixedTime:
+      title: Set fixed time
       parameters:
         timeNumber: number?
         timeString: string?
 
     clockSetSystemTime:
+      title: Set system time
       parameters:
         timeNumber: number?
         timeString: string?
@@ -1468,10 +1547,12 @@ Page:
   commands:
 
     setDefaultNavigationTimeoutNoReply:
+      internal: true
       parameters:
         timeout: number?
 
     setDefaultTimeoutNoReply:
+      internal: true
       parameters:
         timeout: number?
 
@@ -1485,6 +1566,7 @@ Page:
         reason: string?
 
     emulateMedia:
+      title: Emulate media
       parameters:
         media:
           type: enum?
@@ -1521,11 +1603,13 @@ Page:
         snapshot: true
 
     exposeBinding:
+      title: Expose binding
       parameters:
         name: string
         needsHandle: boolean?
 
     goBack:
+      title: Go back
       parameters:
         timeout: number?
         waitUntil: LifecycleEvent?
@@ -1536,6 +1620,7 @@ Page:
         snapshot: true
 
     goForward:
+      title: Go forward
       parameters:
         timeout: number?
         waitUntil: LifecycleEvent?
@@ -1546,8 +1631,10 @@ Page:
         snapshot: true
 
     requestGC:
+      title: Request garbage collection
 
     registerLocatorHandler:
+      title: Register locator handler
       parameters:
         selector: string
         noWaitAfter: boolean?
@@ -1555,15 +1642,18 @@ Page:
         uid: number
 
     resolveLocatorHandlerNoReply:
+      internal: true
       parameters:
         uid: number
         remove: boolean?
 
     unregisterLocatorHandler:
+      title: Unregister locator handler
       parameters:
         uid: number
 
     reload:
+      title: Reload
       parameters:
         timeout: number?
         waitUntil: LifecycleEvent?
@@ -1574,6 +1664,7 @@ Page:
         snapshot: true
 
     expectScreenshot:
+      title: Expect screenshot
       parameters:
         expected: binary?
         timeout: number
@@ -1603,6 +1694,7 @@ Page:
         snapshot: true
 
     screenshot:
+      title: Screenshot
       parameters:
         timeout: number?
         type:
@@ -1620,12 +1712,14 @@ Page:
         snapshot: true
 
     setExtraHTTPHeaders:
+      title: Set extra HTTP headers
       parameters:
         headers:
           type: array
           items: NameValue
 
     setNetworkInterceptionPatterns:
+      title: Route
       parameters:
         patterns:
           type: array
@@ -1637,6 +1731,7 @@ Page:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
+      title: Route web sockets
       parameters:
         patterns:
           type: array
@@ -1648,6 +1743,7 @@ Page:
               regexFlags: string?
 
     setViewportSize:
+      title: Set viewport size
       parameters:
         viewportSize:
           type: object
@@ -1658,6 +1754,7 @@ Page:
         snapshot: true
 
     keyboardDown:
+      title: Key down
       parameters:
         key: string
       flags:
@@ -1665,6 +1762,7 @@ Page:
         snapshot: true
 
     keyboardUp:
+      title: Key up
       parameters:
         key: string
       flags:
@@ -1672,6 +1770,7 @@ Page:
         snapshot: true
 
     keyboardInsertText:
+      title: Insert text
       parameters:
         text: string
       flags:
@@ -1679,6 +1778,7 @@ Page:
         snapshot: true
 
     keyboardType:
+      title: Type
       parameters:
         text: string
         delay: number?
@@ -1687,6 +1787,7 @@ Page:
         snapshot: true
 
     keyboardPress:
+      title: Press
       parameters:
         key: string
         delay: number?
@@ -1695,6 +1796,7 @@ Page:
         snapshot: true
 
     mouseMove:
+      title: Move mouse
       parameters:
         x: number
         y: number
@@ -1704,6 +1806,7 @@ Page:
         snapshot: true
 
     mouseDown:
+      title: Mouse down
       parameters:
         button:
           type: enum?
@@ -1717,6 +1820,7 @@ Page:
         snapshot: true
 
     mouseUp:
+      title: Mouse up
       parameters:
         button:
           type: enum?
@@ -1730,6 +1834,7 @@ Page:
         snapshot: true
 
     mouseClick:
+      title: Click
       parameters:
         x: number
         y: number
@@ -1746,6 +1851,7 @@ Page:
         snapshot: true
 
     mouseWheel:
+      title: Mouse wheel
       parameters:
         deltaX: number
         deltaY: number
@@ -1754,6 +1860,7 @@ Page:
         snapshot: true
 
     touchscreenTap:
+      title: Tap
       parameters:
         x: number
         y: number
@@ -1762,6 +1869,7 @@ Page:
         snapshot: true
 
     accessibilitySnapshot:
+      internal: true
       parameters:
         interestingOnly: boolean?
         root: ElementHandle?
@@ -1771,6 +1879,7 @@ Page:
         snapshot: true
 
     pdf:
+      title: PDF
       parameters:
         scale: number?
         displayHeaderFooter: boolean?
@@ -1796,17 +1905,20 @@ Page:
         pdf: binary
 
     snapshotForAI:
+      internal: true
       returns:
         snapshot: string
       flags:
         snapshot: true
 
     startJSCoverage:
+      internal: true
       parameters:
         resetOnNavigation: boolean?
         reportAnonymousScripts: boolean?
 
     stopJSCoverage:
+      internal: true
       returns:
         entries:
           type: array
@@ -1833,10 +1945,12 @@ Page:
                           count: number
 
     startCSSCoverage:
+      internal: true
       parameters:
         resetOnNavigation: boolean?
 
     stopCSSCoverage:
+      internal: true
       returns:
         entries:
           type: array
@@ -1854,8 +1968,10 @@ Page:
                     end: number
 
     bringToFront:
+      title: Bring to front
 
     updateSubscription:
+      internal: true
       parameters:
         event:
           type: enum
@@ -1938,6 +2054,7 @@ Frame:
   commands:
 
     evalOnSelector:
+      title: Evaluate
       parameters:
         selector: string
         strict: boolean?
@@ -1950,6 +2067,7 @@ Frame:
         snapshot: true
 
     evalOnSelectorAll:
+      title: Evaluate
       parameters:
         selector: string
         expression: string
@@ -1961,6 +2079,7 @@ Frame:
         snapshot: true
 
     addScriptTag:
+      title: Add script tag
       parameters:
         url: string?
         content: string?
@@ -1971,6 +2090,7 @@ Frame:
         snapshot: true
 
     addStyleTag:
+      title: Add style tag
       parameters:
         url: string?
         content: string?
@@ -1980,6 +2100,7 @@ Frame:
         snapshot: true
 
     ariaSnapshot:
+      title: Aria snapshot
       parameters:
         selector: string
         forAI: boolean?
@@ -1990,6 +2111,7 @@ Frame:
         snapshot: true
 
     blur:
+      title: Blur
       parameters:
         selector: string
         strict: boolean?
@@ -1999,6 +2121,7 @@ Frame:
         snapshot: true
 
     check:
+      title: Check
       parameters:
         selector: string
         strict: boolean?
@@ -2012,6 +2135,7 @@ Frame:
         pausesBeforeInput: true
 
     click:
+      title: Click
       parameters:
         selector: string
         strict: boolean?
@@ -2044,12 +2168,14 @@ Frame:
         pausesBeforeInput: true
 
     content:
+      title: Get content
       returns:
         value: string
       flags:
         snapshot: true
 
     dragAndDrop:
+      title: Drag and drop
       parameters:
         source: string
         target: string
@@ -2065,6 +2191,7 @@ Frame:
         pausesBeforeInput: true
 
     dblclick:
+      title: Double click
       parameters:
         selector: string
         strict: boolean?
@@ -2095,6 +2222,7 @@ Frame:
         pausesBeforeInput: true
 
     dispatchEvent:
+      title: Dispatch event
       parameters:
         selector: string
         strict: boolean?
@@ -2106,6 +2234,7 @@ Frame:
         snapshot: true
 
     evaluateExpression:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -2116,6 +2245,7 @@ Frame:
         snapshot: true
 
     evaluateExpressionHandle:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -2126,6 +2256,7 @@ Frame:
         snapshot: true
 
     fill:
+      title: Fill
       parameters:
         selector: string
         strict: boolean?
@@ -2138,6 +2269,7 @@ Frame:
         pausesBeforeInput: true
 
     focus:
+      title: Focus
       parameters:
         selector: string
         strict: boolean?
@@ -2147,14 +2279,17 @@ Frame:
         snapshot: true
 
     frameElement:
+      internal: true
       returns:
         element: ElementHandle
 
     highlight:
+      internal: true
       parameters:
         selector: string
 
     getAttribute:
+      internal: true
       parameters:
         selector: string
         strict: boolean?
@@ -2166,6 +2301,7 @@ Frame:
         snapshot: true
 
     goto:
+      title: Navigate
       parameters:
         url: string
         timeout: number?
@@ -2178,6 +2314,7 @@ Frame:
         snapshot: true
 
     hover:
+      title: Hover
       parameters:
         selector: string
         strict: boolean?
@@ -2201,6 +2338,7 @@ Frame:
         pausesBeforeInput: true
 
     innerHTML:
+      title: Get HTML
       parameters:
         selector: string
         strict: boolean?
@@ -2211,6 +2349,7 @@ Frame:
         snapshot: true
 
     innerText:
+      title: Get inner text
       parameters:
         selector: string
         strict: boolean?
@@ -2221,6 +2360,7 @@ Frame:
         snapshot: true
 
     inputValue:
+      title: Get input value
       parameters:
         selector: string
         strict: boolean?
@@ -2231,6 +2371,7 @@ Frame:
         snapshot: true
 
     isChecked:
+      title: Is checked
       parameters:
         selector: string
         strict: boolean?
@@ -2241,6 +2382,7 @@ Frame:
         snapshot: true
 
     isDisabled:
+      title: Is disabled
       parameters:
         selector: string
         strict: boolean?
@@ -2251,6 +2393,7 @@ Frame:
         snapshot: true
 
     isEnabled:
+      title: Is enabled
       parameters:
         selector: string
         strict: boolean?
@@ -2261,6 +2404,7 @@ Frame:
         snapshot: true
 
     isHidden:
+      title: Is hidden
       parameters:
         selector: string
         strict: boolean?
@@ -2270,6 +2414,7 @@ Frame:
         snapshot: true
 
     isVisible:
+      title: Is visible
       parameters:
         selector: string
         strict: boolean?
@@ -2279,6 +2424,7 @@ Frame:
         snapshot: true
 
     isEditable:
+      title: Is editable
       parameters:
         selector: string
         strict: boolean?
@@ -2289,6 +2435,7 @@ Frame:
         snapshot: true
 
     press:
+      title: Press
       parameters:
         selector: string
         strict: boolean?
@@ -2302,6 +2449,7 @@ Frame:
         pausesBeforeInput: true
 
     querySelector:
+      title: Query selector
       parameters:
         selector: string
         strict: boolean?
@@ -2311,6 +2459,7 @@ Frame:
         snapshot: true
 
     querySelectorAll:
+      title: Query selector all
       parameters:
         selector: string
       returns:
@@ -2321,6 +2470,7 @@ Frame:
         snapshot: true
 
     queryCount:
+      title: Query count
       parameters:
         selector: string
       returns:
@@ -2329,6 +2479,7 @@ Frame:
         snapshot: true
 
     selectOption:
+      title: Select option
       parameters:
         selector: string
         strict: boolean?
@@ -2356,6 +2507,7 @@ Frame:
         pausesBeforeInput: true
 
     setContent:
+      title: Set content
       parameters:
         html: string
         timeout: number?
@@ -2364,6 +2516,7 @@ Frame:
         snapshot: true
 
     setInputFiles:
+      title: Set input files
       parameters:
         selector: string
         strict: boolean?
@@ -2391,6 +2544,7 @@ Frame:
         pausesBeforeInput: true
 
     tap:
+      title: Tap
       parameters:
         selector: string
         strict: boolean?
@@ -2414,6 +2568,7 @@ Frame:
         pausesBeforeInput: true
 
     textContent:
+      title: Get text content
       parameters:
         selector: string
         strict: boolean?
@@ -2424,10 +2579,12 @@ Frame:
         snapshot: true
 
     title:
+      internal: true
       returns:
         value: string
 
     type:
+      title: Type
       parameters:
         selector: string
         strict: boolean?
@@ -2440,6 +2597,7 @@ Frame:
         pausesBeforeInput: true
 
     uncheck:
+      title: Uncheck
       parameters:
         selector: string
         strict: boolean?
@@ -2453,12 +2611,14 @@ Frame:
         pausesBeforeInput: true
 
     waitForTimeout:
+      title: Wait for timeout
       parameters:
         timeout: number
       flags:
         snapshot: true
 
     waitForFunction:
+      title: Wait for function
       parameters:
         expression: string
         isFunction: boolean?
@@ -2472,6 +2632,7 @@ Frame:
         snapshot: true
 
     waitForSelector:
+      title: Wait for selector
       parameters:
         selector: string
         strict: boolean?
@@ -2490,6 +2651,7 @@ Frame:
         snapshot: true
 
     expect:
+      title: Expect
       parameters:
         selector: string
         expression: string
@@ -2540,6 +2702,7 @@ Worker:
   commands:
 
     evaluateExpression:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -2548,6 +2711,7 @@ Worker:
         value: SerializedValue
 
     evaluateExpressionHandle:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -2571,6 +2735,7 @@ JSHandle:
     dispose:
 
     evaluateExpression:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -2581,6 +2746,7 @@ JSHandle:
         snapshot: true
 
     evaluateExpressionHandle:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -2591,6 +2757,7 @@ JSHandle:
         snapshot: true
 
     getPropertyList:
+      internal: true
       returns:
         properties:
           type: array
@@ -2601,12 +2768,14 @@ JSHandle:
               value: JSHandle
 
     getProperty:
+      internal: true
       parameters:
         name: string
       returns:
         handle: JSHandle
 
     jsonValue:
+      internal: true
       returns:
         value: SerializedValue
 
@@ -2626,6 +2795,7 @@ ElementHandle:
   commands:
 
     evalOnSelector:
+      title: Evaluate
       parameters:
         selector: string
         strict: boolean?
@@ -2638,6 +2808,7 @@ ElementHandle:
         snapshot: true
 
     evalOnSelectorAll:
+      title: Evaluate
       parameters:
         selector: string
         expression: string
@@ -2649,12 +2820,14 @@ ElementHandle:
         snapshot: true
 
     boundingBox:
+      title: Get bounding box
       returns:
         value: Rect?
       flags:
         snapshot: true
 
     check:
+      title: Check
       parameters:
         force: boolean?
         position: Point?
@@ -2666,6 +2839,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     click:
+      title: Click
       parameters:
         force: boolean?
         noWaitAfter: boolean?
@@ -2696,12 +2870,14 @@ ElementHandle:
         pausesBeforeInput: true
 
     contentFrame:
+      internal: true
       returns:
         frame: Frame?
       flags:
         snapshot: true
 
     dblclick:
+      title: Double click
       parameters:
         force: boolean?
         modifiers:
@@ -2730,6 +2906,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     dispatchEvent:
+      title: Dispatch event
       parameters:
         type: string
         eventInit: SerializedArgument
@@ -2738,6 +2915,7 @@ ElementHandle:
         snapshot: true
 
     fill:
+      title: Fill
       parameters:
         value: string
         force: boolean?
@@ -2748,21 +2926,25 @@ ElementHandle:
         pausesBeforeInput: true
 
     focus:
+      title: Focus
       flags:
         slowMo: true
         snapshot: true
 
     generateLocatorString:
+      internal: true
       returns:
         value: string?
 
     getAttribute:
+      internal: true
       parameters:
         name: string
       returns:
         value: string?
 
     hover:
+      title: Hover
       parameters:
         force: boolean?
         modifiers:
@@ -2784,64 +2966,75 @@ ElementHandle:
         pausesBeforeInput: true
 
     innerHTML:
+      title: Get HTML
       returns:
         value: string
       flags:
         snapshot: true
 
     innerText:
+      title: Get inner text
       returns:
         value: string
       flags:
         snapshot: true
 
     inputValue:
+      title: Get input value
       returns:
         value: string
       flags:
         snapshot: true
 
     isChecked:
+      title: Is checked
       returns:
         value: boolean
       flags:
         snapshot: true
 
     isDisabled:
+      title: Is disabled
       returns:
         value: boolean
       flags:
         snapshot: true
 
     isEditable:
+      title: Is editable
       returns:
         value: boolean
       flags:
         snapshot: true
 
     isEnabled:
+      title: Is enabled
       returns:
         value: boolean
       flags:
         snapshot: true
 
     isHidden:
+      title: Is hidden
       returns:
         value: boolean
       flags:
         snapshot: true
 
     isVisible:
+      title: Is visible
       returns:
         value: boolean
       flags:
         snapshot: true
 
     ownerFrame:
+      title: Get owner frame
       returns:
         frame: Frame?
 
     press:
+      title: Press
       parameters:
         key: string
         delay: number?
@@ -2853,6 +3046,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     querySelector:
+      title: Query selector
       parameters:
         selector: string
         strict: boolean?
@@ -2862,6 +3056,7 @@ ElementHandle:
         snapshot: true
 
     querySelectorAll:
+      title: Query selector all
       parameters:
         selector: string
       returns:
@@ -2872,6 +3067,7 @@ ElementHandle:
         snapshot: true
 
     screenshot:
+      title: Screenshot
       parameters:
         timeout: number?
         type:
@@ -2887,6 +3083,7 @@ ElementHandle:
         snapshot: true
 
     scrollIntoViewIfNeeded:
+      title: Scroll into view
       parameters:
         timeout: number?
       flags:
@@ -2894,6 +3091,7 @@ ElementHandle:
         snapshot: true
 
     selectOption:
+      title: Select option
       parameters:
         elements:
           type: array?
@@ -2919,6 +3117,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     selectText:
+      title: Select text
       parameters:
         force: boolean?
         timeout: number?
@@ -2927,6 +3126,7 @@ ElementHandle:
         snapshot: true
 
     setInputFiles:
+      title: Set input files
       parameters:
         # Only one of payloads, localPaths and streams should be present.
         payloads:
@@ -2952,6 +3152,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     tap:
+      title: Tap
       parameters:
         force: boolean?
         modifiers:
@@ -2973,12 +3174,14 @@ ElementHandle:
         pausesBeforeInput: true
 
     textContent:
+      title: Get text content
       returns:
         value: string?
       flags:
         snapshot: true
 
     type:
+      title: Type
       parameters:
         text: string
         delay: number?
@@ -2989,6 +3192,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     uncheck:
+      title: Uncheck
       parameters:
         force: boolean?
         position: Point?
@@ -3000,6 +3204,7 @@ ElementHandle:
         pausesBeforeInput: true
 
     waitForElementState:
+      title: Wait for state
       parameters:
         state:
           type: enum
@@ -3015,6 +3220,7 @@ ElementHandle:
         snapshot: true
 
     waitForSelector:
+      title: Wait for selector
       parameters:
         selector: string
         strict: boolean?
@@ -3051,10 +3257,12 @@ Request:
   commands:
 
     response:
+      internal: true
       returns:
         response: Response?
 
     rawRequestHeaders:
+      internal: true
       returns:
         headers:
           type: array
@@ -3070,6 +3278,7 @@ Route:
   commands:
 
     redirectNavigationRequest:
+      internal: true
       parameters:
         url: string
 
@@ -3078,6 +3287,7 @@ Route:
         errorCode: string?
 
     continue:
+      internal: true
       parameters:
         url: string?
         method: string?
@@ -3088,6 +3298,7 @@ Route:
         isFallback: boolean
 
     fulfill:
+      internal: true
       parameters:
         # default is 200
         status: number?
@@ -3108,26 +3319,32 @@ WebSocketRoute:
   commands:
 
     connect:
+      internal: true
 
     ensureOpened:
+      internal: true
 
     sendToPage:
+      internal: true
       parameters:
         message: string
         isBase64: boolean
 
     sendToServer:
+      internal: true
       parameters:
         message: string
         isBase64: boolean
 
     closePage:
+      internal: true
       parameters:
         code: number?
         reason: string?
         wasClean: boolean
 
     closeServer:
+      internal: true
       parameters:
         code: number?
         reason: string?
@@ -3188,24 +3405,29 @@ Response:
   commands:
 
     body:
+      internal: true
       returns:
         binary: binary
 
     securityDetails:
+      internal: true
       returns:
         value: SecurityDetails?
 
     serverAddr:
+      internal: true
       returns:
         value: RemoteAddr?
 
     rawResponseHeaders:
+      internal: true
       returns:
         headers:
           type: array
           items: NameValue
 
     sizes:
+      internal: true
       returns:
         sizes: RequestSizes
 
@@ -3277,10 +3499,12 @@ BindingCall:
   commands:
 
     reject:
+      internal: true
       parameters:
         error: SerializedError
 
     resolve:
+      internal: true
       parameters:
         result: SerializedArgument
 
@@ -3298,11 +3522,12 @@ Dialog:
   commands:
 
     accept:
+      title: Accept dialog
       parameters:
         promptText: string?
 
     dismiss:
-
+      title: Dismiss dialog
 
 Tracing:
   type: interface
@@ -3310,6 +3535,7 @@ Tracing:
   commands:
 
     tracingStart:
+      internal: true
       parameters:
         name: string?
         snapshots: boolean?
@@ -3317,6 +3543,7 @@ Tracing:
         live: boolean?
 
     tracingStartChunk:
+      internal: true
       parameters:
         name: string?
         title: string?
@@ -3324,6 +3551,7 @@ Tracing:
         traceName: string
 
     tracingGroup:
+      title: Group
       parameters:
         name: string
         location:
@@ -3334,8 +3562,10 @@ Tracing:
             column: number?
 
     tracingGroupEnd:
+      title: Group end
 
     tracingStopChunk:
+      internal: true
       parameters:
         mode:
           type: enum
@@ -3353,6 +3583,7 @@ Tracing:
           items: NameValue
 
     tracingStop:
+      internal: true
 
 
 Artifact:
@@ -3364,30 +3595,37 @@ Artifact:
   commands:
 
     pathAfterFinished:
+      internal: true
       returns:
         value: string
 
     # Blocks path/failure/delete/context.close until saved to the local |path|.
     saveAs:
+      internal: true
       parameters:
         path: string
 
     # Blocks path/failure/delete/context.close until the stream is closed.
     saveAsStream:
+      internal: true
       returns:
         stream: Stream
 
     failure:
+      internal: true
       returns:
         error: string?
 
     stream:
+      internal: true
       returns:
         stream: Stream
 
     cancel:
+      internal: true
 
     delete:
+      internal: true
 
 
 Stream:
@@ -3396,12 +3634,14 @@ Stream:
   commands:
 
     read:
+      internal: true
       parameters:
         size: number?
       returns:
         binary: binary
 
     close:
+      internal: true
 
 
 WritableStream:
@@ -3410,10 +3650,12 @@ WritableStream:
   commands:
 
     write:
+      internal: true
       parameters:
         binary: binary
 
     close:
+      internal: true
 
 
 CDPSession:
@@ -3422,6 +3664,7 @@ CDPSession:
   commands:
 
     send:
+      internal: true
       parameters:
         method: string
         params: json?
@@ -3429,6 +3672,7 @@ CDPSession:
         result: json
 
     detach:
+      internal: true
 
   events:
 
@@ -3444,6 +3688,7 @@ Electron:
   commands:
 
     launch:
+      title: Launch electron
       parameters:
         executablePath: string?
         args:
@@ -3515,12 +3760,14 @@ ElectronApplication:
   commands:
 
     browserWindow:
+      internal: true
       parameters:
         page: Page
       returns:
         handle: JSHandle
 
     evaluateExpression:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -3529,6 +3776,7 @@ ElectronApplication:
         value: SerializedValue
 
     evaluateExpressionHandle:
+      title: Evaluate
       parameters:
         expression: string
         isFunction: boolean?
@@ -3537,6 +3785,7 @@ ElectronApplication:
         handle: JSHandle
 
     updateSubscription:
+      internal: true
       parameters:
         event:
           type: enum
@@ -3556,6 +3805,7 @@ Android:
   commands:
 
     devices:
+      internal: true
       parameters:
         host: string?
         port: number?
@@ -3566,6 +3816,7 @@ Android:
           items: AndroidDevice
 
     setDefaultTimeoutNoReply:
+      internal: true
       parameters:
         timeout: number
 
@@ -3574,10 +3825,12 @@ AndroidSocket:
 
   commands:
     write:
+      internal: true
       parameters:
         data: binary
 
     close:
+      internal: true
 
   events:
     data:
@@ -3596,6 +3849,7 @@ AndroidDevice:
 
   commands:
     wait:
+      hidden: Wait
       parameters:
         selector: AndroidSelector
         state:
@@ -3605,18 +3859,21 @@ AndroidDevice:
         timeout: number?
 
     fill:
+      title: Fill
       parameters:
         selector: AndroidSelector
         text: string
         timeout: number?
 
     tap:
+      title: Tap
       parameters:
         selector: AndroidSelector
         duration: number?
         timeout: number?
 
     drag:
+      title: Drag
       parameters:
         selector: AndroidSelector
         dest: Point
@@ -3624,6 +3881,7 @@ AndroidDevice:
         timeout: number?
 
     fling:
+      title: Fling
       parameters:
         selector: AndroidSelector
         direction:
@@ -3637,11 +3895,13 @@ AndroidDevice:
         timeout: number?
 
     longTap:
+      title: Long tap
       parameters:
         selector: AndroidSelector
         timeout: number?
 
     pinchClose:
+      title: Pinch close
       parameters:
         selector: AndroidSelector
         percent: number
@@ -3649,6 +3909,7 @@ AndroidDevice:
         timeout: number?
 
     pinchOpen:
+      title: Pinch open
       parameters:
         selector: AndroidSelector
         percent: number
@@ -3656,6 +3917,7 @@ AndroidDevice:
         timeout: number?
 
     scroll:
+      title: Scroll
       parameters:
         selector: AndroidSelector
         direction:
@@ -3670,6 +3932,7 @@ AndroidDevice:
         timeout: number?
 
     swipe:
+      title: Swipe
       parameters:
         selector: AndroidSelector
         direction:
@@ -3684,28 +3947,34 @@ AndroidDevice:
         timeout: number?
 
     info:
+      internal: true
       parameters:
         selector: AndroidSelector
       returns:
         info: AndroidElementInfo
 
     screenshot:
+      title: Screenshot
       returns:
         binary: binary
 
     inputType:
+      title: Type
       parameters:
         text: string
 
     inputPress:
+      title: Press
       parameters:
         key: string
 
     inputTap:
+      title: Tap
       parameters:
         point: Point
 
     inputSwipe:
+      title: Swipe
       parameters:
         segments:
           type: array
@@ -3713,12 +3982,14 @@ AndroidDevice:
         steps: number
 
     inputDrag:
+      title: Drag
       parameters:
         from: Point
         to: Point
         steps: number
 
     launchBrowser:
+      title: Launch browser
       parameters:
         $mixin: ContextOptions
         pkg: string?
@@ -3737,18 +4008,21 @@ AndroidDevice:
         context: BrowserContext
 
     open:
+      title: Open app
       parameters:
         command: string
       returns:
         socket: AndroidSocket
 
     shell:
+      internal: true
       parameters:
         command: string
       returns:
         result: binary
 
     installApk:
+      title: Install apk
       parameters:
         file: binary
         args:
@@ -3756,22 +4030,26 @@ AndroidDevice:
           items: string
 
     push:
+      title: Push
       parameters:
         file: binary
         path: string
         mode: number?
 
     setDefaultTimeoutNoReply:
+      internal: true
       parameters:
         timeout: number
 
     connectToWebView:
+      internal: true
       parameters:
         socketName: string
       returns:
         context: BrowserContext
 
     close:
+      internal: true
 
   events:
     close:
@@ -3850,10 +4128,12 @@ JsonPipe:
 
   commands:
     send:
+      internal: true
       parameters:
         message: json
 
     close:
+      internal: true
 
   events:
 

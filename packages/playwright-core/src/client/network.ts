@@ -102,7 +102,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RequestInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
@@ -177,7 +176,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
         return new RawHeaders((await this._channel.rawRequestHeaders()).headers);
-      });
+      }, true);
     }
     return await this._actualHeadersPromise;
   }
@@ -199,9 +198,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async _internalResponse(): Promise<Response | null> {
-    return await this._wrapApiCall(async () => {
-      return Response.fromNullable((await this._channel.response()).response);
-    }, true);
+    return Response.fromNullable((await this._channel.response()).response);
   }
 
   frame(): Frame {
@@ -305,7 +302,6 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RouteInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
   }
 
   request(): Request {
@@ -352,7 +348,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     await this._handleRoute(async () => {
       await this._wrapApiCall(async () => {
         await this._innerFulfill(options);
-      });
+      }, true);
     });
   }
 
@@ -468,7 +464,6 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WebSocketRouteInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
 
     this._server = {
       onMessage: (handler: (message: string | Buffer) => any) => {
@@ -651,7 +646,6 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
     super(parent, type, guid, initializer);
-    this.markAsInternalType();
     this._provisionalHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(this._initializer.request);
     Object.assign(this._request._timing, this._initializer.timing);

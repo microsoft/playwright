@@ -1224,7 +1224,6 @@ pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:11
 pw:api    |↪ error: <error message>
 hook      |After Hooks
 fixture   |  fixture: request
-pw:api    |    apiRequestContext.dispose
 fixture   |  fixture: page
 fixture   |  fixture: context
 `);
@@ -1517,6 +1516,7 @@ pw:api    |    browserContext.newPage
 test.step |custom step @ a.test.ts:4
 pw:api    |  page.route @ a.test.ts:5
 pw:api    |  page.goto(${server.EMPTY_PAGE}) @ a.test.ts:12
+pw:api    |  route.fetch(${server.EMPTY_PAGE}) @ a.test.ts:6
 expect    |  expect.toBe @ a.test.ts:8
 hook      |After Hooks
 fixture   |  fixture: page

@@ -219,7 +219,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
+        this._updateInterceptionPatterns().catch(() => {});
       if (handled)
         return;
     }
@@ -245,16 +245,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-    this._wrapApiCall(async () => {
-      await this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
-    }, true).catch(() => {});
+    this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(() => {});
   }
 
   setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._wrapApiCall(async () => {
-      await this._channel.setDefaultTimeoutNoReply({ timeout });
-    }, true).catch(() => {});
+    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
   }
 
   browser(): Browser | null {
@@ -476,9 +472,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     this._closeReason = options.reason;
     this._closeWasCalled = true;
-    await this._wrapApiCall(async () => {
-      await this.request.dispose(options);
-    }, true);
+    await this.request.dispose(options);
     await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
       for (const [harId, harParams] of this._harRecorders) {

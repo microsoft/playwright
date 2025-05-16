@@ -103,7 +103,6 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: page',
     '  fixture: context',
     '  fixture: request',
-    '    apiRequestContext.dispose',
   ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
   expect(trace2.actionTree).toEqual([
@@ -128,7 +127,6 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: page',
     '  fixture: context',
     '  fixture: request',
-    '    apiRequestContext.dispose',
     'Worker Cleanup',
     '  fixture: browser',
   ]);
@@ -332,7 +330,6 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '      apiRequest.newContext',
     '    apiRequestContext.get',
     '    fixture: request',
-    '      apiRequestContext.dispose',
     'Worker Cleanup',
     '  fixture: browser',
   ]);
@@ -1264,6 +1261,7 @@ test('should not nest top level expect into unfinished api calls ', {
     '    browserContext.newPage',
     'page.route',
     'page.goto',
+    'route.fetch',
     'expect.toBeVisible',
     'page.unrouteAll',
     'After Hooks',

@@ -62,17 +62,13 @@ class JsonPipeTransport implements Transport {
   }
 
   async connect(params: channels.LocalUtilsConnectParams) {
-    const { pipe, headers: connectHeaders } = await this._owner._wrapApiCall(async () => {
-      return await this._owner._channel.connect(params);
-    }, /* isInternal */ true);
+    const { pipe, headers: connectHeaders } = await this._owner._channel.connect(params);
     this._pipe = pipe;
     return connectHeaders;
   }
 
   async send(message: object) {
-    await this._owner._wrapApiCall(async () => {
-      await this._pipe!.send({ message });
-    }, /* isInternal */ true);
+    await this._pipe!.send({ message });
   }
 
   onMessage(callback: (message: object) => void) {
@@ -84,9 +80,7 @@ class JsonPipeTransport implements Transport {
   }
 
   async close() {
-    await this._owner._wrapApiCall(async () => {
-      await this._pipe!.close().catch(() => {});
-    }, /* isInternal */ true);
+    await this._pipe!.close().catch(() => {});
   }
 }
 
