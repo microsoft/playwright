@@ -329,6 +329,11 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage).updateRequestInterception();
   }
 
+  override async doExposePlaywrightBinding() {
+    for (const page of this.pages())
+      await (page.delegate as WKPage).exposePlaywrightBinding();
+  }
+
   onClosePersistent() {}
 
   override async clearCache(): Promise<void> {

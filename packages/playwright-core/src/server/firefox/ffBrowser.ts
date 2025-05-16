@@ -185,7 +185,6 @@ export class FFBrowserContext extends BrowserContext {
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [
       super._initialize(),
-      this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: kPlaywrightBinding, script: '' }),
       this._updateInitScripts(),
     ];
     if (this._options.acceptDownloads !== 'internal-browser-default') {
@@ -390,6 +389,10 @@ export class FFBrowserContext extends BrowserContext {
       this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor }),
       this._browser.session.send('Browser.setCacheDisabled', { browserContextId: this._browserContextId, cacheDisabled: !!this._requestInterceptor }),
     ]);
+  }
+
+  override async doExposePlaywrightBinding() {
+    this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: kPlaywrightBinding, script: '' });
   }
 
   onClosePersistent() {}

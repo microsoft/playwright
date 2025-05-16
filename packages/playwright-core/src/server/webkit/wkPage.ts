@@ -176,12 +176,13 @@ export class WKPage implements PageDelegate {
     const promises: Promise<any>[] = [
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
-      session.send('Runtime.addBinding', { name: kPlaywrightBinding }),
       session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
       session.send('Console.enable'),
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
+    if (this._page.browserContext.needsPlaywrightBinding())
+      promises.push(session.send('Runtime.addBinding', { name: kPlaywrightBinding }));
     if (this._page.needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
@@ -770,6 +771,10 @@ export class WKPage implements PageDelegate {
 
   async removeNonInternalInitScripts() {
     await this._updateBootstrapScript();
+  }
+
+  async exposePlaywrightBinding() {
+    await this._updateState('Runtime.addBinding', { name: kPlaywrightBinding });
   }
 
   private _calculateBootstrapScript(): string {

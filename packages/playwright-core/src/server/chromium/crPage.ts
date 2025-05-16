@@ -234,6 +234,10 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(initScript, world));
   }
 
+  async exposePlaywrightBinding() {
+    await this._forAllFrameSessions(frame => frame.exposePlaywrightBinding());
+  }
+
   async removeNonInternalInitScripts() {
     await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument());
   }
@@ -508,7 +512,6 @@ class FrameSession {
       this._client.send('Log.enable', {}),
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
-      this._client.send('Runtime.addBinding', { name: kPlaywrightBinding }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: '',
         worldName: UTILITY_WORLD_NAME,
@@ -517,6 +520,8 @@ class FrameSession {
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
     if (!isSettingStorageState) {
+      if (this._crPage._browserContext.needsPlaywrightBinding())
+        promises.push(this.exposePlaywrightBinding());
       if (this._isMainFrame())
         promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
       const options = this._crPage._browserContext._options;
@@ -1062,6 +1067,10 @@ class FrameSession {
     const identifiers = this._evaluateOnNewDocumentIdentifiers;
     this._evaluateOnNewDocumentIdentifiers = [];
     await Promise.all(identifiers.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier })));
+  }
+
+  async exposePlaywrightBinding() {
+    await this._client.send('Runtime.addBinding', { name: kPlaywrightBinding });
   }
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
