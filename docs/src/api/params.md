@@ -687,6 +687,7 @@ Emulates `'prefers-contrast'` media feature, supported values are `'no-preferenc
 
 ## context-option-logger
 * langs: js
+* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging.
@@ -1084,6 +1085,7 @@ You can also provide a path to a custom [`policies.json` file](https://mozilla.g
 
 ## browser-option-logger
 * langs: js
+* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging.
