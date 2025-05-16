@@ -1194,9 +1194,11 @@ it('should set PointerEvent.pressure on pointerdown', async ({ page, isLinux, he
   ]);
 });
 
-it('should set PointerEvent.pressure on pointermove', async ({ page, isLinux, headless }) => {
+it('should set PointerEvent.pressure on pointermove', async ({ page, isLinux, headless, isWindows, browserName, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35844' });
   it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
+  it.fixme(isWindows && !headless && browserName === 'webkit', 'WebKit win also send stray mouse events.');
+  it.fixme(isAndroid, 'Android coordinates seem to have rounding issues.');
   await page.setContent(`
     <body style="margin: 0; padding: 0;">
       <div id="target" style="width: 500px; height: 500px; background-color: red;"></div>
