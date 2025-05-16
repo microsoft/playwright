@@ -29,9 +29,6 @@ npx playwright test tests/todo-page.spec.ts
 # Run a set of test files
 npx playwright test tests/todo-page/ tests/landing-page/
 
-# Run files that have `my-spec` or `another-spec` in the file name
-npx playwright test my-spec another-spec-2
-
 # Run tests at a specific line
 npx playwright test my-spec.ts:42
 
@@ -52,12 +49,6 @@ npx playwright test --help
 
 ```bash
 npx playwright test --workers=1
-```
-
-**Choose a [reporter](./test-reporters.md)**
-
-```bash
-npx playwright test --reporter=dot
 ```
 
 **Run in debug mode with [Playwright Inspector](./debug.md)**
