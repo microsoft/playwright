@@ -488,6 +488,11 @@ export class CRBrowserContext extends BrowserContext {
       await (sw as CRServiceWorker).updateRequestInterception();
   }
 
+  override async doExposePlaywrightBinding() {
+    for (const page of this._crPages())
+      await page.exposePlaywrightBinding();
+  }
+
   async doClose(reason: string | undefined) {
     // Headful chrome cannot dispose browser context with opened 'beforeunload'
     // dialogs, so we should close all that are currently opened.

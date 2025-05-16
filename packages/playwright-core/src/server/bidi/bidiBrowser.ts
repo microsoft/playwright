@@ -20,8 +20,9 @@ import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
-import { addMainBindingSource, BidiPage, kPlaywrightBindingChannel } from './bidiPage';
+import { BidiPage, kPlaywrightBindingChannel } from './bidiPage';
 import { kUtilityInitScript } from '../page';
+import { kPlaywrightBinding } from '../javascript';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -221,7 +222,6 @@ export class BidiBrowserContext extends BrowserContext {
   override async _initialize() {
     const promises: Promise<any>[] = [
       super._initialize(),
-      this._installMainBinding(),
       this._installUtilityScript(),
     ];
     if (this._options.viewport) {
@@ -237,22 +237,6 @@ export class BidiBrowserContext extends BrowserContext {
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     await Promise.all(promises);
-  }
-
-  // TODO: consider calling this only when bindings are added.
-  private async _installMainBinding() {
-    const args: bidi.Script.ChannelValue[] = [{
-      type: 'channel',
-      value: {
-        channel: kPlaywrightBindingChannel,
-        ownership: bidi.Script.ResultOwnership.Root,
-      }
-    }];
-    await this._browser._browserSession.send('script.addPreloadScript', {
-      functionDeclaration: addMainBindingSource,
-      arguments: args,
-      userContexts: [this._userContextId()],
-    });
   }
 
   private async _installUtilityScript() {
@@ -406,6 +390,21 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
+  }
+
+  override async doExposePlaywrightBinding() {
+    const args: bidi.Script.ChannelValue[] = [{
+      type: 'channel',
+      value: {
+        channel: kPlaywrightBindingChannel,
+        ownership: bidi.Script.ResultOwnership.Root,
+      }
+    }];
+    await this._browser._browserSession.send('script.addPreloadScript', {
+      functionDeclaration: `function addMainBinding(callback) { globalThis['${kPlaywrightBinding}'] = callback; }`,
+      arguments: args,
+      userContexts: [this._userContextId()],
+    });
   }
 
   onClosePersistent() {}

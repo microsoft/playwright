@@ -96,6 +96,7 @@ export abstract class BrowserContext extends SdkObject {
   _closeReason: string | undefined;
   readonly clock: Clock;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
+  private _playwrightBindingExposed = false;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -283,6 +284,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
   protected abstract doRemoveNonInternalInitScripts(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
+  protected abstract doExposePlaywrightBinding(): Promise<void>;
   protected abstract doClose(reason: string | undefined): Promise<void>;
   protected abstract onClosePersistent(): void;
 
@@ -323,6 +325,17 @@ export abstract class BrowserContext extends SdkObject {
     return this._pageBindings.has(name);
   }
 
+  async exposePlaywrightBindingIfNeeded() {
+    if (this._playwrightBindingExposed)
+      return;
+    this._playwrightBindingExposed = true;
+    await this.doExposePlaywrightBinding();
+  }
+
+  needsPlaywrightBinding() {
+    return this._playwrightBindingExposed;
+  }
+
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
@@ -330,6 +343,7 @@ export abstract class BrowserContext extends SdkObject {
       if (page.getBinding(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
+    await this.exposePlaywrightBindingIfNeeded();
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this.doAddInitScript(binding.initScript);

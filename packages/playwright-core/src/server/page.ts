@@ -344,6 +344,7 @@ export class Page extends SdkObject {
       throw new Error(`Function "${name}" has been already registered`);
     if (this.browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
+    await this.browserContext.exposePlaywrightBindingIfNeeded();
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this.delegate.addInitScript(binding.initScript);
