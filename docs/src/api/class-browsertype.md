@@ -117,6 +117,7 @@ can see what is going on. Defaults to 0.
 ### option: BrowserType.connect.logger
 * since: v1.14
 * langs: js
+* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging. Optional.
@@ -201,9 +202,8 @@ A CDP websocket endpoint or http url to connect to. For example `http://localhos
 ### option: BrowserType.connectOverCDP.endpointURL
 * since: v1.14
 * langs: js
+* deprecated: Use the first argument instead.
 - `endpointURL` <[string]>
-
-Deprecated, use the first argument instead. Optional.
 
 ### option: BrowserType.connectOverCDP.headers
 * since: v1.11
@@ -221,6 +221,7 @@ can see what is going on. Defaults to 0.
 ### option: BrowserType.connectOverCDP.logger
 * since: v1.14
 * langs: js
+* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging. Optional.
