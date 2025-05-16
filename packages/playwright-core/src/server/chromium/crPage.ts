@@ -488,8 +488,6 @@ class FrameSession {
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
           });
-          for (const initScript of this._crPage._page.allInitScripts())
-            frame.evaluateExpression(initScript.source).catch(e => {});
         }
 
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
@@ -542,7 +540,7 @@ class FrameSession {
       promises.push(this._updateEmulateMedia());
       promises.push(this._updateFileChooserInterception(true));
       for (const initScript of this._crPage._page.allInitScripts())
-        promises.push(this._evaluateOnNewDocument(initScript, 'main'));
+        promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
       if (screencastOptions)
         promises.push(this._startVideoRecording(screencastOptions));
     }
@@ -1051,9 +1049,9 @@ class FrameSession {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
   }
 
-  async _evaluateOnNewDocument(initScript: InitScript, world: types.World): Promise<void> {
+  async _evaluateOnNewDocument(initScript: InitScript, world: types.World, runImmediately?: boolean): Promise<void> {
     const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
-    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName });
+    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName, runImmediately });
     if (!initScript.internal)
       this._evaluateOnNewDocumentIdentifiers.push(identifier);
   }
