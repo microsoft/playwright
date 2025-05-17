@@ -27,7 +27,8 @@ test(`third party non-partitioned cookies`, async ({ page, browserName, httpsSer
   httpsServer.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', `name=value; SameSite=None; Path=/; Secure;`);
     res.setHeader('Content-Type', 'text/html');
-    res.end(`Received cookie: ${req.headers.cookie}`);
+    const cookies = req.headers.cookie?.split(';').map(c => c.trim()).sort().join('; ');
+    res.end(`Received cookie: ${cookies}`);
   });
   httpsServer.setRoute('/with-frame.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
@@ -55,7 +56,8 @@ test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServ
       `nonPartitionedName=value; SameSite=None; Path=/; Secure;`
     ]);
     res.setHeader('Content-Type', 'text/html');
-    res.end(`Received cookie: ${req.headers.cookie}`);
+    const cookies = req.headers.cookie?.split(';').map(c => c.trim()).sort().join('; ');
+    res.end(`Received cookie: ${cookies}`);
   });
   httpsServer.setRoute('/with-frame.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
@@ -100,7 +102,7 @@ test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServ
   if (browserName === 'webkit')
     await expect(frameBody).toHaveText('Received cookie: undefined');
   else
-    await expect(frameBody).toHaveText('Received cookie: nonPartitionedName=value; name=value');
+    await expect(frameBody).toHaveText('Received cookie: name=value; nonPartitionedName=value');
 });
 
 test('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac }) => {
