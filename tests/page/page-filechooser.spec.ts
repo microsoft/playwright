@@ -245,11 +245,12 @@ test('should accept single file', async ({ page, asset }) => {
 // @see https://github.com/microsoft/playwright/issues/4704
 test('should not trim big uploaded files', async ({ page, server }) => {
 
-  let files: Record<string, formidable.File>;
+  let files: formidable.Files;
+  server.disableRequestBodyConsumption();
   server.setRoute('/upload', async (req, res) => {
-    const form = new formidable.IncomingForm();
+    const form = formidable();
     form.parse(req, function(err, fields, f) {
-      files = f as Record<string, formidable.File>;
+      files = f;
       res.end();
     });
   });
@@ -264,7 +265,7 @@ test('should not trim big uploaded files', async ({ page, server }) => {
     }, DATA_SIZE),
     server.waitForRequest('/upload'),
   ]);
-  expect(files.file.size).toBe(DATA_SIZE);
+  expect(files.file[0].size).toBe(DATA_SIZE);
 });
 
 test('should be able to read selected file', async ({ page, asset }) => {
