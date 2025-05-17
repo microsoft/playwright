@@ -82,22 +82,6 @@
   margin-bottom: 30px;
 }
 
-.status-line {
-  flex: auto;
-  white-space: nowrap;
-  line-height: 22px;
-  padding-left: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 30px;
-}
-
-.status-line > div {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .ui-mode-sidebar input[type=search] {
   flex: auto;
   padding: 0 5px;
