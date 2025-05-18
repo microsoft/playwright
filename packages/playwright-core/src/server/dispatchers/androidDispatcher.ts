@@ -15,7 +15,7 @@
  */
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { AndroidDevice } from '../android/android';
 
 import type { RootDispatcher } from './dispatcher';
@@ -46,7 +46,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   _type_AndroidDevice = true;
 
   static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {
-    const result = existingDispatcher<AndroidDeviceDispatcher>(device);
+    const result = scope.connection.existingDispatcher<AndroidDeviceDispatcher>(device);
     return result || new AndroidDeviceDispatcher(scope, device);
   }
 

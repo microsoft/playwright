@@ -31,12 +31,7 @@ import type { RegisteredListener } from '../utils/eventsHelper';
 import type { ValidatorContext } from '../../protocol/validator';
 import type * as channels from '@protocol/channels';
 
-export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();
-
-export function existingDispatcher<DispatcherType>(object: any): DispatcherType | undefined {
-  return object[dispatcherSymbol];
-}
 
 let maxDispatchersOverride: number | undefined;
 export function setMaxDispatchersForTest(value: number | undefined) {
@@ -50,7 +45,7 @@ function maxDispatchersForBucket(gcBucket: string) {
 }
 
 export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
-  private _connection: DispatcherConnection;
+  readonly connection: DispatcherConnection;
   // Parent is always "isScope".
   private _parent: ParentScopeType | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
@@ -67,7 +62,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>, gcBucket?: string) {
     super();
 
-    this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
+    this.connection = parent instanceof DispatcherConnection ? parent : parent.connection;
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
 
     const guid = object.guid;
@@ -76,17 +71,15 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._object = object;
     this._gcBucket = gcBucket ?? type;
 
-    (object as any)[dispatcherSymbol] = this;
-
-    this._connection.registerDispatcher(this);
+    this.connection.registerDispatcher(this);
     if (this._parent) {
       assert(!this._parent._dispatchers.has(guid));
       this._parent._dispatchers.set(guid, this);
     }
 
     if (this._parent)
-      this._connection.sendCreate(this._parent, type, guid, initializer);
-    this._connection.maybeDisposeStaleDispatchers(this._gcBucket);
+      this.connection.sendCreate(this._parent, type, guid, initializer);
+    this.connection.maybeDisposeStaleDispatchers(this._gcBucket);
   }
 
   parentScope(): ParentScopeType {
@@ -104,7 +97,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     oldParent._dispatchers.delete(child._guid);
     this._dispatchers.set(child._guid, child);
     child._parent = this;
-    this._connection.sendAdopt(this, child);
+    this.connection.sendAdopt(this, child);
   }
 
   async _handleCommand(callMetadata: CallMetadata, method: string, validParams: any) {
@@ -125,12 +118,12 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
       // Just ignore this event outside of tests.
       return;
     }
-    this._connection.sendEvent(this, method as string, params);
+    this.connection.sendEvent(this, method as string, params);
   }
 
   _dispose(reason?: 'gc') {
     this._disposeRecursively(new TargetClosedError());
-    this._connection.sendDispose(this, reason);
+    this.connection.sendDispose(this, reason);
   }
 
   protected _onDispose() {
@@ -144,15 +137,15 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
     // Clean up from parent and connection.
     this._parent?._dispatchers.delete(this._guid);
-    const list = this._connection._dispatchersByBucket.get(this._gcBucket);
+    const list = this.connection._dispatchersByBucket.get(this._gcBucket);
     list?.delete(this._guid);
-    this._connection._dispatchers.delete(this._guid);
+    this.connection._dispatcherByGuid.delete(this._guid);
+    this.connection._dispatcherByObject.delete(this._object);
 
     // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
       dispatcher._disposeRecursively(error);
     this._dispatchers.clear();
-    delete (this._object as any)[dispatcherSymbol];
     this._openScope.close(error);
   }
 
@@ -188,7 +181,8 @@ export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
 }
 
 export class DispatcherConnection {
-  readonly _dispatchers = new Map<string, DispatcherScope>();
+  readonly _dispatcherByGuid = new Map<string, DispatcherScope>();
+  readonly _dispatcherByObject = new Map<any, DispatcherScope>();
   readonly _dispatchersByBucket = new Map<string, Set<string>>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
@@ -237,7 +231,7 @@ export class DispatcherConnection {
   private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext): any {
     if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
       const guid = arg.guid;
-      const dispatcher = this._dispatchers.get(guid);
+      const dispatcher = this._dispatcherByGuid.get(guid);
       if (!dispatcher)
         throw new ValidationError(`${path}: no object with guid ${guid}`);
       if (names !== '*' && !names.includes(dispatcher._type))
@@ -256,9 +250,14 @@ export class DispatcherConnection {
     throw new ValidationError(`${path}: expected dispatcher ${names.toString()}`);
   }
 
+  existingDispatcher<DispatcherType>(object: any): DispatcherType | undefined {
+    return this._dispatcherByObject.get(object) as DispatcherType | undefined;
+  }
+
   registerDispatcher(dispatcher: DispatcherScope) {
-    assert(!this._dispatchers.has(dispatcher._guid));
-    this._dispatchers.set(dispatcher._guid, dispatcher);
+    assert(!this._dispatcherByGuid.has(dispatcher._guid));
+    this._dispatcherByGuid.set(dispatcher._guid, dispatcher);
+    this._dispatcherByObject.set(dispatcher._object, dispatcher);
     let list = this._dispatchersByBucket.get(dispatcher._gcBucket);
     if (!list) {
       list = new Set();
@@ -276,7 +275,7 @@ export class DispatcherConnection {
     const disposeCount = (maxDispatchers / 10) | 0;
     this._dispatchersByBucket.set(gcBucket, new Set(dispatchersArray.slice(disposeCount)));
     for (let i = 0; i < disposeCount; ++i) {
-      const d = this._dispatchers.get(dispatchersArray[i]);
+      const d = this._dispatcherByGuid.get(dispatchersArray[i]);
       if (!d)
         continue;
       d._dispose('gc');
@@ -285,7 +284,7 @@ export class DispatcherConnection {
 
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
-    const dispatcher = this._dispatchers.get(guid);
+    const dispatcher = this._dispatcherByGuid.get(guid);
     if (!dispatcher) {
       this.onmessage({ id, error: serializeError(new TargetClosedError()) });
       return;

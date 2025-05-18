@@ -15,7 +15,7 @@
  */
 
 import { Page, Worker } from '../page';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { parseError } from '../errors';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -53,7 +53,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   static fromNullable(parentScope: BrowserContextDispatcher, page: Page | undefined): PageDispatcher | undefined {
     if (!page)
       return undefined;
-    const result = existingDispatcher<PageDispatcher>(page);
+    const result = parentScope.connection.existingDispatcher<PageDispatcher>(page);
     return result || new PageDispatcher(parentScope, page);
   }
 
@@ -194,7 +194,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(this._page);
+      await WebSocketRouteDispatcher.installIfNeeded(this.connection, this._page);
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
@@ -345,7 +345,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
     if (!worker)
       return undefined;
-    const result = existingDispatcher<WorkerDispatcher>(worker);
+    const result = scope.connection.existingDispatcher<WorkerDispatcher>(worker);
     return result || new WorkerDispatcher(scope, worker);
   }
 
