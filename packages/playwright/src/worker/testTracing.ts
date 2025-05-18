@@ -31,7 +31,7 @@ import type EventEmitter from 'events';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
-const version: trace.VERSION = 7;
+const version: trace.VERSION = 8;
 let traceOrdinal = 0;
 
 type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;
@@ -267,7 +267,7 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(callId: string, parentId: string | undefined, apiName: string, params: Record<string, any> | undefined, stack: StackFrame[]) {
+  appendBeforeActionForStep(callId: string, parentId: string | undefined, options: { title: string, params?: Record<string, any>, stack: StackFrame[] }) {
     this._appendTraceEvent({
       type: 'before',
       callId,
@@ -275,9 +275,9 @@ export class TestTracing {
       startTime: monotonicTime(),
       class: 'Test',
       method: 'step',
-      apiName,
-      params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
-      stack,
+      title: options.title,
+      params: Object.fromEntries(Object.entries(options.params || {}).map(([name, value]) => [name, generatePreview(value)])),
+      stack: options.stack,
     });
   }
 

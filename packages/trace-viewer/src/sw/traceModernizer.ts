@@ -20,6 +20,7 @@ import type * as traceV4 from './versions/traceV4';
 import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
 import type * as traceV7 from './versions/traceV7';
+import type * as traceV8 from './versions/traceV8';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
@@ -32,7 +33,7 @@ export class TraceVersionError extends Error {
 
 // 6 => 10/2023 ~1.40
 // 7 => 05/2024 ~1.45
-const latestVersion: trace.VERSION = 7;
+const latestVersion: trace.VERSION = 8;
 
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
@@ -406,6 +407,17 @@ export class TraceModernizer {
       if (!this._contextEntry.startTime && event.type === 'before')
         this._contextEntry.startTime = event.startTime;
       result.push(event);
+    }
+    return result;
+  }
+
+  _modernize_7_to_8(events: traceV7.TraceEvent[]): traceV8.TraceEvent[] {
+    const result: traceV8.TraceEvent[] = [];
+    for (const event of events) {
+      result.push(event);
+      if (event.type !== 'before' || !event.apiName)
+        continue;
+      (event as traceV8.BeforeActionTraceEvent).title = event.apiName;
     }
     return result;
   }

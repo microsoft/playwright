@@ -478,14 +478,14 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(2);
 
   const trace1 = await parseTrace(traceFile1);
-  expect(trace1.apiNames).toEqual([
+  expect(trace1.titles).toEqual([
     'page.setContent',
     'page.click',
   ]);
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(traceFile2);
-  expect(trace2.apiNames).toEqual([
+  expect(trace2.titles).toEqual([
     'page.setContent',
     'page.fill',
     'locator.click',

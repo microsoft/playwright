@@ -329,7 +329,7 @@ export class TestInfoImpl implements TestInfo {
       location: data.location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, { title: data.title, params: data.params, stack: data.location ? [data.location] : [] });
     return step;
   }
 
@@ -425,7 +425,7 @@ export class TestInfoImpl implements TestInfo {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
     } else {
       const callId = `attach@${createGuid()}`;
-      this._tracing.appendBeforeActionForStep(callId, undefined, `Attach "${attachment.name}"`, undefined, []);
+      this._tracing.appendBeforeActionForStep(callId, undefined, { title: `Attach "${attachment.name}"`, stack: [] });
       this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
     }
 

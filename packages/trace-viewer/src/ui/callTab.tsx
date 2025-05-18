@@ -42,7 +42,7 @@ export const CallTab: React.FunctionComponent<{
 
   return (
     <div className='call-tab'>
-      <div className='call-line'>{action.apiName}</div>
+      <div className='call-line'>{action.title}</div>
       <div className='call-section'>Time</div>
       <DateTimeCallLine name='start:' value={startTime} />
       <DateTimeCallLine name='duration:' value={renderDuration(action)} />

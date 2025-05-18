@@ -151,13 +151,13 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   return {
     events,
     resources,
-    actions: actionObjects.map(a => a.apiName),
+    actions: actionObjects.map(a => a.title ?? a.class.toLowerCase() + '.' + a.method),
     actionObjects,
     stacks,
   };
 }
 
-export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[], errors: string[] }> {
+export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], titles: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[], errors: string[] }> {
   const backend = new TraceBackend(file);
   const traceModel = new TraceModel();
   await traceModel.load(backend, () => {});
@@ -165,13 +165,13 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   const { rootItem } = buildActionTree(model.actions);
   const actionTree: string[] = [];
   const visit = (actionItem: ActionTreeItem, indent: string) => {
-    actionTree.push(`${indent}${actionItem.action?.apiName || actionItem.id}`);
+    actionTree.push(`${indent}${actionItem.action?.title || actionItem.id}`);
     for (const child of actionItem.children)
       visit(child, indent + '  ');
   };
   rootItem.children.forEach(a => visit(a, ''));
   return {
-    apiNames: model.actions.map(a => a.apiName),
+    titles: model.actions.map(a => a.title ?? a.class.toLowerCase() + '.' + a.method),
     resources: backend.entries,
     actions: model.actions,
     events: model.events,

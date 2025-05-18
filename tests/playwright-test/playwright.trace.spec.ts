@@ -465,7 +465,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -487,7 +487,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -507,7 +507,7 @@ test(`trace:retain-on-failure should create trace if request context is disposed
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('apiRequestContext.get');
+  expect(trace.titles).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
 });
 
@@ -528,7 +528,7 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(trace.apiNames).toEqual([
+  expect(trace.titles).toEqual([
     'Before Hooks',
     `attach "foo"`,
     'After Hooks',
@@ -558,7 +558,7 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(trace.apiNames).toEqual([
+  expect(trace.titles).toEqual([
     'Before Hooks',
     `attach "foo"`,
     'After Hooks',
@@ -729,7 +729,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest }, te
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
-  expect(trace.apiNames).toContain('Attach "screenshot"');
+  expect(trace.titles).toContain('Attach "screenshot"');
 });
 
 test('should not throw when screenshot on failure fails', async ({ runInlineTest, server }, testInfo) => {
@@ -1102,7 +1102,7 @@ test('trace:retain-on-first-failure should create trace but only on first failur
 
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -1119,7 +1119,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -1138,7 +1138,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -1155,7 +1155,7 @@ test('trace:retain-on-first-failure should create trace if request context is di
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('apiRequestContext.get');
+  expect(trace.titles).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
 });
 
@@ -1348,13 +1348,13 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
   const snapshots = trace.traceModel.storage();
   const snapshotFrameOrPageId = snapshots.snapshotsForTest()[0];
 
-  const countAction = trace.actions.find(a => a.apiName === 'locator.count');
+  const countAction = trace.actions.find(a => a.title === 'locator.count');
   expect(countAction.beforeSnapshot).toBeTruthy();
   expect(countAction.afterSnapshot).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, countAction.beforeSnapshot)).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, countAction.afterSnapshot)).toBeTruthy();
 
-  const boundingBoxAction = trace.actions.find(a => a.apiName === 'locator.boundingBox');
+  const boundingBoxAction = trace.actions.find(a => a.title === 'locator.boundingBox');
   expect(boundingBoxAction.beforeSnapshot).toBeTruthy();
   expect(boundingBoxAction.afterSnapshot).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, boundingBoxAction.beforeSnapshot)).toBeTruthy();

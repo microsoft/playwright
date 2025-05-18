@@ -213,7 +213,7 @@ test('should record trace', async ({ runInlineTest }) => {
   expect(fs.existsSync(test.info().outputPath('test-results', 'a-pass', 'trace.zip'))).toBe(false);
 
   const trace = await parseTrace(test.info().outputPath('test-results', 'a-fail', 'trace.zip'));
-  expect(trace.apiNames).toEqual([
+  expect(trace.titles).toEqual([
     'Before Hooks',
     'fixture: context',
     'browser.newContext',

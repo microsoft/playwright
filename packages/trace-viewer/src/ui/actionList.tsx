@@ -128,9 +128,10 @@ export const renderAction = (
     time = 'Timed out';
   else if (!isLive)
     time = '-';
+  const title = action.title ?? action.class.toLowerCase() + '.' + action.method;
   return <>
-    <div className='action-title' title={action.apiName}>
-      <span>{action.apiName}</span>
+    <div className='action-title' title={title}>
+      <span>{title}</span>
       {parameterString &&
           (parameterString.type === 'locator' ? (
             <>
