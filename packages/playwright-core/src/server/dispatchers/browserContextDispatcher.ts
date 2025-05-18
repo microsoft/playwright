@@ -200,14 +200,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     };
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
-    this._context.setDefaultNavigationTimeout(params.timeout);
-  }
-
-  async setDefaultTimeoutNoReply(params: channels.BrowserContextSetDefaultTimeoutNoReplyParams) {
-    this._context.setDefaultTimeout(params.timeout);
-  }
-
   async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
     await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,

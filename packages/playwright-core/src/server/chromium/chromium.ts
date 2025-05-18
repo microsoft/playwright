@@ -22,7 +22,6 @@ import path from 'path';
 import { chromiumSwitches } from './chromiumSwitches';
 import { CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
-import { TimeoutSettings } from '../timeoutSettings';
 import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -64,12 +63,12 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, timeout?: number }) {
+  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, timeout: number }) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
-    }, TimeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
@@ -111,7 +110,7 @@ export class Chromium extends BrowserType {
       artifactsDir,
       downloadsPath: options.downloadsPath || artifactsDir,
       tracesDir: options.tracesDir || artifactsDir,
-      originalLaunchOptions: {},
+      originalLaunchOptions: { timeout: options.timeout },
     };
     validateBrowserContextOptions(persistent, browserOptions);
     progress.throwIfAborted();

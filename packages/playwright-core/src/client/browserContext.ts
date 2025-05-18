@@ -90,6 +90,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
+    this.request._timeoutSettings = this._timeoutSettings;
     this.clock = new Clock(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
@@ -245,12 +246,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-    this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(() => {});
   }
 
   setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
   }
 
   browser(): Browser | null {

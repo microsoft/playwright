@@ -17,7 +17,7 @@
 
 import type { Size } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
-export type { HeadersArray, Point, Quad, Rect, Size, TimeoutOptions } from '../utils/isomorphic/types';
+export type { HeadersArray, Point, Quad, Rect, Size } from '../utils/isomorphic/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
@@ -25,15 +25,16 @@ export interface Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
+export type TimeoutOptions = { timeout?: number };
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
 export type Env = { [key: string]: string | number | boolean | undefined };
 
-export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
-export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | number };
+export type WaitForEventOptions = Function | TimeoutOptions & { predicate?: Function };
+export type WaitForFunctionOptions = TimeoutOptions & { polling?: 'raf' | number };
 
 export type SelectOption = { value?: string, label?: string, index?: number, valueOrLabel?: string };
-export type SelectOptionOptions = { force?: boolean, timeout?: number };
+export type SelectOptionOptions = TimeoutOptions & { force?: boolean };
 export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
 export type StorageState = {
   cookies: channels.NetworkCookie[],
@@ -90,7 +91,7 @@ type LaunchOverrides = {
   env?: Env;
   logger?: Logger;
   firefoxUserPrefs?: { [key: string]: string | number | boolean };
-};
+} & TimeoutOptions;
 
 export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
 export type LaunchPersistentContextOptions = Omit<LaunchOptions & BrowserContextOptions, 'storageState'>;

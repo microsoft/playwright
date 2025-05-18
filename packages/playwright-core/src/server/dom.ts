@@ -30,7 +30,6 @@ import type { Page } from './page';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
 
 export type InputFilesItems = {
@@ -195,27 +194,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async getAttribute(metadata: CallMetadata, name: string): Promise<string | null> {
-    return this._frame.getAttribute(metadata, ':scope', name, {}, this);
+    return this._frame.getAttribute(metadata, ':scope', name, { timeout: 0 }, this);
   }
 
   async inputValue(metadata: CallMetadata): Promise<string> {
-    return this._frame.inputValue(metadata, ':scope', {}, this);
+    return this._frame.inputValue(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async textContent(metadata: CallMetadata): Promise<string | null> {
-    return this._frame.textContent(metadata, ':scope', {}, this);
+    return this._frame.textContent(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async innerText(metadata: CallMetadata): Promise<string> {
-    return this._frame.innerText(metadata, ':scope', {}, this);
+    return this._frame.innerText(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async innerHTML(metadata: CallMetadata): Promise<string> {
-    return this._frame.innerHTML(metadata, ':scope', {}, this);
+    return this._frame.innerHTML(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async dispatchEvent(metadata: CallMetadata, type: string, eventInit: Object = {}) {
-    return this._frame.dispatchEvent(metadata, ':scope', type, eventInit, {}, this);
+    return this._frame.dispatchEvent(metadata, ':scope', type, eventInit, { timeout: 0 }, this);
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -235,11 +234,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assertDone(throwRetargetableDOMError(result));
   }
 
-  async scrollIntoViewIfNeeded(metadata: CallMetadata, options: types.TimeoutOptions = {}) {
+  async scrollIntoViewIfNeeded(metadata: CallMetadata, options: types.TimeoutOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._waitAndScrollIntoViewIfNeeded(progress, false /* waitForVisible */),
-        this._page.timeoutSettings.timeout(options));
+        options.timeout);
   }
 
   private async _clickablePoint(): Promise<types.Point | 'error:notvisible' | 'error:notinviewport' | 'error:notconnected'> {
@@ -522,20 +521,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._markAsTargetElement(metadata);
       const result = await this._hover(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
-  async click(metadata: CallMetadata, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions = {}): Promise<void> {
+  async click(metadata: CallMetadata, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(metadata);
       const result = await this._click(progress, { ...options, waitAfter: !options.noWaitAfter });
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   _click(progress: Progress, options: { waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -548,20 +547,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._markAsTargetElement(metadata);
       const result = await this._dblclick(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.dblclick(point.x, point.y, options), { ...options, waitAfter: 'disabled' });
   }
 
-  async tap(metadata: CallMetadata, options: types.PointerActionWaitOptions = {}): Promise<void> {
+  async tap(metadata: CallMetadata, options: types.PointerActionWaitOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(metadata);
       const result = await this._tap(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -574,7 +573,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._markAsTargetElement(metadata);
       const result = await this._selectOption(progress, elements, values, options);
       return throwRetargetableDOMError(result);
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
@@ -604,13 +603,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return resultingOptions;
   }
 
-  async fill(metadata: CallMetadata, value: string, options: types.CommonActionOptions = {}): Promise<void> {
+  async fill(metadata: CallMetadata, value: string, options: types.CommonActionOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(metadata);
       const result = await this._fill(progress, value, options);
       assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async _fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<'error:notconnected' | 'done'> {
@@ -640,7 +639,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options);
   }
 
-  async selectText(metadata: CallMetadata, options: types.CommonActionOptions = {}): Promise<void> {
+  async selectText(metadata: CallMetadata, options: types.CommonActionOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._retryAction(progress, 'selectText', async () => {
@@ -656,7 +655,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         }, { force: options.force });
       }, options);
       assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async setInputFiles(metadata: CallMetadata, params: channels.ElementHandleSetInputFilesParams) {
@@ -666,7 +665,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._markAsTargetElement(metadata);
       const result = await this._setInputFiles(progress, inputFileItems);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(params));
+    }, params.timeout);
   }
 
   async _setInputFiles(progress: Progress, items: InputFilesItems): Promise<'error:notconnected' | 'done'> {
@@ -735,7 +734,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._markAsTargetElement(metadata);
       const result = await this._type(progress, text, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.TimeoutOptions & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
@@ -755,7 +754,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._markAsTargetElement(metadata);
       const result = await this._press(progress, key, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
@@ -776,7 +775,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._setChecked(progress, true, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async uncheck(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions) {
@@ -784,7 +783,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._setChecked(progress, false, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -815,11 +814,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this.evaluateInUtility(([injected, element, options]) => injected.ariaSnapshot(element, options), options);
   }
 
-  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {
+  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & types.TimeoutOptions): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._page.screenshotter.screenshotElement(progress, this, options),
-        this._page.timeoutSettings.timeout(options));
+        options.timeout);
   }
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<ElementHandle | null> {
@@ -847,22 +846,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async isEnabled(metadata: CallMetadata): Promise<boolean> {
-    return this._frame.isEnabled(metadata, ':scope', {}, this);
+    return this._frame.isEnabled(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async isDisabled(metadata: CallMetadata): Promise<boolean> {
-    return this._frame.isDisabled(metadata, ':scope', {}, this);
+    return this._frame.isDisabled(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async isEditable(metadata: CallMetadata): Promise<boolean> {
-    return this._frame.isEditable(metadata, ':scope', {}, this);
+    return this._frame.isEditable(metadata, ':scope', { timeout: 0 }, this);
   }
 
   async isChecked(metadata: CallMetadata): Promise<boolean> {
-    return this._frame.isChecked(metadata, ':scope', {}, this);
+    return this._frame.isChecked(metadata, ':scope', { timeout: 0 }, this);
   }
 
-  async waitForElementState(metadata: CallMetadata, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
+  async waitForElementState(metadata: CallMetadata, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const actionName = `wait for ${state}`;
@@ -872,10 +871,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         }, state);
       }, {});
       assertDone(throwRetargetableDOMError(result));
-    }, this._page.timeoutSettings.timeout(options));
+    }, options.timeout);
   }
 
-  async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
+  async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions): Promise<ElementHandle<Element> | null> {
     return this._frame.waitForSelector(metadata, selector, options, this);
   }
 

@@ -27,7 +27,6 @@ import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { TimeoutSettings } from './timeoutSettings';
 import { LongStandingScope, assert, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
@@ -44,7 +43,6 @@ import type * as network from './network';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
 import type { BindingPayload, UtilityScript } from '@injected/utilityScript';
@@ -111,7 +109,7 @@ type EmulatedMedia = {
 };
 
 type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
-  timeout?: number,
+  timeout: number,
   expected?: Buffer,
   isNot?: boolean,
   locator?: {
@@ -148,7 +146,6 @@ export class Page extends SdkObject {
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   readonly touchscreen: input.Touchscreen;
-  readonly timeoutSettings: TimeoutSettings;
   readonly delegate: PageDelegate;
   private _emulatedSize: EmulatedSize | undefined;
   private _extraHTTPHeaders: types.HeadersArray | undefined;
@@ -186,7 +183,6 @@ export class Page extends SdkObject {
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
-    this.timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
     this.screenshotter = new Screenshotter(this);
     this.frameManager = new frames.FrameManager(this);
     if (delegate.pdf)
@@ -259,8 +255,6 @@ export class Page extends SdkObject {
   }
 
   async resetForReuse(metadata: CallMetadata) {
-    this.setDefaultNavigationTimeout(undefined);
-    this.setDefaultTimeout(undefined);
     this._locatorHandlers.clear();
 
     await this._removeExposedBindings();
@@ -269,7 +263,8 @@ export class Page extends SdkObject {
     await this.setServerRequestInterceptor(undefined);
     await this.setFileChooserIntercepted(false);
     // Re-navigate once init scripts are gone.
-    await this.mainFrame().goto(metadata, 'about:blank');
+    // TODO: we should have a timeout for `resetForReuse`.
+    await this.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
     this._extraHTTPHeaders = undefined;
@@ -332,14 +327,6 @@ export class Page extends SdkObject {
     return this.frameManager.frames();
   }
 
-  setDefaultNavigationTimeout(timeout: number | undefined) {
-    this.timeoutSettings.setDefaultNavigationTimeout(timeout);
-  }
-
-  setDefaultTimeout(timeout: number | undefined) {
-    this.timeoutSettings.setDefaultTimeout(timeout);
-  }
-
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
@@ -395,7 +382,7 @@ export class Page extends SdkObject {
         this.delegate.reload(),
       ]);
       return response;
-    }), this.timeoutSettings.navigationTimeout(options));
+    }), options.timeout);
   }
 
   async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -415,7 +402,7 @@ export class Page extends SdkObject {
       if (error)
         throw error;
       return response;
-    }), this.timeoutSettings.navigationTimeout(options));
+    }), options.timeout);
   }
 
   async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -435,7 +422,7 @@ export class Page extends SdkObject {
       if (error)
         throw error;
       return response;
-    }), this.timeoutSettings.navigationTimeout(options));
+    }), options.timeout);
   }
 
   requestGC(): Promise<void> {
@@ -596,7 +583,7 @@ export class Page extends SdkObject {
     await this.delegate.updateRequestInterception();
   }
 
-  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
+  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
     const locator = options.locator;
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
@@ -631,7 +618,7 @@ export class Page extends SdkObject {
         intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
       return false;
     };
-    const callTimeout = this.timeoutSettings.timeout(options);
+    const callTimeout = options.timeout;
     return controller.run(async progress => {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
@@ -698,11 +685,11 @@ export class Page extends SdkObject {
     });
   }
 
-  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {
+  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & types.TimeoutOptions): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this.screenshotter.screenshotPage(progress, options),
-        this.timeoutSettings.timeout(options));
+        options.timeout);
   }
 
   async close(metadata: CallMetadata, options: { runBeforeUnload?: boolean, reason?: string } = {}) {

@@ -24,6 +24,7 @@ import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 import { connectOverWebSocket } from './webSocket';
+import { TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions, Logger } from './types';
@@ -73,6 +74,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
+      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
@@ -100,6 +102,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
       userDataDir: (this._platform.path().isAbsolute(userDataDir) || !userDataDir) ? userDataDir : this._platform.path().resolve(userDataDir),
+      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
@@ -128,7 +131,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         headers,
         exposeNetwork: params.exposeNetwork ?? params._exposeNetwork,
         slowMo: params.slowMo,
-        timeout: params.timeout,
+        timeout: params.timeout || 0,
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
@@ -188,7 +191,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       endpointURL,
       headers,
       slowMo: params.slowMo,
-      timeout: params.timeout
+      timeout: new TimeoutSettings(this._platform).timeout(params),
     });
     const browser = Browser.from(result.browser);
     this._didLaunchBrowser(browser, {}, params.logger);

@@ -35,10 +35,6 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
       devices: devices.map(d => AndroidDeviceDispatcher.from(this, d))
     };
   }
-
-  async setDefaultTimeoutNoReply(params: channels.AndroidSetDefaultTimeoutNoReplyParams) {
-    this._object.setDefaultTimeout(params.timeout);
-  }
 }
 
 export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher> implements channels.AndroidDeviceChannel {
@@ -167,10 +163,6 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async close(params: channels.AndroidDeviceCloseParams) {
     await this._object.close();
-  }
-
-  async setDefaultTimeoutNoReply(params: channels.AndroidDeviceSetDefaultTimeoutNoReplyParams) {
-    this._object.setDefaultTimeout(params.timeout);
   }
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {

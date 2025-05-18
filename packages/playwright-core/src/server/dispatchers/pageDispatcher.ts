@@ -106,14 +106,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return this._page;
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {
-    this._page.setDefaultNavigationTimeout(params.timeout);
-  }
-
-  async setDefaultTimeoutNoReply(params: channels.PageSetDefaultTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {
-    this._page.setDefaultTimeout(params.timeout);
-  }
-
   async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
     await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
@@ -373,11 +365,12 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
   private _promise: Promise<any>;
 
   constructor(scope: PageDispatcher, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
+    const frameDispatcher = FrameDispatcher.from(scope.parentScope(), source.frame);
     super(scope, { guid: 'bindingCall@' + createGuid() }, 'BindingCall', {
-      frame: FrameDispatcher.from(scope.parentScope(), source.frame),
+      frame: frameDispatcher,
       name,
       args: needsHandle ? undefined : args.map(serializeResult),
-      handle: needsHandle ? ElementHandleDispatcher.fromJSHandle(scope, args[0] as JSHandle) : undefined,
+      handle: needsHandle ? ElementHandleDispatcher.fromJSHandle(frameDispatcher, args[0] as JSHandle) : undefined,
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

@@ -18,6 +18,7 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
 import { debugLogger } from '../server/utils/debugLogger';
 import { Semaphore } from '../utils/isomorphic/semaphore';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
@@ -76,7 +77,7 @@ export class PlaywrightServer {
         const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
         const launchOptionsHeaderValue = Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader;
         const launchOptionsParam = url.searchParams.get('launch-options');
-        let launchOptions: LaunchOptions = {};
+        let launchOptions: LaunchOptions = { timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT };
         try {
           launchOptions = JSON.parse(launchOptionsParam || launchOptionsHeaderValue);
         } catch (e) {
