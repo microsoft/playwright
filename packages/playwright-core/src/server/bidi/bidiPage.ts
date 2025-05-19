@@ -46,7 +46,7 @@ export class BidiPage implements PageDelegate {
   readonly _page: Page;
   readonly _session: BidiSession;
   readonly _opener: BidiPage | null;
-  private readonly _realmToContext: Map<string, dom.FrameExecutionContext>;
+  readonly _realmToContext: Map<string, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;

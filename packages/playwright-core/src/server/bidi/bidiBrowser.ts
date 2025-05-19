@@ -400,11 +400,26 @@ export class BidiBrowserContext extends BrowserContext {
         ownership: bidi.Script.ResultOwnership.Root,
       }
     }];
-    await this._browser._browserSession.send('script.addPreloadScript', {
-      functionDeclaration: `function addMainBinding(callback) { globalThis['${kPlaywrightBinding}'] = callback; }`,
+    const functionDeclaration = `function addMainBinding(callback) { globalThis['${kPlaywrightBinding}'] = callback; }`;
+    const promises = [];
+    promises.push(this._browser._browserSession.send('script.addPreloadScript', {
+      functionDeclaration,
       arguments: args,
       userContexts: [this._userContextId()],
-    });
+    }));
+    promises.push(...this._bidiPages().map(page => {
+      const realms = [...page._realmToContext].filter(([realm, context]) => context.world === 'main').map(([realm, context]) => realm);
+      return Promise.all(realms.map(realm => {
+        return page._session.send('script.callFunction', {
+          functionDeclaration,
+          arguments: args,
+          target: { realm },
+          awaitPromise: false,
+          userActivation: false,
+        });
+      }));
+    }));
+    await Promise.all(promises);
   }
 
   onClosePersistent() {}
