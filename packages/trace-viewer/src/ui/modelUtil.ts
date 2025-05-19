@@ -153,9 +153,9 @@ function indexModel(context: ContextEntry) {
   }
   let lastNonRouteAction = undefined;
   for (let i = context.actions.length - 1; i >= 0; i--) {
-    const action = context.actions[i] as any;
-    action[nextInContextSymbol] = lastNonRouteAction;
-    if (!action.apiName.includes('route.'))
+    const action = context.actions[i] as ActionTraceEvent;
+    (action as any)[nextInContextSymbol] = lastNonRouteAction;
+    if (action.class !== 'Route')
       lastNonRouteAction = action;
   }
   for (const event of context.events)
@@ -249,7 +249,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
 
   for (const context of libraryContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.stepId! : `${action.apiName}@${(action as any).wallTime}`;
+      const key = matchByStepId ? action.stepId! : `${action.title}@${(action as any).wallTime}`;
       map.set(key, { ...action, context });
     }
   }
@@ -265,7 +265,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.callId : `${action.apiName}@${(action as any).wallTime}`;
+      const key = matchByStepId ? action.callId : `${action.title}@${(action as any).wallTime}`;
       const existing = map.get(key);
       if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
@@ -326,7 +326,7 @@ function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEn
     for (const action of context.actions) {
       if (!action.startTime)
         continue;
-      const key = matchByStepId ? action.callId! : `${action.apiName}@${(action as any).wallTime}`;
+      const key = matchByStepId ? action.callId! : `${action.title}@${(action as any).wallTime}`;
       const libraryAction = libraryActions.get(key);
       if (libraryAction)
         return action.startTime - libraryAction.startTime;
@@ -436,6 +436,7 @@ const kRouteMethods = new Set([
   'browsercontext.unroute',
   'browsercontext.unrouteall',
 ]);
+
 {
   // .NET adds async suffix.
   for (const method of [...kRouteMethods])
@@ -448,7 +449,4 @@ const kRouteMethods = new Set([
     'context.unroute_all',
   ])
     kRouteMethods.add(method);
-}
-export function isRouteAction(action: ActionTraceEventInContext) {
-  return action.class === 'Route' || kRouteMethods.has(action.apiName.toLowerCase());
 }

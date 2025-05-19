@@ -14,16 +14,97 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
-import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
-import type { Point, SerializedError, StackFrame } from '@protocol/channels';
+import type { Entry as ResourceSnapshot } from '@trace/har';
 
-export type Size = { width: number, height: number };
+type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
+type Point = { x: number, y: number };
+type Size = { width: number, height: number };
 
-// Make sure you add _modernize_N_to_N1(event: any) to traceModernizer.ts.
-export type VERSION = 8;
+type StackFrame = {
+  file: string,
+  line: number,
+  column: number,
+  function?: string,
+};
 
-export type BrowserContextEventOptions = {
+type Binary = Buffer;
+
+type SerializedValue = {
+  n?: number,
+  b?: boolean,
+  s?: string,
+  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
+  d?: string,
+  u?: string,
+  bi?: string,
+  ta?: {
+    b: Binary,
+    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  },
+  e?: {
+    m: string,
+    n: string,
+    s: string,
+  },
+  r?: {
+    p: string,
+    f: string,
+  },
+  a?: SerializedValue[],
+  o?: {
+    k: string,
+    v: SerializedValue,
+  }[],
+  h?: number,
+  id?: number,
+  ref?: number,
+};
+
+type SerializedError = {
+  error?: {
+    message: string,
+    name: string,
+    stack?: string,
+  },
+  value?: SerializedValue,
+};
+
+// Text node.
+type TextNodeSnapshot = string;
+// Subtree reference, "x snapshots ago, node #y". Could point to a text node.
+// Only nodes that are not references are counted, starting from zero, using post-order traversal.
+type SubtreeReferenceSnapshot = [ [number, number] ];
+// Node name, and optional attributes and child nodes.
+type NodeNameAttributesChildNodesSnapshot = [ string ] | [ string, Record<string, string>, ...NodeSnapshot[] ];
+
+type NodeSnapshot =
+  TextNodeSnapshot |
+  SubtreeReferenceSnapshot |
+  NodeNameAttributesChildNodesSnapshot;
+
+type ResourceOverride = {
+  url: string,
+  sha1?: string,
+  ref?: number
+};
+
+type FrameSnapshot = {
+  snapshotName?: string,
+  callId: string,
+  pageId: string,
+  frameId: string,
+  frameUrl: string,
+  timestamp: number,
+  wallTime?: number,
+  collectionTime: number,
+  doctype?: string,
+  html: NodeSnapshot,
+  resourceOverrides: ResourceOverride[],
+  viewport: { width: number, height: number },
+  isMainFrame: boolean,
+};
+
+type BrowserContextEventOptions = {
   baseURL?: string,
   viewport?: Size,
   deviceScaleFactor?: number,

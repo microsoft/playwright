@@ -64,7 +64,7 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   expect(script.snapshot.response.content._sha1).toBe(undefined);
 });
 
-test('should use the correct apiName for event driven callbacks', async ({ context, page, server }, testInfo) => {
+test('should use the correct title for event driven callbacks', async ({ context, page, server }, testInfo) => {
   await context.tracing.start();
   // route.* calls should not be included in the trace
   await page.route('**/empty.html', route => route.continue());
@@ -125,7 +125,7 @@ test('can call tracing.group/groupEnd at any time and auto-close', async ({ cont
   const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   const groups = events.filter(e => e.method === 'tracingGroup');
   expect(groups).toHaveLength(1);
-  expect(groups[0].apiName).toBe('actual');
+  expect(groups[0].title).toBe('actual');
   expect(events.some(e => e.type === 'after' && e.callId === groups[0].callId)).toBe(true);
 });
 
@@ -135,7 +135,7 @@ test('should not include buffers in the trace', async ({ context, page, server }
   await page.screenshot();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const screenshotEvent = actionObjects.find(a => a.apiName === 'page.screenshot');
+  const screenshotEvent = actionObjects.find(a => a.title === 'page.screenshot');
   expect(screenshotEvent.beforeSnapshot).toBeTruthy();
   expect(screenshotEvent.afterSnapshot).toBeTruthy();
   expect(screenshotEvent.result).toEqual({
@@ -166,7 +166,7 @@ test('should include context API requests', async ({ browserName, context, page,
   await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const postEvent = events.find(e => e.apiName === 'apiRequestContext.post');
+  const postEvent = events.find(e => e.title === 'apiRequestContext.post');
   expect(postEvent).toBeTruthy();
   const harEntry = events.find(e => e.type === 'resource-snapshot');
   expect(harEntry).toBeTruthy();
@@ -484,7 +484,7 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   await context.close();
 
   const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const clickEvent = events.find(e => e.apiName === 'page.click');
+  const clickEvent = events.find(e => e.title === 'page.click');
   expect(clickEvent).toBeTruthy();
 });
 
@@ -605,7 +605,7 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
-  const actions = trace.actionObjects.filter(a => !a.apiName.startsWith('tracing.'));
+  const actions = trace.actionObjects.filter(a => a.class !== 'Tracing');
   expect(actions).toHaveLength(4);
   for (const action of actions)
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
@@ -626,7 +626,7 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
-  const actions = trace.actionObjects.filter(a => !a.apiName.startsWith('tracing.'));
+  const actions = trace.actionObjects.filter(a => a.class !== 'Tracing');
   expect(actions).toHaveLength(5);
   for (const action of actions)
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
@@ -813,7 +813,7 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
       return {
         type: e.type,
         callId: +e.callId.split('@')[1] - minCallId,
-        apiName: e.apiName,
+        title: e.title,
       };
     }
   };
@@ -826,17 +826,17 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
       {
         type: 'before',
         callId: expect.any(Number),
-        apiName: 'page.evaluate'
+        title: 'page.evaluate'
       },
       {
         type: 'before',
         callId: expect.any(Number),
-        apiName: 'page.waitForEvent'
+        title: 'page.waitForEvent'
       },
       {
         type: 'after',
         callId: expect.any(Number),
-        apiName: undefined,
+        title: undefined,
       },
     ]);
     call1 = sanitized[0].callId;
@@ -852,12 +852,12 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
       {
         type: 'before',
         callId: expect.any(Number),
-        apiName: 'page.evaluateHandle'
+        title: 'page.evaluateHandle'
       },
       {
         type: 'after',
         callId: expect.any(Number),
-        apiName: undefined
+        title: undefined
       }
     ]);
     call2before = sanitized[0].callId;

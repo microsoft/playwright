@@ -47,7 +47,7 @@ import type * as har from '@trace/har';
 import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 
-const version: trace.VERSION = 7;
+const version: trace.VERSION = 8;
 
 export type TracerOptions = {
   name?: string;
@@ -230,7 +230,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       type: 'before',
       callId: metadata.id,
       startTime: metadata.startTime,
-      apiName: name,
+      title: name,
       class: 'Tracing',
       method: 'tracingGroup',
       params: { },
@@ -650,7 +650,10 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     type: 'before',
     callId: metadata.id,
     startTime: metadata.startTime,
-    apiName: metadata.apiName || metadata.type + '.' + metadata.method,
+    // This will disappear for action trace events, their titles will be
+    // built based on the protocol metainfo. If I don't do this now,
+    // trace ill get frame.click instead of page.click in trace viewer.
+    title: metadata.apiName,
     class: metadata.type,
     method: metadata.method,
     params: metadata.params,

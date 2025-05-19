@@ -105,7 +105,7 @@ export const Workbench: React.FunctionComponent<{
       // Select the last non-after hooks item.
       let index = model.actions.length - 1;
       for (let i = 0; i < model.actions.length; ++i) {
-        if (model.actions[i].apiName === 'After Hooks' && i) {
+        if (model.actions[i].title === 'After Hooks' && i) {
           index = i - 1;
           break;
         }
