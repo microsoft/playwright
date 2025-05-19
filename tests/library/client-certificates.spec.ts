@@ -371,6 +371,26 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should fail with non-matching certificates and when a http proxy is used', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL("https://abcd.efgh").origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: `localhost:${proxyServer.PORT}` }
+    });
+    expect(proxyServer.connectHosts).toEqual([]);
+    await page.goto(serverURL);
+    const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`${host}:${new URL(serverURL).port}`]);
+    await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
+    await page.close();
+  });
+
   test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);
