@@ -84,7 +84,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   _workers = new Set<Worker>();
   private _closed = false;
   readonly _closedOrCrashedScope = new LongStandingScope();
-  private _viewportSize: Size | null;
+  private _viewportSize: Size | undefined;
   _routes: RouteHandler[] = [];
   _webSocketRoutes: WebSocketRouteHandler[] = [];
 
@@ -130,7 +130,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
     this._frames.add(this._mainFrame);
-    this._viewportSize = initializer.viewportSize || null;
+    this._viewportSize = initializer.viewportSize;
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
 
@@ -151,6 +151,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       const artifactObject = Artifact.from(artifact);
       this._forceVideo()._artifactReady(artifactObject);
     });
+    this._channel.on('viewportSizeChanged', ({ viewportSize }) => this._viewportSize = viewportSize);
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
@@ -506,7 +507,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   viewportSize(): Size | null {
-    return this._viewportSize;
+    return this._viewportSize || null;
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {

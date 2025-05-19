@@ -1122,6 +1122,12 @@ scheme.PageDownloadEvent = tObject({
   suggestedFilename: tString,
   artifact: tChannel(['Artifact']),
 });
+scheme.PageViewportSizeChangedEvent = tObject({
+  viewportSize: tOptional(tObject({
+    width: tNumber,
+    height: tNumber,
+  })),
+});
 scheme.PageFileChooserEvent = tObject({
   element: tChannel(['ElementHandle']),
   isMultiple: tBoolean,

@@ -125,6 +125,7 @@ export class Page extends SdkObject {
     Close: 'close',
     Crash: 'crash',
     Download: 'download',
+    EmulatedSizeChanged: 'emulatedsizechanged',
     FileChooser: 'filechooser',
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
@@ -546,23 +547,24 @@ export class Page extends SdkObject {
   }
 
   async setViewportSize(viewportSize: types.Size) {
-    this._emulatedSize = { viewport: { ...viewportSize }, screen: { ...viewportSize } };
+    this._setEmulatedSize({ viewport: { ...viewportSize }, screen: { ...viewportSize } });
     await this.delegate.updateEmulatedViewportSize();
   }
 
-  viewportSize(): types.Size | null {
-    return this.emulatedSize()?.viewport || null;
+  setEmulatedSizeFromWindowOpen(emulatedSize: EmulatedSize) {
+    this._setEmulatedSize(emulatedSize);
   }
 
-  setEmulatedSize(emulatedSize: EmulatedSize) {
+  private _setEmulatedSize(emulatedSize: EmulatedSize) {
     this._emulatedSize = emulatedSize;
+    this.emit(Page.Events.EmulatedSizeChanged);
   }
 
-  emulatedSize(): EmulatedSize | null {
+  emulatedSize(): EmulatedSize | undefined {
     if (this._emulatedSize)
       return this._emulatedSize;
     const contextOptions = this.browserContext._options;
-    return contextOptions.viewport ? { viewport: contextOptions.viewport, screen: contextOptions.screen || contextOptions.viewport } : null;
+    return contextOptions.viewport ? { viewport: contextOptions.viewport, screen: contextOptions.screen || contextOptions.viewport } : undefined;
   }
 
   async bringToFront(): Promise<void> {
