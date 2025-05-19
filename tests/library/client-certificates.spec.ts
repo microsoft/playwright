@@ -377,7 +377,7 @@ test.describe('browser', () => {
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
-        origin: new URL("https://abcd.efgh").origin,
+        origin: new URL('https://abcd.efgh').origin,
         certPath: asset('client-certificates/client/trusted/cert.pem'),
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],

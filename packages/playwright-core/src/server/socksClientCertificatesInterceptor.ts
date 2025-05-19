@@ -54,7 +54,7 @@ class ALPNCache {
     const result = new ManualPromise<string>();
     this._cache.set(cacheKey, result);
     result.then(success);
-    if(!proxySocket) {
+    if (!proxySocket) {
       createTLSSocket({
         host,
         port,
@@ -92,7 +92,6 @@ class ALPNCache {
         result.resolve('http/1.1');
       });
     }
-    
   }
 }
 
