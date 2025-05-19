@@ -271,6 +271,7 @@ export class TestTracing {
     this._appendTraceEvent({
       type: 'before',
       callId,
+      stepId: callId,
       parentId,
       startTime: monotonicTime(),
       class: 'Test',

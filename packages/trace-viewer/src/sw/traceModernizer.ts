@@ -385,7 +385,7 @@ export class TraceModernizer {
       const event: traceV7.ContextCreatedTraceEvent = {
         type: 'context-options',
         origin: 'testRunner',
-        version: 7,
+        version: 6,
         browserName: '',
         options: {},
         platform: 'unknown',
@@ -396,17 +396,23 @@ export class TraceModernizer {
       };
       result.push(event);
     }
+
     for (const event of events) {
       if (event.type === 'context-options') {
         result.push({ ...event, monotonicTime: 0, origin: 'library', contextId: '' });
         continue;
       }
-      // Take wall and monotonic time from the first event.
-      if (!this._contextEntry.wallTime && event.type === 'before')
-        this._contextEntry.wallTime = event.wallTime;
-      if (!this._contextEntry.startTime && event.type === 'before')
-        this._contextEntry.startTime = event.startTime;
-      result.push(event);
+      if (event.type === 'before' || event.type === 'action') {
+        // Take wall and monotonic time from the first event.
+        if (!this._contextEntry.wallTime)
+          this._contextEntry.wallTime = event.wallTime;
+        const eventAsV6 = event as traceV6.BeforeActionTraceEvent;
+        const eventAsV7 = event as traceV7.BeforeActionTraceEvent;
+        eventAsV7.stepId = `${eventAsV6.apiName}@${eventAsV6.wallTime}`;
+        result.push(eventAsV7);
+      } else {
+        result.push(event);
+      }
     }
     return result;
   }
@@ -414,10 +420,18 @@ export class TraceModernizer {
   _modernize_7_to_8(events: traceV7.TraceEvent[]): traceV8.TraceEvent[] {
     const result: traceV8.TraceEvent[] = [];
     for (const event of events) {
-      result.push(event);
-      if (event.type !== 'before' || !event.apiName)
-        continue;
-      (event as traceV8.BeforeActionTraceEvent).title = event.apiName;
+      if (event.type === 'before' || event.type === 'action') {
+        const eventAsV7 = event as traceV7.BeforeActionTraceEvent;
+        const eventAsV8 = event as traceV8.BeforeActionTraceEvent;
+        if (eventAsV7.apiName) {
+          eventAsV8.title = eventAsV7.apiName;
+          delete (eventAsV8 as any).apiName;
+        }
+        eventAsV8.stepId = eventAsV7.stepId ?? eventAsV7.callId;
+        result.push(eventAsV8);
+      } else {
+        result.push(event);
+      }
     }
     return result;
   }
