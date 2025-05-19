@@ -173,12 +173,11 @@ export class Screenshotter {
     this._queue = new TaskQueue();
   }
 
-  private async _originalViewportSize(progress: Progress): Promise<{ viewportSize: types.Size, originalViewportSize: types.Size | null }> {
-    const originalViewportSize = this._page.viewportSize();
-    let viewportSize = originalViewportSize;
+  private async _originalViewportSize(progress: Progress): Promise<types.Size> {
+    let viewportSize = this._page.emulatedSize()?.viewport;
     if (!viewportSize)
       viewportSize = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ width: window.innerWidth, height: window.innerHeight }));
-    return { viewportSize, originalViewportSize };
+    return viewportSize;
   }
 
   private async _fullPageSize(progress: Progress): Promise<types.Size> {
@@ -205,7 +204,7 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
-      const { viewportSize } = await this._originalViewportSize(progress);
+      const viewportSize = await this._originalViewportSize(progress);
       await this._preparePageForScreenshot(progress, this._page.mainFrame(), options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
@@ -233,7 +232,7 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       progress.log('taking element screenshot');
-      const { viewportSize } = await this._originalViewportSize(progress);
+      const viewportSize = await this._originalViewportSize(progress);
 
       await this._preparePageForScreenshot(progress, handle._frame, options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.

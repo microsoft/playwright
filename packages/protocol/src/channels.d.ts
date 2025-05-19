@@ -2013,6 +2013,7 @@ export interface PageEventTarget {
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
   on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
+  on(event: 'viewportSizeChanged', callback: (params: PageViewportSizeChangedEvent) => void): this;
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
@@ -2074,6 +2075,12 @@ export type PageDownloadEvent = {
   url: string,
   suggestedFilename: string,
   artifact: ArtifactChannel,
+};
+export type PageViewportSizeChangedEvent = {
+  viewportSize?: {
+    width: number,
+    height: number,
+  },
 };
 export type PageFileChooserEvent = {
   element: ElementHandleChannel,
@@ -2566,6 +2573,7 @@ export interface PageEvents {
   'close': PageCloseEvent;
   'crash': PageCrashEvent;
   'download': PageDownloadEvent;
+  'viewportSizeChanged': PageViewportSizeChangedEvent;
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
   'frameDetached': PageFrameDetachedEvent;

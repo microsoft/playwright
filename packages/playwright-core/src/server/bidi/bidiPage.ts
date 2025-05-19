@@ -268,10 +268,10 @@ export class BidiPage implements PageDelegate {
 
   async updateEmulatedViewportSize(): Promise<void> {
     const options = this._browserContext._options;
-    const deviceSize = this._page.emulatedSize();
-    if (deviceSize === null)
+    const emulatedSize = this._page.emulatedSize();
+    if (!emulatedSize)
       return;
-    const viewportSize = deviceSize.viewport;
+    const viewportSize = emulatedSize.viewport;
     await this._session.send('browsingContext.setViewport', {
       context: this._session.sessionId,
       viewport: {

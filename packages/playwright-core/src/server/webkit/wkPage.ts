@@ -109,7 +109,7 @@ export class WKPage implements PageDelegate {
       const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
       opener._nextWindowOpenPopupFeatures = undefined;
       if (viewportSize)
-        this._page.setEmulatedSize({ viewport: viewportSize, screen: viewportSize });
+        this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
   }
 
@@ -677,7 +677,7 @@ export class WKPage implements PageDelegate {
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
-    this._browserContext._validateEmulatedViewport(this._page.viewportSize());
+    this._browserContext._validateEmulatedViewport(this._page.emulatedSize()?.viewport);
     await this._updateViewport();
   }
 
@@ -694,11 +694,11 @@ export class WKPage implements PageDelegate {
 
   async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
-    const deviceSize = this._page.emulatedSize();
-    if (deviceSize === null)
+    const emulatedSize = this._page.emulatedSize();
+    if (!emulatedSize)
       return;
-    const viewportSize = deviceSize.viewport;
-    const screenSize = deviceSize.screen;
+    const viewportSize = emulatedSize.viewport;
+    const screenSize = emulatedSize.screen;
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {
         width: viewportSize.width,

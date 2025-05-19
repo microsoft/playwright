@@ -334,7 +334,7 @@ export class FFPage implements PageDelegate {
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
-    const viewportSize = this._page.viewportSize();
+    const viewportSize = this._page.emulatedSize()?.viewport ?? null;
     await this._session.send('Page.setViewportSize', { viewportSize });
   }
 

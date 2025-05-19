@@ -2001,6 +2001,14 @@ Page:
         suggestedFilename: string
         artifact: Artifact
 
+    viewportSizeChanged:
+      parameters:
+        viewportSize:
+          type: object?
+          properties:
+            width: number
+            height: number
+
     fileChooser:
       parameters:
         element: ElementHandle

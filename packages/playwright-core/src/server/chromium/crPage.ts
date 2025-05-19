@@ -108,7 +108,7 @@ export class CRPage implements PageDelegate {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
       if (viewportSize)
-        this._page.setEmulatedSize({ viewport: viewportSize, screen: viewportSize });
+        this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
 
     const createdEvent = this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page;
@@ -953,7 +953,7 @@ class FrameSession {
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
     const emulatedSize = this._page.emulatedSize();
-    if (emulatedSize === null)
+    if (!emulatedSize)
       return;
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
