@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { kTopLevelAttachmentPrefix } from '@testIsomorphic/util';
-
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
@@ -141,7 +139,7 @@ export class MultiTraceModel {
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
-      context: this.attachments.find(a => a.name === `_error-context-${i}`),
+      context: this.attachments.find(a => a.name === `error-context-${i}`),
     }));
   }
 }
@@ -351,8 +349,6 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
 
   const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
   for (const item of itemMap.values()) {
-    if (item.action?.apiName.startsWith(kTopLevelAttachmentPrefix))
-      continue;
     const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
     parent.children.push(item);
     item.parent = parent;

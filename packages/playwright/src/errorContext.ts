@@ -32,7 +32,7 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
       return;
 
     testInfo._attach({
-      name: `_error-context`,
+      name: `error-context`,
       contentType: 'application/json',
       body: Buffer.from(JSON.stringify({
         pageSnapshot: ariaSnapshot,
@@ -63,7 +63,7 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
 
   for (const [index, error] of errors) {
     const metadata = testInfo.config.metadata as MetadataWithCommitInfo;
-    if (testInfo.attachments.find(a => a.name === `_error-context-${index}`))
+    if (testInfo.attachments.find(a => a.name === `error-context-${index}`))
       continue;
 
     const lines = [
@@ -134,7 +134,7 @@ export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdo
     await fs.writeFile(filePath, lines.join('\n'), 'utf8');
 
     (testInfo as TestInfoImpl)._attach({
-      name: `_error-context-${index}`,
+      name: `error-context-${index}`,
       contentType: 'text/markdown',
       path: filePath,
     }, undefined);

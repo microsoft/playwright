@@ -165,7 +165,7 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: T
       }
     }
 
-    const context = attachments.find(a => a.name === `_error-context-${i}`);
+    const context = attachments.find(a => a.name === `error-context-${i}`);
     return { type: 'regular', error, context };
   });
 }

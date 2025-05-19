@@ -337,7 +337,7 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
     resultLines.push(...errors.map(error => '\n' + error.message));
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
-      if (attachment.name.startsWith('_error-context') && attachment.path) {
+      if (attachment.name.startsWith('error-context') && attachment.path) {
         resultLines.push('');
         resultLines.push(screen.colors.dim(`    Error Context: ${relativeFilePath(screen, config, attachment.path)}`));
         continue;

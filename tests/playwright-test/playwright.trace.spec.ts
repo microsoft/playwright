@@ -127,6 +127,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: page',
     '  fixture: context',
     '  fixture: request',
+    'Attach "error-context-0"',
     'Worker Cleanup',
     '  fixture: browser',
   ]);
@@ -728,7 +729,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest }, te
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
-  expect(trace.apiNames).toContain('_attach "screenshot"');
+  expect(trace.apiNames).toContain('Attach "screenshot"');
 });
 
 test('should not throw when screenshot on failure fails', async ({ runInlineTest, server }, testInfo) => {
@@ -1187,6 +1188,7 @@ test('should not corrupt actions when no library trace is present', async ({ run
     'After Hooks',
     '  fixture: foo',
     '    expect.toBe',
+    'Attach "error-context-0"',
     'Worker Cleanup',
   ]);
 });
@@ -1217,6 +1219,7 @@ test('should record trace for manually created context in a failed test', async 
     'page.setContent',
     'expect.toBe',
     'After Hooks',
+    'Attach "error-context-0"',
     'Worker Cleanup',
     '  fixture: browser',
   ]);

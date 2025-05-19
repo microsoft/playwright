@@ -20,7 +20,6 @@ import path from 'path';
 import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
-import { kTopLevelAttachmentPrefix } from '../isomorphic/util';
 import { filteredStackTrace } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
@@ -268,7 +267,7 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(callId: string, parentId: string | undefined, category: string, apiName: string, params: Record<string, any> | undefined, stack: StackFrame[]) {
+  appendBeforeActionForStep(callId: string, parentId: string | undefined, apiName: string, params: Record<string, any> | undefined, stack: StackFrame[]) {
     this._appendTraceEvent({
       type: 'before',
       callId,
@@ -291,16 +290,6 @@ export class TestTracing {
       annotations,
       error,
     });
-  }
-
-  appendTopLevelAttachment(attachment: Attachment) {
-    // trace viewer has no means of representing attachments outside of a step,
-    // so we create an artificial action that's hidden in the UI
-    // the alternative would be to have one hidden step at the end with all top-level attachments,
-    // but that would delay useful information in live traces.
-    const callId = `${kTopLevelAttachmentPrefix}@${++this._lastActionId}`;
-    this.appendBeforeActionForStep(callId, undefined, kTopLevelAttachmentPrefix, `${kTopLevelAttachmentPrefix} "${attachment.name}"`, undefined, []);
-    this.appendAfterActionForStep(callId, undefined, [attachment]);
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {

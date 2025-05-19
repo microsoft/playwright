@@ -370,7 +370,7 @@ test('attaches error context', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'json' });
 
-  const errorContext = result.report.suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === '_error-context');
+  const errorContext = result.report.suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === 'error-context');
   expect(errorContext).toBeDefined();
   expect(errorContext!.contentType).toBe('application/json');
   const json = JSON.parse(Buffer.from(errorContext!.body, 'base64').toString('utf-8'));
