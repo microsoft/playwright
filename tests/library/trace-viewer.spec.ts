@@ -1080,7 +1080,7 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
 });
 
-test('should open two trace files of the same test', async ({ context, page, request, server, showTraceViewer, asset }, testInfo) => {
+test('should open two trace files of the same test (v6)', async ({ showTraceViewer, asset }) => {
   const traceViewer = await showTraceViewer([asset('test-trace1.zip'), asset('test-trace2.zip')]);
   // Same actions from different test runs should not be merged.
   await expect(traceViewer.actionTitles).toHaveText([
