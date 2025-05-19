@@ -17,7 +17,6 @@
 import { Browser } from '../browser';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { existingDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContext } from '../browserContext';
 import { Selectors } from '../selectors';
@@ -164,7 +163,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
 async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
-    const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
+    const oldContextDispatcher = scope.connection.existingDispatcher<BrowserContextDispatcher>(context);
     if (oldContextDispatcher)
       oldContextDispatcher._dispose();
     await context.resetForReuse(metadata, params);

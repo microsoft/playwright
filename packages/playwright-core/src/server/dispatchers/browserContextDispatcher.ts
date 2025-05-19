@@ -21,7 +21,7 @@ import { BrowserContext } from '../browserContext';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
@@ -129,7 +129,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       // - We are redirected from a reported request so that redirectedTo was updated on client.
       // - We are a navigation request and dispatcher will be reported as a part of the goto return value and newDocument param anyways.
       //   By the time requestFinished is triggered to update the request, we should have a request on the client already.
-      const redirectFromDispatcher = request.redirectedFrom() && existingDispatcher(request.redirectedFrom());
+      const redirectFromDispatcher = request.redirectedFrom() && this.connection.existingDispatcher(request.redirectedFrom());
       if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request') && !request.isNavigationRequest())
         return;
       const requestDispatcher = RequestDispatcher.from(this, request);
@@ -139,7 +139,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.Response, (response: Response) => {
-      const requestDispatcher = existingDispatcher<RequestDispatcher>(response.request());
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(response.request());
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(response.request(), 'response'))
         return;
       this._dispatchEvent('response', {
@@ -148,7 +148,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.RequestFailed, (request: Request) => {
-      const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(request);
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFailed'))
         return;
       this._dispatchEvent('requestFailed', {
@@ -159,7 +159,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
-      const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(request);
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFinished'))
         return;
       this._dispatchEvent('requestFinished', {
@@ -178,7 +178,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _shouldDispatchEvent(page: Page | undefined, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
     if (this._subscriptions.has(event))
       return true;
-    const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : undefined;
+    const pageDispatcher = page ? this.connection.existingDispatcher<PageDispatcher>(page) : undefined;
     if (pageDispatcher?._subscriptions.has(event))
       return true;
     return false;
@@ -290,7 +290,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(this._context);
+      await WebSocketRouteDispatcher.installIfNeeded(this.connection, this._context);
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {

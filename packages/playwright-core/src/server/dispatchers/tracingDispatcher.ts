@@ -15,7 +15,7 @@
  */
 
 import { ArtifactDispatcher } from './artifactDispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { APIRequestContextDispatcher } from './networkDispatchers';
@@ -27,7 +27,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   _type_Tracing = true;
 
   static from(scope: BrowserContextDispatcher | APIRequestContextDispatcher, tracing: Tracing): TracingDispatcher {
-    const result = existingDispatcher<TracingDispatcher>(tracing);
+    const result = scope.connection.existingDispatcher<TracingDispatcher>(tracing);
     return result || new TracingDispatcher(scope, tracing);
   }
 

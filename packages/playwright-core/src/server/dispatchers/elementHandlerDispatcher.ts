@@ -15,7 +15,6 @@
  */
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
 import { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
@@ -34,17 +33,17 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   readonly _elementHandle: ElementHandle;
 
   static from(scope: JSHandleDispatcherParentScope, handle: ElementHandle): ElementHandleDispatcher {
-    return existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
+    return scope.connection.existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
   }
 
   static fromNullable(scope: JSHandleDispatcherParentScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
     if (!handle)
       return undefined;
-    return existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
+    return scope.connection.existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
   }
 
   static fromJSHandle(scope: JSHandleDispatcherParentScope, handle: js.JSHandle): JSHandleDispatcher {
-    const result = existingDispatcher<JSHandleDispatcher>(handle);
+    const result = scope.connection.existingDispatcher<JSHandleDispatcher>(handle);
     if (result)
       return result;
     return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
