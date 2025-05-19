@@ -16,17 +16,12 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-import type { SerializedValue } from '@isomorphic/utilityScriptSerializers';
-
 // --- This section should match javascript.ts and generated_injected_builtins.js ---
 
 // This runtime guid is replaced by the actual guid at runtime in all generated sources.
 const kRuntimeGuid = '$runtime_guid$';
 // This flag is replaced by true/false at runtime in all generated sources.
 const kUtilityScriptIsUnderTest = false;
-
-// The name of the global playwright binding, referenced in Node.js.
-const kPlaywrightBinding = `__playwright__binding__${kRuntimeGuid}`;
 
 // The name of the global property that stores the UtilityScript instance,
 // referenced by generated_injected_builtins.js.
@@ -56,25 +51,11 @@ export type Builtins = {
 
 // --- End of the matching section ---
 
-export type BindingPayload = {
-  name: string;
-  seq: number;
-  serializedArgs?: SerializedValue[],
-};
-
-type BindingData = {
-  callbacks: Map<number, { resolve: (value: any) => void, reject: (error: Error) => void }>;
-  lastSeq: number;
-  handles: Map<number, any>;
-};
-
 export class UtilityScript {
   // eslint-disable-next-line no-restricted-globals
   readonly global: typeof globalThis;
   readonly builtins: Builtins;
   readonly isUnderTest: boolean;
-
-  private _bindings = new Map<string, BindingData>();
 
   // eslint-disable-next-line no-restricted-globals
   constructor(global: typeof globalThis) {
@@ -132,52 +113,6 @@ export class UtilityScript {
     if (value === undefined)
       return undefined;
     return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
-  }
-
-  addBinding(bindingName: string, needsHandle: boolean) {
-    const data: BindingData = {
-      callbacks: new Map(),
-      lastSeq: 0,
-      handles: new Map(),
-    };
-    this._bindings.set(bindingName, data);
-    (this.global as any)[bindingName] = (...args: any[]) => {
-      if (needsHandle && args.slice(1).some(arg => arg !== undefined))
-        throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
-      const seq = ++data.lastSeq;
-      const promise = new Promise((resolve, reject) => data.callbacks.set(seq, { resolve, reject }));
-      let payload: BindingPayload;
-      if (needsHandle) {
-        data.handles.set(seq, args[0]);
-        payload = { name: bindingName, seq };
-      } else {
-        const serializedArgs = [];
-        for (let i = 0; i < args.length; i++) {
-          serializedArgs[i] = serializeAsCallArgument(args[i], v => {
-            return { fallThrough: v };
-          });
-        }
-        payload = { name: bindingName, seq, serializedArgs };
-      }
-      (this.global as any)[kPlaywrightBinding](JSON.stringify(payload));
-      return promise;
-    };
-  }
-
-  takeBindingHandle(arg: { name: string, seq: number }) {
-    const handles = this._bindings.get(arg.name)!.handles;
-    const handle = handles.get(arg.seq);
-    handles.delete(arg.seq);
-    return handle;
-  }
-
-  deliverBindingResult(arg: { name: string, seq: number, result?: any, error?: any }) {
-    const callbacks = this._bindings.get(arg.name)!.callbacks;
-    if ('error' in arg)
-      callbacks.get(arg.seq)!.reject(arg.error);
-    else
-      callbacks.get(arg.seq)!.resolve(arg.result);
-    callbacks.delete(arg.seq);
   }
 
   private _promiseAwareJsonValueNoThrow(value: any) {

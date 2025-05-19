@@ -43,6 +43,11 @@ export function accessUtilityScript() {
 // The name of the global playwright binding, accessed by UtilityScript.
 export const kPlaywrightBinding = '__playwright__binding__' + runtimeGuid;
 
+// Include this code in any evaluated source to get access to the BindingsController instance.
+export function accessBindingsController() {
+  return `globalThis['__playwright__binding__controller__${runtimeGuid}']`;
+}
+
 // --- End of the matching section ---
 
 interface TaggedAsJSHandle<T> {
