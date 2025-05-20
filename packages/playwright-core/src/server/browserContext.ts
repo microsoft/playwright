@@ -32,6 +32,7 @@ import { InitScript } from './page';
 import { Page, PageBinding } from './page';
 import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
+import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as js from './javascript';
 import * as rawStorageSource from '../generated/storageScriptSource';
@@ -43,7 +44,6 @@ import type { Download } from './download';
 import type * as frames from './frames';
 import type { CallMetadata } from './instrumentation';
 import type { Progress, ProgressController } from './progress';
-import type { Selectors } from './selectors';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
@@ -81,7 +81,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _downloads = new Set<Download>();
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
-  private _selectors?: Selectors;
+  private _selectors: Selectors;
   private _origins = new Set<string>();
   readonly _harRecorders = new Map<string, HarRecorder>();
   readonly tracing: Tracing;
@@ -106,6 +106,7 @@ export abstract class BrowserContext extends SdkObject {
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+    this._selectors = new Selectors(options.selectorEngines || [], options.testIdAttributeName);
 
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
@@ -120,12 +121,8 @@ export abstract class BrowserContext extends SdkObject {
     return this._isPersistentContext;
   }
 
-  setSelectors(selectors: Selectors) {
-    this._selectors = selectors;
-  }
-
   selectors(): Selectors {
-    return this._selectors || this.attribution.playwright.selectors;
+    return this._selectors;
   }
 
   async _initialize() {
@@ -183,6 +180,9 @@ export abstract class BrowserContext extends SdkObject {
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {
     const paramsCopy = { ...params };
 
+    if (paramsCopy.selectorEngines?.length === 0)
+      delete paramsCopy.selectorEngines;
+
     for (const k of Object.keys(paramsCopy)) {
       const key = k as keyof channels.BrowserNewContextForReuseParams;
       if (paramsCopy[key] === defaultNewContextParamValues[key])
@@ -200,6 +200,8 @@ export abstract class BrowserContext extends SdkObject {
     if (params) {
       for (const key of paramsThatAllowContextReuse)
         (this._options as any)[key] = params[key];
+      if (params.testIdAttributeName)
+        this.selectors().setTestIdAttributeName(params.testIdAttributeName);
     }
 
     await this._cancelAllRoutesInFlight();
@@ -779,6 +781,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'screen',
   'userAgent',
   'viewport',
+  'testIdAttributeName',
 ];
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {

@@ -52,7 +52,6 @@ export type InitializerTraits<T> =
     T extends EventTargetChannel ? EventTargetInitializer :
     T extends BrowserChannel ? BrowserInitializer :
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
-    T extends SelectorsChannel ? SelectorsInitializer :
     T extends SocksSupportChannel ? SocksSupportInitializer :
     T extends DebugControllerChannel ? DebugControllerInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
@@ -90,7 +89,6 @@ export type EventsTraits<T> =
     T extends EventTargetChannel ? EventTargetEvents :
     T extends BrowserChannel ? BrowserEvents :
     T extends BrowserTypeChannel ? BrowserTypeEvents :
-    T extends SelectorsChannel ? SelectorsEvents :
     T extends SocksSupportChannel ? SocksSupportEvents :
     T extends DebugControllerChannel ? DebugControllerEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
@@ -128,7 +126,6 @@ export type EventTargetTraits<T> =
     T extends EventTargetChannel ? EventTargetEventTarget :
     T extends BrowserChannel ? BrowserEventTarget :
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
-    T extends SelectorsChannel ? SelectorsEventTarget :
     T extends SocksSupportChannel ? SocksSupportEventTarget :
     T extends DebugControllerChannel ? DebugControllerEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
@@ -215,6 +212,12 @@ export type ExpectedTextValue = {
   matchSubstring?: boolean,
   ignoreCase?: boolean,
   normalizeWhiteSpace?: boolean,
+};
+
+export type SelectorEngine = {
+  name: string,
+  source: string,
+  contentScript?: boolean,
 };
 
 export type AXNode = {
@@ -622,7 +625,6 @@ export type PlaywrightInitializer = {
   android: AndroidChannel,
   electron: ElectronChannel,
   utils?: LocalUtilsChannel,
-  selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
   preConnectedAndroidDevice?: AndroidDeviceChannel,
   socksSupport?: SocksSupportChannel,
@@ -897,35 +899,6 @@ export interface SocksSupportEvents {
   'socksClosed': SocksSupportSocksClosedEvent;
 }
 
-// ----------- Selectors -----------
-export type SelectorsInitializer = {};
-export interface SelectorsEventTarget {
-}
-export interface SelectorsChannel extends SelectorsEventTarget, Channel {
-  _type_Selectors: boolean;
-  register(params: SelectorsRegisterParams, metadata?: CallMetadata): Promise<SelectorsRegisterResult>;
-  setTestIdAttributeName(params: SelectorsSetTestIdAttributeNameParams, metadata?: CallMetadata): Promise<SelectorsSetTestIdAttributeNameResult>;
-}
-export type SelectorsRegisterParams = {
-  name: string,
-  source: string,
-  contentScript?: boolean,
-};
-export type SelectorsRegisterOptions = {
-  contentScript?: boolean,
-};
-export type SelectorsRegisterResult = void;
-export type SelectorsSetTestIdAttributeNameParams = {
-  testIdAttributeName: string,
-};
-export type SelectorsSetTestIdAttributeNameOptions = {
-
-};
-export type SelectorsSetTestIdAttributeNameResult = void;
-
-export interface SelectorsEvents {
-}
-
 // ----------- BrowserType -----------
 export type BrowserTypeInitializer = {
   executablePath: string,
@@ -1075,6 +1048,8 @@ export type BrowserTypeLaunchPersistentContextParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   userDataDir: string,
   slowMo?: number,
 };
@@ -1157,6 +1132,8 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -1272,6 +1249,8 @@ export type BrowserNewContextParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1339,6 +1318,8 @@ export type BrowserNewContextOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1409,6 +1390,8 @@ export type BrowserNewContextForReuseParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1476,6 +1459,8 @@ export type BrowserNewContextForReuseOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1582,6 +1567,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   exposeBinding(params: BrowserContextExposeBindingParams, metadata?: CallMetadata): Promise<BrowserContextExposeBindingResult>;
   grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextGrantPermissionsResult>;
   newPage(params?: BrowserContextNewPageParams, metadata?: CallMetadata): Promise<BrowserContextNewPageResult>;
+  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams, metadata?: CallMetadata): Promise<BrowserContextRegisterSelectorEngineResult>;
+  setTestIdAttributeName(params: BrowserContextSetTestIdAttributeNameParams, metadata?: CallMetadata): Promise<BrowserContextSetTestIdAttributeNameResult>;
   setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, metadata?: CallMetadata): Promise<BrowserContextSetExtraHTTPHeadersResult>;
   setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: CallMetadata): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: CallMetadata): Promise<BrowserContextSetHTTPCredentialsResult>;
@@ -1741,6 +1728,20 @@ export type BrowserContextNewPageOptions = {};
 export type BrowserContextNewPageResult = {
   page: PageChannel,
 };
+export type BrowserContextRegisterSelectorEngineParams = {
+  selectorEngine: SelectorEngine,
+};
+export type BrowserContextRegisterSelectorEngineOptions = {
+
+};
+export type BrowserContextRegisterSelectorEngineResult = void;
+export type BrowserContextSetTestIdAttributeNameParams = {
+  testIdAttributeName: string,
+};
+export type BrowserContextSetTestIdAttributeNameOptions = {
+
+};
+export type BrowserContextSetTestIdAttributeNameResult = void;
 export type BrowserContextSetExtraHTTPHeadersParams = {
   headers: NameValue[],
 };
@@ -4757,6 +4758,8 @@ export type AndroidDeviceLaunchBrowserParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -4822,6 +4825,8 @@ export type AndroidDeviceLaunchBrowserOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   pkg?: string,
   args?: string[],
   proxy?: {

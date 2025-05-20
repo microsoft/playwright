@@ -19,7 +19,6 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContext } from '../browserContext';
-import { Selectors } from '../selectors';
 import { ArtifactDispatcher } from './artifactDispatcher';
 
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
@@ -48,7 +47,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return await newContextForReuse(this._object, this, params, null, metadata);
+    return await newContextForReuse(this._object, this, params, metadata);
   }
 
   async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
@@ -95,13 +94,9 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, RootDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
   private _contexts = new Set<BrowserContext>();
-  readonly selectors: Selectors;
 
   constructor(scope: RootDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
-    // When we have a remotely-connected browser, each client gets a fresh Selector instance,
-    // so that two clients do not interfere between each other.
-    this.selectors = new Selectors();
   }
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
@@ -109,13 +104,12 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
       params.recordVideo.dir = this._object.options.artifactsDir;
     const context = await this._object.newContext(metadata, params);
     this._contexts.add(context);
-    context.setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
     return { context: new BrowserContextDispatcher(this, context) };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return await newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata);
+    return await newContextForReuse(this._object, this as any as BrowserDispatcher, params, metadata);
   }
 
   async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
@@ -160,7 +154,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 }
 
-async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = scope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -168,8 +162,6 @@ async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, pa
       oldContextDispatcher._dispose();
     await context.resetForReuse(metadata, params);
   }
-  if (selectors)
-    context.setSelectors(selectors);
   const contextDispatcher = new BrowserContextDispatcher(scope, context);
   return { context: contextDispatcher };
 }

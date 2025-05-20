@@ -43,7 +43,7 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
       'driver': new DriverTestMode(),
     }[mode];
     const playwright = await testMode.setup();
-    playwright._setSelectors(playwrightLibrary.selectors);
+    (playwrightLibrary.selectors as any)._playwrights.add(playwright);
     await run(playwright);
     await testMode.teardown();
   }, { scope: 'worker' }],
