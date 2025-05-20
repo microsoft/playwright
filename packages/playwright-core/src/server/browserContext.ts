@@ -36,6 +36,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import { Tracing } from './trace/recorder/tracing';
 import * as js from './javascript';
 import * as rawStorageSource from '../generated/storageScriptSource';
+import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
@@ -90,6 +91,7 @@ export abstract class BrowserContext extends SdkObject {
   private _customCloseHandler?: () => Promise<any>;
   readonly _tempDirs: string[] = [];
   private _settingStorageState = false;
+  bindingsInitScript?: InitScript;
   initScripts: InitScript[] = [];
   private _routesInFlight = new Set<network.Route>();
   private _debugger!: Debugger;
@@ -330,6 +332,17 @@ export abstract class BrowserContext extends SdkObject {
       return;
     this._playwrightBindingExposed = true;
     await this.doExposePlaywrightBinding();
+
+    this.bindingsInitScript = new InitScript(`
+      (() => {
+        const module = {};
+        ${js.prepareGeneratedScript(rawBindingsControllerSource.source)}
+        (module.exports.ensureBindingsController())();
+      })();
+    `, true /* internal */);
+    this.initScripts.push(this.bindingsInitScript);
+    await this.doAddInitScript(this.bindingsInitScript);
+    await this.safeNonStallingEvaluateInAllFrames(this.bindingsInitScript.source, 'main');
   }
 
   needsPlaywrightBinding() {
@@ -347,8 +360,7 @@ export abstract class BrowserContext extends SdkObject {
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this.doAddInitScript(binding.initScript);
-    const frames = this.pages().map(page => page.frames()).flat();
-    await Promise.all(frames.map(frame => frame.evaluateExpression(binding.initScript.source).catch(e => {})));
+    await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
   }
 
   async _removeExposedBindings() {

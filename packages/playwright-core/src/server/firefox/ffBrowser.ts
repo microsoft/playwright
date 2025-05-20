@@ -380,6 +380,8 @@ export class FFBrowserContext extends BrowserContext {
 
   private async _updateInitScripts() {
     const bindingScripts = [...this._pageBindings.values()].map(binding => binding.initScript.source);
+    if (this.bindingsInitScript)
+      bindingScripts.unshift(this.bindingsInitScript.source);
     const initScripts = this.initScripts.map(script => script.source);
     await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [kUtilityInitScript.source, ...bindingScripts, ...initScripts].map(script => ({ script })) });
   }
