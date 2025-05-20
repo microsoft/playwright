@@ -492,7 +492,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         }
         await artifact.delete();
       }
-    }, true);
+    }, { internal: true });
     await this._channel.close(options);
     await this._closedPromise;
   }

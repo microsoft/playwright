@@ -25,7 +25,7 @@ export function buildFullSelector(framePath: string[], selector: string) {
 }
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
-  let title = metadata.apiName || metadata.method;
+  let title = metadata.title || metadata.method;
   if (metadata.method === 'waitForEventInfo')
     title += `(${metadata.params.info.event})`;
   title = title.replace('object.expect', 'expect');

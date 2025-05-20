@@ -67,7 +67,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
         context._onClose();
       }
       return await this._innerNewContext(options, true);
-    }, true);
+    }, { internal: true });
   }
 
   async _stopPendingOperations(reason: string) {

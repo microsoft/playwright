@@ -203,7 +203,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
+        this._wrapApiCall(() => this._updateInterceptionPatterns(), { internal: true }).catch(() => {});
       if (handled)
         return;
     }
@@ -279,14 +279,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._wrapApiCall(async () => {
       await this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
-    }, true).catch(() => {});
+    }, { internal: true }).catch(() => {});
   }
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._wrapApiCall(async () => {
       await this._channel.setDefaultTimeoutNoReply({ timeout });
-    }, true).catch(() => {});
+    }, { internal: true }).catch(() => {});
   }
 
   private _forceVideo(): Video {
@@ -404,7 +404,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     } finally {
       if (remove)
         this._locatorHandlers.delete(uid);
-      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), true).catch(() => {});
+      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), { internal: true }).catch(() => {});
     }
   }
 

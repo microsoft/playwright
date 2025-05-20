@@ -349,7 +349,7 @@ export class APIResponse implements api.APIResponse {
           throw new Error('Response has been disposed');
         throw e;
       }
-    }, true);
+    }, { internal: true });
   }
 
   async text(): Promise<string> {

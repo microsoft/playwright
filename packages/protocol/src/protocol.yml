@@ -31,7 +31,7 @@ Metadata:
         file: string
         line: number?
         column: number?
-    apiName: string?
+    title: string?
     internal: boolean?
     # Test runner step id.
     stepId: string?

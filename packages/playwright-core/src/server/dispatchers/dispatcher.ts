@@ -308,7 +308,7 @@ export class DispatcherConnection {
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
       location: validMetadata.location,
-      apiName: validMetadata.apiName,
+      title: validMetadata.title,
       internal: validMetadata.internal,
       stepId: validMetadata.stepId,
       objectId: sdkObject?.guid,

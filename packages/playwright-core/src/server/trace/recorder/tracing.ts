@@ -650,10 +650,7 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     type: 'before',
     callId: metadata.id,
     startTime: metadata.startTime,
-    // This will disappear for action trace events, their titles will be
-    // built based on the protocol metainfo. If I don't do this now,
-    // trace ill get frame.click instead of page.click in trace viewer.
-    title: metadata.apiName,
+    title: metadata.title,
     class: metadata.type,
     method: metadata.method,
     params: metadata.params,
