@@ -119,7 +119,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       };
       pipe.on('close', () => transport.close());
       return { pipe, headers: transport.headers };
-    }, params.timeout || 0);
+    }, params.timeout);
   }
 
   async globToRegex(params: channels.LocalUtilsGlobToRegexParams, metadata?: CallMetadata): Promise<channels.LocalUtilsGlobToRegexResult> {
@@ -128,11 +128,11 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 }
 
-async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: string): Promise<string> {
+async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise<string> {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
 
-  progress?.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
+  progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const fetchUrl = new URL(endpointURL);
   if (!fetchUrl.pathname.endsWith('/'))
     fetchUrl.pathname += '/';
@@ -140,13 +140,13 @@ async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: stri
   const json = await fetchData({
     url: fetchUrl.toString(),
     method: 'GET',
-    timeout: progress?.timeUntilDeadline() ?? 30_000,
+    timeout: progress.timeUntilDeadline(),
     headers: { 'User-Agent': getUserAgent() },
   }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
     return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
         `This does not look like a Playwright server, try connecting via ws://.`);
   });
-  progress?.throwIfAborted();
+  progress.throwIfAborted();
 
   const wsUrl = new URL(endpointURL);
   let wsEndpointPath = JSON.parse(json).wsEndpointPath;

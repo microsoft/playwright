@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import type { HeadersArray, Point, Size, TimeoutOptions } from '../utils/isomorphic/types';
-export type { HeadersArray, Point, Quad, Rect, Size, TimeoutOptions } from '../utils/isomorphic/types';
+import type { HeadersArray, Point, Size } from '../utils/isomorphic/types';
+export type { HeadersArray, Point, Quad, Rect, Size } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
+
+export type TimeoutOptions = { timeout: number };
 
 export type StrictOptions = {
   strict?: boolean,
@@ -152,7 +154,7 @@ export type NormalizedContinueOverrides = {
 
 export type EmulatedSize = { viewport: Size, screen: Size };
 
-export type LaunchOptions = channels.BrowserTypeLaunchOptions & {
+export type LaunchOptions = channels.BrowserTypeLaunchParams & {
   cdpPort?: number,
   proxyOverride?: ProxySettings,
   assistantMode?: boolean,

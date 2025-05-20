@@ -16,7 +16,7 @@
 
 import type { ElementHandle } from './elementHandle';
 import type { Page } from './page';
-import type { FilePayload } from './types';
+import type { FilePayload, TimeoutOptions } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -43,7 +43,7 @@ export class FileChooser implements api.FileChooser {
     return this._page;
   }
 
-  async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: channels.ElementHandleSetInputFilesOptions) {
+  async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: channels.ElementHandleSetInputFilesOptions & TimeoutOptions) {
     return await this._elementHandle.setInputFiles(files, options);
   }
 }

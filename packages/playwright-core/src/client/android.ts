@@ -51,7 +51,6 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
   }
 
   async devices(options: { port?: number } = {}): Promise<AndroidDevice[]> {
@@ -69,7 +68,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     return await this._wrapApiCall(async () => {
       const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
-      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout };
+      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout || 0 };
       const connection = await connectOverWebSocket(this._connection, connectParams);
 
       let device: AndroidDevice;
@@ -133,7 +132,6 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
   }
 
   serial(): string {
@@ -162,49 +160,49 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return await this.waitForEvent('webview', { ...options, predicate });
   }
 
-  async wait(selector: api.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
-    await this._channel.wait({ selector: toSelectorChannel(selector), ...options });
+  async wait(selector: api.AndroidSelector, options: { state?: 'gone' } & types.TimeoutOptions = {}) {
+    await this._channel.wait({ selector: toSelectorChannel(selector), ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async fill(selector: api.AndroidSelector, text: string, options?: types.TimeoutOptions) {
-    await this._channel.fill({ selector: toSelectorChannel(selector), text, ...options });
+  async fill(selector: api.AndroidSelector, text: string, options: types.TimeoutOptions = {}) {
+    await this._channel.fill({ selector: toSelectorChannel(selector), text, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async press(selector: api.AndroidSelector, key: api.AndroidKey, options?: types.TimeoutOptions) {
+  async press(selector: api.AndroidSelector, key: api.AndroidKey, options: types.TimeoutOptions = {}) {
     await this.tap(selector, options);
     await this.input.press(key);
   }
 
-  async tap(selector: api.AndroidSelector, options?: { duration?: number } & types.TimeoutOptions) {
-    await this._channel.tap({ selector: toSelectorChannel(selector), ...options });
+  async tap(selector: api.AndroidSelector, options: { duration?: number } & types.TimeoutOptions = {}) {
+    await this._channel.tap({ selector: toSelectorChannel(selector), ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async drag(selector: api.AndroidSelector, dest: types.Point, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.drag({ selector: toSelectorChannel(selector), dest, ...options });
+  async drag(selector: api.AndroidSelector, dest: types.Point, options: SpeedOptions & types.TimeoutOptions = {}) {
+    await this._channel.drag({ selector: toSelectorChannel(selector), dest, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async fling(selector: api.AndroidSelector, direction: Direction, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.fling({ selector: toSelectorChannel(selector), direction, ...options });
+  async fling(selector: api.AndroidSelector, direction: Direction, options: SpeedOptions & types.TimeoutOptions = {}) {
+    await this._channel.fling({ selector: toSelectorChannel(selector), direction, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async longTap(selector: api.AndroidSelector, options?: types.TimeoutOptions) {
-    await this._channel.longTap({ selector: toSelectorChannel(selector), ...options });
+  async longTap(selector: api.AndroidSelector, options: types.TimeoutOptions = {}) {
+    await this._channel.longTap({ selector: toSelectorChannel(selector), ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async pinchClose(selector: api.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.pinchClose({ selector: toSelectorChannel(selector), percent, ...options });
+  async pinchClose(selector: api.AndroidSelector, percent: number, options: SpeedOptions & types.TimeoutOptions = {}) {
+    await this._channel.pinchClose({ selector: toSelectorChannel(selector), percent, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async pinchOpen(selector: api.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.pinchOpen({ selector: toSelectorChannel(selector), percent, ...options });
+  async pinchOpen(selector: api.AndroidSelector, percent: number, options: SpeedOptions & types.TimeoutOptions = {}) {
+    await this._channel.pinchOpen({ selector: toSelectorChannel(selector), percent, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async scroll(selector: api.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.scroll({ selector: toSelectorChannel(selector), direction, percent, ...options });
+  async scroll(selector: api.AndroidSelector, direction: Direction, percent: number, options: SpeedOptions & types.TimeoutOptions = {}) {
+    await this._channel.scroll({ selector: toSelectorChannel(selector), direction, percent, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
-  async swipe(selector: api.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.swipe({ selector: toSelectorChannel(selector), direction, percent, ...options });
+  async swipe(selector: api.AndroidSelector, direction: Direction, percent: number, options: SpeedOptions & types.TimeoutOptions = {}) {
+    await this._channel.swipe({ selector: toSelectorChannel(selector), direction, percent, ...options, timeout: this._timeoutSettings.timeout(options) });
   }
 
   async info(selector: api.AndroidSelector): Promise<api.AndroidElementInfo> {

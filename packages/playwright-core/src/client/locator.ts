@@ -74,7 +74,7 @@ export class Locator implements api.Locator {
   }
 
   private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, timeout?: number): Promise<R> {
-    timeout = this._frame.page()._timeoutSettings.timeout({ timeout });
+    timeout = this._frame._timeout({ timeout });
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
     return await this._frame._wrapApiCall<R>(async () => {
@@ -102,15 +102,15 @@ export class Locator implements api.Locator {
     return await this._withElement(h => h.boundingBox(), options?.timeout);
   }
 
-  async check(options: channels.ElementHandleCheckOptions = {}) {
+  async check(options: channels.ElementHandleCheckOptions & TimeoutOptions = {}) {
     return await this._frame.check(this._selector, { strict: true, ...options });
   }
 
-  async click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
+  async click(options: channels.ElementHandleClickOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.click(this._selector, { strict: true, ...options });
   }
 
-  async dblclick(options: channels.ElementHandleDblclickOptions = {}): Promise<void> {
+  async dblclick(options: channels.ElementHandleDblclickOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.dblclick(this._selector, { strict: true, ...options });
   }
 
@@ -118,7 +118,7 @@ export class Locator implements api.Locator {
     return await this._frame.dispatchEvent(this._selector, type, eventInit, { strict: true, ...options });
   }
 
-  async dragTo(target: Locator, options: channels.FrameDragAndDropOptions = {}) {
+  async dragTo(target: Locator, options: channels.FrameDragAndDropOptions & TimeoutOptions = {}) {
     return await this._frame.dragAndDrop(this._selector, target._selector, {
       strict: true,
       ...options,
@@ -137,7 +137,7 @@ export class Locator implements api.Locator {
     return await this._withElement(h => h.evaluateHandle(pageFunction, arg), options?.timeout);
   }
 
-  async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
+  async fill(value: string, options: channels.ElementHandleFillOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.fill(this._selector, value, { strict: true, ...options });
   }
 
@@ -243,7 +243,7 @@ export class Locator implements api.Locator {
   }
 
   async blur(options?: TimeoutOptions): Promise<void> {
-    await this._frame._channel.blur({ selector: this._selector, strict: true, ...options });
+    await this._frame._channel.blur({ selector: this._selector, strict: true, ...options, timeout: this._frame._timeout(options) });
   }
 
   async count(): Promise<number> {
@@ -258,7 +258,7 @@ export class Locator implements api.Locator {
     return await this._frame.getAttribute(this._selector, name, { strict: true, ...options });
   }
 
-  async hover(options: channels.ElementHandleHoverOptions = {}): Promise<void> {
+  async hover(options: channels.ElementHandleHoverOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.hover(this._selector, { strict: true, ...options });
   }
 
@@ -298,21 +298,21 @@ export class Locator implements api.Locator {
     return await this._frame.isVisible(this._selector, { strict: true, ...options });
   }
 
-  async press(key: string, options: channels.ElementHandlePressOptions = {}): Promise<void> {
+  async press(key: string, options: channels.ElementHandlePressOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.press(this._selector, key, { strict: true, ...options });
   }
 
-  async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
+  async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), options.timeout);
   }
 
   async ariaSnapshot(options?: TimeoutOptions): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ ...options, selector: this._selector });
+    const result = await this._frame._channel.ariaSnapshot({ ...options, selector: this._selector, timeout: this._frame._timeout(options) });
     return result.snapshot;
   }
 
-  async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions = {}) {
+  async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions & TimeoutOptions = {}) {
     return await this._withElement((h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }), options.timeout);
   }
 
@@ -320,22 +320,22 @@ export class Locator implements api.Locator {
     return await this._frame.selectOption(this._selector, values, { strict: true, ...options });
   }
 
-  async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
+  async selectText(options: channels.ElementHandleSelectTextOptions & TimeoutOptions = {}): Promise<void> {
     return await this._withElement((h, timeout) => h.selectText({ ...options, timeout }), options.timeout);
   }
 
-  async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
+  async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions & TimeoutOptions) {
     if (checked)
       await this.check(options);
     else
       await this.uncheck(options);
   }
 
-  async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
+  async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions & TimeoutOptions = {}) {
     return await this._frame.setInputFiles(this._selector, files, { strict: true, ...options });
   }
 
-  async tap(options: channels.ElementHandleTapOptions = {}): Promise<void> {
+  async tap(options: channels.ElementHandleTapOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.tap(this._selector, { strict: true, ...options });
   }
 
@@ -343,15 +343,15 @@ export class Locator implements api.Locator {
     return await this._frame.textContent(this._selector, { strict: true, ...options });
   }
 
-  async type(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
+  async type(text: string, options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.type(this._selector, text, { strict: true, ...options });
   }
 
-  async pressSequentially(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
+  async pressSequentially(text: string, options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
     return await this.type(text, options);
   }
 
-  async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
+  async uncheck(options: channels.ElementHandleUncheckOptions & TimeoutOptions = {}) {
     return await this._frame.uncheck(this._selector, { strict: true, ...options });
   }
 
@@ -367,10 +367,10 @@ export class Locator implements api.Locator {
     return await this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
   }
 
-  waitFor(options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<void>;
-  waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void>;
-  async waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void> {
-    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
+  waitFor(options: channels.FrameWaitForSelectorOptions & TimeoutOptions & { state: 'attached' | 'visible' }): Promise<void>;
+  waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void>;
+  async waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void> {
+    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options, timeout: this._frame._timeout(options) });
   }
 
   async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {

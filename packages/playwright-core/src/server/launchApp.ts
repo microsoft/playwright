@@ -56,6 +56,7 @@ export async function launchApp(browserType: BrowserType, options: {
     acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
     colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
     args,
+    timeout: 0, // Deliberately no timeout for our apps.
   });
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.

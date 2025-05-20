@@ -19,7 +19,6 @@ import os from 'os';
 import path from 'path';
 import * as readline from 'readline';
 
-import { TimeoutSettings } from '../timeoutSettings';
 import { ManualPromise } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -64,7 +63,6 @@ export class ElectronApplication extends SdkObject {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
-  readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
@@ -284,14 +282,14 @@ export class Electron extends SdkObject {
         artifactsDir,
         downloadsPath: artifactsDir,
         tracesDir: options.tracesDir || artifactsDir,
-        originalLaunchOptions: {},
+        originalLaunchOptions: { timeout: options.timeout },
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       await app.initialize();
       return app;
-    }, TimeoutSettings.launchTimeout(options));
+    }, options.timeout);
   }
 }
 

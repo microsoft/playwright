@@ -17,7 +17,6 @@
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
-import { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
@@ -27,16 +26,16 @@ import type { JSHandleDispatcherParentScope } from './jsHandleDispatcher';
 import type * as channels from '@protocol/channels';
 
 
-export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {
+export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher> implements channels.ElementHandleChannel {
   _type_ElementHandle = true;
 
   readonly _elementHandle: ElementHandle;
 
-  static from(scope: JSHandleDispatcherParentScope, handle: ElementHandle): ElementHandleDispatcher {
+  static from(scope: FrameDispatcher, handle: ElementHandle): ElementHandleDispatcher {
     return scope.connection.existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
   }
 
-  static fromNullable(scope: JSHandleDispatcherParentScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
+  static fromNullable(scope: FrameDispatcher, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
     if (!handle)
       return undefined;
     return scope.connection.existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
@@ -46,10 +45,15 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     const result = scope.connection.existingDispatcher<JSHandleDispatcher>(handle);
     if (result)
       return result;
-    return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
+    const elementHandle = handle.asElement();
+    if (!elementHandle)
+      return new JSHandleDispatcher(scope, handle);
+    if (!(scope instanceof FrameDispatcher))
+      throw new Error('ElementHandle can only be created from FrameDispatcher');
+    return new ElementHandleDispatcher(scope, elementHandle);
   }
 
-  private constructor(scope: JSHandleDispatcherParentScope, elementHandle: ElementHandle) {
+  private constructor(scope: FrameDispatcher, elementHandle: ElementHandle) {
     super(scope, elementHandle);
     this._elementHandle = elementHandle;
   }
@@ -216,18 +220,10 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   private _browserContextDispatcher(): BrowserContextDispatcher {
-    const scope = this.parentScope();
-    if (scope instanceof BrowserContextDispatcher)
-      return scope;
-    if (scope instanceof PageDispatcher)
-      return scope.parentScope();
-    if ((scope instanceof WorkerDispatcher) || (scope instanceof FrameDispatcher))  {
-      const parentScope = scope.parentScope();
-      if (parentScope instanceof BrowserContextDispatcher)
-        return parentScope;
-      return parentScope.parentScope();
-    }
-    throw new Error('ElementHandle belongs to unexpected scope');
+    const parentScope = this.parentScope().parentScope();
+    if (parentScope instanceof BrowserContextDispatcher)
+      return parentScope;
+    return parentScope.parentScope();
   }
 
 }

@@ -27,7 +27,7 @@ import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCo
 import { wrapInASCIIBox } from '../utils/ascii';
 import { debugLogger } from '../utils/debugLogger';
 import {  hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
-import { fetchData } from '../utils/network';
+import { fetchData, NET_DEFAULT_TIMEOUT } from '../utils/network';
 import { spawnAsync } from '../utils/spawnAsync';
 import { getEmbedderName } from '../utils/userAgent';
 import { lockfile } from '../../utilsBundle';
@@ -1192,7 +1192,7 @@ export class Registry {
     // PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT is a misnomer, it actually controls the socket's
     // max idle timeout. Unfortunately, we cannot rename it without breaking existing user workflows.
     const downloadSocketTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
-    const downloadSocketTimeout = +(downloadSocketTimeoutEnv || '0') || 30_000;
+    const downloadSocketTimeout = +(downloadSocketTimeoutEnv || '0') || NET_DEFAULT_TIMEOUT;
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadSocketTimeout).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });

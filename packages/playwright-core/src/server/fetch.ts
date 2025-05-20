@@ -20,7 +20,6 @@ import { Transform, pipeline } from 'stream';
 import { TLSSocket } from 'tls';
 import * as zlib from 'zlib';
 
-import { TimeoutSettings } from './timeoutSettings';
 import { assert, constructURLBasedOnBaseURL, createProxyAgent, eventsHelper, monotonicTime  } from '../utils';
 import { createGuid } from './utils/crypto';
 import { getUserAgent } from './utils/userAgent';
@@ -52,7 +51,6 @@ type FetchRequestOptions = {
   failOnStatusCode?: boolean;
   httpCredentials?: HTTPCredentials;
   proxy?: ProxySettings;
-  timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
   maxRedirects?: number;
   baseURL?: string;
@@ -187,7 +185,7 @@ export abstract class APIRequestContext extends SdkObject {
     let maxRedirects = params.maxRedirects ?? (defaults.maxRedirects ?? 20);
     maxRedirects = maxRedirects === 0 ? -1 : maxRedirects;
 
-    const timeout = defaults.timeoutSettings.timeout(params);
+    const timeout = params.timeout;
     const deadline = timeout && (monotonicTime() + timeout);
 
     const options: SendRequestOptions = {
@@ -612,7 +610,6 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
       failOnStatusCode: undefined,
       httpCredentials: this._context._options.httpCredentials,
       proxy: this._context._options.proxy || this._context._browser.options.proxy,
-      timeoutSettings: this._context._timeoutSettings,
       ignoreHTTPSErrors: this._context._options.ignoreHTTPSErrors,
       baseURL: this._context._options.baseURL,
       clientCertificates: this._context._options.clientCertificates,
@@ -642,9 +639,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
     this.attribution.context = this;
-    const timeoutSettings = new TimeoutSettings();
-    if (options.timeout !== undefined)
-      timeoutSettings.setDefaultTimeout(options.timeout);
     if (options.storageState) {
       this._origins = options.storageState.origins?.map(origin => ({ indexedDB: [], ...origin }));
       this._cookieStore.addCookies(options.storageState.cookies || []);
@@ -660,7 +654,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       httpCredentials: options.httpCredentials,
       clientCertificates: options.clientCertificates,
       proxy: options.proxy,
-      timeoutSettings,
     };
     this._tracing = new Tracing(this, options.tracesDir);
   }

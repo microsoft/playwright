@@ -373,7 +373,7 @@ APIRequestContext:
         multipartData:
           type: array?
           items: FormField
-        timeout: number?
+        timeout: number
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
         maxRedirects: number?
@@ -485,7 +485,7 @@ LaunchOptions:
     handleSIGINT: boolean?
     handleSIGTERM: boolean?
     handleSIGHUP: boolean?
-    timeout: number?
+    timeout: number
     env:
       type: array?
       items: NameValue
@@ -715,7 +715,7 @@ LocalUtils:
         headers: json?
         exposeNetwork: string?
         slowMo: number?
-        timeout: number?
+        timeout: number
         socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
@@ -828,7 +828,6 @@ Playwright:
             bypass: string?
             username: string?
             password: string?
-        timeout: number?
         storageState:
           type: object?
           properties:
@@ -1049,7 +1048,7 @@ BrowserType:
           type: array?
           items: NameValue
         slowMo: number?
-        timeout: number?
+        timeout: number
       returns:
         browser: Browser
         defaultContext: BrowserContext?
@@ -1265,16 +1264,6 @@ BrowserContext:
       title: Create new page
       returns:
         page: Page
-
-    setDefaultNavigationTimeoutNoReply:
-      internal: true
-      parameters:
-        timeout: number?
-
-    setDefaultTimeoutNoReply:
-      internal: true
-      parameters:
-        timeout: number?
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
@@ -1546,16 +1535,6 @@ Page:
 
   commands:
 
-    setDefaultNavigationTimeoutNoReply:
-      internal: true
-      parameters:
-        timeout: number?
-
-    setDefaultTimeoutNoReply:
-      internal: true
-      parameters:
-        timeout: number?
-
     addInitScript:
       parameters:
         source: string
@@ -1611,7 +1590,7 @@ Page:
     goBack:
       title: Go back
       parameters:
-        timeout: number?
+        timeout: number
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
@@ -1622,7 +1601,7 @@ Page:
     goForward:
       title: Go forward
       parameters:
-        timeout: number?
+        timeout: number
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
@@ -1655,7 +1634,7 @@ Page:
     reload:
       title: Reload
       parameters:
-        timeout: number?
+        timeout: number
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
@@ -1696,7 +1675,7 @@ Page:
     screenshot:
       title: Screenshot
       parameters:
-        timeout: number?
+        timeout: number
         type:
           type: enum?
           literals:
@@ -2112,7 +2091,7 @@ Frame:
       parameters:
         selector: string
         forAI: boolean?
-        timeout: number?
+        timeout: number
       returns:
         snapshot: string
       flags:
@@ -2123,7 +2102,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2135,7 +2114,7 @@ Frame:
         strict: boolean?
         force: boolean?
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2168,7 +2147,7 @@ Frame:
           - right
           - middle
         clickCount: number?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2188,7 +2167,7 @@ Frame:
         source: string
         target: string
         force: boolean?
-        timeout: number?
+        timeout: number
         trial: boolean?
         sourcePosition: Point?
         targetPosition: Point?
@@ -2222,7 +2201,7 @@ Frame:
           - left
           - right
           - middle
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2236,7 +2215,7 @@ Frame:
         strict: boolean?
         type: string
         eventInit: SerializedArgument
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2270,7 +2249,7 @@ Frame:
         strict: boolean?
         value: string
         force: boolean?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2281,7 +2260,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2302,7 +2281,7 @@ Frame:
         selector: string
         strict: boolean?
         name: string
-        timeout: number?
+        timeout: number
       returns:
         value: string?
       flags:
@@ -2312,7 +2291,7 @@ Frame:
       title: Navigate
       parameters:
         url: string
-        timeout: number?
+        timeout: number
         waitUntil: LifecycleEvent?
         referer: string?
       returns:
@@ -2338,7 +2317,7 @@ Frame:
             - Meta
             - Shift
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2350,7 +2329,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: string
       flags:
@@ -2361,7 +2340,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: string
       flags:
@@ -2372,7 +2351,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: string
       flags:
@@ -2383,7 +2362,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: boolean
       flags:
@@ -2394,7 +2373,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: boolean
       flags:
@@ -2405,7 +2384,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: boolean
       flags:
@@ -2436,7 +2415,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: boolean
       flags:
@@ -2450,7 +2429,7 @@ Frame:
         key: string
         delay: number?
         noWaitAfter: boolean?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2504,7 +2483,7 @@ Frame:
               label: string?
               index: number?
         force: boolean?
-        timeout: number?
+        timeout: number
       returns:
         values:
           type: array
@@ -2518,7 +2497,7 @@ Frame:
       title: Set content
       parameters:
         html: string
-        timeout: number?
+        timeout: number
         waitUntil: LifecycleEvent?
       flags:
         snapshot: true
@@ -2545,7 +2524,7 @@ Frame:
         streams:
           type: array?
           items: WritableStream
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2568,7 +2547,7 @@ Frame:
             - Meta
             - Shift
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2580,7 +2559,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
       returns:
         value: string?
       flags:
@@ -2598,7 +2577,7 @@ Frame:
         strict: boolean?
         text: string
         delay: number?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2611,7 +2590,7 @@ Frame:
         strict: boolean?
         force: boolean?
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2631,7 +2610,7 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        timeout: number?
+        timeout: number
         # When present, polls on interval. Otherwise, polls on raf.
         pollingInterval: number?
       returns:
@@ -2644,7 +2623,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
         state:
           type: enum?
           literals:
@@ -2839,7 +2818,7 @@ ElementHandle:
       parameters:
         force: boolean?
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2870,7 +2849,7 @@ ElementHandle:
           - right
           - middle
         clickCount: number?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2906,7 +2885,7 @@ ElementHandle:
           - left
           - right
           - middle
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -2927,7 +2906,7 @@ ElementHandle:
       parameters:
         value: string
         force: boolean?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -2966,7 +2945,7 @@ ElementHandle:
             - Meta
             - Shift
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -3046,7 +3025,7 @@ ElementHandle:
       parameters:
         key: string
         delay: number?
-        timeout: number?
+        timeout: number
         noWaitAfter: boolean?
       flags:
         slowMo: true
@@ -3077,7 +3056,7 @@ ElementHandle:
     screenshot:
       title: Screenshot
       parameters:
-        timeout: number?
+        timeout: number
         type:
           type: enum?
           literals:
@@ -3093,7 +3072,7 @@ ElementHandle:
     scrollIntoViewIfNeeded:
       title: Scroll into view
       parameters:
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -3114,7 +3093,7 @@ ElementHandle:
               label: string?
               index: number?
         force: boolean?
-        timeout: number?
+        timeout: number
       returns:
         values:
           type: array
@@ -3128,7 +3107,7 @@ ElementHandle:
       title: Select text
       parameters:
         force: boolean?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -3153,7 +3132,7 @@ ElementHandle:
         streams:
           type: array?
           items: WritableStream
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -3174,7 +3153,7 @@ ElementHandle:
             - Meta
             - Shift
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -3193,7 +3172,7 @@ ElementHandle:
       parameters:
         text: string
         delay: number?
-        timeout: number?
+        timeout: number
       flags:
         slowMo: true
         snapshot: true
@@ -3204,7 +3183,7 @@ ElementHandle:
       parameters:
         force: boolean?
         position: Point?
-        timeout: number?
+        timeout: number
         trial: boolean?
       flags:
         slowMo: true
@@ -3223,7 +3202,7 @@ ElementHandle:
           - enabled
           - disabled
           - editable
-        timeout: number?
+        timeout: number
       flags:
         snapshot: true
 
@@ -3232,7 +3211,7 @@ ElementHandle:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
+        timeout: number
         state:
           type: enum?
           literals:
@@ -3706,7 +3685,7 @@ Electron:
         env:
           type: array?
           items: NameValue
-        timeout: number?
+        timeout: number
         acceptDownloads:
           type: enum?
           literals:
@@ -3823,11 +3802,6 @@ Android:
           type: array
           items: AndroidDevice
 
-    setDefaultTimeoutNoReply:
-      internal: true
-      parameters:
-        timeout: number
-
 AndroidSocket:
   type: interface
 
@@ -3864,21 +3838,21 @@ AndroidDevice:
           type: enum?
           literals:
           - gone
-        timeout: number?
+        timeout: number
 
     fill:
       title: Fill
       parameters:
         selector: AndroidSelector
         text: string
-        timeout: number?
+        timeout: number
 
     tap:
       title: Tap
       parameters:
         selector: AndroidSelector
         duration: number?
-        timeout: number?
+        timeout: number
 
     drag:
       title: Drag
@@ -3886,7 +3860,7 @@ AndroidDevice:
         selector: AndroidSelector
         dest: Point
         speed: number?
-        timeout: number?
+        timeout: number
 
     fling:
       title: Fling
@@ -3900,13 +3874,13 @@ AndroidDevice:
           - left
           - right
         speed: number?
-        timeout: number?
+        timeout: number
 
     longTap:
       title: Long tap
       parameters:
         selector: AndroidSelector
-        timeout: number?
+        timeout: number
 
     pinchClose:
       title: Pinch close
@@ -3914,7 +3888,7 @@ AndroidDevice:
         selector: AndroidSelector
         percent: number
         speed: number?
-        timeout: number?
+        timeout: number
 
     pinchOpen:
       title: Pinch open
@@ -3922,7 +3896,7 @@ AndroidDevice:
         selector: AndroidSelector
         percent: number
         speed: number?
-        timeout: number?
+        timeout: number
 
     scroll:
       title: Scroll
@@ -3937,7 +3911,7 @@ AndroidDevice:
           - right
         percent: number
         speed: number?
-        timeout: number?
+        timeout: number
 
     swipe:
       title: Swipe
@@ -3952,7 +3926,7 @@ AndroidDevice:
           - right
         percent: number
         speed: number?
-        timeout: number?
+        timeout: number
 
     info:
       internal: true
@@ -4043,11 +4017,6 @@ AndroidDevice:
         file: binary
         path: string
         mode: number?
-
-    setDefaultTimeoutNoReply:
-      internal: true
-      parameters:
-        timeout: number
 
     connectToWebView:
       internal: true

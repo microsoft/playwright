@@ -18,7 +18,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import { TimeoutSettings } from './timeoutSettings';
 import { createGuid } from './utils/crypto';
 import { debugMode } from './utils/debug';
 import { Clock } from './clock';
@@ -70,7 +69,6 @@ export abstract class BrowserContext extends SdkObject {
     VideoStarted: 'videostarted',
   };
 
-  readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
   readonly _options: types.BrowserContextOptions;
@@ -197,8 +195,6 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
-    this.setDefaultNavigationTimeout(undefined);
-    this.setDefaultTimeout(undefined);
     this.tracing.resetForReuse();
 
     if (params) {
@@ -388,14 +384,6 @@ export abstract class BrowserContext extends SdkObject {
     await this.doClearPermissions();
   }
 
-  setDefaultNavigationTimeout(timeout: number | undefined) {
-    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-  }
-
-  setDefaultTimeout(timeout: number | undefined) {
-    this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
   async _loadDefaultContextAsIs(progress: Progress): Promise<Page | undefined> {
     if (!this.possiblyUninitializedPages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
@@ -574,7 +562,7 @@ export abstract class BrowserContext extends SdkObject {
       });
       for (const origin of originsToSave) {
         const frame = page.mainFrame();
-        await frame.goto(internalMetadata, origin);
+        await frame.goto(internalMetadata, origin, { timeout: 0 });
         const storage: SerializedStorage = await frame.evaluateExpression(collectScript, { world: 'utility' });
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
@@ -605,7 +593,7 @@ export abstract class BrowserContext extends SdkObject {
 
     for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
       const frame = page.mainFrame();
-      await frame.goto(internalMetadata, origin);
+      await frame.goto(internalMetadata, origin, { timeout: 0 });
       await frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin));
     }
 
@@ -639,7 +627,7 @@ export abstract class BrowserContext extends SdkObject {
         });
         for (const originState of state.origins) {
           const frame = page.mainFrame();
-          await frame.goto(metadata, originState.origin);
+          await frame.goto(metadata, originState.origin, { timeout: 0 });
           const restoreScript = `(() => {
             const module = {};
             ${js.prepareGeneratedScript(rawStorageSource.source)}

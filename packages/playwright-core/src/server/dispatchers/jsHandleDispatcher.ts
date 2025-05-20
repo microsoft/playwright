@@ -27,10 +27,10 @@ import type * as channels from '@protocol/channels';
 
 export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
 
-export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel, JSHandleDispatcherParentScope> implements channels.JSHandleChannel {
+export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScope = JSHandleDispatcherParentScope> extends Dispatcher<js.JSHandle, channels.JSHandleChannel, ParentScope> implements channels.JSHandleChannel {
   _type_JSHandle = true;
 
-  protected constructor(scope: JSHandleDispatcherParentScope, jsHandle: js.JSHandle) {
+  protected constructor(scope: ParentScope, jsHandle: js.JSHandle) {
     // Do not call this directly, use createHandle() instead.
     super(scope, jsHandle, jsHandle.asElement() ? 'ElementHandle' : 'JSHandle', {
       preview: jsHandle.toString(),

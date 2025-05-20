@@ -311,7 +311,7 @@ function filterLaunchOptions(options: LaunchOptions, allowFSPaths: boolean): Lau
   };
 }
 
-const defaultLaunchOptions: LaunchOptions = {
+const defaultLaunchOptions: Partial<LaunchOptions> = {
   ignoreAllDefaultArgs: false,
   handleSIGINT: false,
   handleSIGTERM: false,
@@ -322,5 +322,6 @@ const defaultLaunchOptions: LaunchOptions = {
 
 const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
   'headless',
+  'timeout',
   'tracesDir',
 ];
