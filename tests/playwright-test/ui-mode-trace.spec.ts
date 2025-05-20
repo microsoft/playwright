@@ -583,39 +583,33 @@ test('fails', async ({ page }) => {
     `.trim());
 });
 
-test('should update git diff between test runs', async ({ runUITest }) => {
-  const { page, testProcess } = await runUITest({
+test('should update git diff between test runs', async ({ runUITest, writeFiles, initGitRepo }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      export default {
+        captureGitInfo: { diff: true },
+      };
+    `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('fails', async ({ page }) => {
         await page.setContent('<button>Submit</button>');
         expect(1).toBe(2);
       });
-    `.trim(),
+    `,
+    'new-file.ts': 'foo'
   });
 
-  // Run the failing test
-  await page.getByText('fails').dblclick();
+  await initGitRepo();
+  await page.getByTestId('test-tree').getByText('fails').dblclick();
+  await writeFiles({ 'new-file.ts': 'bar' });
+  await page.getByTestId('test-tree').getByText('fails').dblclick();
 
-  // Get the prompt with the initial git diff
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
   await page.locator('.tab-errors').getByRole('button', { name: 'Copy prompt' }).click();
-  const firstPrompt = await page.evaluate(() => navigator.clipboard.readText());
-
-  // Create a new file to introduce a git diff
-  await fs.promises.writeFile(testProcess.runTest.path('new-file.txt'), 'New content to create git diff');
-
-  // Run the test again
-  await page.getByText('fails').dblclick();
-
-  // Get the prompt with the updated git diff
-  await page.getByText('Errors', { exact: true }).click();
-  await page.locator('.tab-errors').getByRole('button', { name: 'Copy prompt' }).click();
   const secondPrompt = await page.evaluate(() => navigator.clipboard.readText());
-
-  // Check for presence of the new file in the git diff
-  expect(secondPrompt).toContain('new-file.txt');
+  expect(secondPrompt).toContain('new-file.ts');
 });
 
 test('should indicate current test status', async ({ runUITest }) => {

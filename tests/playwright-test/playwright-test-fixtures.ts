@@ -27,6 +27,7 @@ import type { TestInfo } from './stable-test-runner';
 import { expect } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
 export { countTimes } from '../config/commonFixtures';
+const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 type CliRunResult = {
   exitCode: number,
@@ -251,6 +252,8 @@ export type RunOptions = {
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   deleteFile: (file: string) => Promise<void>;
+  execGit: (args: string[]) => Promise<void>;
+  initGitRepo: () => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runCLICommand: (files: Files, command: string, args?: string[]) => Promise<{ stdout: string, stderr: string, exitCode: number }>;
   startCLICommand: (files: Files, command: string, args?: string[], options?: RunOptions) => Promise<TestChildProcess>;
@@ -274,6 +277,27 @@ export const test = base
         await use(async file => {
           const baseDir = testInfo.outputPath();
           await fs.promises.unlink(path.join(baseDir, file));
+        });
+      },
+
+      execGit: async ({}, use, testInfo) => {
+        await use(async args => {
+          const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: testInfo.outputDir });
+          if (!!code)
+            throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+        });
+      },
+
+      initGitRepo: async ({ execGit }, use) => {
+        await use(async () => {
+          await execGit(['init']);
+          await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
+          await execGit(['config', '--local', 'user.name', 'William']);
+          await execGit(['checkout', '-b', 'main']);
+          await execGit(['add', 'playwright.config.ts']);
+          await execGit(['commit', '-m', 'init']);
+          await execGit(['add', '*.ts']);
+          await execGit(['commit', '-m', 'chore(html): make this test look nice']);
         });
       },
 
