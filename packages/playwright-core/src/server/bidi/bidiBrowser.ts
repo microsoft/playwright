@@ -21,7 +21,6 @@ import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 import { BidiPage, kPlaywrightBindingChannel } from './bidiPage';
-import { kUtilityInitScript } from '../page';
 import { kPlaywrightBinding } from '../javascript';
 import * as bidi from './third_party/bidiProtocol';
 
@@ -222,7 +221,6 @@ export class BidiBrowserContext extends BrowserContext {
   override async _initialize() {
     const promises: Promise<any>[] = [
       super._initialize(),
-      this._installUtilityScript(),
     ];
     if (this._options.viewport) {
       promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
@@ -237,13 +235,6 @@ export class BidiBrowserContext extends BrowserContext {
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     await Promise.all(promises);
-  }
-
-  private async _installUtilityScript() {
-    await this._browser._browserSession.send('script.addPreloadScript', {
-      functionDeclaration: `() => { return${kUtilityInitScript.source} }`,
-      userContexts: [this._userContextId()],
-    });
   }
 
   override possiblyUninitializedPages(): Page[] {

@@ -136,7 +136,6 @@ const inlineCSSPlugin = {
       platform: 'browser',
       target: 'ES2019',
       plugins: [inlineCSSPlugin],
-      inject: hasExports ? [require.resolve('./generate_injected_builtins.js')] : [],
     });
     for (const message of [...buildOutput.errors, ...buildOutput.warnings])
       console.log(message.text);

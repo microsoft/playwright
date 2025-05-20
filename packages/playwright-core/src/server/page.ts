@@ -760,7 +760,7 @@ export class Page extends SdkObject {
     const bindings = [...this.browserContext._pageBindings.values(), ...this._pageBindings.values()].map(binding => binding.initScript);
     if (this.browserContext.bindingsInitScript)
       bindings.unshift(this.browserContext.bindingsInitScript);
-    return [kUtilityInitScript, ...bindings, ...this.browserContext.initScripts, ...this.initScripts];
+    return [...bindings, ...this.browserContext.initScripts, ...this.initScripts];
   }
 
   getBinding(name: string) {
@@ -901,14 +901,6 @@ export class InitScript {
     this.name = name;
   }
 }
-
-export const kUtilityInitScript = new InitScript(`
-  (() => {
-    const module = {};
-    ${js.kUtilityScriptSource}
-    (module.exports.ensureUtilityScript())();
-  })();
-`, true /* internal */);
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];
