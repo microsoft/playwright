@@ -75,7 +75,7 @@ test('should display native tags and filter by them on click', async ({ runUITes
 test('should filter by status', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -187,7 +187,7 @@ test('should not hide filtered while running', async ({ runUITest, createLatch }
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   latch.open();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -198,7 +198,7 @@ test('should not hide filtered while running', async ({ runUITest, createLatch }
   latch.close();
   await page.getByText('Status:').click();
   await page.getByLabel('failed').setChecked(true);
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ↻ a.test.ts
         ↻ fails <=
@@ -215,7 +215,7 @@ test('should filter skipped', async ({ runUITest, createLatch }) => {
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
         ✅ passes

@@ -34,7 +34,7 @@ test('should show screenshots', async ({ runUITest }) => {
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
 
   await page.getByText('test 1', { exact: true }).click();

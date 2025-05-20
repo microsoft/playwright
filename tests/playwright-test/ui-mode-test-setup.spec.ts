@@ -46,7 +46,7 @@ test('should run global setup and teardown', async ({ runUITest }, testInfo) => 
       test('should work', async ({}) => {});
     `
   }, undefined, { additionalArgs: ['--output=foo'] });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
   await page.getByTitle('Toggle output').click();
@@ -84,7 +84,7 @@ test('should teardown on sigint', async ({ runUITest, nodeVersion }) => {
       test('should work', async ({}) => {});
     `
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByTitle('Toggle output').click();
   await expect(page.getByTestId('output')).toContainText('from-global-setup');
@@ -143,7 +143,7 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
         - checkbox "test"
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ setup.ts
@@ -194,7 +194,7 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
         - checkbox "test" [checked]
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ teardown.ts
@@ -240,7 +240,7 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
         - checkbox "test" [checked]
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ test.ts
@@ -334,7 +334,7 @@ for (const useWeb of [true, false]) {
           test('should work', async ({}) => {});
         `
       }, null, { useWeb });
-      await page.getByTitle('Run all').click();
+      await page.getByTitle('Run all tests').click();
       await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
       await testProcess.kill('SIGINT');
       await expect.poll(() => testProcess.outputLines()).toEqual([
@@ -367,7 +367,7 @@ test('should restart webserver on reload', async ({ runUITest }) => {
       });
     `
   }, { DEBUG: 'pw:webserver' });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
   await page.getByTitle('Toggle output').click();
@@ -380,6 +380,6 @@ test('should restart webserver on reload', async ({ runUITest }) => {
   await expect(page.getByTestId('output')).toContainText('[WebServer] listening');
   await expect(page.getByTestId('output')).not.toContainText('set reuseExistingServer:true');
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });

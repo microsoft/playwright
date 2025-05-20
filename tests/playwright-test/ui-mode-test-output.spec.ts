@@ -42,7 +42,7 @@ test('should work after theme switch', async ({ runUITest, writeFiles }) => {
     `,
   });
   await page.getByTitle('Toggle output').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('output')).toContainText(`Hello world 1`);
 
   await page.getByText('Settings', { exact: true }).click();
@@ -55,7 +55,7 @@ test('should work after theme switch', async ({ runUITest, writeFiles }) => {
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('output')).toContainText(`Hello world 2`);
 });
 
@@ -73,7 +73,7 @@ test('should print buffers', async ({ runUITest }) => {
     `,
   });
   await page.getByTitle('Toggle output').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('output')).toContainText('HELLO');
 });
 
@@ -90,7 +90,7 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await page.getByText('Console').click();
   await page.getByText('print').click();
 
@@ -140,7 +140,7 @@ test('should collapse repeated console messages for test', async ({ runUITest })
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await page.getByRole('tab', { name: 'Console' }).click();
   await page.getByText('print').click();
 
@@ -172,7 +172,7 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await page.getByText('Console').click();
   await page.getByText('print').click();
 
@@ -224,7 +224,7 @@ test('should stream console messages live', async ({ runUITest }) => {
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await page.getByText('Console').click();
   await page.getByText('print').click();
 
@@ -247,7 +247,7 @@ test('should print beforeAll console messages once', async ({ runUITest }, testI
       });
     `,
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await page.getByText('Console').click();
   await page.getByText('print').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');

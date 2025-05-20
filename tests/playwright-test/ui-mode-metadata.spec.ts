@@ -40,7 +40,7 @@ test('should render html report git info metadata', async ({ runUITest }) => {
     BUILD_URL: 'https://playwright.dev',
   });
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByTitle('Toggle output').click();
 

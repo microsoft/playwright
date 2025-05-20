@@ -32,7 +32,7 @@ test('should contain text attachment', async ({ runUITest }) => {
     `,
   });
   await page.getByText('attach test').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
 
@@ -68,7 +68,7 @@ test('should contain binary attachment', async ({ runUITest }) => {
     `,
   });
   await page.getByText('attach test').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
   const downloadPromise = page.waitForEvent('download');
@@ -88,7 +88,7 @@ test('should contain string attachment', async ({ runUITest }) => {
     `,
   });
   await page.getByText('attach test').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
   await page.getByText('attach "note"', { exact: true }).click();
@@ -115,7 +115,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
     `,
   });
   await page.getByText('attach test').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
 
@@ -161,7 +161,7 @@ test('should link from attachment step to attachments view', async ({ runUITest 
   });
 
   await page.getByText('attach test').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByRole('tab', { name: 'Attachments' }).click();
 

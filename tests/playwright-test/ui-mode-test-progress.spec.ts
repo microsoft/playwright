@@ -276,7 +276,7 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
         ◯ two
   `);
   await page.getByText('two', { exact: true }).click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(

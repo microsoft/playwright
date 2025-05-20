@@ -46,7 +46,7 @@ test('should run visible', async ({ runUITest }) => {
     ▼ ◯ a.test.ts
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -95,7 +95,7 @@ test('should show running progress', async ({ runUITest }) => {
     `,
   });
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
   await page.getByTitle('Stop').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)');
@@ -206,7 +206,7 @@ test('should run by project', async ({ runUITest }) => {
     `
   });
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -308,7 +308,7 @@ test('should run by project', async ({ runUITest }) => {
 
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
       ▼ ✅ passes
@@ -364,10 +364,10 @@ test('should stop', async ({ runUITest }) => {
     `,
   });
 
-  await expect(page.getByTitle('Run all')).toBeEnabled();
+  await expect(page.getByTitle('Run all tests')).toBeEnabled();
   await expect(page.getByTitle('Stop')).toBeDisabled();
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ↻ a.test.ts
@@ -387,7 +387,7 @@ test('should stop', async ({ runUITest }) => {
           - treeitem ${/\[icon-clock\] test 3/}
   `);
 
-  await expect(page.getByTitle('Run all')).toBeDisabled();
+  await expect(page.getByTitle('Run all tests')).toBeDisabled();
   await expect(page.getByTitle('Stop')).toBeEnabled();
 
   await page.getByTitle('Stop').click();
@@ -456,7 +456,7 @@ test('should show time', async ({ runUITest }) => {
     ▼ ◯ a.test.ts
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page, { time: true })).toBe(`
     ▼ ❌ a.test.ts
@@ -508,7 +508,7 @@ test('should show test.fail as passing', async ({ runUITest }) => {
     ▼ ◯ a.test.ts
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page, { time: true })).toBe(`
     ▼ ✅ a.test.ts
@@ -544,7 +544,7 @@ test('should ignore repeatEach', async ({ runUITest }) => {
     ▼ ◯ a.test.ts
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
@@ -580,7 +580,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
     ▼ ◯ a.test.ts
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
         ✅ should pass
@@ -595,7 +595,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
         ✅ should pass
@@ -732,7 +732,7 @@ test('should respect --tsconfig option', {
     `,
   }, undefined, { additionalArgs: ['--tsconfig=tsconfig.special.json'] });
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
@@ -761,7 +761,7 @@ test('should respect --ignore-snapshots option', {
     `,
   }, undefined, { additionalArgs: ['--ignore-snapshots'] });
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts

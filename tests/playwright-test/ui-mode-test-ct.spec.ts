@@ -49,7 +49,7 @@ test('should run component tests', async ({ runUITest }) => {
     ▼ ◯ button.test.tsx
         ◯ pass
   `);
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
         ✅ pass
@@ -62,7 +62,7 @@ test('should run component tests after editing test', async ({ runUITest, writeF
     ▼ ◯ button.test.tsx
         ◯ pass
   `);
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
         ✅ pass
@@ -83,7 +83,7 @@ test('should run component tests after editing test', async ({ runUITest, writeF
     ▼ ◯ button.test.tsx
         ◯ fail
   `);
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ button.test.tsx
         ❌ fail <=
@@ -96,7 +96,7 @@ test('should run component tests after editing component', async ({ runUITest, w
     ▼ ◯ button.test.tsx
         ◯ pass
   `);
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
         ✅ pass
@@ -107,7 +107,7 @@ test('should run component tests after editing component', async ({ runUITest, w
       export const Button = () => <button>Button2</button>;
     `
   });
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ button.test.tsx
         ❌ pass <=
@@ -120,7 +120,7 @@ test('should run component tests after editing test and component', async ({ run
     ▼ ◯ button.test.tsx
         ◯ pass
   `);
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
         ✅ pass
@@ -145,7 +145,7 @@ test('should run component tests after editing test and component', async ({ run
         ◯ pass 2
   `);
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
         ✅ pass 2
@@ -160,7 +160,7 @@ test('should watch test', async ({ runUITest, writeFiles }) => {
   `);
 
   await page.getByTitle('Watch all').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
@@ -193,7 +193,7 @@ test('should watch component', async ({ runUITest, writeFiles }) => {
   `);
 
   await page.getByTitle('Watch all').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
@@ -230,7 +230,7 @@ test('should watch component via util', async ({ runUITest, writeFiles }) => {
   `);
 
   await page.getByTitle('Watch all').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx
@@ -270,7 +270,7 @@ test('should watch component when editing util', async ({ runUITest, writeFiles 
   `);
 
   await page.getByTitle('Watch all').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ button.test.tsx

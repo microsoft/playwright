@@ -274,7 +274,7 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   `);
 
   await page.getByTitle('Watch all').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
 
@@ -314,7 +314,7 @@ test('should not watch output', async ({ runUITest }) => {
     commands.push(arg.method);
   });
 
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   expect(commands).toContain('runTests');

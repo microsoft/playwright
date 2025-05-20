@@ -146,7 +146,7 @@ test('should not loose run information after execution if test wrote into testDi
         ◯ passes
   `);
   await page.getByTitle('passes').click();
-  await page.getByTitle('Run all').click();
+  await page.getByTitle('Run all tests').click();
   await page.waitForTimeout(5_000);
   await expect(page.getByText('Did not run')).toBeHidden();
   const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
