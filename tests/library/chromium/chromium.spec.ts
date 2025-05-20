@@ -630,3 +630,18 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
     expect(req.headers['x-custom-header']).toBe('custom!');
   });
 });
+
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, channel, createUserDataDir }) => {
+  test.skip(!['chrome', 'msedge'].includes(channel), 'normal Chromium allows to open a userDataDir twice while Chrome/Edge does not');
+  const userDataDir = await createUserDataDir();
+  const options = {
+    cdpPort: 60483,
+  } as any;
+  const browser = await browserType.launchPersistentContext(userDataDir, options);
+  try {
+    const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
+    expect(error.message).toContain('Unable to determine wsEndpoint.')
+  } finally {
+    await browser.close();
+  }
+});
