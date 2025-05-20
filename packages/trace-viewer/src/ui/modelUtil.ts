@@ -226,6 +226,8 @@ function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId
   }
 }
 
+let lastTmpStepId = 0;
+
 function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionTraceEventInContext[] {
   const map = new Map<string, ActionTraceEventInContext>();
 
@@ -239,18 +241,10 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
     }).flat();
   }
 
-  // Library actions are replaced with corresponding test runner steps. Matching with
-  // the test runner steps enables us to find parent steps.
-  // - In the newer versions the actions are matched by explicit step id stored in the
-  //   library context actions.
-  // - In the older versions the step id is not stored and the match is perfomed based on
-  //   action name and wallTime.
-  const matchByStepId = libraryContexts.some(c => c.actions.some(a => !!a.stepId));
-
   for (const context of libraryContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.stepId! : `${action.title}@${(action as any).wallTime}`;
-      map.set(key, { ...action, context });
+      // Never merge stepless events.
+      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action, context });
     }
   }
 
@@ -258,15 +252,14 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
   // Step aka test runner contexts have startTime/endTime as client-side times.
   // Adjust startTime/endTime on the library contexts to align them with the test
   // runner steps.
-  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map, matchByStepId);
+  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map);
   if (delta)
     adjustMonotonicTime(libraryContexts, delta);
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.callId : `${action.title}@${(action as any).wallTime}`;
-      const existing = map.get(key);
+      const existing = action.stepId && map.get(action.stepId);
       if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
         if (action.error)
@@ -285,7 +278,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
       }
       if (action.parentId)
         action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
-      map.set(key, { ...action, context });
+      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action, context });
     }
   }
   return [...map.values()];
@@ -316,7 +309,7 @@ function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: numbe
   }
 }
 
-function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>, matchByStepId: boolean) {
+function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
   // We cannot rely on wall time or monotonic time to be the in sync
   // between library and test runner contexts. So we find first action
   // that is present in both runner and library contexts and use it
@@ -326,8 +319,7 @@ function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEn
     for (const action of context.actions) {
       if (!action.startTime)
         continue;
-      const key = matchByStepId ? action.callId! : `${action.title}@${(action as any).wallTime}`;
-      const libraryAction = libraryActions.get(key);
+      const libraryAction = action.stepId ? libraryActions.get(action.stepId) : undefined;
       if (libraryAction)
         return action.startTime - libraryAction.startTime;
     }
