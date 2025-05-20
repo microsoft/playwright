@@ -41,12 +41,22 @@ function debug(s: string, ...args: any[]) {
 }
 
 const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
+  // Store these for use in both setup and begin
+  let storedConfigDir: string;
+  let storedCi: CIInfo | undefined;
+  let storedMetadata: MetadataWithCommitInfo;
+
   return {
     name: 'playwright:git-commit-info',
 
     setup: async (config: FullConfig, configDir: string) => {
       const metadata = config.metadata as MetadataWithCommitInfo;
+      storedMetadata = metadata;
+      storedConfigDir = configDir;
+      
       const ci = await ciInfo();
+      storedCi = ci;
+      
       if (!metadata.ci && ci) {
         debug('ci info', ci);
         metadata.ci = ci;
@@ -60,16 +70,29 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
         }
       }
 
-      if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
-        const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
-        if (diffResult) {
-          debug(`diff length ${diffResult.length}`);
-          metadata.gitDiff = diffResult;
-        }
-      }
+      // Still perform initial git diff collection during setup
+      await updateGitDiff(fullConfig, metadata, configDir, ci);
     },
+
+    begin: async () => {
+      // Update git diff information before running tests
+      if (storedConfigDir) {
+        await updateGitDiff(fullConfig, storedMetadata, storedConfigDir, storedCi);
+      }
+    }
   };
 };
+
+// Helper function to update git diff that can be called from both setup and begin
+async function updateGitDiff(fullConfig: FullConfigInternal, metadata: MetadataWithCommitInfo, configDir: string, ci?: CIInfo) {
+  if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
+    const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
+    if (diffResult) {
+      debug(`diff length ${diffResult.length}`);
+      metadata.gitDiff = diffResult;
+    }
+  }
+}
 
 async function ciInfo(): Promise<CIInfo | undefined> {
   if (process.env.GITHUB_ACTIONS) {
