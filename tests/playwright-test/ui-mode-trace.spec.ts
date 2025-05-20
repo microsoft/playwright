@@ -583,6 +583,7 @@ test('fails', async ({ page }) => {
     `.trim());
 });
 
+// https://github.com/microsoft/playwright/issues/35999
 test('should update git diff between test runs', async ({ runUITest, writeFiles, initGitRepo }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `

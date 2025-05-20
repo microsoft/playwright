@@ -41,16 +41,21 @@ function debug(s: string, ...args: any[]) {
 }
 
 const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
-  let storedConfig: FullConfig;
-  let storedConfigDir: string;
+  let config: FullConfig;
+  const configDir = fullConfig.configDir;
 
   return {
     name: 'playwright:git-commit-info',
 
-    setup: async (config: FullConfig, configDir: string) => {
+    setup: async (cfg: FullConfig) => {
+      config = cfg;
+    },
+
+    begin: async () => {
+      if (!config)
+        return;
+
       const metadata = config.metadata as MetadataWithCommitInfo;
-      storedConfig = config;
-      storedConfigDir = configDir;
 
       const ci = await ciInfo();
 
@@ -66,17 +71,9 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
           metadata.gitCommit = git;
         }
       }
-    },
-
-    begin: async () => {
-      if (!storedConfigDir)
-        return;
-
-      const metadata = storedConfig.metadata as MetadataWithCommitInfo;
-      const ci = metadata.ci;
 
       if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
-        const diffResult = await gitDiff(storedConfigDir, ci).catch(e => print('failed to get git diff', e));
+        const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
         if (diffResult) {
           debug(`diff length ${diffResult.length}`);
           metadata.gitDiff = diffResult;
