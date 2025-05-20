@@ -51,9 +51,9 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
       const metadata = config.metadata as MetadataWithCommitInfo;
       storedConfig = config;
       storedConfigDir = configDir;
-      
+
       const ci = await ciInfo();
-      
+
       if (!metadata.ci && ci) {
         debug('ci info', ci);
         metadata.ci = ci;
@@ -71,10 +71,10 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
     begin: async () => {
       if (!storedConfigDir)
         return;
-        
+
       const metadata = storedConfig.metadata as MetadataWithCommitInfo;
       const ci = metadata.ci;
-      
+
       if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
         const diffResult = await gitDiff(storedConfigDir, ci).catch(e => print('failed to get git diff', e));
         if (diffResult) {
