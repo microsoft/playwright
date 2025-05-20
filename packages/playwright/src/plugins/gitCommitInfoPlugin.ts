@@ -53,7 +53,7 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
 
     begin: async () => {
       if (!config)
-        return;
+        throw new Error('Configuration is missing');
 
       const metadata = config.metadata as MetadataWithCommitInfo;
 

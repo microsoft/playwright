@@ -583,8 +583,9 @@ test('fails', async ({ page }) => {
     `.trim());
 });
 
-// https://github.com/microsoft/playwright/issues/35999
-test('should update git diff between test runs', async ({ runUITest, writeFiles, initGitRepo }) => {
+test('should update git diff between test runs', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35999' }
+}, async ({ runUITest, writeFiles, initGitRepo }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `
       export default {
