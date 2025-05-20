@@ -17,6 +17,19 @@
 import { test, expect } from './ui-mode-fixtures';
 import fs from 'fs';
 
+/**
+ * This test verifies that UI Mode updates git diff between test runs,
+ * rather than only calculating it once at launch time.
+ * 
+ * Steps:
+ * 1. Start UI Mode
+ * 2. Run a failing test
+ * 3. Copy the Prompt with git diff
+ * 4. Make local file changes to create a new git diff
+ * 5. Run the test again
+ * 6. Copy the Prompt again
+ * 7. Verify the second prompt includes the new file changes
+ */
 test('should update git diff between test runs', async ({ runUITest }) => {
   const { page, testProcess } = await runUITest({
     'a.spec.ts': `

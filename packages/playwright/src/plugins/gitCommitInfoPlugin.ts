@@ -41,7 +41,8 @@ function debug(s: string, ...args: any[]) {
 }
 
 const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
-  // Store these for use in both setup and begin
+  // Store these for use in both setup and begin methods
+  // This allows the begin method to access the necessary context
   let storedConfigDir: string;
   let storedCi: CIInfo | undefined;
   let storedMetadata: MetadataWithCommitInfo;
@@ -51,6 +52,7 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
 
     setup: async (config: FullConfig, configDir: string) => {
       const metadata = config.metadata as MetadataWithCommitInfo;
+      // Store references for use in the begin method
       storedMetadata = metadata;
       storedConfigDir = configDir;
       
@@ -76,6 +78,7 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
 
     begin: async () => {
       // Update git diff information before running tests
+      // This ensures that any changes made after UI Mode was started are included
       if (storedConfigDir) {
         await updateGitDiff(fullConfig, storedMetadata, storedConfigDir, storedCi);
       }
@@ -83,7 +86,8 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
   };
 };
 
-// Helper function to update git diff that can be called from both setup and begin
+// Helper function to update git diff that can be called from both setup and begin methods
+// This avoids code duplication and ensures consistent behavior in both places
 async function updateGitDiff(fullConfig: FullConfigInternal, metadata: MetadataWithCommitInfo, configDir: string, ci?: CIInfo) {
   if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
     const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
