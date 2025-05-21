@@ -16,11 +16,6 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-// --- This section should match javascript.ts and generated_injected_builtins.js ---
-
-// This flag is replaced by true/false at runtime in all generated sources.
-const kUtilityScriptIsUnderTest = false;
-
 // Keep in sync with eslint.config.mjs
 export type Builtins = {
   setTimeout: Window['setTimeout'],
@@ -38,8 +33,6 @@ export type Builtins = {
   Date: typeof window['Date'],
 };
 
-// --- End of the matching section ---
-
 export class UtilityScript {
   // eslint-disable-next-line no-restricted-globals
   readonly global: typeof globalThis;
@@ -48,9 +41,9 @@ export class UtilityScript {
   readonly isUnderTest: boolean;
 
   // eslint-disable-next-line no-restricted-globals
-  constructor(global: typeof globalThis) {
+  constructor(global: typeof globalThis, isUnderTest: boolean) {
     this.global = global;
-    this.isUnderTest = kUtilityScriptIsUnderTest;
+    this.isUnderTest = isUnderTest;
     if ((global as any).__pwClock) {
       this.builtins = (global as any).__pwClock.builtins;
     } else {

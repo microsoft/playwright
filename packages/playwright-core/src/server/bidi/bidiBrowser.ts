@@ -21,7 +21,7 @@ import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 import { BidiPage, kPlaywrightBindingChannel } from './bidiPage';
-import { kPlaywrightBinding } from '../javascript';
+import { PageBinding } from '../page';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -391,7 +391,7 @@ export class BidiBrowserContext extends BrowserContext {
         ownership: bidi.Script.ResultOwnership.Root,
       }
     }];
-    const functionDeclaration = `function addMainBinding(callback) { globalThis['${kPlaywrightBinding}'] = callback; }`;
+    const functionDeclaration = `function addMainBinding(callback) { globalThis['${PageBinding.kBindingName}'] = callback; }`;
     const promises = [];
     promises.push(this._browser._browserSession.send('script.addPreloadScript', {
       functionDeclaration,

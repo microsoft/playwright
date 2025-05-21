@@ -34,9 +34,7 @@ import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
-import * as js from './javascript';
 import * as rawStorageSource from '../generated/storageScriptSource';
-import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
@@ -327,13 +325,7 @@ export abstract class BrowserContext extends SdkObject {
     this._playwrightBindingExposed = true;
     await this.doExposePlaywrightBinding();
 
-    this.bindingsInitScript = new InitScript(`
-      (() => {
-        const module = {};
-        ${js.prepareGeneratedScript(rawBindingsControllerSource.source)}
-        (module.exports.ensureBindingsController())();
-      })();
-    `, true /* internal */);
+    this.bindingsInitScript = PageBinding.createInitScript();
     this.initScripts.push(this.bindingsInitScript);
     await this.doAddInitScript(this.bindingsInitScript);
     await this.safeNonStallingEvaluateInAllFrames(this.bindingsInitScript.source, 'main');
@@ -530,7 +522,7 @@ export abstract class BrowserContext extends SdkObject {
 
     const collectScript = `(() => {
       const module = {};
-      ${js.prepareGeneratedScript(rawStorageSource.source)}
+      ${rawStorageSource.source}
       const script = new (module.exports.StorageScript())(${this._browser.options.name === 'firefox'});
       return script.collect(${indexedDB});
     })()`;
@@ -628,7 +620,7 @@ export abstract class BrowserContext extends SdkObject {
           await frame.goto(metadata, originState.origin, { timeout: 0 });
           const restoreScript = `(() => {
             const module = {};
-            ${js.prepareGeneratedScript(rawStorageSource.source)}
+            ${rawStorageSource.source}
             const script = new (module.exports.StorageScript())(${this._browser.options.name === 'firefox'});
             return script.restore(${JSON.stringify(originState)});
           })()`;

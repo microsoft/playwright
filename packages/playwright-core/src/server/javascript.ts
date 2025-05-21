@@ -16,39 +16,12 @@
 
 import { SdkObject } from './instrumentation';
 import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
-import { createGuid, isUnderTest } from '../utils';
+import { isUnderTest } from '../utils';
 import { serializeAsCallArgument } from '../utils/isomorphic/utilityScriptSerializers';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type * as dom from './dom';
 import type { UtilityScript } from '@injected/utilityScript';
-
-// --- This section should match utilityScript.ts and generated_injected_builtins.js ---
-
-// Use in the web-facing names to avoid leaking Playwright to the pages.
-export const runtimeGuid = createGuid();
-
-// Preprocesses any generated script to include the runtime guid.
-export function prepareGeneratedScript(source: string) {
-  return source.replaceAll('$runtime_guid$', runtimeGuid).replace('kUtilityScriptIsUnderTest = false', `kUtilityScriptIsUnderTest = ${isUnderTest()}`);
-}
-
-export const kUtilityScriptSource = prepareGeneratedScript(rawUtilityScriptSource.source);
-
-// Include this code in any evaluated source to get access to the UtilityScript instance.
-export function accessUtilityScript() {
-  return `globalThis['__playwright_utility_script__${runtimeGuid}']`;
-}
-
-// The name of the global playwright binding, accessed by UtilityScript.
-export const kPlaywrightBinding = '__playwright__binding__' + runtimeGuid;
-
-// Include this code in any evaluated source to get access to the BindingsController instance.
-export function accessBindingsController() {
-  return `globalThis['__playwright__binding__controller__${runtimeGuid}']`;
-}
-
-// --- End of the matching section ---
 
 interface TaggedAsJSHandle<T> {
   __jshandle: T;
@@ -130,8 +103,8 @@ export class ExecutionContext extends SdkObject {
       const source = `
       (() => {
         const module = {};
-        ${kUtilityScriptSource}
-        return new (module.exports.UtilityScript())(globalThis);
+        ${rawUtilityScriptSource.source}
+        return new (module.exports.UtilityScript())(globalThis, ${isUnderTest()});
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))
           .then(handle => {
