@@ -133,10 +133,11 @@ program
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--dry-run', 'do not execute installation, only print information')
+    .option('--list', 'prints list of browsers from all playwright installations')
     .option('--force', 'force reinstall of stable browser channels')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
       if (options.shell === false)
         options.noShell = true;
@@ -175,6 +176,20 @@ program
               console.log(`  Download url:        ${url}`);
               for (let i = 0; i < fallbacks.length; ++i)
                 console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
+            }
+            console.log(``);
+          }
+        } else if (options.list) {
+          // --dry-run option takes precedence over --list
+          const browsersMap = await registry.list();
+          for (const browserName in browsersMap) {
+            console.log(`Browser: ${browserName}`);
+            const browsers = browsersMap[browserName];
+            for (const browser of browsers) {
+              console.log(` Version: ${browser.browserVersion}`);
+              console.log(` Directory: ${browser.hostDir}`);
+              console.log(` Location: ${browser.browserPath}`);
+              console.log(``);
             }
             console.log(``);
           }

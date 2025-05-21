@@ -1251,6 +1251,27 @@ export class Registry {
     }
   }
 
+  async list() {
+    const linksDir = path.join(registryDirectory, '.links');
+    const browsers: Array<{ browserName: string, browserVersion: number, hostDir: string, browserPath: string }> = await this._traverseBrowserInstallations(linksDir);
+
+    // Group browsers by browserName
+    const groupedBrowsers: Record<string, Array<{ browserVersion: number, hostDir: string, browserPath: string }>> = {};
+
+    browsers.forEach(browser => {
+      if (!groupedBrowsers[browser.browserName])
+        groupedBrowsers[browser.browserName] = [];
+
+      groupedBrowsers[browser.browserName].push({
+        browserVersion: browser.browserVersion,
+        hostDir: browser.hostDir,
+        browserPath: browser.browserPath
+      });
+    });
+
+    return groupedBrowsers;
+  }
+
   private async _traverseBrowserInstallations(linksDir: string) {
     const browserList: Array<{ browserName: string, browserVersion: number, hostDir: string, browserPath: string }> = [];
     for (const fileName of await fs.promises.readdir(linksDir)) {

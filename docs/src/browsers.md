@@ -78,6 +78,26 @@ if (exitCode != 0)
 }
 ```
 
+### List all installed browsers:
+
+Prints list of browsers from all playwright installations on the machine.
+
+```bash js
+npx playwright install --list
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --list"
+```
+
+```bash python
+playwright install --list
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install --list
+```
+
 ## Install system dependencies
 
 System dependencies can get installed automatically. This is useful for CI environments.
