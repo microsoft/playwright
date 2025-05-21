@@ -10,26 +10,14 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-export type ClockMethods = {
-  Date: DateConstructor;
-  setTimeout: Window['setTimeout'];
-  clearTimeout: Window['clearTimeout'];
-  setInterval: Window['setInterval'];
-  clearInterval: Window['clearInterval'];
-  requestAnimationFrame?: Window['requestAnimationFrame'];
-  cancelAnimationFrame?: (id: number) => void;
-  requestIdleCallback?: Window['requestIdleCallback'];
-  cancelIdleCallback?: (id: number) => void;
-  Intl?: typeof Intl;
-  performance?: Window['performance'];
-};
+import type { Builtins } from './utilityScript';
 
 export type ClockConfig = {
-  now?: number | Date;
+  now?: number;
 };
 
 export type InstallConfig = ClockConfig & {
-  toFake?: (keyof ClockMethods)[];
+  toFake?: (keyof Builtins)[];
 };
 
 enum TimerType {
@@ -427,7 +415,7 @@ export class ClockController {
   }
 }
 
-function mirrorDateProperties(target: any, source: DateConstructor): DateConstructor & Date {
+function mirrorDateProperties(target: any, source: Builtins['Date']): Builtins['Date'] {
   for (const prop in source) {
     if (source.hasOwnProperty(prop))
       target[prop] = (source as any)[prop];
@@ -441,7 +429,8 @@ function mirrorDateProperties(target: any, source: DateConstructor): DateConstru
   return target;
 }
 
-function createDate(clock: ClockController, NativeDate: DateConstructor): DateConstructor & Date {
+function createDate(clock: ClockController, NativeDate: Builtins['Date']): Builtins['Date'] {
+  // eslint-disable-next-line no-restricted-globals
   function ClockDate(this: typeof ClockDate, year: number, month: number, date: number, hour: number, minute: number, second: number, ms: number): Date | string {
     // the Date constructor called as a function, ref Ecma-262 Edition 5.1, section 15.9.2.
     // This remains so in the 10th edition of 2019 as well.
@@ -497,17 +486,18 @@ function createDate(clock: ClockController, NativeDate: DateConstructor): DateCo
  * but we need to take control of those that have a
  * dependency on the current clock.
  */
-function createIntl(clock: ClockController, NativeIntl: typeof Intl): typeof Intl {
+function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Builtins['Intl'] {
   const ClockIntl: any = {};
   /*
     * All properties of Intl are non-enumerable, so we need
     * to do a bit of work to get them out.
     */
-  for (const key of Object.getOwnPropertyNames(NativeIntl) as (keyof typeof Intl)[])
+  for (const key of Object.getOwnPropertyNames(NativeIntl) as (keyof Builtins['Intl'])[])
     ClockIntl[key] = NativeIntl[key];
 
   ClockIntl.DateTimeFormat = function(...args: any[]) {
     const realFormatter = new NativeIntl.DateTimeFormat(...args);
+    // eslint-disable-next-line no-restricted-globals
     const formatter: Intl.DateTimeFormat = {
       formatRange: realFormatter.formatRange.bind(realFormatter),
       formatRangeToParts: realFormatter.formatRangeToParts.bind(realFormatter),
@@ -560,8 +550,8 @@ function compareTimers(a: Timer, b: Timer) {
 const maxTimeout = Math.pow(2, 31) - 1;  // see https://heycam.github.io/webidl/#abstract-opdef-converttoint
 const idCounterStart = 1e12; // arbitrarily large number to avoid collisions with native timer IDs
 
-function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: ClockMethods, bound: ClockMethods } {
-  const raw: ClockMethods = {
+function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Builtins, bound: Builtins } {
+  const raw: Builtins = {
     setTimeout: globalObject.setTimeout,
     clearTimeout: globalObject.clearTimeout,
     setInterval: globalObject.setInterval,
@@ -575,7 +565,7 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Cloc
     Intl: (globalObject as any).Intl,
   };
   const bound = { ...raw };
-  for (const key of Object.keys(bound) as (keyof ClockMethods)[]) {
+  for (const key of Object.keys(bound) as (keyof Builtins)[]) {
     if (key !== 'Date' && typeof bound[key] === 'function')
       bound[key] = (bound[key] as any).bind(globalObject);
   }
@@ -592,7 +582,7 @@ function getScheduleHandler(type: TimerType) {
   return `set${type}`;
 }
 
-function createApi(clock: ClockController, originals: ClockMethods): ClockMethods {
+function createApi(clock: ClockController, originals: Builtins): Builtins {
   return {
     setTimeout: (func: TimerHandler, timeout?: number | undefined, ...args: any[]) => {
       const delay = timeout ? +timeout : timeout;
@@ -646,9 +636,9 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       if (timerId)
         return clock.clearTimer(timerId, TimerType.IdleCallback);
     },
-    Intl: originals.Intl ? createIntl(clock, originals.Intl) : undefined,
+    Intl: originals.Intl ? createIntl(clock, originals.Intl) : (undefined as unknown as Builtins['Intl']),
     Date: createDate(clock, originals.Date),
-    performance: originals.performance ? fakePerformance(clock, originals.performance) : undefined,
+    performance: originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']),
   };
 }
 
@@ -659,7 +649,7 @@ function getClearHandler(type: TimerType) {
   return `clear${type}`;
 }
 
-function fakePerformance(clock: ClockController, performance: Performance): Performance {
+function fakePerformance(clock: ClockController, performance: Builtins['performance']): Builtins['performance'] {
   const result: any = {
     now: () => clock.performanceNow(),
   };
@@ -676,7 +666,7 @@ function fakePerformance(clock: ClockController, performance: Performance): Perf
   return result;
 }
 
-export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: ClockController, api: ClockMethods, originals: ClockMethods } {
+export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: ClockController, api: Builtins, originals: Builtins } {
   const originals = platformOriginals(globalObject);
   const embedder: Embedder = {
     dateNow: () => originals.raw.Date.now(),
@@ -696,7 +686,7 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: C
   return { clock, api, originals: originals.raw };
 }
 
-export function install(globalObject: WindowOrWorkerGlobalScope, config: InstallConfig = {}): { clock: ClockController, api: ClockMethods, originals: ClockMethods } {
+export function install(globalObject: WindowOrWorkerGlobalScope, config: InstallConfig = {}): { clock: ClockController, api: Builtins, originals: Builtins } {
   if ((globalObject as any).Date?.isFake) {
     // Timers are already faked; this is a problem.
     // Make the user reset timers before continuing.
@@ -704,7 +694,7 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
   }
 
   const { clock, api, originals } = createClock(globalObject);
-  const toFake = config.toFake?.length ? config.toFake : Object.keys(originals) as (keyof ClockMethods)[];
+  const toFake = config.toFake?.length ? config.toFake : Object.keys(originals) as (keyof Builtins)[];
 
   for (const method of toFake) {
     if (method === 'Date') {
@@ -735,12 +725,12 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
 }
 
 export function inject(globalObject: WindowOrWorkerGlobalScope) {
-  const builtin = platformOriginals(globalObject).bound;
+  const builtins = platformOriginals(globalObject).bound;
   const { clock: controller } = install(globalObject);
   controller.resume();
   return {
     controller,
-    builtin,
+    builtins,
   };
 }
 

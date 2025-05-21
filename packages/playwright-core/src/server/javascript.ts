@@ -131,7 +131,7 @@ export class ExecutionContext extends SdkObject {
       (() => {
         const module = {};
         ${kUtilityScriptSource}
-        return (module.exports.ensureUtilityScript())();
+        return new (module.exports.UtilityScript())(globalThis);
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))
           .then(handle => {

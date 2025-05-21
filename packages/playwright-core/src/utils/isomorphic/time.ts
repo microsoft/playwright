@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+// Hopefully, this file is never used in injected sources,
+// because it does not use `builtins.performance`,
+// and can break when clock emulation is engaged.
+
+/* eslint-disable no-restricted-globals */
+
 let _timeOrigin = performance.timeOrigin;
 let _timeShift = 0;
 

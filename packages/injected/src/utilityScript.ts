@@ -18,15 +18,10 @@ import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic
 
 // --- This section should match javascript.ts and generated_injected_builtins.js ---
 
-// This runtime guid is replaced by the actual guid at runtime in all generated sources.
-const kRuntimeGuid = '$runtime_guid$';
 // This flag is replaced by true/false at runtime in all generated sources.
 const kUtilityScriptIsUnderTest = false;
 
-// The name of the global property that stores the UtilityScript instance,
-// referenced by generated_injected_builtins.js.
-const kUtilityScriptGlobalProperty = `__playwright_utility_script__${kRuntimeGuid}`;
-
+// Keep in sync with eslint.config.mjs
 export type Builtins = {
   setTimeout: Window['setTimeout'],
   clearTimeout: Window['clearTimeout'],
@@ -35,18 +30,12 @@ export type Builtins = {
   requestAnimationFrame: Window['requestAnimationFrame'],
   cancelAnimationFrame: Window['cancelAnimationFrame'],
   requestIdleCallback: Window['requestIdleCallback'],
-  cancelIdleCallback: (id: number) => void,
+  cancelIdleCallback: Window['cancelIdleCallback'],
   performance: Window['performance'],
-  // eslint-disable-next-line no-restricted-globals
-  eval: typeof window['eval'],
   // eslint-disable-next-line no-restricted-globals
   Intl: typeof window['Intl'],
   // eslint-disable-next-line no-restricted-globals
   Date: typeof window['Date'],
-  // eslint-disable-next-line no-restricted-globals
-  Map: typeof window['Map'],
-  // eslint-disable-next-line no-restricted-globals
-  Set: typeof window['Set'],
 };
 
 // --- End of the matching section ---
@@ -54,6 +43,7 @@ export type Builtins = {
 export class UtilityScript {
   // eslint-disable-next-line no-restricted-globals
   readonly global: typeof globalThis;
+  // Builtins protect injected code from clock emulation.
   readonly builtins: Builtins;
   readonly isUnderTest: boolean;
 
@@ -61,29 +51,23 @@ export class UtilityScript {
   constructor(global: typeof globalThis) {
     this.global = global;
     this.isUnderTest = kUtilityScriptIsUnderTest;
-    // UtilityScript is evaluated in every page as an InitScript, and saves builtins
-    // from the global object, before the page has a chance to temper with them.
-    //
-    // Later on, any compiled script replaces global invocations of builtins, e.g. setTimeout,
-    // with a version exported by generate_injected_builtins.js. That file tries to
-    // get original builtins saved on the instance of UtilityScript, and falls back
-    // to the global object just in case something goes wrong with InitScript that creates UtilityScript.
-    this.builtins = {
-      setTimeout: global.setTimeout?.bind(global),
-      clearTimeout: global.clearTimeout?.bind(global),
-      setInterval: global.setInterval?.bind(global),
-      clearInterval: global.clearInterval?.bind(global),
-      requestAnimationFrame: global.requestAnimationFrame?.bind(global),
-      cancelAnimationFrame: global.cancelAnimationFrame?.bind(global),
-      requestIdleCallback: global.requestIdleCallback?.bind(global),
-      cancelIdleCallback: global.cancelIdleCallback?.bind(global),
-      performance: global.performance,
-      eval: global.eval?.bind(global),
-      Intl: global.Intl,
-      Date: global.Date,
-      Map: global.Map,
-      Set: global.Set,
-    };
+    if ((global as any).__pwClock) {
+      this.builtins = (global as any).__pwClock.builtins;
+    } else {
+      this.builtins = {
+        setTimeout: global.setTimeout?.bind(global),
+        clearTimeout: global.clearTimeout?.bind(global),
+        setInterval: global.setInterval?.bind(global),
+        clearInterval: global.clearInterval?.bind(global),
+        requestAnimationFrame: global.requestAnimationFrame?.bind(global),
+        cancelAnimationFrame: global.cancelAnimationFrame?.bind(global),
+        requestIdleCallback: global.requestIdleCallback?.bind(global),
+        cancelIdleCallback: global.cancelIdleCallback?.bind(global),
+        performance: global.performance,
+        Intl: global.Intl,
+        Date: global.Date,
+      } satisfies Builtins;
+    }
     if (this.isUnderTest)
       (global as any).builtins = this.builtins;
   }
@@ -95,7 +79,7 @@ export class UtilityScript {
     for (let i = 0; i < args.length; i++)
       parameters[i] = parseEvaluationResultValue(args[i], handles);
 
-    let result = eval(expression);
+    let result = this.global.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);
     } else if (isFunction === false) {
@@ -136,17 +120,4 @@ export class UtilityScript {
     }
     return safeJson(value);
   }
-}
-
-// eslint-disable-next-line no-restricted-globals
-export function ensureUtilityScript(global?: typeof globalThis): UtilityScript {
-  // eslint-disable-next-line no-restricted-globals
-  global = global ?? globalThis;
-  let utilityScript: UtilityScript = (global as any)[kUtilityScriptGlobalProperty];
-  if (utilityScript)
-    return utilityScript;
-
-  utilityScript = new UtilityScript(global);
-  Object.defineProperty(global, kUtilityScriptGlobalProperty, { value: utilityScript, configurable: false, enumerable: false, writable: false });
-  return utilityScript;
 }

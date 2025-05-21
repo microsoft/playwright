@@ -850,38 +850,6 @@ it('should work with Array.from/map', async ({ page }) => {
   })).toBe('([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})');
 });
 
-it('should work with overridden eval', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34628' },
-}, async ({ page, server }) => {
-  server.setRoute('/page', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.end(`
-      <script>
-        window.eval = () => 42;
-      </script>
-    `);
-  });
-  await page.goto(server.PREFIX + '/page');
-  expect(await page.evaluate(x => ({ value: 2 * x }), 17)).toEqual({ value: 34 });
-});
-
-it('should work with deleted Map', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34443' },
-}, async ({ page, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34443' });
-
-  server.setRoute('/page', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.end(`
-      <script>
-        delete window.Map;
-      </script>
-    `);
-  });
-  await page.goto(server.PREFIX + '/page');
-  expect(await page.evaluate(x => ({ value: 2 * x }), 17)).toEqual({ value: 34 });
-});
-
 it('should ignore dangerous object keys', async ({ page }) => {
   const input = {
     __proto__: { polluted: true },

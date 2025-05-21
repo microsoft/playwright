@@ -83,15 +83,3 @@ it('should work with bogus Array.from', async ({ page, server }) => {
   const divsCount = await page.$$eval('css=div', divs => divs.length);
   expect(divsCount).toBe(3);
 });
-
-it('should work with broken Map', async ({ page, server }) => {
-  await page.setContent(`
-    <script>
-      window.Map = () => {};
-    </script>
-    <button>Click me</button>
-    <button>And me</button>
-  `);
-  const count = await page.$$eval('role=button', els => els.length);
-  expect(count).toBe(2);
-});

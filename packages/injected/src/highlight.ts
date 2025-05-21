@@ -100,7 +100,7 @@ export class Highlight {
 
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
-      cancelAnimationFrame(this._rafRequest);
+      this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
     const elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
     const locator = asLocator(this._language, stringifySelector(selector));
     const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
@@ -108,12 +108,12 @@ export class Highlight {
       const suffix = elements.length > 1 ? ` [${index + 1} of ${elements.length}]` : '';
       return { element, color, tooltipText: locator + suffix };
     }));
-    this._rafRequest = requestAnimationFrame(() => this.runHighlightOnRaf(selector));
+    this._rafRequest = this._injectedScript.utils.builtins.requestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
   uninstall() {
     if (this._rafRequest)
-      cancelAnimationFrame(this._rafRequest);
+      this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
     this._glassPaneElement.remove();
   }
 
