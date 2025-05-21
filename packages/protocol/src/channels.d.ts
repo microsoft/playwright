@@ -324,7 +324,7 @@ export type SerializedError = {
 };
 
 export type RecordHarOptions = {
-  path: string,
+  zip?: boolean,
   content?: 'embed' | 'attach' | 'omit',
   mode?: 'full' | 'minimal',
   urlGlob?: string,
@@ -1045,7 +1045,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -1129,7 +1128,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -1246,7 +1244,6 @@ export type BrowserNewContextParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -1315,7 +1312,6 @@ export type BrowserNewContextOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -1387,7 +1383,6 @@ export type BrowserNewContextForReuseParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -1456,7 +1451,6 @@ export type BrowserNewContextForReuseOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -4329,7 +4323,6 @@ export type ElectronLaunchParams = {
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
-  recordHar?: RecordHarOptions,
   recordVideo?: {
     dir: string,
     size?: {
@@ -4363,7 +4356,6 @@ export type ElectronLaunchOptions = {
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
-  recordHar?: RecordHarOptions,
   recordVideo?: {
     dir: string,
     size?: {
@@ -4755,7 +4747,6 @@ export type AndroidDeviceLaunchBrowserParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
@@ -4822,7 +4813,6 @@ export type AndroidDeviceLaunchBrowserOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],

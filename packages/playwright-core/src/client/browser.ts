@@ -84,6 +84,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = BrowserContext.from(response.context);
+    await context._initializeHarFromOptions(options.recordHar);
     await this._browserType._didCreateContext(context, contextOptions, this._options, options.logger || this._logger);
     return context;
   }

@@ -193,7 +193,7 @@ scheme.SerializedError = tObject({
   value: tOptional(tType('SerializedValue')),
 });
 scheme.RecordHarOptions = tObject({
-  path: tString,
+  zip: tOptional(tBoolean),
   content: tOptional(tEnum(['embed', 'attach', 'omit'])),
   mode: tOptional(tEnum(['full', 'minimal'])),
   urlGlob: tOptional(tString),
@@ -632,7 +632,6 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       height: tNumber,
     })),
   })),
-  recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
@@ -721,7 +720,6 @@ scheme.BrowserNewContextParams = tObject({
       height: tNumber,
     })),
   })),
-  recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
@@ -793,7 +791,6 @@ scheme.BrowserNewContextForReuseParams = tObject({
       height: tNumber,
     })),
   })),
-  recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
@@ -2459,7 +2456,6 @@ scheme.ElectronLaunchParams = tObject({
   ignoreHTTPSErrors: tOptional(tBoolean),
   locale: tOptional(tString),
   offline: tOptional(tBoolean),
-  recordHar: tOptional(tType('RecordHarOptions')),
   recordVideo: tOptional(tObject({
     dir: tString,
     size: tOptional(tObject({
@@ -2699,7 +2695,6 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       height: tNumber,
     })),
   })),
-  recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
