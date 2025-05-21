@@ -113,6 +113,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
       const context = BrowserContext.from(result.context);
+      await context._initializeHarFromOptions(options.recordHar);
       await this._didCreateContext(context, contextParams, options, logger);
       return context;
     });

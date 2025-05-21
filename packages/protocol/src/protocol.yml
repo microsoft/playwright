@@ -324,7 +324,7 @@ SerializedError:
 RecordHarOptions:
   type: object
   properties:
-    path: string
+    zip: boolean?
     content:
       type: enum?
       literals:
@@ -611,7 +611,6 @@ ContextOptions:
           properties:
             width: number
             height: number
-    recordHar: RecordHarOptions?
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -3724,7 +3723,6 @@ Electron:
         ignoreHTTPSErrors: boolean?
         locale: string?
         offline: boolean?
-        recordHar: RecordHarOptions?
         recordVideo:
           type: object?
           properties:

@@ -156,10 +156,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     ]));
   }
 
+  async _initializeHarFromOptions(recordHar: BrowserContextOptions['recordHar']) {
+    if (!recordHar)
+      return;
+    const defaultContent = recordHar.path.endsWith('.zip') ? 'attach' : 'embed';
+    await this._recordIntoHAR(recordHar.path, null, {
+      url: recordHar.urlFilter,
+      updateContent: recordHar.content ?? (recordHar.omitContent ? 'omit' : defaultContent),
+      updateMode: recordHar.mode ?? 'full',
+    });
+  }
+
   _setOptions(contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions) {
     this._options = contextOptions;
-    if (this._options.recordHar)
-      this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
@@ -343,15 +352,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateWebSocketInterceptionPatterns();
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
     const { harId } = await this._channel.harStart({
       page: page?._channel,
-      options: prepareRecordHarOptions({
-        path: har,
+      options: {
+        zip: har.endsWith('.zip'),
         content: options.updateContent ?? 'attach',
+        urlGlob: isString(options.url) ? options.url : undefined,
+        urlRegexSource: isRegExp(options.url) ? options.url.source : undefined,
+        urlRegexFlags: isRegExp(options.url) ? options.url.flags : undefined,
         mode: options.updateMode ?? 'minimal',
-        urlFilter: options.url
-      })!
+      },
     });
     this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach' });
   }
@@ -512,19 +523,6 @@ async function prepareStorageState(platform: Platform, options: BrowserContextOp
   }
 }
 
-function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): channels.RecordHarOptions | undefined {
-  if (!options)
-    return;
-  return {
-    path: options.path,
-    content: options.content || (options.omitContent ? 'omit' : undefined),
-    urlGlob: isString(options.urlFilter) ? options.urlFilter : undefined,
-    urlRegexSource: isRegExp(options.urlFilter) ? options.urlFilter.source : undefined,
-    urlRegexFlags: isRegExp(options.urlFilter) ? options.urlFilter.flags : undefined,
-    mode: options.mode
-  };
-}
-
 export async function prepareBrowserContextParams(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
@@ -537,7 +535,6 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: await prepareStorageState(platform, options),
     serviceWorkers: options.serviceWorkers,
-    recordHar: prepareRecordHarOptions(options.recordHar),
     colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,

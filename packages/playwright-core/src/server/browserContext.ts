@@ -109,10 +109,6 @@ export abstract class BrowserContext extends SdkObject {
     this._selectors = new Selectors(options.selectorEngines || [], options.testIdAttributeName);
 
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
-
-    if (this._options.recordHar)
-      this._harRecorders.set('', new HarRecorder(this, null, this._options.recordHar));
-
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
   }
