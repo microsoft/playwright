@@ -51,7 +51,7 @@ class CsvReporter implements Reporter {
             continue;
           const row = [];
           const [, , , ...titles] = test.titlePath();
-          row.push(csvEscape(`${file.title} :: ${titles.join(' › ')}`));
+          row.push(csvEscape(`${file.title} › ${titles.join(' › ')}`));
           row.push(test.expectedStatus);
           row.push(test.outcome());
           if (fixme) {
