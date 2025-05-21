@@ -120,14 +120,7 @@ export class PlaywrightConnection {
     const playwright = createPlaywright({ sdkLanguage: options.sdkLanguage, isServer: true });
 
     const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
-    let browserName = this._options.browserName;
-    if ('bidi' === browserName) {
-      if (this._options.launchOptions?.channel?.toLocaleLowerCase().includes('firefox'))
-        browserName = 'bidiFirefox';
-      else
-        browserName = 'bidiChromium';
-    }
-    const browser = await playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
+    const browser = await playwright[this._browserFieldNameFromOptions() as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
     this._cleanups.push(async () => {
       for (const browser of playwright.allBrowsers())
@@ -208,7 +201,7 @@ export class PlaywrightConnection {
     }
 
     if (!browser) {
-      browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+      browser = await playwright[(this._browserFieldNameFromOptions() || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
         ...this._options.launchOptions,
         headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
       });
@@ -235,6 +228,15 @@ export class PlaywrightConnection {
 
     const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
     return playwrightDispatcher;
+  }
+
+  private _browserFieldNameFromOptions() {
+    const browserName = this._options.browserName;
+    if ('bidi' !== browserName)
+      return browserName;
+    if (this._options.launchOptions?.channel?.toLocaleLowerCase().includes('firefox'))
+      return 'bidiFirefox';
+    return 'bidiChromium';
   }
 
   private async _createOwnedSocksProxy(playwright: Playwright): Promise<SocksProxy | undefined> {
