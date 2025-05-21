@@ -148,6 +148,7 @@ export type Metadata = {
     column?: number,
   },
   apiName?: string,
+  title?: string,
   internal?: boolean,
   stepId?: string,
 };

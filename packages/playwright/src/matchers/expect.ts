@@ -343,7 +343,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
-      const defaultTitle = `expect${this._info.poll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
+      const defaultTitle = `Expect ${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${argsSuffix}`;
+      const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const title = customMessage || defaultTitle;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
@@ -354,6 +355,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       // so they behave like a retriable step.
       const stepInfo = {
         category: (matcherName === 'toPass' || this._info.poll) ? 'step' : 'expect',
+        apiName,
         title: trimLongString(title, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
         infectParentStepsWithError: this._info.isSoft,

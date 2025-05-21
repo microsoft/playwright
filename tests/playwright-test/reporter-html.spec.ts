@@ -517,7 +517,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
-      await page.click('.action-title >> text=page.evaluate');
+      await page.click('.action-title >> text=EVALUATE');
       await page.click('text=Source');
 
       await expect(page.locator('.CodeMirror-line')).toContainText([
@@ -550,7 +550,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
-      await page.click('.action-title >> text=page.evaluate');
+      await page.click('.action-title >> text=EVALUATE');
       await page.click('text=Source');
 
       await expect(page.locator('.CodeMirror-line')).toContainText([
@@ -608,11 +608,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace']);
 
       await page.click('img');
-      await page.click('.action-title >> text=page.evaluate');
+      await page.click('.action-title >> text=EVALUATE');
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await page.click('.action-title >> text=apiRequestContext.get');
+      await page.click('.action-title >> text=FETCH');
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('request.get');
     });
@@ -643,10 +643,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
-      await expect(page.getByTestId('actions-tree')).toContainText('apiRequestContext.get');
-      await page.getByText('apiRequestContext.get').nth(2).click();
-      await page.getByText('apiRequestContext.get').nth(1).click();
-      await page.getByText('apiRequestContext.get').nth(0).click();
+      await expect(page.getByTestId('actions-tree')).toContainText('Fetch');
+      await page.getByText('Fetch').nth(2).click();
+      await page.getByText('Fetch').nth(1).click();
+      await page.getByText('Fetch').nth(0).click();
     });
 
     test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {
@@ -728,7 +728,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.click('.tree-item:has-text("outer error") >> text=outer error');
       await page.click('.tree-item:has-text("outer error") >> .tree-item >> text=inner error');
       await expect(page.locator('.tree-item:has-text("outer error") svg.color-text-danger')).toHaveCount(3);
-      await expect(page.locator('.tree-item:has-text("expect.soft.toBe"):not(:has-text("inner"))')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("toBe"):not(:has-text("inner"))')).toBeVisible();
 
       await page.click('text=outer step');
       await expect(page.locator('.tree-item:has-text("outer step") svg.color-text-danger')).toHaveCount(2);
@@ -771,7 +771,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
       await page.click('text=step title');
-      await page.click('text=expect.toBe');
+      await page.click('text=EXPECT toBe');
       await expect(page.getByTestId('test-snippet')).toContainText([
         `await test.step('step title', async () => {`,
         'expect(1).toBe(1);',
@@ -1215,8 +1215,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await page.locator('text=sample').first().click();
       await expect(page.locator('.tree-item-title')).toContainText([
-        /expect\.toBe.*10/,
-        /expect\.toEqual.*20/,
+        /Expect toBe.*10/,
+        /Expect toEqual.*20/,
       ]);
     });
 
@@ -1266,7 +1266,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('text=a.spec.js')).toBeVisible();
       await page.locator('text=sample').first().click();
       await expect(page.locator('.tree-item-title')).toContainText([
-        /expect\.toBe/,
+        /Expect toBe/,
       ]);
     });
 

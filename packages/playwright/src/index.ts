@@ -115,7 +115,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await use(browser);
       await (browser as any)._wrapApiCall(async () => {
         await browser.close({ reason: 'Test ended.' });
-      }, true);
+      }, { internal: true });
       return;
     }
 
@@ -123,7 +123,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(browser);
     await (browser as any)._wrapApiCall(async () => {
       await browser.close({ reason: 'Test ended.' });
-    }, true);
+    }, { internal: true });
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
@@ -267,7 +267,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (zone && zone.category === 'expect') {
           // Display the internal locator._expect call under the name of the enclosing expect call,
           // and connect it to the existing expect step.
-          data.apiName = zone.title;
+          if (zone.apiName)
+            data.apiName = zone.apiName;
+          if (zone.title)
+            data.title = zone.title;
           data.stepId = zone.stepId;
           return;
         }
@@ -357,11 +360,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         await (context as any)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
           await context.clock.pauseAt(1000);
-        }, true);
+        }, { internal: true });
       } else if (process.env.PW_CLOCK === 'realtime') {
         await (context as any)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
-        }, true);
+        }, { internal: true });
       }
 
       return context;
@@ -372,7 +375,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await Promise.all([...contexts.keys()].map(async context => {
       await (context as any)._wrapApiCall(async () => {
         await context.close({ reason: closeReason });
-      }, true);
+      }, { internal: true });
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
       if (preserveVideo) {

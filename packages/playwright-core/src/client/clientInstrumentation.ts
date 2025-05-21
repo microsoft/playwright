@@ -21,6 +21,7 @@ import type { StackFrame } from '@protocol/channels';
 // Instrumentation can mutate the data, for example change apiName or stepId.
 export interface ApiCallData {
   apiName: string;
+  title?: string;
   params?: Record<string, any>;
   frames: StackFrame[];
   userData: any;

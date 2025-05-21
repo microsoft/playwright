@@ -132,9 +132,9 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '    browserType.launch',
     '  fixture: context',
     '  fixture: page',
-    '    browserContext.newPage',
-    'page.setContent',
-    'page.click',
+    '    Create page',
+    'Set content',
+    'Click',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
@@ -147,10 +147,10 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     'Before Hooks',
     '  fixture: context',
     '  fixture: page',
-    'expect.toBe',
-    'page.setContent',
-    'page.fill',
-    'locator.click',
+    'Expect toBe',
+    'Set content',
+    'Fill "value"',
+    'Click',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
@@ -479,16 +479,16 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
 
   const trace1 = await parseTrace(traceFile1);
   expect(trace1.titles).toEqual([
-    'page.setContent',
-    'page.click',
+    'Set content',
+    'Click',
   ]);
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(traceFile2);
   expect(trace2.titles).toEqual([
-    'page.setContent',
-    'page.fill',
-    'locator.click',
+    'Set content',
+    'Fill "value"',
+    'Click',
   ]);
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });

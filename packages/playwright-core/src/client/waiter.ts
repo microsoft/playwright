@@ -41,7 +41,7 @@ export class Waiter {
     this._dispose = [
       () => this._channelOwner._wrapApiCall(async () => {
         await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } });
-      }, true).catch(() => {}),
+      }, { internal: true }).catch(() => {}),
     ];
   }
 
@@ -97,7 +97,7 @@ export class Waiter {
     this._logs.push(s);
     this._channelOwner._wrapApiCall(async () => {
       await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } });
-    }, true).catch(() => {});
+    }, { internal: true }).catch(() => {});
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {

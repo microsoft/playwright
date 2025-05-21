@@ -24,6 +24,7 @@ import { TargetClosedError, isTargetClosedError, serializeError } from '../error
 import { SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
+import { methodMetainfo } from '../../protocol/debug';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
@@ -309,6 +310,7 @@ export class DispatcherConnection {
       id: `call@${id}`,
       location: validMetadata.location,
       apiName: validMetadata.apiName,
+      title: renderTitle(dispatcher._type, method, params, validMetadata.title),
       internal: validMetadata.internal,
       stepId: validMetadata.stepId,
       objectId: sdkObject?.guid,
@@ -387,4 +389,44 @@ function closeReason(sdkObject: SdkObject): string | undefined {
   return sdkObject.attribution.page?.closeReason ||
     sdkObject.attribution.context?._closeReason ||
     sdkObject.attribution.browser?._closeReason;
+}
+
+function formatParam(params: Record<string, string> | undefined, name: string): string {
+  if (!params)
+    return '';
+  if (name === 'url') {
+    try {
+      const urlObject = new URL(params[name]);
+      if (urlObject.protocol === 'data:')
+        return urlObject.protocol;
+      if (urlObject.protocol === 'about:')
+        return params[name];
+      return urlObject.pathname + urlObject.search;
+    } catch (error) {
+      return params[name];
+    }
+  }
+  if (name === 'timeNumber')
+    return new Date(params[name]).toString();
+  return deepParam(params, name);
+}
+
+function deepParam(params: Record<string, any>, name: string): string {
+  const tokens = name.split('.');
+  let current = params;
+  for (const token of tokens) {
+    if (typeof current !== 'object' || current === null)
+      return '';
+    current = current[token];
+  }
+  if (current === undefined)
+    return '';
+  return String(current);
+}
+
+function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
+  const titleFormat = title ?? methodMetainfo.get(type + '.' + method)?.title ?? method;
+  return titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => {
+    return formatParam(params, p1);
+  });
 }

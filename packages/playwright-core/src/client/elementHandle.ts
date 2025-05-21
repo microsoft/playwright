@@ -300,7 +300,7 @@ export async function convertInputFiles(platform: Platform, files: string | File
             lastModifiedMs
           };
         })),
-      }), true);
+      }), { internal: true });
       for (let i = 0; i < files.length; i++) {
         const writable = WritableStream.from(writableStreams[i]);
         await platform.streamFile(files[i], writable.stream());
