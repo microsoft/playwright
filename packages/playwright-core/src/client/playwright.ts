@@ -21,7 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { TimeoutError } from './errors';
 import { APIRequest } from './fetch';
-import { Selectors, SelectorsOwner } from './selectors';
+import { Selectors } from './selectors';
 
 import type * as channels from '@protocol/channels';
 import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
@@ -62,21 +62,9 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this._bidiFirefox._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors();
+    this.selectors._playwrights.add(this);
     this.errors = { TimeoutError };
-
-    const selectorsOwner = SelectorsOwner.from(initializer.selectors);
-    this.selectors._addChannel(selectorsOwner);
-    this._connection.on('close', () => {
-      this.selectors._removeChannel(selectorsOwner);
-    });
     (global as any)._playwrightInstance = this;
-  }
-
-  _setSelectors(selectors: Selectors) {
-    const selectorsOwner = SelectorsOwner.from(this._initializer.selectors);
-    this.selectors._removeChannel(selectorsOwner);
-    this.selectors = selectors;
-    this.selectors._addChannel(selectorsOwner);
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {

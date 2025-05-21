@@ -154,6 +154,14 @@ ExpectedTextValue:
     normalizeWhiteSpace: boolean?
 
 
+SelectorEngine:
+  type: object
+  properties:
+    name: string
+    source: string
+    contentScript: boolean?
+
+
 AXNode:
   type: object
   properties:
@@ -610,6 +618,11 @@ ContextOptions:
       literals:
       - allow
       - block
+    selectorEngines:
+      type: array?
+      items: SelectorEngine
+    testIdAttributeName: string?
+
 
 LocalUtils:
   type: interface
@@ -780,7 +793,6 @@ Playwright:
     android: Android
     electron: Electron
     utils: LocalUtils?
-    selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
     # Only present when connecting remotely via Android.connect() method.
@@ -996,22 +1008,6 @@ SocksSupport:
       parameters:
         uid: string
 
-Selectors:
-  type: interface
-
-  commands:
-
-    register:
-      internal: true
-      parameters:
-        name: string
-        source: string
-        contentScript: boolean?
-
-    setTestIdAttributeName:
-      internal: true
-      parameters:
-        testIdAttributeName: string
 
 BrowserType:
   type: interface
@@ -1264,6 +1260,16 @@ BrowserContext:
       title: Create new page
       returns:
         page: Page
+
+    registerSelectorEngine:
+      internal: true
+      parameters:
+        selectorEngine: SelectorEngine
+
+    setTestIdAttributeName:
+      internal: true
+      parameters:
+        testIdAttributeName: string
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers

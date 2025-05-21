@@ -92,6 +92,11 @@ scheme.ExpectedTextValue = tObject({
   ignoreCase: tOptional(tBoolean),
   normalizeWhiteSpace: tOptional(tBoolean),
 });
+scheme.SelectorEngine = tObject({
+  name: tString,
+  source: tString,
+  contentScript: tOptional(tBoolean),
+});
 scheme.AXNode = tObject({
   role: tString,
   name: tString,
@@ -372,7 +377,6 @@ scheme.PlaywrightInitializer = tObject({
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
   utils: tOptional(tChannel(['LocalUtils'])),
-  selectors: tChannel(['Selectors']),
   preLaunchedBrowser: tOptional(tChannel(['Browser'])),
   preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),
   socksSupport: tOptional(tChannel(['SocksSupport'])),
@@ -517,17 +521,6 @@ scheme.SocksSupportSocksEndParams = tObject({
   uid: tString,
 });
 scheme.SocksSupportSocksEndResult = tOptional(tObject({}));
-scheme.SelectorsInitializer = tOptional(tObject({}));
-scheme.SelectorsRegisterParams = tObject({
-  name: tString,
-  source: tString,
-  contentScript: tOptional(tBoolean),
-});
-scheme.SelectorsRegisterResult = tOptional(tObject({}));
-scheme.SelectorsSetTestIdAttributeNameParams = tObject({
-  testIdAttributeName: tString,
-});
-scheme.SelectorsSetTestIdAttributeNameResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
@@ -642,6 +635,8 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
+  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
+  testIdAttributeName: tOptional(tString),
   userDataDir: tString,
   slowMo: tOptional(tNumber),
 });
@@ -729,6 +724,8 @@ scheme.BrowserNewContextParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
+  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
+  testIdAttributeName: tOptional(tString),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -799,6 +796,8 @@ scheme.BrowserNewContextForReuseParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
+  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
+  testIdAttributeName: tOptional(tString),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -963,6 +962,14 @@ scheme.BrowserContextNewPageParams = tOptional(tObject({}));
 scheme.BrowserContextNewPageResult = tObject({
   page: tChannel(['Page']),
 });
+scheme.BrowserContextRegisterSelectorEngineParams = tObject({
+  selectorEngine: tType('SelectorEngine'),
+});
+scheme.BrowserContextRegisterSelectorEngineResult = tOptional(tObject({}));
+scheme.BrowserContextSetTestIdAttributeNameParams = tObject({
+  testIdAttributeName: tString,
+});
+scheme.BrowserContextSetTestIdAttributeNameResult = tOptional(tObject({}));
 scheme.BrowserContextSetExtraHTTPHeadersParams = tObject({
   headers: tArray(tType('NameValue')),
 });
@@ -2695,6 +2702,8 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
+  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
+  testIdAttributeName: tOptional(tString),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({

@@ -358,6 +358,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._subscriptions.delete(params.event);
   }
 
+  async registerSelectorEngine(params: channels.BrowserContextRegisterSelectorEngineParams): Promise<void> {
+    this._object.selectors().register(params.selectorEngine);
+  }
+
+  async setTestIdAttributeName(params: channels.BrowserContextSetTestIdAttributeNameParams): Promise<void> {
+    this._object.selectors().setTestIdAttributeName(params.testIdAttributeName);
+  }
+
   override _onDispose() {
     // Avoid protocol calls for the closed context.
     if (!this._context.isClosingOrClosed())

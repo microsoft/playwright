@@ -24,7 +24,6 @@ import { Dispatcher } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
-import { SelectorsDispatcher } from './selectorsDispatcher';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper  } from '../utils/eventsHelper';
 
@@ -53,7 +52,6 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       android,
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),
-      selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
       preLaunchedBrowser: browserDispatcher,
       preConnectedAndroidDevice: prelaunchedAndroidDeviceDispatcher,
       socksSupport: socksProxy ? new SocksSupportDispatcher(scope, socksProxy) : undefined,
