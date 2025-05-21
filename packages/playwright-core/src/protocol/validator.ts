@@ -640,6 +640,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   slowMo: tOptional(tNumber),
 });
 scheme.BrowserTypeLaunchPersistentContextResult = tObject({
+  browser: tChannel(['Browser']),
   context: tChannel(['BrowserContext']),
 });
 scheme.BrowserTypeConnectOverCDPParams = tObject({

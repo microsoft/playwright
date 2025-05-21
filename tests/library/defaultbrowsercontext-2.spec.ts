@@ -269,3 +269,16 @@ it('dialog.accept should work', {
   expect(shown).toBe(true);
   await context.close();
 });
+
+it('exposes browser', async ({ launchPersistent }) => {
+  const { context } = await launchPersistent();
+  const browser = context.browser();
+  expect(browser.version()).toBeTruthy();
+  const page = await browser.newPage();
+  await page.goto('data:text/html,<html><title>Title</title></html>');
+  expect(await page.title()).toBe('Title');
+  await browser.close();
+  expect(context.pages().length).toBe(0);
+  // Next line should not throw.
+  await context.close();
+});
