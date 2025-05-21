@@ -159,6 +159,14 @@ test('Intercept network requests', async ({ page }) => {
   await page.goto('http://todomvc.com');
 });
 ```
+---
+
+## 📘 Test Report Download Instructions
+
+After running your tests using:
+
+```bash
+npx playwright test
 
 ## Resources
 
