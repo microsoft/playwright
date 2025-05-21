@@ -32,12 +32,14 @@
   gap: 4px;
   user-select: none;
   margin-left: 8px;
+  vertical-align: sub;
 }
 
 .status-line-count {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  vertical-align: sub;
 }
 
 .status-passed {
