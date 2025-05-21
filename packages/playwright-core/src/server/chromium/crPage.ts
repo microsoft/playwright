@@ -26,8 +26,7 @@ import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
-import { kPlaywrightBinding } from '../javascript';
-import { Page, Worker } from '../page';
+import { Page, PageBinding, Worker } from '../page';
 import { registry } from '../registry';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
@@ -1071,7 +1070,7 @@ class FrameSession {
   }
 
   async exposePlaywrightBinding() {
-    await this._client.send('Runtime.addBinding', { name: kPlaywrightBinding });
+    await this._client.send('Runtime.addBinding', { name: PageBinding.kBindingName });
   }
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

@@ -19,10 +19,10 @@ import { assert } from '../../utils';
 import { Browser } from '../browser';
 import { BrowserContext, verifyGeolocation } from '../browserContext';
 import { TargetClosedError } from '../errors';
-import { kPlaywrightBinding } from '../javascript';
 import * as network from '../network';
 import { ConnectionEvents, FFConnection  } from './ffConnection';
 import { FFPage } from './ffPage';
+import { PageBinding } from '../page';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -393,7 +393,7 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   override async doExposePlaywrightBinding() {
-    this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: kPlaywrightBinding, script: '' });
+    this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: PageBinding.kBindingName, script: '' });
   }
 
   onClosePersistent() {}

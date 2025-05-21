@@ -144,9 +144,6 @@ const inlineCSSPlugin = {
     let content = await fs.promises.readFile(outFileJs, 'utf-8');
     if (hasExports)
       content = await replaceEsbuildHeader(content, outFileJs);
-    if (injected.endsWith('utilityScript.ts') && !content.includes('kUtilityScriptIsUnderTest = false')) {
-      throw new Error(`Utility script must include "kUtilityScriptIsUnderTest = false"\n\n${content}`);
-    }
     const newContent = `export const source = ${JSON.stringify(content)};`;
     await fs.promises.writeFile(path.join(generatedFolder, baseName.replace('.ts', 'Source.ts')), newContent);
   }

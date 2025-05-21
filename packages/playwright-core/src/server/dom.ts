@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import * as js from './javascript';
 import { ProgressController } from './progress';
-import { asLocator } from '../utils';
+import { asLocator, isUnderTest } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { isSessionClosedError } from './protocolError';
 import * as rawInjectedScriptSource from '../generated/injectedScriptSource';
@@ -89,6 +89,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         customEngines.push({ name, source });
       const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
       const options: InjectedScriptOptions = {
+        isUnderTest: isUnderTest(),
         sdkLanguage,
         testIdAttributeName: selectorsRegistry.testIdAttributeName(),
         stableRafCount: this.frame._page.delegate.rafCountForStablePosition(),
@@ -99,7 +100,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const source = `
         (() => {
         const module = {};
-        ${js.prepareGeneratedScript(rawInjectedScriptSource.source)}
+        ${rawInjectedScriptSource.source}
         return new (module.exports.InjectedScript())(globalThis, ${JSON.stringify(options)});
         })();
       `;

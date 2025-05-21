@@ -18,7 +18,6 @@ import { Page } from '../page';
 import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as rawWebSocketMockSource from '../../generated/webSocketMockSource';
-import { prepareGeneratedScript } from '../javascript';
 import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import { eventsHelper } from '../utils/eventsHelper';
@@ -97,7 +96,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
       await target.addInitScript(`
         (() => {
           const module = {};
-          ${prepareGeneratedScript(rawWebSocketMockSource.source)}
+          ${rawWebSocketMockSource.source}
           (module.exports.inject())(globalThis);
         })();
       `, kInitScriptName);

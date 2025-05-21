@@ -30,8 +30,7 @@ import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
 import { helper } from '../helper';
 import * as network from '../network';
-import { kPlaywrightBinding } from '../javascript';
-import { Page } from '../page';
+import { Page, PageBinding } from '../page';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKSession } from './wkConnection';
 import { createHandle, WKExecutionContext } from './wkExecutionContext';
@@ -182,7 +181,7 @@ export class WKPage implements PageDelegate {
       this._workers.initializeSession(session)
     ];
     if (this._page.browserContext.needsPlaywrightBinding())
-      promises.push(session.send('Runtime.addBinding', { name: kPlaywrightBinding }));
+      promises.push(session.send('Runtime.addBinding', { name: PageBinding.kBindingName }));
     if (this._page.needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
@@ -774,7 +773,7 @@ export class WKPage implements PageDelegate {
   }
 
   async exposePlaywrightBinding() {
-    await this._updateState('Runtime.addBinding', { name: kPlaywrightBinding });
+    await this._updateState('Runtime.addBinding', { name: PageBinding.kBindingName });
   }
 
   private _calculateBootstrapScript(): string {

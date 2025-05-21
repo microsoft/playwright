@@ -18,13 +18,6 @@ import { serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
 import type { SerializedValue } from '@isomorphic/utilityScriptSerializers';
 
-// This runtime guid is replaced by the actual guid at runtime in all generated sources.
-const kRuntimeGuid = '$runtime_guid$';
-
-// The name of the global playwright binding, referenced in Node.js.
-const kPlaywrightBinding = `__playwright__binding__${kRuntimeGuid}`;
-const kPlaywrightBindingController = `__playwright__binding__controller__${kRuntimeGuid}`;
-
 export type BindingPayload = {
   name: string;
   seq: number;
@@ -37,14 +30,16 @@ type BindingData = {
   handles: Map<number, any>;
 };
 
-class BindingsController {
+export class BindingsController {
   // eslint-disable-next-line no-restricted-globals
   private _global: typeof globalThis;
+  private _globalBindingName: string;
   private _bindings = new Map<string, BindingData>();
 
   // eslint-disable-next-line no-restricted-globals
-  constructor(global: typeof globalThis) {
+  constructor(global: typeof globalThis, globalBindingName: string) {
     this._global = global;
+    this._globalBindingName = globalBindingName;
   }
 
   addBinding(bindingName: string, needsHandle: boolean) {
@@ -72,7 +67,7 @@ class BindingsController {
         }
         payload = { name: bindingName, seq, serializedArgs };
       }
-      (this._global as any)[kPlaywrightBinding](JSON.stringify(payload));
+      (this._global as any)[this._globalBindingName](JSON.stringify(payload));
       return promise;
     };
   }
@@ -92,11 +87,4 @@ class BindingsController {
       callbacks.get(arg.seq)!.resolve(arg.result);
     callbacks.delete(arg.seq);
   }
-}
-
-export function ensureBindingsController() {
-  // eslint-disable-next-line no-restricted-globals
-  const global = globalThis;
-  if (!(global as any)[kPlaywrightBindingController])
-    (global as any)[kPlaywrightBindingController] = new BindingsController(global);
 }

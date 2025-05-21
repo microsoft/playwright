@@ -66,7 +66,7 @@ interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
 }
 
 export type InjectedScriptOptions = {
-  isUnderTest?: boolean;
+  isUnderTest: boolean;
   sdkLanguage: Language;
   // For strict error and codegen
   testIdAttributeName: string;
@@ -124,11 +124,10 @@ export class InjectedScript {
   constructor(window: Window & typeof globalThis, options: InjectedScriptOptions) {
     this.window = window;
     this.document = window.document;
+    this.isUnderTest = options.isUnderTest;
     // Make sure builtins are created from "window". This is important for InjectedScript instantiated
     // inside a trace viewer snapshot, where "window" differs from "globalThis".
-    const utilityScript = new UtilityScript(window);
-    this.isUnderTest = options.isUnderTest ?? utilityScript.isUnderTest;
-    this.utils.builtins = utilityScript.builtins;
+    this.utils.builtins = new UtilityScript(window, options.isUnderTest).builtins;
     this._sdkLanguage = options.sdkLanguage;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = options.testIdAttributeName;
     this._evaluator = new SelectorEvaluatorImpl();
