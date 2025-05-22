@@ -1145,6 +1145,10 @@ Browser:
 
   events:
 
+    context:
+      parameters:
+        context: BrowserContext
+
     close:
 
 ConsoleMessage:
@@ -1195,6 +1199,10 @@ BrowserContext:
     isChromium: boolean
     requestContext: APIRequestContext
     tracing: Tracing
+    options:
+      type: object
+      properties:
+        $mixin: ContextOptions
 
   commands:
 

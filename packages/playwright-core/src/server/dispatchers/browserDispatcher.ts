@@ -33,7 +33,12 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   constructor(scope: BrowserTypeDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
+    this.addObjectListener(Browser.Events.Context, (context: BrowserContext) => this._dispatchEvent('context', { context: BrowserContextDispatcher.from(this, context) }));
     this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
+    if (browser._defaultContext)
+      this._dispatchEvent('context', { context: BrowserContextDispatcher.from(this, browser._defaultContext) });
+    for (const context of browser.contexts())
+      this._dispatchEvent('context', { context: BrowserContextDispatcher.from(this, context) });
   }
 
   _didClose() {
@@ -43,7 +48,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(metadata, params);
-    return { context: new BrowserContextDispatcher(this, context) };
+    return { context: BrowserContextDispatcher.from(this, context) };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
@@ -105,7 +110,9 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     const context = await this._object.newContext(metadata, params);
     this._contexts.add(context);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
-    return { context: new BrowserContextDispatcher(this, context) };
+    const contextDispatcher = BrowserContextDispatcher.from(this, context);
+    this._dispatchEvent('context', { context: contextDispatcher });
+    return { context: contextDispatcher };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
@@ -162,6 +169,7 @@ async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, pa
       oldContextDispatcher._dispose();
     await context.resetForReuse(metadata, params);
   }
-  const contextDispatcher = new BrowserContextDispatcher(scope, context);
+  const contextDispatcher = BrowserContextDispatcher.from(scope, context);
+  scope._dispatchEvent('context', { context: contextDispatcher });
   return { context: contextDispatcher };
 }

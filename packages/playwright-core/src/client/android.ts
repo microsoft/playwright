@@ -258,7 +258,6 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const result = await this._channel.launchBrowser(contextOptions);
     const context = BrowserContext.from(result.context) as BrowserContext;
-    context._setOptions(contextOptions, {});
     await context._initializeHarFromOptions(options.recordHar);
     return context;
   }

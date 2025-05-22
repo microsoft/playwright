@@ -41,8 +41,7 @@ import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
-import type { BrowserType } from './browserType';
-import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';
+import type { BrowserContextOptions, Headers, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
@@ -53,13 +52,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _pages = new Set<Page>();
   _routes: network.RouteHandler[] = [];
   _webSocketRoutes: network.WebSocketRouteHandler[] = [];
-  readonly _browser: Browser | null = null;
-  _browserType: BrowserType | undefined;
+  // Browser is null for browser contexts created outside of normal browser, e.g. android or electron.
+  _browser: Browser | null = null;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings: TimeoutSettings;
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _options: channels.BrowserNewContextParams = { };
+  readonly _options: channels.BrowserNewContextParams;
 
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
@@ -67,7 +66,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
-  readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
   _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
@@ -83,11 +81,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
     super(parent, type, guid, initializer);
+    this._options = initializer.options;
     this._timeoutSettings = new TimeoutSettings(this._platform);
-    if (parent instanceof Browser)
-      this._browser = parent;
-    this._browser?._contexts.add(this);
-    this._isChromium = this._browser?._name === 'chromium';
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
     this.request._timeoutSettings = this._timeoutSettings;
@@ -165,11 +160,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       updateContent: recordHar.content ?? (recordHar.omitContent ? 'omit' : defaultContent),
       updateMode: recordHar.mode ?? 'full',
     });
-  }
-
-  _setOptions(contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions) {
-    this._options = contextOptions;
-    this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
   private _onPage(page: Page): void {
@@ -466,9 +456,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   _onClose() {
     this._closingStatus = 'closed';
-    if (this._browser)
-      this._browser._contexts.delete(this);
-    this._browserType?._contexts?.delete(this);
+    this._browser?._contexts.delete(this);
+    this._browser?._browserType._contexts.delete(this);
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
@@ -485,7 +474,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._closingStatus = 'closing';
     await this.request.dispose(options);
     await this._wrapApiCall(async () => {
-      await this._browserType?._willCloseContext(this);
+      await this._instrumentation.runBeforeCloseBrowserContext(this);
       for (const [harId, harParams] of this._harRecorders) {
         const har = await this._channel.harExport({ harId });
         const artifact = Artifact.from(har.artifact);

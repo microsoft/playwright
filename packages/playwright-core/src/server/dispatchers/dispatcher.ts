@@ -59,7 +59,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   _object: Type;
   private _openScope = new LongStandingScope();
 
-  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>, gcBucket?: string) {
+  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<ChannelType>, gcBucket?: string) {
     super();
 
     this.connection = parent instanceof DispatcherConnection ? parent : parent.connection;

@@ -1162,6 +1162,7 @@ export type BrowserInitializer = {
   name: string,
 };
 export interface BrowserEventTarget {
+  on(event: 'context', callback: (params: BrowserContextEvent) => void): this;
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
@@ -1176,6 +1177,9 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
 }
+export type BrowserContextEvent = {
+  context: BrowserContextChannel,
+};
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {
   reason?: string,
@@ -1500,6 +1504,7 @@ export type BrowserStopTracingResult = {
 };
 
 export interface BrowserEvents {
+  'context': BrowserContextEvent;
   'close': BrowserCloseEvent;
 }
 
@@ -1533,6 +1538,64 @@ export type BrowserContextInitializer = {
   isChromium: boolean,
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
+  options: {
+    noDefaultViewport?: boolean,
+    viewport?: {
+      width: number,
+      height: number,
+    },
+    screen?: {
+      width: number,
+      height: number,
+    },
+    ignoreHTTPSErrors?: boolean,
+    clientCertificates?: {
+      origin: string,
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+    javaScriptEnabled?: boolean,
+    bypassCSP?: boolean,
+    userAgent?: string,
+    locale?: string,
+    timezoneId?: string,
+    geolocation?: {
+      longitude: number,
+      latitude: number,
+      accuracy?: number,
+    },
+    permissions?: string[],
+    extraHTTPHeaders?: NameValue[],
+    offline?: boolean,
+    httpCredentials?: {
+      username: string,
+      password: string,
+      origin?: string,
+      send?: 'always' | 'unauthorized',
+    },
+    deviceScaleFactor?: number,
+    isMobile?: boolean,
+    hasTouch?: boolean,
+    colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+    reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+    forcedColors?: 'active' | 'none' | 'no-override',
+    acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+    contrast?: 'no-preference' | 'more' | 'no-override',
+    baseURL?: string,
+    recordVideo?: {
+      dir: string,
+      size?: {
+        width: number,
+        height: number,
+      },
+    },
+    strictSelectors?: boolean,
+    serviceWorkers?: 'allow' | 'block',
+    selectorEngines?: SelectorEngine[],
+    testIdAttributeName?: string,
+  },
 };
 export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
