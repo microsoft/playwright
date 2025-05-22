@@ -77,7 +77,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   _preLaunchedBrowser(): Browser {
     const browser = Browser.from(this._initializer.preLaunchedBrowser!);
-    browser._browserType = this[browser._name as 'chromium' | 'firefox' | 'webkit'];
+    browser._connectToBrowserType(this[browser._name as 'chromium' | 'firefox' | 'webkit'], {}, undefined);
     return browser;
   }
 

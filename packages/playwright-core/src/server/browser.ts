@@ -58,6 +58,7 @@ export type BrowserOptions = {
 export abstract class Browser extends SdkObject {
 
   static Events = {
+    Context: 'context',
     Disconnected: 'disconnected',
   };
 
@@ -102,6 +103,7 @@ export abstract class Browser extends SdkObject {
     context._clientCertificatesProxy = clientCertificatesProxy;
     if (options.storageState)
       await context.setStorageState(metadata, options.storageState);
+    this.emit(Browser.Events.Context, context);
     return context;
   }
 

@@ -31,6 +31,7 @@ export const Events = {
   },
 
   Browser: {
+    Context: 'context',
     Disconnected: 'disconnected'
   },
 

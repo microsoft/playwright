@@ -52,16 +52,21 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
 
-  constructor(parentScope: DispatcherScope, context: BrowserContext) {
+  static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
+    const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
+    return result || new BrowserContextDispatcher(parentScope, context);
+  }
+
+  private constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
     const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
-      isLocalBrowserOnServer: context._browser._isCollocatedWithServer,
       requestContext,
       tracing,
+      options: context._options,
     });
 
     this.adopt(requestContext);
