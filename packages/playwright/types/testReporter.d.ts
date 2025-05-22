@@ -659,7 +659,7 @@ export interface TestResult {
   parallelIndex: number;
 
   /**
-   * When test is retries multiple times, each retry attempt is given a sequential number.
+   * When test is retried multiple times, each retry attempt is given a sequential number.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
