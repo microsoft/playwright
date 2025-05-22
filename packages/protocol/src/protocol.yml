@@ -1033,6 +1033,7 @@ BrowserType:
         userDataDir: string
         slowMo: number?
       returns:
+        browser: Browser
         context: BrowserContext
 
     connectOverCDP:

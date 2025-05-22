@@ -1135,6 +1135,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
+  browser: BrowserChannel,
   context: BrowserContextChannel,
 };
 export type BrowserTypeConnectOverCDPParams = {

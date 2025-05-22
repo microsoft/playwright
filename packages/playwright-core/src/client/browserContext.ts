@@ -69,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
-  _closeWasCalled = false;
+  _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
 
@@ -218,7 +218,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page or the context was closed we stall all requests right away.
-      if (page?._closeWasCalled || this._closeWasCalled)
+      if (page?._closeWasCalled || this._closingStatus !== 'none')
         return;
       if (!routeHandler.matches(route.request().url()))
         continue;
@@ -465,6 +465,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   _onClose() {
+    this._closingStatus = 'closed';
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
@@ -478,10 +479,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
-    if (this._closeWasCalled)
+    if (this._closingStatus !== 'none')
       return;
     this._closeReason = options.reason;
-    this._closeWasCalled = true;
+    this._closingStatus = 'closing';
     await this.request.dispose(options);
     await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
