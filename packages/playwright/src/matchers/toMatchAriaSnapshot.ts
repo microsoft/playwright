@@ -98,6 +98,8 @@ export async function toMatchAriaSnapshot(
   const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
   const typedReceived = received as MatcherReceived | typeof kNoElementsFoundError;
 
+  console.log(typedReceived);
+
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = typedReceived === kNoElementsFoundError;
   if (notFound) {
@@ -112,46 +114,54 @@ export async function toMatchAriaSnapshot(
   const expectedLines = expected.split('\n');
   const actualLines = typedReceived.raw.split('\n');
 
-  const length = Math.min(actualLines.length, expectedLines.length);
+  // const length = Math.min(actualLines.length, expectedLines.length);
 
-  for (let i = 0; i < length; i++) {
-    const expectedLine = expectedLines[i];
-    const actualLine = actualLines[i];
+  // for (let i = 0; i < length; i++) {
+  //   const expectedLine = expectedLines[i];
+  //   const actualLine = actualLines[i];
 
-    const expectedMatch = expectedLine.match(/\/(.*)\//);
-    if (expectedMatch && expectedMatch.index !== undefined) {
-      try {
-        const regex = new RegExp(expectedMatch[1]);
+  //   const expectedMatch = expectedLine.match(/\/(.*)\//);
+  //   if (expectedMatch && expectedMatch.index !== undefined) {
+  //     try {
+  //       const regex = new RegExp(expectedMatch[1]);
 
-        const actualMatch = actualLine.match(regex);
-        if (actualMatch)
-          expectedLines[i] = expectedLine.slice(0, expectedMatch.index) + actualMatch[0] + expectedLine.slice(expectedMatch.index + expectedMatch[0].length);
-      } catch (e) {
-        // Skip invalid regex
-      }
+  //       const actualMatch = actualLine.match(regex);
+  //       if (actualMatch)
+  //         expectedLines[i] = expectedLine.slice(0, expectedMatch.index) + actualMatch[0] + expectedLine.slice(expectedMatch.index + expectedMatch[0].length);
+  //     } catch (e) {
+  //       // Skip invalid regex
+  //     }
+  //   }
+
+  //   const expectedProps = extractProperties(expectedLine);
+  //   const actualProps = extractProperties(actualLine);
+  //   const actualPropsMap = new Map(actualProps.map(({ key, value }) => [key, value]));
+
+  //   let propsMatch = true;
+
+  //   for (const { key, value } of expectedProps) {
+  //     const actualValue = actualPropsMap.get(key);
+  //     if (!actualValue || actualValue !== value) {
+  //       propsMatch = false;
+  //       break;
+  //     }
+  //   }
+
+  //   if (propsMatch) {
+  //     actualLines[i] = actualLines[i].split(ARIA_PROPERTY_REGEX)[0].trimEnd();
+  //     if (expectedProps.length > 0) {
+  //       const actualPropsString = expectedProps.map(({ key, value }) => `[${key}${value ? '=' + value : ''}]`).join(' ');
+  //       actualLines[i] += ` ${actualPropsString}`;
+  //     }
+  //   }
+  // }
+  for (const entry of typedReceived.matchEntries) {
+    if (entry.templateLineNumber === undefined) {
+      console.log(`No template line number for ${entry.ariaNodeDFSIndex}`);
+      continue;
     }
-
-    const expectedProps = extractProperties(expectedLine);
-    const actualProps = extractProperties(actualLine);
-    const actualPropsMap = new Map(actualProps.map(({ key, value }) => [key, value]));
-
-    let propsMatch = true;
-
-    for (const { key, value } of expectedProps) {
-      const actualValue = actualPropsMap.get(key);
-      if (!actualValue || actualValue !== value) {
-        propsMatch = false;
-        break;
-      }
-    }
-
-    if (propsMatch) {
-      actualLines[i] = actualLines[i].split(ARIA_PROPERTY_REGEX)[0].trimEnd();
-      if (expectedProps.length > 0) {
-        const actualPropsString = expectedProps.map(({ key, value }) => `[${key}${value ? '=' + value : ''}]`).join(' ');
-        actualLines[i] += ` ${actualPropsString}`;
-      }
-    }
+    console.log(`Copying "${actualLines[entry.ariaNodeDFSIndex - 1]}" to ${expectedLines[entry.templateLineNumber - 1]}`);
+    expectedLines[entry.templateLineNumber - 1] = actualLines[entry.ariaNodeDFSIndex - 1];
   }
 
   const receivedText = actualLines.join('\n');

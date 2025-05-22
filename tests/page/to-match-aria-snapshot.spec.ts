@@ -806,8 +806,7 @@ test(`should only highlight regex patterns that don't match`, async ({ page }) =
     `, { timeout: 1000 }).catch(e => e);
 
     expect(stripAnsi(error.message)).toContain(`
-- - heading Title 123
-+ - heading "Title 123"
+  - heading "Title 123" [level=1]
   - text: Content with value 456
 - - text: "This text doesn't exist"`);
   });

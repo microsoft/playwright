@@ -39,11 +39,13 @@ export type AriaRegex = { pattern: string };
 export type AriaTemplateTextNode = {
   kind: 'text';
   text: AriaRegex | string;
+  lineNumber?: number;
 };
 
 export type AriaTemplateRoleNode = AriaProps & {
   kind: 'role';
   role: AriaRole | 'fragment';
+  lineNumber?: number;
   name?: AriaRegex | string;
   children?: AriaTemplateNode[];
   props?: Record<string, string | AriaRegex>;
@@ -103,6 +105,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
       if (itemIsString) {
         const childNode = KeyParser.parse(item, parseOptions, errors);
         if (childNode) {
+          childNode.lineNumber = lineCounter.linePos(item.range![0]).line;
           container.children = container.children || [];
           container.children.push(childNode);
         }
@@ -148,7 +151,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
         }
         container.children.push({
           kind: 'text',
-          text: valueOrRegex(value.value)
+          text: valueOrRegex(value.value),
+          lineNumber: lineCounter.linePos(key.range![0]).line
         });
         continue;
       }
@@ -186,6 +190,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
       const childNode = KeyParser.parse(key, parseOptions, errors);
       if (!childNode)
         continue;
+      childNode.lineNumber = lineCounter.linePos(key.range![0]).line;
 
       // - role "name": "text"
       const valueIsScalar = value instanceof yaml.Scalar;
@@ -198,12 +203,13 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
           });
           continue;
         }
-
+        const textChildLineNumber = value.range ? lineCounter.linePos(value.range[0]).line : childNode.lineNumber;
         container.children.push({
           ...childNode,
           children: [{
             kind: 'text',
-            text: valueOrRegex(String(value.value))
+            text: valueOrRegex(String(value.value)),
+            lineNumber: textChildLineNumber // Line number of the text value itself
           }]
         });
         continue;
@@ -214,7 +220,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
       const valueIsSequence = value instanceof yaml.YAMLSeq;
       if (valueIsSequence) {
         container.children.push(childNode);
-        convertSeq(childNode, value as yamlTypes.YAMLSeq);
+        convertSeq(childNode, value as yamlTypes.YAMLSeq); // convertSeq will handle line numbers for its children
         continue;
       }
 
