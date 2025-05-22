@@ -124,7 +124,9 @@ export class BidiBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    const { userContext } = await this._browserSession.send('browser.createUserContext', {});
+    const { userContext } = await this._browserSession.send('browser.createUserContext', {
+      acceptInsecureCerts: options.ignoreHTTPSErrors,
+    });
     const context = new BidiBrowserContext(this, userContext, options);
     await context._initialize();
     this._contexts.set(userContext, context);
