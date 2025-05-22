@@ -250,3 +250,26 @@ test('should respect config.expect.toMatchAriaSnapshot.pathTemplate', async ({ r
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should match active element after focus', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts-snapshots/test.aria.yml': `
+      - textbox "First input"
+      - textbox "Second input" [active]
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`
+          <input id="input1" placeholder="First input">
+          <input id="input2" placeholder="Second input">
+        \`);
+        // Focus the second input
+        await page.locator('#input2').focus();
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+});

@@ -29,7 +29,7 @@ it('should generate refs', async ({ page }) => {
 
   const snapshot1 = await snapshotForAI(page);
   expect(snapshot1).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "One" [ref=e2]
       - button "Two" [ref=e3]
       - button "Three" [ref=e4]
@@ -44,7 +44,7 @@ it('should generate refs', async ({ page }) => {
 
   const snapshot2 = await snapshotForAI(page);
   expect(snapshot2).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "One" [ref=e2]
       - button "Not Two" [ref=e5]
       - button "Three" [ref=e4]
@@ -68,9 +68,9 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - iframe [ref=e2]:
-        - generic [ref=f1e1]:
+        - generic [active] [ref=f1e1]:
           - iframe [ref=f1e2]:
             - generic [ref=f2e2]: Hi, I'm frame
           - iframe [ref=f1e3]:
@@ -132,7 +132,7 @@ it('should not generate refs for elements with pointer-events:none', async ({ pa
 
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "no-ref"
       - button "with-ref" [ref=e4]
       - button "with-ref" [ref=e7]
@@ -228,7 +228,7 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
   `, { waitUntil: 'domcontentloaded' });
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - paragraph [ref=e2]: Test
       - iframe [ref=e3]
   `);
@@ -255,4 +255,71 @@ it('should auto-wait for blocking CSS', async ({ page, server }) => {
     <p>Hello World</p>
   `, { waitUntil: 'commit' });
   expect(await snapshotForAI(page)).toContainYaml('Hello World');
+});
+
+it('should include active element information', async ({ page }) => {
+  await page.setContent(`
+    <button id="btn1">Button 1</button>
+    <button id="btn2" autofocus>Button 2</button>
+    <div>Not focusable</div>
+  `);
+
+  // Wait for autofocus to take effect
+  await page.waitForFunction(() => document.activeElement?.id === 'btn2');
+
+  const snapshot = await snapshotForAI(page);
+
+  expect(snapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - button "Button 1" [ref=e2]
+      - button "Button 2" [active] [ref=e3]
+      - generic [ref=e4]: Not focusable
+  `);
+});
+
+it('should update active element on focus', async ({ page }) => {
+  await page.setContent(`
+    <input id="input1" placeholder="First input">
+    <input id="input2" placeholder="Second input">
+  `);
+
+  // Initially there shouldn't be an active element on the inputs
+  const initialSnapshot = await snapshotForAI(page);
+  expect(initialSnapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - textbox "First input" [ref=e2]
+      - textbox "Second input" [ref=e3]
+  `);
+
+  // Focus the second input
+  await page.locator('#input2').focus();
+
+  // After focus, the second input should be active
+  const afterFocusSnapshot = await snapshotForAI(page);
+
+  expect(afterFocusSnapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - textbox "First input" [ref=e2]
+      - textbox "Second input" [active] [ref=e3]
+  `);
+});
+
+it('should mark iframe as active when it contains focused element', async ({ page }) => {
+  // Create a simple HTML file for the iframe
+  await page.setContent(`
+    <input id="regular-input" placeholder="Regular input">
+    <iframe src="data:text/html,<input id='iframe-input' placeholder='Input in iframe'>" tabindex="0"></iframe>
+  `);
+
+  // Test 1: Focus the input inside the iframe
+  await page.frameLocator('iframe').locator('#iframe-input').focus();
+  const inputInIframeFocusedSnapshot = await snapshotForAI(page);
+
+  // The iframe should be marked as active when it contains a focused element
+  expect(inputInIframeFocusedSnapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - textbox "Regular input" [ref=e2]
+      - iframe [active] [ref=e3]:
+        - textbox "Input in iframe" [active] [ref=f1e2]
+  `);
 });

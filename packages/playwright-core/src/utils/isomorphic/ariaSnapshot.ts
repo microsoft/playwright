@@ -28,6 +28,7 @@ export type AriaProps = {
   checked?: boolean | 'mixed';
   disabled?: boolean;
   expanded?: boolean;
+  active?: boolean;
   level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -442,6 +443,11 @@ export class KeyParser {
     if (key === 'expanded') {
       this._assert(value === 'true' || value === 'false', 'Value of "expanded" attribute must be a boolean', errorPos);
       node.expanded = value === 'true';
+      return;
+    }
+    if (key === 'active') {
+      this._assert(value === 'true' || value === 'false', 'Value of "active" attribute must be a boolean', errorPos);
+      node.active = value === 'true';
       return;
     }
     if (key === 'level') {
