@@ -47,7 +47,7 @@ test('should not print timed out error message when page closes', async ({ page 
     expect(page.locator('div')).toHaveText('hey', { timeout: 100000 }).catch(e => e),
     page.close(),
   ]);
-  expect(stripAnsi(error.message)).toContain('expect.toHaveText with timeout 100000ms');
+  expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected)`);
   expect(stripAnsi(error.message)).not.toContain('Timed out');
 });
 

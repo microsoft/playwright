@@ -543,10 +543,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
-    await this._wrapApiCall(async () => {
-      await this._unrouteInternal(this._routes, [], options?.behavior);
-      this._disposeHarRouters();
-    }, { title: 'Unroute all' });
+    await this._unrouteInternal(this._routes, [], options?.behavior);
+    this._disposeHarRouters();
   }
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
@@ -656,9 +654,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async dblclick(selector: string, options?: channels.FrameDblclickOptions & TimeoutOptions) {
-    await this._wrapApiCall(async () => {
-      return await this._mainFrame.dblclick(selector, options);
-    }, { title: 'Double click' });
+    await this._mainFrame.dblclick(selector, options);
   }
 
   async tap(selector: string, options?: channels.FrameTapOptions & TimeoutOptions) {

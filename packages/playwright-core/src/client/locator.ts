@@ -111,9 +111,7 @@ export class Locator implements api.Locator {
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions & TimeoutOptions = {}): Promise<void> {
-    await this._frame._wrapApiCall(async () => {
-      return await this._frame.dblclick(this._selector, { strict: true, ...options });
-    }, { title: 'Double click' });
+    await this._frame.dblclick(this._selector, { strict: true, ...options });
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}, options?: TimeoutOptions) {

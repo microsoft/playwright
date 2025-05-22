@@ -22,7 +22,6 @@ import type { StackFrame } from '@protocol/channels';
 export interface ApiCallData {
   apiName: string;
   title?: string;
-  params?: Record<string, any>;
   frames: StackFrame[];
   userData: any;
   stepId?: string;
@@ -33,7 +32,7 @@ export interface ClientInstrumentation {
   addListener(listener: ClientInstrumentationListener): void;
   removeListener(listener: ClientInstrumentationListener): void;
   removeAllListeners(): void;
-  onApiCallBegin(apiCall: ApiCallData): void;
+  onApiCallBegin(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any> }): void;
   onApiCallEnd(apiCal: ApiCallData): void;
   onWillPause(options: { keepTestTimeout: boolean }): void;
 
@@ -44,7 +43,7 @@ export interface ClientInstrumentation {
 }
 
 export interface ClientInstrumentationListener {
-  onApiCallBegin?(apiCall: ApiCallData): void;
+  onApiCallBegin?(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any>  }): void;
   onApiCallEnd?(apiCall: ApiCallData): void;
   onWillPause?(options: { keepTestTimeout: boolean }): void;
 

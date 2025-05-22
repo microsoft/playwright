@@ -154,9 +154,8 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
                 const validatedParams = validator(params, '', this._validatorToWireContext());
                 if (!apiZone.internal && !apiZone.reported) {
                   // Reporting/tracing/logging this api call for the first time.
-                  apiZone.params = params;
                   apiZone.reported = true;
-                  this._instrumentation.onApiCallBegin(apiZone);
+                  this._instrumentation.onApiCallBegin(apiZone, { type: this._type, method: prop, params });
                   logApiCall(this._platform, this._logger, `=> ${apiZone.apiName} started`);
                   return await this._connection.sendMessageToServer(this, prop, validatedParams, apiZone);
                 }
@@ -238,7 +237,6 @@ function tChannelImplToWire(names: '*' | string[], arg: any, path: string, conte
 
 type ApiZone = {
   apiName: string;
-  params?: Record<string, any>;
   frames: channels.StackFrame[];
   title?: string;
   internal?: boolean;

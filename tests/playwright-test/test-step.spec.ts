@@ -139,11 +139,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
   expect(result.output).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 test.step |outer step 1 @ a.test.ts:4
 test.step |  inner step 1.1 @ a.test.ts:5
 test.step |  inner step 1.2 @ a.test.ts:6
@@ -208,11 +208,11 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 test.step |my step @ a.test.ts:4
 hook      |After Hooks
 fixture   |  fixture: page
@@ -549,15 +549,15 @@ test.step |    in beforeAll @ a.test.ts:4
 hook      |  beforeEach hook @ a.test.ts:11
 test.step |    in beforeEach @ a.test.ts:12
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 test.step |grand @ a.test.ts:20
 test.step |  parent1 @ a.test.ts:22
 test.step |    child1 @ a.test.ts:23
-pw:api    |      page.click(body) @ a.test.ts:24
+pw:api    |      Click locator('body') @ a.test.ts:24
 test.step |  parent2 @ a.test.ts:27
 test.step |    child2 @ a.test.ts:28
 expect    |      Expect toBeVisible @ a.test.ts:29
@@ -604,14 +604,14 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
 hook      |Before Hooks
 hook      |  beforeAll hook @ a.test.ts:5
 fixture   |    fixture: browser
-pw:api    |      browserType.launch
-pw:api    |    browser.newPage @ a.test.ts:6
-pw:api    |page.setContent @ a.test.ts:15
-pw:api    |page.click(div) @ a.test.ts:16
+pw:api    |      Launch browser
+pw:api    |    Create page @ a.test.ts:6
+pw:api    |Set content @ a.test.ts:15
+pw:api    |Click locator('div') @ a.test.ts:16
 pw:api    |↪ error: Error: page.click: Target page, context or browser has been closed
 hook      |After Hooks
 hook      |  afterAll hook @ a.test.ts:9
-pw:api    |    page.close @ a.test.ts:10
+pw:api    |    Close context @ a.test.ts:10
 hook      |Worker Cleanup
 fixture   |  fixture: browser
           |Test timeout of 2000ms exceeded.
@@ -883,12 +883,12 @@ test('should not generate dupes for named expects', async ({ runInlineTest }) =>
   expect(result.output).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.setContent @ a.test.ts:4
+pw:api    |    Create page
+pw:api    |Set content @ a.test.ts:4
 expect    |Checking color @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
@@ -972,18 +972,18 @@ test('library API call inside Expect toPass', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 step      |Expect toPass @ a.test.ts:11
-pw:api    |  page.goto(about:blank) @ a.test.ts:6
+pw:api    |  Navigate to "about:blank" @ a.test.ts:6
 test.step |  inner step attempt: 0 @ a.test.ts:7
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |    Expect toBe @ a.test.ts:9
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |  page.goto(about:blank) @ a.test.ts:6
+pw:api    |  Navigate to "about:blank" @ a.test.ts:6
 test.step |  inner step attempt: 1 @ a.test.ts:7
 expect    |    Expect toBe @ a.test.ts:9
 hook      |After Hooks
@@ -1023,18 +1023,18 @@ test('library API call inside expect.poll', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 step      |Expect poll toHaveLength @ a.test.ts:14
-pw:api    |  page.goto(about:blank) @ a.test.ts:7
+pw:api    |  Navigate to "about:blank" @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    Expect toBe @ a.test.ts:10
 expect    |  Expect toHaveLength @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toHaveLength(expected)
-pw:api    |  page.goto(about:blank) @ a.test.ts:7
+pw:api    |  Navigate to "about:blank" @ a.test.ts:7
 test.step |  inner step attempt: 1 @ a.test.ts:8
 expect    |    Expect toBe @ a.test.ts:10
 expect    |  Expect toHaveLength @ a.test.ts:6
@@ -1074,12 +1074,12 @@ test('web assertion inside expect.poll', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.setContent @ a.test.ts:4
+pw:api    |    Create page
+pw:api    |Set content @ a.test.ts:4
 step      |Expect poll toBe @ a.test.ts:13
 expect    |  Expect toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
@@ -1133,11 +1133,11 @@ expect    |Expect not toBeTruthy @ a.test.ts:8
 hook      |After Hooks
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 expect    |Expect not toHaveTitle @ a.test.ts:11
 hook      |After Hooks
 fixture   |  fixture: page
@@ -1193,34 +1193,34 @@ test('should report api steps', async ({ runInlineTest, server }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 hook      |  beforeAll hook @ a.test.ts:16
-pw:api    |    browser.newPage @ a.test.ts:17
-pw:api    |    page.setContent @ a.test.ts:18
-pw:api    |page.click(button) @ a.test.ts:22
+pw:api    |    Create page @ a.test.ts:17
+pw:api    |    Set content @ a.test.ts:18
+pw:api    |Click locator('button') @ a.test.ts:22
 hook      |After Hooks
 hook      |Before Hooks
-pw:api    |page.click(button) @ a.test.ts:25
+pw:api    |Click locator('button') @ a.test.ts:25
 hook      |After Hooks
 hook      |Before Hooks
-pw:api    |locator.fill(foo) @ a.test.ts:28
+pw:api    |Fill "foo" getByRole('textbox') @ a.test.ts:28
 hook      |After Hooks
 hook      |  afterAll hook @ a.test.ts:31
-pw:api    |    page.close @ a.test.ts:32
+pw:api    |    Close context @ a.test.ts:32
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 fixture   |  fixture: request
-pw:api    |    apiRequest.newContext
-pw:api    |page.waitForNavigation @ a.test.ts:5
-pw:api    |page.goto(data:text/html,<button></button>) @ a.test.ts:6
-pw:api    |page.click(button) @ a.test.ts:8
-pw:api    |getByRole('button').click @ a.test.ts:9
-pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:10
+pw:api    |    Create request context
+pw:api    |Wait for navigation @ a.test.ts:5
+pw:api    |Navigate to "data:" @ a.test.ts:6
+pw:api    |Click locator('button') @ a.test.ts:8
+pw:api    |Click getByRole('button') @ a.test.ts:9
+pw:api    |Fetch "/empty.html" @ a.test.ts:10
 pw:api    |↪ error: <error message>
-pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:11
+pw:api    |Fetch "/empty.html" @ a.test.ts:11
 pw:api    |↪ error: <error message>
 hook      |After Hooks
 fixture   |  fixture: request
@@ -1250,13 +1250,13 @@ test('should report api step failure', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.setContent @ a.test.ts:4
-pw:api    |page.click(input) @ a.test.ts:5
+pw:api    |    Create page
+pw:api    |Set content @ a.test.ts:4
+pw:api    |Click locator('input') @ a.test.ts:5
 pw:api    |↪ error: TimeoutError: page.click: Timeout 1ms exceeded.
 hook      |After Hooks
 fixture   |  fixture: page
@@ -1287,13 +1287,13 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.setContent @ a.test.ts:4
-pw:api    |locator.evaluate(button) @ a.test.ts:6
+pw:api    |    Create page
+pw:api    |Set content @ a.test.ts:4
+pw:api    |Evaluate locator('button') @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1373,16 +1373,16 @@ test('should show tracing.group nested inside test.step', async ({ runInlineTest
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 test.step |my step 1 @ a.test.ts:4
 test.step |  my step 2 @ a.test.ts:5
-pw:api    |    my group 1 @ a.test.ts:6
-pw:api    |      my group 2 @ a.test.ts:7
-pw:api    |        page.setContent @ a.test.ts:8
+pw:api    |    Trace "my group 1" @ a.test.ts:6
+pw:api    |      Trace "my group 2" @ a.test.ts:7
+pw:api    |        Set content @ a.test.ts:8
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1423,18 +1423,18 @@ test('calls from waitForEvent callback should be under its parent step', {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.goto(${server.EMPTY_PAGE}) @ a.test.ts:4
-pw:api    |page.setContent @ a.test.ts:5
+pw:api    |    Create page
+pw:api    |Navigate to "/empty.html" @ a.test.ts:4
+pw:api    |Set content @ a.test.ts:5
 test.step |custom step @ a.test.ts:6
-pw:api    |  page.waitForResponse @ a.test.ts:7
-pw:api    |  page.click(div) @ a.test.ts:14
-pw:api    |  page.content @ a.test.ts:8
-pw:api    |  page.content @ a.test.ts:9
+pw:api    |  Wait for event "response" @ a.test.ts:7
+pw:api    |  Click locator('div') @ a.test.ts:14
+pw:api    |  Get content @ a.test.ts:8
+pw:api    |  Get content @ a.test.ts:9
 expect    |  Expect toContainText @ a.test.ts:10
 expect    |Expect toBe @ a.test.ts:18
 hook      |After Hooks
@@ -1467,12 +1467,12 @@ test('reading network request / response should not be listed as step', {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.goto(${server.EMPTY_PAGE}) @ a.test.ts:10
+pw:api    |    Create page
+pw:api    |Navigate to "/empty.html" @ a.test.ts:10
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1508,15 +1508,14 @@ test('calls from page.route callback should be under its parent step', {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
+pw:api    |    Create page
 test.step |custom step @ a.test.ts:4
-pw:api    |  page.route @ a.test.ts:5
-pw:api    |  page.goto(${server.EMPTY_PAGE}) @ a.test.ts:12
-pw:api    |  route.fetch(${server.EMPTY_PAGE}) @ a.test.ts:6
+pw:api    |  Navigate to "/empty.html" @ a.test.ts:12
+pw:api    |  Fetch "/empty.html" @ a.test.ts:6
 expect    |  Expect toBe @ a.test.ts:8
 hook      |After Hooks
 fixture   |  fixture: page
@@ -1687,30 +1686,30 @@ test('show api calls inside expects', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 fixture   |  fixture: browser
-pw:api    |    browserType.launch
+pw:api    |    Launch browser
 fixture   |  fixture: context
-pw:api    |    browser.newContext
+pw:api    |    Create context
 fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.setContent @ a.test.ts:16
+pw:api    |    Create page
+pw:api    |Set content @ a.test.ts:16
 expect    |Expect toBeInvisible @ a.test.ts:17
 step      |  Expect poll toBe @ a.test.ts:7
-pw:api    |    locator.isVisible(div) @ a.test.ts:7
+pw:api    |    Is visible locator('div') @ a.test.ts:7
 expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    locator.isVisible(div) @ a.test.ts:7
+pw:api    |    Is visible locator('div') @ a.test.ts:7
 expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    locator.isVisible(div) @ a.test.ts:7
+pw:api    |    Is visible locator('div') @ a.test.ts:7
 expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    locator.isVisible(div) @ a.test.ts:7
+pw:api    |    Is visible locator('div') @ a.test.ts:7
 expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    locator.isVisible(div) @ a.test.ts:7
+pw:api    |    Is visible locator('div') @ a.test.ts:7
 expect    |    Expect toBe @ a.test.ts:7
-pw:api    |page.waitForTimeout @ a.test.ts:18
-pw:api    |page.setContent @ a.test.ts:19
+pw:api    |Wait for timeout @ a.test.ts:18
+pw:api    |Set content @ a.test.ts:19
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context

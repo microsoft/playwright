@@ -326,7 +326,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
     /Before Hooks/,
     /beforeAll hook/,
     /fixture: browser/,
-    /browser.newPage/,
+    /Create page/,
   ]);
   latch1.open();
   await expect(
@@ -336,7 +336,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
     /Before Hooks/,
     /beforeAll hook/,
     /beforeEach hook/,
-    /browser.newPage/,
+    /Create page/,
   ]);
   latch2.open();
   await expect(

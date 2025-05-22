@@ -31,7 +31,6 @@ Metadata:
         file: string
         line: number?
         column: number?
-    apiName: string?
     title: string?
     internal: boolean?
     # Test runner step id.
@@ -1308,7 +1307,7 @@ BrowserContext:
             origin: string?
 
     setNetworkInterceptionPatterns:
-      tite: Route
+      internal: true
       parameters:
         patterns:
           type: array
@@ -1320,7 +1319,7 @@ BrowserContext:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
-      title: Route web sockets
+      internal: true
       parameters:
         patterns:
           type: array
@@ -1714,7 +1713,7 @@ Page:
           items: NameValue
 
     setNetworkInterceptionPatterns:
-      title: Route
+      internal: true
       parameters:
         patterns:
           type: array
@@ -1726,7 +1725,7 @@ Page:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
-      title: Route web sockets
+      internal: true
       parameters:
         patterns:
           type: array
@@ -3554,6 +3553,7 @@ Tracing:
         traceName: string
 
     tracingGroup:
+      title: Trace "{name}"
       parameters:
         name: string
         location:

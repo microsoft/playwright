@@ -274,7 +274,7 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /browser.newContext/,
+    /Create context/,
     /Create page/,
     /Navigate to "\/empty.html"/,
     /Get storage state/,

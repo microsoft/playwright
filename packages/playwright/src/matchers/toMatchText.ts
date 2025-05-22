@@ -36,7 +36,7 @@ export async function toMatchText(
   receiverType: string,
   query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean }>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean } = {},
+  options: { timeout?: number, matchSubstring?: boolean, receiverLabel?: string } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   expectTypes(receiver, [receiverType], matcherName);
 
@@ -71,7 +71,7 @@ export async function toMatchText(
 
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
-  const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
+  const messagePrefix = matcherHint(this, receiver, matcherName, options.receiverLabel ?? 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
 
   let printedReceived: string | undefined;

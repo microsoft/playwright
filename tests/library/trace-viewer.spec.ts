@@ -1527,7 +1527,6 @@ test('should not record route actions', {
   });
 
   await expect(traceViewer.actionTitles).toHaveText([
-    /Route/,
     /Navigate to "\/empty.html"/,
   ]);
 });

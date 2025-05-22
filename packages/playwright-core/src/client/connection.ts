@@ -138,7 +138,7 @@ export class Connection extends EventEmitter {
       this._platform.log('channel', 'SEND> ' + JSON.stringify(message));
     }
     const location = options.frames?.[0] ? { file: options.frames[0].file, line: options.frames[0].line, column: options.frames[0].column } : undefined;
-    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId, apiName: options.apiName };
+    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId };
     if (this._tracingCount && options.frames && type !== 'LocalUtils')
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: options.frames ?? [], id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise

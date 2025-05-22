@@ -1432,7 +1432,7 @@ export class Frame extends SdkObject {
 
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       await (new ProgressController(metadata, this)).run(async progress => {
-        progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
+        progress.log(`${metadata.title}${timeout ? ` with timeout ${timeout}ms` : ''}`);
         progress.log(`waiting for ${this._asLocator(selector)}`);
         await this._page.performActionPreChecks(progress);
       }, timeout);

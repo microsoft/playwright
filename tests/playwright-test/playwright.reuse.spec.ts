@@ -129,7 +129,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     'Before Hooks',
     '  beforeAll hook',
     '  fixture: browser',
-    '    browserType.launch',
+    '    Launch browser',
     '  fixture: context',
     '  fixture: page',
     '    Create page',

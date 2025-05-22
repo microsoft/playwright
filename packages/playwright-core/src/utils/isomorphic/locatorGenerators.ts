@@ -37,12 +37,12 @@ export interface LocatorFactory {
   chainLocators(locators: string[]): string;
 }
 
-export function asLocatorDescription(selector: string): string | undefined {
+export function asLocatorDescription(lang: Language, selector: string): string | undefined {
   const parsed = parseSelector(selector);
   const describe = parsed.parts.findLast(part => part.name === 'internal:describe');
   if (describe)
     return JSON.parse(describe.body as string);
-  return undefined;
+  return asLocator(lang, selector);
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
