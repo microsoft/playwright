@@ -67,7 +67,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
         context._onClose();
       }
       return await this._innerNewContext(options, true);
-    }, true);
+    }, { internal: true });
   }
 
   async _stopPendingOperations(reason: string) {
@@ -104,7 +104,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
       page._ownedContext = context;
       context._ownerPage = page;
       return page;
-    });
+    }, { title: 'Create page' });
   }
 
   isConnected(): boolean {

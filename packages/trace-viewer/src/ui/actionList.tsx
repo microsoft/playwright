@@ -19,7 +19,7 @@ import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
-import { asLocatorDescription, asLocator, type Language } from '@isomorphic/locatorGenerators';
+import { asLocator, asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
@@ -118,7 +118,7 @@ export const renderAction = (
   const { errors, warnings } = modelUtil.stats(action);
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
-  const parameterString = actionParameterDisplayString(action, sdkLanguage || 'javascript');
+  const locator = action.params.selector ? asLocatorDescription(action.params.selector) ?? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
   const isSkipped = action.class === 'Test' && action.method === 'step' && action.annotations?.some(a => a.type === 'skip');
   let time: string = '';
@@ -128,197 +128,36 @@ export const renderAction = (
     time = 'Timed out';
   else if (!isLive)
     time = '-';
-  const title = action.title ?? action.class.toLowerCase() + '.' + action.method;
-  return <>
-    <div className='action-title' title={title}>
-      <span>{title}</span>
-      {parameterString &&
-          (parameterString.type === 'locator' ? (
-            <>
-              <span className='action-parameter action-locator-parameter'>
-                {parameterString.value}
-              </span>
-              {parameterString.childDisplayString && (
-                <span className='action-parameter action-generic-parameter'>
-                  {parameterString.childDisplayString.value}
-                </span>
-              )}
-            </>
-          ) : (
-            <span className='action-parameter action-generic-parameter'>
-              {parameterString.value}
-            </span>
-          ))}
-      {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
-      {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
+  const renderedTitle = highlightQuotedText(action.title || action.method);
+  return <div className='action-title vbox'>
+    <div className='hbox'>
+      <span className='action-title-method' title={action.title || action.method}>{renderedTitle}</span>
+      {(showDuration || showBadges || showAttachments || isSkipped) && <div className='spacer'></div>}
+      {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
+      {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
+      {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
+      {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
+        {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
+        {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
+      </div>}
     </div>
-    {(showDuration || showBadges || showAttachments || isSkipped) && <div className='spacer'></div>}
-    {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
-    {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
-    {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
-    {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
-      {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
-      {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
-    </div>}
-  </>;
+    {locator && <div className='action-title-selector' title={locator}>{locator}</div>}
+  </div>;
 };
 
-function excludeOrigin(url: string): string {
-  try {
-    const urlObject = new URL(url);
-    return urlObject.pathname + urlObject.search;
-  } catch (error) {
-    return url;
+function highlightQuotedText(text: string): React.ReactNode[] {
+  const result: React.ReactNode[] = [];
+  let currentIndex = 0;
+  const regex = /("[^"]*")/g;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    const [fullMatch, quotedText] = match;
+    result.push(text.slice(currentIndex, match.index));
+    result.push(<span className='action-title-param'>{quotedText}</span>);
+    currentIndex = match.index + fullMatch.length;
   }
+  if (currentIndex < text.length)
+    result.push(text.slice(currentIndex));
+  return result;
 }
-
-type ActionParameterDisplayString =
-  | {
-      type: 'generic';
-      value: string;
-    }
-  | {
-      type: 'locator';
-      value: string;
-      childDisplayString?: ActionParameterDisplayString;
-    };
-
-const clockDisplayString = (
-  action: ActionTraceEvent,
-): ActionParameterDisplayString | undefined => {
-  switch (action.method) {
-    case 'clockPauseAt':
-    case 'clockSetFixedTime':
-    case 'clockSetSystemTime': {
-      if (
-        action.params.timeString === undefined &&
-        action.params.timeNumber === undefined
-      )
-        return undefined;
-      return {
-        type: 'generic',
-        value: new Date(
-            action.params.timeString ?? action.params.timeNumber,
-        ).toLocaleString(undefined, { timeZone: 'UTC' }),
-      };
-    }
-    case 'clockFastForward':
-    case 'clockRunFor': {
-      if (
-        action.params.ticksNumber === undefined &&
-        action.params.ticksString === undefined
-      )
-        return undefined;
-      return {
-        type: 'generic',
-        value: action.params.ticksString ?? `${action.params.ticksNumber}ms`,
-      };
-    }
-  }
-
-  return undefined;
-};
-
-const keyboardDisplayString = (
-  action: ActionTraceEvent,
-): ActionParameterDisplayString | undefined => {
-  switch (action.method) {
-    case 'press':
-    case 'keyboardPress':
-    case 'keyboardDown':
-    case 'keyboardUp': {
-      if (action.params.key === undefined)
-        return undefined;
-      return { type: 'generic', value: action.params.key };
-    }
-    case 'type':
-    case 'fill':
-    case 'keyboardType':
-    case 'keyboardInsertText': {
-      const string = action.params.text ?? action.params.value;
-      if (string === undefined)
-        return undefined;
-      return { type: 'generic', value: `"${string}"` };
-    }
-  }
-};
-
-const mouseDisplayString = (
-  action: ActionTraceEvent,
-): ActionParameterDisplayString | undefined => {
-  switch (action.method) {
-    case 'click':
-    case 'dblclick':
-    case 'mouseClick':
-    case 'mouseMove': {
-      if (action.params.x === undefined || action.params.y === undefined)
-        return undefined;
-      return {
-        type: 'generic',
-        value: `(${action.params.x}, ${action.params.y})`,
-      };
-    }
-    case 'mouseWheel': {
-      if (
-        action.params.deltaX === undefined ||
-        action.params.deltaY === undefined
-      )
-        return undefined;
-      return {
-        type: 'generic',
-        value: `(${action.params.deltaX}, ${action.params.deltaY})`,
-      };
-    }
-  }
-};
-
-const touchscreenDisplayString = (
-  action: ActionTraceEvent,
-): ActionParameterDisplayString | undefined => {
-  switch (action.method) {
-    case 'tap': {
-      if (action.params.x === undefined || action.params.y === undefined)
-        return undefined;
-      return {
-        type: 'generic',
-        value: `(${action.params.x}, ${action.params.y})`,
-      };
-    }
-  }
-};
-
-const actionParameterDisplayString = (
-  action: ActionTraceEvent,
-  sdkLanguage: Language,
-  ignoreLocator: boolean = false,
-): ActionParameterDisplayString | undefined => {
-  const params = action.params;
-
-  // Locators have many possible classes, so follow existing logic and use `selector` presence
-  if (!ignoreLocator && params.selector !== undefined) {
-    return {
-      type: 'locator',
-      value: asLocatorDescription(params.selector) ?? asLocator(sdkLanguage, params.selector),
-      childDisplayString: actionParameterDisplayString(
-          action,
-          sdkLanguage,
-          true,
-      ),
-    };
-  }
-
-  switch (action.class.toLowerCase()) {
-    case 'browsercontext':
-      return clockDisplayString(action);
-    case 'page':
-    case 'frame':
-    case 'elementhandle':
-      return (
-        keyboardDisplayString(action) ??
-        mouseDisplayString(action) ??
-        touchscreenDisplayString(action)
-      );
-  }
-
-  return undefined;
-};

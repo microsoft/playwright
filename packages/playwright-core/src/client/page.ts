@@ -203,7 +203,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
+        this._wrapApiCall(() => this._updateInterceptionPatterns(), { internal: true }).catch(() => {});
       if (handled)
         return;
     }
@@ -398,7 +398,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     } finally {
       if (remove)
         this._locatorHandlers.delete(uid);
-      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), true).catch(() => {});
+      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), { internal: true }).catch(() => {});
     }
   }
 
@@ -543,8 +543,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
-    await this._unrouteInternal(this._routes, [], options?.behavior);
-    this._disposeHarRouters();
+    await this._wrapApiCall(async () => {
+      await this._unrouteInternal(this._routes, [], options?.behavior);
+      this._disposeHarRouters();
+    }, { title: 'Unroute all' });
   }
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
@@ -654,7 +656,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async dblclick(selector: string, options?: channels.FrameDblclickOptions & TimeoutOptions) {
-    return await this._mainFrame.dblclick(selector, options);
+    await this._wrapApiCall(async () => {
+      return await this._mainFrame.dblclick(selector, options);
+    }, { title: 'Double click' });
   }
 
   async tap(selector: string, options?: channels.FrameTapOptions & TimeoutOptions) {

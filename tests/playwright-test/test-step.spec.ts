@@ -302,7 +302,7 @@ test('should report expect step locations', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output).toBe(`
 hook      |Before Hooks
-expect    |expect.toBeTruthy @ a.test.ts:4
+expect    |Expect toBeTruthy @ a.test.ts:4
 hook      |After Hooks
 `);
 });
@@ -355,8 +355,8 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toBe(`
 hook      |Before Hooks
-expect    |expect.toBeWithinRange @ a.test.ts:32
-expect    |expect.toBeFailingAsync @ a.test.ts:33
+expect    |Expect toBeWithinRange @ a.test.ts:32
+expect    |Expect toBeFailingAsync @ a.test.ts:33
 expect    |↪ error: Error: It fails!
 hook      |After Hooks
 hook      |Worker Cleanup
@@ -487,7 +487,7 @@ test.step |outer @ a.test.ts:4
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |  inner @ a.test.ts:5
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |    expect.soft.toBe @ a.test.ts:6
+expect    |    Expect soft toBe @ a.test.ts:6
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |passing @ a.test.ts:9
 hook      |After Hooks
@@ -560,7 +560,7 @@ test.step |    child1 @ a.test.ts:23
 pw:api    |      page.click(body) @ a.test.ts:24
 test.step |  parent2 @ a.test.ts:27
 test.step |    child2 @ a.test.ts:28
-expect    |      expect.toBeVisible @ a.test.ts:29
+expect    |      Expect toBeVisible @ a.test.ts:29
 hook      |After Hooks
 hook      |  afterEach hook @ a.test.ts:15
 test.step |    in afterEach @ a.test.ts:16
@@ -637,12 +637,12 @@ test('should not propagate errors from within toPass', async ({ runInlineTest })
   expect(result.exitCode).toBe(0);
   expect(result.output).toBe(`
 hook      |Before Hooks
-step      |expect.toPass @ a.test.ts:7
-expect    |  expect.toBe @ a.test.ts:6
+step      |Expect toPass @ a.test.ts:7
+expect    |  Expect toBe @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |  expect.toBe @ a.test.ts:6
+expect    |  Expect toBe @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |  expect.toBe @ a.test.ts:6
+expect    |  Expect toBe @ a.test.ts:6
 hook      |After Hooks
 `);
 });
@@ -664,9 +664,9 @@ test('should show final toPass error', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
-step      |expect.toPass @ a.test.ts:6
+step      |Expect toPass @ a.test.ts:6
 step      |↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |  expect.toBe @ a.test.ts:5
+expect    |  Expect toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 hook      |After Hooks
 hook      |Worker Cleanup
@@ -703,13 +703,13 @@ test.step |first outer @ a.test.ts:4
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |  first inner @ a.test.ts:5
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |    expect.soft.toBe @ a.test.ts:6
+expect    |    Expect soft toBe @ a.test.ts:6
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |second outer @ a.test.ts:10
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |  second inner @ a.test.ts:11
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |    expect.toBe @ a.test.ts:12
+expect    |    Expect toBe @ a.test.ts:12
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 hook      |After Hooks
 hook      |Worker Cleanup
@@ -748,13 +748,13 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |first outer @ a.test.ts:4
 test.step |  first inner @ a.test.ts:5
-expect    |    expect.toBe @ a.test.ts:7
+expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |second outer @ a.test.ts:13
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |  second inner @ a.test.ts:14
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |    expect.toBe @ a.test.ts:15
+expect    |    Expect toBe @ a.test.ts:15
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 hook      |After Hooks
 hook      |Worker Cleanup
@@ -783,7 +783,7 @@ test.step |boxed step @ a.test.ts:3
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
 test.step |    at a.test.ts:4:27
 test.step |    at a.test.ts:3:26
-expect    |  expect.toBe @ a.test.ts:4
+expect    |  Expect toBe @ a.test.ts:4
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
 expect    |      at a.test.ts:4:27
 expect    |      at a.test.ts:3:26
@@ -818,7 +818,7 @@ hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
 test.step |    at a.test.ts:8:21
-expect    |  expect.toBe @ a.test.ts:5
+expect    |  Expect toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
 expect    |      at a.test.ts:8:21
 hook      |After Hooks
@@ -851,7 +851,7 @@ hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
 test.step |    at a.test.ts:8:21
-expect    |  expect.soft.toBe @ a.test.ts:5
+expect    |  Expect soft toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
 expect    |      at a.test.ts:8:21
 hook      |After Hooks
@@ -896,7 +896,7 @@ fixture   |  fixture: context
 `);
 });
 
-test('step inside expect.toPass', async ({ runInlineTest }) => {
+test('step inside Expect toPass', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
@@ -930,21 +930,21 @@ test('step inside expect.toPass', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |step 1 @ a.test.ts:4
-step      |  expect.toPass @ a.test.ts:11
+step      |  Expect toPass @ a.test.ts:11
 test.step |    step 2, attempt: 0 @ a.test.ts:7
 test.step |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |      expect.toBe @ a.test.ts:9
+expect    |      Expect toBe @ a.test.ts:9
 expect    |      ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |    step 2, attempt: 1 @ a.test.ts:7
-expect    |      expect.toBe @ a.test.ts:9
+expect    |      Expect toBe @ a.test.ts:9
 test.step |  step 3 @ a.test.ts:12
 test.step |    step 4 @ a.test.ts:13
-expect    |      expect.toBe @ a.test.ts:14
+expect    |      Expect toBe @ a.test.ts:14
 hook      |After Hooks
 `);
 });
 
-test('library API call inside expect.toPass', async ({ runInlineTest }) => {
+test('library API call inside Expect toPass', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
@@ -977,15 +977,15 @@ fixture   |  fixture: context
 pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
-step      |expect.toPass @ a.test.ts:11
+step      |Expect toPass @ a.test.ts:11
 pw:api    |  page.goto(about:blank) @ a.test.ts:6
 test.step |  inner step attempt: 0 @ a.test.ts:7
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |    expect.toBe @ a.test.ts:9
+expect    |    Expect toBe @ a.test.ts:9
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 pw:api    |  page.goto(about:blank) @ a.test.ts:6
 test.step |  inner step attempt: 1 @ a.test.ts:7
-expect    |    expect.toBe @ a.test.ts:9
+expect    |    Expect toBe @ a.test.ts:9
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1028,16 +1028,16 @@ fixture   |  fixture: context
 pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
-step      |expect.poll.toHaveLength @ a.test.ts:14
+step      |Expect poll toHaveLength @ a.test.ts:14
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
-expect    |    expect.toBe @ a.test.ts:10
-expect    |  expect.toHaveLength @ a.test.ts:6
+expect    |    Expect toBe @ a.test.ts:10
+expect    |  Expect toHaveLength @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toHaveLength(expected)
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 1 @ a.test.ts:8
-expect    |    expect.toBe @ a.test.ts:10
-expect    |  expect.toHaveLength @ a.test.ts:6
+expect    |    Expect toBe @ a.test.ts:10
+expect    |  Expect toHaveLength @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1080,16 +1080,16 @@ pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 pw:api    |page.setContent @ a.test.ts:4
-step      |expect.poll.toBe @ a.test.ts:13
-expect    |  expect.toHaveText @ a.test.ts:7
+step      |Expect poll toBe @ a.test.ts:13
+expect    |  Expect toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
-expect    |    expect.toBeVisible @ a.test.ts:10
-expect    |  expect.toBe @ a.test.ts:6
+expect    |    Expect toBeVisible @ a.test.ts:10
+expect    |  Expect toBe @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |  expect.toHaveText @ a.test.ts:7
+expect    |  Expect toHaveText @ a.test.ts:7
 test.step |  iteration 2 @ a.test.ts:9
-expect    |    expect.toBeVisible @ a.test.ts:10
-expect    |  expect.toBe @ a.test.ts:6
+expect    |    Expect toBeVisible @ a.test.ts:10
+expect    |  Expect toBe @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1122,14 +1122,14 @@ test('should report expect steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
-expect    |expect.toBeTruthy @ a.test.ts:4
-expect    |expect.toBeTruthy @ a.test.ts:5
+expect    |Expect toBeTruthy @ a.test.ts:4
+expect    |Expect toBeTruthy @ a.test.ts:5
 expect    |↪ error: Error: expect(received).toBeTruthy()
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBeTruthy()
 hook      |Before Hooks
-expect    |expect.not.toBeTruthy @ a.test.ts:8
+expect    |Expect not toBeTruthy @ a.test.ts:8
 hook      |After Hooks
 hook      |Before Hooks
 fixture   |  fixture: browser
@@ -1138,7 +1138,7 @@ fixture   |  fixture: context
 pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
-expect    |expect.not.toHaveTitle @ a.test.ts:11
+expect    |Expect not toHaveTitle @ a.test.ts:11
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1435,8 +1435,8 @@ pw:api    |  page.waitForResponse @ a.test.ts:7
 pw:api    |  page.click(div) @ a.test.ts:14
 pw:api    |  page.content @ a.test.ts:8
 pw:api    |  page.content @ a.test.ts:9
-expect    |  expect.toContainText @ a.test.ts:10
-expect    |expect.toBe @ a.test.ts:18
+expect    |  Expect toContainText @ a.test.ts:10
+expect    |Expect toBe @ a.test.ts:18
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1517,7 +1517,7 @@ test.step |custom step @ a.test.ts:4
 pw:api    |  page.route @ a.test.ts:5
 pw:api    |  page.goto(${server.EMPTY_PAGE}) @ a.test.ts:12
 pw:api    |  route.fetch(${server.EMPTY_PAGE}) @ a.test.ts:6
-expect    |  expect.toBe @ a.test.ts:8
+expect    |  Expect toBe @ a.test.ts:8
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1557,7 +1557,7 @@ test.step |outer step 1 @ a.test.ts:4 (skipped)
 test.step |outer step 2 @ a.test.ts:11
 test.step |  inner step 2.1 @ a.test.ts:12 (skipped)
 test.step |  inner step 2.2 @ a.test.ts:13
-expect    |    expect.toBe @ a.test.ts:14
+expect    |    Expect toBe @ a.test.ts:14
 hook      |After Hooks
 `);
 });
@@ -1586,7 +1586,7 @@ test('skip test.step.skip body', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |outer step 2 @ a.test.ts:5
 test.step |  inner step 2 @ a.test.ts:6 (skipped)
-expect    |expect.toBe @ a.test.ts:10
+expect    |Expect toBe @ a.test.ts:10
 hook      |After Hooks
 `);
 });
@@ -1629,7 +1629,7 @@ test.step |  inner step 1.3 @ a.test.ts:11
 test.step |outer step 2 @ a.test.ts:13
 test.step |  inner step 2.1 @ a.test.ts:14 (skipped)
 test.step |  inner step 2.2 @ a.test.ts:15
-expect    |    expect.toBe @ a.test.ts:16
+expect    |    Expect toBe @ a.test.ts:16
 hook      |After Hooks
 `);
 });
@@ -1693,22 +1693,22 @@ pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 pw:api    |page.setContent @ a.test.ts:16
-expect    |expect.toBeInvisible @ a.test.ts:17
-step      |  expect.poll.toBe @ a.test.ts:7
+expect    |Expect toBeInvisible @ a.test.ts:17
+step      |  Expect poll toBe @ a.test.ts:7
 pw:api    |    locator.isVisible(div) @ a.test.ts:7
-expect    |    expect.toBe @ a.test.ts:7
+expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 pw:api    |    locator.isVisible(div) @ a.test.ts:7
-expect    |    expect.toBe @ a.test.ts:7
+expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 pw:api    |    locator.isVisible(div) @ a.test.ts:7
-expect    |    expect.toBe @ a.test.ts:7
+expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 pw:api    |    locator.isVisible(div) @ a.test.ts:7
-expect    |    expect.toBe @ a.test.ts:7
+expect    |    Expect toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 pw:api    |    locator.isVisible(div) @ a.test.ts:7
-expect    |    expect.toBe @ a.test.ts:7
+expect    |    Expect toBe @ a.test.ts:7
 pw:api    |page.waitForTimeout @ a.test.ts:18
 pw:api    |page.setContent @ a.test.ts:19
 hook      |After Hooks

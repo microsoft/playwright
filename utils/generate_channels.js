@@ -277,12 +277,15 @@ for (const [name, item] of Object.entries(protocol)) {
       if (method === null)
         method = {};
 
-      const internalProp = method.internal ? ` internal: ${method.internal},` : '';
-      const titleProp = method.title ? ` title: '${method.title}',` : '';
-      const slowMoProp = method.flags?.slowMo ? ` slowMo: ${method.flags.slowMo},` : '';
-      const snapshotProp = method.flags?.snapshot ? ` snapshot: ${method.flags.snapshot},` : '';
-      const pauseProp = method.flags?.pausesBeforeInput ? ` pausesBeforeInput: ${method.flags.pausesBeforeInput},` : '';
-      methodMetainfo.push(`['${name + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp} }]`);
+
+      for (const className of [name, ...(derivedClasses.get(name) || [])]) {
+        const internalProp = method.internal ? ` internal: ${method.internal},` : '';
+        const titleProp = method.title ? ` title: '${method.title}',` : '';
+        const slowMoProp = method.flags?.slowMo ? ` slowMo: ${method.flags.slowMo},` : '';
+        const snapshotProp = method.flags?.snapshot ? ` snapshot: ${method.flags.snapshot},` : '';
+        const pauseProp = method.flags?.pausesBeforeInput ? ` pausesBeforeInput: ${method.flags.pausesBeforeInput},` : '';
+        methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp} }]`);
+      }
 
       const parameters = objectType(method.parameters || {}, '');
       const paramsName = `${channelName}${titleCase(methodName)}Params`;

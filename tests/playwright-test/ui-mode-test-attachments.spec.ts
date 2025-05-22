@@ -91,7 +91,7 @@ test('should contain string attachment', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
-  await page.getByText('attach "note"', { exact: true }).click();
+  await page.getByText('note', { exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('.expandable-title', { hasText: 'note' }).getByRole('link').click();
   const download = await downloadPromise;

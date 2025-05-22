@@ -40,10 +40,10 @@ test('should merge trace events', async ({ runUITest }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
-    /expect.toBe[\d.]+m?s/,
-    /locator.clickgetByRole\('button'\)[\d.]+m?s/,
-    /expect.toBe[\d.]+m?s/,
+    /Set content/,
+    /Expect toBe/,
+    /Click.*getByRole/,
+    /Expect toBe/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
@@ -67,8 +67,8 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
-    /expect.toBeVisiblelocator\('button'\)[\d.]+m?s/,
+    /Set content/,
+    /Expect toBeVisible.*locator/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
@@ -92,8 +92,8 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
-    /expect.toHaveScreenshot[\d.]+m?s/,
+    /Set content/,
+    /Expect toHaveScreenshot[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
     /Worker Cleanup[\d.]+m?s/,
   ]);
@@ -110,7 +110,7 @@ test('should locate sync assertions in source', async ({ runUITest }) => {
   });
 
   await page.getByText('trace test').dblclick();
-  await page.getByText('expect.toBe').click();
+  await page.getByText('EXPECT toBe').click();
 
   await expect(
       page.locator('.CodeMirror .source-line-running'),
@@ -138,9 +138,9 @@ test('should show snapshots for sync assertions', async ({ runUITest }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page\.setContent[\d.]+m?s/,
-    /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
-    /expect\.toBe[\d.]+m?s/,
+    /Set content/,
+    /Click.*getByRole/,
+    /Expect toBe/,
     /After Hooks[\d.]+m?s/,
   ]);
 
@@ -274,10 +274,10 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /browser.newContext[\d.]+m?s/,
-    /browserContext.newPage[\d.]+m?s/,
-    /page.goto/,
-    /browserContext.storageState[\d.]+m?s/,
+    /browser.newContext/,
+    /Create page/,
+    /Navigate to "\/empty.html"/,
+    /Get storage state/,
     /After Hooks/,
   ]);
 });
@@ -301,8 +301,8 @@ test('should not show caught errors in the errors tab', async ({ runUITest }, te
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.setContent/,
-    /expect.toBeCheckedlocator.*[\d.]+m?s/,
+    /Set content/,
+    /Expect toBeChecked.*locator/,
     /After Hooks/,
   ]);
 
@@ -414,9 +414,9 @@ test('should work behind reverse proxy', { annotation: { type: 'issue', descript
   await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks \\d+[hmsp]+/
-      - treeitem /page\\.setContent \\d+[hmsp]+/
-      - treeitem /locator\\.clickgetByRole\\('button'\\) \\d+[hmsp]+/
-      - treeitem /expect\\.toBe \\d+[hmsp]+/ [selected]
+      - treeitem /Set content \\d+[hmsp]+/
+      - treeitem /Click.*getByRole/
+      - treeitem /Expect toBe/
       - treeitem /After Hooks \\d+[hmsp]+/
   `);
 
@@ -440,12 +440,12 @@ test('should filter actions tab on double-click', async ({ runUITest, server }) 
   const actionsTree = page.getByTestId('actions-tree');
   await expect(actionsTree.getByRole('treeitem')).toHaveText([
     /Before Hooks/,
-    /page.goto/,
+    /Navigate to "\/empty.html"/,
     /After Hooks/,
   ]);
-  await actionsTree.getByRole('treeitem', { name: 'page.goto' }).dblclick();
+  await actionsTree.getByRole('treeitem', { name: 'Navigate to "\/empty.html"' }).dblclick();
   await expect(actionsTree.getByRole('treeitem')).toHaveText([
-    /page.goto/,
+    /Navigate to "\/empty.html"/,
   ]);
 });
 

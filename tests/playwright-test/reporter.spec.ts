@@ -480,7 +480,7 @@ var import_test = __toModule(require("@playwright/test"));
 onBegin: 1 tests total
 onTestBegin:  > a.spec.js > test; retry #0
 onStepEnd: Before Hooks
-onStepEnd: expect.toBe
+onStepEnd: Expect toBe
   error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
   ======
     3 |           test('test', async () => {

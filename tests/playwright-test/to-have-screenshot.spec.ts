@@ -263,8 +263,8 @@ test('should report toHaveScreenshot step with expectation name in title', async
     `end browserContext.newPage`,
     `end fixture: page`,
     `end Before Hooks`,
-    `end expect.toHaveScreenshot(foo.png)`,
-    `end expect.toHaveScreenshot(is-a-test-1.png)`,
+    `end Expect toHaveScreenshot(foo.png)`,
+    `end Expect toHaveScreenshot(is-a-test-1.png)`,
     `end fixture: page`,
     `end fixture: context`,
     `end After Hooks`,
@@ -700,7 +700,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
   }, { reporter: '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.outputLines).toEqual(['expect.toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
+  expect(result.outputLines).toEqual(['Expect toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
 });
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
@@ -785,7 +785,7 @@ test('should respect config.snapshotPathTemplate and sanitize the name', {
   expect(result.passed).toBe(1);
 });
 
-test('should respect config.expect.toHaveScreenshot.pathTemplate', async ({ runInlineTest }, testInfo) => {
+test('should respect config.EXPECT toHaveScreenshot.pathTemplate', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',

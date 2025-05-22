@@ -33,6 +33,7 @@ scheme.Metadata = tObject({
     column: tOptional(tNumber),
   })),
   apiName: tOptional(tString),
+  title: tOptional(tString),
   internal: tOptional(tBoolean),
   stepId: tOptional(tString),
 });

@@ -709,7 +709,10 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   // Check that trace loads.
   await page.locator('.test-file-test').filter({ hasText: /failing 1/ }).getByRole('link', { name: 'View Trace' }).click();
   await expect(page).toHaveTitle('Playwright Trace Viewer');
-  await expect(page.getByTestId('actions-tree').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /Expect toBe \\d+[hmsp]+/ [selected]
+  `);
 });
 
 test('resource names should not clash between runs', async ({ runInlineTest, showReport, mergeReports, page }) => {
@@ -1207,15 +1210,15 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
 
   await page.getByText('Before Hooks').click();
   await page.getByText('beforeAll hook').click();
-  await expect(page.getByText('expect.toBe')).toBeVisible();
+  await expect(page.getByText('EXPECT toBe')).toBeVisible();
   // Collapse hooks.
   await page.getByText('Before Hooks').click();
-  await expect(page.getByText('expect.toBe')).not.toBeVisible();
+  await expect(page.getByText('EXPECT toBe')).not.toBeVisible();
 
   // Check that 'my step' location is relative.
   await expect(page.getByText('— tests/a.test.js:7')).toBeVisible();
   await page.getByText('my step').click();
-  await expect(page.getByText('expect.toBe')).toBeVisible();
+  await expect(page.getByText('EXPECT toBe')).toBeVisible();
 });
 
 test('support fileName option', async ({ runInlineTest, mergeReports }) => {

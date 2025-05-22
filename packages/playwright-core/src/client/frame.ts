@@ -157,7 +157,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       const response = request ? await waiter.waitForPromise(request._finalRequest()._internalResponse()) : null;
       waiter.dispose();
       return response;
-    });
+    }, { title: 'Wait for navigation' });
   }
 
   async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
@@ -173,7 +173,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
         });
       }
       waiter.dispose();
-    });
+    }, { title: `Wait for load state "${state}"` });
   }
 
   async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {

@@ -131,7 +131,7 @@ function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolea
 
 function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
   // Don't stop on internal.
-  if (!metadata.apiName)
+  if (!metadata.apiName || metadata.internal)
     return false;
   // Always stop on 'close'
   if (metadata.method === 'close')
@@ -142,6 +142,8 @@ function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
   // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
   // since we stop in them on a separate instrumentation signal.
   const metainfo = methodMetainfo.get(step);
+  if (metainfo?.internal)
+    return false;
   return !!metainfo?.snapshot && !metainfo.pausesBeforeInput;
 }
 
