@@ -195,10 +195,6 @@ export interface Locator {
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
 }
 
-export interface ConsoleMessage {
-  type(): 'log'|'debug'|'info'|'error'|'warning'|'dir'|'dirxml'|'table'|'trace'|'clear'|'startGroup'|'startGroupCollapsed'|'endGroup'|'assert'|'profile'|'profileEnd'|'count'|'timeEnd';
-}
-
 export interface BrowserType<Unused = {}> {
   connectOverCDP(endpointURL: string, options?: ConnectOverCDPOptions): Promise<Browser>;
   /**
