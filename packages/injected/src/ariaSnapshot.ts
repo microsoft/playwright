@@ -39,10 +39,15 @@ export type AriaSnapshot = {
   elements: Map<string, Element>;
 };
 
-export interface AriaMatchEntry {
-  templateLineNumber: number | undefined; // Line number from the original template string
-  ariaNodeDFSIndex: number; // DFS index in the live ARIA tree
-}
+export type AriaMatchEntry = {
+  templateLineNumber: number | undefined;
+  actualLineNumber: number;
+};
+
+type InternalMatchEntry = {
+  templateLineNumber: number | undefined;
+  node: AriaNode | string;
+};
 
 export interface AriaMatch {
   templateLineNumber?: number;
@@ -310,25 +315,36 @@ export type MatcherReceived = {
 
 export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
   const snapshot = generateAriaTree(rootElement);
-  const matchEntries: AriaMatchEntry[] = [];
-  const dfsIndexState = { currentIndex: 0 };
+  const internalMatchEntries: InternalMatchEntry[] = [];
   console.log('matchesAriaTree');
-  const matches = matchesNodeDeep(snapshot.root, template, false, false, matchEntries, dfsIndexState);
+  const matches = matchesNodeDeep(snapshot.root, template, false, false, internalMatchEntries);
+  console.log('allmatches', internalMatchEntries);
+  const rawTree = renderAriaTree(snapshot, { mode: 'raw' });
+  const matchEntries = internalMatchEntries.flatMap(entry => {
+    const index = rawTree.findIndex(({ ariaNode }) => ariaNode === entry.node);
+    if (index !== -1) {
+      return {
+        templateLineNumber: entry.templateLineNumber !== undefined ? entry.templateLineNumber - 1 : undefined,
+        actualLineNumber: index
+      };
+    } else {
+      return [];
+    }
+  });
   return {
     matches,
     received: {
       matchEntries,
-      raw: renderAriaTree(snapshot, { mode: 'raw' }),
-      regex: renderAriaTree(snapshot, { mode: 'regex' }),
+      raw: rawTree.map(({ line }) => line).join('\n'),
+      regex: renderAriaTree(snapshot, { mode: 'regex' }).map(({ line }) => line).join('\n'),
     }
   };
 }
 
 export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
   const root = generateAriaTree(rootElement).root;
-  const matchEntries: AriaMatchEntry[] = []; // Required for matchesNodeDeep signature
-  const dfsIndexState = { currentIndex: 0 }; // Required for matchesNodeDeep signature
-  const matches = matchesNodeDeep(root, template, true, false, matchEntries, dfsIndexState);
+  const matchEntries: InternalMatchEntry[] = []; // Required for matchesNodeDeep signature
+  const matches = matchesNodeDeep(root, template, true, false, matchEntries);
   return matches.map(n => n.element);
 }
 
@@ -336,18 +352,16 @@ function matchesNode(
   node: AriaNode | string,
   template: AriaTemplateNode,
   isDeepEqual: boolean,
-  matchEntriesCollector: AriaMatchEntry[],
-  dfsIndexState: { currentIndex: number },
-  currentAriaNodeDFSIndex?: number
+  matchEntriesCollector: InternalMatchEntry[],
 ): boolean {
-  console.log('matchesNode', node, template, dfsIndexState.currentIndex, currentAriaNodeDFSIndex);
+  console.log('matchesNode', node, template);
   if (typeof node === 'string' && template.kind === 'text') {
     const didMatch = matchesTextNode(node, template);
-    if (didMatch && currentAriaNodeDFSIndex !== undefined) {
-      console.log('Matching', template.lineNumber, currentAriaNodeDFSIndex);
+    if (didMatch) {
+      console.log('Matching', template.lineNumber);
       matchEntriesCollector.push({
         templateLineNumber: template.lineNumber,
-        ariaNodeDFSIndex: currentAriaNodeDFSIndex,
+        node
       });
     }
     return didMatch;
@@ -378,19 +392,19 @@ function matchesNode(
   let childrenMatch: boolean;
   // Proceed based on the container mode.
   if (template.containerMode === 'contain')
-    childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector, dfsIndexState);
+    childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector);
   else if (template.containerMode === 'equal')
-    childrenMatch = listEqual(node.children || [], template.children || [], false, matchEntriesCollector, dfsIndexState);
+    childrenMatch = listEqual(node.children || [], template.children || [], false, matchEntriesCollector);
   else if (template.containerMode === 'deep-equal' || isDeepEqual)
-    childrenMatch = listEqual(node.children || [], template.children || [], true, matchEntriesCollector, dfsIndexState);
+    childrenMatch = listEqual(node.children || [], template.children || [], true, matchEntriesCollector);
   else
-    childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector, dfsIndexState);
+    childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector);
 
-  if (childrenMatch && currentAriaNodeDFSIndex !== undefined) {
-    console.log('Matching', template.lineNumber, currentAriaNodeDFSIndex);
+  if (childrenMatch) {
+    console.log('Matching', template.lineNumber);
     matchEntriesCollector.push({
       templateLineNumber: template.lineNumber,
-      ariaNodeDFSIndex: currentAriaNodeDFSIndex,
+      node
     });
   }
   return childrenMatch;
@@ -400,20 +414,18 @@ function listEqual(
   children: (AriaNode | string)[],
   template: AriaTemplateNode[],
   isDeepEqual: boolean,
-  matchEntriesCollector: AriaMatchEntry[],
-  dfsIndexState: { currentIndex: number }
+  matchEntriesCollector: InternalMatchEntry[],
 ): boolean {
   if (template.length !== children.length)
     return false;
   for (let i = 0; i < template.length; ++i) {
-    const childDFSIndex = dfsIndexState.currentIndex++;
-    if (!matchesNode(children[i], template[i], isDeepEqual, matchEntriesCollector, dfsIndexState, childDFSIndex))
+    if (!matchesNode(children[i], template[i], isDeepEqual, matchEntriesCollector))
       return false;
   }
   return true;
 }
 
-function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], matchEntriesCollector: AriaMatchEntry[], dfsIndexState: { currentIndex: number }): boolean {
+function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], matchEntriesCollector: InternalMatchEntry[]): boolean {
   // if (template.length > children.length)
   //   return false;
   console.log('containsList', children, template);
@@ -422,8 +434,7 @@ function containsList(children: (AriaNode | string)[], template: AriaTemplateNod
   for (const t of tt) {
     let c = cc.shift();
     while (c) {
-      const childDFSIndex = dfsIndexState ? dfsIndexState.currentIndex++ : -1;
-      if (matchesNode(c, t, false, matchEntriesCollector, dfsIndexState, childDFSIndex))
+      if (matchesNode(c, t, false, matchEntriesCollector))
         break;
       c = cc.shift();
     }
@@ -438,13 +449,11 @@ function matchesNodeDeep(
   template: AriaTemplateNode,
   collectAll: boolean,
   isDeepEqual: boolean,
-  matchEntriesCollector: AriaMatchEntry[],
-  dfsIndexState: { currentIndex: number }
+  matchEntriesCollector: InternalMatchEntry[],
 ): AriaNode[] {
   const results: AriaNode[] = [];
   const visit = (node: AriaNode | string, parent: AriaNode | null): boolean => {
-    const currentDFSIndex = dfsIndexState.currentIndex++;
-    if (matchesNode(node, template, isDeepEqual, matchEntriesCollector, dfsIndexState, currentDFSIndex)) {
+    if (matchesNode(node, template, isDeepEqual, matchEntriesCollector)) {
       const result = typeof node === 'string' ? parent : node;
       if (result)
         results.push(result);
@@ -462,8 +471,8 @@ function matchesNodeDeep(
   return results;
 }
 
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'raw' | 'regex', forAI?: boolean }): string {
-  const lines: string[] = [];
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'raw' | 'regex', forAI?: boolean }): Array<{ ariaNode: AriaNode | string, line: string }> {
+  const lines: Array<{ ariaNode: AriaNode | string, line: string }> = [];
   const includeText = options?.mode === 'regex' ? textContributesInfo : () => true;
   const renderString = options?.mode === 'regex' ? convertToBestGuessRegex : (str: string) => str;
   const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string) => {
@@ -472,7 +481,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
         return;
       const text = yamlEscapeValueIfNeeded(renderString(ariaNode));
       if (text)
-        lines.push(indent + '- text: ' + text);
+        lines.push({ ariaNode, line: indent + '- text: ' + text });
       return;
     }
 
@@ -511,17 +520,17 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
     const hasProps = !!Object.keys(ariaNode.props).length;
     if (!ariaNode.children.length && !hasProps) {
-      lines.push(escapedKey);
+      lines.push({ ariaNode, line: escapedKey });
     } else if (ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' && !hasProps) {
       const text = includeText(ariaNode, ariaNode.children[0]) ? renderString(ariaNode.children[0] as string) : null;
       if (text)
-        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(text));
+        lines.push({ ariaNode, line: escapedKey + ': ' + yamlEscapeValueIfNeeded(text) });
       else
-        lines.push(escapedKey);
+        lines.push({ ariaNode, line: escapedKey });
     } else {
-      lines.push(escapedKey + ':');
+      lines.push({ ariaNode, line: escapedKey + ':' });
       for (const [name, value] of Object.entries(ariaNode.props))
-        lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
+        lines.push({ ariaNode, line: indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value) });
       for (const child of ariaNode.children || [])
         visit(child, ariaNode, indent + '  ');
     }
@@ -535,7 +544,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
   } else {
     visit(ariaNode, null, '');
   }
-  return lines.join('\n');
+  return lines;
 }
 
 function convertToBestGuessRegex(text: string): string {

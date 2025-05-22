@@ -155,13 +155,13 @@ export async function toMatchAriaSnapshot(
   //     }
   //   }
   // }
-  for (const entry of typedReceived.matchEntries) {
-    if (entry.templateLineNumber === undefined) {
-      console.log(`No template line number for ${entry.ariaNodeDFSIndex}`);
+  for (const { templateLineNumber, actualLineNumber } of typedReceived.matchEntries) {
+    if (templateLineNumber === undefined) {
+      console.log(`No template line number for ${actualLineNumber}`);
       continue;
     }
-    console.log(`Copying "${actualLines[entry.ariaNodeDFSIndex - 1]}" to ${expectedLines[entry.templateLineNumber - 1]}`);
-    expectedLines[entry.templateLineNumber - 1] = actualLines[entry.ariaNodeDFSIndex - 1];
+    console.log(`Copying "${actualLines[actualLineNumber]}" to ${expectedLines[templateLineNumber]}`);
+    expectedLines[templateLineNumber] = actualLines[actualLineNumber];
   }
 
   const receivedText = actualLines.join('\n');
