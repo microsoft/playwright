@@ -26,6 +26,8 @@ import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
+import { methodMetainfo } from '@isomorphic/protocolMetainfo';
+import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -128,10 +130,10 @@ export const renderAction = (
     time = 'Timed out';
   else if (!isLive)
     time = '-';
-  const renderedTitle = highlightQuotedText(action.title || action.method);
+  const { elements, title } = renderTitleForCall(action);
   return <div className='action-title vbox'>
     <div className='hbox'>
-      <span className='action-title-method' title={action.title || action.method}>{renderedTitle}</span>
+      <span className='action-title-method' title={title}>{elements}</span>
       {(showDuration || showBadges || showAttachments || isSkipped) && <div className='spacer'></div>}
       {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
       {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
@@ -145,19 +147,33 @@ export const renderAction = (
   </div>;
 };
 
-function highlightQuotedText(text: string): React.ReactNode[] {
-  const result: React.ReactNode[] = [];
+export function renderTitleForCall(action: ActionTraceEvent): { elements: React.ReactNode[], title: string } {
+  const titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method;
+
+  const elements: React.ReactNode[] = [];
+  const title: string[] = [];
   let currentIndex = 0;
-  const regex = /("[^"]*")/g;
+  const regex = /\{([^}]+)\}/g;
   let match;
 
-  while ((match = regex.exec(text)) !== null) {
+  while ((match = regex.exec(titleFormat)) !== null) {
     const [fullMatch, quotedText] = match;
-    result.push(text.slice(currentIndex, match.index));
-    result.push(<span className='action-title-param'>{quotedText}</span>);
+    const chunk = titleFormat.slice(currentIndex, match.index);
+
+    elements.push(chunk);
+    title.push(chunk);
+
+    const param = formatProtocolParam(action.params, quotedText);
+    elements.push(<span className='action-title-param'>{param}</span>);
+    title.push(param);
     currentIndex = match.index + fullMatch.length;
   }
-  if (currentIndex < text.length)
-    result.push(text.slice(currentIndex));
-  return result;
+
+  if (currentIndex < titleFormat.length) {
+    const chunk = titleFormat.slice(currentIndex);
+    elements.push(chunk);
+    title.push(chunk);
+  }
+
+  return { elements, title: title.join('') };
 }

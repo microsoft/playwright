@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, methodMetainfo, asLocatorDescription, formatProtocolParam } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
@@ -758,8 +758,7 @@ class ArtifactsRecorder {
 }
 
 function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
-  const titleFormat = title ?? methodMetainfo.get(type + '.' + method)?.title ?? method;
-  const prefix = titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => formatProtocolParam(params, p1));
+  const prefix = renderTitleForCall({ title, type, method, params });
   let selector;
   if (params?.['selector'])
     selector = asLocatorDescription('javascript', params.selector);

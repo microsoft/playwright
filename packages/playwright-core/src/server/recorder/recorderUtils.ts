@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
+
 import type { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
@@ -25,7 +27,7 @@ export function buildFullSelector(framePath: string[], selector: string) {
 }
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
-  const title = metadata.title;
+  const title = renderTitleForCall(metadata);
   if (metadata.error)
     status = 'error';
   const params = {
