@@ -16253,6 +16253,75 @@ export const _android: Android;
 export const _bidiChromium: BrowserType;
 export const _bidiFirefox: BrowserType;
 
+/**
+ * [ConsoleMessage](https://playwright.dev/docs/api/class-consolemessage) objects are dispatched by page via the
+ * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console message
+ * logged in the page there will be corresponding event in the Playwright context.
+ *
+ * ```js
+ * // Listen for all console logs
+ * page.on('console', msg => console.log(msg.text()));
+ *
+ * // Listen for all console events and handle errors
+ * page.on('console', msg => {
+ *   if (msg.type() === 'error')
+ *     console.log(`Error text: "${msg.text()}"`);
+ * });
+ *
+ * // Get the next console log
+ * const msgPromise = page.waitForEvent('console');
+ * await page.evaluate(() => {
+ *   console.log('hello', 42, { foo: 'bar' });  // Issue console.log inside the page
+ * });
+ * const msg = await msgPromise;
+ *
+ * // Deconstruct console log arguments
+ * await msg.args()[0].jsonValue(); // hello
+ * await msg.args()[1].jsonValue(); // 42
+ * ```
+ *
+ */
+export interface ConsoleMessage {
+  /**
+   * One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
+   * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`,
+   * `'profileEnd'`, `'count'`, `'timeEnd'`.
+   */
+  type(): 'log'|'debug'|'info'|'error'|'warning'|'dir'|'dirxml'|'table'|'trace'|'clear'|'startGroup'|'startGroupCollapsed'|'endGroup'|'assert'|'profile'|'profileEnd'|'count'|'timeEnd';
+  /**
+   * List of arguments passed to a `console` function call. See also
+   * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console).
+   */
+  args(): Array<JSHandle>;
+
+  location(): {
+    /**
+     * URL of the resource.
+     */
+    url: string;
+
+    /**
+     * 0-based line number in the resource.
+     */
+    lineNumber: number;
+
+    /**
+     * 0-based column number in the resource.
+     */
+    columnNumber: number;
+  };
+
+  /**
+   * The page that produced this console message, if any.
+   */
+  page(): null|Page;
+
+  /**
+   * The text of the console message.
+   */
+  text(): string;
+}
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
@@ -18769,76 +18838,6 @@ export interface Clock {
    * @param time Time to be set in milliseconds.
    */
   setSystemTime(time: number|string|Date): Promise<void>;
-}
-
-/**
- * [ConsoleMessage](https://playwright.dev/docs/api/class-consolemessage) objects are dispatched by page via the
- * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console message
- * logged in the page there will be corresponding event in the Playwright context.
- *
- * ```js
- * // Listen for all console logs
- * page.on('console', msg => console.log(msg.text()));
- *
- * // Listen for all console events and handle errors
- * page.on('console', msg => {
- *   if (msg.type() === 'error')
- *     console.log(`Error text: "${msg.text()}"`);
- * });
- *
- * // Get the next console log
- * const msgPromise = page.waitForEvent('console');
- * await page.evaluate(() => {
- *   console.log('hello', 42, { foo: 'bar' });  // Issue console.log inside the page
- * });
- * const msg = await msgPromise;
- *
- * // Deconstruct console log arguments
- * await msg.args()[0].jsonValue(); // hello
- * await msg.args()[1].jsonValue(); // 42
- * ```
- *
- */
-export interface ConsoleMessage {
-  /**
-   * List of arguments passed to a `console` function call. See also
-   * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console).
-   */
-  args(): Array<JSHandle>;
-
-  location(): {
-    /**
-     * URL of the resource.
-     */
-    url: string;
-
-    /**
-     * 0-based line number in the resource.
-     */
-    lineNumber: number;
-
-    /**
-     * 0-based column number in the resource.
-     */
-    columnNumber: number;
-  };
-
-  /**
-   * The page that produced this console message, if any.
-   */
-  page(): null|Page;
-
-  /**
-   * The text of the console message.
-   */
-  text(): string;
-
-  /**
-   * One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
-   * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`,
-   * `'profileEnd'`, `'count'`, `'timeEnd'`.
-   */
-  type(): string;
 }
 
 /**

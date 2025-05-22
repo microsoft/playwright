@@ -384,5 +384,9 @@ export const _android: Android;
 export const _bidiChromium: BrowserType;
 export const _bidiFirefox: BrowserType;
 
+export interface ConsoleMessage {
+  type(): 'log'|'debug'|'info'|'error'|'warning'|'dir'|'dirxml'|'table'|'trace'|'clear'|'startGroup'|'startGroupCollapsed'|'endGroup'|'assert'|'profile'|'profileEnd'|'count'|'timeEnd';
+}
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
