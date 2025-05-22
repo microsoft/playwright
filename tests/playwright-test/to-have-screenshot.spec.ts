@@ -50,7 +50,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Timeout 2000ms exceeded`);
-  expect(result.output).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
+  expect(result.output).toContain(`Expect toHaveScreenshot with timeout 2000ms`);
   expect(result.output).toContain(`generating new stable screenshot expectation`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
@@ -256,11 +256,11 @@ test('should report toHaveScreenshot step with expectation name in title', async
 
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
-    `end browserType.launch`,
+    `end Launch browser`,
     `end fixture: browser`,
-    `end browser.newContext`,
+    `end Create context`,
     `end fixture: context`,
-    `end browserContext.newPage`,
+    `end Create page`,
     `end fixture: page`,
     `end Before Hooks`,
     `end Expect toHaveScreenshot(foo.png)`,
@@ -389,7 +389,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Timeout 2000ms exceeded`);
-  expect(result.output).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
+  expect(result.output).toContain(`Expect toHaveScreenshot with timeout 2000ms`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);

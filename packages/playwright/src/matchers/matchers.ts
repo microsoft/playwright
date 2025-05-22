@@ -405,7 +405,7 @@ export function toHaveTitle(
   return toMatchText.call(this, 'toHaveTitle', locator, 'Locator', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await locator._expect('to.have.title', { expectedText, isNot, timeout });
-  }, expected, options);
+  }, expected, { receiverLabel: 'page', ...options });
 }
 
 export function toHaveURL(

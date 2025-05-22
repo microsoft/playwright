@@ -172,7 +172,7 @@ for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
       const data = fs.readFileSync(snapshotOutputPath);
       expect(data.toString()).toBe('- heading "New content" [level=1]');
     } else {
-      expect(result.output).toContain(`expect.toMatchAriaSnapshot`);
+      expect(result.output).toContain(`Expect toMatchAriaSnapshot`);
     }
   });
 }

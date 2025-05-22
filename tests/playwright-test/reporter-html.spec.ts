@@ -2972,7 +2972,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'sample' }).click();
       await expect(page.locator('body')).toMatchAriaSnapshot(`
-        - treeitem "click \\\"Click me\\\""
+        - treeitem "Click Click me"
       `);
     });
   });

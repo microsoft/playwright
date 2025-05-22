@@ -216,7 +216,7 @@ test('should record trace', async ({ runInlineTest }) => {
   expect(trace.titles).toEqual([
     'Before Hooks',
     'fixture: context',
-    'browser.newContext',
+    'Create context',
     'fixture: page',
     'Create page',
     'Expect toBe',

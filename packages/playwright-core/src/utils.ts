@@ -52,4 +52,7 @@ export * from './server/utils/wsServer';
 export * from './server/utils/zipFile';
 export * from './server/utils/zones';
 
+export * from './protocol/debug';
+export * from './protocol/formatter';
+
 export { colors } from './utilsBundle';

@@ -84,7 +84,6 @@ test('should use the correct title for event driven callbacks', async ({ context
   const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
   expect(actions).toEqual([
-    'Route',
     'Navigate to "/empty.html"',
     'Navigate to "/grid.html"',
     'Evaluate',

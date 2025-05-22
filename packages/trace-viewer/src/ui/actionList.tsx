@@ -19,7 +19,7 @@ import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
-import { asLocator, asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
+import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
@@ -118,7 +118,7 @@ export const renderAction = (
   const { errors, warnings } = modelUtil.stats(action);
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
-  const locator = action.params.selector ? asLocatorDescription(action.params.selector) ?? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
+  const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
   const isSkipped = action.class === 'Test' && action.method === 'step' && action.annotations?.some(a => a.type === 'skip');
   let time: string = '';
