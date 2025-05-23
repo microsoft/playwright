@@ -872,7 +872,7 @@ test(`should only highlight regex patterns that don't match`, async ({ page }) =
   });
 });
 
-test(`should handle various regex failure scenarios`, async ({ page }) => {
+test('should handle various regex failure scenarios', async ({ page }) => {
   await test.step('regex with special characters', async () => {
     await page.setContent(`
       <div>Item A.1</div>
@@ -1043,4 +1043,104 @@ Received: \"- heading \\\"Actual Section Title\\\" [level=2]\"`);
 + - text: Product Code ABC-123-XYZ
 + - heading "Other text" [level=1]`);
   });
+});
+
+test('should properly highlight regex failures in equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+      <li>
+        <ul>
+          <li>2.1</li>
+          <li>2.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+      - listitem:
+        - list:
+          - listitem: 2.1
+  `, { timeout: 1000 });
+
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: /a value/
+      - listitem:
+        - list:
+          - listitem: 2.1
+
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`
+  - list:
+-   - /children: deep-equal
+-   - listitem:
+-     - list:
++   - listitem:
++     - list:
++       - listitem: \"1.1\"
+-       - listitem: /a value/
++       - listitem: \"1.2\"
+    - listitem:
+      - list:
+-       - listitem: 2.1
++       - listitem: \"2.1\"
++       - listitem: \"2.2\"`);
+});
+
+test('should properly highlight regex failures in deep-equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+          - listitem: /1\\.\\d/
+  `, { timeout: 1000 });
+
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+          - listitem: /2\\.\\d/
+          - listitem: another
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`
+  - list:
+-   - /children: deep-equal
+    - listitem:
+      - list:
+        - listitem: \"1.1\"
+-       - listitem: /2\\.\\d/
+-       - listitem: another
++       - listitem: \"1.2\"`);
 });
