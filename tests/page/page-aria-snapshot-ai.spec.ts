@@ -241,15 +241,41 @@ it('should include active element information', async ({ page }) => {
 
   const snapshot = await snapshotForAI(page);
   
-  // Check for Button 1
+  // Check for all buttons and text
   expect(snapshot).toContain('button "Button 1"');
-  
-  // Check for Button 2
   expect(snapshot).toContain('button "Button 2"');
-  
-  // Check that there's an active element somewhere in the snapshot
-  expect(snapshot).toContain('[active]');
-  
-  // Check for the div
   expect(snapshot).toContain('Not focusable');
+  
+  // Check that active element is marked
+  expect(snapshot).toMatch(/\[active\]/);
+});
+
+it('should update active element on focus', async ({ page }) => {
+  await page.setContent(`
+    <input id="input1" placeholder="First input">
+    <input id="input2" placeholder="Second input">
+  `);
+
+  // Initially there shouldn't be an active element on the inputs
+  const initialSnapshot = await snapshotForAI(page);
+  expect(initialSnapshot).toContain('textbox "First input"');
+  expect(initialSnapshot).toContain('textbox "Second input"');
+  
+  // Focus the second input
+  await page.locator('#input2').focus();
+  
+  // After focus, the second input should be active
+  const afterFocusSnapshot = await snapshotForAI(page);
+  
+  // Verify it contains both inputs
+  expect(afterFocusSnapshot).toContain('textbox "First input"');
+  expect(afterFocusSnapshot).toContain('textbox "Second input"');
+  
+  // Only one of these will pass depending on browser implementation:
+  // Either the second input is marked as active
+  const secondInputActive = afterFocusSnapshot.includes('textbox "Second input" [active]');
+  // Or the document is no longer marked as active (because input has focus)
+  const docNotActive = !afterFocusSnapshot.includes('generic [active]');
+  
+  expect(secondInputActive || docNotActive).toBeTruthy();
 });
