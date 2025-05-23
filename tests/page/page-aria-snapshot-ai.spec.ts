@@ -232,7 +232,7 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
   `);
 });
 
-it('should include focused and focusable information', async ({ page }) => {
+it('should include active element information', async ({ page }) => {
   await page.setContent(`
     <button id="btn1">Button 1</button>
     <button id="btn2" autofocus>Button 2</button>
@@ -241,17 +241,15 @@ it('should include focused and focusable information', async ({ page }) => {
 
   const snapshot = await snapshotForAI(page);
   
-  // Check for Button 1 with focusable attribute
+  // Check for Button 1
   expect(snapshot).toContain('button "Button 1"');
-  expect(snapshot).toContain('[focusable]');
-
-  // Check for Button 2 with focusable attribute
+  
+  // Check for Button 2
   expect(snapshot).toContain('button "Button 2"');
-  expect(snapshot).toMatch(/Button 2.*\[focusable\]/);
   
-  // Check that there's a focused element somewhere in the snapshot
-  expect(snapshot).toContain('[focused]');
+  // Check that there's an active element somewhere in the snapshot
+  expect(snapshot).toContain('[active]');
   
-  // Check for the non-focusable div
+  // Check for the div
   expect(snapshot).toContain('Not focusable');
 });

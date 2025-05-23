@@ -31,8 +31,7 @@ export type AriaNode = AriaProps & {
   element: Element;
   box: Box;
   receivesPointerEvents: boolean;
-  focused?: boolean;
-  focusable?: boolean;
+  active?: boolean;
   props: Record<string, string>;
 };
 
@@ -195,8 +194,7 @@ function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: s
     element,
     box: box(element),
     receivesPointerEvents,
-    focused: element.ownerDocument.activeElement === element,
-    focusable: roleUtils.isFocusable(element)
+    active: element.ownerDocument.activeElement === element
   };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
@@ -435,10 +433,8 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [disabled]`;
     if (ariaNode.expanded)
       key += ` [expanded]`;
-    if (ariaNode.focused)
-      key += ` [focused]`;
-    if (ariaNode.focusable)
-      key += ` [focusable]`;
+    if (ariaNode.active)
+      key += ` [active]`;
     if (ariaNode.level)
       key += ` [level=${ariaNode.level}]`;
     if (ariaNode.pressed === 'mixed')
