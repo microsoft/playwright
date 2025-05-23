@@ -24,6 +24,7 @@ import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUti
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
 import style from 'ansi-styles';
+import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -151,7 +152,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   return {
     events,
     resources,
-    actions: actionObjects.map(a => a.title ?? a.class.toLowerCase() + '.' + a.method),
+    actions: actionObjects.map(a => renderTitleForCall({ ...a, type: a.class })),
     actionObjects,
     stacks,
   };
@@ -165,13 +166,14 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   const { rootItem } = buildActionTree(model.actions);
   const actionTree: string[] = [];
   const visit = (actionItem: ActionTreeItem, indent: string) => {
-    actionTree.push(`${indent}${actionItem.action?.title || actionItem.id}`);
+    const title = renderTitleForCall({ ...actionItem.action, type: actionItem.action.class });
+    actionTree.push(`${indent}${title || actionItem.id}`);
     for (const child of actionItem.children)
       visit(child, indent + '  ');
   };
   rootItem.children.forEach(a => visit(a, ''));
   return {
-    titles: model.actions.map(a => a.title ?? a.class.toLowerCase() + '.' + a.method),
+    titles: model.actions.map(a => renderTitleForCall({ ...a, type: a.class })),
     resources: backend.entries,
     actions: model.actions,
     events: model.events,

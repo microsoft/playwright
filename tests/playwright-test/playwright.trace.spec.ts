@@ -1346,7 +1346,7 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
   const snapshots = trace.traceModel.storage();
   const snapshotFrameOrPageId = snapshots.snapshotsForTest()[0];
 
-  const countAction = trace.actions.find(a => a.title === 'Query count');
+  const countAction = trace.actions.find(a => a.method === 'queryCount');
   expect(countAction.beforeSnapshot).toBeTruthy();
   expect(countAction.afterSnapshot).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, countAction.beforeSnapshot)).toBeTruthy();

@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import { methodMetainfo } from '../protocol/debug';
+import { methodMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 

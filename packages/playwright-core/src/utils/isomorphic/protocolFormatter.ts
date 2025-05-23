@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { methodMetainfo } from './protocolMetainfo';
+
 export function formatProtocolParam(params: Record<string, string> | undefined, name: string): string {
   if (!params)
     return '';
@@ -29,8 +31,10 @@ export function formatProtocolParam(params: Record<string, string> | undefined, 
       return params[name];
     }
   }
-  if (name === 'timeNumber')
+  if (name === 'timeNumber') {
+    // eslint-disable-next-line no-restricted-globals
     return new Date(params[name]).toString();
+  }
   return deepParam(params, name);
 }
 
@@ -45,4 +49,11 @@ function deepParam(params: Record<string, any>, name: string): string {
   if (current === undefined)
     return '';
   return String(current);
+}
+
+export function renderTitleForCall(metadata: { title?: string, type: string, method: string, params: Record<string, string> | undefined }) {
+  const titleFormat = metadata.title ?? methodMetainfo.get(metadata.type + '.' + metadata.method)?.title ?? metadata.method;
+  return titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => {
+    return formatProtocolParam(metadata.params, p1);
+  });
 }

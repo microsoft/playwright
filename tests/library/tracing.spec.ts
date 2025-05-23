@@ -134,7 +134,7 @@ test('should not include buffers in the trace', async ({ context, page, server }
   await page.screenshot();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const screenshotEvent = actionObjects.find(a => a.title === 'Screenshot');
+  const screenshotEvent = actionObjects.find(a => a.method === 'screenshot');
   expect(screenshotEvent.beforeSnapshot).toBeTruthy();
   expect(screenshotEvent.afterSnapshot).toBeTruthy();
   expect(screenshotEvent.result).toEqual({
@@ -160,13 +160,12 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   expect(pageIds.size).toBe(1);
 });
 
-test('should include context API requests', async ({ browserName, context, page, server }, testInfo) => {
+test('should include context API requests', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ snapshots: true });
   await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const postEvent = events.find(e => e.title === 'Fetch "/simple.json"');
-  expect(postEvent).toBeTruthy();
+  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  expect(actions).toContain('Fetch "/simple.json"');
   const harEntry = events.find(e => e.type === 'resource-snapshot');
   expect(harEntry).toBeTruthy();
   expect(harEntry.snapshot.request.url).toBe(server.PREFIX + '/simple.json');
@@ -482,9 +481,8 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   await context.close();
 
-  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const clickEvent = events.find(e => e.title === 'Click');
-  expect(clickEvent).toBeTruthy();
+  const { actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  expect(actions).toContain('Click');
 });
 
 test('should throw when starting with different options', async ({ context }) => {
@@ -741,7 +739,6 @@ test('should not flush console events', async ({ context, page, mode }, testInfo
   await expect(async () => {
     const traceName = fs.readdirSync(dir).find(name => name.endsWith(testId + '.trace'));
     content = await fs.promises.readFile(path.join(dir, traceName), 'utf8');
-    expect(content).toContain('Evaluate');
     expect(content).toContain('31415926');
   }).toPass();
   expect(content).not.toContain('hello 0');
@@ -823,17 +820,14 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
       {
         type: 'before',
         callId: expect.any(Number),
-        title: 'Evaluate'
       },
       {
         type: 'before',
         callId: expect.any(Number),
-        title: 'Wait for event "console"'
       },
       {
         type: 'after',
         callId: expect.any(Number),
-        title: undefined,
       },
     ]);
     call1 = sanitized[0].callId;
@@ -849,12 +843,10 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
       {
         type: 'before',
         callId: expect.any(Number),
-        title: 'Evaluate'
       },
       {
         type: 'after',
         callId: expect.any(Number),
-        title: undefined
       }
     ]);
     call2before = sanitized[0].callId;
