@@ -1043,7 +1043,7 @@ export class Registry {
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
 
       // Remove stale browsers.
-      const browserList = await this._traverseBrowserInstallations(linksDir);
+      const browserList = await this._traverseBrowserInstallations(linksDir, false);
       await this._deleteStaleBrowsers(browserList);
 
       // Install browsers for this package.
@@ -1109,7 +1109,7 @@ export class Registry {
     }
 
     // Remove stale browsers.
-    const browserList = await this._traverseBrowserInstallations(linksDir);
+    const browserList = await this._traverseBrowserInstallations(linksDir, false);
     await this._deleteStaleBrowsers(browserList);
 
     return {
@@ -1253,7 +1253,7 @@ export class Registry {
 
   async list() {
     const linksDir = path.join(registryDirectory, '.links');
-    const browsers: Array<{ browserName: string, browserVersion: number, hostDir: string, browserPath: string }> = await this._traverseBrowserInstallations(linksDir);
+    const browsers = await this._traverseBrowserInstallations(linksDir, true);
 
     // Group browsers by browserName
     const groupedBrowsers: Record<string, Array<{ browserVersion: number, hostDir: string, browserPath: string }>> = {};
@@ -1272,8 +1272,8 @@ export class Registry {
     return groupedBrowsers;
   }
 
-  private async _traverseBrowserInstallations(linksDir: string) {
-    const browserList: Array<{ browserName: string, browserVersion: number, hostDir: string, browserPath: string }> = [];
+  private async _traverseBrowserInstallations(linksDir: string, listOnly: Boolean) {
+    const browserList = [];
     for (const fileName of await fs.promises.readdir(linksDir)) {
       const linkPath = path.join(linksDir, fileName);
       let linkTarget = '';
@@ -1301,7 +1301,8 @@ export class Registry {
           });
         }
       } catch (e) {
-        await fs.promises.unlink(linkPath).catch(e => {});
+        if (!listOnly)
+          await fs.promises.unlink(linkPath).catch(e => {});
       }
     }
 

@@ -78,26 +78,6 @@ if (exitCode != 0)
 }
 ```
 
-### List all installed browsers:
-
-Prints list of browsers from all playwright installations on the machine.
-
-```bash js
-npx playwright install --list
-```
-
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --list"
-```
-
-```bash python
-playwright install --list
-```
-
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 install --list
-```
-
 ## Install system dependencies
 
 System dependencies can get installed automatically. This is useful for CI environments.
@@ -1103,6 +1083,26 @@ mvn test
 Playwright keeps track of the clients that use its browsers. When there are no more clients that require a particular version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
 
 To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
+
+### List all installed browsers:
+
+Prints list of browsers from all playwright installations on the machine.
+
+```bash js
+npx playwright install --list
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --list"
+```
+
+```bash python
+playwright install --list
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install --list
+```
 
 ### Uninstall browsers
 

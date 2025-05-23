@@ -166,6 +166,8 @@ program
         const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
         if (options.withDeps)
           await registry.installDeps(executables, !!options.dryRun);
+        if (options.dryRun && options.list)
+          throw new Error(`Only one of --dry-run and --list can be specified`);
         if (options.dryRun) {
           for (const executable of executables) {
             const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
@@ -180,7 +182,6 @@ program
             console.log(``);
           }
         } else if (options.list) {
-          // --dry-run option takes precedence over --list
           const browsersMap = await registry.list();
           for (const browserName in browsersMap) {
             console.log(`Browser: ${browserName}`);
