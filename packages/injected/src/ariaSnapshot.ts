@@ -49,11 +49,6 @@ type InternalMatchEntry = {
   node: AriaNode | string;
 };
 
-export interface AriaMatch {
-  templateLineNumber?: number;
-  isFromTemplateRegex?: boolean; // True if this failure was due to a regex in the template name/prop
-}
-
 type AriaRef = {
   role: string;
   name: string;
