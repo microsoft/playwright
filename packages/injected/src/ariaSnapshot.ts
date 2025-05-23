@@ -426,22 +426,30 @@ function listEqual(
 }
 
 function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], matchEntriesCollector: InternalMatchEntry[]): boolean {
-  // if (template.length > children.length)
-  //   return false;
   console.log('containsList', children, template);
-  const cc = children.slice();
+  let cc = children.slice();
   const tt = template.slice();
+  let match = true;
+  let childrenAtStartOfTemplate = [];
   for (const t of tt) {
+    // At start of template node store where we are in the children list
+    childrenAtStartOfTemplate = cc.slice();
     let c = cc.shift();
     while (c) {
       if (matchesNode(c, t, false, matchEntriesCollector))
         break;
       c = cc.shift();
+      console.log('Incremented children', cc);
     }
-    if (!c)
-      return false;
+    if (!c) {
+      console.log('Failing containsList');
+      cc = childrenAtStartOfTemplate;
+      match = false;
   }
-  return true;
+    console.log('Incremented template', tt);
+  }
+  console.log('Passing containsList');
+  return match;
 }
 
 function matchesNodeDeep(
