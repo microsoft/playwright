@@ -416,13 +416,12 @@ test('expected formatter', async ({ page }) => {
 
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
-- Expected  - 2
-+ Received  + 3
+- Expected  - 1
++ Received  + 2
 
-- - heading "todos"
-- - textbox "Wrong text"
 + - banner:
-+   - heading "todos" [level=1]
+    - heading "todos" [level=1]
+- - textbox "Wrong text"
 +   - textbox "What needs to be done?"`);
 });
 
@@ -847,5 +846,28 @@ test(`should only highlight regex patterns that don't match`, async ({ page }) =
 -   - listitem: "One more row"
 +   - listitem: Another row
 +   - listitem: One more row`);
+  });
+
+  await test.step('regex with attributes', async () => {
+    await page.setContent(`
+      <h1>Title 123</h1>
+      <h2>Heading 2 456</h2>
+    `);
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Title \\d+/ [level=1]
+      - heading /Heading 2 \\d+/ [level=2]
+      - text: "This text doesn't exist"
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+  - heading "Title 123" [level=1]
+  - heading "Heading 2 456" [level=2]
+- - text: "This text doesn't exist"`);
+
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Title \\d+/
+      - heading /Heading 2 \\d+/
+    `, { timeout: 1000 });
   });
 });

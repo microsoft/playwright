@@ -301,7 +301,7 @@ export class InjectedScript {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     this._lastAriaSnapshot = generateAriaTree(node as Element, options);
-    return renderAriaTree(this._lastAriaSnapshot, options);
+    return renderAriaTree(this._lastAriaSnapshot, options).map(({ line }) => line).join('\n');
   }
 
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
