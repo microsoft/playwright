@@ -31,13 +31,10 @@
   white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-transform: uppercase;
-  font-weight: 600;
 }
 
 .action-title-param {
   color: var(--vscode-editorBracketHighlight-foreground1);
-  text-transform: none;
 }
 
 .action-location {

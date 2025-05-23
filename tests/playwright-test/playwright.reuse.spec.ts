@@ -128,16 +128,16 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
     '  beforeAll hook',
-    '  fixture: browser',
+    '  Fixture "browser"',
     '    Launch browser',
-    '  fixture: context',
-    '  fixture: page',
+    '  Fixture "context"',
+    '  Fixture "page"',
     '    Create page',
     'Set content',
     'Click',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
   ]);
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
@@ -145,15 +145,15 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
   expect(trace2.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: context',
-    '  fixture: page',
-    'Expect toBe',
+    '  Fixture "context"',
+    '  Fixture "page"',
+    'Expect "toBe"',
     'Set content',
     'Fill "value"',
     'Click',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
     '  afterAll hook',
   ]);
   expect(trace2.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);

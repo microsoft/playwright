@@ -127,7 +127,7 @@ test('should show tracing.group in the action list with location', async ({ runA
     /Navigate/,
     /inner group 1/,
     /inner group 2/,
-    /Expect toBeVisible/,
+    /toBeVisible/,
   ]);
 
   await traceViewer.selectAction('inner group 1');
@@ -152,9 +152,9 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /Create page/,
     /Navigate to "data:"/,
     /Set content/,
-    /Expect toHaveText.*locator/,
-    /Expect toBeHidden.*getByTestId/,
-    /Expect toBeHidden.*getByTestId/,
+    /toHaveText.*locator/,
+    /toBeHidden.*getByTestId/,
+    /toBeHidden.*getByTestId/,
     /Evaluate/,
     /Evaluate/,
     /Click/,
@@ -200,7 +200,7 @@ test('should show action context on locators and other common actions', async ({
     /Set content/,
     /Click.*locator\('input'\)/,
     /Click.*getByRole\('textbox'\)/,
-    /Expect toHaveText.*locator\('input'\)/,
+    /toHaveText.*locator\('input'\)/,
     /Press "Enter".*locator\('input'\)/,
     /Type "Hello world.*/,
     /Press "Control\+c"/,
@@ -305,7 +305,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
 
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
-    /Expect toHaveText/,
+    /toHaveText/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /locator:locator\('button'\)/,
@@ -1828,9 +1828,9 @@ test('should render blob trace received from message', async ({ showTraceViewer 
     /Create page/,
     /Navigate to "data:"/,
     /Set content/,
-    /Expect toHaveText.*locator/,
-    /Expect toBeHidden.*getByTestId/,
-    /Expect toBeHidden.*getByTestId/,
+    /toHaveText.*locator/,
+    /toBeHidden.*getByTestId/,
+    /toBeHidden.*getByTestId/,
     /Evaluate/,
     /Evaluate/,
     /Click.*getByText\('Click'\)/,

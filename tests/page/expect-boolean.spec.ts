@@ -56,7 +56,7 @@ test.describe('toBeChecked', () => {
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toBeChecked()`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toBeChecked with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" with timeout 1000ms`);
   });
 
   test('with not', async ({ page }) => {
@@ -76,7 +76,7 @@ test.describe('toBeChecked', () => {
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toBeChecked()`);
-    expect(stripAnsi(error.message)).toContain(`- Expect not toBeChecked with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeChecked" with timeout 1000ms`);
     expect(stripAnsi(error.message)).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
@@ -85,7 +85,7 @@ test.describe('toBeChecked', () => {
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ checked: false, timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toBeChecked({ checked: false })`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toBeChecked with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" with timeout 1000ms`);
     expect(stripAnsi(error.message)).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
@@ -94,7 +94,7 @@ test.describe('toBeChecked', () => {
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ indeterminate: true, timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toBeChecked({ indeterminate: true })`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toBeChecked with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" with timeout 1000ms`);
   });
 
   test('fail missing', async ({ page }) => {
@@ -102,7 +102,7 @@ test.describe('toBeChecked', () => {
     const locator2 = page.locator('input2');
     const error = await expect(locator2).not.toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toBeChecked()`);
-    expect(stripAnsi(error.message)).toContain(`- Expect not toBeChecked with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeChecked" with timeout 1000ms`);
     expect(stripAnsi(error.message)).toContain(`- waiting for locator(\'input2\')`);
   });
 
@@ -440,7 +440,7 @@ test.describe('toBeHidden', () => {
     const locator = page.locator('button');
     const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toBeHidden()`);
-    expect(stripAnsi(error.message)).toContain(`- Expect not toBeHidden with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeHidden" with timeout 1000ms`);
   });
 
   test('with impossible timeout .not', async ({ page }) => {
