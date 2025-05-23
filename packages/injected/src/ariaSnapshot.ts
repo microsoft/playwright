@@ -316,9 +316,7 @@ export type MatcherReceived = {
 export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
   const snapshot = generateAriaTree(rootElement);
   const internalMatchEntries: InternalMatchEntry[] = [];
-  console.log('matchesAriaTree');
   const matches = matchesNodeDeep(snapshot.root, template, false, false, internalMatchEntries);
-  console.log('allmatches', internalMatchEntries);
   const rawTree = renderAriaTree(snapshot, { mode: 'raw' });
   const matchEntries = internalMatchEntries.flatMap(entry => {
     const index = rawTree.findIndex(({ ariaNode }) => ariaNode === entry.node);
@@ -354,11 +352,9 @@ function matchesNode(
   isDeepEqual: boolean,
   matchEntriesCollector: InternalMatchEntry[],
 ): boolean {
-  console.log('matchesNode', node, template);
   if (typeof node === 'string' && template.kind === 'text') {
     const didMatch = matchesTextNode(node, template);
     if (didMatch) {
-      console.log('Matching', template.lineNumber);
       matchEntriesCollector.push({
         templateLineNumber: template.lineNumber,
         node
@@ -401,7 +397,6 @@ function matchesNode(
     childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector);
 
   if (childrenMatch) {
-    console.log('Matching', template.lineNumber);
     matchEntriesCollector.push({
       templateLineNumber: template.lineNumber,
       node
@@ -426,7 +421,6 @@ function listEqual(
 }
 
 function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], matchEntriesCollector: InternalMatchEntry[]): boolean {
-  console.log('containsList', children, template);
   let cc = children.slice();
   const tt = template.slice();
   let match = true;
@@ -439,16 +433,12 @@ function containsList(children: (AriaNode | string)[], template: AriaTemplateNod
       if (matchesNode(c, t, false, matchEntriesCollector))
         break;
       c = cc.shift();
-      console.log('Incremented children', cc);
     }
     if (!c) {
-      console.log('Failing containsList');
       cc = childrenAtStartOfTemplate;
       match = false;
+    }
   }
-    console.log('Incremented template', tt);
-  }
-  console.log('Passing containsList');
   return match;
 }
 
