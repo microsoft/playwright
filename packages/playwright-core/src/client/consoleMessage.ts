@@ -39,8 +39,8 @@ export class ConsoleMessage implements api.ConsoleMessage {
     return this._page;
   }
 
-  type(): string {
-    return this._event.type;
+  type(): 'log'|'debug'|'info'|'error'|'warning'|'dir'|'dirxml'|'table'|'trace'|'clear'|'startGroup'|'startGroupCollapsed'|'endGroup'|'assert'|'profile'|'profileEnd'|'count'|'timeEnd' {
+    return this._event.type as 'log'|'debug'|'info'|'error'|'warning'|'dir'|'dirxml'|'table'|'trace'|'clear'|'startGroup'|'startGroupCollapsed'|'endGroup'|'assert'|'profile'|'profileEnd'|'count'|'timeEnd';
   }
 
   text(): string {
