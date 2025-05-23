@@ -133,7 +133,7 @@ test('last emulateMedia wins', async ({ twoPages }) => {
   expect(await pageA.evaluate(() => window.matchMedia('print').matches)).toBe(false);
 });
 
-test('should dispose of bindings upon disconnect', async ({ twoPages }) => {
+test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;
 
   await pageA.exposeBinding('pageBindingA', () => 'pageBindingAResult');

@@ -218,7 +218,6 @@ export abstract class BrowserContext extends SdkObject {
     page?.frameManager.setCloseAllOpeningDialogs(false);
 
     await this._resetStorage();
-    await this._removeExposedBindings();
     await this._removeInitScripts();
     this.clock.markAsUninstalled();
     // TODO: following can be optimized to not perform noops.
@@ -344,26 +343,19 @@ export abstract class BrowserContext extends SdkObject {
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
     await this.exposePlaywrightBindingIfNeeded();
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, (): Promise<void> => this._removeExposedBinding(binding));
+    const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this.doAddInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
     return binding;
   }
 
-  private async _removeExposedBinding(binding: PageBinding) {
+  async removeExposedBinding(binding: PageBinding) {
     if (this._pageBindings.get(binding.name) !== binding)
       return;
     this._pageBindings.delete(binding.name);
     await this.doRemoveInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.cleanupScript, 'main');
-  }
-
-  async _removeExposedBindings() {
-    for (const [key, binding] of this._pageBindings) {
-      if (!binding.internal)
-        this._pageBindings.delete(key);
-    }
   }
 
   async grantPermissions(permissions: string[], origin?: string) {

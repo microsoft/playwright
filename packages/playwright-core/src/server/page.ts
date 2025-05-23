@@ -259,7 +259,6 @@ export class Page extends SdkObject {
   async resetForReuse(metadata: CallMetadata) {
     this._locatorHandlers.clear();
 
-    await this._removeExposedBindings();
     await this._removeInitScripts();
     await this.setClientRequestInterceptor(undefined);
     await this.setServerRequestInterceptor(undefined);
@@ -335,26 +334,19 @@ export class Page extends SdkObject {
     if (this.browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
     await this.browserContext.exposePlaywrightBindingIfNeeded();
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, (): Promise<void> => this._removeExposedBinding(binding));
+    const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this.delegate.addInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
     return binding;
   }
 
-  private async _removeExposedBinding(binding: PageBinding) {
+  async removeExposedBinding(binding: PageBinding) {
     if (this._pageBindings.get(binding.name) !== binding)
       return;
     this._pageBindings.delete(binding.name);
     await this.delegate.removeInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.cleanupScript, 'main');
-  }
-
-  private async _removeExposedBindings() {
-    for (const [key, binding] of this._pageBindings) {
-      if (!binding.internal)
-        this._pageBindings.delete(key);
-    }
   }
 
   setExtraHTTPHeaders(headers: types.HeadersArray) {
@@ -879,18 +871,14 @@ export class PageBinding {
   readonly playwrightFunction: frames.FunctionWithSource;
   readonly initScript: InitScript;
   readonly needsHandle: boolean;
-  readonly internal: boolean;
   readonly cleanupScript: string;
-  readonly dispose: () => Promise<void>;
 
-  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean, dispose: () => Promise<void>) {
+  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
     this.initScript = new InitScript(`globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`, true /* internal */);
     this.needsHandle = needsHandle;
-    this.internal = name.startsWith('__pw');
     this.cleanupScript = `globalThis['${PageBinding.kController}'].removeBinding(${JSON.stringify(name)})`;
-    this.dispose = dispose;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {

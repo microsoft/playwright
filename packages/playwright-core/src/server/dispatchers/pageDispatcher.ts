@@ -332,7 +332,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (!this._page.isClosedOrClosingOrCrashed()) {
       this._page.setClientRequestInterceptor(undefined).catch(() => {});
       for (const binding of this._bindings)
-        binding.dispose().catch(() => {});
+        this._page.removeExposedBinding(binding).catch(() => {});
       this._bindings.clear();
     }
   }

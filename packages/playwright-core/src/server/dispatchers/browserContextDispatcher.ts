@@ -378,7 +378,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     if (!this._context.isClosingOrClosed()) {
       this._context.setRequestInterceptor(undefined).catch(() => {});
       for (const binding of this._bindings)
-        binding.dispose().catch(() => {});
+        this._context.removeExposedBinding(binding).catch(() => {});
       this._bindings.clear();
     }
   }
