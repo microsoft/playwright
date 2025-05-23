@@ -711,7 +711,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   await expect(page).toHaveTitle('Playwright Trace Viewer');
   await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem /Expect toBe \\d+[hmsp]+/ [selected]
+      - treeitem /Expect "toBe" \\d+[hmsp]+/ [selected]
   `);
 });
 
@@ -1210,15 +1210,15 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
 
   await page.getByText('Before Hooks').click();
   await page.getByText('beforeAll hook').click();
-  await expect(page.getByText('EXPECT toBe')).toBeVisible();
+  await expect(page.getByText('Expect "toBe"')).toBeVisible();
   // Collapse hooks.
   await page.getByText('Before Hooks').click();
-  await expect(page.getByText('EXPECT toBe')).not.toBeVisible();
+  await expect(page.getByText('Expect "toBe"')).not.toBeVisible();
 
   // Check that 'my step' location is relative.
   await expect(page.getByText('— tests/a.test.js:7')).toBeVisible();
   await page.getByText('my step').click();
-  await expect(page.getByText('EXPECT toBe')).toBeVisible();
+  await expect(page.getByText('Expect "toBe"')).toBeVisible();
 });
 
 test('support fileName option', async ({ runInlineTest, mergeReports }) => {

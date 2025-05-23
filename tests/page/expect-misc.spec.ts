@@ -69,7 +69,7 @@ test.describe('toHaveCount', () => {
     const locator = page.locator('span');
     const error = await expect(locator).toHaveCount(0, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveCount(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveCount with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveCount" with timeout 1000ms`);
   });
 
   test('fail zero 2', async ({ page }) => {
@@ -77,7 +77,7 @@ test.describe('toHaveCount', () => {
     const locator = page.locator('span');
     const error = await expect(locator).not.toHaveCount(1, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveCount(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect not toHaveCount with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveCount" with timeout 1000ms`);
   });
 });
 
@@ -110,7 +110,7 @@ test.describe('toHaveJSProperty', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', 'error', { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass number', async ({ page }) => {
@@ -126,7 +126,7 @@ test.describe('toHaveJSProperty', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', 1, { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass boolean', async ({ page }) => {
@@ -142,7 +142,7 @@ test.describe('toHaveJSProperty', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', true, { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass boolean 2', async ({ page }) => {
@@ -158,7 +158,7 @@ test.describe('toHaveJSProperty', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', true, { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass undefined', async ({ page }) => {
@@ -212,7 +212,7 @@ test.describe('toHaveClass', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveClass('foo bar baz', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveClass(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveClass with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveClass" with timeout 1000ms`);
   });
 
   test('pass with array', async ({ page }) => {
@@ -226,7 +226,7 @@ test.describe('toHaveClass', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveClass(['foo', 'bar', /[a-z]az/], { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveClass(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveClass with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveClass" with timeout 1000ms`);
   });
 });
 
@@ -252,7 +252,7 @@ test.describe('toContainClass', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toContainClass('does-not-exist', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toContainClass(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toContainClass with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toContainClass" with timeout 1000ms`);
   });
 
   test('pass with array', async ({ page }) => {
@@ -269,7 +269,7 @@ test.describe('toContainClass', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toContainClass(['foo', 'bar', 'baz'], { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toContainClass(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toContainClass with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toContainClass" with timeout 1000ms`);
   });
 });
 
@@ -283,7 +283,7 @@ test.describe('toHaveTitle', () => {
     await page.setContent('<title>Bye</title>');
     const error = await expect(page).toHaveTitle('Hello', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(page).toHaveTitle(expected)`);
-    expect(stripAnsi(error.message)).toContain(`- Expect toHaveTitle with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveTitle" with timeout 1000ms`);
   });
 });
 
@@ -353,12 +353,12 @@ test.describe('toHaveAttribute', () => {
     {
       const error = await expect(locator).toHaveAttribute('disabled', '', { timeout: 1000 }).catch(e => e);
       expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveAttribute(expected)`);
-      expect(stripAnsi(error.message)).toContain(`- Expect toHaveAttribute with timeout 1000ms`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "toHaveAttribute" with timeout 1000ms`);
     }
     {
       const error = await expect(locator).toHaveAttribute('disabled', /.*/, { timeout: 1000 }).catch(e => e);
       expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveAttribute(expected)`);
-      expect(stripAnsi(error.message)).toContain(`- Expect toHaveAttribute with timeout 1000ms`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "toHaveAttribute" with timeout 1000ms`);
     }
     await expect(locator).not.toHaveAttribute('disabled', '');
     await expect(locator).not.toHaveAttribute('disabled', /.*/);
@@ -372,12 +372,12 @@ test.describe('toHaveAttribute', () => {
     {
       const error = await expect(locator).not.toHaveAttribute('checked', '', { timeout: 1000 }).catch(e => e);
       expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveAttribute(expected)`);
-      expect(stripAnsi(error.message)).toContain(`- Expect not toHaveAttribute with timeout 1000ms`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveAttribute" with timeout 1000ms`);
     }
     {
       const error = await expect(locator).not.toHaveAttribute('checked', /.*/, { timeout: 1000 }).catch(e => e);
       expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveAttribute(expected)`);
-      expect(stripAnsi(error.message)).toContain(`- Expect not toHaveAttribute with timeout 1000ms`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveAttribute" with timeout 1000ms`);
     }
   });
 

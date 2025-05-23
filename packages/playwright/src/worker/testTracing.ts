@@ -20,7 +20,7 @@ import path from 'path';
 import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
-import { filteredStackTrace } from '../util';
+import { filteredStackTrace, stepTitle } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
@@ -28,6 +28,7 @@ import type { TestInfoErrorImpl } from '../common/ipc';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
+import type { TestStepCategory } from '../util';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
@@ -47,7 +48,6 @@ export class TestTracing {
   private _tracesDir: string;
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _didFinishTestFunctionAndAfterEachHooks = false;
-  private _lastActionId = 0;
 
   constructor(testInfo: TestInfoImpl, artifactsDir: string) {
     this._testInfo = testInfo;
@@ -267,7 +267,7 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(callId: string, parentId: string | undefined, options: { title: string, params?: Record<string, any>, stack: StackFrame[] }) {
+  appendBeforeActionForStep(callId: string, parentId: string | undefined, options: { title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[] }) {
     this._appendTraceEvent({
       type: 'before',
       callId,
@@ -276,7 +276,7 @@ export class TestTracing {
       startTime: monotonicTime(),
       class: 'Test',
       method: 'step',
-      title: options.title,
+      title: stepTitle(options.category, options.title),
       params: Object.fromEntries(Object.entries(options.params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack: options.stack,
     });
