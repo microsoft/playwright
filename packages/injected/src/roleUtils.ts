@@ -66,7 +66,7 @@ function hasTabIndex(element: Element) {
   return !Number.isNaN(Number(String(element.getAttribute('tabindex'))));
 }
 
-function isFocusable(element: Element) {
+export function isFocusable(element: Element) {
   // TODO:
   // - "inert" attribute makes the whole substree not focusable
   // - when dialog is open on the page - everything but the dialog is not focusable

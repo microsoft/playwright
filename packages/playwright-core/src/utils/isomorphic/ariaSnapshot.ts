@@ -28,6 +28,8 @@ export type AriaProps = {
   checked?: boolean | 'mixed';
   disabled?: boolean;
   expanded?: boolean;
+  focused?: boolean;
+  focusable?: boolean;
   level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -441,6 +443,16 @@ export class KeyParser {
     if (key === 'expanded') {
       this._assert(value === 'true' || value === 'false', 'Value of "expanded" attribute must be a boolean', errorPos);
       node.expanded = value === 'true';
+      return;
+    }
+    if (key === 'focused') {
+      this._assert(value === 'true' || value === 'false', 'Value of "focused" attribute must be a boolean', errorPos);
+      node.focused = value === 'true';
+      return;
+    }
+    if (key === 'focusable') {
+      this._assert(value === 'true' || value === 'false', 'Value of "focusable" attribute must be a boolean', errorPos);
+      node.focusable = value === 'true';
       return;
     }
     if (key === 'level') {

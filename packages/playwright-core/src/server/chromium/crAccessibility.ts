@@ -254,6 +254,9 @@ class CRAXNode implements accessibility.AXNode {
         continue;
       node[booleanProperty] = value;
     }
+    
+    // Add focusable property
+    node.focusable = this._focusable;
     const numericalProperties: Array<keyof channels.AXNode> = [
       'level',
       'valuemax',

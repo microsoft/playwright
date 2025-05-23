@@ -225,6 +225,9 @@ class WKAXNode implements accessibility.AXNode {
         continue;
       (node as any)[booleanProperty] = value;
     }
+    
+    // Add focusable property
+    node.focusable = this._payload.focusable;
 
     const numericalProperties: Array<keyof channels.AXNode & keyof Protocol.Page.AXNode> = [
       'level',
