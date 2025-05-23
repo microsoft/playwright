@@ -449,6 +449,13 @@ type BrowsersJSONDescriptor = {
   dir: string,
 };
 
+type BrowsersInfo = {
+  browserName: string,
+  browserVersion: number,
+  hostDir: string,
+  browserPath: string
+};
+
 function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
   return (browsersJSON['browsers']).map(obj => {
     const name = obj.name;
@@ -1043,8 +1050,9 @@ export class Registry {
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
 
       // Remove stale browsers.
-      const browserList = await this._traverseBrowserInstallations(linksDir, false);
-      await this._deleteStaleBrowsers(browserList);
+      const [browsers, brokenLinks] = await this._traverseBrowserInstallations(linksDir);
+      await this._deleteStaleBrowsers(browsers);
+      await this._deleteBrokenInstallations(brokenLinks);
 
       // Install browsers for this package.
       for (const executable of executables) {
@@ -1109,8 +1117,9 @@ export class Registry {
     }
 
     // Remove stale browsers.
-    const browserList = await this._traverseBrowserInstallations(linksDir, false);
-    await this._deleteStaleBrowsers(browserList);
+    const [browsers, brokenLinks] = await this._traverseBrowserInstallations(linksDir);
+    await this._deleteStaleBrowsers(browsers);
+    await this._deleteBrokenInstallations(brokenLinks);
 
     return {
       numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
@@ -1253,12 +1262,12 @@ export class Registry {
 
   async list() {
     const linksDir = path.join(registryDirectory, '.links');
-    const browsers = await this._traverseBrowserInstallations(linksDir, true);
+    const [browsers, _brokenLinks] = await this._traverseBrowserInstallations(linksDir);
 
     // Group browsers by browserName
     const groupedBrowsers: Record<string, Array<{ browserVersion: number, hostDir: string, browserPath: string }>> = {};
 
-    browsers.forEach(browser => {
+    for(const browser of browsers) {
       if (!groupedBrowsers[browser.browserName])
         groupedBrowsers[browser.browserName] = [];
 
@@ -1267,13 +1276,14 @@ export class Registry {
         hostDir: browser.hostDir,
         browserPath: browser.browserPath
       });
-    });
+    }
 
     return groupedBrowsers;
   }
 
-  private async _traverseBrowserInstallations(linksDir: string, listOnly: Boolean) {
-    const browserList = [];
+  private async _traverseBrowserInstallations(linksDir: string): Promise<[BrowsersInfo[], string[]]> {
+    const browserList: Array<BrowsersInfo> = [];
+    const brokenLinks: string[] = [];
     for (const fileName of await fs.promises.readdir(linksDir)) {
       const linkPath = path.join(linksDir, fileName);
       let linkTarget = '';
@@ -1301,12 +1311,11 @@ export class Registry {
           });
         }
       } catch (e) {
-        if (!listOnly)
-          await fs.promises.unlink(linkPath).catch(e => {});
+        brokenLinks.push(linkPath);
       }
     }
 
-    return browserList;
+    return [browserList, brokenLinks];
   }
 
   private async _deleteStaleBrowsers(browserList: Array<{ browserName: string, browserVersion: number, hostDir: string, browserPath: string }>) {
@@ -1336,6 +1345,11 @@ export class Registry {
     for (const directory of directories)
       logPolitely('Removing unused browser at ' + directory);
     await removeFolders([...directories]);
+  }
+
+  private async _deleteBrokenInstallations(brokenLinks: string[]) {
+    for(const linkPath of brokenLinks)
+      await fs.promises.unlink(linkPath).catch(e => {});
   }
 }
 

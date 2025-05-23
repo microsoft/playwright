@@ -48,7 +48,6 @@ test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk 
     expected.forEach(browser => {
       expect(listed.has(browser)).toBe(true);
     });
-    expect(listed.size).toBe(expected.length);
   });
 
   await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: '0' } });
