@@ -111,31 +111,23 @@ export class FrameSelectors {
     return Promise.all(result);
   }
 
-  private _resolveForLastAISnapshot(selector: string, options: types.StrictOptions = {}): SelectorInFrame | null {
-    const match = selector.match(/^aria-ref=f(\d+)e\d+$/);
+  private _jumpToAriaRefFrameIfNeeded(selector: string, info: SelectorInfo, frame: Frame): Frame {
+    if (info.parsed.parts[0].name !== 'aria-ref')
+      return frame;
+    const body = info.parsed.parts[0].body as string;
+    const match = body.match(/^f(\d+)e\d+$/);
     if (!match)
-      return null;
-
+      return frame;
     const frameIndex = +match[1];
     const page = this.frame._page;
     const frameId = page.lastSnapshotFrameIds[frameIndex - 1];
-    if (!frameId)
-      return null;
-    const frameManager = page.frameManager;
-    const frame = frameManager.frame(frameId);
-    if (!frame)
-      return null;
-    return {
-      frame,
-      info: frame.selectors._parseSelector(selector, options),
-    };
+    const jumptToFrame = frameId ? page.frameManager.frame(frameId) : null;
+    if (!jumptToFrame)
+      throw new InvalidSelectorError(`Invalid frame in aria-ref selector "${selector}"`);
+    return jumptToFrame;
   }
 
   async resolveFrameForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame | null> {
-    const resolvedForSnapshot = this._resolveForLastAISnapshot(selector, options);
-    if (resolvedForSnapshot)
-      return resolvedForSnapshot;
-
     let frame: Frame = this.frame;
     const frameChunks = splitSelectorByFrame(selector);
 
@@ -150,6 +142,7 @@ export class FrameSelectors {
 
     for (let i = 0; i < frameChunks.length - 1; ++i) {
       const info = this._parseSelector(frameChunks[i], options);
+      frame = this._jumpToAriaRefFrameIfNeeded(selector, info, frame);
       const context = await frame._context(info.world);
       const injectedScript = await context.injectedScript();
       const handle = await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
@@ -170,7 +163,9 @@ export class FrameSelectors {
     // If we end up in the different frame, we should start from the frame root, so throw away the scope.
     if (frame !== this.frame)
       scope = undefined;
-    return { frame, info: frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options), scope };
+    const lastChunk = frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options);
+    frame = this._jumpToAriaRefFrameIfNeeded(selector, lastChunk, frame);
+    return { frame, info: lastChunk, scope };
   }
 
   async resolveInjectedForSelector(selector: string, options?: { strict?: boolean, mainWorld?: boolean }, scope?: ElementHandle): Promise<{ injected: JSHandle<InjectedScript>, info: SelectorInfo, frame: Frame, scope?: ElementHandle } | undefined> {
