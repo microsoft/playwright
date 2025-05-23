@@ -60,37 +60,6 @@ const expect = _expect.extend({
         `   actual: ${[...downloaded].sort().join(', ')}`,
       ].join('\n'),
     };
-  },
-  toHaveListedBrowsers(received: string, browsers: ('chromium' | 'chromium-headless-shell' | 'firefox' | 'webkit' | 'winldd' |'ffmpeg')[]) {
-    if (typeof received !== 'string')
-      throw new Error(`Expected argument to be a string.`);
-
-    // Extract browser names from the received string
-    const listed = new Set();
-    let index = 0;
-    while (true) {
-      const match = received.substring(index).match(/Browser: (chromium|chromium-headless-shell|firefox|webkit|winldd|ffmpeg)/im);
-      if (!match)
-        break;
-      listed.add(match[1].replace(/\s/g, '-').toLowerCase());
-      index += match.index + 1;
-    }
-
-    const expected = new Set(browsers);
-    if (expected.size === listed.size && [...expected].every(browser => listed.has(browser))) {
-      return {
-        pass: true,
-        message: () => 'Expected not to list browsers, but did.'
-      };
-    }
-    return {
-      pass: false,
-      message: () => [
-        `Browser list expectation failed!`,
-        ` expected: ${[...expected].sort().join(', ')}`,
-        `   actual: ${[...listed].sort().join(', ')}`,
-      ].join('\n'),
-    };
   }
 });
 
