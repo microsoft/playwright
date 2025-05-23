@@ -54,44 +54,22 @@ class ALPNCache {
     const result = new ManualPromise<string>();
     this._cache.set(cacheKey, result);
     result.then(success);
-    if (!proxySocket) {
-      createTLSSocket({
-        host,
-        port,
-        servername: net.isIP(host) ? undefined : host,
-        ALPNProtocols: ['h2', 'http/1.1'],
-        rejectUnauthorized: false,
-        secureContext
-      }).then(socket => {
-        // The server may not respond with ALPN, in which case we default to http/1.1.
-        result.resolve(socket.alpnProtocol || 'http/1.1');
-        socket.end();
-      }).catch(error => {
-        debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
-        result.resolve('http/1.1');
-      });
-    } else {
-      const socket = tls.connect({
-        socket: proxySocket,
-        port: port,
-        host: host,
-        ALPNProtocols: ['h2', 'http/1.1'],
-        rejectUnauthorized: false,
-        secureContext: secureContext,
-        servername: net.isIP(host) ? undefined : host
-      });
-      socket.on('secureConnect', () => {
-        result.resolve(socket.alpnProtocol || 'http/1.1');
-        socket.end();
-      });
-      socket.on('error', error => {
-        debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
-        result.resolve('http/1.1');
-      });
-      socket.on('timeout', () => {
-        result.resolve('http/1.1');
-      });
-    }
+    createTLSSocket({
+      socket: proxySocket,
+      host,
+      port,
+      servername: net.isIP(host) ? undefined : host,
+      ALPNProtocols: ['h2', 'http/1.1'],
+      rejectUnauthorized: false,
+      secureContext,
+    }).then(socket => {
+      // The server may not respond with ALPN, in which case we default to http/1.1.
+      result.resolve(socket.alpnProtocol || 'http/1.1');
+      socket.end();
+    }).catch(error => {
+      debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
+      result.resolve('http/1.1');
+    });
   }
 }
 
@@ -123,11 +101,7 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    if (this.socksProxy.proxyAgentFromOptions)
-      this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
-    else
-      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
-
+    this.target = await this._createProxySocket() ?? await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     if (this._closed) {
@@ -166,19 +140,21 @@ class SocksProxyConnection {
       this.target.write(data);
   }
 
+  private async _createProxySocket() {
+    if (this.socksProxy.proxyAgentFromOptions)
+      return await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+  }
+
   private async _attachTLSListeners() {
     this.internal = new stream.Duplex({
-      read: () => {},
+      read: () => { },
       write: (data, encoding, callback) => {
         this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
         callback();
       }
     });
     const secureContext = this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin);
-    let proxySocket: stream.Duplex | undefined = undefined;
-    if (this.socksProxy.proxyAgentFromOptions)
-      proxySocket = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
-
+    const proxySocket = await this._createProxySocket();
     this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, secureContext, proxySocket, alpnProtocolChosenByServer => {
       proxySocket?.destroy();
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
@@ -251,7 +227,7 @@ class SocksProxyConnection {
           rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
           ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
           servername: !net.isIP(this.host) ? this.host : undefined,
-          secureContext: secureContext,
+          secureContext,
         });
 
         targetTLS.once('secureConnect', () => {
