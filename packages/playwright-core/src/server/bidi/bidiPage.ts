@@ -343,8 +343,14 @@ export class BidiPage implements PageDelegate {
       // TODO: push to iframes?
       contexts: [this._session.sessionId],
     });
+    initScript.implData = { script };
     if (!initScript.internal)
       this._initScriptIds.push(script);
+  }
+
+  async removeInitScript(initScript: InitScript): Promise<void> {
+    this._initScriptIds = this._initScriptIds.filter(script => script !== initScript.implData);
+    this._session.send('script.removePreloadScript', { script: initScript.implData });
   }
 
   async removeNonInternalInitScripts() {

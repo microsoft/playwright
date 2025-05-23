@@ -476,6 +476,11 @@ export class CRBrowserContext extends BrowserContext {
       await (page.delegate as CRPage).addInitScript(initScript);
   }
 
+  async doRemoveInitScript(initScript: InitScript) {
+    for (const page of this.pages())
+      await (page.delegate as CRPage).removeInitScript(initScript);
+  }
+
   async doRemoveNonInternalInitScripts() {
     for (const page of this.pages())
       await (page.delegate as CRPage).removeNonInternalInitScripts();

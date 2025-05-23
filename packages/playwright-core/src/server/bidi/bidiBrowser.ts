@@ -372,8 +372,14 @@ export class BidiBrowserContext extends BrowserContext {
       functionDeclaration: `() => { return ${initScript.source} }`,
       userContexts: [this._browserContextId || 'default'],
     });
+    initScript.implData = script;
     if (!initScript.internal)
       this._initScriptIds.push(script);
+  }
+
+  async doRemoveInitScript(initScript: InitScript) {
+    this._initScriptIds = this._initScriptIds.filter(script => script !== initScript.implData);
+    this._browser._browserSession.send('script.removePreloadScript', { script: initScript.implData });
   }
 
   async doRemoveNonInternalInitScripts() {

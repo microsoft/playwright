@@ -276,6 +276,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
+  protected abstract doRemoveInitScript(initScript: InitScript): Promise<void>;
   protected abstract doRemoveNonInternalInitScripts(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
@@ -335,7 +336,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._playwrightBindingExposed;
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
@@ -343,10 +344,19 @@ export abstract class BrowserContext extends SdkObject {
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
     await this.exposePlaywrightBindingIfNeeded();
-    const binding = new PageBinding(name, playwrightBinding, needsHandle);
+    const binding = new PageBinding(name, playwrightBinding, needsHandle, (): Promise<void> => this._removeExposedBinding(binding));
     this._pageBindings.set(name, binding);
     await this.doAddInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
+    return binding;
+  }
+
+  private async _removeExposedBinding(binding: PageBinding) {
+    if (this._pageBindings.get(binding.name) !== binding)
+      return;
+    this._pageBindings.delete(binding.name);
+    await this.doRemoveInitScript(binding.initScript);
+    await this.safeNonStallingEvaluateInAllFrames(binding.cleanupScript, 'main');
   }
 
   async _removeExposedBindings() {
