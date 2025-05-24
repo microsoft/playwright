@@ -251,6 +251,7 @@ HTML report supports the following configuration options and environment variabl
 | `PLAYWRIGHT_HTML_OPEN` | `open` | When to open the html report in the browser, one of `'always'`, `'never'` or `'on-failure'` | `'on-failure'`
 | `PLAYWRIGHT_HTML_HOST` | `host` | When report opens in the browser, it will be served bound to this hostname. | `localhost`
 | `PLAYWRIGHT_HTML_PORT` | `port` | When report opens in the browser, it will be served on this port. | `9323` or any available port when `9323` is not available.
+| `PLAYWRIGHT_HTML_IGNORE_TEST_STEPS` | `ignoreTestSteps` | When to ignore test steps from the test report containing the text defined. Data format is string separated by comma. e.g. `'step-exact-text,step-partial-text,STEP-PARTIAL-UPPER'`  | `undefined` 
 | `PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL` | `attachmentsBaseURL` | A separate location where attachments from the `data` subdirectory are uploaded. Only needed when you upload report and `data` separately to different locations. | `data/`
 
 ### Blob reporter
