@@ -78,12 +78,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   const textarea = page.locator('textarea');
   await textarea.evaluate(textarea => (textarea as HTMLTextAreaElement).value = 'some value');
   await textarea.selectText();
-  if (browserName === 'firefox') {
-    expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionStart)).toBe(0);
-    expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionEnd)).toBe(10);
-  } else {
-    expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
-  }
+  expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
 });
 
 it('should type', async ({ page }) => {
