@@ -761,7 +761,7 @@ class ArtifactsRecorder {
 function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
   const prefix = renderTitleForCall({ title, type, method, params });
   let selector;
-  if (params?.['selector'])
+  if (params?.['selector'] && typeof params.selector === 'string')
     selector = asLocatorDescription('javascript', params.selector);
   return prefix + (selector ? ` ${selector}` : '');
 }
