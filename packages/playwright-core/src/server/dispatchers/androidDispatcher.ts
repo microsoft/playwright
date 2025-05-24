@@ -63,7 +63,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async fill(params: channels.AndroidDeviceFillParams) {
-    await this._object.send('click', { selector: params.selector });
+    await this._object.send('click', { selector: params.androidSelector });
     await this._object.send('fill', params);
   }
 

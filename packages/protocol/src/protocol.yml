@@ -3847,7 +3847,7 @@ AndroidDevice:
     wait:
       hidden: Wait
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         state:
           type: enum?
           literals:
@@ -3857,21 +3857,21 @@ AndroidDevice:
     fill:
       title: Fill "{text}"
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         text: string
         timeout: number
 
     tap:
       title: Tap
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         duration: number?
         timeout: number
 
     drag:
       title: Drag
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         dest: Point
         speed: number?
         timeout: number
@@ -3879,7 +3879,7 @@ AndroidDevice:
     fling:
       title: Fling
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         direction:
           type: enum
           literals:
@@ -3893,13 +3893,13 @@ AndroidDevice:
     longTap:
       title: Long tap
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         timeout: number
 
     pinchClose:
       title: Pinch close
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         percent: number
         speed: number?
         timeout: number
@@ -3907,7 +3907,7 @@ AndroidDevice:
     pinchOpen:
       title: Pinch open
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         percent: number
         speed: number?
         timeout: number
@@ -3915,7 +3915,7 @@ AndroidDevice:
     scroll:
       title: Scroll
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         direction:
           type: enum
           literals:
@@ -3930,7 +3930,7 @@ AndroidDevice:
     swipe:
       title: Swipe
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         direction:
           type: enum
           literals:
@@ -3945,7 +3945,7 @@ AndroidDevice:
     info:
       internal: true
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
       returns:
         info: AndroidElementInfo
 
@@ -4077,11 +4077,11 @@ AndroidSelector:
     hasChild:
       type: object?
       properties:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
     hasDescendant:
       type: object?
       properties:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         maxDepth: number?
     longClickable: boolean?
     pkg: string?
