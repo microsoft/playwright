@@ -2691,6 +2691,39 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
+    test('should ignore unwanted steps from the report', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+        const { test, expect } = require('@playwright/test');
+        test('ignore steps from the report', async ({}) => {
+          await test.step('step 1 with some title', async () => {
+            expect(1).toBe(1);
+          });
+          
+          await test.step('step 2 with some title', async () => {
+            expect(1).toBe(1);
+          });
+          
+          await test.step('step 3 with some title', async () => {
+            expect(1).toBe(1);
+          });
+        });
+      `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_IGNORE_TEST_STEPS: 'after,step 2' });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'ignore steps from the report' }).click();
+
+      await expect(page.getByRole('treeitem', { name: 'Before Hooks' })).toBeVisible();
+      await expect(page.getByRole('treeitem', { name: 'step 1 with some title' })).toBeVisible();
+      await expect(page.getByRole('treeitem', { name: 'step 2 with some title' })).not.toBeVisible();
+      await expect(page.getByRole('treeitem', { name: 'step 3 with some title' })).toBeVisible();
+      await expect(page.getByRole('treeitem', { name: 'After Hooks' })).not.toBeVisible();
+    });
+
     test('should properly display afterEach with and without title', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'a.test.js': `

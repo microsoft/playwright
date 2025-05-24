@@ -108,7 +108,7 @@ class HtmlReporter implements ReporterV2 {
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined, ignoreTestSteps: RegExp[] | undefined} {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
-    const ignoreTestSteps = process.env.PLAYWRIGHT_HTML_IGNORE_TEST_STEPS ?? this._options.ignoreTestSteps ?? '';
+    const ignoreTestSteps = process.env.PLAYWRIGHT_HTML_IGNORE_TEST_STEPS || this._options.ignoreTestSteps;
     return {
       outputFolder,
       open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
@@ -116,7 +116,7 @@ class HtmlReporter implements ReporterV2 {
       host: process.env.PLAYWRIGHT_HTML_HOST || this._options.host,
       port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : this._options.port,
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
-      ignoreTestSteps: ignoreTestSteps.split(',').map(step => new RegExp(step, 'i')),
+      ignoreTestSteps: ignoreTestSteps?.split(',').map(step => new RegExp(step, 'i')) ?? [],
     };
   }
 
