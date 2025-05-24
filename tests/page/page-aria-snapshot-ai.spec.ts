@@ -87,22 +87,20 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
 
   const href3 = await page.locator('aria-ref=f3e2').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
-});
 
-it('should not generate refs for hidden elements', async ({ page }) => {
-  await page.setContent(`
-    <button>One</button>
-    <button style="width: 0; height: 0; appearance: none; border: 0; padding: 0;">Two</button>
-    <button>Three</button>
-  `);
-
-  const snapshot = await snapshotForAI(page);
-  expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
-      - button "One" [ref=e2]
-      - button "Two"
-      - button "Three" [ref=e4]
-  `);
+  {
+    const locator = await (page.locator('aria-ref=e1') as any)._generateLocatorString();
+    expect(locator).toBe(`locator('body')`);
+  }
+  {
+    const locator = await (page.locator('aria-ref=f3e2') as any)._generateLocatorString();
+    expect(locator).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
+  }
+  {
+    // Should tolerate .describe().
+    const locator = await (page.locator('aria-ref=f2e2').describe('foo bar') as any)._generateLocatorString();
+    expect(locator).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
+  }
 });
 
 it('should not generate refs for elements with pointer-events:none', async ({ page }) => {

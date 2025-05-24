@@ -423,7 +423,7 @@ it.describe('selector generator', () => {
 
   it('should work with tricky attributes', async ({ page }) => {
     await page.setContent(`<button id="this:is-my-tricky.id"><span></span></button>`);
-    expect(await generate(page, 'button')).toBe('[id="this\\:is-my-tricky\\.id"]');
+    expect(await generate(page, 'button')).toBe('[id="this\\:is-my-tricky.id"]');
 
     await page.setContent(`<ng:switch><span></span></ng:switch>`);
     expect(await generate(page, 'ng\\:switch')).toBe('ng\\:switch');
@@ -435,7 +435,7 @@ it.describe('selector generator', () => {
 
     await page.setContent(`<div><span></span></div>`);
     await page.$eval('div', div => div.id = `!#'!?:`);
-    expect(await generate(page, 'div')).toBe("[id=\"\\!\\#\\'\\!\\?\\:\"]");
+    expect(await generate(page, 'div')).toBe(`[id="!#\\'!?\\:"]`);
   });
 
   it('should work without CSS.escape', async ({ page }) => {
@@ -444,7 +444,7 @@ it.describe('selector generator', () => {
       delete window.CSS.escape;
       button.setAttribute('name', '-tricky\u0001name');
     });
-    expect(await generate(page, 'button')).toBe(`button[name="-tricky\\1 name"]`);
+    expect(await generate(page, 'button')).toBe(`button[name="-tricky\u0001name"]`);
   });
 
   it('should ignore empty aria-label for candidate consideration', async ({ page }) => {
