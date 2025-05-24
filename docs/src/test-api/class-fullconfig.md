@@ -90,6 +90,12 @@ See [`property: TestConfig.quiet`].
 
 See [`property: TestConfig.reporter`].
 
+## property: FullConfig.retryStrategy
+* since: v1.54
+- type: <[RetryStrategy]<"leading"|"trailing">>
+
+See [`property: TestConfig.retryStrategy`].
+
 ## property: FullConfig.reportSlowTests
 * since: v1.10
 - type: <[null]|[Object]>
