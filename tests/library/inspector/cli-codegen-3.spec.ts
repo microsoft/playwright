@@ -316,19 +316,19 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locato
       page.locator('iframe[name="foo<bar\'\\"`>"]').contentFrame().getByRole('button', { name: 'Click me' }).click(),
     ]);
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.locator('iframe[name="foo\\\\<bar\\\\\\'\\\\"\\\\\`\\\\>"]').contentFrame().getByRole('button', { name: 'Click me' }).click();`);
+  await page.locator('iframe[name="foo<bar\\'\\\\\"\`>"]').contentFrame().getByRole('button', { name: 'Click me' }).click()`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Click me")).click()`);
+      page.locator("iframe[name=\\"foo<bar'\\\\\\"\`>\\"]").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Click me")).click()`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").content_frame.get_by_role("button", name="Click me").click()`);
+    page.locator("iframe[name=\\"foo<bar'\\\\\\"\`>\\"]").content_frame.get_by_role("button", name="Click me").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").content_frame.get_by_role("button", name="Click me").click()`);
+    await page.locator("iframe[name=\\"foo<bar'\\\\\\"\`>\\"]").content_frame.get_by_role("button", name="Click me").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").ContentFrame.GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
+await page.Locator("iframe[name=\\"foo<bar'\\\\\\"\`>\\"]").ContentFrame.GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync()`);
   });
 
   test('should generate frame locators with title attribute', async ({ openRecorder, server }) => {
