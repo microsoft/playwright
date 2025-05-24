@@ -1262,16 +1262,17 @@ export class Registry {
 
   async list() {
     const linksDir = path.join(registryDirectory, '.links');
-    const [browsers, _brokenLinks] = await this._traverseBrowserInstallations(linksDir);
+    const [browsers] = await this._traverseBrowserInstallations(linksDir);
 
     // Group browsers by browserName
-    const groupedBrowsers: Record<string, Array<{ browserVersion: number, hostDir: string, browserPath: string }>> = {};
+    const groupedBrowsers: Record<string, BrowsersInfo[]> = {};
 
-    for(const browser of browsers) {
+    for (const browser of browsers) {
       if (!groupedBrowsers[browser.browserName])
         groupedBrowsers[browser.browserName] = [];
 
       groupedBrowsers[browser.browserName].push({
+        browserName: browser.browserName,
         browserVersion: browser.browserVersion,
         hostDir: browser.hostDir,
         browserPath: browser.browserPath
@@ -1281,8 +1282,8 @@ export class Registry {
     return groupedBrowsers;
   }
 
-  private async _traverseBrowserInstallations(linksDir: string): Promise<[BrowsersInfo[], string[]]> {
-    const browserList: Array<BrowsersInfo> = [];
+  private async _traverseBrowserInstallations(linksDir: string): Promise<[browsers: BrowsersInfo[], brokenLinks: string[]]> {
+    const browserList: BrowsersInfo[] = [];
     const brokenLinks: string[] = [];
     for (const fileName of await fs.promises.readdir(linksDir)) {
       const linkPath = path.join(linksDir, fileName);
@@ -1318,7 +1319,7 @@ export class Registry {
     return [browserList, brokenLinks];
   }
 
-  private async _deleteStaleBrowsers(browserList: Array<{ browserName: string, browserVersion: number, hostDir: string, browserPath: string }>) {
+  private async _deleteStaleBrowsers(browserList: BrowsersInfo[]) {
     if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC'))
       return;
 
@@ -1348,7 +1349,7 @@ export class Registry {
   }
 
   private async _deleteBrokenInstallations(brokenLinks: string[]) {
-    for(const linkPath of brokenLinks)
+    for (const linkPath of brokenLinks)
       await fs.promises.unlink(linkPath).catch(e => {});
   }
 }

@@ -41,9 +41,9 @@ test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk 
     const listed = new Set();
     const regex = /Browser:\s+([\w-]+)/g;
     let match;
-    while ((match = regex.exec(result)) !== null) {
+    while ((match = regex.exec(result)) !== null)
       listed.add(match[1]);
-    }
+
     const expected = ['android', 'chromium', 'ffmpeg', 'firefox', 'webkit'];
     expected.forEach(browser => {
       expect(listed.has(browser)).toBe(true);
