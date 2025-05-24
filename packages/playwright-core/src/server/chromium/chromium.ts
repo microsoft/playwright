@@ -357,10 +357,24 @@ export class Chromium extends BrowserType {
 }
 
 class ChromiumReadyState extends BrowserReadyState {
+  private _browserError: Error | null = null;
+
   override onBrowserOutput(message: string): void {
+    if (message.includes('Failed to create a ProcessSingleton for your profile directory.')) {
+      this._browserError = new Error([
+        'Failed to create a ProcessSingleton for your profile directory.',
+        'This usually means that the profile is already in use by another instance of Chromium.',
+        'Ensure that there is no other instance of Chromium running with the same profile.',
+      ].join('\n'));
+    }
     const match = message.match(/DevTools listening on (.*)/);
     if (match)
       this._wsEndpoint.resolve(match[1]);
+  }
+
+  override throwPotentialLaunchError(): void {
+    if (this._browserError)
+      throw this._browserError;
   }
 }
 

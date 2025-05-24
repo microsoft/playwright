@@ -57,6 +57,9 @@ export abstract class BrowserReadyState {
     // Unblock launch when browser prematurely exits.
     this._wsEndpoint.resolve(undefined);
   }
+
+  throwPotentialLaunchError(): void {}
+
   async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
     const wsEndpoint = await this._wsEndpoint;
     return { wsEndpoint };
@@ -271,8 +274,11 @@ export abstract class BrowserType extends SdkObject {
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
     const wsEndpoint = (await readyState?.waitUntilReady())?.wsEndpoint;
+    readyState?.throwPotentialLaunchError();
     if (options.cdpPort !== undefined || !this.supportsPipeTransport()) {
-      transport = await WebSocketTransport.connect(progress, wsEndpoint!);
+      if (!wsEndpoint)
+        throw new Error('Unable to determine wsEndpoint.');
+      transport = await WebSocketTransport.connect(progress, wsEndpoint);
     } else {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
       transport = new PipeTransport(stdio[3], stdio[4]);
