@@ -3745,6 +3745,10 @@ Electron:
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
+        selectorEngines:
+          type: array?
+          items: SelectorEngine
+        testIdAttributeName: string?
 
       returns:
         electronApplication: ElectronApplication

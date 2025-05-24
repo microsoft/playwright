@@ -56,6 +56,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._electron = Electron.from(initializer.electron);
+    this._electron._playwright = this;
     this._bidiChromium = BrowserType.from(initializer.bidiChromium);
     this._bidiChromium._playwright = this;
     this._bidiFirefox = BrowserType.from(initializer.bidiFirefox);
@@ -82,7 +83,11 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   }
 
   _allContexts() {
-    return this._browserTypes().flatMap(type => [...type._contexts]);
+    return [
+      ...this._browserTypes().flatMap(type => [...type._contexts]),
+      ...this._electron._contexts,
+      ...this._android._contexts,
+    ];
   }
 
   _allPages() {

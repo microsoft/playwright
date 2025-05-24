@@ -4397,6 +4397,8 @@ export type ElectronLaunchParams = {
   strictSelectors?: boolean,
   timezoneId?: string,
   tracesDir?: string,
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
 };
 export type ElectronLaunchOptions = {
   executablePath?: string,
@@ -4430,6 +4432,8 @@ export type ElectronLaunchOptions = {
   strictSelectors?: boolean,
   timezoneId?: string,
   tracesDir?: string,
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
 };
 export type ElectronLaunchResult = {
   electronApplication: ElectronApplicationChannel,
