@@ -583,6 +583,37 @@ test('fails', async ({ page }) => {
     `.trim());
 });
 
+test('should update git diff between test runs', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35999' }
+}, async ({ runUITest, writeFiles, initGitRepo }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      export default {
+        captureGitInfo: { diff: true },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        expect(1).toBe(2);
+      });
+    `,
+    'new-file.ts': 'foo'
+  });
+
+  await initGitRepo();
+  await page.getByTestId('test-tree').getByText('fails').dblclick();
+  await writeFiles({ 'new-file.ts': 'bar' });
+  await page.getByTestId('test-tree').getByText('fails').dblclick();
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByText('Errors', { exact: true }).click();
+  await page.locator('.tab-errors').getByRole('button', { name: 'Copy prompt' }).click();
+  const secondPrompt = await page.evaluate(() => navigator.clipboard.readText());
+  expect(secondPrompt).toContain('new-file.ts');
+});
+
 test('should indicate current test status', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `

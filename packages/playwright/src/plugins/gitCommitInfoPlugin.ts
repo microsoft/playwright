@@ -41,33 +41,50 @@ function debug(s: string, ...args: any[]) {
 }
 
 const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
+  let config: FullConfig;
+  const configDir = fullConfig.configDir;
+
+  async function updateMetdata() {
+    const metadata = config.metadata as MetadataWithCommitInfo;
+
+    const ci = await ciInfo();
+
+    if (!metadata.ci && ci) {
+      debug('ci info', ci);
+      metadata.ci = ci;
+    }
+
+    if (fullConfig.captureGitInfo?.commit || (fullConfig.captureGitInfo?.commit === undefined && ci)) {
+      const git = await gitCommitInfo(configDir).catch(e => print('failed to get git commit info', e));
+      if (git) {
+        debug('commit info', git);
+        metadata.gitCommit = git;
+      }
+    }
+
+    if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
+      const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
+      if (diffResult) {
+        debug(`diff length ${diffResult.length}`);
+        metadata.gitDiff = diffResult;
+      }
+    }
+  }
+
+  let testRun = 0;
   return {
     name: 'playwright:git-commit-info',
 
-    setup: async (config: FullConfig, configDir: string) => {
-      const metadata = config.metadata as MetadataWithCommitInfo;
-      const ci = await ciInfo();
-      if (!metadata.ci && ci) {
-        debug('ci info', ci);
-        metadata.ci = ci;
-      }
-
-      if (fullConfig.captureGitInfo?.commit || (fullConfig.captureGitInfo?.commit === undefined && ci)) {
-        const git = await gitCommitInfo(configDir).catch(e => print('failed to get git commit info', e));
-        if (git) {
-          debug('commit info', git);
-          metadata.gitCommit = git;
-        }
-      }
-
-      if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
-        const diffResult = await gitDiff(configDir, ci).catch(e => print('failed to get git diff', e));
-        if (diffResult) {
-          debug(`diff length ${diffResult.length}`);
-          metadata.gitDiff = diffResult;
-        }
-      }
+    setup: async (cfg: FullConfig) => {
+      config = cfg;
+      await updateMetdata();
     },
+
+    begin: async () => {
+      testRun++;
+      if (testRun > 1)
+        await updateMetdata();
+    }
   };
 };
 

@@ -21,7 +21,6 @@ import { test as baseTest, expect as baseExpect, createImage } from './playwrigh
 import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
 import { msToString } from '../../packages/web/src/uiUtils';
-const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
@@ -1270,7 +1269,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
-    test('should include commit metadata w/ captureGitInfo', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include commit metadata w/ captureGitInfo', async ({ runInlineTest, writeFiles, showReport, page, initGitRepo }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `
@@ -1283,8 +1282,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           test('sample', async ({}) => { expect(2).toBe(2); });
         `,
       };
-      const baseDir = await writeFiles(files);
-      await initGitRepo(baseDir);
+      await writeFiles(files);
+      await initGitRepo();
 
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
@@ -1301,7 +1300,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
 
-    test('should include commit metadata w/ CI', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include commit metadata w/ CI', async ({ runInlineTest, writeFiles, showReport, page, initGitRepo }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `export default {}`,
@@ -1310,8 +1309,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           test('sample', async ({}) => { expect(2).toBe(2); });
         `,
       };
-      const baseDir = await writeFiles(files);
-      await initGitRepo(baseDir);
+      await writeFiles(files);
+      await initGitRepo();
 
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
@@ -1330,7 +1329,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
 
-    test('should include PR metadata on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include PR metadata on GHA', async ({ runInlineTest, writeFiles, showReport, page, initGitRepo }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `export default {}`,
@@ -1340,7 +1339,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         `,
       };
       const baseDir = await writeFiles(files);
-      await initGitRepo(baseDir);
+      await initGitRepo();
 
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
@@ -2874,7 +2873,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
     });
 
-    test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page, execGit, initGitRepo }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `export default {}`,
@@ -2887,7 +2886,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         `,
       };
       const baseDir = await writeFiles(files);
-      await initGitRepo(baseDir);
+      await initGitRepo();
       await writeFiles({
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
@@ -2896,8 +2895,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             expect(2).toBe(3);
           });`
       });
-      await execGit(baseDir, ['checkout', '-b', 'pr_branch']);
-      await execGit(baseDir, ['commit', '-am', 'changes']);
+      await execGit(['checkout', '-b', 'pr_branch']);
+      await execGit(['commit', '-am', 'changes']);
 
       const result = await runInlineTest({}, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
@@ -2984,24 +2983,6 @@ function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
     stream.on('data', chunk => chunks.push(chunk));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
   });
-}
-
-async function execGit(baseDir: string, args: string[]) {
-  const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
-  if (!!code)
-    throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
-  return;
-}
-
-async function initGitRepo(baseDir: string) {
-  await execGit(baseDir, ['init']);
-  await execGit(baseDir, ['config', '--local', 'user.email', 'shakespeare@example.local']);
-  await execGit(baseDir, ['config', '--local', 'user.name', 'William']);
-  await execGit(baseDir, ['checkout', '-b', 'main']);
-  await execGit(baseDir, ['add', 'playwright.config.ts']);
-  await execGit(baseDir, ['commit', '-m', 'init']);
-  await execGit(baseDir, ['add', '*.ts']);
-  await execGit(baseDir, ['commit', '-m', 'chore(html): make this test look nice']);
 }
 
 function ghaCommitEnv() {
