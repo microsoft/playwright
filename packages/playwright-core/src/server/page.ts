@@ -805,9 +805,8 @@ export class Page extends SdkObject {
   }
 
   async snapshotForAI(metadata: CallMetadata): Promise<string> {
-    const frameIds: string[] = [];
-    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, frameIds);
-    this.lastSnapshotFrameIds = frameIds;
+    this.lastSnapshotFrameIds = [];
+    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, this.lastSnapshotFrameIds);
     return snapshot.join('\n');
   }
 }
