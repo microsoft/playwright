@@ -283,7 +283,7 @@ it('should round-trip extracted har.zip', async ({ contextFactory, server }, tes
   await context1.close();
 
   const harDir = testInfo.outputPath('hardir');
-  await extractZip(harPath, { dir: harDir });
+  await extractZip(await fs.promises.readFile(harPath), { dir: harDir });
 
   const context2 = await contextFactory();
   await context2.routeFromHAR(path.join(harDir, 'har.har'));
