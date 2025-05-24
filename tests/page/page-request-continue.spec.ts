@@ -563,6 +563,30 @@ it('continue should propagate headers to redirects', {
   expect(serverRequest.headers['custom']).toBe('value');
 });
 
+it('continue should drop content-length on redirects', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36029' }
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+
+  await server.setRedirect('/redirect', '/empty.html');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        custom: 'value'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.evaluate(url => fetch(url, { method: 'POST', body: 'foo' }), server.PREFIX + '/redirect')
+  ]);
+  expect.soft(serverRequest.method).toBe('GET');
+  expect.soft(serverRequest.headers['content-length']).toBeUndefined();
+  expect.soft(serverRequest.headers['content-type']).toBeUndefined();
+  expect.soft(serverRequest.headers['custom']).toBe('value');
+});
+
 it('redirected requests should report overridden headers', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31351' },
