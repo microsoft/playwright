@@ -640,7 +640,8 @@ test('should throw when connecting twice to an already running persistent contex
   const browser = await browserType.launchPersistentContext(userDataDir, options);
   try {
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-    expect(error.message).toContain('Unable to determine wsEndpoint.')
+    expect(error.message).toContain('Failed to create a ProcessSingleton for your profile directory.');
+    expect(error.message).toContain('Ensure that there is no other instance of Chromium running with the same profile.');
   } finally {
     await browser.close();
   }
