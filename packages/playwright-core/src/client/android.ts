@@ -38,6 +38,7 @@ type SpeedOptions = { speed?: number };
 
 export class Android extends ChannelOwner<channels.AndroidChannel> implements api.Android {
   readonly _timeoutSettings: TimeoutSettings;
+  _contexts = new Set<BrowserContext>();
   _serverLauncher?: AndroidServerLauncherImpl;
 
   static from(android: channels.AndroidChannel): Android {
@@ -100,6 +101,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<string, AndroidWebView>();
+  private _android: Android;
   _shouldCloseConnectionOnClose = false;
 
   static from(androidDevice: channels.AndroidDeviceChannel): AndroidDevice {
@@ -110,6 +112,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidDeviceInitializer) {
     super(parent, type, guid, initializer);
+    this._android = parent as Android;
     this.input = new AndroidInput(this);
     this._timeoutSettings = new TimeoutSettings(this._platform, (parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
@@ -257,7 +260,9 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   async launchBrowser(options: types.BrowserContextOptions & { pkg?: string } = {}): Promise<BrowserContext> {
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const result = await this._channel.launchBrowser(contextOptions);
-    const context = BrowserContext.from(result.context) as BrowserContext;
+    const context = BrowserContext.from(result.context);
+    this._android._contexts.add(context);
+    context.on(Events.BrowserContext.Close, () => this._android._contexts.delete(context));
     await context._initializeHarFromOptions(options.recordHar);
     return context;
   }

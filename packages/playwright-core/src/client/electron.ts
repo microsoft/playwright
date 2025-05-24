@@ -31,6 +31,7 @@ import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
+import type { Playwright } from './playwright';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: Env,
@@ -44,6 +45,9 @@ type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHead
 type ElectronAppType = typeof import('electron');
 
 export class Electron extends ChannelOwner<channels.ElectronChannel> implements api.Electron {
+  _playwright!: Playwright;
+  _contexts = new Set<BrowserContext>();
+
   static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
   }
@@ -53,6 +57,11 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
   }
 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
+    options = {
+      ...options,
+      selectorEngines: this._playwright.selectors._selectorEngines,
+      testIdAttributeName: this._playwright.selectors._testIdAttributeName,
+    };
     const params: channels.ElectronLaunchParams = {
       ...await prepareBrowserContextParams(this._platform, options),
       env: envObjectToArray(options.env ? options.env : this._platform.env),
@@ -60,6 +69,8 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
+    this._contexts.add(app.context());
+    app.once(Events.ElectronApplication.Close, () => this._contexts.delete(app.context()));
     await app._context._initializeHarFromOptions(options.recordHar);
     app._context.tracing._tracesDir = options.tracesDir;
     return app;
