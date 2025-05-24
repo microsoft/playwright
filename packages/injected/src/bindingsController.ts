@@ -28,6 +28,7 @@ type BindingData = {
   callbacks: Map<number, { resolve: (value: any) => void, reject: (error: Error) => void }>;
   lastSeq: number;
   handles: Map<number, any>;
+  removed: boolean;
 };
 
 export class BindingsController {
@@ -47,9 +48,12 @@ export class BindingsController {
       callbacks: new Map(),
       lastSeq: 0,
       handles: new Map(),
+      removed: false,
     };
     this._bindings.set(bindingName, data);
     (this._global as any)[bindingName] = (...args: any[]) => {
+      if (data.removed)
+        throw new Error(`binding "${bindingName}" has been removed`);
       if (needsHandle && args.slice(1).some(arg => arg !== undefined))
         throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
       const seq = ++data.lastSeq;
@@ -70,6 +74,14 @@ export class BindingsController {
       (this._global as any)[this._globalBindingName](JSON.stringify(payload));
       return promise;
     };
+  }
+
+  removeBinding(bindingName: string) {
+    const data = this._bindings.get(bindingName);
+    if (data)
+      data.removed = true;
+    this._bindings.delete(bindingName);
+    delete (this._global as any)[bindingName];
   }
 
   takeBindingHandle(arg: { name: string, seq: number }) {

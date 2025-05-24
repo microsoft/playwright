@@ -218,7 +218,6 @@ export abstract class BrowserContext extends SdkObject {
     page?.frameManager.setCloseAllOpeningDialogs(false);
 
     await this._resetStorage();
-    await this._removeExposedBindings();
     await this._removeInitScripts();
     this.clock.markAsUninstalled();
     // TODO: following can be optimized to not perform noops.
@@ -276,6 +275,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
+  protected abstract doRemoveInitScript(initScript: InitScript): Promise<void>;
   protected abstract doRemoveNonInternalInitScripts(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
@@ -335,7 +335,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._playwrightBindingExposed;
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
@@ -347,13 +347,15 @@ export abstract class BrowserContext extends SdkObject {
     this._pageBindings.set(name, binding);
     await this.doAddInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
+    return binding;
   }
 
-  async _removeExposedBindings() {
-    for (const [key, binding] of this._pageBindings) {
-      if (!binding.internal)
-        this._pageBindings.delete(key);
-    }
+  async removeExposedBinding(binding: PageBinding) {
+    if (this._pageBindings.get(binding.name) !== binding)
+      return;
+    this._pageBindings.delete(binding.name);
+    await this.doRemoveInitScript(binding.initScript);
+    await this.safeNonStallingEvaluateInAllFrames(binding.cleanupScript, 'main');
   }
 
   async grantPermissions(permissions: string[], origin?: string) {

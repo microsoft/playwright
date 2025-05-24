@@ -319,6 +319,11 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage)._updateBootstrapScript();
   }
 
+  async doRemoveInitScript(initScript: InitScript) {
+    for (const page of this.pages())
+      await (page.delegate as WKPage)._updateBootstrapScript();
+  }
+
   async doRemoveNonInternalInitScripts() {
     for (const page of this.pages())
       await (page.delegate as WKPage)._updateBootstrapScript();

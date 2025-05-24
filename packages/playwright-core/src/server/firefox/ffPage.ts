@@ -387,11 +387,20 @@ export class FFPage implements PageDelegate {
 
   async addInitScript(initScript: InitScript, worldName?: string): Promise<void> {
     this._initScripts.push({ initScript, worldName });
-    await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
+    await this._updateInitScripts();
+  }
+
+  async removeInitScript(initScript: InitScript): Promise<void> {
+    this._initScripts = this._initScripts.filter(s => s.initScript !== initScript);
+    await this._updateInitScripts();
   }
 
   async removeNonInternalInitScripts() {
     this._initScripts = this._initScripts.filter(s => s.initScript.internal);
+    await this._updateInitScripts();
+  }
+
+  private async _updateInitScripts() {
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
   }
 
