@@ -4610,7 +4610,7 @@ export type AndroidDeviceWebViewRemovedEvent = {
   socketName: string,
 };
 export type AndroidDeviceWaitParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   state?: 'gone',
   timeout: number,
 };
@@ -4619,7 +4619,7 @@ export type AndroidDeviceWaitOptions = {
 };
 export type AndroidDeviceWaitResult = void;
 export type AndroidDeviceFillParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   text: string,
   timeout: number,
 };
@@ -4628,7 +4628,7 @@ export type AndroidDeviceFillOptions = {
 };
 export type AndroidDeviceFillResult = void;
 export type AndroidDeviceTapParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   duration?: number,
   timeout: number,
 };
@@ -4637,7 +4637,7 @@ export type AndroidDeviceTapOptions = {
 };
 export type AndroidDeviceTapResult = void;
 export type AndroidDeviceDragParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   dest: Point,
   speed?: number,
   timeout: number,
@@ -4647,7 +4647,7 @@ export type AndroidDeviceDragOptions = {
 };
 export type AndroidDeviceDragResult = void;
 export type AndroidDeviceFlingParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   direction: 'up' | 'down' | 'left' | 'right',
   speed?: number,
   timeout: number,
@@ -4657,7 +4657,7 @@ export type AndroidDeviceFlingOptions = {
 };
 export type AndroidDeviceFlingResult = void;
 export type AndroidDeviceLongTapParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   timeout: number,
 };
 export type AndroidDeviceLongTapOptions = {
@@ -4665,7 +4665,7 @@ export type AndroidDeviceLongTapOptions = {
 };
 export type AndroidDeviceLongTapResult = void;
 export type AndroidDevicePinchCloseParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   percent: number,
   speed?: number,
   timeout: number,
@@ -4675,7 +4675,7 @@ export type AndroidDevicePinchCloseOptions = {
 };
 export type AndroidDevicePinchCloseResult = void;
 export type AndroidDevicePinchOpenParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   percent: number,
   speed?: number,
   timeout: number,
@@ -4685,7 +4685,7 @@ export type AndroidDevicePinchOpenOptions = {
 };
 export type AndroidDevicePinchOpenResult = void;
 export type AndroidDeviceScrollParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   direction: 'up' | 'down' | 'left' | 'right',
   percent: number,
   speed?: number,
@@ -4696,7 +4696,7 @@ export type AndroidDeviceScrollOptions = {
 };
 export type AndroidDeviceScrollResult = void;
 export type AndroidDeviceSwipeParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
   direction: 'up' | 'down' | 'left' | 'right',
   percent: number,
   speed?: number,
@@ -4707,7 +4707,7 @@ export type AndroidDeviceSwipeOptions = {
 };
 export type AndroidDeviceSwipeResult = void;
 export type AndroidDeviceInfoParams = {
-  selector: AndroidSelector,
+  androidSelector: AndroidSelector,
 };
 export type AndroidDeviceInfoOptions = {
 
@@ -4964,10 +4964,10 @@ export type AndroidSelector = {
   focusable?: boolean,
   focused?: boolean,
   hasChild?: {
-    selector: AndroidSelector,
+    androidSelector: AndroidSelector,
   },
   hasDescendant?: {
-    selector: AndroidSelector,
+    androidSelector: AndroidSelector,
     maxDepth?: number,
   },
   longClickable?: boolean,
