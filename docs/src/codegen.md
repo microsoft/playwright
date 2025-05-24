@@ -414,6 +414,26 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/m
 
 <img width="1394" alt="github signed in showing use of load storage scharp" src="https://user-images.githubusercontent.com/13063165/220928354-caa0e958-fe09-4125-9b54-67483064da51.png" />
 
+#### Use existing userDataDir
+
+Run `codegen` with `--user-data-dir` to set a fixed [user data directory](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-user-data-dir) for the browser session. If you provide your existing browser's user data directory, codegen will use your existing browser profile and have access to your authentication state.
+
+```bash js
+npx playwright codegen --user-data-dir=/path/to/your/browser/data/ github.com/microsoft/playwright
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --user-data-dir=/path/to/your/browser/data/ github.com/microsoft/playwright"
+```
+
+```bash python
+playwright codegen --user-data-dir=/path/to/your/browser/data/ github.com/microsoft/playwright
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 codegen --user-data-dir=/path/to/your/browser/data/ github.com/microsoft/playwright
+```
+
 ## Record using custom setup
 
 If you would like to use codegen in some non-standard setup (for example, use [`method: BrowserContext.route`]), it is possible to call [`method: Page.pause`] that will open a separate window with codegen controls.
