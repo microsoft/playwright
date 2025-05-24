@@ -189,7 +189,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
-    this.tracing.resetForReuse();
+    await this.tracing.resetForReuse();
 
     if (params) {
       for (const key of paramsThatAllowContextReuse)
@@ -218,8 +218,7 @@ export abstract class BrowserContext extends SdkObject {
     page?.frameManager.setCloseAllOpeningDialogs(false);
 
     await this._resetStorage();
-    await this._removeInitScripts();
-    this.clock.markAsUninstalled();
+    await this.clock.resetForReuse();
     // TODO: following can be optimized to not perform noops.
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
@@ -275,8 +274,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
-  protected abstract doRemoveInitScript(initScript: InitScript): Promise<void>;
-  protected abstract doRemoveNonInternalInitScripts(): Promise<void>;
+  protected abstract doRemoveInitScripts(initScripts: InitScript[]): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
   protected abstract doClose(reason: string | undefined): Promise<void>;
@@ -350,12 +348,13 @@ export abstract class BrowserContext extends SdkObject {
     return binding;
   }
 
-  async removeExposedBinding(binding: PageBinding) {
-    if (this._pageBindings.get(binding.name) !== binding)
-      return;
-    this._pageBindings.delete(binding.name);
-    await this.doRemoveInitScript(binding.initScript);
-    await this.safeNonStallingEvaluateInAllFrames(binding.cleanupScript, 'main');
+  async removeExposedBindings(bindings: PageBinding[]) {
+    bindings = bindings.filter(binding => this._pageBindings.get(binding.name) === binding);
+    for (const binding of bindings)
+      this._pageBindings.delete(binding.name);
+    await this.doRemoveInitScripts(bindings.map(binding => binding.initScript));
+    const cleanup = bindings.map(binding => `{ ${binding.cleanupScript} };\n`).join('');
+    await this.safeNonStallingEvaluateInAllFrames(cleanup, 'main');
   }
 
   async grantPermissions(permissions: string[], origin?: string) {
@@ -430,14 +429,16 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async addInitScript(source: string, name?: string) {
-    const initScript = new InitScript(source, false /* internal */, name);
+    const initScript = new InitScript(source, name);
     this.initScripts.push(initScript);
     await this.doAddInitScript(initScript);
+    return initScript;
   }
 
-  async _removeInitScripts(): Promise<void> {
-    this.initScripts = this.initScripts.filter(script => script.internal);
-    await this.doRemoveNonInternalInitScripts();
+  async removeInitScripts(initScripts: InitScript[]) {
+    const set = new Set(initScripts);
+    this.initScripts = this.initScripts.filter(script => !set.has(script));
+    await this.doRemoveInitScripts(initScripts);
   }
 
   async setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {

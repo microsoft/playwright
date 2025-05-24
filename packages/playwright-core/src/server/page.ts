@@ -58,8 +58,7 @@ export interface PageDelegate {
   goForward(): Promise<boolean>;
   requestGC(): Promise<void>;
   addInitScript(initScript: InitScript): Promise<void>;
-  removeInitScript(initScript: InitScript): Promise<void>;
-  removeNonInternalInitScripts(): Promise<void>;
+  removeInitScripts(initScripts: InitScript[]): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
@@ -259,7 +258,6 @@ export class Page extends SdkObject {
   async resetForReuse(metadata: CallMetadata) {
     this._locatorHandlers.clear();
 
-    await this._removeInitScripts();
     await this.setClientRequestInterceptor(undefined);
     await this.setServerRequestInterceptor(undefined);
     await this.setFileChooserIntercepted(false);
@@ -341,12 +339,13 @@ export class Page extends SdkObject {
     return binding;
   }
 
-  async removeExposedBinding(binding: PageBinding) {
-    if (this._pageBindings.get(binding.name) !== binding)
-      return;
-    this._pageBindings.delete(binding.name);
-    await this.delegate.removeInitScript(binding.initScript);
-    await this.safeNonStallingEvaluateInAllFrames(binding.cleanupScript, 'main');
+  async removeExposedBindings(bindings: PageBinding[]) {
+    bindings = bindings.filter(binding => this._pageBindings.get(binding.name) === binding);
+    for (const binding of bindings)
+      this._pageBindings.delete(binding.name);
+    await this.delegate.removeInitScripts(bindings.map(binding => binding.initScript));
+    const cleanup = bindings.map(binding => `{ ${binding.cleanupScript} };\n`).join('');
+    await this.safeNonStallingEvaluateInAllFrames(cleanup, 'main');
   }
 
   setExtraHTTPHeaders(headers: types.HeadersArray) {
@@ -562,14 +561,16 @@ export class Page extends SdkObject {
   }
 
   async addInitScript(source: string, name?: string) {
-    const initScript = new InitScript(source, false /* internal */, name);
+    const initScript = new InitScript(source, name);
     this.initScripts.push(initScript);
     await this.delegate.addInitScript(initScript);
+    return initScript;
   }
 
-  private async _removeInitScripts() {
-    this.initScripts = this.initScripts.filter(script => script.internal);
-    await this.delegate.removeNonInternalInitScripts();
+  async removeInitScripts(initScripts: InitScript[]) {
+    const set = new Set(initScripts);
+    this.initScripts = this.initScripts.filter(script => !set.has(script));
+    await this.delegate.removeInitScripts(initScripts);
   }
 
   needsRequestInterception(): boolean {
@@ -864,7 +865,7 @@ export class PageBinding {
         if (!globalThis[property])
           globalThis[property] = new (module.exports.BindingsController())(globalThis, '${PageBinding.kBindingName}');
       })();
-    `, true /* internal */);
+    `);
   }
 
   readonly name: string;
@@ -876,7 +877,7 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(`globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`, true /* internal */);
+    this.initScript = new InitScript(`globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`);
     this.needsHandle = needsHandle;
     this.cleanupScript = `globalThis['${PageBinding.kController}'].removeBinding(${JSON.stringify(name)})`;
   }
@@ -907,15 +908,13 @@ export class PageBinding {
 
 export class InitScript {
   readonly source: string;
-  readonly internal: boolean;
   readonly name?: string;
-  implData: any; // Can be arbitrarily used by a browser-specific implementation.
+  auxData: any; // Can be arbitrarily used by a browser-specific implementation.
 
-  constructor(source: string, internal?: boolean, name?: string) {
+  constructor(source: string, name?: string) {
     this.source = `(() => {
       ${source}
     })();`;
-    this.internal = !!internal;
     this.name = name;
   }
 }

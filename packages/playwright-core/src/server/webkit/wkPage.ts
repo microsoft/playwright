@@ -768,11 +768,7 @@ export class WKPage implements PageDelegate {
     await this._updateBootstrapScript();
   }
 
-  async removeInitScript(initScript: InitScript): Promise<void> {
-    await this._updateBootstrapScript();
-  }
-
-  async removeNonInternalInitScripts() {
+  async removeInitScripts(initScripts: InitScript[]): Promise<void> {
     await this._updateBootstrapScript();
   }
 
