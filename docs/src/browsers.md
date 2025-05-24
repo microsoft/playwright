@@ -1084,6 +1084,26 @@ Playwright keeps track of the clients that use its browsers. When there are no m
 
 To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
 
+### List all installed browsers:
+
+Prints list of browsers from all playwright installations on the machine.
+
+```bash js
+npx playwright install --list
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --list"
+```
+
+```bash python
+playwright install --list
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install --list
+```
+
 ### Uninstall browsers
 
 This will remove the browsers (chromium, firefox, webkit) of the current Playwright installation:

@@ -134,7 +134,7 @@ export const test = _test
       tmpWorkspace: async ({}, use) => {
         // We want a location that won't have a node_modules dir anywhere along its path
         const tmpWorkspace = path.join(TMP_WORKSPACES, path.basename(test.info().outputDir));
-        await fs.promises.mkdir(tmpWorkspace);
+        await fs.promises.mkdir(tmpWorkspace, { recursive: true });
         debug(`Workspace Folder: ${tmpWorkspace}`);
         await use(tmpWorkspace);
       },
