@@ -58,6 +58,7 @@ class HtmlReporter implements ReporterV2 {
   private _port: number | undefined;
   private _host: string | undefined;
   private _title: string | undefined;
+  private _ignoreTestSteps: RegExp[] | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
@@ -78,13 +79,14 @@ class HtmlReporter implements ReporterV2 {
   }
 
   onBegin(suite: api.Suite) {
-    const { outputFolder, open, attachmentsBaseURL, host, port, title } = this._resolveOptions();
+    const { outputFolder, open, attachmentsBaseURL, host, port, title, ignoreTestSteps } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
     this._host = host;
     this._port = port;
     this._attachmentsBaseURL = attachmentsBaseURL;
     this._title = title;
+    this._ignoreTestSteps = ignoreTestSteps;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
       if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
@@ -104,8 +106,9 @@ class HtmlReporter implements ReporterV2 {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined } {
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined, ignoreTestSteps: RegExp[] | undefined} {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
+    const ignoreTestSteps = process.env.PLAYWRIGHT_HTML_IGNORE_TEST_STEPS ?? this._options.ignoreTestSteps ?? '';
     return {
       outputFolder,
       open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
@@ -113,6 +116,7 @@ class HtmlReporter implements ReporterV2 {
       host: process.env.PLAYWRIGHT_HTML_HOST || this._options.host,
       port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : this._options.port,
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
+      ignoreTestSteps: ignoreTestSteps.split(',').map(step => new RegExp(step, 'i')),
     };
   }
 
@@ -128,7 +132,7 @@ class HtmlReporter implements ReporterV2 {
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title);
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title, this._ignoreTestSteps);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -226,14 +230,16 @@ class HtmlBuilder {
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _title: string | undefined;
+  private _ignoreTestSteps: RegExp[] | undefined;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined, ignoreTestSteps: RegExp[] | undefined) {
     this._config = config;
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
     this._title = title;
+    this._ignoreTestSteps = ignoreTestSteps;
   }
 
   async build(metadata: Metadata, projectSuites: api.Suite[], result: api.FullResult, topLevelErrors: api.TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
@@ -506,11 +512,15 @@ class HtmlBuilder {
   }
 
   private _createTestResult(test: api.TestCase, result: api.TestResult): TestResult {
+    const filteredSteps = result.steps.filter(({ title }) => {
+      const hasPatternToIgnore = this._ignoreTestSteps?.some(pattern => pattern.test(title));
+      return !hasPatternToIgnore;
+    });
     return {
       duration: result.duration,
       startTime: result.startTime.toISOString(),
       retry: result.retry,
-      steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
+      steps: dedupeSteps(filteredSteps).map(s => this._createTestStep(s, result)),
       errors: formatResultFailure(internalScreen, test, result, '').map(error => error.message),
       status: result.status,
       annotations: this._serializeAnnotations(result.annotations),
