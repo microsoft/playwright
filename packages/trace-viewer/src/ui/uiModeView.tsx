@@ -37,6 +37,7 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
+import { StatusLine } from './statusLine';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -460,13 +461,13 @@ export const UIModeView: React.FC<{}> = ({
           testModel={testModel}
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
-          {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
-          {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
-          </div>}
-          {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
-          </div>}
+          <StatusLine
+            passed={progress?.passed ?? 0}
+            failed={progress?.failed ?? 0}
+            skipped={progress?.skipped ?? 0}
+            total={progress ? (isRunningTest ? runningState.testIds.size : progress.total) : visibleTestIds.size}
+            isRunning={!!isRunningTest}
+          />
           <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
