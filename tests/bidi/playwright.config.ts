@@ -16,6 +16,7 @@
 
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env'), override: true });
+process.env.PWTEST_UNDER_TEST = '1';
 
 import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, type ReporterDescription } from '@playwright/test';
 import * as path from 'path';
@@ -56,7 +57,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   },
   maxFailures: 0,
   timeout: 15 * 1000,
-  globalTimeout: 60 * 60 * 1000,
+  globalTimeout: 90 * 60 * 1000,
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
@@ -65,15 +66,25 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-const executablePath = process.env.BIDIPATH;
-if (executablePath && !process.env.TEST_WORKER_INDEX)
-  console.error(`Using executable at ${executablePath}`);
+type BrowserName = '_bidiChromium' | '_bidiFirefox';
+
+const getExecutablePath = (browserName: BrowserName) => {
+  if (browserName === '_bidiChromium')
+    return process.env.BIDI_CRPATH;
+  if (browserName === '_bidiFirefox')
+    return process.env.BIDI_FFPATH;
+};
+
 const browserToChannels = {
   '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
-  '_bidiFirefox': ['bidi-firefox-nightly', 'bidi-firefox-beta', 'bidi-firefox-stable'],
+  '_bidiFirefox': ['moz-firefox'],
 };
+
 for (const [key, channels] of Object.entries(browserToChannels)) {
   const browserName: any = key;
+  const executablePath = getExecutablePath(browserName);
+  if (executablePath && !process.env.TEST_WORKER_INDEX)
+    console.error(`Using executable at ${executablePath}`);
   for (const channel of channels) {
     const testIgnore: RegExp[] = [
       /library\/debug-controller/,

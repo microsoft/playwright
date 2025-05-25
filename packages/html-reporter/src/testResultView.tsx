@@ -92,7 +92,7 @@ export const TestResultView: React.FC<{test: TestCase; result: TestResult;}> = (
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} prompt={error.prompt}></TestErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} context={error.context}></TestErrorView>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
@@ -129,7 +129,7 @@ export const TestResultView: React.FC<{test: TestCase; result: TestResult;}> = (
     </AutoChip></Anchor>}
 
     {!!videos.length && <Anchor id='attachment-video'><AutoChip header='Videos' revealOnAnchorId='attachment-video'>
-      {videos.map((a, i) => <div key={`video-${i}`}>
+      {videos.map(a => <div key={a.path}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
@@ -168,8 +168,8 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: T
       }
     }
 
-    const prompt = attachments.find(a => a.name === `_prompt-${i}`)?.body;
-    return { type: 'regular', error, prompt };
+    const context = attachments.find(a => a.name === `error-context-${i}`);
+    return { type: 'regular', error, context };
   });
 }
 

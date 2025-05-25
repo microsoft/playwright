@@ -1,3 +1,2 @@
 #!/bin/sh
-ps ax | grep playwright | grep "vite\|tsc\|babel\|esbuild" | sed 's|pts/.*||' | xargs kill
-
+ps ax | grep playwright | grep "vite\|tsc\|esbuild" | sed 's|pts/.*||' | xargs kill

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as clockSource from '../generated/clockSource';
+import * as rawClockSource from '../generated/clockSource';
 
 import type { BrowserContext } from './browserContext';
 
@@ -84,7 +84,7 @@ export class Clock {
     this._scriptInstalled = true;
     const script = `(() => {
       const module = {};
-      ${clockSource.source}
+      ${rawClockSource.source}
       globalThis.__pwClock = (module.exports.inject())(globalThis);
     })();`;
     await this._browserContext.addInitScript(script);

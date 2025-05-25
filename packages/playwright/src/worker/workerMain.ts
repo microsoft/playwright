@@ -32,9 +32,10 @@ import { loadTestFile } from '../common/testLoader';
 
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
+import type { TestAnnotation } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -60,7 +61,7 @@ export class WorkerMain extends ProcessRunner {
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
-  private _activeSuites = new Map<Suite, Annotation[]>();
+  private _activeSuites = new Map<Suite, TestAnnotation[]>();
 
   constructor(params: WorkerInitParams) {
     super();
@@ -264,7 +265,7 @@ export class WorkerMain extends ProcessRunner {
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
 
-    const processAnnotation = (annotation: Annotation) => {
+    const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
@@ -322,17 +323,6 @@ export class WorkerMain extends ProcessRunner {
 
     testInfo._allowSkips = true;
 
-    // Create warning if any of the async calls were not awaited in various stages.
-    const checkForFloatingPromises = (functionDescription: string) => {
-      if (process.env.PW_DISABLE_FLOATING_PROMISES_WARNING)
-        return;
-      if (!testInfo._floatingPromiseScope.hasFloatingPromises())
-        return;
-      // TODO: 1.52: Actually build annotations
-      // testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
-      testInfo._floatingPromiseScope.clear();
-    };
-
     await (async () => {
       await testInfo._runWithTimeout({ type: 'test' }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
@@ -372,8 +362,6 @@ export class WorkerMain extends ProcessRunner {
         testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
       });
 
-      checkForFloatingPromises('beforeAll/beforeEach hooks');
-
       if (testFunctionParams === null) {
         // Fixture setup failed or was skipped, we should not run the test now.
         return;
@@ -383,7 +371,6 @@ export class WorkerMain extends ProcessRunner {
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
-        checkForFloatingPromises('the test');
       });
     })().catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
@@ -440,8 +427,6 @@ export class WorkerMain extends ProcessRunner {
       if (firstAfterHooksError)
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
-
-    checkForFloatingPromises('afterAll/afterEach hooks');
 
     if (testInfo._isFailure())
       this._isStopped = true;
@@ -527,12 +512,12 @@ export class WorkerMain extends ProcessRunner {
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
-    const extraAnnotations: Annotation[] = [];
+    const extraAnnotations: TestAnnotation[] = [];
     this._activeSuites.set(suite, extraAnnotations);
     await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
   }
 
-  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: Annotation[]) {
+  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
     // Always run all the hooks, and capture the first error.
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {

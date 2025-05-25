@@ -34,6 +34,7 @@ import {
   toBeInViewport,
   toBeOK,
   toBeVisible,
+  toContainClass,
   toContainText,
   toHaveAccessibleDescription,
   toHaveAccessibleErrorMessage,
@@ -61,12 +62,13 @@ import {
   printReceived,
 } from '../common/expectBundle';
 import { currentTestInfo } from '../common/globals';
-import { filteredStackTrace, trimLongString } from '../util';
+import { filteredStackTrace } from '../util';
 import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
+import type { TestStepCategory } from '../util';
 
 
 // #region
@@ -257,6 +259,7 @@ const customAsyncMatchers = {
   toBeOK,
   toBeVisible,
   toContainText,
+  toContainClass,
   toHaveAccessibleDescription,
   toHaveAccessibleName,
   toHaveAccessibleErrorMessage,
@@ -341,8 +344,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
-      const defaultTitle = `expect${this._info.poll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
+      const defaultTitle = `${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${argsSuffix}`;
       const title = customMessage || defaultTitle;
+      const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
@@ -351,8 +355,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       // toPass and poll matchers can contain other steps, expects and API calls,
       // so they behave like a retriable step.
       const stepInfo = {
-        category: (matcherName === 'toPass' || this._info.poll) ? 'step' : 'expect',
-        title: trimLongString(title, 1024),
+        category: (matcherName === 'toPass' || this._info.poll) ? 'test.step' : 'expect' as TestStepCategory,
+        apiName,
+        title,
         params: args[0] ? { expected: args[0] } : undefined,
         infectParentStepsWithError: this._info.isSoft,
       };
@@ -383,10 +388,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
         const callback = () => matcher.call(target, ...args);
         const result = currentZone().with('stepZone', step).run(callback);
-        if (result instanceof Promise) {
-          const promise = result.then(finalizer).catch(reportStepError);
-          return testInfo._floatingPromiseScope.wrapPromiseAPIResult(promise);
-        }
+        if (result instanceof Promise)
+          return result.then(finalizer).catch(reportStepError);
         finalizer();
         return result;
       } catch (e) {

@@ -18,14 +18,11 @@ import http from 'http';
 import https from 'https';
 import { Transform, pipeline } from 'stream';
 import { TLSSocket } from 'tls';
-import url from 'url';
 import * as zlib from 'zlib';
 
-import { TimeoutSettings } from './timeoutSettings';
-import { assert, constructURLBasedOnBaseURL, eventsHelper, monotonicTime  } from '../utils';
+import { assert, constructURLBasedOnBaseURL, createProxyAgent, eventsHelper, monotonicTime  } from '../utils';
 import { createGuid } from './utils/crypto';
 import { getUserAgent } from './utils/userAgent';
-import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
@@ -54,8 +51,8 @@ type FetchRequestOptions = {
   failOnStatusCode?: boolean;
   httpCredentials?: HTTPCredentials;
   proxy?: ProxySettings;
-  timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
+  maxRedirects?: number;
   baseURL?: string;
   clientCertificates?: types.BrowserContextOptions['clientCertificates'];
 };
@@ -182,18 +179,20 @@ export abstract class APIRequestContext extends SdkObject {
     let agent;
     // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
     // workaround an upstream Chromium bug. Can be removed in the future.
-    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass))
-      agent = createProxyAgent(proxy);
+    if (proxy?.server !== 'per-context')
+      agent = createProxyAgent(proxy, requestUrl);
 
+    let maxRedirects = params.maxRedirects ?? (defaults.maxRedirects ?? 20);
+    maxRedirects = maxRedirects === 0 ? -1 : maxRedirects;
 
-    const timeout = defaults.timeoutSettings.timeout(params);
+    const timeout = params.timeout;
     const deadline = timeout && (monotonicTime() + timeout);
 
     const options: SendRequestOptions = {
       method,
       headers,
       agent,
-      maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
+      maxRedirects,
       timeout,
       deadline,
       ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
@@ -371,7 +370,7 @@ export abstract class APIRequestContext extends SdkObject {
         }
 
         if (redirectStatus.includes(response.statusCode!) && options.maxRedirects >= 0) {
-          if (!options.maxRedirects) {
+          if (options.maxRedirects === 0) {
             reject(new Error('Max redirect count exceeded'));
             request.destroy();
             return;
@@ -611,7 +610,6 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
       failOnStatusCode: undefined,
       httpCredentials: this._context._options.httpCredentials,
       proxy: this._context._options.proxy || this._context._browser.options.proxy,
-      timeoutSettings: this._context._timeoutSettings,
       ignoreHTTPSErrors: this._context._options.ignoreHTTPSErrors,
       baseURL: this._context._options.baseURL,
       clientCertificates: this._context._options.clientCertificates,
@@ -641,16 +639,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
     this.attribution.context = this;
-    const timeoutSettings = new TimeoutSettings();
-    if (options.timeout !== undefined)
-      timeoutSettings.setDefaultTimeout(options.timeout);
-    const proxy = options.proxy;
-    if (proxy?.server) {
-      let url = proxy?.server.trim();
-      if (!/^\w+:\/\//.test(url))
-        url = 'http://' + url;
-      proxy.server = url;
-    }
     if (options.storageState) {
       this._origins = options.storageState.origins?.map(origin => ({ indexedDB: [], ...origin }));
       this._cookieStore.addCookies(options.storageState.cookies || []);
@@ -662,10 +650,10 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       extraHTTPHeaders: options.extraHTTPHeaders,
       failOnStatusCode: !!options.failOnStatusCode,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
+      maxRedirects: options.maxRedirects,
       httpCredentials: options.httpCredentials,
       clientCertificates: options.clientCertificates,
-      proxy,
-      timeoutSettings,
+      proxy: options.proxy,
     };
     this._tracing = new Tracing(this, options.tracesDir);
   }
@@ -699,20 +687,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [] })),
     };
   }
-}
-
-export function createProxyAgent(proxy: types.ProxySettings) {
-  const proxyOpts = url.parse(proxy.server);
-  if (proxyOpts.protocol?.startsWith('socks')) {
-    return new SocksProxyAgent({
-      host: proxyOpts.hostname,
-      port: proxyOpts.port || undefined,
-    });
-  }
-  if (proxy.username)
-    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyOpts);
 }
 
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
@@ -785,19 +759,6 @@ function getHeader(headers: HeadersObject, name: string) {
 
 function removeHeader(headers: { [name: string]: string }, name: string) {
   delete headers[name];
-}
-
-function shouldBypassProxy(url: URL, bypass?: string): boolean {
-  if (!bypass)
-    return false;
-  const domains = bypass.split(',').map(s => {
-    s = s.trim();
-    if (!s.startsWith('.'))
-      s = '.' + s;
-    return s;
-  });
-  const domain = '.' + url.hostname;
-  return domains.some(d => domain.endsWith(d));
 }
 
 function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HTTPCredentials) {

@@ -135,8 +135,6 @@ jobs:
       with:
         node-version: 18
     - run: npm ci
-      env:
-        DEBUG: pw:install
     - run: npm run build
 
     - run: npx playwright install --with-deps
@@ -186,7 +184,7 @@ jobs:
       run: node -e "const p = require('./package.json'); delete p.devDependencies['@playwright/test']; fs.writeFileSync('./package.json', JSON.stringify(p, null, 2));"
       working-directory: ./playwright-vscode
     - name: Build extension
-      run: npm install && npm run build
+      run: npm ci && npm run build
       working-directory: ./playwright-vscode
     - name: Run extension tests
       run: npm run test -- --workers=1

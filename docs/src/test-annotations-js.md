@@ -105,7 +105,7 @@ test.describe('group', {
 });
 ```
 
-You can now run tests that have a particular tag with [`--grep`](./test-cli.md#reference) command line option.
+You can now run tests that have a particular tag with [`--grep`](./test-cli.md#all-options) command line option.
 
 ```bash tab=bash-bash
 npx playwright test --grep @fast

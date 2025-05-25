@@ -29,7 +29,6 @@ jobs:
         platforms: arm64
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
     - name: Azure Login
       uses: azure/login@v2
       with:

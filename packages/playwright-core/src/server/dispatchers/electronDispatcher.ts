@@ -47,7 +47,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
 
   constructor(scope: ElectronDispatcher, electronApplication: ElectronApplication) {
     super(scope, electronApplication, 'ElectronApplication', {
-      context: new BrowserContextDispatcher(scope, electronApplication.context())
+      context: BrowserContextDispatcher.from(scope, electronApplication.context())
     });
     this.addObjectListener(ElectronApplication.Events.Close, () => {
       this._dispatchEvent('close');

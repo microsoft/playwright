@@ -173,12 +173,11 @@ export class Screenshotter {
     this._queue = new TaskQueue();
   }
 
-  private async _originalViewportSize(progress: Progress): Promise<{ viewportSize: types.Size, originalViewportSize: types.Size | null }> {
-    const originalViewportSize = this._page.viewportSize();
-    let viewportSize = originalViewportSize;
+  private async _originalViewportSize(progress: Progress): Promise<types.Size> {
+    let viewportSize = this._page.emulatedSize()?.viewport;
     if (!viewportSize)
       viewportSize = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ width: window.innerWidth, height: window.innerHeight }));
-    return { viewportSize, originalViewportSize };
+    return viewportSize;
   }
 
   private async _fullPageSize(progress: Progress): Promise<types.Size> {
@@ -205,7 +204,7 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
-      const { viewportSize } = await this._originalViewportSize(progress);
+      const viewportSize = await this._originalViewportSize(progress);
       await this._preparePageForScreenshot(progress, this._page.mainFrame(), options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
@@ -233,7 +232,7 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       progress.log('taking element screenshot');
-      const { viewportSize } = await this._originalViewportSize(progress);
+      const viewportSize = await this._originalViewportSize(progress);
 
       await this._preparePageForScreenshot(progress, handle._frame, options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.
@@ -262,7 +261,7 @@ export class Screenshotter {
   async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
-    const syncAnimations = this._page._delegate.shouldToggleStyleSheetToSyncAnimations();
+    const syncAnimations = this._page.delegate.shouldToggleStyleSheetToSyncAnimations();
     await this._page.safeNonStallingEvaluateInAllFrames('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations}, ${syncAnimations})`, 'utility');
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
       progress.log('waiting for fonts to load...');
@@ -308,8 +307,8 @@ export class Screenshotter {
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground) {
-      await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0 });
-      progress.cleanupWhenAborted(() => this._page._delegate.setBackgroundColor());
+      await this._page.delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0 });
+      progress.cleanupWhenAborted(() => this._page.delegate.setBackgroundColor());
     }
     progress.throwIfAborted(); // Avoid extra work.
 
@@ -317,14 +316,14 @@ export class Screenshotter {
     progress.throwIfAborted(); // Avoid extra work.
 
     const quality = format === 'jpeg' ? options.quality ?? 80 : undefined;
-    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
+    const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
     await cleanupHighlight();
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
     if (shouldSetDefaultBackground)
-      await this._page._delegate.setBackgroundColor();
+      await this._page.delegate.setBackgroundColor();
     progress.throwIfAborted(); // Avoid side effects.
     if ((options as any).__testHookAfterScreenshot)
       await (options as any).__testHookAfterScreenshot();

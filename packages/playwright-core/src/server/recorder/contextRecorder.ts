@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 
 import { RecorderCollection } from './recorderCollection';
-import * as recorderSource from '../../generated/pollingRecorderSource';
+import * as rawRecorderSource from '../../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue  } from '../../utils';
 import { raceAgainstDeadline } from '../../utils/isomorphic/timeoutRunner';
 import { BrowserContext } from '../browserContext';
@@ -146,7 +146,7 @@ export class ContextRecorder extends EventEmitter {
     await this._context.exposeBinding('__pw_recorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-    await this._context.extendInjectedScript(recorderSource.source);
+    await this._context.extendInjectedScript(rawRecorderSource.source);
   }
 
   setEnabled(enabled: boolean) {

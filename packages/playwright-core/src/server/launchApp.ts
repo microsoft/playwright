@@ -36,6 +36,7 @@ export async function launchApp(browserType: BrowserType, options: {
 }) {
   const args = [...options.persistentContextOptions?.args ?? []];
 
+  let channel = options.persistentContextOptions?.channel;
   if (browserType.name() === 'chromium') {
     args.push(
         '--app=data:text/html,',
@@ -43,16 +44,19 @@ export async function launchApp(browserType: BrowserType, options: {
         ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
         '--test-type=',
     );
+    if (!channel && !options.persistentContextOptions?.executablePath)
+      channel = findChromiumChannel(options.sdkLanguage);
   }
 
   const context = await browserType.launchPersistentContext(serverSideCallMetadata(), '', {
     ignoreDefaultArgs: ['--enable-automation'],
     ...options?.persistentContextOptions,
-    channel: options.persistentContextOptions?.channel ?? (!options.persistentContextOptions?.executablePath ? findChromiumChannel(options.sdkLanguage) : undefined),
+    channel,
     noDefaultViewport: options.persistentContextOptions?.noDefaultViewport ?? true,
     acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
     colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
     args,
+    timeout: 0, // Deliberately no timeout for our apps.
   });
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.
@@ -72,7 +76,7 @@ export async function launchApp(browserType: BrowserType, options: {
 
 async function installAppIcon(page: Page) {
   const icon = await fs.promises.readFile(require.resolve('./chromium/appIcon.png'));
-  const crPage = page._delegate as CRPage;
+  const crPage = page.delegate as CRPage;
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
     image: icon.toString('base64')
   });

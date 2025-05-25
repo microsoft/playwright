@@ -307,6 +307,7 @@ export interface JSONReportTestResult {
     body?: string;
     contentType: string;
   }[];
+  annotations: { type: string, description?: string }[];
   errorLocation?: Location;
 }
 
@@ -437,23 +438,8 @@ export interface TestCase {
   titlePath(): Array<string>;
 
   /**
-   * The list of annotations applicable to the current test. Includes:
-   * - annotations defined on the test or suite via
-   *   [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) and
-   *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe);
-   * - annotations implicitly added by methods
-   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip),
-   *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
-   *   and
-   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail);
-   * - annotations appended to
-   *   [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations) during the test
-   *   execution.
-   *
-   * Annotations are available during test execution through
-   * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
-   *
-   * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   * [testResult.annotations](https://playwright.dev/docs/api/class-testresult#test-result-annotations) of the last test
+   * run.
    */
   annotations: Array<{
     /**
@@ -593,6 +579,37 @@ export interface TestError {
  */
 export interface TestResult {
   /**
+   * The list of annotations applicable to the current test. Includes:
+   * - annotations defined on the test or suite via
+   *   [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) and
+   *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe);
+   * - annotations implicitly added by methods
+   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip),
+   *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   *   and
+   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail);
+   * - annotations appended to
+   *   [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations) during the test
+   *   execution.
+   *
+   * Annotations are available during test execution through
+   * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
+   *
+   * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   */
+  annotations: Array<{
+    /**
+     * Annotation type, for example `'skip'` or `'fail'`.
+     */
+    type: string;
+
+    /**
+     * Optional description.
+     */
+    description?: string;
+  }>;
+
+  /**
    * The list of files or buffers attached during the test execution through
    * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments).
    */
@@ -642,7 +659,7 @@ export interface TestResult {
   parallelIndex: number;
 
   /**
-   * When test is retries multiple times, each retry attempt is given a sequential number.
+   * When test is retried multiple times, each retry attempt is given a sequential number.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
@@ -736,10 +753,12 @@ export interface TestStep {
 
   /**
    * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
-   * - `hook` for fixtures and hooks initialization and teardown
    * - `expect` for expect calls
+   * - `fixture` for fixtures setup and teardown
+   * - `hook` for hooks initialization and teardown
    * - `pw:api` for Playwright API calls.
    * - `test.step` for test.step API calls.
+   * - `test.attach` for test attachmen calls.
    */
   category: string;
 

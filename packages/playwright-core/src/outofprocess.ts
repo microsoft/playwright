@@ -21,13 +21,11 @@ import { Connection } from './client/connection';
 import { PipeTransport } from './server/utils/pipeTransport';
 import { ManualPromise } from './utils/isomorphic/manualPromise';
 import { nodePlatform } from './server/utils/nodePlatform';
-import { setPlatformForSelectors } from './client/selectors';
 
 import type { Playwright } from './client/playwright';
 
 
 export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
-  setPlatformForSelectors(nodePlatform);
   const client = new PlaywrightClient(env);
   const playwright = await client._playwright;
   (playwright as any).driverProcess = client._driverProcess;

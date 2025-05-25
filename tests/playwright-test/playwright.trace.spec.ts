@@ -89,48 +89,47 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: request',
-    '    apiRequest.newContext',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'page.goto',
-    'apiRequestContext.get',
+    '  Fixture "request"',
+    '    Create request context',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Navigate to "about:blank"',
+    'Fetch "/empty.html"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
-    '  fixture: request',
-    '    apiRequestContext.dispose',
+    '  Fixture "page"',
+    '  Fixture "context"',
+    '  Fixture "request"',
   ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
   expect(trace2.actionTree).toEqual([
     'Before Hooks',
-    'apiRequest.newContext',
-    'apiRequestContext.get',
+    'Create request context',
+    'Fetch "/empty.html"',
     'After Hooks',
   ]);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
   expect(trace3.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: request',
-    '    apiRequest.newContext',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'page.goto',
-    'apiRequestContext.get',
-    'expect.toBe',
+    '  Fixture "request"',
+    '    Create request context',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Navigate to "about:blank"',
+    'Fetch "/empty.html"',
+    'Expect "toBe"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
-    '  fixture: request',
-    '    apiRequestContext.dispose',
+    '  Fixture "page"',
+    '  Fixture "context"',
+    '  Fixture "request"',
+    'Attach "error-context-0"',
     'Worker Cleanup',
-    '  fixture: browser',
+    '  Fixture "browser"',
   ]);
 });
 
@@ -317,24 +316,23 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
 
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'page.goto',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Navigate to "about:blank"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
     '  afterAll hook',
-    '    fixture: request',
-    '      apiRequest.newContext',
-    '    apiRequestContext.get',
-    '    fixture: request',
-    '      apiRequestContext.dispose',
+    '    Fixture "request"',
+    '      Create request context',
+    '    Fetch "/empty.html"',
+    '    Fixture "request"',
     'Worker Cleanup',
-    '  fixture: browser',
+    '  Fixture "browser"',
   ]);
   expect(trace1.errors).toEqual([`'oh no!'`]);
 
@@ -467,7 +465,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('Navigate to "about:blank"');
   expect(result.failed).toBe(1);
 });
 
@@ -489,7 +487,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('Navigate to "about:blank"');
   expect(result.failed).toBe(1);
 });
 
@@ -509,7 +507,7 @@ test(`trace:retain-on-failure should create trace if request context is disposed
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('apiRequestContext.get');
+  expect(trace.titles).toContain('Fetch "/empty.html"');
   expect(result.failed).toBe(1);
 });
 
@@ -530,9 +528,9 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(trace.apiNames).toEqual([
+  expect(trace.titles).toEqual([
     'Before Hooks',
-    `attach "foo"`,
+    'Attach "foo"',
     'After Hooks',
   ]);
   expect(trace.actions[1].attachments).toEqual([{
@@ -560,9 +558,9 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(trace.apiNames).toEqual([
+  expect(trace.titles).toEqual([
     'Before Hooks',
-    `attach "foo"`,
+    `Attach "foo"`,
     'After Hooks',
   ]);
   expect(trace.actions[1].attachments).toEqual(undefined);
@@ -620,22 +618,22 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'expect.toPass',
-    '  page.goto',
-    '  expect.toBe',
-    '  page.goto',
-    '  expect.toBe',
-    '  page.goto',
-    '  expect.toBe',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Step "toPass"',
+    '  Navigate to "data:"',
+    '  Expect "toBe"',
+    '  Navigate to "data:"',
+    '  Expect "toBe"',
+    '  Navigate to "data:"',
+    '  Expect "toBe"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
   ]);
 });
 
@@ -659,18 +657,18 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'expect.toBe',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Expect "toBe"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
     'Worker Cleanup',
-    '  fixture: browser',
+    '  Fixture "browser"',
   ]);
   expect(trace.errors).toEqual(['ReferenceError: undefinedVariable1 is not defined']);
 });
@@ -731,7 +729,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest }, te
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
-  expect(trace.apiNames).toContain('_attach "screenshot"');
+  expect(trace.titles).toContain('Attach "screenshot"');
 });
 
 test('should not throw when screenshot on failure fails', async ({ runInlineTest, server }, testInfo) => {
@@ -787,16 +785,16 @@ test('should use custom expect message in trace', async ({ runInlineTest }, test
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'expect to have text: find a hotel',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Expect "expect to have text: find a hotel"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
   ]);
 });
 
@@ -938,64 +936,106 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
   expect(trace.actionTree).toEqual([
     'Before Hooks',
     '  beforeAll hook',
-    '    fixture: browser',
-    '      browserType.launch',
-    '    fixture: barPage',
-    '      barPage setup',
-    '      browser.newPage',
-    '      step in barPage setup',
-    '        page.setContent',
-    '    beforeAll start',
-    '    page.setContent',
-    '    step in beforeAll',
-    '      page.setContent',
-    '    fixture: barPage',
-    '      barPage teardown',
-    '      step in barPage teardown',
-    '        page.close',
+    '    Fixture "browser"',
+    '      Launch browser',
+    '    Fixture "barPage"',
+    '      Expect "barPage setup"',
+    '      Create page',
+    '      Step "step in barPage setup"',
+    '        Set content',
+    '    Expect "beforeAll start"',
+    '    Set content',
+    '    Step "step in beforeAll"',
+    '      Set content',
+    '    Fixture "barPage"',
+    '      Expect "barPage teardown"',
+    '      Step "step in barPage teardown"',
+    '        Close context',
     '  beforeEach hook',
-    '    fixture: context',
-    '      browser.newContext',
-    '    fixture: page',
-    '      browserContext.newPage',
-    '    fixture: fooPage',
-    '      fooPage setup',
-    '      page.setContent',
-    '      step in fooPage setup',
-    '        page.setContent',
-    '    beforeEach start',
-    '    page.setContent',
-    '    step in beforeEach',
-    '      page.setContent',
+    '    Fixture "context"',
+    '      Create context',
+    '    Fixture "page"',
+    '      Create page',
+    '    Fixture "fooPage"',
+    '      Expect "fooPage setup"',
+    '      Set content',
+    '      Step "step in fooPage setup"',
+    '        Set content',
+    '    Expect "beforeEach start"',
+    '    Set content',
+    '    Step "step in beforeEach"',
+    '      Set content',
     'After Hooks',
     '  afterEach hook',
-    '    afterEach start',
-    '    page.setContent',
-    '    step in afterEach',
-    '      page.setContent',
-    '  fixture: fooPage',
-    '    fooPage teardown',
-    '    page.setContent',
-    '    step in fooPage teardown',
-    '      page.setContent',
-    '  fixture: page',
-    '  fixture: context',
+    '    Expect "afterEach start"',
+    '    Set content',
+    '    Step "step in afterEach"',
+    '      Set content',
+    '  Fixture "fooPage"',
+    '    Expect "fooPage teardown"',
+    '    Set content',
+    '    Step "step in fooPage teardown"',
+    '      Set content',
+    '  Fixture "page"',
+    '  Fixture "context"',
     '  afterAll hook',
-    '    fixture: barPage',
-    '      barPage setup',
-    '      browser.newPage',
-    '      step in barPage setup',
-    '        page.setContent',
-    '    afterAll start',
-    '    page.setContent',
-    '    step in afterAll',
-    '      page.setContent',
-    '    fixture: barPage',
-    '      barPage teardown',
-    '      step in barPage teardown',
-    '        page.close',
+    '    Fixture "barPage"',
+    '      Expect "barPage setup"',
+    '      Create page',
+    '      Step "step in barPage setup"',
+    '        Set content',
+    '    Expect "afterAll start"',
+    '    Set content',
+    '    Step "step in afterAll"',
+    '      Set content',
+    '    Fixture "barPage"',
+    '      Expect "barPage teardown"',
+    '      Step "step in barPage teardown"',
+    '        Close context',
     'Worker Cleanup',
-    '  fixture: browser',
+    '  Fixture "browser"',
+  ]);
+});
+
+test('should not produce an action entry for calling a binding', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({ page }) => {
+          let wasCalled = false;
+          await page.exposeBinding('customBinding', () => {
+            wasCalled = true;
+            return 'foo';
+          });
+        
+          const output = await page.evaluate(() => window['customBinding']());
+          expect(wasCalled).toBe(true);
+          expect(output).toBe('foo');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Expose binding',
+    'Evaluate',
+    'Expect "toBe"',
+    'Expect "toBe"',
+    'After Hooks',
+    '  Fixture "page"',
+    '  Fixture "context"',
   ]);
 });
 
@@ -1031,8 +1071,8 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-one', 'trace.zip'));
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: foo',
-    '    step in foo setup',
+    '  Fixture "foo"',
+    '    Expect "step in foo setup"',
     'After Hooks',
   ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-two', 'trace.zip'));
@@ -1040,8 +1080,8 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
     'Before Hooks',
     'After Hooks',
     'Worker Cleanup',
-    '  fixture: foo',
-    '    step in foo teardown',
+    '  Fixture "foo"',
+    '    Expect "step in foo teardown"',
   ]);
 });
 
@@ -1062,7 +1102,7 @@ test('trace:retain-on-first-failure should create trace but only on first failur
 
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('Navigate to "about:blank"');
   expect(result.failed).toBe(1);
 });
 
@@ -1079,7 +1119,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('Navigate to "about:blank"');
   expect(result.failed).toBe(1);
 });
 
@@ -1098,7 +1138,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('page.goto');
+  expect(trace.titles).toContain('Navigate to "about:blank"');
   expect(result.failed).toBe(1);
 });
 
@@ -1115,7 +1155,7 @@ test('trace:retain-on-first-failure should create trace if request context is di
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.apiNames).toContain('apiRequestContext.get');
+  expect(trace.titles).toContain('Fetch "/empty.html"');
   expect(result.failed).toBe(1);
 });
 
@@ -1142,12 +1182,13 @@ test('should not corrupt actions when no library trace is present', async ({ run
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: foo',
-    '    expect.toBe',
-    'expect.toBe',
+    '  Fixture "foo"',
+    '    Expect "toBe"',
+    'Expect "toBe"',
     'After Hooks',
-    '  fixture: foo',
-    '    expect.toBe',
+    '  Fixture "foo"',
+    '    Expect "toBe"',
+    'Attach "error-context-0"',
     'Worker Cleanup',
   ]);
 });
@@ -1172,14 +1213,15 @@ test('should record trace for manually created context in a failed test', async 
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    'browser.newPage',
-    'page.setContent',
-    'expect.toBe',
+    '  Fixture "browser"',
+    '    Launch browser',
+    'Create page',
+    'Set content',
+    'Expect "toBe"',
     'After Hooks',
+    'Attach "error-context-0"',
     'Worker Cleanup',
-    '  fixture: browser',
+    '  Fixture "browser"',
   ]);
   // Check console events to make sure that library trace is recorded.
   expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
@@ -1214,19 +1256,18 @@ test('should not nest top level expect into unfinished api calls ', {
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    'page.route',
-    'page.goto',
-    'expect.toBeVisible',
-    'page.unrouteAll',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    'Navigate to "/index"',
+    'Fetch "/hang"',
+    'Expect "toBeVisible"',
     'After Hooks',
-    '  fixture: page',
-    '  fixture: context',
+    '  Fixture "page"',
+    '  Fixture "context"',
   ]);
 });
 
@@ -1255,18 +1296,18 @@ test('should record trace after fixture teardown timeout', {
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    '  fixture: context',
-    '    browser.newContext',
-    '  fixture: page',
-    '    browserContext.newPage',
-    '  fixture: fixture',
-    'page.evaluate',
+    '  Fixture "browser"',
+    '    Launch browser',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
+    '  Fixture "fixture"',
+    'Evaluate',
     'After Hooks',
-    '  fixture: fixture',
+    '  Fixture "fixture"',
     'Worker Cleanup',
-    '  fixture: browser',
+    '  Fixture "browser"',
   ]);
   // Check console events to make sure that library trace is recorded.
   expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
@@ -1292,26 +1333,26 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
-    '  fixture: browser',
-    '    browserType.launch',
-    'browser.newPage',
-    'page.setContent',
-    'locator.count',
-    'expect.toBe',
-    'locator.boundingBox',
+    '  Fixture "browser"',
+    '    Launch browser',
+    'Create page',
+    'Set content',
+    'Query count',
+    'Expect "toBe"',
+    'Bounding box',
     'After Hooks',
   ]);
 
   const snapshots = trace.traceModel.storage();
   const snapshotFrameOrPageId = snapshots.snapshotsForTest()[0];
 
-  const countAction = trace.actions.find(a => a.apiName === 'locator.count');
+  const countAction = trace.actions.find(a => a.method === 'queryCount');
   expect(countAction.beforeSnapshot).toBeTruthy();
   expect(countAction.afterSnapshot).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, countAction.beforeSnapshot)).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, countAction.afterSnapshot)).toBeTruthy();
 
-  const boundingBoxAction = trace.actions.find(a => a.apiName === 'locator.boundingBox');
+  const boundingBoxAction = trace.actions.find(a => a.title === 'Bounding box');
   expect(boundingBoxAction.beforeSnapshot).toBeTruthy();
   expect(boundingBoxAction.afterSnapshot).toBeTruthy();
   expect(snapshots.snapshotByName(snapshotFrameOrPageId, boundingBoxAction.beforeSnapshot)).toBeTruthy();

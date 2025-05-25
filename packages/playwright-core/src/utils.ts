@@ -21,6 +21,8 @@ export * from './utils/isomorphic/locatorGenerators';
 export * from './utils/isomorphic/manualPromise';
 export * from './utils/isomorphic/mimeType';
 export * from './utils/isomorphic/multimap';
+export * from './utils/isomorphic/protocolFormatter';
+export * from './utils/isomorphic/protocolMetainfo';
 export * from './utils/isomorphic/rtti';
 export * from './utils/isomorphic/semaphore';
 export * from './utils/isomorphic/stackTrace';

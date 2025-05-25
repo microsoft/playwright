@@ -52,7 +52,6 @@ export type InitializerTraits<T> =
     T extends EventTargetChannel ? EventTargetInitializer :
     T extends BrowserChannel ? BrowserInitializer :
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
-    T extends SelectorsChannel ? SelectorsInitializer :
     T extends SocksSupportChannel ? SocksSupportInitializer :
     T extends DebugControllerChannel ? DebugControllerInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
@@ -90,7 +89,6 @@ export type EventsTraits<T> =
     T extends EventTargetChannel ? EventTargetEvents :
     T extends BrowserChannel ? BrowserEvents :
     T extends BrowserTypeChannel ? BrowserTypeEvents :
-    T extends SelectorsChannel ? SelectorsEvents :
     T extends SocksSupportChannel ? SocksSupportEvents :
     T extends DebugControllerChannel ? DebugControllerEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
@@ -128,7 +126,6 @@ export type EventTargetTraits<T> =
     T extends EventTargetChannel ? EventTargetEventTarget :
     T extends BrowserChannel ? BrowserEventTarget :
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
-    T extends SelectorsChannel ? SelectorsEventTarget :
     T extends SocksSupportChannel ? SocksSupportEventTarget :
     T extends DebugControllerChannel ? DebugControllerEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
@@ -150,7 +147,7 @@ export type Metadata = {
     line?: number,
     column?: number,
   },
-  apiName?: string,
+  title?: string,
   internal?: boolean,
   stepId?: string,
 };
@@ -180,6 +177,10 @@ export type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
+  ta?: {
+    b: Binary,
+    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  },
   e?: {
     m: string,
     n: string,
@@ -211,6 +212,12 @@ export type ExpectedTextValue = {
   matchSubstring?: boolean,
   ignoreCase?: boolean,
   normalizeWhiteSpace?: boolean,
+};
+
+export type SelectorEngine = {
+  name: string,
+  source: string,
+  contentScript?: boolean,
 };
 
 export type AXNode = {
@@ -317,7 +324,7 @@ export type SerializedError = {
 };
 
 export type RecordHarOptions = {
-  path: string,
+  zip?: boolean,
   content?: 'embed' | 'attach' | 'omit',
   mode?: 'full' | 'minimal',
   urlGlob?: string,
@@ -360,7 +367,7 @@ export type APIRequestContextFetchParams = {
   jsonData?: string,
   formData?: NameValue[],
   multipartData?: FormField[],
-  timeout?: number,
+  timeout: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
   maxRedirects?: number,
@@ -375,7 +382,6 @@ export type APIRequestContextFetchOptions = {
   jsonData?: string,
   formData?: NameValue[],
   multipartData?: FormField[],
-  timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
   maxRedirects?: number,
@@ -535,14 +541,13 @@ export type LocalUtilsConnectParams = {
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,
-  timeout?: number,
+  timeout: number,
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,
-  timeout?: number,
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectResult = {
@@ -620,7 +625,6 @@ export type PlaywrightInitializer = {
   android: AndroidChannel,
   electron: ElectronChannel,
   utils?: LocalUtilsChannel,
-  selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
   preConnectedAndroidDevice?: AndroidDeviceChannel,
   socksSupport?: SocksSupportChannel,
@@ -644,6 +648,7 @@ export type PlaywrightNewRequestParams = {
     passphrase?: string,
     pfx?: Binary,
   }[],
+  maxRedirects?: number,
   httpCredentials?: {
     username: string,
     password: string,
@@ -656,7 +661,6 @@ export type PlaywrightNewRequestParams = {
     username?: string,
     password?: string,
   },
-  timeout?: number,
   storageState?: {
     cookies?: NetworkCookie[],
     origins?: SetOriginStorage[],
@@ -676,6 +680,7 @@ export type PlaywrightNewRequestOptions = {
     passphrase?: string,
     pfx?: Binary,
   }[],
+  maxRedirects?: number,
   httpCredentials?: {
     username: string,
     password: string,
@@ -688,7 +693,6 @@ export type PlaywrightNewRequestOptions = {
     username?: string,
     password?: string,
   },
-  timeout?: number,
   storageState?: {
     cookies?: NetworkCookie[],
     origins?: SetOriginStorage[],
@@ -895,35 +899,6 @@ export interface SocksSupportEvents {
   'socksClosed': SocksSupportSocksClosedEvent;
 }
 
-// ----------- Selectors -----------
-export type SelectorsInitializer = {};
-export interface SelectorsEventTarget {
-}
-export interface SelectorsChannel extends SelectorsEventTarget, Channel {
-  _type_Selectors: boolean;
-  register(params: SelectorsRegisterParams, metadata?: CallMetadata): Promise<SelectorsRegisterResult>;
-  setTestIdAttributeName(params: SelectorsSetTestIdAttributeNameParams, metadata?: CallMetadata): Promise<SelectorsSetTestIdAttributeNameResult>;
-}
-export type SelectorsRegisterParams = {
-  name: string,
-  source: string,
-  contentScript?: boolean,
-};
-export type SelectorsRegisterOptions = {
-  contentScript?: boolean,
-};
-export type SelectorsRegisterResult = void;
-export type SelectorsSetTestIdAttributeNameParams = {
-  testIdAttributeName: string,
-};
-export type SelectorsSetTestIdAttributeNameOptions = {
-
-};
-export type SelectorsSetTestIdAttributeNameResult = void;
-
-export interface SelectorsEvents {
-}
-
 // ----------- BrowserType -----------
 export type BrowserTypeInitializer = {
   executablePath: string,
@@ -943,10 +918,11 @@ export type BrowserTypeLaunchParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
+  timeout: number,
   env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
@@ -960,6 +936,7 @@ export type BrowserTypeLaunchParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  cdpPort?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
@@ -968,10 +945,10 @@ export type BrowserTypeLaunchOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
   env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
@@ -985,6 +962,7 @@ export type BrowserTypeLaunchOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  cdpPort?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
@@ -996,10 +974,11 @@ export type BrowserTypeLaunchPersistentContextParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
+  timeout: number,
   env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
@@ -1013,6 +992,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  cdpPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1065,9 +1045,10 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   userDataDir: string,
   slowMo?: number,
 };
@@ -1077,10 +1058,10 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
+  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
   env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
@@ -1094,6 +1075,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  cdpPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1146,24 +1128,25 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
+  browser: BrowserChannel,
   context: BrowserContextChannel,
 };
 export type BrowserTypeConnectOverCDPParams = {
   endpointURL: string,
   headers?: NameValue[],
   slowMo?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type BrowserTypeConnectOverCDPOptions = {
   headers?: NameValue[],
   slowMo?: number,
-  timeout?: number,
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
@@ -1179,6 +1162,7 @@ export type BrowserInitializer = {
   name: string,
 };
 export interface BrowserEventTarget {
+  on(event: 'context', callback: (params: BrowserContextEvent) => void): this;
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
@@ -1193,6 +1177,9 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
 }
+export type BrowserContextEvent = {
+  context: BrowserContextChannel,
+};
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {
   reason?: string,
@@ -1262,9 +1249,10 @@ export type BrowserNewContextParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1329,9 +1317,10 @@ export type BrowserNewContextOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1399,9 +1388,10 @@ export type BrowserNewContextForReuseParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1466,9 +1456,10 @@ export type BrowserNewContextForReuseOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1513,6 +1504,7 @@ export type BrowserStopTracingResult = {
 };
 
 export interface BrowserEvents {
+  'context': BrowserContextEvent;
   'close': BrowserCloseEvent;
 }
 
@@ -1546,6 +1538,64 @@ export type BrowserContextInitializer = {
   isChromium: boolean,
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
+  options: {
+    noDefaultViewport?: boolean,
+    viewport?: {
+      width: number,
+      height: number,
+    },
+    screen?: {
+      width: number,
+      height: number,
+    },
+    ignoreHTTPSErrors?: boolean,
+    clientCertificates?: {
+      origin: string,
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+    javaScriptEnabled?: boolean,
+    bypassCSP?: boolean,
+    userAgent?: string,
+    locale?: string,
+    timezoneId?: string,
+    geolocation?: {
+      longitude: number,
+      latitude: number,
+      accuracy?: number,
+    },
+    permissions?: string[],
+    extraHTTPHeaders?: NameValue[],
+    offline?: boolean,
+    httpCredentials?: {
+      username: string,
+      password: string,
+      origin?: string,
+      send?: 'always' | 'unauthorized',
+    },
+    deviceScaleFactor?: number,
+    isMobile?: boolean,
+    hasTouch?: boolean,
+    colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+    reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+    forcedColors?: 'active' | 'none' | 'no-override',
+    acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+    contrast?: 'no-preference' | 'more' | 'no-override',
+    baseURL?: string,
+    recordVideo?: {
+      dir: string,
+      size?: {
+        width: number,
+        height: number,
+      },
+    },
+    strictSelectors?: boolean,
+    serviceWorkers?: 'allow' | 'block',
+    selectorEngines?: SelectorEngine[],
+    testIdAttributeName?: string,
+  },
 };
 export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
@@ -1575,8 +1625,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   exposeBinding(params: BrowserContextExposeBindingParams, metadata?: CallMetadata): Promise<BrowserContextExposeBindingResult>;
   grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextGrantPermissionsResult>;
   newPage(params?: BrowserContextNewPageParams, metadata?: CallMetadata): Promise<BrowserContextNewPageResult>;
-  setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, metadata?: CallMetadata): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: BrowserContextSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
+  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams, metadata?: CallMetadata): Promise<BrowserContextRegisterSelectorEngineResult>;
+  setTestIdAttributeName(params: BrowserContextSetTestIdAttributeNameParams, metadata?: CallMetadata): Promise<BrowserContextSetTestIdAttributeNameResult>;
   setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, metadata?: CallMetadata): Promise<BrowserContextSetExtraHTTPHeadersResult>;
   setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: CallMetadata): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: CallMetadata): Promise<BrowserContextSetHTTPCredentialsResult>;
@@ -1736,20 +1786,20 @@ export type BrowserContextNewPageOptions = {};
 export type BrowserContextNewPageResult = {
   page: PageChannel,
 };
-export type BrowserContextSetDefaultNavigationTimeoutNoReplyParams = {
-  timeout?: number,
+export type BrowserContextRegisterSelectorEngineParams = {
+  selectorEngine: SelectorEngine,
 };
-export type BrowserContextSetDefaultNavigationTimeoutNoReplyOptions = {
-  timeout?: number,
+export type BrowserContextRegisterSelectorEngineOptions = {
+
 };
-export type BrowserContextSetDefaultNavigationTimeoutNoReplyResult = void;
-export type BrowserContextSetDefaultTimeoutNoReplyParams = {
-  timeout?: number,
+export type BrowserContextRegisterSelectorEngineResult = void;
+export type BrowserContextSetTestIdAttributeNameParams = {
+  testIdAttributeName: string,
 };
-export type BrowserContextSetDefaultTimeoutNoReplyOptions = {
-  timeout?: number,
+export type BrowserContextSetTestIdAttributeNameOptions = {
+
 };
-export type BrowserContextSetDefaultTimeoutNoReplyResult = void;
+export type BrowserContextSetTestIdAttributeNameResult = void;
 export type BrowserContextSetExtraHTTPHeadersParams = {
   headers: NameValue[],
 };
@@ -1999,6 +2049,7 @@ export interface PageEventTarget {
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
   on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
+  on(event: 'viewportSizeChanged', callback: (params: PageViewportSizeChangedEvent) => void): this;
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
@@ -2011,8 +2062,6 @@ export interface PageEventTarget {
 }
 export interface PageChannel extends PageEventTarget, EventTargetChannel {
   _type_Page: boolean;
-  setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: CallMetadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
   addInitScript(params: PageAddInitScriptParams, metadata?: CallMetadata): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, metadata?: CallMetadata): Promise<PageCloseResult>;
   emulateMedia(params: PageEmulateMediaParams, metadata?: CallMetadata): Promise<PageEmulateMediaResult>;
@@ -2043,6 +2092,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: CallMetadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: CallMetadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: CallMetadata): Promise<PagePdfResult>;
+  snapshotForAI(params?: PageSnapshotForAIParams, metadata?: CallMetadata): Promise<PageSnapshotForAIResult>;
   startJSCoverage(params: PageStartJSCoverageParams, metadata?: CallMetadata): Promise<PageStartJSCoverageResult>;
   stopJSCoverage(params?: PageStopJSCoverageParams, metadata?: CallMetadata): Promise<PageStopJSCoverageResult>;
   startCSSCoverage(params: PageStartCSSCoverageParams, metadata?: CallMetadata): Promise<PageStartCSSCoverageResult>;
@@ -2059,6 +2109,12 @@ export type PageDownloadEvent = {
   url: string,
   suggestedFilename: string,
   artifact: ArtifactChannel,
+};
+export type PageViewportSizeChangedEvent = {
+  viewportSize?: {
+    width: number,
+    height: number,
+  },
 };
 export type PageFileChooserEvent = {
   element: ElementHandleChannel,
@@ -2088,20 +2144,6 @@ export type PageWebSocketEvent = {
 export type PageWorkerEvent = {
   worker: WorkerChannel,
 };
-export type PageSetDefaultNavigationTimeoutNoReplyParams = {
-  timeout?: number,
-};
-export type PageSetDefaultNavigationTimeoutNoReplyOptions = {
-  timeout?: number,
-};
-export type PageSetDefaultNavigationTimeoutNoReplyResult = void;
-export type PageSetDefaultTimeoutNoReplyParams = {
-  timeout?: number,
-};
-export type PageSetDefaultTimeoutNoReplyOptions = {
-  timeout?: number,
-};
-export type PageSetDefaultTimeoutNoReplyResult = void;
 export type PageAddInitScriptParams = {
   source: string,
 };
@@ -2142,22 +2184,20 @@ export type PageExposeBindingOptions = {
 };
 export type PageExposeBindingResult = void;
 export type PageGoBackParams = {
-  timeout?: number,
+  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageGoBackOptions = {
-  timeout?: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageGoBackResult = {
   response?: ResponseChannel,
 };
 export type PageGoForwardParams = {
-  timeout?: number,
+  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageGoForwardOptions = {
-  timeout?: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageGoForwardResult = {
@@ -2192,11 +2232,10 @@ export type PageUnregisterLocatorHandlerOptions = {
 };
 export type PageUnregisterLocatorHandlerResult = void;
 export type PageReloadParams = {
-  timeout?: number,
+  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageReloadOptions = {
-  timeout?: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageReloadResult = {
@@ -2259,7 +2298,7 @@ export type PageExpectScreenshotResult = {
   log?: string[],
 };
 export type PageScreenshotParams = {
-  timeout?: number,
+  timeout: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   fullPage?: boolean,
@@ -2276,7 +2315,6 @@ export type PageScreenshotParams = {
   style?: string,
 };
 export type PageScreenshotOptions = {
-  timeout?: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   fullPage?: boolean,
@@ -2483,6 +2521,11 @@ export type PagePdfOptions = {
 export type PagePdfResult = {
   pdf: Binary,
 };
+export type PageSnapshotForAIParams = {};
+export type PageSnapshotForAIOptions = {};
+export type PageSnapshotForAIResult = {
+  snapshot: string,
+};
 export type PageStartJSCoverageParams = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
@@ -2546,6 +2589,7 @@ export interface PageEvents {
   'close': PageCloseEvent;
   'crash': PageCrashEvent;
   'download': PageDownloadEvent;
+  'viewportSizeChanged': PageViewportSizeChangedEvent;
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
   'frameDetached': PageFrameDetachedEvent;
@@ -2681,14 +2725,11 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameAriaSnapshotParams = {
   selector: string,
-  ref?: boolean,
-  mode?: 'raw' | 'regex',
-  timeout?: number,
+  forAI?: boolean,
+  timeout: number,
 };
 export type FrameAriaSnapshotOptions = {
-  ref?: boolean,
-  mode?: 'raw' | 'regex',
-  timeout?: number,
+  forAI?: boolean,
 };
 export type FrameAriaSnapshotResult = {
   snapshot: string,
@@ -2696,11 +2737,10 @@ export type FrameAriaSnapshotResult = {
 export type FrameBlurParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameBlurOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameBlurResult = void;
 export type FrameCheckParams = {
@@ -2708,14 +2748,13 @@ export type FrameCheckParams = {
   strict?: boolean,
   force?: boolean,
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type FrameCheckOptions = {
   strict?: boolean,
   force?: boolean,
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type FrameCheckResult = void;
@@ -2729,7 +2768,7 @@ export type FrameClickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type FrameClickOptions = {
@@ -2741,7 +2780,6 @@ export type FrameClickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
-  timeout?: number,
   trial?: boolean,
 };
 export type FrameClickResult = void;
@@ -2754,7 +2792,7 @@ export type FrameDragAndDropParams = {
   source: string,
   target: string,
   force?: boolean,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
   sourcePosition?: Point,
   targetPosition?: Point,
@@ -2762,7 +2800,6 @@ export type FrameDragAndDropParams = {
 };
 export type FrameDragAndDropOptions = {
   force?: boolean,
-  timeout?: number,
   trial?: boolean,
   sourcePosition?: Point,
   targetPosition?: Point,
@@ -2777,7 +2814,7 @@ export type FrameDblclickParams = {
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type FrameDblclickOptions = {
@@ -2787,7 +2824,6 @@ export type FrameDblclickOptions = {
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
-  timeout?: number,
   trial?: boolean,
 };
 export type FrameDblclickResult = void;
@@ -2796,11 +2832,10 @@ export type FrameDispatchEventParams = {
   strict?: boolean,
   type: string,
   eventInit: SerializedArgument,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameDispatchEventOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameDispatchEventResult = void;
 export type FrameEvaluateExpressionParams = {
@@ -2830,22 +2865,20 @@ export type FrameFillParams = {
   strict?: boolean,
   value: string,
   force?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameFillOptions = {
   strict?: boolean,
   force?: boolean,
-  timeout?: number,
 };
 export type FrameFillResult = void;
 export type FrameFocusParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameFocusOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameFocusResult = void;
 export type FrameFrameElementParams = {};
@@ -2864,23 +2897,21 @@ export type FrameGetAttributeParams = {
   selector: string,
   strict?: boolean,
   name: string,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameGetAttributeOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameGetAttributeResult = {
   value?: string,
 };
 export type FrameGotoParams = {
   url: string,
-  timeout?: number,
+  timeout: number,
   waitUntil?: LifecycleEvent,
   referer?: string,
 };
 export type FrameGotoOptions = {
-  timeout?: number,
   waitUntil?: LifecycleEvent,
   referer?: string,
 };
@@ -2893,7 +2924,7 @@ export type FrameHoverParams = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type FrameHoverOptions = {
@@ -2901,18 +2932,16 @@ export type FrameHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameInnerHTMLOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameInnerHTMLResult = {
   value: string,
@@ -2920,11 +2949,10 @@ export type FrameInnerHTMLResult = {
 export type FrameInnerTextParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameInnerTextOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameInnerTextResult = {
   value: string,
@@ -2932,11 +2960,10 @@ export type FrameInnerTextResult = {
 export type FrameInputValueParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameInputValueOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameInputValueResult = {
   value: string,
@@ -2944,11 +2971,10 @@ export type FrameInputValueResult = {
 export type FrameIsCheckedParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameIsCheckedOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsCheckedResult = {
   value: boolean,
@@ -2956,11 +2982,10 @@ export type FrameIsCheckedResult = {
 export type FrameIsDisabledParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameIsDisabledOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsDisabledResult = {
   value: boolean,
@@ -2968,11 +2993,10 @@ export type FrameIsDisabledResult = {
 export type FrameIsEnabledParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameIsEnabledOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsEnabledResult = {
   value: boolean,
@@ -3000,11 +3024,10 @@ export type FrameIsVisibleResult = {
 export type FrameIsEditableParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameIsEditableOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsEditableResult = {
   value: boolean,
@@ -3015,13 +3038,12 @@ export type FramePressParams = {
   key: string,
   delay?: number,
   noWaitAfter?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FramePressOptions = {
   strict?: boolean,
   delay?: number,
   noWaitAfter?: boolean,
-  timeout?: number,
 };
 export type FramePressResult = void;
 export type FrameQuerySelectorParams = {
@@ -3063,7 +3085,7 @@ export type FrameSelectOptionParams = {
     index?: number,
   }[],
   force?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameSelectOptionOptions = {
   strict?: boolean,
@@ -3075,18 +3097,16 @@ export type FrameSelectOptionOptions = {
     index?: number,
   }[],
   force?: boolean,
-  timeout?: number,
 };
 export type FrameSelectOptionResult = {
   values: string[],
 };
 export type FrameSetContentParams = {
   html: string,
-  timeout?: number,
+  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type FrameSetContentOptions = {
-  timeout?: number,
   waitUntil?: LifecycleEvent,
 };
 export type FrameSetContentResult = void;
@@ -3102,7 +3122,7 @@ export type FrameSetInputFilesParams = {
   directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
-  timeout?: number,
+  timeout: number,
 };
 export type FrameSetInputFilesOptions = {
   strict?: boolean,
@@ -3115,7 +3135,6 @@ export type FrameSetInputFilesOptions = {
   directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
-  timeout?: number,
 };
 export type FrameSetInputFilesResult = void;
 export type FrameTapParams = {
@@ -3124,7 +3143,7 @@ export type FrameTapParams = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type FrameTapOptions = {
@@ -3132,18 +3151,16 @@ export type FrameTapOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type FrameTapResult = void;
 export type FrameTextContentParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameTextContentOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameTextContentResult = {
   value?: string,
@@ -3158,12 +3175,11 @@ export type FrameTypeParams = {
   strict?: boolean,
   text: string,
   delay?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
   delay?: number,
-  timeout?: number,
 };
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
@@ -3171,14 +3187,13 @@ export type FrameUncheckParams = {
   strict?: boolean,
   force?: boolean,
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type FrameUncheckOptions = {
   strict?: boolean,
   force?: boolean,
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type FrameUncheckResult = void;
@@ -3193,12 +3208,11 @@ export type FrameWaitForFunctionParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  timeout?: number,
+  timeout: number,
   pollingInterval?: number,
 };
 export type FrameWaitForFunctionOptions = {
   isFunction?: boolean,
-  timeout?: number,
   pollingInterval?: number,
 };
 export type FrameWaitForFunctionResult = {
@@ -3207,13 +3221,12 @@ export type FrameWaitForFunctionResult = {
 export type FrameWaitForSelectorParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
   omitReturnValue?: boolean,
 };
 export type FrameWaitForSelectorOptions = {
   strict?: boolean,
-  timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
   omitReturnValue?: boolean,
 };
@@ -3439,13 +3452,12 @@ export type ElementHandleBoundingBoxResult = {
 export type ElementHandleCheckParams = {
   force?: boolean,
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleCheckOptions = {
   force?: boolean,
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleCheckResult = void;
@@ -3457,7 +3469,7 @@ export type ElementHandleClickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleClickOptions = {
@@ -3468,7 +3480,6 @@ export type ElementHandleClickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
-  timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleClickResult = void;
@@ -3483,7 +3494,7 @@ export type ElementHandleDblclickParams = {
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleDblclickOptions = {
@@ -3492,7 +3503,6 @@ export type ElementHandleDblclickOptions = {
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
-  timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleDblclickResult = void;
@@ -3507,11 +3517,10 @@ export type ElementHandleDispatchEventResult = void;
 export type ElementHandleFillParams = {
   value: string,
   force?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleFillOptions = {
   force?: boolean,
-  timeout?: number,
 };
 export type ElementHandleFillResult = void;
 export type ElementHandleFocusParams = {};
@@ -3535,14 +3544,13 @@ export type ElementHandleHoverParams = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleHoverResult = void;
@@ -3599,12 +3607,11 @@ export type ElementHandleOwnerFrameResult = {
 export type ElementHandlePressParams = {
   key: string,
   delay?: number,
-  timeout?: number,
+  timeout: number,
   noWaitAfter?: boolean,
 };
 export type ElementHandlePressOptions = {
   delay?: number,
-  timeout?: number,
   noWaitAfter?: boolean,
 };
 export type ElementHandlePressResult = void;
@@ -3628,7 +3635,7 @@ export type ElementHandleQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
 };
 export type ElementHandleScreenshotParams = {
-  timeout?: number,
+  timeout: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
@@ -3643,7 +3650,6 @@ export type ElementHandleScreenshotParams = {
   style?: string,
 };
 export type ElementHandleScreenshotOptions = {
-  timeout?: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
@@ -3661,10 +3667,10 @@ export type ElementHandleScreenshotResult = {
   binary: Binary,
 };
 export type ElementHandleScrollIntoViewIfNeededParams = {
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleScrollIntoViewIfNeededOptions = {
-  timeout?: number,
+
 };
 export type ElementHandleScrollIntoViewIfNeededResult = void;
 export type ElementHandleSelectOptionParams = {
@@ -3676,7 +3682,7 @@ export type ElementHandleSelectOptionParams = {
     index?: number,
   }[],
   force?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
@@ -3687,18 +3693,16 @@ export type ElementHandleSelectOptionOptions = {
     index?: number,
   }[],
   force?: boolean,
-  timeout?: number,
 };
 export type ElementHandleSelectOptionResult = {
   values: string[],
 };
 export type ElementHandleSelectTextParams = {
   force?: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleSelectTextOptions = {
   force?: boolean,
-  timeout?: number,
 };
 export type ElementHandleSelectTextResult = void;
 export type ElementHandleSetInputFilesParams = {
@@ -3711,7 +3715,7 @@ export type ElementHandleSetInputFilesParams = {
   directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleSetInputFilesOptions = {
   payloads?: {
@@ -3723,21 +3727,19 @@ export type ElementHandleSetInputFilesOptions = {
   directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
-  timeout?: number,
 };
 export type ElementHandleSetInputFilesResult = void;
 export type ElementHandleTapParams = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleTapOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleTapResult = void;
@@ -3749,43 +3751,40 @@ export type ElementHandleTextContentResult = {
 export type ElementHandleTypeParams = {
   text: string,
   delay?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleTypeOptions = {
   delay?: number,
-  timeout?: number,
 };
 export type ElementHandleTypeResult = void;
 export type ElementHandleUncheckParams = {
   force?: boolean,
   position?: Point,
-  timeout?: number,
+  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleUncheckOptions = {
   force?: boolean,
   position?: Point,
-  timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleUncheckResult = void;
 export type ElementHandleWaitForElementStateParams = {
   state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable',
-  timeout?: number,
+  timeout: number,
 };
 export type ElementHandleWaitForElementStateOptions = {
-  timeout?: number,
+
 };
 export type ElementHandleWaitForElementStateResult = void;
 export type ElementHandleWaitForSelectorParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
+  timeout: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type ElementHandleWaitForSelectorOptions = {
   strict?: boolean,
-  timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type ElementHandleWaitForSelectorResult = {
@@ -4370,7 +4369,7 @@ export type ElectronLaunchParams = {
   args?: string[],
   cwd?: string,
   env?: NameValue[],
-  timeout?: number,
+  timeout: number,
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
@@ -4388,7 +4387,6 @@ export type ElectronLaunchParams = {
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
-  recordHar?: RecordHarOptions,
   recordVideo?: {
     dir: string,
     size?: {
@@ -4405,7 +4403,6 @@ export type ElectronLaunchOptions = {
   args?: string[],
   cwd?: string,
   env?: NameValue[],
-  timeout?: number,
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
@@ -4423,7 +4420,6 @@ export type ElectronLaunchOptions = {
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
-  recordHar?: RecordHarOptions,
   recordVideo?: {
     dir: string,
     size?: {
@@ -4520,7 +4516,6 @@ export interface AndroidEventTarget {
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
   devices(params: AndroidDevicesParams, metadata?: CallMetadata): Promise<AndroidDevicesResult>;
-  setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {
   host?: string,
@@ -4535,13 +4530,6 @@ export type AndroidDevicesOptions = {
 export type AndroidDevicesResult = {
   devices: AndroidDeviceChannel[],
 };
-export type AndroidSetDefaultTimeoutNoReplyParams = {
-  timeout: number,
-};
-export type AndroidSetDefaultTimeoutNoReplyOptions = {
-
-};
-export type AndroidSetDefaultTimeoutNoReplyResult = void;
 
 export interface AndroidEvents {
 }
@@ -4611,7 +4599,6 @@ export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTar
   shell(params: AndroidDeviceShellParams, metadata?: CallMetadata): Promise<AndroidDeviceShellResult>;
   installApk(params: AndroidDeviceInstallApkParams, metadata?: CallMetadata): Promise<AndroidDeviceInstallApkResult>;
   push(params: AndroidDevicePushParams, metadata?: CallMetadata): Promise<AndroidDevicePushResult>;
-  setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
   connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: CallMetadata): Promise<AndroidDeviceConnectToWebViewResult>;
   close(params?: AndroidDeviceCloseParams, metadata?: CallMetadata): Promise<AndroidDeviceCloseResult>;
 }
@@ -4625,82 +4612,76 @@ export type AndroidDeviceWebViewRemovedEvent = {
 export type AndroidDeviceWaitParams = {
   selector: AndroidSelector,
   state?: 'gone',
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceWaitOptions = {
   state?: 'gone',
-  timeout?: number,
 };
 export type AndroidDeviceWaitResult = void;
 export type AndroidDeviceFillParams = {
   selector: AndroidSelector,
   text: string,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceFillOptions = {
-  timeout?: number,
+
 };
 export type AndroidDeviceFillResult = void;
 export type AndroidDeviceTapParams = {
   selector: AndroidSelector,
   duration?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceTapOptions = {
   duration?: number,
-  timeout?: number,
 };
 export type AndroidDeviceTapResult = void;
 export type AndroidDeviceDragParams = {
   selector: AndroidSelector,
   dest: Point,
   speed?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceDragOptions = {
   speed?: number,
-  timeout?: number,
 };
 export type AndroidDeviceDragResult = void;
 export type AndroidDeviceFlingParams = {
   selector: AndroidSelector,
   direction: 'up' | 'down' | 'left' | 'right',
   speed?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceFlingOptions = {
   speed?: number,
-  timeout?: number,
 };
 export type AndroidDeviceFlingResult = void;
 export type AndroidDeviceLongTapParams = {
   selector: AndroidSelector,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceLongTapOptions = {
-  timeout?: number,
+
 };
 export type AndroidDeviceLongTapResult = void;
 export type AndroidDevicePinchCloseParams = {
   selector: AndroidSelector,
   percent: number,
   speed?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDevicePinchCloseOptions = {
   speed?: number,
-  timeout?: number,
 };
 export type AndroidDevicePinchCloseResult = void;
 export type AndroidDevicePinchOpenParams = {
   selector: AndroidSelector,
   percent: number,
   speed?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDevicePinchOpenOptions = {
   speed?: number,
-  timeout?: number,
 };
 export type AndroidDevicePinchOpenResult = void;
 export type AndroidDeviceScrollParams = {
@@ -4708,11 +4689,10 @@ export type AndroidDeviceScrollParams = {
   direction: 'up' | 'down' | 'left' | 'right',
   percent: number,
   speed?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceScrollOptions = {
   speed?: number,
-  timeout?: number,
 };
 export type AndroidDeviceScrollResult = void;
 export type AndroidDeviceSwipeParams = {
@@ -4720,11 +4700,10 @@ export type AndroidDeviceSwipeParams = {
   direction: 'up' | 'down' | 'left' | 'right',
   percent: number,
   speed?: number,
-  timeout?: number,
+  timeout: number,
 };
 export type AndroidDeviceSwipeOptions = {
   speed?: number,
-  timeout?: number,
 };
 export type AndroidDeviceSwipeResult = void;
 export type AndroidDeviceInfoParams = {
@@ -4832,9 +4811,10 @@ export type AndroidDeviceLaunchBrowserParams = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -4897,9 +4877,10 @@ export type AndroidDeviceLaunchBrowserOptions = {
       height: number,
     },
   },
-  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -4947,13 +4928,6 @@ export type AndroidDevicePushOptions = {
   mode?: number,
 };
 export type AndroidDevicePushResult = void;
-export type AndroidDeviceSetDefaultTimeoutNoReplyParams = {
-  timeout: number,
-};
-export type AndroidDeviceSetDefaultTimeoutNoReplyOptions = {
-
-};
-export type AndroidDeviceSetDefaultTimeoutNoReplyResult = void;
 export type AndroidDeviceConnectToWebViewParams = {
   socketName: string,
 };

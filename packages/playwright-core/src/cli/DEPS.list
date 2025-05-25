@@ -1,9 +1,7 @@
 [*]
 ../../
-../debug/injected
 ../generated/
 ../server/
-../server/injected/
 ../server/trace
 ../server/utils
 ../utils
@@ -12,7 +10,6 @@
 [program.ts]
 ../server/trace/viewer/traceViewer.ts
 ../server/
-../containers/
 
 [driver.ts]
 ../**

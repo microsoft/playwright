@@ -11,7 +11,7 @@
          - .../lib/* means require dependency
       */
       "@html-reporter/*": ["./packages/html-reporter/src/*"],
-      "@injected/*": ["./packages/playwright-core/src/server/injected/*"],
+      "@injected/*": ["./packages/injected/src/*"],
       "@isomorphic/*": ["./packages/playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["./packages/protocol/src/*"],
       "@recorder/*": ["./packages/recorder/src/*"],

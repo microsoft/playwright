@@ -94,6 +94,27 @@ it('should transfer arrays as arrays, not objects', async ({ page }) => {
   expect(result).toBe(true);
 });
 
+it('should transfer typed arrays', async ({ page }) => {
+  const testCases = [
+    new Int8Array([1, 2, 3]),
+    new Uint8Array([1, 2, 3]),
+    new Uint8ClampedArray([1, 2, 3]),
+    new Int16Array([1, 2, 3]),
+    new Uint16Array([1, 2, 3]),
+    new Int32Array([1, 2, 3]),
+    new Uint32Array([1, 2, 3]),
+    new Float32Array([1.1, 2.2, 3.3]),
+    new Float64Array([1.1, 2.2, 3.3]),
+    new BigInt64Array([1n, 2n, 3n]),
+    new BigUint64Array([1n, 2n, 3n])
+  ];
+
+  for (const typedArray of testCases) {
+    const result = await page.evaluate(a => a, typedArray);
+    expect(result).toEqual(typedArray);
+  }
+});
+
 it('should transfer bigint', async ({ page }) => {
   expect(await page.evaluate(() => 42n)).toBe(42n);
   expect(await page.evaluate(a => a, 17n)).toBe(17n);
@@ -349,10 +370,10 @@ it('should properly serialize null fields', async ({ page }) => {
 
 it('should properly serialize PerformanceMeasure object', async ({ page }) => {
   expect(await page.evaluate(() => {
-    window.builtinPerformance.mark('start');
-    window.builtinPerformance.mark('end');
-    window.builtinPerformance.measure('my-measure', 'start', 'end');
-    return window.builtinPerformance.getEntriesByType('measure');
+    window.builtins.performance.mark('start');
+    window.builtins.performance.mark('end');
+    window.builtins.performance.measure('my-measure', 'start', 'end');
+    return window.builtins.performance.getEntriesByType('measure');
   })).toEqual([{
     duration: expect.any(Number),
     entryType: 'measure',
@@ -403,6 +424,7 @@ it('should return undefined for non-serializable objects', async ({ page }) => {
 it('should throw for too deep reference chain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33997' }
 }, async ({ page, browserName }) => {
+  it.fixme(browserName === 'firefox', 'Firefox Juggler -> Playwright serialiser does not throw for deep references.\nThis causes large objects to get serialised back to the Playwright client.\nThere our validators throw \'Maximum call stack size exceeded\'.');
   await expect(page.evaluate(depth => {
     const obj = {};
     let temp = obj;
@@ -411,9 +433,27 @@ it('should throw for too deep reference chain', {
       temp = temp[i];
     }
     return obj;
-  }, 1000)).rejects.toThrow(browserName === 'firefox'
-    ? 'Maximum call stack size exceeded'
-    : 'Cannot serialize result: object reference chain is too long.');
+  }, 1000)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
+});
+
+it('should throw usable message for unserializable shallow function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, () => { }))
+      .rejects.toThrow(/Attempting to serialize unexpected value: \(\) => {}/);
+});
+
+it('should throw usable message for unserializable object one deep function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, { aProperty: () => { } }))
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "aProperty": \(\) => {}/);
+});
+
+it('should throw usable message for unserializable object nested function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, { a: { inner: { property: () => { } } } }))
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\.property": \(\) => {}/);
+});
+
+it('should throw usable message for unserializable array nested function', async ({ page }) => {
+  await expect(() => page.evaluate(arg => arg, { a: { inner: ['firstValue', { property: () => { } }] } }))
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\[1\]\.property": \(\) => {}/);
 });
 
 it('should alias Window, Document and Node', async ({ page }) => {
@@ -808,4 +848,13 @@ it('should work with Array.from/map', async ({ page }) => {
     const r = (str, amount) => Array.from(Array(amount)).map(() => str).join('');
     return r('([a-f0-9]{2})', 3);
   })).toBe('([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})');
+});
+
+it('should ignore dangerous object keys', async ({ page }) => {
+  const input = {
+    __proto__: { polluted: true },
+    safeKey: 'safeValue'
+  };
+  const result = await page.evaluate(arg => arg, input);
+  expect(result).toEqual({ safeKey: 'safeValue' });
 });

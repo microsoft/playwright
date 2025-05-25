@@ -306,23 +306,6 @@ test.describe('test modifier annotations', () => {
     expectTest('focused fail by suite', 'failed', 'expected', ['fail']);
   });
 
-  test('should not multiple on retry', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.test.ts': `
-        import { test, expect } from '@playwright/test';
-        test('retry', () => {
-          test.info().annotations.push({ type: 'example' });
-          expect(1).toBe(2);
-        });
-      `,
-    }, { retries: 3 });
-    const expectTest = expectTestHelper(result);
-
-    expect(result.exitCode).toBe(1);
-    expect(result.passed).toBe(0);
-    expectTest('retry', 'passed', 'unexpected', ['example']);
-  });
-
   test('should not multiply on repeat-each', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `

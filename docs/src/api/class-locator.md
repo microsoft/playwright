@@ -206,13 +206,6 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
-### option: Locator.ariaSnapshot.ref
-* since: v1.52
-- `ref` <[boolean]>
-
-Generate symbolic reference for each element. One can use `aria-ref=<ref>` locator immediately after capturing the
-snapshot to perform actions on the element.
-
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.49
 
@@ -587,6 +580,19 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
+## method: Locator.describe
+* since: v1.53
+- returns: <[Locator]>
+
+Describes the locator, description is used in the trace viewer and reports.
+Returns the locator pointing to the same element.
+
+### param: Locator.describe.description
+* since: v1.53
+- `description` <[string]>
+
+Locator description.
+
 ## async method: Locator.dispatchEvent
 * since: v1.14
 
@@ -871,6 +877,37 @@ If [`param: expression`] throws or rejects, this method throws.
 
 **Usage**
 
+Passing argument to [`param: expression`]:
+
+```js
+const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
+  return element.textContent + ' ' + x * y;
+}, [7, 8]);
+console.log(result); // prints "myId text 56"
+```
+
+```java
+Object result = page.getByTestId("myId").evaluate("(element, [x, y]) => {\n" +
+  "  return element.textContent + ' ' + x * y;\n" +
+  "}", Arrays.asList(7, 8));
+System.out.println(result); // prints "myId text 56"
+```
+
+```python async
+result = await page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+print(result) # prints "myId text 56"
+```
+
+```python sync
+result = page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+print(result) # prints "myId text 56"
+```
+
+```csharp
+var result = await page.GetByTestId("myId").EvaluateAsync<string>("(element, [x, y]) => element.textContent + ' ' + x * y)", new[] { 7, 8 });
+Console.WriteLine(result); // prints "myId text 56"
+```
+
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.14
 
@@ -883,11 +920,19 @@ If [`param: expression`] throws or rejects, this method throws.
 
 Optional argument to pass to [`param: expression`].
 
-### option: Locator.evaluate.timeout = %%-input-timeout-%%
+### option: Locator.evaluate.timeout
 * since: v1.14
+* langs: python, java, csharp
+- `timeout` <[float]>
 
-### option: Locator.evaluate.timeout = %%-input-timeout-js-%%
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: Locator.evaluate.timeout
 * since: v1.14
+* langs: js
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
 
 ## async method: Locator.evaluateAll
 * since: v1.14
@@ -972,11 +1017,19 @@ See [`method: Page.evaluateHandle`] for more details.
 
 Optional argument to pass to [`param: expression`].
 
-### option: Locator.evaluateHandle.timeout = %%-input-timeout-%%
+### option: Locator.evaluateHandle.timeout
 * since: v1.14
+* langs: python, java, csharp
+- `timeout` <[float]>
 
-### option: Locator.evaluateHandle.timeout = %%-input-timeout-js-%%
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: Locator.evaluateHandle.timeout
 * since: v1.14
+* langs: js
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
 
 ## async method: Locator.fill
 * since: v1.14

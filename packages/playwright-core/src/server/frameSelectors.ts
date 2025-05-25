@@ -19,7 +19,7 @@ import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAl
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
-import type { InjectedScript } from './injected/injectedScript';
+import type { InjectedScript } from '@injected/injectedScript';
 import type { JSHandle } from './javascript';
 import type * as types from './types';
 import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
@@ -45,8 +45,8 @@ export class FrameSelectors {
   }
 
   private _parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
-    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.context()._options.strictSelectors;
-    return this.frame._page.context().selectors().parseSelector(selector, strict);
+    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.browserContext._options.strictSelectors;
+    return this.frame._page.browserContext.selectors().parseSelector(selector, strict);
   }
 
   async query(selector: string, options?: types.StrictOptions, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
@@ -111,7 +111,31 @@ export class FrameSelectors {
     return Promise.all(result);
   }
 
+  private _resolveForLastAISnapshot(selector: string, options: types.StrictOptions = {}): SelectorInFrame | null {
+    const match = selector.match(/^aria-ref=f(\d+)e\d+$/);
+    if (!match)
+      return null;
+
+    const frameIndex = +match[1];
+    const page = this.frame._page;
+    const frameId = page.lastSnapshotFrameIds[frameIndex - 1];
+    if (!frameId)
+      return null;
+    const frameManager = page.frameManager;
+    const frame = frameManager.frame(frameId);
+    if (!frame)
+      return null;
+    return {
+      frame,
+      info: frame.selectors._parseSelector(selector, options),
+    };
+  }
+
   async resolveFrameForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame | null> {
+    const resolvedForSnapshot = this._resolveForLastAISnapshot(selector, options);
+    if (resolvedForSnapshot)
+      return resolvedForSnapshot;
+
     let frame: Frame = this.frame;
     const frameChunks = splitSelectorByFrame(selector);
 
@@ -137,7 +161,7 @@ export class FrameSelectors {
       const element = handle.asElement() as ElementHandle<Element> | null;
       if (!element)
         return null;
-      const maybeFrame = await frame._page._delegate.getContentFrame(element);
+      const maybeFrame = await frame._page.delegate.getContentFrame(element);
       element.dispose();
       if (!maybeFrame)
         return null;
@@ -163,7 +187,7 @@ export class FrameSelectors {
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
   if (handle._context === context)
     return handle;
-  const adopted = await handle._page._delegate.adoptElementHandle(handle, context);
+  const adopted = await handle._page.delegate.adoptElementHandle(handle, context);
   handle.dispose();
   return adopted;
 }

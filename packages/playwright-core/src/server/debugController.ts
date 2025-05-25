@@ -17,7 +17,7 @@
 import { SdkObject, createInstrumentation, serverSideCallMetadata } from './instrumentation';
 import { gracefullyProcessExitDoNotHang } from './utils/processLauncher';
 import { Recorder } from './recorder';
-import { asLocator  } from '../utils';
+import { asLocator, DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, DEFAULT_PLAYWRIGHT_TIMEOUT  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { EmptyRecorderApp } from './recorder/recorderApp';
@@ -77,14 +77,14 @@ export class DebugController extends SdkObject {
   async resetForReuse() {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
-      contexts.add(page.context());
+      contexts.add(page.browserContext);
     for (const context of contexts)
       await context.resetForReuse(internalMetadata, null);
   }
 
   async navigate(url: string) {
     for (const p of this._playwright.allPages())
-      await p.mainFrame().goto(internalMetadata, url);
+      await p.mainFrame().goto(internalMetadata, url, { timeout: DEFAULT_PLAYWRIGHT_TIMEOUT });
   }
 
   async setRecorderMode(params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
@@ -100,7 +100,7 @@ export class DebugController extends SdkObject {
     }
 
     if (!this._playwright.allBrowsers().length)
-      await this._playwright.chromium.launch(internalMetadata, { headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS });
+      await this._playwright.chromium.launch(internalMetadata, { headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS, timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT });
     // Create page if none.
     const pages = this._playwright.allPages();
     if (!pages.length) {
@@ -111,7 +111,7 @@ export class DebugController extends SdkObject {
     // Update test id attribute.
     if (params.testIdAttributeName) {
       for (const page of this._playwright.allPages())
-        page.context().selectors().setTestIdAttributeName(params.testIdAttributeName);
+        page.browserContext.selectors().setTestIdAttributeName(params.testIdAttributeName);
     }
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
@@ -170,7 +170,7 @@ export class DebugController extends SdkObject {
   private async _allRecorders(): Promise<Recorder[]> {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
-      contexts.add(page.context());
+      contexts.add(page.browserContext);
     const result = await Promise.all([...contexts].map(c => Recorder.showInspector(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp(this)))));
     return result.filter(Boolean) as Recorder[];
   }

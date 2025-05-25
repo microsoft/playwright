@@ -51,8 +51,8 @@ const HEADER = `/*
 import type { SvgJson } from './recorder';
 `;
 
-const iconsDir = path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder', 'icons');
-const outFile = path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder', 'clipPaths.ts');
+const iconsDir = path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'icons');
+const outFile = path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'clipPaths.ts');
 
 const iconNames = [
   'gripper',

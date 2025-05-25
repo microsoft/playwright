@@ -15,17 +15,21 @@
  */
 
 import { baseTest } from '../config/baseTest';
-import * as path from 'path';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import type { ElectronApplication, Page, Electron } from '@playwright/test';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
+import { removeFolders } from '../../packages/playwright-core/lib/server/utils/fileUtils';
 export { expect } from '@playwright/test';
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;
   launchElectronApp: (appFile: string, args?: string[], options?: Parameters<Electron['launch']>[0]) => Promise<ElectronApplication>;
   newWindow: () => Promise<Page>;
+  createUserDataDir: () => Promise<string>;
 };
 
 export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixtures).extend<ElectronTestFixtures, PageWorkerFixtures>({
@@ -37,12 +41,32 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   isWebView2: [false, { scope: 'worker' }],
   isHeadlessShell: [false, { scope: 'worker' }],
 
-  launchElectronApp: async ({ playwright }, use) => {
+  createUserDataDir: async ({ mode }, run) => {
+    const dirs: string[] = [];
+    // We do not put user data dir in testOutputPath,
+    // because we do not want to upload them as test result artifacts.
+    await run(async () => {
+      const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-'));
+      dirs.push(dir);
+      return dir;
+    });
+    await removeFolders(dirs);
+  },
+
+  launchElectronApp: async ({ playwright, createUserDataDir }, use) => {
     // This env prevents 'Electron Security Policy' console message.
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
     const apps: ElectronApplication[] = [];
     await use(async (appFile: string, args: string[] = [], options?: Parameters<Electron['launch']>[0]) => {
-      const app = await playwright._electron.launch({ ...options, args: [path.join(__dirname, appFile), ...args] });
+      const userDataDir = await createUserDataDir();
+      const app = await playwright._electron.launch({
+        ...options,
+        args: [path.join(__dirname, appFile), ...args],
+        env: {
+          ...process.env,
+          PWTEST_ELECTRON_USER_DATA_DIR: userDataDir,
+        }
+      });
       apps.push(app);
       return app;
     });

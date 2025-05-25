@@ -508,7 +508,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   </TabItem>
 
-  <TabItem value="vue3">
+  <TabItem value="vue">
 
   ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
@@ -686,7 +686,7 @@ Playwright provides an **experimental** `router` fixture to intercept and handle
 
 Here is an example of reusing your existing MSW handlers in the test.
 
-```ts
+```js
 import { handlers } from '@src/mocks/handlers';
 
 test.beforeEach(async ({ router }) => {
@@ -702,7 +702,7 @@ test('example test', async ({ mount }) => {
 
 You can also introduce a one-off handler for a specific test.
 
-```ts
+```js
 import { http, HttpResponse } from 'msw';
 
 test('example test', async ({ mount, router }) => {

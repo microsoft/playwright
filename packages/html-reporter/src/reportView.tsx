@@ -19,7 +19,7 @@ import * as React from 'react';
 import './colors.css';
 import './common.css';
 import { Filter } from './filter';
-import { HeaderView } from './headerView';
+import { HeaderView, GlobalFilterView } from './headerView';
 import { Route, SearchParamsContext } from './links';
 import type { LoadedReport } from './loadedReport';
 import './reportView.css';
@@ -72,9 +72,18 @@ export const ReportView: React.FC<{
     return result;
   }, [report, filter]);
 
+  const reportTitle = report?.json()?.title;
+
+  React.useEffect(() => {
+    if (reportTitle)
+      document.title = reportTitle;
+    else
+      document.title = 'Playwright Test Report';
+  }, [reportTitle]);
+
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      {report?.json() && <GlobalFilterView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
@@ -97,7 +106,7 @@ const TestCaseViewLoader: React.FC<{
   testIdToFileIdMap: Map<string, string>,
 }> = ({ report, testIdToFileIdMap, tests }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const [test, setTest] = React.useState<TestCase | undefined>();
+  const [test, setTest] = React.useState<TestCase | 'loading' | 'not-found'>('loading');
   const testId = searchParams.get('testId');
   const run = +(searchParams.get('run') || '0');
 
@@ -110,28 +119,37 @@ const TestCaseViewLoader: React.FC<{
 
   React.useEffect(() => {
     (async () => {
-      if (!testId || testId === test?.testId)
+      if (!testId || (typeof test === 'object' && testId === test.testId))
         return;
       const fileId = testIdToFileIdMap.get(testId);
-      if (!fileId)
+      if (!fileId) {
+        setTest('not-found');
         return;
-      const file = await report.entry(`${fileId}.json`) as TestFile;
-      for (const t of file.tests) {
-        if (t.testId === testId) {
-          setTest(t);
-          break;
-        }
       }
+      const file = await report.entry(`${fileId}.json`) as TestFile;
+      setTest(file?.tests.find(t => t.testId === testId) || 'not-found');
     })();
   }, [test, report, testId, testIdToFileIdMap]);
 
-  return <TestCaseView
-    projectNames={report.json().projectNames}
-    next={next}
-    prev={prev}
-    test={test}
-    run={run}
-  />;
+  if (test === 'loading')
+    return <div className='test-case-column'></div>;
+
+  if (test === 'not-found') {
+    return <div className='test-case-column'>
+      <HeaderView title='Test not found' />
+      <div className='test-case-location'>Test ID: {testId}</div>
+    </div>;
+  }
+
+  return <div className='test-case-column'>
+    <TestCaseView
+      projectNames={report.json().projectNames}
+      next={next}
+      prev={prev}
+      test={test}
+      run={run}
+    />
+  </div>;
 };
 
 function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {

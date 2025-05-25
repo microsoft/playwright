@@ -33,8 +33,8 @@ jobs:
     - name: Cherry-pick commits
       id: cherry-pick
       run: |
-        git config --global user.name github-actions
-        git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+        git config --global user.name microsoft-playwright-automation[bot]
+        git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
         for COMMIT_HASH in $(echo "${{ github.event.inputs.commit_hashes }}" | tr "," "\n"); do
           git cherry-pick --no-commit "$COMMIT_HASH"
 
@@ -59,10 +59,15 @@ jobs:
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
         git checkout -b "$BRANCH_NAME"
         git push origin $BRANCH_NAME
+    - uses: actions/create-github-app-token@v2
+      id: app-token
+      with:
+        app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
     - name: Create Pull Request
       uses: actions/github-script@v7
       with:
-        github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+        github-token: ${{ steps.app-token.outputs.token }}
         script: |
           const readableCommitHashesList = '${{ github.event.inputs.commit_hashes }}'.split(',').map(hash => `- ${hash}`).join('\n');
           const response = await github.rest.pulls.create({

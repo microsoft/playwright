@@ -2,18 +2,11 @@
   "name": "utils-bundle",
   "version": "0.0.1",
   "private": true,
-  "scripts": {
-    "esbuild": "node build.js",
-    "build": "npm run esbuild -- --minify",
-    "watch": "npm run esbuild -- --watch --sourcemap",
-    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
-  },
   "dependencies": {
     "chokidar": "3.6.0",
     "enquirer": "2.3.6",
     "get-east-asian-width": "1.3.0",
     "json5": "2.2.3",
-    "pirates": "4.0.4",
     "source-map-support": "0.5.21",
     "stoppable": "1.1.0"
   },

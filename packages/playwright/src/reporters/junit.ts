@@ -19,19 +19,12 @@ import path from 'path';
 
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 
-import { formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
+import { CommonReporterOptions, formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
+import type { JUnitReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-
-type JUnitOptions = {
-  outputFile?: string,
-  stripANSIControlSequences?: boolean,
-  includeProjectInTestName?: boolean,
-
-  configDir: string,
-};
 
 class JUnitReporter implements ReporterV2 {
   private config!: FullConfig;
@@ -45,7 +38,7 @@ class JUnitReporter implements ReporterV2 {
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
 
-  constructor(options: JUnitOptions) {
+  constructor(options: JUnitReporterOptions & CommonReporterOptions) {
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.configDir = options.configDir;

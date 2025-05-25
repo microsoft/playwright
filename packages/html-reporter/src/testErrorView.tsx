@@ -19,17 +19,19 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
+import { TestAttachment } from './types';
+import { fixTestInstructions } from '@web/prompts';
 
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
-  prompt?: string;
-}> = ({ error, testId, prompt }) => {
+  context?: TestAttachment;
+}> = ({ error, testId, context }) => {
   return (
     <CodeSnippet code={error} testId={testId}>
-      {prompt && (
-        <div style={{ float: 'right', margin: 10 }}>
-          <PromptButton prompt={prompt} />
+      {context && (
+        <div style={{ position: 'absolute', right: 0, padding: '10px' }}>
+          <PromptButton context={context} />
         </div>
       )}
     </CodeSnippet>
@@ -46,13 +48,14 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
-const PromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
+const PromptButton: React.FC<{ context: TestAttachment }> = ({ context }) => {
   const [copied, setCopied] = React.useState(false);
   return <button
     className='button'
     style={{ minWidth: 100 }}
     onClick={async () => {
-      await navigator.clipboard.writeText(prompt);
+      const text = context.body ? context.body : await fetch(context.path!).then(r => r.text());
+      await navigator.clipboard.writeText(fixTestInstructions + text);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);

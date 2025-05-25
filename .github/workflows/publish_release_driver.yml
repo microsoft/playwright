@@ -24,7 +24,6 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
     - name: Azure Login
       uses: azure/login@v2

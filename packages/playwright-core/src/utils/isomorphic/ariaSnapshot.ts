@@ -47,6 +47,7 @@ export type AriaTemplateRoleNode = AriaProps & {
   name?: AriaRegex | string;
   children?: AriaTemplateNode[];
   props?: Record<string, string | AriaRegex>;
+  containerMode?: 'contain' | 'equal' | 'deep-equal';
 };
 
 export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
@@ -149,6 +150,20 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
           kind: 'text',
           text: valueOrRegex(value.value)
         });
+        continue;
+      }
+
+      // - /children: equal
+      if (key.value === '/children') {
+        const valueIsString = value instanceof yaml.Scalar && typeof value.value === 'string';
+        if (!valueIsString || (value.value !== 'contain' && value.value !== 'equal' && value.value !== 'deep-equal')) {
+          errors.push({
+            message: 'Strict value should be "contain", "equal" or "deep-equal"',
+            range: convertRange(((entry.value as any).range || map.range)),
+          });
+          continue;
+        }
+        container.containerMode = value.value;
         continue;
       }
 

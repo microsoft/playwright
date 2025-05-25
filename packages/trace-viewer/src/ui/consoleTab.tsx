@@ -200,38 +200,38 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
   let match;
   const formatted: JSX.Element[] = [];
   let tokens: JSX.Element[] = [];
-  formatted.push(<span>{tokens}</span>);
+  formatted.push(<span key={formatted.length + 1}>{tokens}</span>);
   let formatIndex = 0;
   while ((match = regex.exec(messageFormat)) !== null) {
     const text = messageFormat.substring(formatIndex, match.index);
-    tokens.push(<span>{text}</span>);
+    tokens.push(<span key={tokens.length + 1}>{text}</span>);
     formatIndex = match.index + 2;
     const specifier = match[0][1];
     if (specifier === '%') {
-      tokens.push(<span>%</span>);
+      tokens.push(<span key={tokens.length + 1}>%</span>);
     } else if (specifier === 's' || specifier === 'o' || specifier === 'O' || specifier === 'd' || specifier === 'i' || specifier === 'f') {
       const value = tail[argIndex++];
       const styleObject: any = {};
       if (typeof value?.value !== 'string')
         styleObject['color'] = 'var(--vscode-debugTokenExpression-number)';
-      tokens.push(<span style={styleObject}>{value?.preview || ''}</span>);
+      tokens.push(<span key={tokens.length + 1} style={styleObject}>{value?.preview || ''}</span>);
     } else if (specifier === 'c') {
       tokens = [];
       const format = tail[argIndex++];
       const styleObject = format ? parseCSSStyle(format.preview) : {};
-      formatted.push(<span style={styleObject}>{tokens}</span>);
+      formatted.push(<span key={formatted.length + 1} style={styleObject}>{tokens}</span>);
     }
   }
   if (formatIndex < messageFormat.length)
-    tokens.push(<span>{messageFormat.substring(formatIndex)}</span>);
+    tokens.push(<span key={tokens.length + 1}>{messageFormat.substring(formatIndex)}</span>);
   for (; argIndex < tail.length; argIndex++) {
     const value = tail[argIndex];
     const styleObject: any = {};
     if (tokens.length)
-      tokens.push(<span> </span>);
+      tokens.push(<span key={tokens.length + 1}> </span>);
     if (typeof value?.value !== 'string')
       styleObject['color'] = 'var(--vscode-debugTokenExpression-number)';
-    tokens.push(<span style={styleObject}>{value?.preview || ''}</span>);
+    tokens.push(<span key={tokens.length + 1} style={styleObject}>{value?.preview || ''}</span>);
   }
   return formatted;
 }

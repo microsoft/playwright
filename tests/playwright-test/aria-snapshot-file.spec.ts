@@ -172,7 +172,7 @@ for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
       const data = fs.readFileSync(snapshotOutputPath);
       expect(data.toString()).toBe('- heading "New content" [level=1]');
     } else {
-      expect(result.output).toContain(`expect.toMatchAriaSnapshot`);
+      expect(result.output).toContain(`Expect "toMatchAriaSnapshot"`);
     }
   });
 }
@@ -201,14 +201,19 @@ test('should respect config.snapshotPathTemplate', async ({ runInlineTest }, tes
         snapshotPathTemplate: 'my-snapshots/{testFilePath}/{arg}{ext}',
       };
     `,
-    'my-snapshots/dir/a.spec.ts/test.aria.yml': `
+    'my-snapshots/dir/a.spec.ts/my-test.aria.yml': `
       - heading "hello world"
     `,
     'dir/a.spec.ts': `
+      import path from 'path';
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
+        const testDir = test.info().project.testDir;
+        const screenshotPath = path.join(testDir, 'my-snapshots/dir/a.spec.ts/my-test.aria.yml');
+        expect(test.info().snapshotPath('my_test.aria.yml', { kind: 'aria' })).toBe(screenshotPath);
+
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'my_test.aria.yml' });
       });
     `
   });

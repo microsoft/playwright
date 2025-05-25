@@ -17,13 +17,12 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, nextActionByStartTime, previousActionByEndTime } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
-import ConsoleAPI from '@injected/consoleApi';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
@@ -78,8 +77,8 @@ export const SnapshotTabsView: React.FunctionComponent<{
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
         const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
-          const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
-          new ConsoleAPI(injectedScript);
+          const injectedScript = new InjectedScript(win as any, { isUnderTest, sdkLanguage, testIdAttributeName, stableRafCount: 1, browserName: 'chromium', inputFileRoleTextbox: false, customEngines: [] });
+          injectedScript.consoleApi.install();
         });
       }} />
     </Toolbar>
@@ -236,16 +235,20 @@ export const InspectModeController: React.FunctionComponent<{
   iteration: number,
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedElement, setHighlightedElement, iteration }) => {
   React.useEffect(() => {
+    const highlightedAriaSnapshot = highlightedElement.lastEdited === 'ariaSnapshot' ? highlightedElement.ariaSnapshot : undefined;
+    const highlightedLocator = highlightedElement.lastEdited === 'locator' ? highlightedElement.locator : undefined;
+    const forceRecorders = !!highlightedAriaSnapshot || !!highlightedLocator || isInspecting;
+
     const recorders: { recorder: Recorder, frameSelector: string }[] = [];
     const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';
     try {
-      createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
+      createRecorders(recorders, forceRecorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
     } catch {
       // Potential cross-origin exceptions.
     }
 
-    const parsedSnapshot = highlightedElement.lastEdited === 'ariaSnapshot' && highlightedElement.ariaSnapshot ? parseAriaSnapshot(yaml, highlightedElement.ariaSnapshot) : undefined;
-    const fullSelector = highlightedElement.lastEdited === 'locator' && highlightedElement.locator ? locatorOrSelectorAsSelector(sdkLanguage, highlightedElement.locator, testIdAttributeName) : undefined;
+    const parsedSnapshot = highlightedAriaSnapshot ? parseAriaSnapshot(yaml, highlightedAriaSnapshot) : undefined;
+    const fullSelector = highlightedLocator ? locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName) : undefined;
     for (const { recorder, frameSelector } of recorders) {
       const actionSelector = fullSelector?.startsWith(frameSelector) ? fullSelector.substring(frameSelector.length).trim() : undefined;
       const ariaTemplate = parsedSnapshot?.errors.length === 0 ? parsedSnapshot.fragment : undefined;
@@ -276,12 +279,12 @@ export const InspectModeController: React.FunctionComponent<{
   return <></>;
 };
 
-function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
+function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], force: boolean, sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
   if (!frameWindow)
     return;
   const win = frameWindow as any;
-  if (!win._recorder) {
-    const injectedScript = new InjectedScript(frameWindow as any, isUnderTest, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+  if (!win._recorder && force) {
+    const injectedScript = new InjectedScript(frameWindow as any, { isUnderTest, sdkLanguage, testIdAttributeName, stableRafCount: 1, browserName: 'chromium', inputFileRoleTextbox: false, customEngines: [] });
     const recorder = new Recorder(injectedScript);
     win._injectedScript = injectedScript;
     win._recorder = { recorder, frameSelector: parentFrameSelector };
@@ -290,12 +293,13 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
       (window as any)._weakRecordersForTest.add(new WeakRef(recorder));
     }
   }
-  recorders.push(win._recorder);
+  if (win._recorder)
+    recorders.push(win._recorder);
 
   for (let i = 0; i < frameWindow.frames.length; ++i) {
     const childFrame = frameWindow.frames[i];
     const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelectorSimple(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
-    createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
+    createRecorders(recorders, force, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
   }
 }
 
@@ -329,14 +333,40 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   if (!action)
     return {};
 
-  // if the action has no beforeSnapshot, use the last available afterSnapshot.
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
-  let a = action;
-  while (!beforeSnapshot && a) {
-    a = prevInList(a);
-    beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
+  if (!beforeSnapshot) {
+    // If the action has no beforeSnapshot, use the last available afterSnapshot.
+    for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
+      if (a.endTime <= action.startTime && a.afterSnapshot) {
+        beforeSnapshot = { action: a, snapshotName: a.afterSnapshot };
+        break;
+      }
+    }
   }
-  const afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
+
+  let afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : undefined;
+  if (!afterSnapshot) {
+    let last: ActionTraceEvent | undefined;
+    // - For test.step, we want to use the snapshot of the last nested action.
+    // - For a regular action, we use snapshot of any overlapping in time action
+    //   as a best effort.
+    // - If there are no "nested" actions, use the beforeSnapshot which works best
+    //   for simple `expect(a).toBe(b);` case. Also if the action doesn't have
+    //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
+    //   and we calculated it above from a previous action.
+    for (let a = nextActionByStartTime(action); a && a.startTime <= action.endTime; a = nextActionByStartTime(a)) {
+      if (a.endTime > action.endTime || !a.afterSnapshot)
+        continue;
+      if (last && last.endTime > a.endTime)
+        continue;
+      last = a;
+    }
+    if (last)
+      afterSnapshot = { action: last, snapshotName: last.afterSnapshot! };
+    else
+      afterSnapshot = beforeSnapshot;
+  }
+
   const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;

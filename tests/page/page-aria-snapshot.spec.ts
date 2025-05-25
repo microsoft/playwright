@@ -1,12 +1,11 @@
 /**
- * Copyright 2018 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -416,13 +415,19 @@ it('should ignore presentation and none roles', async ({ page }) => {
   `);
 });
 
-it('should treat input value as text in templates', async ({ page }) => {
+it('should treat input value as text in templates, but not for checkbox/radio/file', async ({ page }) => {
   await page.setContent(`
     <input value='hello world'>
+    <input type=file>
+    <input type=checkbox checked>
+    <input type=radio checked>
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - textbox: hello world
+    - button "Choose File"
+    - checkbox [checked]
+    - radio [checked]
   `);
 });
 
@@ -652,28 +657,4 @@ it('should not report textarea textContent', async ({ page }) => {
   await checkAndMatchSnapshot(page.locator('body'), `
     - textbox: After
   `);
-});
-
-it('should generate refs', async ({ page }) => {
-  await page.setContent(`
-    <button>One</button>
-    <button>Two</button>
-    <button>Three</button>
-  `);
-
-  const snapshot1 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot1).toContain('- button "One" [ref=s1e3]');
-  expect(snapshot1).toContain('- button "Two" [ref=s1e4]');
-  expect(snapshot1).toContain('- button "Three" [ref=s1e5]');
-
-  await expect(page.locator('aria-ref=s1e3')).toHaveText('One');
-  await expect(page.locator('aria-ref=s1e4')).toHaveText('Two');
-  await expect(page.locator('aria-ref=s1e5')).toHaveText('Three');
-
-  const snapshot2 = await page.locator('body').ariaSnapshot({ ref: true });
-  expect(snapshot2).toContain('- button "One" [ref=s2e3]');
-  await expect(page.locator('aria-ref=s2e3')).toHaveText('One');
-
-  const e = await expect(page.locator('aria-ref=s1e3')).toHaveText('One').catch(e => e);
-  expect(e.message).toContain('Error: Stale aria-ref, expected s2e{number}, got s1e3');
 });

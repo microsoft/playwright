@@ -119,19 +119,19 @@ await page.CloseAsync();`);
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript')!.text).toContain(`
-  await page.getByRole('textbox').setInputFiles('file-to-upload.txt');`);
+  await page.getByRole('button', { name: 'Choose File' }).setInputFiles('file-to-upload.txt');`);
 
     expect(sources.get('Java')!.text).toContain(`
-      page.getByRole(AriaRole.TEXTBOX).setInputFiles(Paths.get("file-to-upload.txt"));`);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Choose File")).setInputFiles(Paths.get("file-to-upload.txt"));`);
 
     expect(sources.get('Python')!.text).toContain(`
-    page.get_by_role("textbox").set_input_files(\"file-to-upload.txt\")`);
+    page.get_by_role("button", name="Choose File").set_input_files(\"file-to-upload.txt\")`);
 
     expect(sources.get('Python Async')!.text).toContain(`
-    await page.get_by_role("textbox").set_input_files(\"file-to-upload.txt\")`);
+    await page.get_by_role("button", name="Choose File").set_input_files(\"file-to-upload.txt\")`);
 
     expect(sources.get('C#')!.text).toContain(`
-await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
   });
 
   test('should upload multiple files', async ({ openRecorder, browserName, asset, isLinux }) => {
@@ -149,19 +149,19 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-uplo
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript')!.text).toContain(`
-  await page.getByRole('textbox').setInputFiles(['file-to-upload.txt', 'file-to-upload-2.txt']);`);
+  await page.getByRole('button', { name: 'Choose File' }).setInputFiles(['file-to-upload.txt', 'file-to-upload-2.txt']);`);
 
     expect(sources.get('Java')!.text).toContain(`
-      page.getByRole(AriaRole.TEXTBOX).setInputFiles(new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Choose File")).setInputFiles(new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
 
     expect(sources.get('Python')!.text).toContain(`
-    page.get_by_role("textbox").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
+    page.get_by_role("button", name="Choose File").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
     expect(sources.get('Python Async')!.text).toContain(`
-    await page.get_by_role("textbox").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
+    await page.get_by_role("button", name="Choose File").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
     expect(sources.get('C#')!.text).toContain(`
-await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
   test('should clear files', async ({ openRecorder, browserName, asset, isLinux }) => {
@@ -179,19 +179,19 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-uplo
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript')!.text).toContain(`
-  await page.getByRole('textbox').setInputFiles([]);`);
+  await page.getByRole('button', { name: 'Choose File' }).setInputFiles([]);`);
 
     expect(sources.get('Java')!.text).toContain(`
-      page.getByRole(AriaRole.TEXTBOX).setInputFiles(new Path[0]);`);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Choose File")).setInputFiles(new Path[0]);`);
 
     expect(sources.get('Python')!.text).toContain(`
-    page.get_by_role("textbox").set_input_files([])`);
+    page.get_by_role("button", name="Choose File").set_input_files([])`);
 
     expect(sources.get('Python Async')!.text).toContain(`
-    await page.get_by_role("textbox").set_input_files([])`);
+    await page.get_by_role("button", name="Choose File").set_input_files([])`);
 
     expect(sources.get('C#')!.text).toContain(`
-await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] {  });`);
   });
 
   test('should download files', async ({ openRecorder, server }) => {

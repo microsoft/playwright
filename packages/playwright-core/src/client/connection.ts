@@ -35,7 +35,6 @@ import { LocalUtils } from './localUtils';
 import { Request, Response, Route, WebSocket, WebSocketRoute } from './network';
 import { BindingCall, Page } from './page';
 import { Playwright } from './playwright';
-import { SelectorsOwner } from './selectors';
 import { Stream } from './stream';
 import { Tracing } from './tracing';
 import { Worker } from './worker';
@@ -68,7 +67,7 @@ export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, apiName: string | undefined, type: string, method: string }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, title: string | undefined, type: string, method: string }>();
   private _rootObject: Root;
   private _closedError: Error | undefined;
   private _isRemote = false;
@@ -124,7 +123,7 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, apiName: string | undefined, frames: channels.StackFrame[], stepId?: string): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string }): Promise<any> {
     if (this._closedError)
       throw this._closedError;
     if (object._wasCollected)
@@ -138,14 +137,14 @@ export class Connection extends EventEmitter {
       // Do not include metadata in debug logs to avoid noise.
       this._platform.log('channel', 'SEND> ' + JSON.stringify(message));
     }
-    const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
-    const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
-    if (this._tracingCount && frames && type !== 'LocalUtils')
-      this._localUtils?.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
+    const location = options.frames?.[0] ? { file: options.frames[0].file, line: options.frames[0].line, column: options.frames[0].column } : undefined;
+    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId };
+    if (this._tracingCount && options.frames && type !== 'LocalUtils')
+      this._localUtils?.addStackToTracingNoReply({ callData: { stack: options.frames ?? [], id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
     this._platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, title: options.title, type, method }));
   }
 
   private _validatorFromWireContext(): ValidatorContext {
@@ -310,9 +309,6 @@ export class Connection extends EventEmitter {
         break;
       case 'Stream':
         result = new Stream(parent, type, guid, initializer);
-        break;
-      case 'Selectors':
-        result = new SelectorsOwner(parent, type, guid, initializer);
         break;
       case 'SocksSupport':
         result = new DummyChannelOwner(parent, type, guid, initializer);

@@ -322,7 +322,7 @@ export class Touchscreen {
   async tap(x: number, y: number, metadata?: CallMetadata) {
     if (metadata)
       metadata.point = { x, y };
-    if (!this._page._browserContext._options.hasTouch)
+    if (!this._page.browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
   }

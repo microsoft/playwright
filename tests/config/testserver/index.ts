@@ -58,7 +58,7 @@ export class TestServer {
 
   static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback);
-    await new Promise(x => server._server.once('listening', x));
+    await server.waitUntilReady();
     return server;
   }
 
@@ -68,7 +68,7 @@ export class TestServer {
       cert: await fs.promises.readFile(path.join(__dirname, 'cert.pem')),
       passphrase: 'aaaa',
     });
-    await new Promise(x => server._server.once('listening', x));
+    await server.waitUntilReady();
     return server;
   }
 
@@ -119,6 +119,10 @@ export class TestServer {
     this.PREFIX = `${protocol}://${same_origin}:${port}`;
     this.CROSS_PROCESS_PREFIX = `${protocol}://${cross_origin}:${port}`;
     this.EMPTY_PAGE = `${protocol}://${same_origin}:${port}/empty.html`;
+  }
+
+  async waitUntilReady() {
+    await new Promise(x => this._server.once('listening', x));
   }
 
   _onSocket(socket: net.Socket) {

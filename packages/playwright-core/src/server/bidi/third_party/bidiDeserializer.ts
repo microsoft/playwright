@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Copied from upstream: https://github.com/puppeteer/puppeteer/blob/main/packages/puppeteer-core/src/bidi/Deserializer.ts
 
 import type * as Bidi from './bidiProtocol';
 

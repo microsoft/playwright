@@ -56,7 +56,7 @@ test('another test @smoke', async ({ page }) => {
 Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
 
 You can also filter tests by their tags during test execution:
-* in the [command line](../test-cli.md#reference);
+* in the [command line](../test-cli.md#all-options);
 * in the config with [`property: TestConfig.grep`] and [`property: TestProject.grep`];
 
 Learn more about [tagging](../test-annotations.md#tag-tests).
@@ -469,7 +469,18 @@ Learn more about the execution modes [here](../test-parallel.md).
   test('runs in parallel 2', async ({ page }) => {});
   ```
 
-* Running tests serially, retrying from the start.
+* Running tests in order, retrying each failed test independetly.
+
+  This is the default mode. It can be useful to set it explicitly to override project configuration that uses `fullyParallel`.
+
+  ```js
+  // Tests in this file run in order. Retries, if any, run independently.
+  test.describe.configure({ mode: 'default' });
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
+  ```
+
+* Running tests serially, retrying from the start. If one of the serial tests fails, all subsequent tests are skipped.
 
   :::note
   Running serially is not recommended. It is usually better to make your tests isolated, so they can be run independently.

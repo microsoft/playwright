@@ -22,7 +22,6 @@ import path from 'path';
 import { chromiumSwitches } from './chromiumSwitches';
 import { CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
-import { TimeoutSettings } from '../timeoutSettings';
 import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -64,12 +63,12 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, timeout?: number) {
+  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, timeout: number }) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
-    }, TimeoutSettings.timeout({ timeout }));
+    }, options.timeout);
   }
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
@@ -87,7 +86,7 @@ export class Chromium extends BrowserType {
     const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
     progress.throwIfAborted();
 
-    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
+    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap });
     const cleanedUp = new ManualPromise<void>();
     const doCleanup = async () => {
       await removeFolders([artifactsDir]);
@@ -111,7 +110,7 @@ export class Chromium extends BrowserType {
       artifactsDir,
       downloadsPath: options.downloadsPath || artifactsDir,
       tracesDir: options.tracesDir || artifactsDir,
-      originalLaunchOptions: {},
+      originalLaunchOptions: { timeout: options.timeout },
     };
     validateBrowserContextOptions(persistent, browserOptions);
     progress.throwIfAborted();
@@ -276,8 +275,8 @@ export class Chromium extends BrowserType {
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    if (options.useWebSocket)
-      chromeArguments.push('--remote-debugging-port=0');
+    if (options.cdpPort !== undefined)
+      chromeArguments.push(`--remote-debugging-port=${options.cdpPort}`);
     else
       chromeArguments.push('--remote-debugging-pipe');
     if (isPersistent)
@@ -296,7 +295,7 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...chromiumSwitches];
+    const chromeArguments = [...chromiumSwitches(options.assistantMode)];
 
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
@@ -345,7 +344,7 @@ export class Chromium extends BrowserType {
   }
 
   override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
+    if (options.cdpPort !== undefined || options.args?.some(a => a.startsWith('--remote-debugging-port')))
       return new ChromiumReadyState();
     return undefined;
   }

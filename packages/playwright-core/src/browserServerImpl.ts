@@ -21,6 +21,7 @@ import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
 import { createGuid } from './server/utils/crypto';
 import { rewriteErrorMessage } from './utils/isomorphic/stackTrace';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from './utils/isomorphic/time';
 import { ws } from './utilsBundle';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
@@ -35,7 +36,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     this._browserName = browserName;
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+  async launchServer(options: LaunchServerOptions & { _sharedBrowser?: boolean } = {}): Promise<BrowserServer> {
     const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
     // TODO: enable socks proxy once ipv6 is supported.
     const socksProxy = false ? new SocksProxy() : undefined;
@@ -48,6 +49,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
+      timeout: options.timeout ?? DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT,
     }, toProtocolLogger(options.logger)).catch(e => {
       const log = helper.formatBrowserLogs(metadata.log);
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
@@ -57,7 +59,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer({ mode: 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser, preLaunchedSocksProxy: socksProxy });
+    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser, preLaunchedSocksProxy: socksProxy });
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface

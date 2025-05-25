@@ -130,7 +130,7 @@ test('should collapse repeated console messages for test', async ({ runUITest })
           await new Promise(resolve => {
             for (let i = 0; i < 10; ++i)
               console.log('page message')
-            builtinSetTimeout(() => {
+            window.builtins.setTimeout(() => {
               for (let i = 0; i < 10; ++i)
                 console.log('page message')
               resolve()
@@ -216,7 +216,7 @@ test('should stream console messages live', async ({ runUITest }) => {
         await page.setContent('<button>Click me</button>');
         const button = page.getByRole('button', { name: 'Click me' });
         await button.evaluate(node => node.addEventListener('click', () => {
-          builtinSetTimeout(() => { console.log('I was clicked'); }, 1000);
+          window.builtins.setTimeout(() => { console.log('I was clicked'); }, 1000);
         }));
         console.log('I was logged');
         await button.click();

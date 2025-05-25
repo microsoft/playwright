@@ -18,16 +18,17 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { attachErrorPrompts } from './prompt';
+import { attachErrorContext } from './errorContext';
+import { stepTitle } from './util';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
-import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
@@ -55,12 +56,15 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
+type ErrorContextOption = { format: 'json' | 'markdown' } | undefined;
+
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   playwright: PlaywrightImpl;
   _browserOptions: LaunchOptions;
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
+  _optionErrorContext: ErrorContextOption,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -95,7 +99,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
-  browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
+  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit', '_bidiChromium', '_bidiFirefox'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
@@ -104,7 +108,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         ...connectOptions,
         exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as any)._exposeNetwork,
         headers: {
-          ...(_reuseContext ? { 'x-playwright-reuse-context': '1' } : {}),
           // HTTP headers are ASCII only (not UTF-8).
           'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
           ...connectOptions.headers,
@@ -113,7 +116,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await use(browser);
       await (browser as any)._wrapApiCall(async () => {
         await browser.close({ reason: 'Test ended.' });
-      }, true);
+      }, { internal: true });
       return;
     }
 
@@ -121,7 +124,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(browser);
     await (browser as any)._wrapApiCall(async () => {
       await browser.close({ reason: 'Test ended.' });
-    }, true);
+    }, { internal: true });
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
@@ -245,18 +248,18 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, _optionErrorContext }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, _optionErrorContext);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
     const csiListener: ClientInstrumentationListener = {
-      onApiCallBegin: (data: ApiCallData) => {
+      onApiCallBegin: (data, channel) => {
         const testInfo = currentTestInfo();
         // Some special calls do not get into steps.
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
@@ -265,24 +268,28 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (zone && zone.category === 'expect') {
           // Display the internal locator._expect call under the name of the enclosing expect call,
           // and connect it to the existing expect step.
-          data.apiName = zone.title;
+          if (zone.apiName)
+            data.apiName = zone.apiName;
+          if (zone.title)
+            data.title = stepTitle(zone.category, zone.title);
           data.stepId = zone.stepId;
           return;
         }
+
         // In the general case, create a step for each api call and connect them through the stepId.
         const step = testInfo._addStep({
           location: data.frames[0],
           category: 'pw:api',
-          title: renderApiCall(data.apiName, data.params),
+          title: renderTitle(channel.type, channel.method, channel.params, data.title),
           apiName: data.apiName,
-          params: data.params,
+          params: channel.params,
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         data.userData = step;
         data.stepId = step.stepId;
         if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
-      onApiCallEnd: (data: ApiCallData) => {
+      onApiCallEnd: data => {
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
         if (data.apiName === 'tracing.group')
           return;
@@ -355,11 +362,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         await (context as any)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
           await context.clock.pauseAt(1000);
-        }, true);
+        }, { internal: true });
       } else if (process.env.PW_CLOCK === 'realtime') {
         await (context as any)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
-        }, true);
+        }, { internal: true });
       }
 
       return context;
@@ -370,7 +377,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await Promise.all([...contexts.keys()].map(async context => {
       await (context as any)._wrapApiCall(async () => {
         await context.close({ reason: closeReason });
-      }, true);
+      }, { internal: true });
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
       if (preserveVideo) {
@@ -393,6 +400,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
   _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
+  _optionErrorContext: [process.env.PLAYWRIGHT_NO_COPY_PROMPT ? undefined : { format: 'markdown' }, { scope: 'worker', option: true }],
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
@@ -621,10 +629,12 @@ class ArtifactsRecorder {
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
   private _sourceCache: Map<string, string> = new Map();
+  private _errorContext: ErrorContextOption;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, errorContext: ErrorContextOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
+    this._errorContext = errorContext;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -664,14 +674,22 @@ class ArtifactsRecorder {
     await this._stopTracing(context.tracing);
 
     await this._screenshotRecorder.captureTemporary(context);
+    await this._takePageSnapshot(context);
+  }
 
-    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT && this._testInfo.errors.length > 0) {
-      try {
-        const page = context.pages()[0];
-        // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
-        this._pageSnapshot ??= await page?.locator('body').ariaSnapshot({ timeout: 5000 });
-      } catch {}
-    }
+  private async _takePageSnapshot(context: BrowserContext) {
+    if (!this._errorContext)
+      return;
+    if (this._testInfo.errors.length === 0)
+      return;
+    if (this._pageSnapshot)
+      return;
+    const page = context.pages()[0];
+
+    try {
+      // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+      this._pageSnapshot = await page?.locator('body').ariaSnapshot({ timeout: 5000 });
+    } catch {}
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -703,7 +721,13 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    await attachErrorPrompts(this._testInfo, this._sourceCache, this._pageSnapshot);
+
+    const context = leftoverContexts[0];
+    if (context)
+      await this._takePageSnapshot(context);
+
+    if (this._errorContext)
+      await attachErrorContext(this._testInfo, this._errorContext.format, this._sourceCache, this._pageSnapshot);
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
@@ -734,30 +758,12 @@ class ArtifactsRecorder {
   }
 }
 
-const paramsToRender = ['url', 'selector', 'text', 'key'];
-
-function renderApiCall(apiName: string, params: any) {
-  if (apiName === 'tracing.group')
-    return params.name;
-  const paramsArray = [];
-  if (params) {
-    for (const name of paramsToRender) {
-      if (!(name in params))
-        continue;
-      let value;
-      if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
-        const getter = asLocator('javascript', params[name]);
-        apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
-        apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
-        apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
-      } else {
-        value = params[name];
-        paramsArray.push(value);
-      }
-    }
-  }
-  const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
-  return apiName + paramsText;
+function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
+  const prefix = renderTitleForCall({ title, type, method, params });
+  let selector;
+  if (params?.['selector'] && typeof params.selector === 'string')
+    selector = asLocatorDescription('javascript', params.selector);
+  return prefix + (selector ? ` ${selector}` : '');
 }
 
 function tracing() {

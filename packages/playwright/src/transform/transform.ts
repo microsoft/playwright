@@ -22,8 +22,9 @@ import url from 'url';
 
 import { loadTsConfig } from '../third_party/tsconfig-loader';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
-import { pirates, sourceMapSupport } from '../utilsBundle';
+import { sourceMapSupport } from '../utilsBundle';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
+import { addHook } from '../third_party/pirates';
 
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import type { Location } from '../../types/testReporter';
@@ -291,11 +292,10 @@ function installTransformIfNeeded() {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  pirates.addHook((code: string, filename: string) => {
-    if (!shouldTransform(filename))
-      return code;
+  // Hopefully, one day we can migrate to synchronous loader hooks instead, similar to our esmLoader...
+  addHook((code, filename) => {
     return transformHook(code, filename).code;
-  }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts'] });
+  }, shouldTransform, ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts']);
 }
 
 const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {

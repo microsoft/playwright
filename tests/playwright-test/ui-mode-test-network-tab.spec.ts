@@ -24,6 +24,7 @@ test('should filter network requests by resource type', async ({ runUITest, serv
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -64,6 +65,7 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -100,6 +102,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -109,7 +112,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
 
   await page.getByText('post-data-1').click();
 
-  await expect(page.locator('.CodeMirror-code .CodeMirror-line').allInnerTexts()).resolves.toEqual([
+  await expect(page.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "data": {',
     '    "key": "value",',
@@ -119,11 +122,11 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '    ]',
     '  }',
     '}',
-  ]);
+  ], { useInnerText: true });
 
   await page.getByText('post-data-2').click();
 
-  await expect(page.locator('.CodeMirror-code .CodeMirror-line').allInnerTexts()).resolves.toEqual([
+  await expect(page.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "data": {',
     '    "key": "value",',
@@ -133,7 +136,7 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '    ]',
     '  }',
     '}',
-  ]);
+  ], { useInnerText: true });
 });
 
 test('should display list of query parameters (only if present)', async ({ runUITest, server }) => {
@@ -142,6 +145,7 @@ test('should display list of query parameters (only if present)', async ({ runUI
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });

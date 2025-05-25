@@ -51,7 +51,7 @@ In the previous example, each test shard has its own test report. If you want to
 
 Start with adding `blob` reporter to the config when running on CI:
 
-```ts title="playwright.config.ts"
+```js title="playwright.config.ts"
 export default defineConfig({
   testDir: './tests',
   reporter: process.env.CI ? 'blob' : 'html',
@@ -193,7 +193,7 @@ Supported options:
   npx playwright merge-reports --config=merge.config.ts ./blob-reports
   ```
 
-  ```ts title="merge.config.ts"
+  ```js title="merge.config.ts"
   export default {
     testDir: 'e2e',
     reporter: [['html', { open: 'never' }]],

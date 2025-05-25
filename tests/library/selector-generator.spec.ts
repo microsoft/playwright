@@ -136,9 +136,8 @@ it.describe('selector generator', () => {
     expect(await generate(page, '[data-testid="a"]')).toBe('internal:testid=[data-testid=\"a\"s]');
   });
 
-  it('should use data-testid in strict errors', async ({ page, playwright }) => {
-    playwright.selectors.setTestIdAttribute('data-custom-id');
-    await page.setContent(`
+  it('should use data-testid in strict errors', async ({ contextFactory, page, playwright }) => {
+    const content = `
       <div>
         <div></div>
         <div>
@@ -151,13 +150,27 @@ it.describe('selector generator', () => {
         </div>
         <div class='foo bar:1' data-custom-id='Two'>
         </div>
-      </div>`);
-    const error = await page.locator('.foo').hover().catch(e => e);
-    expect(error.message).toContain('strict mode violation');
-    expect(error.message).toContain('<div class=\"foo bar:0');
-    expect(error.message).toContain('<div class=\"foo bar:1');
-    expect(error.message).toContain(`aka getByTestId('One')`);
-    expect(error.message).toContain(`aka getByTestId('Two')`);
+      </div>
+    `;
+
+    const checkPage = async (page: Page) => {
+      await page.setContent(content);
+      const error = await page.locator('.foo').hover().catch(e => e);
+      expect(error.message).toContain('strict mode violation');
+      expect(error.message).toContain('<div class=\"foo bar:0');
+      expect(error.message).toContain('<div class=\"foo bar:1');
+      expect(error.message).toContain(`aka getByTestId('One')`);
+      expect(error.message).toContain(`aka getByTestId('Two')`);
+    };
+
+    playwright.selectors.setTestIdAttribute('data-custom-id');
+    // Check page and context that were created before setting the attribute.
+    await checkPage(page);
+
+    const context2 = await contextFactory();
+    const page2 = await context2.newPage();
+    // Check page and context that were created after setting the attribute.
+    await checkPage(page2);
   });
 
   it('should handle first non-unique data-testid', async ({ page }) => {

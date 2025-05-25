@@ -25,8 +25,6 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { TestInfoImpl } from '../worker/testInfo';
-
 
 const testTypeSymbol = Symbol('testType');
 
@@ -107,16 +105,16 @@ export class TestTypeImpl {
     const validatedDetails = validateTestDetails(details);
     const test = new TestCase(title, body, this, location);
     test._requireFile = suite._requireFile;
-    test._staticAnnotations.push(...validatedDetails.annotations);
+    test.annotations.push(...validatedDetails.annotations);
     test._tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
     if (type === 'only' || type === 'fail.only')
       test._only = true;
     if (type === 'skip' || type === 'fixme' || type === 'fail')
-      test._staticAnnotations.push({ type });
+      test.annotations.push({ type });
     else if (type === 'fail.only')
-      test._staticAnnotations.push({ type: 'fail' });
+      test.annotations.push({ type: 'fail' });
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
@@ -262,14 +260,10 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  _step<T>(expectation: 'pass'|'skip', title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
+  async _step<T>(expectation: 'pass'|'skip', title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    return testInfo._floatingPromiseScope.wrapPromiseAPIResult(this._stepInternal(expectation, testInfo, title, body, options));
-  }
-
-  private async _stepInternal<T>(expectation: 'pass'|'skip', testInfo: TestInfoImpl, title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await currentZone().with('stepZone', step).run(async () => {
       try {

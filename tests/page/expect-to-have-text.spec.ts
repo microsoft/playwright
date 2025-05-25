@@ -208,7 +208,8 @@ test.describe('toHaveText with array', () => {
     await page.setContent('<div></div>');
     const locator = page.locator('p');
     const error = await expect(locator).not.toHaveText([], { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.not.toHaveText with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveText(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveText" with timeout 1000ms`);
   });
 
   test('pass eventually empty', async ({ page }) => {
@@ -225,9 +226,10 @@ test.describe('toHaveText with array', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toHaveText(['Text 1', /Text \d/, 'Extra'], { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain('-   "Extra"');
-    expect(error.message).toContain('expect.toHaveText with timeout 1000ms');
-    expect(error.message).toContain('waiting for locator(\'div\')');
-    expect(error.message).toContain('locator resolved to 2 elements');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveText(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveText" with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain('waiting for locator(\'div\')');
+    expect(stripAnsi(error.message)).toContain('locator resolved to 2 elements');
   });
 
   test('fail on repeating array matchers', async ({ page }) => {

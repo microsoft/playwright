@@ -14,5 +14,5 @@ common/
 [internalsForTest.ts]
 **
 
-[prompt.ts]
+[errorContext.ts]
 ./transform/babelBundle.ts

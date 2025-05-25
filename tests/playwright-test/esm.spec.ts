@@ -35,6 +35,35 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
+test('should load esm -> cjs -> cjs require tree', async ({ runInlineTest }) => {
+  test.setTimeout(10000);
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.esm.test.js': `
+      import { test, expect } from '@playwright/test';
+      import * as root from './nested/root_require.js';
+      test('check project name', ({}, testInfo) => {
+        console.log('root', root);
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+    'nested/package.json': JSON.stringify({ type: 'commonjs' }),
+    'nested/root_require.js': `
+      const nested = require('./nested_require.js');
+      console.log(nested);
+    `,
+    'nested/nested_require.js': `
+      console.log('nested require');
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should support import attributes', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -62,7 +91,7 @@ test('should support import attributes', async ({ runInlineTest }) => {
   expect(result.stdout).toContain('imported value (test): bar');
 });
 
-test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
+test('should import esm from ts when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as fs from 'fs';
@@ -73,8 +102,10 @@ test('should import esm from ts when package.json has type module in experimenta
       import { foo } from './b.ts';
       import { bar } from './c.js';
       import { qux } from './d.js';
-      import { test, expect } from '@playwright/test';
+      // Make sure to import a type-only Locator below to check that our babel strips it out.
+      import { test, expect, Locator } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
+        const locator: Locator = null!;
         expect(testInfo.project.name).toBe('foo');
         expect(bar).toBe('bar');
         expect(qux).toBe('qux');

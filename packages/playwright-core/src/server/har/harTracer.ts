@@ -106,6 +106,8 @@ export class HarTracer {
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFulfilled, request => this._onRequestFulfilled(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestContinued, request => this._onRequestContinued(request)),
       );
+      for (const page of this._context.pages())
+        this._createPageEntryIfNeeded(page);
     }
   }
 

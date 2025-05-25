@@ -10,14 +10,7 @@
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
 
-The list of annotations applicable to the current test. Includes:
-* annotations defined on the test or suite via [`method: Test.(call)`] and [`method: Test.describe`];
-* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`];
-* annotations appended to [`property: TestInfo.annotations`] during the test execution.
-
-Annotations are available during test execution through [`property: TestInfo.annotations`].
-
-Learn more about [test annotations](../test-annotations.md).
+[`property: TestResult.annotations`] of the last test run.
 
 ## property: TestCase.expectedStatus
 * since: v1.10
