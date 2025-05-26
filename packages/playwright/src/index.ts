@@ -22,7 +22,6 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { attachErrorContext } from './errorContext';
 import { stepTitle } from './util';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -726,8 +725,22 @@ class ArtifactsRecorder {
     if (context)
       await this._takePageSnapshot(context);
 
-    if (this._errorContext)
-      await attachErrorContext(this._testInfo, this._errorContext.format, this._sourceCache, this._pageSnapshot);
+    if (this._pageSnapshot) {
+      const lines = [
+        '# Page snapshot',
+        '',
+        '```yaml',
+        this._pageSnapshot,
+        '```',
+      ];
+      const filePath = this._testInfo.outputPath(`error-context.md`);
+      await fs.promises.writeFile(filePath, lines.join('\n'), 'utf8');
+      this._testInfo._attach({
+        name: `error-context`,
+        contentType: 'text/markdown',
+        path: filePath,
+      }, undefined);
+    }
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
