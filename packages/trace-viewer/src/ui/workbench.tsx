@@ -19,7 +19,7 @@ import * as React from 'react';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { LogTab } from './logTab';
-import { ErrorsTab, useErrorsTabModel } from './errorsTab';
+import { ErrorsTab } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
@@ -43,6 +43,7 @@ import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
 import type { TestAnnotation } from '@playwright/test';
+import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -56,7 +57,8 @@ export const Workbench: React.FunctionComponent<{
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
+  metadata?: MetadataWithCommitInfo,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, metadata }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -163,7 +165,6 @@ export const Workbench: React.FunctionComponent<{
 
   const consoleModel = useConsoleTabModel(model, selectedTime);
   const networkModel = useNetworkTabModel(model, selectedTime);
-  const errorsModel = useErrorsTabModel(model);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -189,14 +190,14 @@ export const Workbench: React.FunctionComponent<{
   const errorsTab: TabbedPaneTabModel = {
     id: 'errors',
     title: 'Errors',
-    errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={error => {
+    errorCount: model?.errorDescriptors.length,
+    render: () => <ErrorsTab model={model} sdkLanguage={sdkLanguage} revealInSource={error => {
       if (error.action)
         setSelectedAction(error.action);
       else
         setRevealedError(error);
       selectPropertiesTab('source');
-    }} wallTime={model?.wallTime ?? 0} />
+    }} wallTime={model?.wallTime ?? 0} metadata={metadata} />
   };
 
   // Fallback location w/o action stands for file / test.

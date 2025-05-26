@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+import { StackFrame } from '@isomorphic/stackTrace';
+import { codeFrameColumns } from '@babel/code-frame';
+
+import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
+
 export const fixTestInstructions = `
 # Instructions
 
@@ -21,3 +26,98 @@ export const fixTestInstructions = `
 - Explain why, be concise, respect Playwright best practices.
 - Provide a snippet of code with the fix, if possible.
 `.trimStart();
+
+export async function copyPrompt(title: string, errors: { message: string, stack?: StackFrame[] }[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, readSource: (path: string) => Promise<string | undefined>) {
+  const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
+  for (const error of errors) {
+    for (const singleLineError of meaningfulSingleLineErrors.keys()) {
+      if (error.message?.includes(singleLineError))
+        meaningfulSingleLineErrors.delete(singleLineError);
+    }
+  }
+
+  const meaningfulErrors = errors.filter(error => {
+    if (!error.message)
+      return false;
+
+    // Skip errors that are just a single line - they are likely to already be the error message.
+    if (!error.message.includes('\n') && !meaningfulSingleLineErrors.has(error.message))
+      return false;
+
+    return true;
+  });
+
+  if (!meaningfulErrors.length)
+    return undefined;
+
+  const lines = [
+    fixTestInstructions,
+    `# Test info`,
+    '',
+    title,
+    '',
+    '# Error details',
+    '',
+  ];
+
+  for (const error of meaningfulErrors) {
+    lines.push(
+        '',
+        '```',
+        stripAnsiEscapes(error.message || ''),
+        '```',
+    );
+  }
+
+  if (errorContext)
+    lines.push(errorContext);
+
+  const lastError = meaningfulErrors[meaningfulErrors.length - 1];
+  const location = lastError?.stack?.[0];
+  if (location) {
+    const source = await readSource(location.file);
+    if (source) {
+      const codeFrame = codeFrameColumns(
+          source,
+          {
+            start: {
+              line: location.line,
+              column: location.column,
+            },
+          },
+          {
+            highlightCode: false,
+            linesAbove: 100,
+            linesBelow: 100,
+            message: stripAnsiEscapes(lastError?.message || '').split('\n')[0] || undefined,
+          }
+      );
+      lines.push(
+          '',
+          '# Test source',
+          '',
+          '```ts',
+          codeFrame,
+          '```',
+      );
+    }
+  }
+
+  if (metadata?.gitDiff) {
+    lines.push(
+        '',
+        '# Local changes',
+        '',
+        '```diff',
+        metadata.gitDiff,
+        '```',
+    );
+  }
+
+  return lines.join('\n');
+}
+
+export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
+function stripAnsiEscapes(str: string): string {
+  return str.replace(ansiRegex, '');
+}

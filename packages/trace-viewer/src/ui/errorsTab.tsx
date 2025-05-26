@@ -22,8 +22,9 @@ import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { useAsyncMemo } from '@web/uiUtils';
-import { attachmentURL } from './attachmentsTab';
-import { fixTestInstructions } from '@web/prompts';
+import { copyPrompt } from '@web/prompts';
+import { MetadataWithCommitInfo } from '@testIsomorphic/types';
+import { calculateSha1 } from './sourceTab';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -36,21 +37,6 @@ const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   );
 };
 
-type ErrorsTabModel = {
-  errors: Map<string, modelUtil.ErrorDescription>;
-};
-
-export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
-  return React.useMemo(() => {
-    if (!model)
-      return { errors: new Map() };
-    const errors = new Map<string, modelUtil.ErrorDescription>();
-    for (const error of model.errorDescriptors)
-      errors.set(error.message, error);
-    return { errors };
-  }, [model]);
-}
-
 function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: string, error: modelUtil.ErrorDescription, sdkLanguage: Language, revealInSource: (error: modelUtil.ErrorDescription) => void }) {
   let location: string | undefined;
   let longLocation: string | undefined;
@@ -60,13 +46,6 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
     location = file + ':' + stackFrame.line;
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
-
-  const prompt = useAsyncMemo(async () => {
-    if (!error.context)
-      return;
-    const response = await fetch(attachmentURL(error.context));
-    return fixTestInstructions + await response.text();
-  }, [error], undefined);
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
@@ -81,9 +60,6 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
       {location && <div className='action-location'>
         @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
       </div>}
-      <span style={{ position: 'absolute', right: '5px' }}>
-        {prompt && <CopyPromptButton prompt={prompt} />}
-      </span>
     </div>
 
     <ErrorMessage error={message} />
@@ -91,18 +67,47 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
 }
 
 export const ErrorsTab: React.FunctionComponent<{
-  errorsModel: ErrorsTabModel,
+  model: modelUtil.MultiTraceModel | undefined,
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource, wallTime }) => {
-  if (!errorsModel.errors.size)
+  metadata?: MetadataWithCommitInfo,
+}> = ({ model, sdkLanguage, revealInSource, wallTime, metadata }) => {
+  const errorContext = useAsyncMemo(async () => {
+    const attachment = model?.attachments.find(a => a.name === 'error-context');
+    if (!attachment)
+      return;
+    if (attachment.path)
+      return await fetch(attachment.path).then(response => response.text());
+  }, [model?.attachments], undefined);
+
+  const prompt = useAsyncMemo(() =>
+    copyPrompt(
+        model?.title ?? '',
+        model?.errorDescriptors ?? [],
+        metadata,
+        errorContext,
+        async file => {
+          let response = await fetch(`sha1/src@${await calculateSha1(file)}.txt`);
+          if (response.status === 404)
+            response = await fetch(`file?path=${encodeURIComponent(file)}`);
+          if (response.status >= 400)
+            return;
+          return await response.text();
+        }
+    ), [model, metadata, errorContext], undefined
+  );
+
+  if (!model?.errorDescriptors.length)
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
-    {[...errorsModel.errors.entries()].map(([message, error]) => {
-      const errorId = `error-${wallTime}-${message}`;
-      return <ErrorView key={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} />;
+    <span style={{ position: 'absolute', right: '5px', top: '5px', zIndex: 1 }}>
+      {prompt && <CopyPromptButton prompt={prompt} />}
+    </span>
+    {model?.errorDescriptors.map(error => {
+      const errorId = `error-${wallTime}-${error.message}`;
+      return <ErrorView key={errorId} message={error.message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} />;
     })}
   </div>;
 };

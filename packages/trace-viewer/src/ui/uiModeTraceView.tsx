@@ -24,6 +24,7 @@ import type { ContextEntry } from '../types/entries';
 import type { SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
+import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
@@ -31,7 +32,8 @@ export const TraceView: React.FC<{
   onOpenExternally?: (location: SourceLocation) => void,
   revealSource?: boolean,
   pathSeparator: string,
-}> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
+  metadata?: MetadataWithCommitInfo,
+}> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator, metadata }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -99,6 +101,7 @@ export const TraceView: React.FC<{
     annotations={item.testCase?.annotations ?? []}
     onOpenExternally={onOpenExternally}
     revealSource={revealSource}
+    metadata={metadata}
   />;
 };
 
