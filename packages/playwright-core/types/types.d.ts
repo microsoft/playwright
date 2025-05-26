@@ -15528,7 +15528,7 @@ export interface CDPSession {
  *
  * **Mocking**
  *
- * By default, the routed WebSocket will not connect to the server. This way, you can mock entire communcation over
+ * By default, the routed WebSocket will not connect to the server. This way, you can mock entire communication over
  * the WebSocket. Here is an example that responds to a `"request"` with a `"response"`.
  *
  * ```js

@@ -238,7 +238,7 @@
     // To find which value is throwing, check the browser or debugger console.
     // Before this exception was thrown, there should be `console.error` output
     // that shows the type (Symbol, Temporal.PlainDate, etc.) that caused the
-    // problem and how that type was used: key, atrribute, input value prop, etc.
+    // problem and how that type was used: key, attribute, input value prop, etc.
     // In most cases, this console output also shows the component and its
     // ancestor components where the exception happened.
     //
@@ -13989,7 +13989,7 @@
   function pushTreeFork(workInProgress, totalChildren) {
     // This is called right after we reconcile an array (or iterator) of child
     // fibers, because that's the only place where we know how many children in
-    // the whole set without doing extra work later, or storing addtional
+    // the whole set without doing extra work later, or storing additional
     // information on the fiber.
     //
     // That's why this function is separate from pushTreeId — it's called during
@@ -14142,7 +14142,7 @@
 
   var hydrationParentFiber = null;
   var nextHydratableInstance = null;
-  var isHydrating = false; // This flag allows for warning supression when we expect there to be mismatches
+  var isHydrating = false; // This flag allows for warning suppression when we expect there to be mismatches
   // due to earlier mismatches or a suspended fiber.
 
   var didSuspendOrErrorDEV = false; // Hydration errors that were thrown inside this boundary
@@ -16765,7 +16765,7 @@
     // this can happen all the time, but even in synchronous mode, an earlier
     // effect may have mutated the store.
 
-    if (inst.getSnapshot !== getSnapshot || snapshotChanged || // Check if the susbcribe function changed. We can save some memory by
+    if (inst.getSnapshot !== getSnapshot || snapshotChanged || // Check if the subscribe function changed. We can save some memory by
     // checking whether we scheduled a subscription effect above.
     workInProgressHook !== null && workInProgressHook.memoizedState.tag & HasEffect) {
       fiber.flags |= Passive;
@@ -17273,7 +17273,7 @@
     var id;
 
     if (getIsHydrating()) {
-      var treeId = getTreeId(); // Use a captial R prefix for server-generated ids.
+      var treeId = getTreeId(); // Use a capital R prefix for server-generated ids.
 
       id = ':' + identifierPrefix + 'R' + treeId; // Unless this is the first id at this level, append a number at the end
       // that represents the position of this useId hook among all the useId
@@ -22398,7 +22398,7 @@
       didReceiveUpdate = false;
 
       if (getIsHydrating() && isForkedChild(workInProgress)) {
-        // Check if this child belongs to a list of muliple children in
+        // Check if this child belongs to a list of multiple children in
         // its parent.
         //
         // In a true multi-threaded implementation, we would render children on

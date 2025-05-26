@@ -81,7 +81,7 @@ export module Protocol {
        */
       transitionProperty?: string;
     }
-    
+
     /**
      * Dispatched whenever a `WebAnimation` is created.
      */
@@ -135,7 +135,7 @@ export module Protocol {
     export type trackingCompletePayload = {
       timestamp: number;
     }
-    
+
     /**
      * Enables Canvas domain events.
      */
@@ -199,10 +199,10 @@ export module Protocol {
     export type stopTrackingReturnValue = {
     }
   }
-  
+
   export module Audit {
-    
-    
+
+
     /**
      * Creates the `WebInspectorAudit` object that is passed to run. Must call teardown before calling setup more than once.
      */
@@ -245,9 +245,9 @@ export module Protocol {
     export type teardownReturnValue = {
     }
   }
-  
+
   /**
-   * The Browser domain contains commands and events related to getting information about the browser 
+   * The Browser domain contains commands and events related to getting information about the browser
    */
   export module Browser {
     /**
@@ -267,7 +267,7 @@ export module Protocol {
        */
       name: string;
     }
-    
+
     export type extensionsEnabledPayload = {
       /**
        * Information about the enabled extensions.
@@ -280,7 +280,7 @@ export module Protocol {
        */
       extensionIds: ExtensionId[];
     }
-    
+
     /**
      * Enables Browser domain events.
      */
@@ -296,7 +296,7 @@ export module Protocol {
     export type disableReturnValue = {
     }
   }
-  
+
   /**
    * CPUProfiler domain exposes cpu usage tracking.
    */
@@ -333,7 +333,7 @@ export module Protocol {
        */
       threads?: ThreadInfo[];
     }
-    
+
     /**
      * Tracking started.
      */
@@ -352,7 +352,7 @@ export module Protocol {
     export type trackingCompletePayload = {
       timestamp: number;
     }
-    
+
     /**
      * Start tracking cpu usage.
      */
@@ -368,7 +368,7 @@ export module Protocol {
     export type stopTrackingReturnValue = {
     }
   }
-  
+
   /**
    * This domain exposes CSS read/write operations. All CSS objects, like stylesheets, rules, and styles, have an associated <code>id</code> used in subsequent operations on the related object. Each object type has a specific <code>id</code> structure, and those are not interchangeable between objects of different kinds. CSS objects can be loaded using the <code>get*ForNode()</code> calls (which accept a DOM node id). Alternatively, a client can discover all the existing stylesheets with the <code>getAllStyleSheets()</code> method and subsequently load the required stylesheet contents using the <code>getStyleSheet[Text]()</code> methods.
    */
@@ -778,7 +778,7 @@ export module Protocol {
      */
     export interface FontVariationAxis {
       /**
-       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distiguishable from the tag. This field is ommited when there is no name, or the name matches the tag exactly.
+       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distiguishable from the tag. This field is omitted when there is no name, or the name matches the tag exactly.
        */
       name?: string;
       /**
@@ -806,7 +806,7 @@ export module Protocol {
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
     export type LayoutContextTypeChangedMode = "observed"|"all";
-    
+
     /**
      * Fires whenever a MediaQuery result changes (for example, after a browser window has been resized.) The current implementation considers only viewport-dependent media features.
      */
@@ -848,7 +848,7 @@ export module Protocol {
        */
       layoutFlags?: string[];
     }
-    
+
     /**
      * Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been enabled until the result of this command is received.
      */
@@ -1080,7 +1080,7 @@ export module Protocol {
     export type forcePseudoStateReturnValue = {
     }
     /**
-     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet recieved, those nodes will be sent to the frontend immediately.
+     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet received, those nodes will be sent to the frontend immediately.
      */
     export type setLayoutContextTypeChangedModeParameters = {
       /**
@@ -1091,7 +1091,7 @@ export module Protocol {
     export type setLayoutContextTypeChangedModeReturnValue = {
     }
   }
-  
+
   /**
    * Canvas domain allows tracking of canvases that have an associated graphics context. Tracks canvases in the DOM and CSS canvases created with -webkit-canvas.
    */
@@ -1209,7 +1209,7 @@ export module Protocol {
       programType: ProgramType;
       canvasId: CanvasId;
     }
-    
+
     export type canvasAddedPayload = {
       /**
        * Canvas object.
@@ -1281,7 +1281,7 @@ export module Protocol {
     export type programDeletedPayload = {
       programId: ProgramId;
     }
-    
+
     /**
      * Enables Canvas domain events.
      */
@@ -1428,7 +1428,7 @@ export module Protocol {
     export type setShaderProgramHighlightedReturnValue = {
     }
   }
-  
+
   /**
    * Console domain defines methods and events for interaction with the JavaScript console. Console collects messages created by means of the <a href='http://getfirebug.com/wiki/index.php/Console_API'>JavaScript Console API</a>. One needs to enable this domain using <code>enable</code> command in order to start receiving the console messages. Browser collects messages issued while console domain is not enabled as well and reports them using <code>messageAdded</code> notification upon enabling.
    */
@@ -1545,7 +1545,7 @@ export module Protocol {
        */
       parentStackTrace?: StackTrace;
     }
-    
+
     /**
      * Issued when new console message is added.
      */
@@ -1591,7 +1591,7 @@ export module Protocol {
        */
       title?: string;
     }
-    
+
     /**
      * Enables console domain, sends the messages collected so far to the client by means of the <code>messageAdded</code> notification.
      */
@@ -1648,7 +1648,7 @@ export module Protocol {
     export type setLoggingChannelLevelReturnValue = {
     }
   }
-  
+
   /**
    * This domain exposes DOM read/write operations. Each DOM Node is represented with its mirror object that has an <code>id</code>. This <code>id</code> can be used to get additional information on the Node, resolve it into the JavaScript object wrapper, etc. It is important that client receives DOM events only for the nodes that are known to the client. Backend keeps track of the nodes that were sent to the client and never sends the same node twice. It is client's responsibility to collect information about the nodes that were sent to the client.<p>Note that <code>iframe</code> owner elements will return corresponding document elements as their child nodes.</p>
    */
@@ -2248,7 +2248,7 @@ export module Protocol {
       width: number;
       height: number;
     }
-    
+
     /**
      * Fired when <code>Document</code> has been totally updated. Node ids are no longer valid.
      */
@@ -2479,7 +2479,7 @@ export module Protocol {
       timestamp: Network.Timestamp;
       isPowerEfficient: boolean;
     }
-    
+
     /**
      * Returns the root DOM node to the caller.
      */
@@ -3339,7 +3339,7 @@ might return multiple quads for inline nodes.
     export type setInputFilesReturnValue = {
     }
   }
-  
+
   /**
    * DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript execution will stop on these operations as if there was a regular breakpoint set.
    */
@@ -3352,8 +3352,8 @@ might return multiple quads for inline nodes.
      * Event breakpoint type.
      */
     export type EventBreakpointType = "animation-frame"|"interval"|"listener"|"timeout";
-    
-    
+
+
     /**
      * Sets breakpoint on particular operation with DOM.
      */
@@ -3467,7 +3467,7 @@ might return multiple quads for inline nodes.
     export type removeURLBreakpointReturnValue = {
     }
   }
-  
+
   /**
    * Query and modify DOM storage.
    */
@@ -3489,7 +3489,7 @@ might return multiple quads for inline nodes.
      * DOM Storage item.
      */
     export type Item = string[];
-    
+
     export type domStorageItemsClearedPayload = {
       storageId: StorageId;
     }
@@ -3508,7 +3508,7 @@ might return multiple quads for inline nodes.
       oldValue: string;
       newValue: string;
     }
-    
+
     /**
      * Enables storage tracking, storage events will now be delivered to the client.
      */
@@ -3548,7 +3548,7 @@ might return multiple quads for inline nodes.
     export type clearDOMStorageItemsReturnValue = {
     }
   }
-  
+
   /**
    * Debugger domain exposes JavaScript debugging capabilities. It allows setting and removing breakpoints, stepping through execution, exploring stack traces, etc.
    */
@@ -3755,7 +3755,7 @@ might return multiple quads for inline nodes.
        */
       directive: string;
     }
-    
+
     /**
      * Called when global has been cleared and debugger client should reset its state. Happens upon navigation or reload.
      */
@@ -3886,7 +3886,7 @@ might return multiple quads for inline nodes.
        */
       breakpointActionId: BreakpointActionIdentifier;
     }
-    
+
     /**
      * Enables debugger for the given page. Clients should not assume that the debugging has been enabled until the result for this command is received.
      */
@@ -4311,12 +4311,12 @@ might return multiple quads for inline nodes.
     export type setBlackboxBreakpointEvaluationsReturnValue = {
     }
   }
-  
+
   /**
    * Actions and events related to alert boxes.
    */
   export module Dialog {
-    
+
     /**
      * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
      */
@@ -4334,7 +4334,7 @@ might return multiple quads for inline nodes.
        */
       defaultPrompt?: string;
     }
-    
+
     /**
      * Enables dialog domain notifications.
      */
@@ -4365,10 +4365,10 @@ might return multiple quads for inline nodes.
     export type handleJavaScriptDialogReturnValue = {
     }
   }
-  
+
   export module Emulation {
-    
-    
+
+
     /**
      * Overrides device metrics with provided values.
      */
@@ -4431,7 +4431,7 @@ might return multiple quads for inline nodes.
     export type setOrientationOverrideReturnValue = {
     }
   }
-  
+
   /**
    * Exposes generic types to be used by any domain.
    */
@@ -4449,10 +4449,10 @@ might return multiple quads for inline nodes.
        */
       lineContent: string;
     }
-    
-    
+
+
   }
-  
+
   /**
    * Heap domain exposes JavaScript heap attributes and capabilities.
    */
@@ -4472,7 +4472,7 @@ might return multiple quads for inline nodes.
      * JavaScriptCore HeapSnapshot JSON data.
      */
     export type HeapSnapshotData = string;
-    
+
     /**
      * Information about the garbage collection.
      */
@@ -4499,7 +4499,7 @@ might return multiple quads for inline nodes.
        */
       snapshotData: HeapSnapshotData;
     }
-    
+
     /**
      * Enables Heap domain events.
      */
@@ -4587,7 +4587,7 @@ might return multiple quads for inline nodes.
       result: Runtime.RemoteObject;
     }
   }
-  
+
   export module IndexedDB {
     /**
      * Database with an array of object stores.
@@ -4728,8 +4728,8 @@ might return multiple quads for inline nodes.
        */
       array?: string[];
     }
-    
-    
+
+
     /**
      * Enables events from backend.
      */
@@ -4841,7 +4841,7 @@ might return multiple quads for inline nodes.
     export type clearObjectStoreReturnValue = {
     }
   }
-  
+
   export module Input {
     /**
      * UTC time in seconds, counted from January 1, 1970.
@@ -4864,8 +4864,8 @@ might return multiple quads for inline nodes.
        */
       id: number;
     }
-    
-    
+
+
     /**
      * Dispatches a key event to the page.
      */
@@ -5041,9 +5041,9 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type dispatchTouchEventReturnValue = {
     }
   }
-  
+
   export module Inspector {
-    
+
     export type evaluateForTestInFrontendPayload = {
       script: string;
     }
@@ -5051,7 +5051,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       object: Runtime.RemoteObject;
       hints: { [key: string]: string };
     }
-    
+
     /**
      * Enables inspector domain notifications.
      */
@@ -5074,7 +5074,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type initializedReturnValue = {
     }
   }
-  
+
   export module LayerTree {
     /**
      * Unique RenderLayer identifier.
@@ -5279,9 +5279,9 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       backdropRoot?: boolean;
     }
-    
+
     export type layerTreeDidChangePayload = void;
-    
+
     /**
      * Enables compositing tree inspection.
      */
@@ -5327,7 +5327,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       compositingReasons: CompositingReasons;
     }
   }
-  
+
   /**
    * Memory domain exposes page memory tracking.
    */
@@ -5349,7 +5349,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       size: number;
     }
-    
+
     /**
      * Memory pressure was encountered.
      */
@@ -5378,7 +5378,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type trackingCompletePayload = {
       timestamp: number;
     }
-    
+
     /**
      * Enables Memory domain events.
      */
@@ -5408,7 +5408,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type stopTrackingReturnValue = {
     }
   }
-  
+
   /**
    * Network domain allows tracking network activities of the page. It exposes information about http, file, data and other requests and responses, their headers, bodies, timing, etc.
    */
@@ -5722,7 +5722,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      * Different stages of a network request.
      */
     export type ResourceErrorType = "General"|"AccessControl"|"Cancellation"|"Timeout";
-    
+
     /**
      * Fired when page is about to send HTTP request.
      */
@@ -6023,7 +6023,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       response: WebSocketFrame;
     }
-    
+
     /**
      * Enables network tracking, network events will now be delivered to the client.
      */
@@ -6332,7 +6332,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setEmulateOfflineStateReturnValue = {
     }
   }
-  
+
   /**
    * Actions and events related to the inspected page belong to the page domain.
    */
@@ -6342,7 +6342,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebSecurityEnabled"|"DeviceOrientationEventEnabled"|"SpeechRecognitionEnabled"|"PointerLockEnabled"|"NotificationsEnabled"|"FullScreenEnabled"|"InputTypeMonthEnabled"|"InputTypeWeekEnabled"|"FixedBackgroundsPaintRelativeToDocument";
     /**
-     * A user preference that can be overriden by Web Inspector, like an accessibility preference.
+     * A user preference that can be overridden by Web Inspector, like an accessibility preference.
      */
     export interface UserPreference {
       /**
@@ -6643,7 +6643,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       bottom: number;
       left: number;
     }
-    
+
     export type domContentEventFiredPayload = {
       timestamp: number;
       /**
@@ -6751,7 +6751,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type defaultUserPreferencesDidChangePayload = {
       /**
-       * List of user preferences that can be overriden and their new system (default) values.
+       * List of user preferences that can be overridden and their new system (default) values.
        */
       preferences: UserPreference[];
     }
@@ -6790,7 +6790,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       element: Runtime.RemoteObject;
     }
-    
+
     /**
      * Enables page domain notifications.
      */
@@ -7250,7 +7250,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type updateScrollingStateReturnValue = {
     }
   }
-  
+
   export module Playwright {
     /**
      * Id of Browser context.
@@ -7387,7 +7387,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       accuracy: number;
     }
-    
+
     export type pageProxyCreatedPayload = {
       /**
        * Unique identifier of the context.
@@ -7456,7 +7456,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       screencastId: Screencast.ScreencastId;
     }
-    
+
     export type enableParameters = {
     }
     export type enableReturnValue = {
@@ -7724,7 +7724,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type clearMemoryCacheReturnValue = {
     }
   }
-  
+
   /**
    * General types used for recordings of actions performed in the inspected page.
    */
@@ -7764,7 +7764,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       actions: any[];
       /**
-       * Total execution time of all actions recorded in this frame in milliseconds. 
+       * Total execution time of all actions recorded in this frame in milliseconds.
        */
       duration?: number;
       /**
@@ -7779,7 +7779,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       version: number;
       type: Type;
       /**
-       * JSON data of inital state of object before recording.
+       * JSON data of initial state of object before recording.
        */
       initialState: InitialState;
       /**
@@ -7788,10 +7788,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       data: any[];
       name?: string;
     }
-    
-    
+
+
   }
-  
+
   /**
    * Runtime domain exposes JavaScript runtime by means of remote evaluation and mirror objects. Evaluation results are returned as mirror object that expose object type, string representation and unique identifier that can be used for further object reference. Original objects are maintained in memory unless they are either explicitly released or are released along with the other objects in their object group.
    */
@@ -8064,7 +8064,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       constructorName?: string;
       /**
-       * Pointer to the StructureRepresentation of the protoype if one exists.
+       * Pointer to the StructureRepresentation of the prototype if one exists.
        */
       prototypeStructure?: StructureDescription;
       /**
@@ -8119,7 +8119,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export interface TypeDescription {
       /**
-       * If true, we were able to correlate the offset successfuly with a program location. If false, the offset may be bogus or the offset may be from a CodeBlock that hasn't executed.
+       * If true, we were able to correlate the offset successfully with a program location. If false, the offset may be bogus or the offset may be from a CodeBlock that hasn't executed.
        */
       isValid: boolean;
       /**
@@ -8177,7 +8177,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       executionCount: number;
     }
-    
+
     /**
      * Issued when new execution context is created.
      */
@@ -8204,7 +8204,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       argument: string;
     }
-    
+
     /**
      * Parses JavaScript source code for errors.
      */
@@ -8600,13 +8600,13 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       basicBlocks: BasicBlock[];
     }
   }
-  
+
   export module Screencast {
     /**
      * Unique identifier of the screencast.
      */
     export type ScreencastId = string;
-    
+
     export type screencastFramePayload = {
       /**
        * Base64 data
@@ -8615,7 +8615,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       deviceWidth: number;
       deviceHeight: number;
     }
-    
+
     /**
      * Starts recoring video to speified file.
      */
@@ -8672,7 +8672,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type screencastFrameAckReturnValue = {
     }
   }
-  
+
   /**
    * Profiler domain exposes JavaScript evaluation timing and profiling.
    */
@@ -8723,7 +8723,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export interface Samples {
       stackTraces: StackTrace[];
     }
-    
+
     /**
      * Tracking started.
      */
@@ -8746,7 +8746,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       samples?: Samples;
     }
-    
+
     /**
      * Start tracking script evaluations.
      */
@@ -8766,7 +8766,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type stopTrackingReturnValue = {
     }
   }
-  
+
   /**
    * Security domain allows the frontend to query for information relating to the security of the page (e.g. HTTPS info, TLS info, user activity, etc.).
    */
@@ -8801,10 +8801,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       connection?: Connection;
       certificate?: Certificate;
     }
-    
-    
+
+
   }
-  
+
   /**
    * Actions and events related to the inspected service worker.
    */
@@ -8824,8 +8824,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       content: string;
     }
-    
-    
+
+
     /**
      * Returns the initialization information for this target.
      */
@@ -8835,7 +8835,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       info: Configuration;
     }
   }
-  
+
   export module Target {
     /**
      * Description of a target.
@@ -8851,11 +8851,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       isProvisional?: boolean;
       /**
-       * Whether the target is paused on start and has to be explicitely resumed by inspector.
+       * Whether the target is paused on start and has to be explicitly resumed by inspector.
        */
       isPaused?: boolean;
     }
-    
+
     export type targetCreatedPayload = {
       targetInfo: TargetInfo;
     }
@@ -8883,7 +8883,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       message: string;
     }
-    
+
     /**
      * If set to true, new targets will be paused on start waiting for resume command. Other commands can be dispatched on the target before it is resumed.
      */
@@ -8933,7 +8933,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type closeReturnValue = {
     }
   }
-  
+
   /**
    * Timeline provides its clients with instrumentation records that are generated during the page runtime. Timeline instrumentation can be started and stopped using corresponding commands. While timeline is started, it is generating timeline event records.
    */
@@ -8963,7 +8963,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       children?: TimelineEvent[];
     }
-    
+
     /**
      * Fired for every instrumentation event while timeline is started.
      */
@@ -8995,7 +8995,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      * Fired when auto capture started.
      */
     export type autoCaptureStartedPayload = void;
-    
+
     /**
      * Enables Timeline domain events.
      */
@@ -9051,9 +9051,9 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setInstrumentsReturnValue = {
     }
   }
-  
+
   export module Worker {
-    
+
     export type workerCreatedPayload = {
       workerId: string;
       url: string;
@@ -9069,7 +9069,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       message: string;
     }
-    
+
     /**
      * Enable Worker domain events.
      */
@@ -9105,7 +9105,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type sendMessageToWorkerReturnValue = {
     }
   }
-  
+
   export interface Events {
     "Animation.animationCreated": Animation.animationCreatedPayload;
     "Animation.nameChanged": Animation.nameChangedPayload;

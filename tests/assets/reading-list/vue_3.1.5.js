@@ -2718,7 +2718,7 @@ var Vue = (function (exports) {
       // on a vnode's type and calls the `process` method, passing in renderer
       // internals.
       __isSuspense: true,
-      process(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG, slotScopeIds, optimized, 
+      process(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG, slotScopeIds, optimized,
       // platform-specific impl passed from renderer
       rendererInternals) {
           if (n1 == null) {
@@ -3024,11 +3024,11 @@ var Vue = (function (exports) {
                       vnode.el = hydratedEl;
                   }
                   const placeholder = !hydratedEl && instance.subTree.el;
-                  setupRenderEffect(instance, vnode, 
+                  setupRenderEffect(instance, vnode,
                   // component may have been moved before resolve.
                   // if this is not a hydration, instance.subTree will be the comment
                   // placeholder.
-                  parentNode(hydratedEl || instance.subTree.el), 
+                  parentNode(hydratedEl || instance.subTree.el),
                   // anchor will not be used if this is hydration, so only need to
                   // consider the comment placeholder case.
                   hydratedEl ? null : next(instance.subTree), suspense, isSVG, optimized);
@@ -3165,7 +3165,7 @@ var Vue = (function (exports) {
       if (instance) {
           // #2400
           // to support `app.use` plugins,
-          // fallback to appContext's `provides` if the intance is at root
+          // fallback to appContext's `provides` if the instance is at root
           const provides = instance.parent == null
               ? instance.vnode.appContext && instance.vnode.appContext.provides
               : instance.parent.provides;
@@ -3976,7 +3976,7 @@ var Vue = (function (exports) {
           watch(() => [props.include, props.exclude], ([include, exclude]) => {
               include && pruneCache(name => matches(include, name));
               exclude && pruneCache(name => !matches(exclude, name));
-          }, 
+          },
           // prune post-render after `current` has been updated
           { flush: 'post', deep: true });
           // cache sub tree after render
@@ -4197,7 +4197,7 @@ var Vue = (function (exports) {
                   ));
       }
   }
-  const createHook = (lifecycle) => (hook, target = currentInstance) => 
+  const createHook = (lifecycle) => (hook, target = currentInstance) =>
   // post-create lifecycle registrations are noops during SSR (except for serverPrefetch)
   (!isInSSRComponentSetup || lifecycle === "sp" /* SERVER_PREFETCH */) &&
       injectHook(lifecycle, hook, target);
@@ -4237,13 +4237,13 @@ var Vue = (function (exports) {
       if (options.beforeCreate) {
           callHook(options.beforeCreate, instance, "bc" /* BEFORE_CREATE */);
       }
-      const { 
+      const {
       // state
-      data: dataOptions, computed: computedOptions, methods, watch: watchOptions, provide: provideOptions, inject: injectOptions, 
+      data: dataOptions, computed: computedOptions, methods, watch: watchOptions, provide: provideOptions, inject: injectOptions,
       // lifecycle
-      created, beforeMount, mounted, beforeUpdate, updated, activated, deactivated, beforeDestroy, beforeUnmount, destroyed, unmounted, render, renderTracked, renderTriggered, errorCaptured, serverPrefetch, 
+      created, beforeMount, mounted, beforeUpdate, updated, activated, deactivated, beforeDestroy, beforeUnmount, destroyed, unmounted, render, renderTracked, renderTriggered, errorCaptured, serverPrefetch,
       // public API
-      expose, inheritAttrs, 
+      expose, inheritAttrs,
       // assets
       components, directives, filters } = options;
       const checkDuplicateProperties = createDuplicateChecker() ;
@@ -6177,7 +6177,7 @@ var Vue = (function (exports) {
               const oldVNode = oldChildren[i];
               const newVNode = newChildren[i];
               // Determine the container (parent element) for the patch.
-              const container = 
+              const container =
               // oldVNode may be an errored async setup() component inside Suspense
               // which will not have a mounted element
               oldVNode.el &&
@@ -6488,9 +6488,9 @@ var Vue = (function (exports) {
                   {
                       startMeasure(instance, `patch`);
                   }
-                  patch(prevTree, nextTree, 
+                  patch(prevTree, nextTree,
                   // parent may have changed if it's in a teleport
-                  hostParentNode(prevTree.el), 
+                  hostParentNode(prevTree.el),
                   // anchor may have changed if it's in a fragment
                   getNextHostNode(prevTree), instance, parentSuspense, isSVG);
                   {
@@ -7350,7 +7350,7 @@ var Vue = (function (exports) {
                   return Component;
               }
           }
-          const res = 
+          const res =
           // local registration
           // check instance[type] first which is resolved for options API
           resolve(instance[type] || Component[type], name) ||
@@ -7636,7 +7636,7 @@ var Vue = (function (exports) {
           shapeFlag: vnode.shapeFlag,
           // if the vnode is cloned with extra props, we can no longer assume its
           // existing patch flag to be reliable and need to add the FULL_PROPS flag.
-          // note: perserve flag for fragments since they use the flag for children
+          // note: preserve flag for fragments since they use the flag for children
           // fast paths only.
           patchFlag: extraProps && vnode.type !== Fragment
               ? patchFlag === -1 // hoisted node
@@ -7691,7 +7691,7 @@ var Vue = (function (exports) {
   /**
    * @private
    */
-  function createCommentVNode(text = '', 
+  function createCommentVNode(text = '',
   // when used as the v-else branch, the comment node must be created as a
   // block to ensure correct updates.
   asBlock = false) {
@@ -7706,7 +7706,7 @@ var Vue = (function (exports) {
       }
       else if (isArray(child)) {
           // fragment
-          return createVNode(Fragment, null, 
+          return createVNode(Fragment, null,
           // #3666, avoid reference pollution when reusing vnode
           child.slice());
       }
@@ -7877,7 +7877,7 @@ var Vue = (function (exports) {
    * Compiler runtime helper for rendering `<slot/>`
    * @private
    */
-  function renderSlot(slots, name, props = {}, 
+  function renderSlot(slots, name, props = {},
   // this is not a user-facing function, so the fallback is always generated by
   // the compiler and guaranteed to be a function returning an array
   fallback, noSlotted) {
@@ -8221,7 +8221,7 @@ var Vue = (function (exports) {
           provides: parent ? parent.provides : Object.create(appContext.provides),
           accessCache: null,
           renderCache: [],
-          // local resovled assets
+          // local resolved assets
           components: null,
           directives: null,
           // resolved props and emits options
@@ -9151,7 +9151,7 @@ var Vue = (function (exports) {
 
   // __UNSAFE__
   // functions. The user is responsible for using them with only trusted content.
-  function patchDOMProp(el, key, value, 
+  function patchDOMProp(el, key, value,
   // the following args are passed only due to potential innerHTML/textContent
   // overriding existing VNodes, in which case the old tree must be properly
   // unmounted.
@@ -11678,7 +11678,7 @@ var Vue = (function (exports) {
   }
 
   function hoistStatic(root, context) {
-      walk(root, context, 
+      walk(root, context,
       // Root node is unfortunately non-hoistable due to potential parent
       // fallthrough attributes.
       isSingleElementRoot(root, root.children[0]));
@@ -12805,7 +12805,7 @@ var Vue = (function (exports) {
                   if (exp &&
                       exp.type === 4 /* SIMPLE_EXPRESSION */ &&
                       !(dir.name === 'on' && arg)) {
-                      dir.exp = processExpression(exp, context, 
+                      dir.exp = processExpression(exp, context,
                       // slot args must be processed as function params
                       dir.name === 'slot');
                   }
@@ -12819,10 +12819,10 @@ var Vue = (function (exports) {
   // Important: since this function uses Node.js only dependencies, it should
   // always be used with a leading !true check so that it can be
   // tree-shaken from the browser build.
-  function processExpression(node, context, 
+  function processExpression(node, context,
   // some expressions like v-slot props & v-for aliases should be parsed as
   // function params
-  asParams = false, 
+  asParams = false,
   // v-on handler values may contain multiple statements
   asRawStatements = false) {
       {
@@ -12957,7 +12957,7 @@ var Vue = (function (exports) {
   }
   function createCodegenNodeForBranch(branch, keyIndex, context) {
       if (branch.condition) {
-          return createConditionalExpression(branch.condition, createChildrenCodegenNode(branch, keyIndex, context), 
+          return createConditionalExpression(branch.condition, createChildrenCodegenNode(branch, keyIndex, context),
           // make sure to pass in asBlock: true so that the comment node call
           // closes the current block.
           createCallExpression(context.helper(CREATE_COMMENT), [
@@ -13438,7 +13438,7 @@ var Vue = (function (exports) {
           : hasForwardedSlots(node.children)
               ? 3 /* FORWARDED */
               : 1 /* STABLE */;
-      let slots = createObjectExpression(slotsProperties.concat(createObjectProperty(`_`, 
+      let slots = createObjectExpression(slotsProperties.concat(createObjectProperty(`_`,
       // 2 = compiled but dynamic = can skip normalization, but must run diff
       // 1 = compiled and static = can skip normalization AND diff as optimized
       createSimpleExpression(slotFlag + (` /* ${slotFlagsText[slotFlag]} */` ), false))), loc);
@@ -13521,7 +13521,7 @@ var Vue = (function (exports) {
           let vnodeDynamicProps;
           let dynamicPropNames;
           let vnodeDirectives;
-          let shouldUseBlock = 
+          let shouldUseBlock =
           // dynamic component may resolve to plain elements
           isDynamicComponent ||
               vnodeTag === TELEPORT ||
@@ -14807,7 +14807,7 @@ var Vue = (function (exports) {
               ...(options.nodeTransforms || [])
           ],
           directiveTransforms: extend({}, DOMDirectiveTransforms, options.directiveTransforms || {}),
-          transformHoist: null 
+          transformHoist: null
       }));
   }
 
@@ -14845,7 +14845,7 @@ var Vue = (function (exports) {
       const { code } = compile$1(template, extend({
           hoistStatic: true,
           onError: onError ,
-          onWarn: e => onError(e, true) 
+          onWarn: e => onError(e, true)
       }, options));
       function onError(err, asWarning = false) {
           const message = asWarning
