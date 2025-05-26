@@ -29,7 +29,7 @@ import * as icons from './icons';
 import './testResultView.css';
 import { copyPrompt } from '@web/prompts';
 import { useAsyncMemo } from '@web/uiUtils';
-import { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
+import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
