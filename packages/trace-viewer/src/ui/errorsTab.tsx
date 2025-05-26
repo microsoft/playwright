@@ -84,7 +84,10 @@ export const ErrorsTab: React.FunctionComponent<{
   const prompt = useAsyncMemo(() =>
     copyPrompt(
         model?.title ?? '',
-        model?.errorDescriptors ?? [],
+        (model?.errorDescriptors ?? []).map(error => ({
+          message: error.message,
+          location: error.stack?.[0]
+        })),
         metadata,
         errorContext,
         async file => {

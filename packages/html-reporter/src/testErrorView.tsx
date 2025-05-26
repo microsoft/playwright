@@ -19,50 +19,21 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { TestAttachment } from './types';
-import { fixTestInstructions } from '@web/prompts';
 
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
-  context?: TestAttachment;
-}> = ({ error, testId, context }) => {
-  return (
-    <CodeSnippet code={error} testId={testId}>
-      {context && (
-        <div style={{ position: 'absolute', right: 0, padding: '10px' }}>
-          <PromptButton context={context} />
-        </div>
-      )}
-    </CodeSnippet>
-  );
+}> = ({ error, testId }) => {
+  return <CodeSnippet code={error} testId={testId}/>;
 };
 
-export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<{ code: string; testId?: string; }>) => {
+export const CodeSnippet = ({ code, testId }: { code: string; testId?: string; }) => {
   const html = React.useMemo(() => ansiErrorToHtml(code), [code]);
   return (
     <div className='test-error-container test-error-text' data-testid={testId}>
-      {children}
       <div className='test-error-view' dangerouslySetInnerHTML={{ __html: html || '' }}></div>
     </div>
   );
-};
-
-const PromptButton: React.FC<{ context: TestAttachment }> = ({ context }) => {
-  const [copied, setCopied] = React.useState(false);
-  return <button
-    className='button'
-    style={{ minWidth: 100 }}
-    onClick={async () => {
-      const text = context.body ? context.body : await fetch(context.path!).then(r => r.text());
-      await navigator.clipboard.writeText(fixTestInstructions + text);
-      setCopied(true);
-      setTimeout(() => {
-        setCopied(false);
-      }, 3000);
-    }}>
-    {copied ? 'Copied' : 'Copy prompt'}
-  </button>;
 };
 
 export const TestScreenshotErrorView: React.FC<{

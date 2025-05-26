@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { StackFrame } from '@isomorphic/stackTrace';
 import { codeFrameColumns } from '@babel/code-frame';
 
 import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 
-export const fixTestInstructions = `
+const fixTestInstructions = `
 # Instructions
 
 - Following Playwright test failed.
@@ -27,7 +26,7 @@ export const fixTestInstructions = `
 - Provide a snippet of code with the fix, if possible.
 `.trimStart();
 
-export async function copyPrompt(title: string, errors: { message: string, stack?: StackFrame[] }[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, readSource: (path: string) => Promise<string | undefined>) {
+export async function copyPrompt(testInfo: string, errors: { message: string, location?: { file: string, line: number, column: number } }[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, readSource: (path: string) => Promise<string | undefined>) {
   const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of errors) {
     for (const singleLineError of meaningfulSingleLineErrors.keys()) {
@@ -54,10 +53,9 @@ export async function copyPrompt(title: string, errors: { message: string, stack
     fixTestInstructions,
     `# Test info`,
     '',
-    title,
+    testInfo,
     '',
     '# Error details',
-    '',
   ];
 
   for (const error of meaningfulErrors) {
@@ -73,16 +71,15 @@ export async function copyPrompt(title: string, errors: { message: string, stack
     lines.push(errorContext);
 
   const lastError = meaningfulErrors[meaningfulErrors.length - 1];
-  const location = lastError?.stack?.[0];
-  if (location) {
-    const source = await readSource(location.file);
+  if (lastError.location) {
+    const source = await readSource(lastError.location.file);
     if (source) {
       const codeFrame = codeFrameColumns(
           source,
           {
             start: {
-              line: location.line,
-              column: location.column,
+              line: lastError.location.line,
+              column: lastError.location.column,
             },
           },
           {
