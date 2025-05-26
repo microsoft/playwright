@@ -37,6 +37,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
+import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
@@ -45,6 +46,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _page: Page;
   _subscriptions = new Set<channels.PageUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
+  private _bindings: PageBinding[] = [];
+  private _initScripts: InitScript[] = [];
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -107,7 +110,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
-    await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+    const binding = await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
       if (this._disposed)
@@ -116,6 +119,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
+    this._bindings.push(binding);
   }
 
   async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams, metadata: CallMetadata): Promise<void> {
@@ -166,7 +170,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async addInitScript(params: channels.PageAddInitScriptParams, metadata: CallMetadata): Promise<void> {
-    await this._page.addInitScript(params.source);
+    this._initScripts.push(await this._page.addInitScript(params.source));
   }
 
   async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
@@ -326,8 +330,13 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   override _onDispose() {
     // Avoid protocol calls for the closed page.
-    if (!this._page.isClosedOrClosingOrCrashed())
-      this._page.setClientRequestInterceptor(undefined).catch(() => {});
+    if (this._page.isClosedOrClosingOrCrashed())
+      return;
+    this._page.setClientRequestInterceptor(undefined).catch(() => {});
+    this._page.removeExposedBindings(this._bindings).catch(() => {});
+    this._bindings = [];
+    this._page.removeInitScripts(this._initScripts).catch(() => {});
+    this._initScripts = [];
   }
 }
 

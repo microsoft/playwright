@@ -240,8 +240,8 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame.exposePlaywrightBinding());
   }
 
-  async removeNonInternalInitScripts() {
-    await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument());
+  async removeInitScripts(initScripts: InitScript[]): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument(initScripts));
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -392,7 +392,6 @@ class FrameSession {
   private _videoRecorder: VideoRecorder | null = null;
   private _screencastId: string | null = null;
   private _screencastClients = new Set<any>();
-  private _evaluateOnNewDocumentIdentifiers: string[] = [];
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
 
@@ -1059,14 +1058,11 @@ class FrameSession {
   async _evaluateOnNewDocument(initScript: InitScript, world: types.World, runImmediately?: boolean): Promise<void> {
     const worldName = world === 'utility' ? this._crPage.utilityWorldName : undefined;
     const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName, runImmediately });
-    if (!initScript.internal)
-      this._evaluateOnNewDocumentIdentifiers.push(identifier);
+    initScript.auxData = identifier;
   }
 
-  async _removeEvaluatesOnNewDocument(): Promise<void> {
-    const identifiers = this._evaluateOnNewDocumentIdentifiers;
-    this._evaluateOnNewDocumentIdentifiers = [];
-    await Promise.all(identifiers.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier })));
+  async _removeEvaluatesOnNewDocument(initScripts: InitScript[]): Promise<void> {
+    await Promise.all(initScripts.map(script => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.auxData }).catch(() => {}))); // target can be closed
   }
 
   async exposePlaywrightBinding() {

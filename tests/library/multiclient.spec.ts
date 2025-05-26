@@ -20,6 +20,7 @@ import type { Browser, BrowserContext, BrowserServer, ConnectOptions, Page } fro
 type ExtraFixtures = {
   remoteServer: BrowserServer;
   connect: (wsEndpoint: string, options?: ConnectOptions) => Promise<Browser>,
+  twoPages: { pageA: Page, pageB: Page },
 };
 const test = playwrightTest.extend<ExtraFixtures>({
   remoteServer: async ({ browserType }, use) => {
@@ -34,6 +35,17 @@ const test = playwrightTest.extend<ExtraFixtures>({
       return browser;
     });
     await browser?.close();
+  },
+  twoPages: async ({ remoteServer, connect }, use) => {
+    const browserA = await connect(remoteServer.wsEndpoint());
+    const contextA = await browserA.newContext();
+    const pageA = await contextA.newPage();
+
+    const browserB = await connect(remoteServer.wsEndpoint());
+    const contextB = browserB.contexts()[0];
+    const pageB = contextB.pages()[0];
+
+    await use({ pageA, pageB });
   },
 });
 
@@ -65,4 +77,114 @@ test('should connect two clients', async ({ connect, remoteServer, server }) => 
   const pageB2 = await pageEventPromise;
   await pageA2.goto('/frames/frame.html');
   await expect(pageB2).toHaveURL('/frames/frame.html');
+
+  // Both contexts and pages should be still operational after any client disconnects.
+  await browserA.close();
+  await expect(pageB1).toHaveURL(server.EMPTY_PAGE);
+  await expect(pageB2).toHaveURL(server.PREFIX + '/frames/frame.html');
+});
+
+test('should have separate default timeouts', async ({ twoPages }) => {
+  const { pageA, pageB } = twoPages;
+  pageA.setDefaultTimeout(500);
+  pageB.setDefaultTimeout(600);
+
+  const [errorA, errorB] = await Promise.all([
+    pageA.click('div').catch(e => e),
+    pageB.click('div').catch(e => e),
+  ]);
+  expect(errorA.message).toContain('Timeout 500ms exceeded');
+  expect(errorB.message).toContain('Timeout 600ms exceeded');
+});
+
+test('should receive viewport size changes', async ({ twoPages }) => {
+  const { pageA, pageB } = twoPages;
+
+  await pageA.setViewportSize({ width: 567, height: 456 });
+  expect(pageA.viewportSize()).toEqual({ width: 567, height: 456 });
+  await expect.poll(() => pageB.viewportSize()).toEqual({ width: 567, height: 456 });
+
+  await pageB.setViewportSize({ width: 456, height: 567 });
+  expect(pageB.viewportSize()).toEqual({ width: 456, height: 567 });
+  await expect.poll(() => pageA.viewportSize()).toEqual({ width: 456, height: 567 });
+});
+
+test('should not allow parallel js coverage', async ({ twoPages, browserName }) => {
+  test.skip(browserName !== 'chromium');
+  const { pageA, pageB } = twoPages;
+  await pageA.coverage.startJSCoverage();
+  const error = await pageB.coverage.startJSCoverage().catch(e => e);
+  expect(error.message).toContain('JSCoverage is already enabled');
+});
+
+test('should not allow parallel css coverage', async ({ twoPages, browserName }) => {
+  test.skip(browserName !== 'chromium');
+  const { pageA, pageB } = twoPages;
+  await pageA.coverage.startCSSCoverage();
+  const error = await pageB.coverage.startCSSCoverage().catch(e => e);
+  expect(error.message).toContain('CSSCoverage is already enabled');
+});
+
+test('last emulateMedia wins', async ({ twoPages }) => {
+  const { pageA, pageB } = twoPages;
+  await pageA.emulateMedia({ media: 'print' });
+  expect(await pageB.evaluate(() => window.matchMedia('screen').matches)).toBe(false);
+  expect(await pageA.evaluate(() => window.matchMedia('print').matches)).toBe(true);
+  await pageB.emulateMedia({ media: 'screen' });
+  expect(await pageB.evaluate(() => window.matchMedia('screen').matches)).toBe(true);
+  expect(await pageA.evaluate(() => window.matchMedia('print').matches)).toBe(false);
+});
+
+test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
+  const { pageA, pageB } = twoPages;
+
+  await pageA.exposeBinding('pageBindingA', () => 'pageBindingAResult');
+  await pageA.evaluate(() => {
+    (window as any).pageBindingACopy = (window as any).pageBindingA;
+  });
+  expect(await pageB.evaluate(() => (window as any).pageBindingA())).toBe('pageBindingAResult');
+  expect(await pageB.evaluate(() => !!(window as any).pageBindingACopy)).toBe(true);
+
+  await pageA.context().exposeBinding('contextBindingA', () => 'contextBindingAResult');
+  expect(await pageB.evaluate(() => (window as any).contextBindingA())).toBe('contextBindingAResult');
+
+  await pageB.exposeBinding('pageBindingB', () => 'pageBindingBResult');
+  expect(await pageA.evaluate(() => (window as any).pageBindingB())).toBe('pageBindingBResult');
+  await pageB.context().exposeBinding('contextBindingB', () => 'contextBindingBResult');
+  expect(await pageA.evaluate(() => (window as any).contextBindingB())).toBe('contextBindingBResult');
+
+  await pageA.context().browser().close();
+  await new Promise(f => setTimeout(f, 1000)); // Give disconnect some time to cleanup.
+
+  expect(await pageB.evaluate(() => (window as any).pageBindingA)).toBe(undefined);
+  expect(await pageB.evaluate(() => (window as any).contextBindingA)).toBe(undefined);
+  const error = await pageB.evaluate(() => (window as any).pageBindingACopy()).catch(e => e);
+  expect(error.message).toContain('binding "pageBindingA" has been removed');
+
+  expect(await pageB.evaluate(() => (window as any).pageBindingB())).toBe('pageBindingBResult');
+});
+
+test('should remove init scripts upon disconnect', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  await pageA.addInitScript(() => (window as any).pageValueA = 'pageValueA');
+  await pageA.context().addInitScript(() => (window as any).contextValueA = 'contextValueA');
+  await pageB.goto(server.EMPTY_PAGE);
+  expect(await pageB.evaluate(() => (window as any).pageValueA)).toBe('pageValueA');
+  expect(await pageB.evaluate(() => (window as any).contextValueA)).toBe('contextValueA');
+
+  await pageB.addInitScript(() => (window as any).pageValueB = 'pageValueB');
+  await pageB.context().addInitScript(() => (window as any).contextValueB = 'contextValueB');
+  await pageA.goto(server.EMPTY_PAGE);
+  expect(await pageA.evaluate(() => (window as any).pageValueB)).toBe('pageValueB');
+  expect(await pageA.evaluate(() => (window as any).contextValueB)).toBe('contextValueB');
+
+  await pageB.context().browser().close();
+  await new Promise(f => setTimeout(f, 1000)); // Give disconnect some time to cleanup.
+
+  await pageA.goto(server.EMPTY_PAGE);
+  expect(await pageA.evaluate(() => (window as any).pageValueB)).toBe(undefined);
+  expect(await pageA.evaluate(() => (window as any).contextValueB)).toBe(undefined);
+  expect(await pageA.evaluate(() => (window as any).pageValueA)).toBe('pageValueA');
+  expect(await pageA.evaluate(() => (window as any).contextValueA)).toBe('contextValueA');
 });

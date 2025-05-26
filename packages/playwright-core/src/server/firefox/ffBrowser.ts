@@ -373,7 +373,7 @@ export class FFBrowserContext extends BrowserContext {
     await this._updateInitScripts();
   }
 
-  async doRemoveNonInternalInitScripts() {
+  async doRemoveInitScripts(initScripts: InitScript[]) {
     await this._updateInitScripts();
   }
 
