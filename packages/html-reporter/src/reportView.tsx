@@ -144,6 +144,8 @@ const TestCaseViewLoader: React.FC<{
   return <div className='test-case-column'>
     <TestCaseView
       projectNames={report.json().projectNames}
+      rootDir={report.json().rootDir}
+      metadata={report.json().metadata}
       next={next}
       prev={prev}
       test={test}

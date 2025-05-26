@@ -33,12 +33,13 @@ import { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
+  metadata: MetadataWithCommitInfo,
+  rootDir: string,
   test: TestCase,
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
   run: number,
-  metadata: MetadataWithCommitInfo,
-}> = ({ projectNames, test, run, next, prev, metadata }) => {
+}> = ({ projectNames, metadata, rootDir, test, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
 
@@ -85,7 +86,7 @@ export const TestCaseView: React.FC<{
             {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
               {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
             </AutoChip>}
-            <TestResultView test={test!} result={result} metadata={metadata} />
+            <TestResultView test={test!} result={result} metadata={metadata} rootDir={rootDir} />
           </>;
         },
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />

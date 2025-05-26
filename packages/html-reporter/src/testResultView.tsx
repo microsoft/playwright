@@ -90,7 +90,8 @@ export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
   metadata: MetadataWithCommitInfo,
-}> = ({ test, result, metadata }) => {
+  rootDir: string,
+}> = ({ test, result, metadata, rootDir }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -119,10 +120,8 @@ export const TestResultView: React.FC<{
             result.errors,
             metadata,
             errorContextContent,
-            async path => {
-              // TODO: path is relative, but we need to resolve it to absolute path.
-              // What's the base?
-              const response = await fetch('trace/file?' + new URLSearchParams({ path }));
+            async file => {
+              const response = await fetch('trace/file?' + new URLSearchParams({ path: `${rootDir}/${file}` }));
               if (response.status !== 200)
                 return;
               return await response.text();

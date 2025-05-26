@@ -290,6 +290,7 @@ class HtmlBuilder {
     }
     const htmlReport: HTMLReport = {
       metadata,
+      rootDir: this._config.rootDir,
       title: this._title,
       startTime: result.startTime.getTime(),
       duration: result.duration,
