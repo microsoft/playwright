@@ -22,7 +22,7 @@ html, body {
   overscroll-behavior-x: none;
 }
 
-body {
+:root {
   overflow: auto;
   max-width: 1024px;
   margin: 0 auto;
