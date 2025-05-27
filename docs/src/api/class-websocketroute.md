@@ -333,7 +333,7 @@ Function that will handle WebSocket closure. Received an optional [close code](h
 ### param: WebSocketRoute.onClose.handler
 * since: v1.48
 * langs: csharp
-- `handler` <[function]\([int?], [string]\)>
+- `handler` <[function]\([int?], [string?]\)>
 
 Function that will handle WebSocket closure. Received an optional [close code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code) and an optional [close reason](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
 
