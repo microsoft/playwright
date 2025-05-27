@@ -627,7 +627,6 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
-  private _sourceCache: Map<string, string> = new Map();
   private _errorContext: ErrorContextOption;
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, errorContext: ErrorContextOption) {
