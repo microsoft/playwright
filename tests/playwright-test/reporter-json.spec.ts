@@ -372,9 +372,12 @@ test('attaches error context', async ({ runInlineTest }) => {
 
   const errorContext = result.report.suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === 'error-context');
   expect(errorContext).toBeDefined();
-  expect(errorContext!.contentType).toBe('application/json');
-  const json = JSON.parse(Buffer.from(errorContext!.body, 'base64').toString('utf-8'));
-  expect(json).toEqual({
-    pageSnapshot: expect.any(String),
-  });
+  expect(errorContext!.contentType).toBe('text/markdown');
+  expect(await fs.promises.readFile(errorContext.path, 'utf-8')).toEqual(`
+# Page snapshot
+
+\`\`\`yaml
+- button \"Click me\"
+\`\`\`
+    `.trim());
 });

@@ -95,6 +95,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
     /Set content/,
     /Expect "toHaveScreenshot"[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /Attach "error-context"0ms/,
     /Worker Cleanup[\d.]+m?s/,
   ]);
 });
