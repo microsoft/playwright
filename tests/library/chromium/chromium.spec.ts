@@ -631,16 +631,29 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
   });
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, channel, createUserDataDir }) => {
-  test.skip(!['chrome', 'msedge'].includes(channel), 'normal Chromium allows to open a userDataDir twice while Chrome/Edge does not');
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, isHeadlessShell }) => {
+  test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
   const userDataDir = await createUserDataDir();
-  const options = {
-    cdpPort: 60483,
-  } as any;
-  const browser = await browserType.launchPersistentContext(userDataDir, options);
+  const browser = await browserType.launchPersistentContext(userDataDir, {
+    cdpPort: 9222,
+  } as any);
   try {
-    const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-    expect(error.message).toContain('Unable to determine wsEndpoint.')
+    const error = await browserType.launchPersistentContext(userDataDir, {
+      cdpPort: 9223,
+    } as any).catch(e => e);
+    expect(error.message).toContain('This usually means that the profile is already in use by another instance of Chromium.');
+  } finally {
+    await browser.close();
+  }
+});
+
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, isHeadlessShell }) => {
+  test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
+  const userDataDir = await createUserDataDir();
+  const browser = await browserType.launchPersistentContext(userDataDir);
+  try {
+    const error = await browserType.launchPersistentContext(userDataDir).catch(e => e);
+    expect(error.message).toContain('This usually means that the profile is already in use by another instance of Chromium.');
   } finally {
     await browser.close();
   }
