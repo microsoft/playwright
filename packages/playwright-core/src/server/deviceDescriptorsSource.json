@@ -176,7 +176,7 @@
     "defaultBrowserType": "chromium"
   },
   "Galaxy S24": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.6 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
     "viewport": {
       "width": 480,
       "height": 1040
@@ -187,7 +187,7 @@
     "defaultBrowserType": "chromium"
   },
   "Galaxy S24 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.6 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
     "viewport": {
       "width": 1040,
       "height": 480
@@ -198,7 +198,7 @@
     "defaultBrowserType": "chromium"
   },
   "Galaxy A55": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.6 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
     "viewport": {
       "width": 480,
       "height": 1040
@@ -209,7 +209,7 @@
     "defaultBrowserType": "chromium"
   },
   "Galaxy A55 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.6 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
     "viewport": {
       "width": 1040,
       "height": 480
@@ -242,7 +242,7 @@
     "defaultBrowserType": "chromium"
   },
   "Galaxy Tab S9": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.6 Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Safari/537.36",
     "viewport": {
       "width": 640,
       "height": 1024
@@ -253,7 +253,7 @@
     "defaultBrowserType": "chromium"
   },
   "Galaxy Tab S9 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.6 Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Safari/537.36",
     "viewport": {
       "width": 1024,
       "height": 640
