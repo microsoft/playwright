@@ -48,6 +48,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
+  private _locatorHandlers = new Set<number>();
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -144,6 +145,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, metadata: CallMetadata): Promise<channels.PageRegisterLocatorHandlerResult> {
     const uid = this._page.registerLocatorHandler(params.selector, params.noWaitAfter);
+    this._locatorHandlers.add(uid);
     return { uid };
   }
 
@@ -153,6 +155,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async unregisterLocatorHandler(params: channels.PageUnregisterLocatorHandlerParams, metadata: CallMetadata): Promise<void> {
     this._page.unregisterLocatorHandler(params.uid);
+    this._locatorHandlers.delete(params.uid);
   }
 
   async emulateMedia(params: channels.PageEmulateMediaParams, metadata: CallMetadata): Promise<void> {
@@ -337,6 +340,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._bindings = [];
     this._page.removeInitScripts(this._initScripts).catch(() => {});
     this._initScripts = [];
+    for (const uid of this._locatorHandlers)
+      this._page.unregisterLocatorHandler(uid);
+    this._locatorHandlers.clear();
   }
 }
 

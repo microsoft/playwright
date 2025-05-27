@@ -188,3 +188,37 @@ test('should remove init scripts upon disconnect', async ({ twoPages, server }) 
   expect(await pageA.evaluate(() => (window as any).pageValueA)).toBe('pageValueA');
   expect(await pageA.evaluate(() => (window as any).contextValueA)).toBe('contextValueA');
 });
+
+test('should remove locator handlers upon disconnect', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  await pageA.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let count = 0;
+  await pageA.addLocatorHandler(pageA.getByText('This interstitial covers the button'), async () => {
+    ++count;
+    await pageA.locator('#close').click();
+  });
+
+  await pageA.locator('#aside').hover();
+  await pageA.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('mouseover', 1);
+  });
+  await pageA.locator('#target').click();
+  expect(count).toBe(1);
+  expect(await pageB.evaluate('window.clicked')).toBe(1);
+  await expect(pageB.locator('#interstitial')).not.toBeVisible();
+
+  await pageA.locator('#aside').hover();
+  await pageA.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('mouseover', 1);
+  });
+
+  await pageA.context().browser().close();
+  const error = await pageB.locator('#target').click({ timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('Timeout 3000ms exceeded');
+  expect(error.message).toContain('intercepts pointer events');
+  expect(error.message).not.toContain('locator handler');
+});
