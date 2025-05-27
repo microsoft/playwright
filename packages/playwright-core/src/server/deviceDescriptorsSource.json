@@ -175,6 +175,50 @@
     "hasTouch": true,
     "defaultBrowserType": "chromium"
   },
+  "Galaxy S24": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
+    "viewport": {
+      "width": 480,
+      "height": 1040
+    },
+    "deviceScaleFactor": 2.25,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy S24 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
+    "viewport": {
+      "width": 1040,
+      "height": 480
+    },
+    "deviceScaleFactor": 2.25,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy A55": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
+    "viewport": {
+      "width": 480,
+      "height": 1040
+    },
+    "deviceScaleFactor": 2.25,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy A55 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Mobile Safari/537.36",
+    "viewport": {
+      "width": 1040,
+      "height": 480
+    },
+    "deviceScaleFactor": 2.25,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
   "Galaxy Tab S4": {
     "userAgent": "Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Safari/537.36",
     "viewport": {
@@ -193,6 +237,28 @@
       "height": 712
     },
     "deviceScaleFactor": 2.25,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Tab S9": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Safari/537.36",
+    "viewport": {
+      "width": 640,
+      "height": 1024
+    },
+    "deviceScaleFactor": 2.5,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Tab S9 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.40 Safari/537.36",
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    },
+    "deviceScaleFactor": 2.5,
     "isMobile": true,
     "hasTouch": true,
     "defaultBrowserType": "chromium"
@@ -259,6 +325,28 @@
       "height": 810
     },
     "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPad (gen 11)": {
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/19E241 Safari/604.1",
+    "viewport": {
+      "width": 656,
+      "height": 944
+    },
+    "deviceScaleFactor": 2.5,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPad (gen 11) landscape": {
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/19E241 Safari/604.1",
+    "viewport": {
+      "width": 944,
+      "height": 656
+    },
+    "deviceScaleFactor": 2.5,
     "isMobile": true,
     "hasTouch": true,
     "defaultBrowserType": "webkit"
@@ -455,6 +543,28 @@
     "viewport": {
       "width": 568,
       "height": 320
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone SE (3rd gen)": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/18.4 Mobile/19E241 Safari/602.1",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone SE (3rd gen) landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/18.4 Mobile/19E241 Safari/602.1",
+    "viewport": {
+      "width": 667,
+      "height": 375
     },
     "deviceScaleFactor": 2,
     "isMobile": true,
