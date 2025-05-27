@@ -29,7 +29,7 @@ it('should generate refs', async ({ page }) => {
 
   const snapshot1 = await snapshotForAI(page);
   expect(snapshot1).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "One" [ref=e2]
       - button "Two" [ref=e3]
       - button "Three" [ref=e4]
@@ -44,7 +44,7 @@ it('should generate refs', async ({ page }) => {
 
   const snapshot2 = await snapshotForAI(page);
   expect(snapshot2).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "One" [ref=e2]
       - button "Not Two" [ref=e5]
       - button "Three" [ref=e4]
@@ -68,9 +68,9 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - iframe [ref=e2]:
-        - generic [ref=f1e1]:
+        - generic [active] [ref=f1e1]:
           - iframe [ref=f1e2]:
             - generic [ref=f2e2]: Hi, I'm frame
           - iframe [ref=f1e3]:
@@ -98,7 +98,7 @@ it('should not generate refs for hidden elements', async ({ page }) => {
 
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "One" [ref=e2]
       - button "Two"
       - button "Three" [ref=e4]
@@ -130,7 +130,7 @@ it('should not generate refs for elements with pointer-events:none', async ({ pa
 
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "no-ref"
       - button "with-ref" [ref=e4]
       - button "with-ref" [ref=e7]
@@ -226,7 +226,7 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
   `, { waitUntil: 'domcontentloaded' });
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - paragraph [ref=e2]: Test
       - iframe [ref=e3]
   `);
@@ -241,13 +241,12 @@ it('should include active element information', async ({ page }) => {
 
   const snapshot = await snapshotForAI(page);
 
-  // Check for all buttons and text
-  expect(snapshot).toContain('button "Button 1"');
-  expect(snapshot).toContain('button "Button 2"');
-  expect(snapshot).toContain('Not focusable');
-
-  // Check that active element is marked
-  expect(snapshot).toMatch(/\[active\]/);
+  expect(snapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - button "Button 1" [ref=e2]
+      - button "Button 2" [active] [ref=e3]
+      - generic [ref=e4]: Not focusable
+  `);
 });
 
 it('should update active element on focus', async ({ page }) => {
@@ -266,16 +265,10 @@ it('should update active element on focus', async ({ page }) => {
 
   // After focus, the second input should be active
   const afterFocusSnapshot = await snapshotForAI(page);
-
-  // Verify it contains both inputs
-  expect(afterFocusSnapshot).toContain('textbox "First input"');
-  expect(afterFocusSnapshot).toContain('textbox "Second input"');
-
-  // Only one of these will pass depending on browser implementation:
-  // Either the second input is marked as active
-  const secondInputActive = afterFocusSnapshot.includes('textbox "Second input" [active]');
-  // Or the document is no longer marked as active (because input has focus)
-  const docNotActive = !afterFocusSnapshot.includes('generic [active]');
-
-  expect(secondInputActive || docNotActive).toBeTruthy();
+  
+  expect(afterFocusSnapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - textbox "First input" [ref=e2]
+      - textbox "Second input" [active] [ref=e3]
+  `);
 });
