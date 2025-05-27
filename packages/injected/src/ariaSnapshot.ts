@@ -45,7 +45,7 @@ export type AriaMatchEntry = {
 };
 
 type InternalMatchEntry = {
-  templateLineNumber: number | undefined;
+  templateLineNumber: number;
   node: AriaNode | string;
 };
 
@@ -315,14 +315,12 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
   const rawTree = renderAriaTree(snapshot, { mode: 'raw' });
   const matchEntries = internalMatchEntries.flatMap(entry => {
     const index = rawTree.findIndex(({ ariaNode }) => ariaNode === entry.node);
-    if (index !== -1) {
-      return {
-        templateLineNumber: entry.templateLineNumber !== undefined ? entry.templateLineNumber - 1 : undefined,
-        actualLineNumber: index
-      };
-    } else {
+    if (index === -1)
       return [];
-    }
+    return {
+      templateLineNumber: entry.templateLineNumber - 1,
+      actualLineNumber: index
+    };
   });
   return {
     matches,
@@ -336,7 +334,7 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
 
 export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
   const root = generateAriaTree(rootElement).root;
-  const matchEntries: InternalMatchEntry[] = []; // Required for matchesNodeDeep signature
+  const matchEntries: InternalMatchEntry[] = [];
   const matches = matchesNodeDeep(root, template, true, false, matchEntries);
   return matches.map(n => n.element);
 }
@@ -345,77 +343,70 @@ function matchesNode(
   node: AriaNode | string,
   template: AriaTemplateNode,
   isDeepEqual: boolean,
-  matchEntriesCollector: InternalMatchEntry[],
+  foundMatchEntries: InternalMatchEntry[],
 ): boolean {
-  if (typeof node === 'string' && template.kind === 'text') {
-    const didMatch = matchesTextNode(node, template);
-    if (didMatch) {
-      matchEntriesCollector.push({
-        templateLineNumber: template.lineNumber,
-        node
-      });
-    }
-    return didMatch;
+  function doesMatchNode(): boolean {
+    if (typeof node === 'string' && template.kind === 'text')
+      return matchesTextNode(node, template);
+
+    if (node === null || typeof node !== 'object' || template.kind !== 'role')
+      return false;
+
+    if (template.role !== 'fragment' && template.role !== node.role)
+      return false;
+    if (template.checked !== undefined && template.checked !== node.checked)
+      return false;
+    if (template.disabled !== undefined && template.disabled !== node.disabled)
+      return false;
+    if (template.expanded !== undefined && template.expanded !== node.expanded)
+      return false;
+    if (template.level !== undefined && template.level !== node.level)
+      return false;
+    if (template.pressed !== undefined && template.pressed !== node.pressed)
+      return false;
+    if (template.selected !== undefined && template.selected !== node.selected)
+      return false;
+    if (!matchesName(node.name, template))
+      return false;
+    if (!matchesText(node.props.url, template.props?.url))
+      return false;
+
+    // Proceed based on the container mode.
+    if (template.containerMode === 'contain')
+      return containsList(node.children || [], template.children || [], foundMatchEntries);
+    else if (template.containerMode === 'equal')
+      return listEqual(node.children || [], template.children || [], false, foundMatchEntries);
+    else if (template.containerMode === 'deep-equal' || isDeepEqual)
+      return listEqual(node.children || [], template.children || [], true, foundMatchEntries);
+    return containsList(node.children || [], template.children || [], foundMatchEntries);
   }
 
-  if (node === null || typeof node !== 'object' || template.kind !== 'role')
-    return false;
-
-  if (template.role !== 'fragment' && template.role !== node.role)
-    return false;
-  if (template.checked !== undefined && template.checked !== node.checked)
-    return false;
-  if (template.disabled !== undefined && template.disabled !== node.disabled)
-    return false;
-  if (template.expanded !== undefined && template.expanded !== node.expanded)
-    return false;
-  if (template.level !== undefined && template.level !== node.level)
-    return false;
-  if (template.pressed !== undefined && template.pressed !== node.pressed)
-    return false;
-  if (template.selected !== undefined && template.selected !== node.selected)
-    return false;
-  if (!matchesName(node.name, template))
-    return false;
-  if (!matchesText(node.props.url, template.props?.url))
-    return false;
-
-  let childrenMatch: boolean;
-  // Proceed based on the container mode.
-  if (template.containerMode === 'contain')
-    childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector);
-  else if (template.containerMode === 'equal')
-    childrenMatch = listEqual(node.children || [], template.children || [], false, matchEntriesCollector);
-  else if (template.containerMode === 'deep-equal' || isDeepEqual)
-    childrenMatch = listEqual(node.children || [], template.children || [], true, matchEntriesCollector);
-  else
-    childrenMatch = containsList(node.children || [], template.children || [], matchEntriesCollector);
-
-  if (childrenMatch) {
-    matchEntriesCollector.push({
+  const didMatch = doesMatchNode();
+  if (didMatch) {
+    foundMatchEntries.push({
       templateLineNumber: template.lineNumber,
       node
     });
   }
-  return childrenMatch;
+  return didMatch;
 }
 
 function listEqual(
   children: (AriaNode | string)[],
   template: AriaTemplateNode[],
   isDeepEqual: boolean,
-  matchEntriesCollector: InternalMatchEntry[],
+  foundMatchEntries: InternalMatchEntry[],
 ): boolean {
-  if (template.length !== children.length)
-    return false;
-  for (let i = 0; i < template.length; ++i) {
-    if (!matchesNode(children[i], template[i], isDeepEqual, matchEntriesCollector))
-      return false;
+  let match = true;
+  const length = Math.min(children.length, template.length);
+  for (let i = 0; i < length; ++i) {
+    if (!matchesNode(children[i], template[i], isDeepEqual, foundMatchEntries))
+      match = false;
   }
-  return true;
+  return template.length === children.length && match;
 }
 
-function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], matchEntriesCollector: InternalMatchEntry[]): boolean {
+function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], foundMatchEntries: InternalMatchEntry[]): boolean {
   let cc = children.slice();
   const tt = template.slice();
   let match = true;
@@ -425,11 +416,12 @@ function containsList(children: (AriaNode | string)[], template: AriaTemplateNod
     childrenAtStartOfTemplate = cc.slice();
     let c = cc.shift();
     while (c) {
-      if (matchesNode(c, t, false, matchEntriesCollector))
+      if (matchesNode(c, t, false, foundMatchEntries))
         break;
       c = cc.shift();
     }
     if (!c) {
+      // Restore children location after we finished matching against this template node
       cc = childrenAtStartOfTemplate;
       match = false;
     }
@@ -442,11 +434,11 @@ function matchesNodeDeep(
   template: AriaTemplateNode,
   collectAll: boolean,
   isDeepEqual: boolean,
-  matchEntriesCollector: InternalMatchEntry[],
+  foundMatchEntries: InternalMatchEntry[],
 ): AriaNode[] {
   const results: AriaNode[] = [];
   const visit = (node: AriaNode | string, parent: AriaNode | null): boolean => {
-    if (matchesNode(node, template, isDeepEqual, matchEntriesCollector)) {
+    if (matchesNode(node, template, isDeepEqual, foundMatchEntries)) {
       const result = typeof node === 'string' ? parent : node;
       if (result)
         results.push(result);

@@ -39,13 +39,13 @@ export type AriaRegex = { pattern: string };
 export type AriaTemplateTextNode = {
   kind: 'text';
   text: AriaRegex | string;
-  lineNumber?: number;
+  lineNumber: number;
 };
 
 export type AriaTemplateRoleNode = AriaProps & {
   kind: 'role';
   role: AriaRole | 'fragment';
-  lineNumber?: number;
+  lineNumber: number;
   name?: AriaRegex | string;
   children?: AriaTemplateNode[];
   props?: Record<string, string | AriaRegex>;
@@ -103,9 +103,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
     for (const item of seq.items) {
       const itemIsString = item instanceof yaml.Scalar && typeof item.value === 'string';
       if (itemIsString) {
-        const childNode = KeyParser.parse(item, parseOptions, errors);
+        const childNode = KeyParser.parse(item, parseOptions, errors, lineCounter.linePos(item.range![0]).line);
         if (childNode) {
-          childNode.lineNumber = lineCounter.linePos(item.range![0]).line;
           container.children = container.children || [];
           container.children.push(childNode);
         }
@@ -187,10 +186,9 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
       }
 
       // role "name": ...
-      const childNode = KeyParser.parse(key, parseOptions, errors);
+      const childNode = KeyParser.parse(key, parseOptions, errors, lineCounter.linePos(key.range![0]).line);
       if (!childNode)
         continue;
-      childNode.lineNumber = lineCounter.linePos(key.range![0]).line;
 
       // - role "name": "text"
       const valueIsScalar = value instanceof yaml.Scalar;
@@ -220,7 +218,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
       const valueIsSequence = value instanceof yaml.YAMLSeq;
       if (valueIsSequence) {
         container.children.push(childNode);
-        convertSeq(childNode, value as yamlTypes.YAMLSeq); // convertSeq will handle line numbers for its children
+        convertSeq(childNode, value as yamlTypes.YAMLSeq);
         continue;
       }
 
@@ -231,7 +229,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
     }
   };
 
-  const fragment: AriaTemplateNode = { kind: 'role', role: 'fragment' };
+  const fragment: AriaTemplateNode = { kind: 'role', role: 'fragment', lineNumber: 0 };
 
   yamlDoc.errors.forEach(addError);
   if (errors.length)
@@ -254,7 +252,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
   return { fragment, errors };
 }
 
-const emptyFragment: AriaTemplateRoleNode = { kind: 'role', role: 'fragment' };
+const emptyFragment: AriaTemplateRoleNode = { kind: 'role', role: 'fragment', lineNumber: 0 };
 
 function normalizeWhitespace(text: string) {
   // TODO: why is this different from normalizeWhitespace in stringUtils.ts?
@@ -269,10 +267,11 @@ export class KeyParser {
   private _input: string;
   private _pos: number;
   private _length: number;
+  private _lineNumber: number;
 
-  static parse(text: yamlTypes.Scalar<string>, options: yamlTypes.ParseOptions, errors: ParsedYamlError[]): AriaTemplateRoleNode | null {
+  static parse(text: yamlTypes.Scalar<string>, options: yamlTypes.ParseOptions, errors: ParsedYamlError[], lineNumber: number): AriaTemplateRoleNode | null {
     try {
-      return new KeyParser(text.value)._parse();
+      return new KeyParser(text.value, lineNumber)._parse();
     } catch (e) {
       if (e instanceof ParserError) {
         const message = options.prettyErrors === false ? e.message : e.message + ':\n\n' + text.value + '\n' + ' '.repeat(e.pos) + '^\n';
@@ -286,10 +285,11 @@ export class KeyParser {
     }
   }
 
-  constructor(input: string) {
+  constructor(input: string, lineNumber: number) {
     this._input = input;
     this._pos = 0;
     this._length = input.length;
+    this._lineNumber = lineNumber;
   }
 
   private _peek() {
@@ -425,7 +425,7 @@ export class KeyParser {
     const role = this._readIdentifier('role') as AriaTemplateRoleNode['role'];
     this._skipWhitespace();
     const name = this._readStringOrRegex() || '';
-    const result: AriaTemplateRoleNode = { kind: 'role', role, name };
+    const result: AriaTemplateRoleNode = { kind: 'role', role, name, lineNumber: this._lineNumber };
     this._readAttributes(result);
     this._skipWhitespace();
     if (!this._eof())

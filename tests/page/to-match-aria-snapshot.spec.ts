@@ -843,9 +843,8 @@ test(`should only highlight regex patterns that don't match`, async ({ page }) =
 -     - link /Link2 \\d+/:
 +     - link "Link 123":
         - /url: about:blank
--   - listitem: "One more row"
 +   - listitem: Another row
-+   - listitem: One more row`);
+    - listitem: One more row`);
   });
 
   await test.step('regex with attributes', async () => {
@@ -1076,30 +1075,28 @@ test('should properly highlight regex failures in equal', async ({ page }) => {
 
   const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
     - list:
-      - /children: deep-equal
+      - /children: equal
       - listitem:
         - list:
           - listitem: /a value/
       - listitem:
         - list:
           - listitem: 2.1
-
   `, { timeout: 1000 }).catch(e => e);
 
   expect(stripAnsi(error.message)).toContain(`
   - list:
--   - /children: deep-equal
+-   - /children: equal
 -   - listitem:
--     - list:
 +   - listitem:
+-     - list:
 +     - list:
 +       - listitem: \"1.1\"
 -       - listitem: /a value/
 +       - listitem: \"1.2\"
     - listitem:
       - list:
--       - listitem: 2.1
-+       - listitem: \"2.1\"
+        - listitem: \"2.1\"
 +       - listitem: \"2.2\"`);
 });
 
