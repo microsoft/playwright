@@ -345,43 +345,7 @@ function matchesNode(
   isDeepEqual: boolean,
   foundMatchEntries: InternalMatchEntry[],
 ): boolean {
-  function doesMatchNode(): boolean {
-    if (typeof node === 'string' && template.kind === 'text')
-      return matchesTextNode(node, template);
-
-    if (node === null || typeof node !== 'object' || template.kind !== 'role')
-      return false;
-
-    if (template.role !== 'fragment' && template.role !== node.role)
-      return false;
-    if (template.checked !== undefined && template.checked !== node.checked)
-      return false;
-    if (template.disabled !== undefined && template.disabled !== node.disabled)
-      return false;
-    if (template.expanded !== undefined && template.expanded !== node.expanded)
-      return false;
-    if (template.level !== undefined && template.level !== node.level)
-      return false;
-    if (template.pressed !== undefined && template.pressed !== node.pressed)
-      return false;
-    if (template.selected !== undefined && template.selected !== node.selected)
-      return false;
-    if (!matchesName(node.name, template))
-      return false;
-    if (!matchesText(node.props.url, template.props?.url))
-      return false;
-
-    // Proceed based on the container mode.
-    if (template.containerMode === 'contain')
-      return containsList(node.children || [], template.children || [], foundMatchEntries);
-    else if (template.containerMode === 'equal')
-      return listEqual(node.children || [], template.children || [], false, foundMatchEntries);
-    else if (template.containerMode === 'deep-equal' || isDeepEqual)
-      return listEqual(node.children || [], template.children || [], true, foundMatchEntries);
-    return containsList(node.children || [], template.children || [], foundMatchEntries);
-  }
-
-  const didMatch = doesMatchNode();
+  const didMatch = _doesMatchNode(node, template, isDeepEqual, foundMatchEntries);
   if (didMatch) {
     foundMatchEntries.push({
       templateLineNumber: template.lineNumber,
@@ -391,12 +355,48 @@ function matchesNode(
   return didMatch;
 }
 
-function listEqual(
-  children: (AriaNode | string)[],
-  template: AriaTemplateNode[],
+function _doesMatchNode(
+  node: AriaNode | string,
+  template: AriaTemplateNode,
   isDeepEqual: boolean,
   foundMatchEntries: InternalMatchEntry[],
 ): boolean {
+  if (typeof node === 'string' && template.kind === 'text')
+    return matchesTextNode(node, template);
+
+  if (node === null || typeof node !== 'object' || template.kind !== 'role')
+    return false;
+
+  if (template.role !== 'fragment' && template.role !== node.role)
+    return false;
+  if (template.checked !== undefined && template.checked !== node.checked)
+    return false;
+  if (template.disabled !== undefined && template.disabled !== node.disabled)
+    return false;
+  if (template.expanded !== undefined && template.expanded !== node.expanded)
+    return false;
+  if (template.level !== undefined && template.level !== node.level)
+    return false;
+  if (template.pressed !== undefined && template.pressed !== node.pressed)
+    return false;
+  if (template.selected !== undefined && template.selected !== node.selected)
+    return false;
+  if (!matchesName(node.name, template))
+    return false;
+  if (!matchesText(node.props.url, template.props?.url))
+    return false;
+
+  // Proceed based on the container mode.
+  if (template.containerMode === 'contain')
+    return containsList(node.children || [], template.children || [], foundMatchEntries);
+  else if (template.containerMode === 'equal')
+    return listEqual(node.children || [], template.children || [], false, foundMatchEntries);
+  else if (template.containerMode === 'deep-equal' || isDeepEqual)
+    return listEqual(node.children || [], template.children || [], true, foundMatchEntries);
+  return containsList(node.children || [], template.children || [], foundMatchEntries);
+}
+
+function listEqual(children: (AriaNode | string)[], template: AriaTemplateNode[], isDeepEqual: boolean, foundMatchEntries: InternalMatchEntry[]): boolean {
   let match = true;
   const length = Math.min(children.length, template.length);
   for (let i = 0; i < length; ++i) {
