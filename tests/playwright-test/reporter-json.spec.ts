@@ -358,9 +358,6 @@ test('should report parallelIndex', async ({ runInlineTest }, testInfo) => {
 
 test('attaches error context', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-          export default { use: { _optionErrorContext: { format: 'json' } } };
-    `,
     'a.test.js': `
       const { test, expect } = require('@playwright/test');
       test('one', async ({ page }, testInfo) => {

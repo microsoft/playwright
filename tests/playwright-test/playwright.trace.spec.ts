@@ -991,6 +991,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
     '      Expect "barPage teardown"',
     '      Step "step in barPage teardown"',
     '        Close context',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -1217,7 +1218,6 @@ test('should record trace for manually created context in a failed test', async 
     'Set content',
     'Expect "toBe"',
     'After Hooks',
-    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
