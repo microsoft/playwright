@@ -515,13 +515,10 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
-// https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
-const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
-
 function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
-  const role = getAriaRole(element) || '';
-  if (!role || !kAriaInvalidRoles.includes(role))
-    return 'false';
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
+  // This state is being deprecated as a global state in ARIA 1.2.
+  // In future versions it will only be allowed on roles where it is specifically supported.
   const ariaInvalid = element.getAttribute('aria-invalid');
   if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
     return 'false';
