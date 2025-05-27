@@ -368,7 +368,13 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
-  const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
+  const url = new URL(endpointURL);
+
+  if (!url.pathname.endsWith('/'))
+    url.pathname += '/';
+  url.pathname += 'json/version';
+
+  const httpURL = url.toString();
   const json = await fetchData({
     url: httpURL,
     headers,
