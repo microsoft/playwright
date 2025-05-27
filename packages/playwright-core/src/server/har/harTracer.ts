@@ -292,7 +292,7 @@ export class HarTracer {
   }
 
   private _recordRequestOverrides(harEntry: har.Entry, request: network.Request) {
-    if (!request._hasOverrides() || !this._options.recordRequestOverrides)
+    if (!request.overrides() || !this._options.recordRequestOverrides)
       return;
     harEntry.request.method = request.method();
     harEntry.request.url = request.url();

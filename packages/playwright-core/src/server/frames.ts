@@ -301,16 +301,8 @@ export class FrameManager {
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
-    if (route) {
-      const r = new network.Route(request, route);
-      if (this._page.serverRequestInterceptor?.(r, request))
-        return;
-      if (this._page.clientRequestInterceptor?.(r, request))
-        return;
-      if (this._page.browserContext._requestInterceptor?.(r, request))
-        return;
-      r.continue({ isFallback: true }).catch(() => {});
-    }
+    if (route)
+      new network.Route(request, route).handle([...this._page.requestInterceptors, ...this._page.browserContext.requestInterceptors]);
   }
 
   requestReceivedResponse(response: network.Response) {

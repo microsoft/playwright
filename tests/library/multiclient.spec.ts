@@ -50,7 +50,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
 });
 
 test.slow(true, 'All connect tests are slow');
-test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(({ mode }) => mode !== 'default');
 
 async function disconnect(page: Page) {
   await page.context().browser().close();
@@ -159,6 +159,74 @@ test('last emulateMedia wins', async ({ twoPages }) => {
   await pageB.emulateMedia({ media: 'screen' });
   expect(await pageB.evaluate(() => window.matchMedia('screen').matches)).toBe(true);
   expect(await pageA.evaluate(() => window.matchMedia('print').matches)).toBe(false);
+});
+
+test('should chain routes', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  server.setRoute('/foo', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-foo</div>'));
+  server.setRoute('/bar', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-bar</div>'));
+  server.setRoute('/qux', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-qux</div>'));
+
+  let stall = false;
+  let stallCallback;
+  const stallPromise = new Promise(f => stallCallback = f);
+  await pageA.route('**/foo', async route => {
+    if (stall)
+      stallCallback();
+    else
+      await route.fallback();
+  });
+  await pageA.route('**/bar', async route => {
+    await route.fulfill({ body: '<div>intercepted-bar</div>', contentType: 'text/html' });
+  });
+
+  await pageB.route('**/foo', async route => {
+    await route.fulfill({ body: '<div>intercepted2-foo</div>', contentType: 'text/html' });
+  });
+  await pageB.route('**/bar', async route => {
+    await route.fulfill({ body: '<div>intercepted2-bar</div>', contentType: 'text/html' });
+  });
+  await pageB.route('**/qux', async route => {
+    await route.fulfill({ body: '<div>intercepted2-qux</div>', contentType: 'text/html' });
+  });
+
+  await pageA.goto(server.PREFIX + '/foo');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-foo');
+
+  await pageA.goto(server.PREFIX + '/bar');
+  await expect(pageB.locator('div')).toHaveText('intercepted-bar');
+
+  await pageA.goto(server.PREFIX + '/qux');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-qux');
+
+  stall = true;
+  const gotoPromise = pageB.goto(server.PREFIX + '/foo');
+  await stallPromise;
+  await pageA.context().browser().close();
+
+  await gotoPromise;
+  await expect(pageB.locator('div')).toHaveText('intercepted2-foo');
+
+  await pageB.goto(server.PREFIX + '/bar');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-bar');
+});
+
+test.fixme('should chain routes with changed url', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  server.setRoute('/foo', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-foo</div>'));
+  server.setRoute('/baz', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-baz</div>'));
+
+  await pageA.route('**/foo', async route => {
+    await route.fallback({ url: server.PREFIX + '/baz' });
+  });
+  await pageB.route('**/baz', async route => {
+    await route.fulfill({ body: '<div>intercepted2-baz</div>', contentType: 'text/html' });
+  });
+
+  await pageA.goto(server.PREFIX + '/foo');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-baz');
 });
 
 test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {

@@ -160,8 +160,7 @@ export class Page extends SdkObject {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options: channels.PagePdfParams) => Promise<Buffer>) | undefined;
   readonly coverage: any;
-  clientRequestInterceptor: network.RouteHandler | undefined;
-  serverRequestInterceptor: network.RouteHandler | undefined;
+  readonly requestInterceptors: network.RouteHandler[] = [];
   video: Artifact | null = null;
   private _opener: Page | undefined;
   private _isServerSideOnly = false;
@@ -258,8 +257,6 @@ export class Page extends SdkObject {
   async resetForReuse(metadata: CallMetadata) {
     this._locatorHandlers.clear();
 
-    await this.setClientRequestInterceptor(undefined);
-    await this.setServerRequestInterceptor(undefined);
     // Re-navigate once init scripts are gone.
     // TODO: we should have a timeout for `resetForReuse`.
     await this.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
@@ -571,16 +568,23 @@ export class Page extends SdkObject {
   }
 
   needsRequestInterception(): boolean {
-    return !!this.clientRequestInterceptor || !!this.serverRequestInterceptor || !!this.browserContext._requestInterceptor;
+    return this.requestInterceptors.length > 0 || this.browserContext.requestInterceptors.length > 0;
   }
 
-  async setClientRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
-    this.clientRequestInterceptor = handler;
+  async addRequestInterceptor(handler: network.RouteHandler, prepend?: 'prepend'): Promise<void> {
+    if (prepend)
+      this.requestInterceptors.unshift(handler);
+    else
+      this.requestInterceptors.push(handler);
     await this.delegate.updateRequestInterception();
   }
 
-  async setServerRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
-    this.serverRequestInterceptor = handler;
+  async removeRequestInterceptor(handler: network.RouteHandler): Promise<void> {
+    const index = this.requestInterceptors.indexOf(handler);
+    if (index === -1)
+      return;
+    this.requestInterceptors.splice(index, 1);
+    await this.browserContext.notifyRoutesInFlightAboutRemovedHandler(handler);
     await this.delegate.updateRequestInterception();
   }
 

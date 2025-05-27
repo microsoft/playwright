@@ -37,6 +37,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
+import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 
@@ -48,6 +49,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
+  private _requestInterceptor: RouteHandler;
+  private _interceptionUrlMatchers: (string | RegExp)[] = [];
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
@@ -80,6 +83,15 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.adopt(mainFrame);
 
     this._page = page;
+    this._requestInterceptor = (route, request) => {
+      const matchesSome = this._interceptionUrlMatchers.some(urlMatch => urlMatches(this._page.browserContext._options.baseURL, request.url(), urlMatch));
+      if (!matchesSome) {
+        route.continue({ isFallback: true }).catch(() => {});
+        return;
+      }
+      this._dispatchEvent('route', { route: new RouteDispatcher(RequestDispatcher.from(this.parentScope(), request), route) });
+    };
+
     this.addObjectListener(Page.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -179,18 +191,18 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+    const hadMatchers = this._interceptionUrlMatchers.length > 0;
     if (!params.patterns.length) {
-      await this._page.setClientRequestInterceptor(undefined);
-      return;
+      // Note: it is important to remove the interceptor when there are no patterns,
+      // because that disables the slow-path interception in the browser itself.
+      if (hadMatchers)
+        await this._page.removeRequestInterceptor(this._requestInterceptor);
+      this._interceptionUrlMatchers = [];
+    } else {
+      this._interceptionUrlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
+      if (!hadMatchers)
+        await this._page.addRequestInterceptor(this._requestInterceptor);
     }
-    const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
-    await this._page.setClientRequestInterceptor((route, request) => {
-      const matchesSome = urlMatchers.some(urlMatch => urlMatches(this._page.browserContext._options.baseURL, request.url(), urlMatch));
-      if (!matchesSome)
-        return false;
-      this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
-      return true;
-    });
   }
 
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
@@ -343,7 +355,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // Avoid protocol calls for the closed page.
     if (this._page.isClosedOrClosingOrCrashed())
       return;
-    this._page.setClientRequestInterceptor(undefined).catch(() => {});
+
+    // Cleanup properly and leave the page in a good state. Other clients may still connect and use it.
+    this._interceptionUrlMatchers = [];
+    this._page.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
     this._page.removeExposedBindings(this._bindings).catch(() => {});
     this._bindings = [];
     this._page.removeInitScripts(this._initScripts).catch(() => {});
