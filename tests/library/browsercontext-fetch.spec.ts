@@ -121,6 +121,37 @@ it('should add session cookies to request', async ({ context, server }) => {
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
+it('should filter cookies by domain', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36069' }
+}, async ({ context, server }) => {
+  await context.addCookies([{
+    name: 'first',
+    value: '1',
+    domain: 'playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }, {
+    name: 'second',
+    value: '2',
+    domain: '.playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+  const [req] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.get(`http://my.playwright.dev:${server.PORT}/simple.json`, {
+      __testHookLookup
+    } as any),
+  ]);
+  expect(req.headers.cookie).toEqual('second=2');
+});
+
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
   it(`${method} should support params passed as object`, async ({ context, server }) => {
     const url = new URL(server.EMPTY_PAGE);
