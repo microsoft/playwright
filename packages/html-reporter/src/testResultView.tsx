@@ -86,7 +86,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors, diffs);
+    const errors = classifyErrors(result.errors.map(e => e.message), diffs);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
 
@@ -98,10 +98,10 @@ export const TestResultView: React.FC<{
           `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
           `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
         ].join('\n'),
-        result.errors.map(message => ({ message })),
+        result.errors,
         testRunMetadata,
         errorContextContent,
-        async () => undefined // not implemented yet, we don't have source access in HTML reporter
+        async error => error.codeframe,
     );
   }, [errorContext, testRunMetadata], undefined);
 

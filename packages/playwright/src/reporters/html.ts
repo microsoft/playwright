@@ -31,7 +31,7 @@ import { resolveReporterOutputPath, stripAnsiEscapes, stepTitle } from '../util'
 import type { ReporterV2 } from './reporterV2';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
-import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import type { HTMLReport, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
 import type { TestStepCategory } from '../util';
@@ -511,7 +511,12 @@ class HtmlBuilder {
       startTime: result.startTime.toISOString(),
       retry: result.retry,
       steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
-      errors: formatResultFailure(internalScreen, test, result, '').map(error => error.message),
+      errors: formatResultFailure(internalScreen, test, result, '').map(error => {
+        return {
+          message: error.message,
+          codeframe: error.location ? createErrorCodeframe(error.message, error.location) : undefined
+        };
+      }),
       status: result.status,
       annotations: this._serializeAnnotations(result.annotations),
       attachments: this._serializeAttachments([
@@ -673,6 +678,31 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
+}
+
+function createErrorCodeframe(message: string, location: Location) {
+  let source: string;
+  try {
+    source = fs.readFileSync(location.file, 'utf-8') + '\n//';
+  } catch (e) {
+    return;
+  }
+
+  return codeFrameColumns(
+      source,
+      {
+        start: {
+          line: location.line,
+          column: location.column,
+        },
+      },
+      {
+        highlightCode: false,
+        linesAbove: 100,
+        linesBelow: 100,
+        message: stripAnsiEscapes(message).split('\n')[0] || undefined,
+      }
+  );
 }
 
 export default HtmlReporter;

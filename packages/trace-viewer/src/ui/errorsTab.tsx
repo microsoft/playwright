@@ -89,8 +89,8 @@ export const ErrorsTab: React.FunctionComponent<{
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-  testRunMetdata: MetadataWithCommitInfo | undefined,
-}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime, testRunMetdata }) => {
+  testRunMetadata: MetadataWithCommitInfo | undefined,
+}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
   const errorContext = useAsyncMemo(async () => {
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
@@ -102,7 +102,7 @@ export const ErrorsTab: React.FunctionComponent<{
       () => copyPrompt(
           model?.title ?? '',
           model?.errorDescriptors ?? [],
-          testRunMetdata,
+          testRunMetadata,
           errorContext,
           async error => {
             const location = error.stack?.[0];
