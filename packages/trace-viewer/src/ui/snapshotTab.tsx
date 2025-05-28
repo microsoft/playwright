@@ -82,6 +82,16 @@ export const SnapshotTabsView: React.FunctionComponent<{
           new ConsoleAPI(injectedScript);
         });
       }} />
+      <ToolbarButton
+        icon='file-code'
+        title='copy file path to clipboard'
+        disabled={!snapshotUrls?.popoutUrl}
+        onClick={() => {
+          const tracePath = context(action!).traceUrl;
+          navigator.clipboard.writeText(tracePath);
+          alert(`Trace path copied to clipboard: ${tracePath}`);
+        }}
+      />
     </Toolbar>
     <SnapshotView
       snapshotUrls={snapshotUrls}
