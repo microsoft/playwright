@@ -84,7 +84,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       }} />
       <ToolbarButton
         icon='file-code'
-        title='copy file path to clipboard'
+        title='Copy file path to clipboard'
         disabled={!snapshotUrls?.popoutUrl}
         onClick={() => {
           const tracePath = context(action!).traceUrl;

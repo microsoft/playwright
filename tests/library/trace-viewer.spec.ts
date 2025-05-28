@@ -1459,6 +1459,25 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
   await newPage.close();
 });
 
+test('should copy snapshot file path in alert text', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('hello');
+  });
+  await traceViewer.snapshotFrame('page.setContent');
+
+  let alertMessage = '';
+  traceViewer.page.on('dialog', async dialog => {
+    alertMessage = dialog.message();
+    await dialog.dismiss();
+  });
+
+  await traceViewer.page.getByTitle('Copy file path to clipboard').click();
+
+  expect(alertMessage).toContain('Trace path copied to clipboard:');
+  expect(alertMessage).toContain('.zip');
+});
+
 test('should show similar actions from library-only trace', async ({ showTraceViewer, asset }) => {
   const traceViewer = await showTraceViewer([asset('trace-library-1.46.zip')]);
   await expect(traceViewer.actionTitles).toHaveText([
