@@ -15,7 +15,6 @@
  */
 
 import path from 'path';
-import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
