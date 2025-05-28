@@ -1271,12 +1271,7 @@ export class Registry {
       if (!groupedBrowsers[browser.browserName])
         groupedBrowsers[browser.browserName] = [];
 
-      groupedBrowsers[browser.browserName].push({
-        browserName: browser.browserName,
-        browserVersion: browser.browserVersion,
-        hostDir: browser.hostDir,
-        browserPath: browser.browserPath
-      });
+      groupedBrowsers[browser.browserName].push(browser);
     }
 
     return groupedBrowsers;
