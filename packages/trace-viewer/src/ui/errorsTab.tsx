@@ -23,7 +23,9 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
-import { fixTestInstructions } from '@web/prompts';
+import { copyPrompt } from '@web/shared/prompts';
+import { MetadataWithCommitInfo } from '@testIsomorphic/types';
+import { calculateSha1 } from './sourceTab';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -86,7 +88,8 @@ export const ErrorsTab: React.FunctionComponent<{
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime }) => {
+  testRunMetdata: MetadataWithCommitInfo | undefined,
+}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime, testRunMetdata }) => {
   const errorContext = useAsyncMemo(async () => {
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
@@ -94,7 +97,27 @@ export const ErrorsTab: React.FunctionComponent<{
     return await fetch(attachmentURL(attachment)).then(r => r.text());
   }, [model], undefined);
 
-  const prompt = fixTestInstructions + (errorContext ?? ''); // TODO in next PR: enrich with test location, error details and source code, similar to errorContext.ts
+  const prompt = useAsyncMemo(
+      () => copyPrompt(
+          model?.title ?? '',
+          (model?.errorDescriptors ?? []).map(error => ({
+            message: error.message,
+            location: error.stack?.[0]
+          })),
+          testRunMetdata,
+          errorContext,
+          async file => {
+            let response = await fetch(`sha1/src@${await calculateSha1(file)}.txt`);
+            if (response.status === 404)
+              response = await fetch(`file?path=${encodeURIComponent(file)}`);
+            if (response.status >= 400)
+              return;
+            return await response.text();
+          }
+      ),
+      [errorContext],
+      undefined
+  );
 
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
