@@ -101,7 +101,7 @@ export const TestResultView: React.FC<{
         result.errors.map(message => ({ message })),
         testRunMetadata,
         errorContextContent,
-        () => { throw new Error('no location provided, this shouldnt be called'); }
+        async () => undefined // not implemented yet, we don't have source access in HTML reporter
     );
   }, [errorContext, testRunMetadata], undefined);
 

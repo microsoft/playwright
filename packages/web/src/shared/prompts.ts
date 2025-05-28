@@ -24,9 +24,7 @@ const fixTestInstructions = `
 - Provide a snippet of code with the fix, if possible.
 `.trimStart();
 
-interface Location { file: string, line: number, column: number }
-
-export async function copyPrompt(testInfo: string, errors: { message: string, location?: Location }[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, buildCodeFrame: (error: { message: string, location: Location }) => Promise<string | undefined>) {
+export async function copyPrompt<ErrorInfo extends { message: string }>(testInfo: string, errors: ErrorInfo[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, buildCodeFrame: (error: ErrorInfo) => Promise<string | undefined>) {
   const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of errors) {
     for (const singleLineError of meaningfulSingleLineErrors.keys()) {
@@ -70,22 +68,16 @@ export async function copyPrompt(testInfo: string, errors: { message: string, lo
   if (errorContext)
     lines.push(errorContext);
 
-  const lastError = meaningfulErrors[meaningfulErrors.length - 1];
-  if (lastError.location) {
-    const codeFrame = await buildCodeFrame({
-      message: lastError.message,
-      location: lastError.location,
-    });
-    if (codeFrame) {
-      lines.push(
-          '',
-          '# Test source',
-          '',
-          '```ts',
-          codeFrame,
-          '```',
-      );
-    }
+  const codeFrame = await buildCodeFrame(meaningfulErrors[meaningfulErrors.length - 1]);
+  if (codeFrame) {
+    lines.push(
+        '',
+        '# Test source',
+        '',
+        '```ts',
+        codeFrame,
+        '```',
+    );
   }
 
   if (metadata?.gitDiff) {

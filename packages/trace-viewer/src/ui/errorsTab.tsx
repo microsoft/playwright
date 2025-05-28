@@ -101,18 +101,20 @@ export const ErrorsTab: React.FunctionComponent<{
   const prompt = useAsyncMemo(
       () => copyPrompt(
           model?.title ?? '',
-          (model?.errorDescriptors ?? []).map(error => ({
-            message: error.message,
-            location: error.stack?.[0]
-          })),
+          model?.errorDescriptors ?? [],
           testRunMetdata,
           errorContext,
-          async ({ message, location }) => {
+          async error => {
+            const location = error.stack?.[0];
+            if (!location)
+              return;
+
             let response = await fetch(`sha1/src@${await calculateSha1(location.file)}.txt`);
             if (response.status === 404)
               response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
             if (response.status >= 400)
               return;
+
             const source = await response.text();
 
             return codeFrameColumns(
@@ -127,7 +129,7 @@ export const ErrorsTab: React.FunctionComponent<{
                   highlightCode: false,
                   linesAbove: 100,
                   linesBelow: 100,
-                  message: stripAnsiEscapes(message).split('\n')[0] || undefined,
+                  message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
                 }
             );
           }
