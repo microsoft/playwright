@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { codeFrameColumns } from '@babel/code-frame';
-
 import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 
 const fixTestInstructions = `
@@ -26,7 +24,9 @@ const fixTestInstructions = `
 - Provide a snippet of code with the fix, if possible.
 `.trimStart();
 
-export async function copyPrompt(testInfo: string, errors: { message: string, location?: { file: string, line: number, column: number } }[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, readSource: (path: string) => Promise<string | undefined>) {
+interface Location { file: string, line: number, column: number }
+
+export async function copyPrompt(testInfo: string, errors: { message: string, location?: Location }[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, buildCodeFrame: (error: { message: string, location: Location }) => Promise<string | undefined>) {
   const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of errors) {
     for (const singleLineError of meaningfulSingleLineErrors.keys()) {
@@ -72,23 +72,11 @@ export async function copyPrompt(testInfo: string, errors: { message: string, lo
 
   const lastError = meaningfulErrors[meaningfulErrors.length - 1];
   if (lastError.location) {
-    const source = await readSource(lastError.location.file);
-    if (source) {
-      const codeFrame = codeFrameColumns(
-          source,
-          {
-            start: {
-              line: lastError.location.line,
-              column: lastError.location.column,
-            },
-          },
-          {
-            highlightCode: false,
-            linesAbove: 100,
-            linesBelow: 100,
-            message: stripAnsiEscapes(lastError?.message || '').split('\n')[0] || undefined,
-          }
-      );
+    const codeFrame = await buildCodeFrame({
+      message: lastError.message,
+      location: lastError.location,
+    });
+    if (codeFrame) {
       lines.push(
           '',
           '# Test source',
@@ -114,7 +102,7 @@ export async function copyPrompt(testInfo: string, errors: { message: string, lo
   return lines.join('\n');
 }
 
-export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
-function stripAnsiEscapes(str: string): string {
+const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
+export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }

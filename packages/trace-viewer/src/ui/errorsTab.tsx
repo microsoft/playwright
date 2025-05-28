@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { codeFrameColumns } from '@babel/code-frame';
 import { ErrorMessage } from '@web/components/errorMessage';
 import * as React from 'react';
 import type * as modelUtil from './modelUtil';
@@ -23,7 +24,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
-import { copyPrompt } from '@web/shared/prompts';
+import { copyPrompt, stripAnsiEscapes } from '@web/shared/prompts';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { calculateSha1 } from './sourceTab';
 
@@ -106,13 +107,29 @@ export const ErrorsTab: React.FunctionComponent<{
           })),
           testRunMetdata,
           errorContext,
-          async file => {
-            let response = await fetch(`sha1/src@${await calculateSha1(file)}.txt`);
+          async ({ message, location }) => {
+            let response = await fetch(`sha1/src@${await calculateSha1(location.file)}.txt`);
             if (response.status === 404)
-              response = await fetch(`file?path=${encodeURIComponent(file)}`);
+              response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
             if (response.status >= 400)
               return;
-            return await response.text();
+            const source = await response.text();
+
+            return codeFrameColumns(
+                source,
+                {
+                  start: {
+                    line: location.line,
+                    column: location.column,
+                  },
+                },
+                {
+                  highlightCode: false,
+                  linesAbove: 100,
+                  linesBelow: 100,
+                  message: stripAnsiEscapes(message).split('\n')[0] || undefined,
+                }
+            );
           }
       ),
       [errorContext],

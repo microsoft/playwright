@@ -86,7 +86,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors.map(e => e.message), diffs);
+    const errors = classifyErrors(result.errors, diffs);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
 
@@ -98,13 +98,10 @@ export const TestResultView: React.FC<{
           `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
           `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
         ].join('\n'),
-        result.errors,
+        result.errors.map(message => ({ message })),
         testRunMetadata,
         errorContextContent,
-        async file => {
-          // TODO: implement
-          return undefined;
-        }
+        () => { throw new Error('no location provided, this shouldnt be called'); }
     );
   }, [errorContext, testRunMetadata], undefined);
 
