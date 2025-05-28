@@ -20,7 +20,7 @@ import { TestFileView } from './testFileView';
 import './testFileView.css';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
-import { TestErrorView } from './testErrorView';
+import { CodeSnippet } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
 import { HeaderView } from './headerView';
@@ -88,7 +88,7 @@ export const TestFilesHeader: React.FC<{
     </div>}
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
-      {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
+      {report.errors.map((error, index) => <CodeSnippet key={'test-report-error-message-' + index} code={error}/>)}
     </AutoChip>}
   </>;
 };
