@@ -1084,3 +1084,80 @@ test('should remove import css', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should dynamically import re-exported cjs namespace', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35812' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'node_modules/helper/package.json': `
+      {
+        "type": "module",
+        "main": "./index.cjs",
+        "exports": {
+          ".": {
+            "import": "./index.js",
+            "require": "./index.cjs",
+            "default": "./index.js"
+          }
+        }
+      }
+    `,
+    'node_modules/helper/index.js': `
+      import * as mod from './index.cjs'
+      const { $ } = mod;
+      export { $ };
+    `,
+    'node_modules/helper/modules.cjs': `
+      "use strict";
+
+      function __toCommonJS(props) {
+        const result = {};
+        Object.defineProperty(result, '__esModule', { value: true });
+        for (const prop of Object.getOwnPropertyNames(props))
+          Object.defineProperty(result, prop, { enumerable: true, get: props[prop] });
+        return result;
+      }
+
+      function __reExport(to, from) {
+        for (const prop of Object.getOwnPropertyNames(from)) {
+          if (prop !== 'default' && !to.hasOwnProperty(prop))
+            Object.defineProperty(to, prop, { get: () => from[prop], enumerable: true });
+        }
+      }
+
+      module.exports = { __toCommonJS, __reExport };
+    `,
+    'node_modules/helper/index.cjs': `
+      "use strict";
+      const { __toCommonJS, __reExport } = require('./modules.cjs');
+
+      module.exports = __toCommonJS({});
+      __reExport(module.exports, require('./inner.cjs'));
+
+      // Annotate the CommonJS export names for ESM import in node:
+      0 && (module.exports = { ...require('./inner.cjs') });
+    `,
+    'node_modules/helper/inner.cjs': `
+      "use strict";
+      const { __toCommonJS, __reExport } = require('./modules.cjs');
+
+      const $ = '$ value';
+      module.exports = __toCommonJS({ $: () => $ });
+
+      // Annotate the CommonJS export names for ESM import in node:
+      0 && (module.exports = { $ });
+    `,
+    'package.json': `
+      { "type": "commonjs" }
+    `,
+    'a.test.js': `
+      const { test, expect } = require('@playwright/test');
+      test('pass', async () => {
+        const $ = (await import('helper')).$;
+        expect($).toBe('$ value');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

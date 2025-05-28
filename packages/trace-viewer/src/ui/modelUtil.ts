@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { kTopLevelAttachmentPrefix } from '@testIsomorphic/util';
-
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
@@ -24,8 +22,9 @@ import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
-const nextInContextSymbol = Symbol('next');
-const prevInListSymbol = Symbol('prev');
+const nextInContextSymbol = Symbol('nextInContext');
+const prevByEndTimeSymbol = Symbol('prevByEndTime');
+const nextByStartTimeSymbol = Symbol('nextByStartTime');
 const eventsSymbol = Symbol('events');
 
 export type SourceLocation = {
@@ -55,7 +54,7 @@ export type ErrorDescription = {
   action?: ActionTraceEventInContext;
   stack?: StackFrame[];
   message: string;
-  prompt?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
+  context?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
 };
 
 export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
@@ -140,7 +139,7 @@ export class MultiTraceModel {
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
-      prompt: this.attachments.find(a => a.name === `_prompt-${i}`),
+      context: this.attachments.find(a => a.name === `error-context-${i}`),
     }));
   }
 }
@@ -154,9 +153,9 @@ function indexModel(context: ContextEntry) {
   }
   let lastNonRouteAction = undefined;
   for (let i = context.actions.length - 1; i >= 0; i--) {
-    const action = context.actions[i] as any;
-    action[nextInContextSymbol] = lastNonRouteAction;
-    if (!action.apiName.includes('route.'))
+    const action = context.actions[i] as ActionTraceEvent;
+    (action as any)[nextInContextSymbol] = lastNonRouteAction;
+    if (action.class !== 'Route')
       lastNonRouteAction = action;
   }
   for (const event of context.events)
@@ -190,6 +189,18 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
     result.push(...actions);
   }
+
+  result.sort((a1, a2) => {
+    if (a2.parentId === a1.callId)
+      return 1;
+    if (a1.parentId === a2.callId)
+      return -1;
+    return a1.endTime - a2.endTime;
+  });
+
+  for (let i = 1; i < result.length; ++i)
+    (result[i] as any)[prevByEndTimeSymbol] = result[i - 1];
+
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
       return -1;
@@ -198,8 +209,8 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     return a1.startTime - a2.startTime;
   });
 
-  for (let i = 1; i < result.length; ++i)
-    (result[i] as any)[prevInListSymbol] = result[i - 1];
+  for (let i = 0; i + 1 < result.length; ++i)
+    (result[i] as any)[nextByStartTimeSymbol] = result[i + 1];
 
   return result;
 }
@@ -215,6 +226,8 @@ function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId
   }
 }
 
+let lastTmpStepId = 0;
+
 function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionTraceEventInContext[] {
   const map = new Map<string, ActionTraceEventInContext>();
 
@@ -228,18 +241,10 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
     }).flat();
   }
 
-  // Library actions are replaced with corresponding test runner steps. Matching with
-  // the test runner steps enables us to find parent steps.
-  // - In the newer versions the actions are matched by explicit step id stored in the
-  //   library context actions.
-  // - In the older versions the step id is not stored and the match is perfomed based on
-  //   action name and wallTime.
-  const matchByStepId = libraryContexts.some(c => c.actions.some(a => !!a.stepId));
-
   for (const context of libraryContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.stepId! : `${action.apiName}@${(action as any).wallTime}`;
-      map.set(key, { ...action, context });
+      // Never merge stepless events.
+      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action, context });
     }
   }
 
@@ -247,15 +252,14 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
   // Step aka test runner contexts have startTime/endTime as client-side times.
   // Adjust startTime/endTime on the library contexts to align them with the test
   // runner steps.
-  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map, matchByStepId);
+  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map);
   if (delta)
     adjustMonotonicTime(libraryContexts, delta);
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.callId : `${action.apiName}@${(action as any).wallTime}`;
-      const existing = map.get(key);
+      const existing = action.stepId && map.get(action.stepId);
       if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
         if (action.error)
@@ -274,7 +278,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
       }
       if (action.parentId)
         action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
-      map.set(key, { ...action, context });
+      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action, context });
     }
   }
   return [...map.values()];
@@ -305,7 +309,7 @@ function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: numbe
   }
 }
 
-function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>, matchByStepId: boolean) {
+function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
   // We cannot rely on wall time or monotonic time to be the in sync
   // between library and test runner contexts. So we find first action
   // that is present in both runner and library contexts and use it
@@ -315,8 +319,7 @@ function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEn
     for (const action of context.actions) {
       if (!action.startTime)
         continue;
-      const key = matchByStepId ? action.callId! : `${action.apiName}@${(action as any).wallTime}`;
-      const libraryAction = libraryActions.get(key);
+      const libraryAction = action.stepId ? libraryActions.get(action.stepId) : undefined;
       if (libraryAction)
         return action.startTime - libraryAction.startTime;
     }
@@ -338,8 +341,6 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
 
   const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
   for (const item of itemMap.values()) {
-    if (item.action?.apiName.startsWith(kTopLevelAttachmentPrefix))
-      continue;
     const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
     parent.children.push(item);
     item.parent = parent;
@@ -355,8 +356,12 @@ function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextInContextSymbol];
 }
 
-export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[prevInListSymbol];
+export function previousActionByEndTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[prevByEndTimeSymbol];
+}
+
+export function nextActionByStartTime(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[nextByStartTimeSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
@@ -423,6 +428,7 @@ const kRouteMethods = new Set([
   'browsercontext.unroute',
   'browsercontext.unrouteall',
 ]);
+
 {
   // .NET adds async suffix.
   for (const method of [...kRouteMethods])
@@ -435,7 +441,4 @@ const kRouteMethods = new Set([
     'context.unroute_all',
   ])
     kRouteMethods.add(method);
-}
-export function isRouteAction(action: ActionTraceEventInContext) {
-  return action.class === 'Route' || kRouteMethods.has(action.apiName.toLowerCase());
 }

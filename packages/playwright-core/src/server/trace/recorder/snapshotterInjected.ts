@@ -49,6 +49,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   const kCurrentSrcAttribute = '__playwright_current_src__';
   const kBoundingRectAttribute = '__playwright_bounding_rect__';
   const kPopoverOpenAttribute = '__playwright_popover_open_';
+  const kDialogOpenAttribute = '__playwright_dialog_open_';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -456,6 +457,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(value);
             attrs[kPopoverOpenAttribute] = value;
           }
+          if (nodeName === 'DIALOG' && (element as HTMLDialogElement).open) {
+            const value = (element as HTMLDialogElement).matches(':modal') ? 'modal' : 'true';
+            expectValue(kDialogOpenAttribute);
+            expectValue(value);
+            attrs[kDialogOpenAttribute] = value;
+          }
           if (element.scrollTop) {
             expectValue(kScrollTopAttribute);
             expectValue(element.scrollTop);
@@ -541,6 +548,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             if (nodeName === 'IFRAME' && (name === 'src' || name === 'srcdoc' || name === 'sandbox'))
               continue;
             if (nodeName === 'FRAME' && name === 'src')
+              continue;
+            if (nodeName === 'DIALOG' && name === 'open')
               continue;
             let value = element.attributes[i].value;
             if (nodeName === 'META')

@@ -14,10 +14,27 @@
   limitations under the License.
 */
 
-.action-title {
+.action-title-line {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.action-title-selector {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: var(--vscode-tab-inactiveForeground);
+  margin-top: -8px;
+}
+
+.action-title-method {
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.action-title-param {
+  color: var(--vscode-editorBracketHighlight-foreground1);
 }
 
 .action-location {

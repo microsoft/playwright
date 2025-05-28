@@ -41,16 +41,12 @@ for (let range = 0; range <= ranges.length; range++) {
       'name_test_case_659-manual.html',
       // This test expects ::before + title + ::after, which is neither 2F nor 2I.
       'name_test_case_660-manual.html',
+      // These two tests expect <input type=file title=...> to respect the title, but browsers do not.
+      'name_test_case_751-manual.html',
+      'name_file-title-manual.html',
       // Spec says role=combobox should use selected options, not a title attribute.
       'description_1.0_combobox-focusable-manual.html',
     ];
-    if (browserName === 'firefox') {
-      // This test contains the following style:
-      //   [data-after]:after { content: attr(data-after); }
-      // In firefox, content is returned as "attr(data-after)"
-      // instead of being resolved to the actual value.
-      skipped.push('name_test_case_553-manual.html');
-    }
 
     await page.addInitScript(() => {
       const self = window as any;
@@ -101,7 +97,7 @@ for (let range = 0; range <= ranges.length; range++) {
   });
 }
 
-test('wpt accname non-manual', async ({ page, asset, server }) => {
+test('wpt accname non-manual', async ({ page, asset, server, browserName }) => {
   await page.addInitScript(() => {
     const self = window as any;
     self.AriaUtils = {};
@@ -119,14 +115,6 @@ test('wpt accname non-manual', async ({ page, asset, server }) => {
     // TODO: dd/dt elements have roles that prohibit naming. However, both Chromium and Safari still support naming.
     'label valid on dd element',
     'label valid on dt element',
-
-    // TODO: support Alternative Text syntax in ::before and ::after.
-    'button name from fallback content with ::before and ::after',
-    'heading name from fallback content with ::before and ::after',
-    'link name from fallback content with ::before and ::after',
-    'button name from fallback content mixing attr() and strings with ::before and ::after',
-    'heading name from fallback content mixing attr() and strings with ::before and ::after',
-    'link name from fallback content mixing attr() and strings with ::before and ::after',
 
     // TODO: recursive bugs
     'heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby',
@@ -320,6 +308,9 @@ test('native controls', async ({ page }) => {
     <button id="button2" role="combobox">BUTTON2</button>
     <button id="button3">BUTTON3</button>
     <button id="button4" title="BUTTON4"></button>
+
+    <input id="file1" type=file>
+    <label for="file2">FILE2</label><input id="file2" type=file>
   `);
 
   expect.soft(await getNameAndRole(page, '#text1')).toEqual({ role: 'textbox', name: 'TEXT1' });
@@ -332,6 +323,8 @@ test('native controls', async ({ page }) => {
   expect.soft(await getNameAndRole(page, '#button2')).toEqual({ role: 'combobox', name: '' });
   expect.soft(await getNameAndRole(page, '#button3')).toEqual({ role: 'button', name: 'BUTTON3' });
   expect.soft(await getNameAndRole(page, '#button4')).toEqual({ role: 'button', name: 'BUTTON4' });
+  expect.soft(await getNameAndRole(page, '#file1')).toEqual({ role: 'button', name: 'Choose File' });
+  expect.soft(await getNameAndRole(page, '#file2')).toEqual({ role: 'button', name: 'FILE2' });
 });
 
 test('native controls labelled-by', async ({ page }) => {
@@ -515,6 +508,35 @@ test('should resolve pseudo content from attr', async ({ page }) => {
     </a>
   `);
   expect(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'hello world' });
+});
+
+test('should resolve pseudo content alternative text', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      .with-content:before {
+        content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'></svg>") / "alternative text";
+      }
+    </style>
+    <div role="button" class="with-content"> inner text</div>
+  `);
+  expect(await getNameAndRole(page, 'div')).toEqual({ role: 'button', name: 'alternative text inner text' });
+});
+
+test('should resolve css content property for an element', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      .with-content-1 {
+        content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'></svg>") / "alternative text";
+      }
+      .with-content-2 {
+        content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'></svg>");
+      }
+    </style>
+    <div id="button1" role="button" class="with-content-1">inner text</div>
+    <div id="button2" role="button" class="with-content-2">inner text</div>
+  `);
+  expect(await getNameAndRole(page, '#button1')).toEqual({ role: 'button', name: 'alternative text' });
+  expect(await getNameAndRole(page, '#button2')).toEqual({ role: 'button', name: 'inner text' });
 });
 
 test('should ignore invalid aria-labelledby', async ({ page }) => {

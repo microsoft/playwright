@@ -6,6 +6,58 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.52
+
+### Highlights
+ 
+- New method [`method: LocatorAssertions.toContainClass`] to ergonomically assert individual class names on the element.
+
+  ```ts
+  await expect(page.getByRole('listitem', { name: 'Ship v1.52' })).toContainClass('done');
+  ```
+
+- [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and `/url` for links.
+
+  ```ts
+  await expect(locator).toMatchAriaSnapshot(`
+    - list
+      - /children: equal
+      - listitem: Feature A
+      - listitem:
+        - link "Feature B":
+          - /url: "https://playwright.dev"
+  `);
+  ```
+
+### Test Runner
+
+- New property [`property: TestProject.workers`] allows to specify the number of concurrent worker processes to use for a test project. The global limit of property [`property: TestConfig.workers`] still applies.
+- New [`property: TestConfig.failOnFlakyTests`] option to fail the test run if any flaky tests are detected, similarly to `--fail-on-flaky-tests`. This is useful for CI/CD environments where you want to ensure that all tests are stable before deploying.
+- New property [`property: TestResult.annotations`] contains annotations for each test retry.
+
+### Miscellaneous
+
+- New option [`option: APIRequest.newContext.maxRedirects`] in [`method: APIRequest.newContext`] to control the maximum number of redirects.
+- New option `ref` in [`method: Locator.ariaSnapshot`] to generate reference for each element in the snapshot which can later be used to locate the element.
+- HTML reporter now supports *NOT filtering* via `!@my-tag` or `!my-file.spec.ts` or `!p:my-project`.
+
+### Breaking Changes
+
+- Glob URL patterns in methods like [`method: Page.route`] do not support `?` and `[]` anymore. We recommend using regular expressions instead.
+- Method [`method: Route.continue`] does not allow to override the `Cookie` header anymore. If a `Cookie` header is provided, it will be ignored, and the cookie will be loaded from the browser's cookie store. To set custom cookies, use [`method: BrowserContext.addCookies`].
+- macOS 13 is now deprecated and will no longer receive WebKit updates. Please upgrade to a more recent macOS version to continue benefiting from the latest WebKit improvements.
+
+### Browser Versions
+
+- Chromium 136.0.7103.25
+- Mozilla Firefox 137.0
+- WebKit 18.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 135
+- Microsoft Edge 135
+
 ## Version 1.51
 
 ### StorageState for indexedDB
@@ -333,7 +385,7 @@ npx playwright test --tsconfig tsconfig.test.json
 
 You can now pass [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and `string` as query parameters to [APIRequestContext]:
 
-```ts
+```js
 test('query params', async ({ request }) => {
   const searchParams = new URLSearchParams();
   searchParams.set('userId', 1);
@@ -382,7 +434,7 @@ Playwright now allows you to supply client-side certificates, so that server can
 
 The following snippet sets up a client certificate for `https://example.com`:
 
-```ts
+```js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -423,7 +475,7 @@ There are two ways to use the router fixture:
 
 Here is an example of reusing your existing MSW handlers in the test.
 
-```ts
+```js
 import { handlers } from '@src/mocks/handlers';
 
 test.beforeEach(async ({ router }) => {
@@ -516,7 +568,7 @@ See [the clock guide](./clock.md) for more details.
 - New options [`property: TestConfig.respectGitIgnore`] and [`property: TestProject.respectGitIgnore`] control whether files matching `.gitignore` patterns are excluded when searching for tests.
 
 - New property `timeout` is now available for custom expect matchers. This property takes into account `playwright.config.ts` and `expect.configure()`.
-  ```ts
+  ```js
   import { expect as baseExpect } from '@playwright/test';
 
   export const expect = baseExpect.extend({
@@ -531,12 +583,12 @@ See [the clock guide](./clock.md) for more details.
 ### Miscellaneous
 
 - Method [`method: Locator.setInputFiles`] now supports uploading a directory for `<input type=file webkitdirectory>` elements.
-  ```ts
+  ```js
   await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
   ```
 
 - Multiple methods like [`method: Locator.click`] or [`method: Locator.press`] now support a `ControlOrMeta` modifier key. This key maps to `Meta` on macOS and maps to `Control` on Windows and Linux.
-  ```ts
+  ```js
   // Press the common keyboard shortcut Control+S or Meta+S to trigger a "Save" operation.
   await page.keyboard.press('ControlOrMeta+S');
   ```
@@ -789,7 +841,7 @@ test('test customer login', {
 npx playwright test --grep @fast
 ```
 
-- `--project` command line [flag](./test-cli#reference) now supports '*' wildcard:
+- `--project` command line [flag](./test-cli#all-options) now supports '*' wildcard:
 ```sh
 npx playwright test --project='*mobile*'
 ```
@@ -1845,7 +1897,7 @@ This version was also tested against the following stable channels:
 
 * [`method: Test.step`] now returns the value of the step function:
 
-    ```ts
+    ```js
     test('should work', async ({ page }) => {
       const pageTitle = await test.step('get title', async () => {
         await page.goto('https://playwright.dev');
@@ -1889,7 +1941,7 @@ This version was also tested against the following stable channels:
 
 Launch multiple web servers, databases, or other processes by passing an array of configurations:
 
-```ts title="playwright.config.ts"
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: [
@@ -1929,7 +1981,7 @@ Linux support looks like this:
 
 It is now possible to call [`method: Test.describe`] to create suites without a title. This is useful for giving a group of tests a common option with [`method: Test.use`].
 
-```ts
+```js
 test.describe(() => {
   test.use({ colorScheme: 'dark' });
 
@@ -2020,7 +2072,7 @@ npx playwright open --save-har=github.har.zip https://github.com/microsoft
 
 Alternatively, you can record HAR programmatically:
 
-```ts
+```js
 const context = await browser.newContext({
   recordHar: { path: 'github.har.zip' }
 });
@@ -2031,7 +2083,7 @@ await context.close();
 Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
 
 
-```ts
+```js
 await context.routeFromHAR('github.har.zip');
 ```
 
@@ -2044,7 +2096,7 @@ You can now use [`method: Route.fallback`] to defer routing to other handlers.
 
 Consider the following example:
 
-```ts
+```js
 // Remove a header from all requests.
 test.beforeEach(async ({ page }) => {
   await page.route('**/*', async route => {
@@ -2081,7 +2133,7 @@ Read more about [component testing with Playwright](./test-components).
 ### Miscellaneous
 
 * If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
-  ```ts title="playwright.config.ts"
+  ```js title="playwright.config.ts"
   export default {
     use: {
       serviceWorkers: 'block',
@@ -2089,7 +2141,7 @@ Read more about [component testing with Playwright](./test-components).
   };
   ```
 * Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
-  ```ts
+  ```js
   const context = await browser.newContext({
     recordHar: {
       path: 'github.har.zip',
@@ -2098,7 +2150,7 @@ Read more about [component testing with Playwright](./test-components).
   ```
 * If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
   that only records information that is essential for replaying:
-  ```ts
+  ```js
   const context = await browser.newContext({
     recordHar: {
       path: 'github.har',
@@ -2136,7 +2188,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
 
   Here is what a typical component test looks like:
 
-  ```ts title="App.spec.tsx"
+  ```js title="App.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
   import App from './App';
 
@@ -2274,7 +2326,7 @@ This version was also tested against the following stable channels:
 
 - Playwright Test now adds [`property: TestConfig.fullyParallel`] mode. By default, Playwright Test parallelizes between files. In fully parallel mode, tests inside a single file are also run in parallel. You can also use `--fully-parallel` command line flag.
 
-  ```ts title="playwright.config.ts"
+  ```js title="playwright.config.ts"
   export default {
     fullyParallel: true,
   };
@@ -2282,7 +2334,7 @@ This version was also tested against the following stable channels:
 
 - [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] are now configurable per project. For example, you can now
   configure smoke tests project using `grep`:
-  ```ts title="playwright.config.ts"
+  ```js title="playwright.config.ts"
   export default {
     projects: [
       {
@@ -2591,7 +2643,7 @@ Now you can:
 
 To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('context fetch', async ({ page }) => {
@@ -2603,7 +2655,7 @@ test('context fetch', async ({ page }) => {
 
 To do a stand-alone request from node.js to an API endpoint, use **new [`request` fixture](./api/class-fixtures#fixtures-request)**:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('context fetch', async ({ request }) => {
@@ -2621,7 +2673,7 @@ It is now possible to do response interception by combining [API Testing](./api-
 
 For example, we can blur all the images on the page:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 import jimp from 'jimp'; // image processing library
 
@@ -2667,7 +2719,7 @@ Defaults to the `state: 'visible'`.
 
 Comes especially handy when working with lists:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('context fetch', async ({ page }) => {
@@ -2747,7 +2799,7 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 
 #### 🤝 `test.parallel()` run tests in the same file in parallel
 
-```ts
+```js
 test.describe.parallel('group', () => {
   test('runs in parallel 1', async ({ page }) => {
   });
@@ -2872,7 +2924,7 @@ List of all new assertions:
 
 Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
-```ts
+```js
 test.describe.serial('group', () => {
   test('runs first', async ({ page }) => { /* ... */ });
   test('runs second', async ({ page }) => { /* ... */ });
@@ -2885,7 +2937,7 @@ Learn more in the [documentation](./api/class-test#test-describe-serial).
 
 Split long tests into multiple steps using `test.step()` API:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -2904,7 +2956,7 @@ Step information is exposed in reporters API.
 
 To launch a server during the tests, use the [`webServer`](./test-webserver) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-testoptions#test-options-base-url) when creating a context.
 
-```ts title="playwright.config.ts"
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: {
@@ -2988,7 +3040,7 @@ npm i -D @playwright/test
 
 Simple test `tests/foo.spec.ts`:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -3015,7 +3067,7 @@ npx playwright test
 
 Traces are recorded using the new [`property: BrowserContext.tracing`] API:
 
-```ts
+```js
 const browser = await chromium.launch();
 const context = await browser.newContext();
 

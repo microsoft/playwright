@@ -24,7 +24,7 @@ import { mkdirIfNeeded } from './fileUtils';
 
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
-import type { BrowserContextOptions, LaunchOptions } from './types';
+import type { BrowserContextOptions, LaunchOptions, Logger } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -46,6 +46,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
     super(parent, type, guid, initializer);
     this._name = initializer.name;
+    this._channel.on('context', ({ context }) => this._didCreateContext(BrowserContext.from(context)));
     this._channel.on('close', () => this._didClose());
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
@@ -61,28 +62,63 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   async _newContextForReuse(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     return await this._wrapApiCall(async () => {
       for (const context of this._contexts) {
-        await this._browserType._willCloseContext(context);
+        await this._instrumentation.runBeforeCloseBrowserContext(context);
         for (const page of context.pages())
           page._onClose();
         context._onClose();
       }
       return await this._innerNewContext(options, true);
-    }, true);
+    }, { internal: true });
   }
 
   async _stopPendingOperations(reason: string) {
-    return await this._wrapApiCall(async () => {
-      await this._channel.stopPendingOperations({ reason });
-    }, true);
+    await this._channel.stopPendingOperations({ reason });
   }
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
-    options = { ...this._browserType._playwright._defaultContextOptions, ...options };
+    options = {
+      ...this._browserType._playwright._defaultContextOptions,
+      ...options,
+      selectorEngines: this._browserType._playwright.selectors._selectorEngines,
+      testIdAttributeName: this._browserType._playwright.selectors._testIdAttributeName,
+    };
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = BrowserContext.from(response.context);
-    await this._browserType._didCreateContext(context, contextOptions, this._options, options.logger || this._logger);
+    if (options.logger)
+      context._logger = options.logger;
+    await context._initializeHarFromOptions(options.recordHar);
+    await this._instrumentation.runAfterCreateBrowserContext(context);
     return context;
+  }
+
+  _connectToBrowserType(browserType: BrowserType, browserOptions: LaunchOptions, logger: Logger | undefined) {
+    // Note: when using connect(), `browserType` is different from `this._parent`.
+    // This is why browser type is not wired up in the constructor,
+    // and instead this separate method is called later on.
+    this._browserType = browserType;
+    this._options = browserOptions;
+    this._logger = logger;
+    for (const context of this._contexts)
+      this._setupBrowserContext(context);
+  }
+
+  private _didCreateContext(context: BrowserContext) {
+    context._browser = this;
+    this._contexts.add(context);
+    // Note: when connecting to a browser, initial contexts arrive before `browserType` is set,
+    // and will be configured later in `_connectToBrowserType`.
+    if (this._browserType)
+      this._setupBrowserContext(context);
+    this.emit(Events.Browser.Context, context);
+  }
+
+  private _setupBrowserContext(context: BrowserContext) {
+    context._logger = this._logger;
+    context.tracing._tracesDir = this._options.tracesDir;
+    this._browserType._contexts.add(context);
+    context.setDefaultTimeout(this._browserType._playwright._defaultContextTimeout);
+    context.setDefaultNavigationTimeout(this._browserType._playwright._defaultContextNavigationTimeout);
   }
 
   contexts(): BrowserContext[] {
@@ -100,7 +136,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
       page._ownedContext = context;
       context._ownerPage = page;
       return page;
-    });
+    }, { title: 'Create page' });
   }
 
   isConnected(): boolean {

@@ -6,7 +6,6 @@
 ../utilsBundle.ts
 ../zipBundle.ts
 ./
-./injected/
 ./isomorphic/
 ./har/
 ./recorder/

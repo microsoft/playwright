@@ -15,7 +15,7 @@
  */
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { AndroidDevice } from '../android/android';
 
 import type { RootDispatcher } from './dispatcher';
@@ -35,10 +35,6 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
       devices: devices.map(d => AndroidDeviceDispatcher.from(this, d))
     };
   }
-
-  async setDefaultTimeoutNoReply(params: channels.AndroidSetDefaultTimeoutNoReplyParams) {
-    this._object.setDefaultTimeout(params.timeout);
-  }
 }
 
 export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher> implements channels.AndroidDeviceChannel {
@@ -46,7 +42,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   _type_AndroidDevice = true;
 
   static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {
-    const result = existingDispatcher<AndroidDeviceDispatcher>(device);
+    const result = scope.connection.existingDispatcher<AndroidDeviceDispatcher>(device);
     return result || new AndroidDeviceDispatcher(scope, device);
   }
 
@@ -67,7 +63,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async fill(params: channels.AndroidDeviceFillParams) {
-    await this._object.send('click', { selector: params.selector });
+    await this._object.send('click', { selector: params.androidSelector });
     await this._object.send('fill', params);
   }
 
@@ -162,19 +158,15 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
     const context = await this._object.launchBrowser(params.pkg, params);
-    return { context: new BrowserContextDispatcher(this, context) };
+    return { context: BrowserContextDispatcher.from(this, context) };
   }
 
   async close(params: channels.AndroidDeviceCloseParams) {
     await this._object.close();
   }
 
-  async setDefaultTimeoutNoReply(params: channels.AndroidDeviceSetDefaultTimeoutNoReplyParams) {
-    this._object.setDefaultTimeout(params.timeout);
-  }
-
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
-    return { context: new BrowserContextDispatcher(this, await this._object.connectToWebView(params.socketName)) };
+    return { context: BrowserContextDispatcher.from(this, await this._object.connectToWebView(params.socketName)) };
   }
 }
 

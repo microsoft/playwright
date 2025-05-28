@@ -57,13 +57,13 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async close() {
-    await this._page.context().close({ reason: 'Recorder window closed' });
+    await this._page.browserContext.close({ reason: 'Recorder window closed' });
   }
 
   private async _init() {
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
-    await this._page._setServerRequestInterceptor(route => {
+    await this._page.setServerRequestInterceptor(route => {
       if (!route.request().url().startsWith('https://playwright/'))
         return false;
 
@@ -86,11 +86,11 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close({ reason: 'Recorder window closed' }).catch(() => {});
+      this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
     });
 
     const mainFrame = this._page.mainFrame();
-    await mainFrame.goto(serverSideCallMetadata(), process.env.PW_HMR ? 'http://localhost:44225' : 'https://playwright/index.html');
+    await mainFrame.goto(serverSideCallMetadata(), process.env.PW_HMR ? 'http://localhost:44225' : 'https://playwright/index.html', { timeout: 0 });
   }
 
   static factory(context: BrowserContext): IRecorderAppFactory {
@@ -112,9 +112,12 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       persistentContextOptions: {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
-        useWebSocket: isUnderTest(),
+        cdpPort: isUnderTest() ? 0 : undefined,
         handleSIGINT: recorder.handleSIGINT,
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
+        // Use the same channel as the inspected context to guarantee that the browser is installed.
+        channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
+        timeout: 0,
       }
     });
     const controller = new ProgressController(serverSideCallMetadata(), context._browser);

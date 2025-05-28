@@ -95,10 +95,10 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
         const transaction = openRequest.result.transaction(['store', 'store2'], 'readwrite');
         transaction
             .objectStore('store')
-            .put({ name: 'foo', date: new Date(0) });
+            .put({ name: 'foo', date: new Date(0), null: null });
         transaction
             .objectStore('store2')
-            .put('bar', 'foo');
+            .put(new TextEncoder().encode('bar'), 'foo');
         transaction.addEventListener('complete', resolve);
         transaction.addEventListener('error', reject);
       };
@@ -124,21 +124,23 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
   expect(cookie).toEqual('username=John Doe');
   const idbValues = await page2.evaluate(() => new Promise((resolve, reject) => {
     const openRequest = indexedDB.open('db', 42);
-    openRequest.addEventListener('success', () => {
+    openRequest.addEventListener('success', async () => {
       const db = openRequest.result;
       const transaction = db.transaction(['store', 'store2'], 'readonly');
       const request1 = transaction.objectStore('store').get('foo');
       const request2 = transaction.objectStore('store2').get('foo');
 
-      Promise.all([request1, request2].map(request => new Promise((resolve, reject) => {
+      const [result1, result2] = await Promise.all([request1, request2].map(request => new Promise((resolve, reject) => {
         request.addEventListener('success', () => resolve(request.result));
         request.addEventListener('error', () => reject(request.error));
-      }))).then(resolve, reject);
+      })));
+
+      resolve([result1, new TextDecoder().decode(result2 as any)]);
     });
     openRequest.addEventListener('error', () => reject(openRequest.error));
   }));
   expect(idbValues).toEqual([
-    { name: 'foo', date: new Date(0) },
+    { name: 'foo', date: new Date(0), null: null },
     'bar'
   ]);
   await context2.close();
@@ -447,4 +449,26 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
   `);
 
   expect(await context.storageState()).toEqual({ cookies: [], origins: [] });
+});
+
+it('should support empty indexedDB', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35760' } }, async ({ page, server, contextFactory }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => new Promise<void>(resolve => {
+    const openRequest = indexedDB.open('unused-db');
+    openRequest.onsuccess = () => resolve();
+    openRequest.onerror = () => resolve();
+  }));
+  const storageState = await page.context().storageState({ indexedDB: true });
+  expect(storageState.origins).toEqual([{
+    origin: server.PREFIX,
+    localStorage: [],
+    indexedDB: [{
+      name: 'unused-db',
+      version: 1,
+      stores: [],
+    }]
+  }]);
+
+  const context = await contextFactory({ storageState });
+  expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
 });

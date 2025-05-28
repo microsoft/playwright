@@ -20,8 +20,7 @@ import path from 'path';
 import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
-import { kTopLevelAttachmentPrefix } from '../isomorphic/util';
-import { filteredStackTrace } from '../util';
+import { filteredStackTrace, stepTitle } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
@@ -29,10 +28,11 @@ import type { TestInfoErrorImpl } from '../common/ipc';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
+import type { TestStepCategory } from '../util';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
-const version: trace.VERSION = 7;
+const version: trace.VERSION = 8;
 let traceOrdinal = 0;
 
 type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;
@@ -48,7 +48,6 @@ export class TestTracing {
   private _tracesDir: string;
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _didFinishTestFunctionAndAfterEachHooks = false;
-  private _lastActionId = 0;
 
   constructor(testInfo: TestInfoImpl, artifactsDir: string) {
     this._testInfo = testInfo;
@@ -268,17 +267,18 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(callId: string, parentId: string | undefined, category: string, apiName: string, params: Record<string, any> | undefined, stack: StackFrame[]) {
+  appendBeforeActionForStep(callId: string, parentId: string | undefined, options: { title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[] }) {
     this._appendTraceEvent({
       type: 'before',
       callId,
+      stepId: callId,
       parentId,
       startTime: monotonicTime(),
       class: 'Test',
       method: 'step',
-      apiName,
-      params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
-      stack,
+      title: stepTitle(options.category, options.title),
+      params: Object.fromEntries(Object.entries(options.params || {}).map(([name, value]) => [name, generatePreview(value)])),
+      stack: options.stack,
     });
   }
 
@@ -291,16 +291,6 @@ export class TestTracing {
       annotations,
       error,
     });
-  }
-
-  appendTopLevelAttachment(attachment: Attachment) {
-    // trace viewer has no means of representing attachments outside of a step,
-    // so we create an artificial action that's hidden in the UI
-    // the alternative would be to have one hidden step at the end with all top-level attachments,
-    // but that would delay useful information in live traces.
-    const callId = `${kTopLevelAttachmentPrefix}@${++this._lastActionId}`;
-    this.appendBeforeActionForStep(callId, undefined, kTopLevelAttachmentPrefix, `${kTopLevelAttachmentPrefix} "${attachment.name}"`, undefined, []);
-    this.appendAfterActionForStep(callId, undefined, [attachment]);
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {

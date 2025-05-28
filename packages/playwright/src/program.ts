@@ -23,7 +23,7 @@ import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
+import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 export { program } from 'playwright-core/lib/cli/program';
 import { prepareErrorStack } from './reporters/base';
 import { showHTMLReport } from './reporters/html';
@@ -77,9 +77,7 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const config = await loadConfigFromFileRestartIfNeeded(opts.config);
-    if (!config)
-      return;
+    const config = await loadConfigFromFile(opts.config);
     const runner = new Runner(config);
     const { status } = await runner.clearCache();
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
@@ -102,9 +100,7 @@ function addDevServerCommand(program: Command) {
   command.description('start dev server');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async options => {
-    const config = await loadConfigFromFileRestartIfNeeded(options.config);
-    if (!config)
-      return;
+    const config = await loadConfigFromFile(options.config);
     const runner = new Runner(config);
     const { status } = await runner.runDevServer();
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
@@ -161,10 +157,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
-  const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
-  if (!config)
-    return;
-
+  const config = await loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
@@ -191,8 +184,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
     });
     await stopProfiling('runner');
-    if (status === 'restarted')
-      return;
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
@@ -211,8 +202,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
         }
     );
     await stopProfiling('runner');
-    if (status === 'restarted')
-      return;
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
@@ -229,8 +218,6 @@ async function runTestServer(opts: { [key: string]: any }) {
   const host = opts.host || 'localhost';
   const port = opts.port ? +opts.port : 0;
   const status = await testServer.runTestServer(opts.config, { }, { host, port });
-  if (status === 'restarted')
-    return;
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
@@ -240,9 +227,7 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
   const stdoutWrite = process.stdout.write.bind(process.stdout);
   process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
   try {
-    const config = await loadConfigFromFileRestartIfNeeded(configFile);
-    if (!config)
-      return;
+    const config = await loadConfigFromFile(configFile);
     const runner = new Runner(config);
     const result = await callback(runner);
     stdoutWrite(JSON.stringify(result, undefined, 2), () => {
@@ -265,9 +250,7 @@ async function listTestFiles(opts: { [key: string]: any }) {
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
-  const config = configFile ? await loadConfigFromFileRestartIfNeeded(configFile) : await loadEmptyConfigForMergeReports();
-  if (!config)
-    return;
+  const config = configFile ? await loadConfigFromFile(configFile) : await loadEmptyConfigForMergeReports();
 
   const dir = path.resolve(process.cwd(), reportDir || '');
   const dirStat = await fs.promises.stat(dir).catch(e => null);

@@ -41,7 +41,7 @@ export const webView2Test = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
       shell: true,
       env: {
         ...process.env,
-        WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort} ${chromiumSwitches.join(' ')}`,
+        WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort} ${chromiumSwitches().join(' ')}`,
         WEBVIEW2_USER_DATA_FOLDER: path.join(fs.realpathSync.native(os.tmpdir()), `playwright-webview2-tests/user-data-dir-${testInfo.workerIndex}`),
       }
     });

@@ -42,6 +42,7 @@ import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
+import type { TestAnnotation } from '@playwright/test';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -51,7 +52,7 @@ export const Workbench: React.FunctionComponent<{
   isLive?: boolean,
   hideTimeline?: boolean,
   status?: UITestStatus,
-  annotations?: { type: string; description?: string; }[];
+  annotations?: TestAnnotation[];
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
@@ -104,7 +105,7 @@ export const Workbench: React.FunctionComponent<{
       // Select the last non-after hooks item.
       let index = model.actions.length - 1;
       for (let i = 0; i < model.actions.length; ++i) {
-        if (model.actions[i].apiName === 'After Hooks' && i) {
+        if (model.actions[i].title === 'After Hooks' && i) {
           index = i - 1;
           break;
         }

@@ -29,6 +29,11 @@ test('basics should work', async ({ runTSC }) => {
           expect(testInfo.title).toBe('my test');
           testInfo.annotations[0].type;
           test.setTimeout(123);
+          testInfo.snapshotPath('a', 'b');
+          testInfo.snapshotPath();
+          testInfo.snapshotPath('foo.png', { kind: 'screenshot' });
+          // @ts-expect-error
+          testInfo.snapshotPath('a', 'b', { kind: 'aria' });
         });
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
@@ -215,6 +220,27 @@ test('step.skip returns void ', async ({ runTSC }) => {
         const good: void = await test.step.skip('my step', async () => {
           return 2024;
         });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('calling custom matcher on expect.poll should return Promise', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35635' } }, async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect as baseExpect } from '@playwright/test';
+      const expect = baseExpect.extend({
+        toBeFoo(actual) {
+          return {
+            pass: actual === 'foo',
+            message: () => 'not foo!',
+          };
+        }
+      });
+      test('test', async () => {
+        const pollingPromise: Promise<any> = expect.poll(() => 'foo').toBeFoo();
+        await pollingPromise;
       });
     `
   });

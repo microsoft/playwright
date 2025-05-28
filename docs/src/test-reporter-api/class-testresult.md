@@ -14,6 +14,21 @@ A result of a single [TestCase] run.
 
 The list of files or buffers attached during the test execution through [`property: TestInfo.attachments`].
 
+## property: TestResult.annotations
+* since: v1.52
+- type: <[Array]<[Object]>>
+  - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
+  - `description` ?<[string]> Optional description.
+
+The list of annotations applicable to the current test. Includes:
+* annotations defined on the test or suite via [`method: Test.(call)`] and [`method: Test.describe`];
+* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`];
+* annotations appended to [`property: TestInfo.annotations`] during the test execution.
+
+Annotations are available during test execution through [`property: TestInfo.annotations`].
+
+Learn more about [test annotations](../test-annotations.md).
+
 ## property: TestResult.duration
 * since: v1.10
 - type: <[float]>
@@ -37,7 +52,7 @@ Errors thrown during the test execution.
 * since: v1.10
 - type: <[int]>
 
-When test is retries multiple times, each retry attempt is given a sequential number.
+When test is retried multiple times, each retry attempt is given a sequential number.
 
 Learn more about [test retries](../test-retries.md#retries).
 

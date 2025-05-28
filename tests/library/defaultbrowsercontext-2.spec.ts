@@ -253,3 +253,32 @@ it('user agent is up to date', async ({ launchPersistent, browser, mode }) => {
   expect(await page.evaluate(() => navigator.userAgent)).toBe(userAgent);
   await context.close();
 });
+
+it('dialog.accept should work', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35663' }
+}, async ({ launchPersistent, mode }) => {
+  it.skip(mode !== 'default');
+  const { context, page } = await launchPersistent();
+  await page.goto('data:text/html,<html><title>Title</title><button onclick="alert(\'Alert\')">Button</button></html>');
+  let shown = false;
+  page.on('dialog', dialog => {
+    shown = true;
+    void dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Button' }).click();
+  expect(shown).toBe(true);
+  await context.close();
+});
+
+it('exposes browser', async ({ launchPersistent }) => {
+  const { context } = await launchPersistent();
+  const browser = context.browser();
+  expect(browser.version()).toBeTruthy();
+  const page = await browser.newPage();
+  await page.goto('data:text/html,<html><title>Title</title></html>');
+  expect(await page.title()).toBe('Title');
+  await browser.close();
+  expect(context.pages().length).toBe(0);
+  // Next line should not throw.
+  await context.close();
+});

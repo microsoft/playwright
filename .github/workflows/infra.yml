@@ -24,8 +24,7 @@ jobs:
         node-version: 18
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
-    - run: npx playwright install
+    - run: npx playwright install --with-deps
     - run: npm run lint
     - name: Verify clean tree
       run: |
@@ -36,6 +35,7 @@ jobs:
         fi
     - name: Audit prod NPM dependencies
       run: node utils/check_audit.js
+      continue-on-error: true
   lint-snippets:
     name: "Lint snippets"
     runs-on: ubuntu-latest

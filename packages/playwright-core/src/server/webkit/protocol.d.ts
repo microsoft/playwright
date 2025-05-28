@@ -26,7 +26,6 @@ export module Protocol {
        * Equal to the corresponding `transition-property` CSS property. Should not be provided if `animationName` is also provided.
        */
       cssTransitionProperty?: string;
-      effect?: Effect;
       /**
        * Backtrace that was captured when this `WebAnimation` was created.
        */
@@ -104,10 +103,6 @@ export module Protocol {
      */
     export type effectChangedPayload = {
       animationId: AnimationId;
-      /**
-       * This is omitted when the effect is removed without a replacement.
-       */
-      effect?: Effect;
     }
     /**
      * Dispatched whenever the target of any effect of any animation is changed in any way.
@@ -154,6 +149,18 @@ export module Protocol {
     export type disableParameters = {
     }
     export type disableReturnValue = {
+    }
+    /**
+     * Gets the `Effect` for the animation with the given `AnimationId`.
+     */
+    export type requestEffectParameters = {
+      animationId: AnimationId;
+    }
+    export type requestEffectReturnValue = {
+      /**
+       * This is omitted when there is no effect.
+       */
+      effect?: Effect;
     }
     /**
      * Gets the `DOM.NodeId` for the target of the effect of the animation with the given `AnimationId`.
@@ -794,7 +801,7 @@ export module Protocol {
     /**
      * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event";
+    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event"|"slot-assigned"|"slot-filled";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -1429,7 +1436,7 @@ export module Protocol {
     /**
      * Channels for different types of log messages.
      */
-    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"payment-request"|"other";
+    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"accessibility"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"payment-request"|"other";
     /**
      * Level of logging.
      */
@@ -2164,6 +2171,8 @@ export module Protocol {
        * The native width of the video track in CSS pixels
        */
       width: number;
+      spatialVideoMetadata?: SpatialVideoMetadata;
+      videoProjectionMetadata?: VideoProjectionMetadata;
     }
     /**
      * WebCodecs VideoColorSpace
@@ -2203,26 +2212,41 @@ export module Protocol {
        */
       totalVideoFrames: number;
     }
+    /**
+     * A structure containing metadata describing spatial video properties.
+     */
+    export interface SpatialVideoMetadata {
+      width: number;
+      height: number;
+      /**
+       * The horizontal field-of-view measurement, in degrees
+       */
+      horizontalFOVDegrees: number;
+      /**
+       * The distance between the centers of the lenses in a camera system, in micrometers
+       */
+      baseline: number;
+      /**
+       * The relative shift of the left and right eye images, as a percentage.
+       */
+      disparityAdjustment: number;
+    }
+    /**
+     * Video Projection Metadata Kind.
+     */
+    export type VideoProjectionMetadataKind = "unknown"|"equirectangular"|"half-equirectangular"|"equi-angular-cubemap"|"parametric"|"pyramid"|"apple-immersive-video";
+    /**
+     * A structure containing metadata describing video projections.
+     */
+    export interface VideoProjectionMetadata {
+      /**
+       * The kind of video projection.
+       */
+      kind: VideoProjectionMetadataKind;
+    }
     export interface ViewportSize {
       width: number;
       height: number;
-    }
-    /**
-     * Data to construct File object.
-     */
-    export interface FilePayload {
-      /**
-       * File name.
-       */
-      name: string;
-      /**
-       * File type.
-       */
-      type: string;
-      /**
-       * Base64-encoded file data.
-       */
-      data: string;
     }
     
     /**
@@ -2481,6 +2505,27 @@ export module Protocol {
       depth?: number;
     }
     export type requestChildNodesReturnValue = {
+    }
+    /**
+     * Requests the <code>HTMLSlotElement</code> that the node with the given id is assigned to.
+     */
+    export type requestAssignedSlotParameters = {
+      nodeId: NodeId;
+    }
+    export type requestAssignedSlotReturnValue = {
+      /**
+       * Not provided if the given node is not assigned to a <code>HTMLSlotElement</code>.
+       */
+      slotElementId?: NodeId;
+    }
+    /**
+     * Requests the list of assigned nodes for the <code>HTMLSlotElement</code> with the given id.
+     */
+    export type requestAssignedNodesParameters = {
+      slotElementId: NodeId;
+    }
+    export type requestAssignedNodesReturnValue = {
+      assignedNodeIds: NodeId[];
     }
     /**
      * Executes <code>querySelector</code> on a given node.
@@ -3287,13 +3332,9 @@ might return multiple quads for inline nodes.
        */
       objectId: Runtime.RemoteObjectId;
       /**
-       * Files to set
-       */
-      files?: FilePayload[];
-      /**
        * File paths to set
        */
-      paths?: string[];
+      paths: string[];
     }
     export type setInputFilesReturnValue = {
     }
@@ -4247,11 +4288,11 @@ might return multiple quads for inline nodes.
       url: string;
       shouldBlackbox: boolean;
       /**
-       * If <code>true</code>, <code>url</code> is case sensitive.
+       * If <code>true</code>, <code>url</code> is case sensitive. Defaults to true.
        */
       caseSensitive?: boolean;
       /**
-       * If <code>true</code>, treat <code>url</code> as regular expression.
+       * If <code>true</code>, treat <code>url</code> as regular expression. Defaults to false.
        */
       isRegex?: boolean;
       /**
@@ -9200,6 +9241,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   export interface CommandParameters {
     "Animation.enable": Animation.enableParameters;
     "Animation.disable": Animation.disableParameters;
+    "Animation.requestEffect": Animation.requestEffectParameters;
     "Animation.requestEffectTarget": Animation.requestEffectTargetParameters;
     "Animation.resolveAnimation": Animation.resolveAnimationParameters;
     "Animation.startTracking": Animation.startTrackingParameters;
@@ -9251,6 +9293,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelParameters;
     "DOM.getDocument": DOM.getDocumentParameters;
     "DOM.requestChildNodes": DOM.requestChildNodesParameters;
+    "DOM.requestAssignedSlot": DOM.requestAssignedSlotParameters;
+    "DOM.requestAssignedNodes": DOM.requestAssignedNodesParameters;
     "DOM.querySelector": DOM.querySelectorParameters;
     "DOM.querySelectorAll": DOM.querySelectorAllParameters;
     "DOM.setNodeName": DOM.setNodeNameParameters;
@@ -9504,6 +9548,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   export interface CommandReturnValues {
     "Animation.enable": Animation.enableReturnValue;
     "Animation.disable": Animation.disableReturnValue;
+    "Animation.requestEffect": Animation.requestEffectReturnValue;
     "Animation.requestEffectTarget": Animation.requestEffectTargetReturnValue;
     "Animation.resolveAnimation": Animation.resolveAnimationReturnValue;
     "Animation.startTracking": Animation.startTrackingReturnValue;
@@ -9555,6 +9600,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelReturnValue;
     "DOM.getDocument": DOM.getDocumentReturnValue;
     "DOM.requestChildNodes": DOM.requestChildNodesReturnValue;
+    "DOM.requestAssignedSlot": DOM.requestAssignedSlotReturnValue;
+    "DOM.requestAssignedNodes": DOM.requestAssignedNodesReturnValue;
     "DOM.querySelector": DOM.querySelectorReturnValue;
     "DOM.querySelectorAll": DOM.querySelectorAllReturnValue;
     "DOM.setNodeName": DOM.setNodeNameReturnValue;

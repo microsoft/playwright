@@ -13,7 +13,8 @@ async def run(playwright: Playwright):
     assert response.ok
     assert response.status == 200
     assert response.headers["content-type"] == "application/json; charset=utf-8"
-    assert response.json()["name"] == "foobar"
+    json_data = await response.json()
+    assert json_data["name"] == "foobar"
     assert await response.body() == '{"status": "ok"}'
 
 

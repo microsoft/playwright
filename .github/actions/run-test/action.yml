@@ -41,9 +41,6 @@ runs:
         npm ci
         echo "::endgroup::"
       shell: bash
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     - run: |
         echo "::group::npm run build"
         npm run build

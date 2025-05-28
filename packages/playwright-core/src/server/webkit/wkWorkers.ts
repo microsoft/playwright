@@ -48,8 +48,8 @@ export class WKWorkers {
           });
         });
         this._workerSessions.set(event.workerId, workerSession);
-        worker._createExecutionContext(new WKExecutionContext(workerSession, undefined));
-        this._page._addWorker(event.workerId, worker);
+        worker.createExecutionContext(new WKExecutionContext(workerSession, undefined));
+        this._page.addWorker(event.workerId, worker);
         workerSession.on('Console.messageAdded', event => this._onConsoleMessage(worker, event));
         Promise.all([
           workerSession.send('Runtime.enable'),
@@ -57,7 +57,7 @@ export class WKWorkers {
           session.send('Worker.initialized', { workerId: event.workerId })
         ]).catch(e => {
           // Worker can go as we are initializing it.
-          this._page._removeWorker(event.workerId);
+          this._page.removeWorker(event.workerId);
         });
       }),
       eventsHelper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
@@ -72,13 +72,13 @@ export class WKWorkers {
           return;
         workerSession.dispose();
         this._workerSessions.delete(event.workerId);
-        this._page._removeWorker(event.workerId);
+        this._page.removeWorker(event.workerId);
       })
     ];
   }
 
   clear() {
-    this._page._clearWorkers();
+    this._page.clearWorkers();
     this._workerSessions.clear();
   }
 
@@ -95,13 +95,13 @@ export class WKWorkers {
       derivedType = 'timeEnd';
 
     const handles = (parameters || []).map(p => {
-      return createHandle(worker._existingExecutionContext!, p);
+      return createHandle(worker.existingExecutionContext!, p);
     });
     const location: types.ConsoleMessageLocation = {
       url: url || '',
       lineNumber: (lineNumber || 1) - 1,
       columnNumber: (columnNumber || 1) - 1
     };
-    this._page._addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
+    this._page.addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
   }
 }

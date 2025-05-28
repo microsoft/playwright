@@ -87,7 +87,7 @@ class Reporter {
 
   onStepEnd(test, result, step) {
     if (this.options.printSteps) {
-      console.log('onStepEnd: ' + step.title);
+      console.log('onStepEnd: [' + step.category + '] ' + step.title);
       if (step.error)
         this.printErrors([step.error]);
     }
@@ -479,8 +479,8 @@ var import_test = __toModule(require("@playwright/test"));
       expect(result.output).toBe(`
 onBegin: 1 tests total
 onTestBegin:  > a.spec.js > test; retry #0
-onStepEnd: Before Hooks
-onStepEnd: expect.toBe
+onStepEnd: [hook] Before Hooks
+onStepEnd: [expect] toBe
   error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
   ======
     3 |           test('test', async () => {
@@ -491,7 +491,7 @@ onStepEnd: expect.toBe
     7 |           });
     8 |
   ======
-onStepEnd: step
+onStepEnd: [test.step] step
   error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
   ======
     3 |           test('test', async () => {
@@ -502,8 +502,8 @@ onStepEnd: step
     7 |           });
     8 |
   ======
-onStepEnd: After Hooks
-onStepEnd: Worker Cleanup
+onStepEnd: [hook] After Hooks
+onStepEnd: [hook] Worker Cleanup
 onTestEnd:  > a.spec.js > test; retry #0
   error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
   ======
@@ -775,7 +775,7 @@ test('step.attach attachments are reported on right steps', async ({ runInlineTe
 test('attachments are reported in onStepEnd', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14364' } }, async ({ runInlineTest }) => {
   class TestReporter implements Reporter {
     onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-      console.log(`%%${step.title}: ${result.attachments.length} attachments in result`);
+      console.log(`%%[${step.category}] ${step.title}: ${result.attachments.length} attachments in result`);
     }
   }
   const result = await runInlineTest({
@@ -794,9 +794,9 @@ test('attachments are reported in onStepEnd', { annotation: { type: 'issue', des
   }, { 'reporter': '', 'workers': 1 });
 
   expect(result.outputLines).toEqual([
-    'Before Hooks: 0 attachments in result',
-    'step: 1 attachments in result',
-    'attach "4": 2 attachments in result',
-    'After Hooks: 2 attachments in result',
+    '[hook] Before Hooks: 0 attachments in result',
+    '[test.step] step: 1 attachments in result',
+    '[test.attach] 4: 2 attachments in result',
+    '[hook] After Hooks: 2 attachments in result',
   ]);
 });

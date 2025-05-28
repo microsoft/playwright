@@ -17,22 +17,21 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { FloatingPromiseScope } from './floatingPromiseScope';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
+import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
-
+import type { TestStepCategory } from '../util';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
@@ -40,7 +39,7 @@ export interface TestStepInternal {
   attachmentIndices: number[];
   stepId: string;
   title: string;
-  category: string;
+  category: TestStepCategory;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
@@ -52,15 +51,21 @@ export interface TestStepInternal {
   box?: boolean;
 }
 
+type SnapshotNames = {
+  lastAnonymousSnapshotIndex: number;
+  lastNamedSnapshotIndex: { [key: string]: number };
+};
+
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
+  private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
+  private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
-  readonly _floatingPromiseScope: FloatingPromiseScope = new FloatingPromiseScope();
   readonly _uniqueSymbol;
 
   _wasInterrupted = false;
@@ -92,7 +97,7 @@ export class TestInfoImpl implements TestInfo {
   readonly fn: Function;
   expectedStatus: TestStatus;
   duration: number = 0;
-  readonly annotations: Annotation[] = [];
+  readonly annotations: TestAnnotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
   status: TestStatus = 'passed';
   snapshotSuffix: string = '';
@@ -324,7 +329,12 @@ export class TestInfoImpl implements TestInfo {
       location: data.location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.category, data.apiName || data.title, data.params, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, {
+      title: data.title,
+      category: data.category,
+      params: data.params,
+      stack: data.location ? [data.location] : []
+    });
     return step;
   }
 
@@ -407,8 +417,8 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: `attach "${name}"`,
-      category: 'attach',
+      title: name,
+      category: 'test.attach',
     });
     this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
     step.complete({});
@@ -416,10 +426,13 @@ export class TestInfoImpl implements TestInfo {
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    if (stepId)
+    if (stepId) {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
-    else
-      this._tracing.appendTopLevelAttachment(attachment);
+    } else {
+      const callId = `attach@${createGuid()}`;
+      this._tracing.appendBeforeActionForStep(callId, undefined, { title: attachment.name, category: 'test.attach', stack: [] });
+      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
+    }
 
     this._onAttach({
       testId: this.testId,
@@ -450,17 +463,75 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], extension?: string) {
-    const subPath = path.join(...pathSegments);
-    const dir = path.dirname(subPath);
-    const ext = extension ?? path.extname(subPath);
-    const name = path.basename(subPath, ext);
+  _resolveSnapshotPaths(kind: 'snapshot' | 'screenshot' | 'aria', name: string | string[] | undefined, updateSnapshotIndex: 'updateSnapshotIndex' | 'dontUpdateSnapshotIndex', anonymousExtension?: string) {
+    // NOTE: snapshot path must not ever change for backwards compatibility!
+
+    const snapshotNames = kind === 'aria' ? this._ariaSnapshotNames : this._snapshotNames;
+    const defaultExtensions = { 'aria': '.aria.yml', 'screenshot': '.png', 'snapshot': '.txt' };
+    const ariaAwareExtname = (filePath: string) => kind === 'aria' && filePath.endsWith('.aria.yml') ? '.aria.yml' : path.extname(filePath);
+
+    let subPath: string;
+    let ext: string;
+    let relativeOutputPath: string;
+
+    if (!name) {
+      // Consider the use case below. We should save actual to different paths, so we use |nextAnonymousSnapshotIndex|.
+      //
+      //   expect.toMatchSnapshot('a.png')
+      //   // noop
+      //   expect.toMatchSnapshot('a.png')
+      const index = snapshotNames.lastAnonymousSnapshotIndex + 1;
+      if (updateSnapshotIndex === 'updateSnapshotIndex')
+        snapshotNames.lastAnonymousSnapshotIndex = index;
+      const fullTitleWithoutSpec = [...this.titlePath.slice(1), index].join(' ');
+      ext = anonymousExtension ?? defaultExtensions[kind];
+      subPath = sanitizeFilePathBeforeExtension(trimLongString(fullTitleWithoutSpec) + ext, ext);
+      // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
+      relativeOutputPath = sanitizeFilePathBeforeExtension(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength) + ext, ext);
+    } else {
+      if (Array.isArray(name)) {
+        // We intentionally do not sanitize user-provided array of segments,
+        // assuming it is a file system path.
+        // See https://github.com/microsoft/playwright/pull/9156.
+        subPath = path.join(...name);
+        relativeOutputPath = path.join(...name);
+        ext = ariaAwareExtname(subPath);
+      } else {
+        ext = ariaAwareExtname(name);
+        subPath = sanitizeFilePathBeforeExtension(name, ext);
+        // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
+        relativeOutputPath = sanitizeFilePathBeforeExtension(trimLongString(name, windowsFilesystemFriendlyLength), ext);
+      }
+      const index = (snapshotNames.lastNamedSnapshotIndex[relativeOutputPath] || 0) + 1;
+      if (updateSnapshotIndex === 'updateSnapshotIndex')
+        snapshotNames.lastNamedSnapshotIndex[relativeOutputPath] = index;
+      if (index > 1)
+        relativeOutputPath = addSuffixToFilePath(relativeOutputPath, `-${index - 1}`);
+    }
+
+    const absoluteSnapshotPath = this._applyPathTemplate(kind, subPath, ext);
+    return { absoluteSnapshotPath, relativeOutputPath };
+  }
+
+  private _applyPathTemplate(kind: 'snapshot' | 'screenshot' | 'aria', relativePath: string, ext: string) {
+    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
+    let template: string;
+    if (kind === 'screenshot') {
+      template = this._projectInternal.expect?.toHaveScreenshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || legacyTemplate;
+    } else if (kind === 'aria') {
+      const ariaDefaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}';
+      template = this._projectInternal.expect?.toMatchAriaSnapshot?.pathTemplate || this._projectInternal.snapshotPathTemplate || ariaDefaultTemplate;
+    } else {
+      template = this._projectInternal.snapshotPathTemplate || legacyTemplate;
+    }
+
+    const dir = path.dirname(relativePath);
+    const name = path.basename(relativePath, ext);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
-    const actualTemplate = (template || this._projectInternal.snapshotPathTemplate || defaultTemplate);
-    const snapshotPath = actualTemplate
+    const snapshotPath = template
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
@@ -476,9 +547,24 @@ export class TestInfoImpl implements TestInfo {
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }
 
-  snapshotPath(...pathSegments: string[]) {
-    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments);
+  snapshotPath(...name: string[]): string;
+  snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
+  snapshotPath(...args: any[]) {
+    let name: string[] = args;
+    let kind: 'snapshot' | 'screenshot' | 'aria' = 'snapshot';
+
+    const options = args[args.length - 1];
+    if (options && typeof options === 'object') {
+      kind = options.kind ?? kind;
+      name = args.slice(0, -1);
+    }
+
+    if (!['snapshot', 'screenshot', 'aria'].includes(kind))
+      throw new Error(`testInfo.snapshotPath: unknown kind "${kind}", must be one of "snapshot", "screenshot" or "aria"`);
+
+    // Assume a zero/single path segment corresponds to `toHaveScreenshot(name)`,
+    // while multiple path segments correspond to `toHaveScreenshot([...name])`.
+    return this._resolveSnapshotPaths(kind, name.length <= 1 ? name[0] : name, 'dontUpdateSnapshotIndex').absoluteSnapshotPath;
   }
 
   skip(...args: [arg?: any, description?: string]) {
@@ -503,7 +589,7 @@ export class TestInfoImpl implements TestInfo {
 }
 
 export class TestStepInfoImpl implements TestStepInfo {
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
 
   private _testInfo: TestInfoImpl;
   private _stepId: string;

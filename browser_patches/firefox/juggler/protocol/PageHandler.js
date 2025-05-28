@@ -302,10 +302,11 @@ class PageHandler {
     return await this._contentPage.send('setFileInputFiles', options);
   }
 
-  async ['Page.setEmulatedMedia']({colorScheme, type, reducedMotion, forcedColors}) {
+  async ['Page.setEmulatedMedia']({colorScheme, type, reducedMotion, forcedColors, contrast}) {
     this._pageTarget.setColorScheme(colorScheme || null);
     this._pageTarget.setReducedMotion(reducedMotion || null);
     this._pageTarget.setForcedColors(forcedColors || null);
+    this._pageTarget.setContrast(contrast || null);
     this._pageTarget.setEmulatedMedia(type);
   }
 

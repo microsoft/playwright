@@ -19,7 +19,7 @@ import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAl
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
-import type { InjectedScript } from './injected/injectedScript';
+import type { InjectedScript } from '@injected/injectedScript';
 import type { JSHandle } from './javascript';
 import type * as types from './types';
 import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
@@ -45,8 +45,8 @@ export class FrameSelectors {
   }
 
   private _parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
-    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.context()._options.strictSelectors;
-    return this.frame._page.context().selectors().parseSelector(selector, strict);
+    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.browserContext._options.strictSelectors;
+    return this.frame._page.browserContext.selectors().parseSelector(selector, strict);
   }
 
   async query(selector: string, options?: types.StrictOptions, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
@@ -111,6 +111,22 @@ export class FrameSelectors {
     return Promise.all(result);
   }
 
+  private _jumpToAriaRefFrameIfNeeded(selector: string, info: SelectorInfo, frame: Frame): Frame {
+    if (info.parsed.parts[0].name !== 'aria-ref')
+      return frame;
+    const body = info.parsed.parts[0].body as string;
+    const match = body.match(/^f(\d+)e\d+$/);
+    if (!match)
+      return frame;
+    const frameIndex = +match[1];
+    const page = this.frame._page;
+    const frameId = page.lastSnapshotFrameIds[frameIndex - 1];
+    const jumptToFrame = frameId ? page.frameManager.frame(frameId) : null;
+    if (!jumptToFrame)
+      throw new InvalidSelectorError(`Invalid frame in aria-ref selector "${selector}"`);
+    return jumptToFrame;
+  }
+
   async resolveFrameForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame | null> {
     let frame: Frame = this.frame;
     const frameChunks = splitSelectorByFrame(selector);
@@ -126,6 +142,7 @@ export class FrameSelectors {
 
     for (let i = 0; i < frameChunks.length - 1; ++i) {
       const info = this._parseSelector(frameChunks[i], options);
+      frame = this._jumpToAriaRefFrameIfNeeded(selector, info, frame);
       const context = await frame._context(info.world);
       const injectedScript = await context.injectedScript();
       const handle = await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
@@ -137,7 +154,7 @@ export class FrameSelectors {
       const element = handle.asElement() as ElementHandle<Element> | null;
       if (!element)
         return null;
-      const maybeFrame = await frame._page._delegate.getContentFrame(element);
+      const maybeFrame = await frame._page.delegate.getContentFrame(element);
       element.dispose();
       if (!maybeFrame)
         return null;
@@ -146,7 +163,9 @@ export class FrameSelectors {
     // If we end up in the different frame, we should start from the frame root, so throw away the scope.
     if (frame !== this.frame)
       scope = undefined;
-    return { frame, info: frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options), scope };
+    const lastChunk = frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options);
+    frame = this._jumpToAriaRefFrameIfNeeded(selector, lastChunk, frame);
+    return { frame, info: lastChunk, scope };
   }
 
   async resolveInjectedForSelector(selector: string, options?: { strict?: boolean, mainWorld?: boolean }, scope?: ElementHandle): Promise<{ injected: JSHandle<InjectedScript>, info: SelectorInfo, frame: Frame, scope?: ElementHandle } | undefined> {
@@ -163,7 +182,7 @@ export class FrameSelectors {
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
   if (handle._context === context)
     return handle;
-  const adopted = await handle._page._delegate.adoptElementHandle(handle, context);
+  const adopted = await handle._page.delegate.adoptElementHandle(handle, context);
   handle.dispose();
   return adopted;
 }

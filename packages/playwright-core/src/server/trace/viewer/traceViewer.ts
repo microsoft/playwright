@@ -142,16 +142,6 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
-
-    if (process.env.EXPERIMENTAL_OPENAI_API_KEY)
-      response.appendHeader('Set-Cookie', `openai_api_key=${process.env.EXPERIMENTAL_OPENAI_API_KEY}`);
-    if (process.env.OPENAI_BASE_URL)
-      response.appendHeader('Set-Cookie', `openai_base_url=${process.env.OPENAI_BASE_URL}`);
-    if (process.env.EXPERIMENTAL_ANTHROPIC_API_KEY)
-      response.appendHeader('Set-Cookie', `anthropic_api_key=${process.env.EXPERIMENTAL_ANTHROPIC_API_KEY}`);
-    if (process.env.ANTHROPIC_BASE_URL)
-      response.appendHeader('Set-Cookie', `anthropic_base_url=${process.env.ANTHROPIC_BASE_URL}`);
-
     response.end();
     return true;
   });
@@ -184,9 +174,10 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     windowSize: { width: 1280, height: 800 },
     persistentContextOptions: {
       ...options?.persistentContextOptions,
-      useWebSocket: isUnderTest(),
+      cdpPort: isUnderTest() ? 0 : undefined,
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
+      timeout: 0,
     },
   });
 
@@ -204,7 +195,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   if (isUnderTest())
     page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
 
-  await page.mainFrame().goto(serverSideCallMetadata(), url);
+  await page.mainFrame().goto(serverSideCallMetadata(), url, { timeout: 0 });
   return page;
 }
 

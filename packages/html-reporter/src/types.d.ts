@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Metadata } from '@playwright/test';
+import type { TestAnnotation, Metadata } from '@playwright/test';
 
 export type Stats = {
   total: number;
@@ -38,6 +38,7 @@ export type Location = {
 
 export type HTMLReport = {
   metadata: Metadata;
+  title: string | undefined;
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
@@ -59,15 +60,13 @@ export type TestFileSummary = {
   stats: Stats;
 };
 
-export type TestCaseAnnotation = { type: string, description?: string };
-
 export type TestCaseSummary = {
   testId: string,
   title: string;
   path: string[];
   projectName: string;
   location: Location;
-  annotations: TestCaseAnnotation[];
+  annotations: TestAnnotation[];
   tags: string[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
@@ -98,6 +97,7 @@ export type TestResult = {
   errors: string[];
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
+  annotations: TestAnnotation[];
 };
 
 export type TestStep = {

@@ -17,7 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { isRegExp } from 'playwright-core/lib/utils';
 
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
@@ -25,7 +24,6 @@ import { errorWithFile, fileIsModule } from '../util';
 import { FullConfigInternal } from './config';
 import { configureESMLoader, configureESMLoaderTransformConfig, registerESMLoader } from './esmLoaderHost';
 import { addToCompilationCache } from '../transform/compilationCache';
-import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
 
 import type { ConfigLocation } from './config';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
@@ -102,6 +100,14 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
 }
 
 export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
+  // 0. Setup ESM loader if needed.
+  if (!registerESMLoader()) {
+    // In Node.js < 18, complain if the config file is ESM. Historically, we would restart
+    // the process with --loader, but now we require newer Node.js.
+    if (location.resolvedConfigFile && fileIsModule(location.resolvedConfigFile))
+      throw errorWithFile(location.resolvedConfigFile, `Playwright requires Node.js 18.19 or higher to load esm modules. Please update your version of Node.js.`);
+  }
+
   // 1. Setup tsconfig; configure ESM loader with tsconfig and compilation cache.
   setSingleTSConfig(overrides?.tsconfig);
   await configureESMLoader();
@@ -359,57 +365,11 @@ function resolveConfigFile(configFileOrDirectory: string): string | undefined {
   return configFileOrDirectory!;
 }
 
-export async function loadConfigFromFileRestartIfNeeded(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal | null> {
-  const location = resolveConfigLocation(configFile);
-  if (restartWithExperimentalTsEsm(location.resolvedConfigFile))
-    return null;
-  return await loadConfig(location, overrides, ignoreDeps);
+export async function loadConfigFromFile(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal> {
+  return await loadConfig(resolveConfigLocation(configFile), overrides, ignoreDeps);
 }
 
 export async function loadEmptyConfigForMergeReports() {
   // Merge reports is "different" for no good reason. It should not pick up local config from the cwd.
   return await loadConfig({ configDir: process.cwd() });
-}
-
-export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
-  // Opt-out switch.
-  if (process.env.PW_DISABLE_TS_ESM)
-    return false;
-
-  // There are two esm loader APIs:
-  // - Older API that needs a process restart. Available in Node 16, 17, and non-latest 18, 19 and 20.
-  // - Newer API that works in-process. Available in Node 21+ and latest 18, 19 and 20.
-
-  // First check whether we have already restarted with the ESM loader from the older API.
-  if ((globalThis as any).__esmLoaderPortPreV20) {
-    // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
-    process.execArgv = execArgvWithoutExperimentalLoaderOptions();
-    return false;
-  }
-
-  // Now check for the newer API presence.
-  if (!require('node:module').register) {
-    // With older API requiring a process restart, do so conditionally on the config.
-    const configIsModule = !!configFile && fileIsModule(configFile);
-    if (!force && !configIsModule)
-      return false;
-
-    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../../cli'), process.argv.slice(2), {
-      env: {
-        ...process.env,
-        PW_TS_ESM_LEGACY_LOADER_ON: '1',
-      },
-      execArgv: execArgvWithExperimentalLoaderOptions(),
-    });
-
-    innerProcess.on('close', (code: number | null) => {
-      if (code !== 0 && code !== null)
-        gracefullyProcessExitDoNotHang(code);
-    });
-    return true;
-  }
-
-  // With the newer API, always enable the ESM loader, because it does not need a restart.
-  registerESMLoader();
-  return false;
 }

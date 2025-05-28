@@ -295,7 +295,6 @@ jobs:
         node-version: 18
     - run: npm ci
     - run: npm run build
-    - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
 
   test_channel_chromium:

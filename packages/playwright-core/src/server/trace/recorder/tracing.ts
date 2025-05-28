@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { Snapshotter } from './snapshotter';
-import { commandsWithTracingSnapshots } from '../../../protocol/debug';
+import { methodMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
@@ -47,7 +47,7 @@ import type * as har from '@trace/har';
 import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 
-const version: trace.VERSION = 7;
+const version: trace.VERSION = 8;
 
 export type TracerOptions = {
   name?: string;
@@ -126,7 +126,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Discard previous chunk if any and ignore any errors there.
     await this.stopChunk({ mode: 'discard' }).catch(() => {});
     await this.stop();
-    this._snapshotter?.resetForReuse();
+    await this._snapshotter?.resetForReuse();
   }
 
   async start(options: TracerOptions) {
@@ -230,7 +230,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       type: 'before',
       callId: metadata.id,
       startTime: metadata.startTime,
-      apiName: name,
+      title: name,
       class: 'Tracing',
       method: 'tracingGroup',
       params: { },
@@ -639,7 +639,8 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
 }
 
 export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
-  return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
+  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
+  return !!metainfo?.snapshot;
 }
 
 function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string): trace.BeforeActionTraceEvent | null {
@@ -649,7 +650,7 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     type: 'before',
     callId: metadata.id,
     startTime: metadata.startTime,
-    apiName: metadata.apiName || metadata.type + '.' + metadata.method,
+    title: metadata.title,
     class: metadata.type,
     method: metadata.method,
     params: metadata.params,

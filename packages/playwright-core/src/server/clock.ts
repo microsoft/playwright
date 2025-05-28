@@ -14,80 +14,81 @@
  * limitations under the License.
  */
 
-import * as clockSource from '../generated/clockSource';
+import * as rawClockSource from '../generated/clockSource';
 
 import type { BrowserContext } from './browserContext';
+import type { InitScript } from './page';
 
 export class Clock {
   private _browserContext: BrowserContext;
-  private _scriptInstalled = false;
+  private _initScripts: InitScript[] = [];
 
   constructor(browserContext: BrowserContext) {
     this._browserContext = browserContext;
   }
 
-  markAsUninstalled() {
-    this._scriptInstalled = false;
+  async resetForReuse() {
+    await this._browserContext.removeInitScripts(this._initScripts);
+    this._initScripts = [];
   }
 
   async fastForward(ticks: number | string) {
     await this._installIfNeeded();
     const ticksMillis = parseTicks(ticks);
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('fastForward', ${Date.now()}, ${ticksMillis})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('fastForward', ${Date.now()}, ${ticksMillis})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.fastForward(${ticksMillis})`);
   }
 
   async install(time: number | string | undefined) {
     await this._installIfNeeded();
     const timeMillis = time !== undefined ? parseTime(time) : Date.now();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('install', ${Date.now()}, ${timeMillis})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('install', ${Date.now()}, ${timeMillis})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.install(${timeMillis})`);
   }
 
   async pauseAt(ticks: number | string) {
     await this._installIfNeeded();
     const timeMillis = parseTime(ticks);
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('pauseAt', ${Date.now()}, ${timeMillis})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('pauseAt', ${Date.now()}, ${timeMillis})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.pauseAt(${timeMillis})`);
   }
 
   async resume() {
     await this._installIfNeeded();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('resume', ${Date.now()})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('resume', ${Date.now()})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.resume()`);
   }
 
   async setFixedTime(time: string | number) {
     await this._installIfNeeded();
     const timeMillis = parseTime(time);
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setFixedTime', ${Date.now()}, ${timeMillis})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setFixedTime', ${Date.now()}, ${timeMillis})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.setFixedTime(${timeMillis})`);
   }
 
   async setSystemTime(time: string | number) {
     await this._installIfNeeded();
     const timeMillis = parseTime(time);
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setSystemTime', ${Date.now()}, ${timeMillis})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setSystemTime', ${Date.now()}, ${timeMillis})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.setSystemTime(${timeMillis})`);
   }
 
   async runFor(ticks: number | string) {
     await this._installIfNeeded();
     const ticksMillis = parseTicks(ticks);
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('runFor', ${Date.now()}, ${ticksMillis})`);
+    this._initScripts.push(await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('runFor', ${Date.now()}, ${ticksMillis})`));
     await this._evaluateInFrames(`globalThis.__pwClock.controller.runFor(${ticksMillis})`);
   }
 
   private async _installIfNeeded() {
-    if (this._scriptInstalled)
+    if (this._initScripts.length)
       return;
-    this._scriptInstalled = true;
     const script = `(() => {
       const module = {};
-      ${clockSource.source}
+      ${rawClockSource.source}
       globalThis.__pwClock = (module.exports.inject())(globalThis);
     })();`;
-    await this._browserContext.addInitScript(script);
+    this._initScripts.push(await this._browserContext.addInitScript(script));
     await this._evaluateInFrames(script);
   }
 

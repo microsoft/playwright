@@ -16,10 +16,20 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+          private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+          repositories: |
+            playwright
+            playwright-python
+            playwright-java
+            playwright-dotnet
       - name: Create GitHub issue
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const currentPlaywrightVersion = require('./package.json').version.match(/\d+\.\d+/)[0];
             const { data } = await github.rest.git.getCommit({
@@ -36,7 +46,7 @@ jobs:
             const title = '[Ports]: Backport client side changes for ' + currentPlaywrightVersion;
             for (const repo of ['playwright-python', 'playwright-java', 'playwright-dotnet']) {
               const { data: issuesData } = await github.rest.search.issuesAndPullRequests({
-                q: `is:issue is:open repo:microsoft/${repo} in:title "${title}" author:playwrightmachine`
+                q: `is:issue is:open repo:microsoft/${repo} in:title "${title}"`
               })
               let issueNumber = null;
               let issueBody = '';

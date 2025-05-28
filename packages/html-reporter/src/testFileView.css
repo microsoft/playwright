@@ -36,7 +36,7 @@
   margin: 0 0 0 15px;
   line-height: 16px;
   font-weight: 400;
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
   display: flex;
   align-items: center;
 }
@@ -44,7 +44,7 @@
 .test-file-path {
   text-overflow: ellipsis;
   overflow: hidden;
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
 }
 
 .test-file-path-link {
@@ -53,10 +53,20 @@
 
 .test-file-badge {
   flex: none;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.test-file-badge span {
+  color: var(--color-fg-muted);
+}
+
+.test-file-badge:hover {
+  cursor: pointer;
 }
 
 .test-file-badge svg {
-  fill: var(--color-fg-subtle);
+  fill: var(--color-fg-muted);
 }
 
 .test-file-badge:hover svg {
@@ -75,5 +85,5 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
 }

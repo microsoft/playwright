@@ -49,7 +49,7 @@ export class FailureTracker {
   }
 
   result(): 'failed' | 'passed' {
-    return this._hasWorkerErrors || this.hasReachedMaxFailures() || this.hasFailedTests() || (this._config.config.failOnFlakyTests && this.hasFlakyTests()) ? 'failed' : 'passed';
+    return this._hasWorkerErrors || this.hasReachedMaxFailures() || this.hasFailedTests() || (this._config.failOnFlakyTests && this.hasFlakyTests()) ? 'failed' : 'passed';
   }
 
   hasFailedTests() {

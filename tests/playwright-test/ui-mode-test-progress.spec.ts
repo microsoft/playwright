@@ -53,13 +53,13 @@ test('should update trace live', async ({ runUITest, server }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/one.html/
+    /Navigate to "\/one.html"/,
   ]);
 
   await expect(
       listItem.locator(':scope[aria-selected="true"]'),
       'last action to be selected'
-  ).toHaveText(/page.goto/);
+  ).toHaveText(/Navigate to/);
   await expect(
       listItem.locator(':scope[aria-selected="true"] .codicon.codicon-loading'),
       'spinner'
@@ -79,13 +79,13 @@ test('should update trace live', async ({ runUITest, server }) => {
   ).toHaveText('One');
   await expect(listItem).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/two.html/
+    /Navigate to "\/one.html"/,
+    /Navigate to "\/two.html"/
   ]);
   await expect(
       listItem.locator(':scope[aria-selected="true"]'),
       'last action to be selected'
-  ).toHaveText(/page.goto/);
+  ).toHaveText(/Navigate to/);
   await expect(
       listItem.locator(':scope[aria-selected="true"] .codicon.codicon-loading'),
       'spinner'
@@ -106,8 +106,8 @@ test('should update trace live', async ({ runUITest, server }) => {
 
   await expect(listItem).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/two.html[\d.]+m?s/,
+    /Navigate to "\/one.html"/,
+    /Navigate to "\/two.html"/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
@@ -138,12 +138,12 @@ test('should preserve action list selection upon live trace update', async ({ ru
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotoabout:blank[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
+    /Navigate to "about:blank"/,
+    /Set content/,
   ]);
 
   // Manually select page.goto.
-  await page.getByTestId('actions-tree').getByText('page.goto').click();
+  await page.getByTestId('actions-tree').getByText('Navigate to').click();
 
   // Generate more actions and check that we are still on the page.goto action.
   latch.open();
@@ -152,14 +152,14 @@ test('should preserve action list selection upon live trace update', async ({ ru
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotoabout:blank[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
+    /Navigate to "about:blank"/,
+    /Set content/,
+    /Set content/,
   ]);
   await expect(
       listItem.locator(':scope[aria-selected="true"]'),
       'selected action stays the same'
-  ).toHaveText(/page.goto/);
+  ).toHaveText(/Navigate to/);
 });
 
 test('should update tracing network live', async ({ runUITest, server }) => {
@@ -199,13 +199,13 @@ test('should update tracing network live', async ({ runUITest, server }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
-    /page.setContent[\d.]+m?s/,
+    /Navigate to "\/one.html"/,
+    /Set content/,
   ]);
 
   // Once page.setContent is visible, we can be sure that page.goto has all required
   // resources in the trace. Switch to it and check that everything renders.
-  await page.getByTestId('actions-tree').getByText('page.goto').click();
+  await page.getByTestId('actions-tree').getByText('NAVIGATE').click();
 
   await expect(
       page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
@@ -239,7 +239,7 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotoabout:blank[\d.]+m?s/,
+    /Navigate to "about:blank"/,
   ]);
 
   latch.open();
@@ -284,8 +284,8 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /locator.unchecklocator\('input'\)[\d.]+m?s/,
-    /expect.not.toBeCheckedlocator\('input'\)[\d.]/,
+    /Uncheck.*locator/,
+    /Expect "not toBeChecked"/,
   ]);
 });
 
@@ -325,8 +325,8 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
   ).toHaveText([
     /Before Hooks/,
     /beforeAll hook/,
-    /fixture: browser/,
-    /browser.newPage/,
+    /Fixture "browser"/,
+    /Create page/,
   ]);
   latch1.open();
   await expect(
@@ -336,7 +336,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
     /Before Hooks/,
     /beforeAll hook/,
     /beforeEach hook/,
-    /browser.newPage/,
+    /Create page/,
   ]);
   latch2.open();
   await expect(
@@ -344,7 +344,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
       'action list'
   ).toHaveText([
     /Before Hooks/,
-    /page.setContent/,
+    /Set content/,
     /After Hooks/,
   ]);
 });

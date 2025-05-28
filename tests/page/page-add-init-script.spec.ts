@@ -99,13 +99,18 @@ it('init script should run only once in iframe', async ({ page, server, browserN
   ]);
 });
 
-it('init script should run only once in popup', async ({ page, browserName }) => {
-  await page.context().addInitScript(() => {
-    window['callCount'] = (window['callCount'] || 0) + 1;
+it('init script should not observe playwright internals', async ({ server, page, trace }) => {
+  it.skip(!!process.env.PW_CLOCK, 'clock installs globalThis.__pwClock');
+  it.fixme(trace === 'on', 'tracing installs __playwright_snapshot_streamer');
+
+  await page.addInitScript(() => {
+    window['check'] = () => {
+      const keys = Reflect.ownKeys(globalThis).map(k => k.toString());
+      return keys.find(name => name.includes('playwright') || name.includes('_pw')) || 'none';
+    };
+    window['found'] = window['check']();
   });
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(() => window.open('about:blank')),
-  ]);
-  expect(await popup.evaluate('callCount')).toEqual(1);
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => window['found'])).toBe('none');
+  expect(await page.evaluate(() => window['check']())).toBe('none');
 });

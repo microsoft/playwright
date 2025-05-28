@@ -321,35 +321,6 @@ it('should add cookies with an expiration', async ({ context }) => {
   }])).rejects.toThrow(/Cookie should have a valid expires/);
 });
 
-it('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac }) => {
-  it.fixme(browserName === 'webkit' && isMac);
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16937' });
-
-  const context = await browser.newContext({
-    ignoreHTTPSErrors: true,
-  });
-  try {
-    const page = await context.newPage();
-    await page.goto(httpsServer.EMPTY_PAGE);
-    await context.addCookies([{
-      domain: new URL(httpsServer.CROSS_PROCESS_PREFIX).hostname,
-      path: '/',
-      name: 'cookie1',
-      value: 'yes',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None'
-    }]);
-    const [response] = await Promise.all([
-      httpsServer.waitForRequest('/grid.html'),
-      page.setContent(`<iframe src="${httpsServer.CROSS_PROCESS_PREFIX}/grid.html"></iframe>`)
-    ]);
-    expect(response.headers['cookie']).toBe('cookie1=yes');
-  } finally {
-    await context.close();
-  }
-});
-
 it('should support requestStorageAccess', async ({ page, server, channel, browserName, isMac, isLinux, isWindows, macVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
   it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');
@@ -428,4 +399,35 @@ it('should parse cookie with large Max-Age correctly', async ({ server, page, de
       sameSite: defaultSameSiteCookieValue,
     },
   ]);
+});
+
+it('iframe should inherit cookies from parent', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35439' } }, async ({ page, isLinux, browserName }) => {
+  it.fixme(browserName === 'webkit' && isLinux, 'https://bugs.webkit.org/show_bug.cgi?id=291194');
+
+  await page.route('**/*', async (route, request) => {
+    if (request.url().includes('sub.example.test')) {
+      await route.fulfill({
+        body: `
+            <p id="result"></p>
+            <script>document.getElementById('result').textContent = document.cookie || 'no cookies';</script>
+        `,
+        contentType: 'text/html',
+      });
+      return;
+    }
+    await route.fulfill({
+      headers: { 'set-cookie': 'testCookie=value; SameSite=Lax; Domain=example.test' },
+      contentType: 'text/html',
+      body: `
+          <p id="result"></p>
+          <script>document.getElementById('result').textContent = document.cookie || 'no cookies';</script>
+          <iframe src="http://sub.example.test"></iframe>
+      `
+    });
+  });
+
+  await page.goto('http://example.test');
+
+  await expect(page.locator('body')).toContainText('testCookie=value');
+  await expect(page.frameLocator('iframe').locator('body')).toContainText('testCookie=value');
 });

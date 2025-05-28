@@ -16,6 +16,8 @@
 
 import { defineConfig } from '@playwright/test';
 
+process.env.PWTEST_UNDER_TEST = '1';
+
 export default defineConfig({
   forbidOnly: !!process.env.CI,
   reporter: 'html',

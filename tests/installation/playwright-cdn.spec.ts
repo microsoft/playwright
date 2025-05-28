@@ -72,6 +72,64 @@ test(`playwright cdn should race with a timeout`, async ({ exec }) => {
   }
 });
 
+test(`playwright cdn should not timeout on redirect`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34686' }
+}, async ({ exec }) => {
+  const server = http.createServer(async (req, res) => {
+    if (req.url !== '/foo.zip') {
+      res.writeHead(307, {
+        'Connection': 'keep-alive',
+        'location': `http://127.0.0.1:${(server.address() as AddressInfo).port}/foo.zip`,
+      });
+      res.flushHeaders();
+      // Keep the connection open, the client is expected to close it.
+      return;
+    }
+    const emptyZip = Buffer.from([
+      0x50, 0x4B, 0x05, 0x06, // EOCD
+      0x00, 0x00,             // Disk number
+      0x00, 0x00,             // Central dir start disk
+      0x00, 0x00,             // Central dir records on this disk
+      0x00, 0x00,             // Total central dir records
+      0x00, 0x00, 0x00, 0x00, // Central dir size
+      0x00, 0x00, 0x00, 0x00, // Offset of start of central dir
+      0x00, 0x00              // ZIP comment length
+    ]);
+    res.socket.setNoDelay(true);
+    res.writeHead(200, {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': 'attachment; filename="empty.zip"',
+      'Content-Length': emptyZip.length,
+    });
+    res.flushHeaders();
+    // Send one byte at a time in small intervals (< 1000ms) during 2 seconds
+    // to keep the second connection slow but alive.
+    for (let i = 0; i < emptyZip.length; i ++) {
+      res.write(emptyZip.subarray(i, i + 1));
+      await new Promise(resolve => setTimeout(resolve, 2000 / emptyZip.length));
+    }
+    res.end();
+  });
+  await new Promise<void>(resolve => server.listen(0, resolve));
+
+  try {
+    await exec('npm i playwright');
+    const result = await exec('npx playwright install chromium', {
+      env: {
+        PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        DEBUG: 'pw:install',
+        PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '1000',
+      },
+      expectToExitWithError: true
+    });
+    // Steps after the extraction will fail, but the download should succeed without timeouts.
+    expect(result).toContain(`pw:install SUCCESS downloading Chromium`);
+    expect(result).not.toContain(`timed out after 1000ms`);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
 test(`npx playwright install should not hang when CDN closes the connection`, async ({ exec }) => {
   let retryCount = 0;
   const server = http.createServer((req, res) => {

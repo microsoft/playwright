@@ -182,7 +182,10 @@ it('should report network activity on worker creation', async function({ page, s
 });
 
 it('should report worker script as network request', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33107' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33107' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35678' },
+  ],
 }, async function({ page, server }) {
   await page.goto(server.EMPTY_PAGE);
   const [request1, request2] = await Promise.all([
@@ -192,6 +195,34 @@ it('should report worker script as network request', {
   ]);
   expect.soft(request1.url()).toBe(server.PREFIX + '/worker/worker.js');
   expect.soft(request1).toBe(request2);
+  const response = await request1.response();
+  const text = await response.text();
+  expect(text).toContain(`console.log('hello from the worker');`);
+});
+
+it('should report worker script as network request after redirect', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35678' },
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium', 'Chromium does not report the redirect because it is not plumbed to the worker target');
+
+  await page.goto(server.EMPTY_PAGE);
+  server.setRedirect('/worker.js', '/worker2.js');
+  server.setRoute('/worker2.js', (req, res) => {
+    res.setHeader('Content-Type', 'text/javascript');
+    res.end(`console.log('hello from the worker');`);
+  });
+  const [request] = await Promise.all([
+    page.waitForEvent('request', r => r.url().includes('worker.js')),
+    page.waitForEvent('console', msg => msg.text().includes('hello from the worker')),
+    page.evaluate(() => (window as any).w = new Worker('/worker.js')),
+  ]);
+  expect(request.url()).toBe(server.PREFIX + '/worker.js');
+  const redirect = request.redirectedTo();
+  expect(redirect).toBeTruthy();
+  expect(redirect.url()).toBe(server.PREFIX + '/worker2.js');
+  const response = await redirect.response();
+  const text = await response.text();
+  expect(text).toContain(`console.log('hello from the worker');`);
 });
 
 it('should dispatch console messages when page has workers', async function({ page, server }) {
@@ -255,15 +286,17 @@ it('should support extra http headers', {
 });
 
 it('should support offline', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox');
   it.fixme(browserName === 'webkit', 'flaky on all platforms');
 
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
+    page.waitForEvent('console', msg => msg.text().includes('hello from the worker')),
     page.goto(server.PREFIX + '/worker/worker.html'),
   ]);
   await page.context().setOffline(true);
-  await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(false);
+  // TODO: Firefox does not plumb setOffline into WorkerNavigator::OnLine.
+  const expectedOnline = browserName === 'firefox' ? true : false;
+  await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(expectedOnline);
   expect(await worker.evaluate(() => fetch('/one-style.css').catch(e => 'error'))).toBe('error');
   await page.context().setOffline(false);
   await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(true);

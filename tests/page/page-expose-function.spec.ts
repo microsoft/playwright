@@ -95,7 +95,7 @@ it('should be callable from-inside addInitScript', async ({ page, server }) => {
   });
   await page.addInitScript(() => window['woof']());
   await page.reload();
-  expect(called).toBe(true);
+  await expect.poll(() => called).toBe(true);
 });
 
 it('should survive navigation', async ({ page, server }) => {
@@ -230,7 +230,7 @@ it('should not result in unhandled rejection', async ({ page, isAndroid, isWebVi
     await page.close();
   });
   await page.evaluate(() => {
-    window.builtinSetTimeout(() => (window as any).foo(), 0);
+    window.builtins.setTimeout(() => (window as any).foo(), 0);
     return undefined;
   });
   await closedPromise;

@@ -15,7 +15,7 @@
  */
 
 import { assert } from '../../utils';
-import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import { BidiDeserializer } from './third_party/bidiDeserializer';

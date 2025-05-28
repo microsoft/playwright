@@ -58,7 +58,7 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
     lastModifiedMs?: number,
   }[] | undefined = payloads;
 
-  if (!frame._page._browserContext._browser._isCollocatedWithServer) {
+  if (!frame._page.browserContext._browser._isCollocatedWithServer) {
     // If the browser is on a different machine read files into buffers.
     if (localPaths) {
       if (await filesExceedUploadLimit(localPaths))

@@ -319,3 +319,66 @@ it('input event.composed should be true and cross shadow dom boundary', async ({
   expect(await page.evaluate(() => window['firedEvents'])).toEqual(['input:true', 'change:false']);
   expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
 });
+
+it('should wait for option to be enabled', async ({ page }) => {
+  await page.setContent(`
+    <select disabled>
+      <option>one</option>
+      <option>two</option>
+    </select>
+
+    <script>
+    function hydrate() {
+      const select = document.querySelector('select');
+      select.removeAttribute('disabled');
+      select.addEventListener('change', () => {
+        window['result'] = select.value;
+      });
+    }
+    </script>
+  `);
+
+  const selectPromise = page.locator('select').selectOption('two');
+  await new Promise(f => setTimeout(f, 1000));
+  await page.evaluate(() => (window as any).hydrate());
+  await selectPromise;
+  expect(await page.evaluate(() => window['result'])).toEqual('two');
+  await expect(page.locator('select')).toHaveValue('two');
+});
+
+it('should wait for select to be swapped', async ({ page }) => {
+  await page.setContent(`
+    <select disabled>
+      <option>one</option>
+      <option>two</option>
+    </select>
+
+    <script>
+    function hydrate() {
+      const select = document.querySelector('select');
+      select.remove();
+
+      const newSelect = document.createElement('select');
+      const option1 = document.createElement('option');
+      option1.textContent = 'one';
+      newSelect.appendChild(option1);
+      const option2 = document.createElement('option');
+      option2.textContent = 'two';
+      newSelect.appendChild(option2);
+
+      document.body.appendChild(newSelect);
+
+      newSelect.addEventListener('change', () => {
+        window['result'] = newSelect.value;
+      });
+    }
+    </script>
+  `);
+
+  const selectPromise = page.locator('select').selectOption('two');
+  await new Promise(f => setTimeout(f, 1000));
+  await page.evaluate(() => (window as any).hydrate());
+  await selectPromise;
+  await expect(page.locator('select')).toHaveValue('two');
+  expect(await page.evaluate(() => window['result'])).toEqual('two');
+});

@@ -21,7 +21,7 @@ import { BrowserContext } from '../browserContext';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
@@ -40,7 +40,7 @@ import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response } from '../network';
-import type { Page } from '../page';
+import type { InitScript, Page, PageBinding } from '../page';
 import type { DispatcherScope } from './dispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type * as channels from '@protocol/channels';
@@ -51,17 +51,24 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
+  private _bindings: PageBinding[] = [];
+  private _initScritps: InitScript[] = [];
 
-  constructor(parentScope: DispatcherScope, context: BrowserContext) {
+  static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
+    const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
+    return result || new BrowserContextDispatcher(parentScope, context);
+  }
+
+  private constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
     const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
-      isLocalBrowserOnServer: context._browser._isCollocatedWithServer,
       requestContext,
       tracing,
+      options: context._options,
     });
 
     this.adopt(requestContext);
@@ -129,7 +136,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       // - We are redirected from a reported request so that redirectedTo was updated on client.
       // - We are a navigation request and dispatcher will be reported as a part of the goto return value and newDocument param anyways.
       //   By the time requestFinished is triggered to update the request, we should have a request on the client already.
-      const redirectFromDispatcher = request.redirectedFrom() && existingDispatcher(request.redirectedFrom());
+      const redirectFromDispatcher = request.redirectedFrom() && this.connection.existingDispatcher(request.redirectedFrom());
       if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request') && !request.isNavigationRequest())
         return;
       const requestDispatcher = RequestDispatcher.from(this, request);
@@ -139,7 +146,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.Response, (response: Response) => {
-      const requestDispatcher = existingDispatcher<RequestDispatcher>(response.request());
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(response.request());
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(response.request(), 'response'))
         return;
       this._dispatchEvent('response', {
@@ -148,7 +155,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.RequestFailed, (request: Request) => {
-      const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(request);
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFailed'))
         return;
       this._dispatchEvent('requestFailed', {
@@ -159,7 +166,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
-      const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(request);
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFinished'))
         return;
       this._dispatchEvent('requestFinished', {
@@ -178,7 +185,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _shouldDispatchEvent(page: Page | undefined, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
     if (this._subscriptions.has(event))
       return true;
-    const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : undefined;
+    const pageDispatcher = page ? this.connection.existingDispatcher<PageDispatcher>(page) : undefined;
     if (pageDispatcher?._subscriptions.has(event))
       return true;
     return false;
@@ -200,16 +207,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     };
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
-    this._context.setDefaultNavigationTimeout(params.timeout);
-  }
-
-  async setDefaultTimeoutNoReply(params: channels.BrowserContextSetDefaultTimeoutNoReplyParams) {
-    this._context.setDefaultTimeout(params.timeout);
-  }
-
   async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
-    await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+    const binding = await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
       if (this._disposed)
@@ -219,6 +218,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
+    this._bindings.push(binding);
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
@@ -269,7 +269,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams): Promise<void> {
-    await this._context.addInitScript(params.source);
+    this._initScritps.push(await this._context.addInitScript(params.source));
   }
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams): Promise<void> {
@@ -290,7 +290,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(this._context);
+      await WebSocketRouteDispatcher.installIfNeeded(this.connection, this._context);
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
@@ -366,9 +366,22 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._subscriptions.delete(params.event);
   }
 
+  async registerSelectorEngine(params: channels.BrowserContextRegisterSelectorEngineParams): Promise<void> {
+    this._object.selectors().register(params.selectorEngine);
+  }
+
+  async setTestIdAttributeName(params: channels.BrowserContextSetTestIdAttributeNameParams): Promise<void> {
+    this._object.selectors().setTestIdAttributeName(params.testIdAttributeName);
+  }
+
   override _onDispose() {
     // Avoid protocol calls for the closed context.
-    if (!this._context.isClosingOrClosed())
-      this._context.setRequestInterceptor(undefined).catch(() => {});
+    if (this._context.isClosingOrClosed())
+      return;
+    this._context.setRequestInterceptor(undefined).catch(() => {});
+    this._context.removeExposedBindings(this._bindings).catch(() => {});
+    this._bindings = [];
+    this._context.removeInitScripts(this._initScritps).catch(() => {});
+    this._initScritps = [];
   }
 }

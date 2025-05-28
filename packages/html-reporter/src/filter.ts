@@ -15,12 +15,18 @@
 */
 
 import type { TestCaseSummary } from './types';
+
+type FilterToken = {
+  name: string;
+  not: boolean;
+};
+
 export class Filter {
-  project: string[] = [];
-  status: string[] = [];
-  text: string[] = [];
-  labels: string[] = [];
-  annotations: string[] = [];
+  project: FilterToken[] = [];
+  status: FilterToken[] = [];
+  text: FilterToken[] = [];
+  labels: FilterToken[] = [];
+  annotations: FilterToken[] = [];
 
   empty(): boolean {
     return this.project.length + this.status.length + this.text.length === 0;
@@ -28,29 +34,33 @@ export class Filter {
 
   static parse(expression: string): Filter {
     const tokens = Filter.tokenize(expression);
-    const project = new Set<string>();
-    const status = new Set<string>();
-    const text: string[] = [];
-    const labels = new Set<string>();
-    const annotations = new Set<string>();
-    for (const token of tokens) {
+    const project = new Set<FilterToken>();
+    const status = new Set<FilterToken>();
+    const text: FilterToken[] = [];
+    const labels = new Set<FilterToken>();
+    const annotations = new Set<FilterToken>();
+    for (let token of tokens) {
+      const not = token.startsWith('!');
+      if (not)
+        token = token.slice(1);
+
       if (token.startsWith('p:')) {
-        project.add(token.slice(2));
+        project.add({ name: token.slice(2), not });
         continue;
       }
       if (token.startsWith('s:')) {
-        status.add(token.slice(2));
+        status.add({ name: token.slice(2), not });
         continue;
       }
       if (token.startsWith('@')) {
-        labels.add(token);
+        labels.add({ name: token, not });
         continue;
       }
       if (token.startsWith('annot:')) {
-        annotations.add(token.slice('annot:'.length));
+        annotations.add({ name: token.slice('annot:'.length), not });
         continue;
       }
-      text.push(token.toLowerCase());
+      text.push({ name: token.toLowerCase(), not });
     }
 
     const filter = new Filter();
@@ -106,12 +116,18 @@ export class Filter {
   matches(test: TestCaseSummary): boolean {
     const searchValues = cacheSearchValues(test);
     if (this.project.length) {
-      const matches = !!this.project.find(p => searchValues.project.includes(p));
+      const matches = !!this.project.find(p => {
+        const match = searchValues.project.includes(p.name);
+        return p.not ? !match : match;
+      });
       if (!matches)
         return false;
     }
     if (this.status.length) {
-      const matches = !!this.status.find(s => searchValues.status.includes(s));
+      const matches = !!this.status.find(s => {
+        const match = searchValues.status.includes(s.name);
+        return s.not ? !match : match;
+      });
       if (!matches)
         return false;
     } else {
@@ -119,23 +135,32 @@ export class Filter {
         return false;
     }
     if (this.text.length) {
-      for (const text of this.text) {
-        if (searchValues.text.includes(text))
-          continue;
-        const [fileName, line, column] = text.split(':');
+      const matches = this.text.every(text => {
+        if (searchValues.text.includes(text.name))
+          return text.not ? false : true;
+
+        const [fileName, line, column] = text.name.split(':');
         if (searchValues.file.includes(fileName) && searchValues.line === line && (column === undefined || searchValues.column === column))
-          continue;
+          return text.not ? false : true;
+
+        return text.not ? true : false;
+      });
+      if (!matches)
         return false;
-      }
     }
     if (this.labels.length) {
-      const matches = this.labels.every(l => searchValues.labels.includes(l));
+      const matches = this.labels.every(l => {
+        const match = searchValues.labels.includes(l.name);
+        return l.not ? !match : match;
+      });
       if (!matches)
         return false;
     }
     if (this.annotations.length) {
-      const matches = this.annotations.every(annotation =>
-        searchValues.annotations.some(a => a.includes(annotation)));
+      const matches = this.annotations.every(annotation => {
+        const match = searchValues.annotations.some(a => a.includes(annotation.name));
+        return annotation.not ? !match : match;
+      });
       if (!matches)
         return false;
     }

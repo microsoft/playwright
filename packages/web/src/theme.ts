@@ -36,9 +36,11 @@ export function applyTheme() {
     document.body.classList.add('inactive');
   }, false);
 
-  const currentTheme = settings.getString('theme', 'light-mode');
   const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-  if (currentTheme === 'dark-mode' || prefersDarkScheme.matches)
+  const defaultTheme = prefersDarkScheme.matches ? 'dark-mode' : 'light-mode';
+
+  const currentTheme = settings.getString('theme', defaultTheme);
+  if (currentTheme === 'dark-mode')
     document.body.classList.add('dark-mode');
 }
 

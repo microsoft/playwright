@@ -32,7 +32,6 @@ it('calling window.stop async', async ({ page, server }) => {
 });
 
 it('calling window.stop sync', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/35147');
   await page.evaluate(url => {
     window.location.href = url;
     window.stop();

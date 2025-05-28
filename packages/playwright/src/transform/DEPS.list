@@ -1,5 +1,6 @@
 [*]
 ../util.ts
 ../utilsBundle.ts
+../third_party/pirates.ts
 ../third_party/tsconfig-loader.ts
 ../common/globals.ts

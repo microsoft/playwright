@@ -59,7 +59,7 @@ export class BidiNetworkManager {
     if (param.request.url.startsWith('data:'))
       return;
     const redirectedFrom = param.redirectCount ? (this._requests.get(param.request.request) || null) : null;
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : (param.context ? this._page._frameManager.frame(param.context) : null);
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : (param.context ? this._page.frameManager.frame(param.context) : null);
     if (!frame)
       return;
     if (redirectedFrom)
@@ -82,7 +82,7 @@ export class BidiNetworkManager {
     }
     const request = new BidiRequest(frame, redirectedFrom, param, route);
     this._requests.set(request._id, request);
-    this._page._frameManager.requestStarted(request.request, route);
+    this._page.frameManager.requestStarted(request.request, route);
   }
 
   private _onResponseStarted(params: bidi.Network.ResponseStartedParameters) {
@@ -115,7 +115,7 @@ export class BidiNetworkManager {
     // "raw" headers are the same as "provisional" headers in Bidi.
     response.setRawResponseHeaders(null);
     response.setResponseHeadersSize(params.response.headersSize);
-    this._page._frameManager.requestReceivedResponse(response);
+    this._page.frameManager.requestReceivedResponse(response);
     if (params.navigation)
       this._onNavigationResponseStarted(params);
   }
@@ -139,7 +139,7 @@ export class BidiNetworkManager {
       response._requestFinished(responseEndTime);
     }
     response._setHttpVersion(params.response.protocol);
-    this._page._frameManager.reportRequestFinished(request.request, response);
+    this._page.frameManager.reportRequestFinished(request.request, response);
 
   }
 
@@ -156,12 +156,12 @@ export class BidiNetworkManager {
     }
     request.request._setFailureText(params.errorText);
     // TODO: support canceled flag
-    this._page._frameManager.requestFailed(request.request, params.errorText === 'NS_BINDING_ABORTED');
+    this._page.frameManager.requestFailed(request.request, params.errorText === 'NS_BINDING_ABORTED');
   }
 
   private _onAuthRequired(params: bidi.Network.AuthRequiredParameters) {
     const isBasic = params.response.authChallenges?.some(challenge => challenge.scheme.startsWith('Basic'));
-    const credentials = this._page._browserContext._options.httpCredentials;
+    const credentials = this._page.browserContext._options.httpCredentials;
     if (isBasic && credentials) {
       this._session.sendMayFail('network.continueWithAuth', {
         request: params.request.request,
@@ -230,7 +230,7 @@ class BidiRequest {
       redirectedFrom._redirectedTo = this;
     // TODO: missing in the spec?
     const postDataBuffer = null;
-    this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
+    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
         payload.request.url, 'other', payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);

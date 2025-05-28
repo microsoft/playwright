@@ -732,8 +732,6 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       console.warn(`${type.name} should be a 'string', but was a ${type.expression}`);
       return `string`;
     }
-    if (type.union.length === 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
-      return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
 

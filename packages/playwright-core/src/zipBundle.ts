@@ -18,4 +18,4 @@ export const yazl: typeof import('../bundles/zip/node_modules/@types/yazl') = re
 export type { ZipFile } from '../bundles/zip/node_modules/@types/yazl';
 export const yauzl: typeof import('../bundles/zip/node_modules/@types/yauzl') = require('./zipBundleImpl').yauzl;
 export type { Entry, ZipFile as UnzipFile } from '../bundles/zip/node_modules/@types/yauzl';
-export const extract: typeof import('../bundles/zip/node_modules/extract-zip') = require('./zipBundleImpl').extract;
+export const extract: typeof import('../bundles/zip/src/third_party/extract-zip.d.ts') = require('./zipBundleImpl').extract;

@@ -166,9 +166,8 @@ it('should properly return navigation response when URL has cookies', async ({ p
   expect(response.status()).toBe(200);
 });
 
-it('should override cookie header', async ({ page, server, browserName }) => {
+it('should not override cookie header', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16773' });
-  it.fail(browserName !== 'firefox' && !browserName.includes('bidi'));
 
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = 'original=value');
@@ -184,8 +183,9 @@ it('should override cookie header', async ({ page, server, browserName }) => {
     page.goto(server.EMPTY_PAGE),
   ]);
 
-  expect(cookieValueInRoute).toBe('original=value');
-  expect(serverReq.headers['cookie']).toBe('overridden=value');
+  if (browserName !== 'webkit')
+    expect.soft(cookieValueInRoute).toBe('original=value');
+  expect.soft(serverReq.headers['cookie']).toBe('original=value');
 });
 
 it('should show custom HTTP headers', async ({ page, server }) => {
@@ -1027,4 +1027,21 @@ it('should intercept when postData is more than 1MB', async ({ page, server }) =
     body: POST_BODY,
   }).catch(e => {}), POST_BODY);
   expect(await interceptionPromise).toBe(POST_BODY);
+});
+
+it('should be able to intercept every navigation to a page controlled by service worker', async ({ page, server, isElectron, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33561' });
+  it.skip(isElectron);
+
+  let interceptions = 0;
+  const URL = server.PREFIX + '/serviceworkers/bug-33561/index.html';
+  await page.route(URL, async route => {
+    ++interceptions;
+    await route.continue();
+  });
+
+  await page.goto(URL);
+  await page.evaluate(() => window['activationPromise']);
+  await page.goto(URL);
+  expect(interceptions).toBe(2);
 });

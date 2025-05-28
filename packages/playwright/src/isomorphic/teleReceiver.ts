@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { Metadata } from '../../types/test';
+import type { Metadata, TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
-import type { Annotation } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type StringIntern = (s: string) => string;
@@ -68,14 +67,15 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
-  annotations?: { type: string, description?: string }[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonTestEnd = {
   testId: string;
   expectedStatus: reporterTypes.TestStatus;
   timeout: number;
-  annotations: { type: string, description?: string }[];
+  // Dropped in 1.52. Kept as empty array for backwards compatibility.
+  annotations: [];
 };
 
 export type JsonTestResultStart = {
@@ -86,14 +86,16 @@ export type JsonTestResultStart = {
   startTime: number;
 };
 
-export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & { base64?: string };
+export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & { base64?: string; };
 
 export type JsonTestResultEnd = {
   id: string;
   duration: number;
   status: reporterTypes.TestStatus;
   errors: reporterTypes.TestError[];
-  attachments: JsonAttachment[];
+  /** No longer emitted, but kept for backwards compatibility */
+  attachments?: JsonAttachment[];
+  annotations?: TestAnnotation[];
 };
 
 export type JsonTestStepStart = {
@@ -110,7 +112,13 @@ export type JsonTestStepEnd = {
   duration: number;
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
-  annotations?: Annotation[];
+  annotations?: TestAnnotation[];
+};
+
+export type JsonTestResultOnAttach = {
+  testId: string;
+  resultId: string;
+  attachments: JsonAttachment[];
 };
 
 export type JsonFullResult = {
@@ -178,6 +186,10 @@ export class TeleReporterReceiver {
       this._onStepBegin(params.testId, params.resultId, params.step);
       return;
     }
+    if (method === 'onAttach') {
+      this._onAttach(params.testId, params.resultId, params.attachments);
+      return;
+    }
     if (method === 'onStepEnd') {
       this._onStepEnd(params.testId, params.resultId, params.step);
       return;
@@ -234,13 +246,18 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testEndPayload.testId)!;
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
-    test.annotations = testEndPayload.annotations;
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
     result.errors = payload.errors;
     result.error = result.errors?.[0];
-    result.attachments = this._parseAttachments(payload.attachments);
+    // Attachments are only present here from legacy blobs. These override all _onAttach events
+    if (!!payload.attachments)
+      result.attachments = this._parseAttachments(payload.attachments);
+    if (payload.annotations) {
+      result.annotations = payload.annotations;
+      test.annotations = result.annotations;
+    }
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
@@ -269,6 +286,17 @@ export class TeleReporterReceiver {
     step.duration = payload.duration;
     step.error = payload.error;
     this._reporter.onStepEnd?.(test, result, step);
+  }
+
+  private _onAttach(testId: string, resultId: string, attachments: JsonAttachment[]) {
+    const test = this._tests.get(testId)!;
+    const result = test.results.find(r => r._id === resultId)!;
+    result.attachments.push(...attachments.map(a => ({
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      body: a.base64 && (globalThis as any).Buffer ? Buffer.from(a.base64, 'base64') : undefined,
+    })));
   }
 
   private _onError(error: reporterTypes.TestError) {
@@ -474,7 +502,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: Annotation[] = [];
+  annotations: TestAnnotation[] = [];
   retries = 0;
   tags: string[] = [];
   repeatEachIndex = 0;
@@ -562,6 +590,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
   stdout: reporterTypes.TestResult['stdout'] = [];
   stderr: reporterTypes.TestResult['stderr'] = [];
   attachments: reporterTypes.TestResult['attachments'] = [];
+  annotations: reporterTypes.TestResult['annotations'] = [];
   status: reporterTypes.TestStatus = 'skipped';
   steps: TeleTestStep[] = [];
   errors: reporterTypes.TestResult['errors'] = [];
@@ -593,7 +622,6 @@ export class TeleTestResult implements reporterTypes.TestResult {
 export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
-  failOnFlakyTests: false,
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,

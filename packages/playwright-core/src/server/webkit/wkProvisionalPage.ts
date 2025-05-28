@@ -49,7 +49,7 @@ export class WKProvisionalPage {
       return (payload: any) => {
         // Pretend that the events happened in the same process.
         if (payload.frameId)
-          payload.frameId = this._wkPage._page._frameManager.mainFrame()._id;
+          payload.frameId = this._wkPage._page.frameManager.mainFrame()._id;
         handler(payload);
       };
     };

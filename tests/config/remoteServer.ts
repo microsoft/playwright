@@ -35,7 +35,6 @@ export class RunServer implements PlaywrightServer {
       command,
       env: {
         ...process.env,
-        PWTEST_UNDER_TEST: '1',
         ...env,
       },
     });
@@ -69,6 +68,7 @@ export type RemoteServerOptions = {
   inCluster?: boolean;
   url?: string;
   startStopAndRunHttp?: boolean;
+  sharedBrowser?: boolean;
 };
 
 export class RemoteServer implements PlaywrightServer {
@@ -95,6 +95,8 @@ export class RemoteServer implements PlaywrightServer {
       handleSIGHUP: true,
       logger: undefined,
     };
+    if (remoteServerOptions.sharedBrowser)
+      (launchOptions as any)._sharedBrowser = true;
     const options = {
       browserTypeName: browserType.name(),
       channel,
@@ -109,7 +111,6 @@ export class RemoteServer implements PlaywrightServer {
     }
     this._process = childProcess({
       command: ['node', path.join(__dirname, 'remote-server-impl.js'), JSON.stringify(options)],
-      env: { ...process.env, PWTEST_UNDER_TEST: '1' },
     });
 
     let index = 0;
