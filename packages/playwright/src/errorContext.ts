@@ -26,22 +26,7 @@ import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { TestInfoImpl } from './worker/testInfo';
 import type { Location } from '../types/test';
 
-export async function attachErrorContext(testInfo: TestInfoImpl, format: 'markdown' | 'json', sourceCache: Map<string, string>, ariaSnapshot: string | undefined) {
-  if (format === 'json') {
-    if (!ariaSnapshot)
-      return;
-
-    testInfo._attach({
-      name: `error-context`,
-      contentType: 'application/json',
-      body: Buffer.from(JSON.stringify({
-        pageSnapshot: ariaSnapshot,
-      })),
-    }, undefined);
-
-    return;
-  }
-
+export async function attachErrorContext(testInfo: TestInfoImpl, sourceCache: Map<string, string>, ariaSnapshot: string | undefined) {
   const meaningfulSingleLineErrors = new Set(testInfo.errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of testInfo.errors) {
     for (const singleLineError of meaningfulSingleLineErrors.keys()) {

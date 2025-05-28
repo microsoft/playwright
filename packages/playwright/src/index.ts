@@ -56,15 +56,12 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
-type ErrorContextOption = { format: 'json' | 'markdown' } | undefined;
-
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   playwright: PlaywrightImpl;
   _browserOptions: LaunchOptions;
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
-  _optionErrorContext: ErrorContextOption,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -248,13 +245,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, _optionErrorContext }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, _optionErrorContext);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -400,7 +397,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
   _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
-  _optionErrorContext: [process.env.PLAYWRIGHT_NO_COPY_PROMPT ? undefined : { format: 'markdown' }, { scope: 'worker', option: true }],
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
@@ -629,12 +625,10 @@ class ArtifactsRecorder {
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
   private _sourceCache: Map<string, string> = new Map();
-  private _errorContext: ErrorContextOption;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, errorContext: ErrorContextOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
-    this._errorContext = errorContext;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -678,7 +672,7 @@ class ArtifactsRecorder {
   }
 
   private async _takePageSnapshot(context: BrowserContext) {
-    if (!this._errorContext)
+    if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
       return;
     if (this._testInfo.errors.length === 0)
       return;
@@ -726,8 +720,8 @@ class ArtifactsRecorder {
     if (context)
       await this._takePageSnapshot(context);
 
-    if (this._errorContext)
-      await attachErrorContext(this._testInfo, this._errorContext.format, this._sourceCache, this._pageSnapshot);
+    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT)
+      await attachErrorContext(this._testInfo, this._sourceCache, this._pageSnapshot);
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
