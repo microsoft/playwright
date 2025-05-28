@@ -76,12 +76,10 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
-    options = {
+    options = this._browserType._playwright.selectors._withSelectorOptions({
       ...this._browserType._playwright._defaultContextOptions,
       ...options,
-      selectorEngines: this._browserType._playwright.selectors._selectorEngines,
-      testIdAttributeName: this._browserType._playwright.selectors._testIdAttributeName,
-    };
+    });
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = BrowserContext.from(response.context);
@@ -117,6 +115,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     context._logger = this._logger;
     context.tracing._tracesDir = this._options.tracesDir;
     this._browserType._contexts.add(context);
+    this._browserType._playwright.selectors._contextsForSelectors.add(context);
     context.setDefaultTimeout(this._browserType._playwright._defaultContextTimeout);
     context.setDefaultNavigationTimeout(this._browserType._playwright._defaultContextNavigationTimeout);
   }
