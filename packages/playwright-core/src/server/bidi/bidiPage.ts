@@ -16,7 +16,6 @@
 
 import { assert } from '../../utils';
 import { eventsHelper } from '../utils/eventsHelper';
-import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
@@ -220,7 +219,7 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onUserPromptOpened(event: bidi.BrowsingContext.UserPromptOpenedParameters) {
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
         event.message,

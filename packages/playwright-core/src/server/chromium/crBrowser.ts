@@ -30,7 +30,6 @@ import { CRPage } from './crPage';
 import { saveProtocolStream } from './crProtocolHelper';
 import { CRServiceWorker } from './crServiceWorker';
 
-import type { Dialog } from '../dialog';
 import type { InitScript, Worker } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
@@ -498,12 +497,7 @@ export class CRBrowserContext extends BrowserContext {
     // dialogs, so we should close all that are currently opened.
     // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
     // beforeunload.
-    const openedBeforeUnloadDialogs: Dialog[] = [];
-    for (const crPage of this._crPages()) {
-      const dialogs = [...crPage._page.frameManager._openedDialogs].filter(dialog => dialog.type() === 'beforeunload');
-      openedBeforeUnloadDialogs.push(...dialogs);
-    }
-    await Promise.all(openedBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
+    await this.dialogManager.closeBeforeUnloadDialogs();
 
     if (!this._browserContextId) {
       await this.stopVideoRecording();
