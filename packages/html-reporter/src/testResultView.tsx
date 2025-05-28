@@ -24,7 +24,7 @@ import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './link
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { CodeSnippet, PromptButton, TestErrorView, TestScreenshotErrorView } from './testErrorView';
+import { CodeSnippet, PromptButton, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
 
@@ -96,7 +96,7 @@ export const TestResultView: React.FC<{
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}/>;
+        return <CodeSnippet key={'test-result-error-message-' + index} code={error.error!}/>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>

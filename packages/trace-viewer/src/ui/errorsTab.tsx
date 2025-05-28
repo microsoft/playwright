@@ -82,13 +82,13 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
-  model: modelUtil.MultiTraceModel,
+  model?: modelUtil.MultiTraceModel,
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
 }> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime }) => {
   const errorContext = useAsyncMemo(async () => {
-    const attachment = model.attachments.find(a => a.name === 'error-context');
+    const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
       return;
     const response = await fetch(attachmentURL(attachment));

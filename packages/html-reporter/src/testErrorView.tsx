@@ -22,15 +22,6 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import { TestAttachment } from './types';
 import { fixTestInstructions } from '@web/prompts';
 
-export const TestErrorView: React.FC<{
-  error: string;
-  testId?: string;
-}> = ({ error, testId }) => {
-  return (
-    <CodeSnippet code={error} testId={testId} />
-  );
-};
-
 export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<{ code: string; testId?: string; }>) => {
   const html = React.useMemo(() => ansiErrorToHtml(code), [code]);
   return (
