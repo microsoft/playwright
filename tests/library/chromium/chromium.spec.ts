@@ -631,8 +631,9 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
   });
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, isHeadlessShell }) => {
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, platform, isHeadlessShell }) => {
   test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
+  test.fixme(platform === 'win32', 'Windows does not print something to the console when the profile is already in use by another instance of Chromium.');
   const userDataDir = await createUserDataDir();
   const browser = await browserType.launchPersistentContext(userDataDir, {
     cdpPort: 9222,
@@ -647,8 +648,9 @@ test('should throw when connecting twice to an already running persistent contex
   }
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, isHeadlessShell }) => {
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, platform, isHeadlessShell }) => {
   test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
+  test.fixme(platform === 'win32', 'Windows does not print something to the console when the profile is already in use by another instance of Chromium.');
   const userDataDir = await createUserDataDir();
   const browser = await browserType.launchPersistentContext(userDataDir);
   try {
