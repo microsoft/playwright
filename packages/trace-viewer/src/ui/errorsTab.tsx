@@ -91,9 +91,10 @@ export const ErrorsTab: React.FunctionComponent<{
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
       return;
-    const response = await fetch(attachmentURL(attachment));
-    return fixTestInstructions + await response.text();  // TODO in next PR: enrich with test location, error details and source code.
+    return await fetch(attachmentURL(attachment)).then(r => r.text());
   }, [model], undefined);
+
+  const prompt = fixTestInstructions + (errorContext ?? ''); // TODO in next PR: enrich with test location, error details and source code.
 
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
@@ -101,7 +102,7 @@ export const ErrorsTab: React.FunctionComponent<{
   return <div className='fill' style={{ overflow: 'auto' }}>
     {}
     <span style={{ position: 'absolute', right: '5px', top: '5px', zIndex: 1 }}>
-      {errorContext && <CopyPromptButton prompt={errorContext} />}
+      {prompt && <CopyPromptButton prompt={prompt} />}
     </span>
     {[...errorsModel.errors.entries()].map(([message, error]) => {
       const errorId = `error-${wallTime}-${message}`;

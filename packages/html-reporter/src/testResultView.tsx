@@ -88,11 +88,9 @@ export const TestResultView: React.FC<{
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
-      {errorContext && (
-        <div style={{ position: 'absolute', right: '16px', padding: '10px', zIndex: 1 }}>
-          <PromptButton context={errorContext} />
-        </div>
-      )}
+      <div style={{ position: 'absolute', right: '16px', padding: '10px', zIndex: 1 }}>
+        <PromptButton context={errorContext} />
+      </div>
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
