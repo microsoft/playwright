@@ -29,7 +29,7 @@ import { hashStringToInt, msToString } from './utils';
 import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { HeaderView } from './headerView';
-import { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
+import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
