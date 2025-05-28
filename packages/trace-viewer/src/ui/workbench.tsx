@@ -190,7 +190,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'errors',
     title: 'Errors',
     errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={error => {
+    render: () => <ErrorsTab errorsModel={errorsModel} model={model} sdkLanguage={sdkLanguage} revealInSource={error => {
       if (error.action)
         setSelectedAction(error.action);
       else

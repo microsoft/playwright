@@ -25,16 +25,9 @@ import { fixTestInstructions } from '@web/prompts';
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
-  context?: TestAttachment;
-}> = ({ error, testId, context }) => {
+}> = ({ error, testId }) => {
   return (
-    <CodeSnippet code={error} testId={testId}>
-      {context && (
-        <div style={{ position: 'absolute', right: 0, padding: '10px' }}>
-          <PromptButton context={context} />
-        </div>
-      )}
-    </CodeSnippet>
+    <CodeSnippet code={error} testId={testId} />
   );
 };
 
@@ -48,14 +41,14 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
-const PromptButton: React.FC<{ context: TestAttachment }> = ({ context }) => {
+export const PromptButton: React.FC<{ context: TestAttachment }> = ({ context }) => {
   const [copied, setCopied] = React.useState(false);
   return <button
     className='button'
     style={{ minWidth: 100 }}
     onClick={async () => {
       const text = context.body ? context.body : await fetch(context.path!).then(r => r.text());
-      await navigator.clipboard.writeText(fixTestInstructions + text);
+      await navigator.clipboard.writeText(fixTestInstructions + text); // TODO in next PR: enrich with test location, error details and source code.
       setCopied(true);
       setTimeout(() => {
         setCopied(false);

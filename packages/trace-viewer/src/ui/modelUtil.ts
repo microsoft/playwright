@@ -54,7 +54,6 @@ export type ErrorDescription = {
   action?: ActionTraceEventInContext;
   stack?: StackFrame[];
   message: string;
-  context?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
 };
 
 export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
@@ -139,7 +138,6 @@ export class MultiTraceModel {
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
-      context: this.attachments.find(a => a.name === `error-context-${i}`),
     }));
   }
 }

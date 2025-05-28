@@ -127,7 +127,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  Fixture "page"',
     '  Fixture "context"',
     '  Fixture "request"',
-    'Attach "error-context-0"',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -1188,7 +1188,7 @@ test('should not corrupt actions when no library trace is present', async ({ run
     'After Hooks',
     '  Fixture "foo"',
     '    Expect "toBe"',
-    'Attach "error-context-0"',
+    'Attach "error-context"',
     'Worker Cleanup',
   ]);
 });
@@ -1219,7 +1219,7 @@ test('should record trace for manually created context in a failed test', async 
     'Set content',
     'Expect "toBe"',
     'After Hooks',
-    'Attach "error-context-0"',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
