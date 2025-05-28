@@ -94,13 +94,12 @@ export const ErrorsTab: React.FunctionComponent<{
     return await fetch(attachmentURL(attachment)).then(r => r.text());
   }, [model], undefined);
 
-  const prompt = fixTestInstructions + (errorContext ?? ''); // TODO in next PR: enrich with test location, error details and source code.
+  const prompt = fixTestInstructions + (errorContext ?? ''); // TODO in next PR: enrich with test location, error details and source code, similar to errorContext.ts
 
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
-    {}
     <span style={{ position: 'absolute', right: '5px', top: '5px', zIndex: 1 }}>
       {prompt && <CopyPromptButton prompt={prompt} />}
     </span>

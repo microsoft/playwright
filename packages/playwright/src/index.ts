@@ -719,7 +719,7 @@ class ArtifactsRecorder {
     if (context)
       await this._takePageSnapshot(context);
 
-    if (this._pageSnapshot && this._testInfo.errors.length > 0) {
+    if (this._pageSnapshot && this._testInfo.errors.length > 0 && !this._testInfo.attachments.some(a => a.name === 'error-context')) {
       const lines = [
         '# Page snapshot',
         '',
