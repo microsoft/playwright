@@ -17,7 +17,6 @@
 import { test } from '@playwright/test';
 import type { TestModeName } from './testMode';
 import { DefaultTestMode, DriverTestMode } from './testMode';
-import * as playwrightLibrary from 'playwright-core';
 
 export type TestModeWorkerOptions = {
   mode: TestModeName;
@@ -43,7 +42,6 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
       'driver': new DriverTestMode(),
     }[mode];
     const playwright = await testMode.setup();
-    (playwrightLibrary.selectors as any)._playwrights.add(playwright);
     await run(playwright);
     await testMode.teardown();
   }, { scope: 'worker' }],
