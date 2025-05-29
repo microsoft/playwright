@@ -33,7 +33,6 @@ it('SharedArrayBuffer should work @smoke', async function({ contextFactory, http
 
 it('Web Assembly should work @smoke', async ({ page, server, browserName, platform, macVersion }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'Windows JIT is disabled: https://bugs.webkit.org/show_bug.cgi?id=273854');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64' && macVersion === 15, 'Started failing on macOS intel after the roll, see https://github.com/microsoft/playwright-browsers/issues/1676');
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });

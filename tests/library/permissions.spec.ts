@@ -29,7 +29,9 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should deny permission when not listed', async ({ page, context, server, browserName }) => {
+  it('should deny permission when not listed', async ({ page, context, server, browserName, isMac, macVersion }) => {
+    it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
+
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions([], { origin: server.EMPTY_PAGE });
     if (browserName === 'webkit') {
@@ -130,7 +132,9 @@ it.describe('permissions', () => {
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
   });
 
-  it('should isolate permissions between browser contexts', async ({ server, browser, browserName }) => {
+  it('should isolate permissions between browser contexts', async ({ server, browser, browserName, isMac, macVersion }) => {
+    it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
+
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
