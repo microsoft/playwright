@@ -973,9 +973,7 @@ class FrameSession {
     };
     if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
       return;
-    const promises = [
-      this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride),
-    ];
+    const promises = [];
     if (!preserveWindowBoundaries && this._windowId) {
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
@@ -999,6 +997,8 @@ class FrameSession {
         height: viewportSize.height + insets.height
       }));
     }
+    // Make sure that the viewport emulationis set after the embedder window resize.
+    promises.push(this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride));
     await Promise.all(promises);
     this._metricsOverride = metricsOverride;
   }
