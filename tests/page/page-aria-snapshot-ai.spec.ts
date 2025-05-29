@@ -257,8 +257,11 @@ it('should update active element on focus', async ({ page }) => {
 
   // Initially there shouldn't be an active element on the inputs
   const initialSnapshot = await snapshotForAI(page);
-  expect(initialSnapshot).toContain('textbox "First input"');
-  expect(initialSnapshot).toContain('textbox "Second input"');
+  expect(initialSnapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - textbox "First input" [ref=e2]
+      - textbox "Second input" [ref=e3]
+  `);
 
   // Focus the second input
   await page.locator('#input2').focus();
