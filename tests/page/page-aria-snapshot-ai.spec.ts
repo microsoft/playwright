@@ -280,14 +280,17 @@ it('should mark iframe as active when it contains focused element', async ({ pag
   // Create a simple HTML file for the iframe
   await page.setContent(`
     <input id="regular-input" placeholder="Regular input">
-    <iframe srcdoc="<input id='iframe-input' placeholder='Input in iframe'>" tabindex="0"></iframe>
+    <iframe src="data:text/html,<input id='iframe-input' placeholder='Input in iframe'>" tabindex="0"></iframe>
   `);
 
   // Test 1: Focus the input inside the iframe
   await page.frameLocator('iframe').locator('#iframe-input').focus();
   const inputInIframeFocusedSnapshot = await snapshotForAI(page);
-  console.log('Input in iframe focused snapshot:', inputInIframeFocusedSnapshot);
   
   // The iframe should be marked as active when it contains a focused element
   expect(inputInIframeFocusedSnapshot).toContain('iframe [active]');
+  
+  // Also check that the input element inside the iframe is active
+  const iframeSnapshot = await page.frameLocator('iframe').locator('body').ariaSnapshot();
+  expect(iframeSnapshot).toContain('textbox "Input in iframe" [active]');
 });
