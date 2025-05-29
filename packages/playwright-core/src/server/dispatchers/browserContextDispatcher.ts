@@ -40,7 +40,7 @@ import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response } from '../network';
-import type { Page } from '../page';
+import type { InitScript, Page, PageBinding } from '../page';
 import type { DispatcherScope } from './dispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type * as channels from '@protocol/channels';
@@ -51,6 +51,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
+  private _bindings: PageBinding[] = [];
+  private _initScritps: InitScript[] = [];
+  private _dialogHandler: (dialog: Dialog) => boolean;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -113,12 +116,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         });
       }
     });
-    this.addObjectListener(BrowserContext.Events.Dialog, (dialog: Dialog) => {
-      if (this._shouldDispatchEvent(dialog.page(), 'dialog'))
-        this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) });
-      else
-        dialog.close().catch(() => {});
-    });
+    this._dialogHandler = dialog => {
+      if (!this._shouldDispatchEvent(dialog.page(), 'dialog'))
+        return false;
+      this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) });
+      return true;
+    };
+    context.dialogManager.addDialogHandler(this._dialogHandler);
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
@@ -206,7 +210,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
-    await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+    const binding = await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
       if (this._disposed)
@@ -216,6 +220,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
+    this._bindings.push(binding);
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
@@ -266,7 +271,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams): Promise<void> {
-    await this._context.addInitScript(params.source);
+    this._initScritps.push(await this._context.addInitScript(params.source));
   }
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams): Promise<void> {
@@ -373,7 +378,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   override _onDispose() {
     // Avoid protocol calls for the closed context.
-    if (!this._context.isClosingOrClosed())
-      this._context.setRequestInterceptor(undefined).catch(() => {});
+    if (this._context.isClosingOrClosed())
+      return;
+    this._context.dialogManager.removeDialogHandler(this._dialogHandler);
+    this._context.setRequestInterceptor(undefined).catch(() => {});
+    this._context.removeExposedBindings(this._bindings).catch(() => {});
+    this._bindings = [];
+    this._context.removeInitScripts(this._initScritps).catch(() => {});
+    this._initScritps = [];
   }
 }

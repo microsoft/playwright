@@ -66,3 +66,15 @@ it('should work with browser context scripts for already created pages', async (
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => (window as any)['result'])).toBe(123);
 });
+
+it('init script should run only once in popup', async ({ context }) => {
+  await context.addInitScript(() => {
+    window['callCount'] = (window['callCount'] || 0) + 1;
+  });
+  const page = await context.newPage();
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('about:blank')),
+  ]);
+  expect(await popup.evaluate('callCount')).toEqual(1);
+});

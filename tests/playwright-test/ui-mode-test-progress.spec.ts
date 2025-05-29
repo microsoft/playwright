@@ -285,7 +285,7 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
     /Uncheck.*locator/,
-    /Expect not toBeChecked/,
+    /Expect "not toBeChecked"/,
   ]);
 });
 
@@ -325,7 +325,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
   ).toHaveText([
     /Before Hooks/,
     /beforeAll hook/,
-    /fixture: browser/,
+    /Fixture "browser"/,
     /Create page/,
   ]);
   latch1.open();

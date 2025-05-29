@@ -93,13 +93,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-    options = {
+    options = this._playwright.selectors._withSelectorOptions({
       ...this._playwright._defaultLaunchOptions,
       ...this._playwright._defaultContextOptions,
       ...options,
-      selectorEngines: this._playwright.selectors._selectorEngines,
-      testIdAttributeName: this._playwright.selectors._testIdAttributeName,
-    };
+    });
     const contextParams = await prepareBrowserContextParams(this._platform, options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
@@ -166,8 +164,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           connection.close();
           throw new Error('Malformed endpoint. Did you use BrowserType.launchServer method?');
         }
-        this._playwright.selectors._playwrights.add(playwright);
-        connection.on('close', () => this._playwright.selectors._playwrights.delete(playwright));
+        playwright.selectors = this._playwright.selectors;
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
         browser._connectToBrowserType(this, {}, logger);
         browser._shouldCloseConnectionOnClose = true;

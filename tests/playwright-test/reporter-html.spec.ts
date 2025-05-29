@@ -771,7 +771,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
       await page.click('text=step title');
-      await page.click('text=EXPECT toBe');
+      await page.click('text=Expect "toBe"');
       await expect(page.getByTestId('test-snippet')).toContainText([
         `await test.step('step title', async () => {`,
         'expect(1).toBe(1);',
@@ -801,11 +801,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
-      await page.click('text=skipped step title (skipped)');
+      await page.click('text=Step "skipped step title" (skipped)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step.skip('skipped step title', async () => {`);
     });
 
-    test('step title should inlclude skipped step description', async ({ runInlineTest, page, showReport }) => {
+    test('step title should include skipped step description', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
           export default { testDir: './tests' };
@@ -826,7 +826,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
-      await page.click('text=step title (skipped: conditional step.skip)');
+      await page.click('text=Step "step title" (skipped: conditional step.skip)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step('step title', async (step) => {`);
     });
 
@@ -1215,8 +1215,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await page.locator('text=sample').first().click();
       await expect(page.locator('.tree-item-title')).toContainText([
-        /Expect toBe.*10/,
-        /Expect toEqual.*20/,
+        /Expect "toBe".*10/,
+        /Expect "toEqual".*20/,
       ]);
     });
 
@@ -1243,11 +1243,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'sample' }).click();
       await page.getByText('Before Hooks').click();
-      await expect(page.getByText('fixture: custom fixture name')).toBeVisible();
+      await expect(page.getByText('Fixture "custom fixture name"')).toBeVisible();
       await expect(page.locator('.tree-item-title')).toHaveText([
         /Before Hooks/,
-        /fixture: custom fixture/,
-        /fixture: fixture2/,
+        /Fixture "custom fixture name"/,
+        /Fixture "fixture2"/,
         /After Hooks/,
       ]);
     });
@@ -1266,7 +1266,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('text=a.spec.js')).toBeVisible();
       await page.locator('text=sample').first().click();
       await expect(page.locator('.tree-item-title')).toContainText([
-        /Expect toBe/,
+        /Expect "toBe"/,
       ]);
     });
 
@@ -2874,7 +2874,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
     });
 
-    test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test.fixme('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `export default {}`,
@@ -2917,22 +2917,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
       expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
-    });
-
-    test('should not show prompt for empty timeout error', async ({ runInlineTest, showReport, page }) => {
-      const result = await runInlineTest({
-        'example.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample', async ({ page }) => {
-            test.setTimeout(2000);
-            await page.setChecked('input', true);
-          });
-        `,
-      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      await showReport();
-      await page.getByRole('link', { name: 'sample' }).click();
-      await expect(page.getByRole('button', { name: 'Copy prompt' })).toHaveCount(1);
     });
 
     test('should include snapshot when page wasnt closed', async ({ runInlineTest, showReport, page }) => {

@@ -127,7 +127,7 @@ test('should show tracing.group in the action list with location', async ({ runA
     /Navigate/,
     /inner group 1/,
     /inner group 2/,
-    /Expect toBeVisible/,
+    /toBeVisible/,
   ]);
 
   await traceViewer.selectAction('inner group 1');
@@ -152,9 +152,9 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /Create page/,
     /Navigate to "data:"/,
     /Set content/,
-    /Expect toHaveText.*locator/,
-    /Expect toBeHidden.*getByTestId/,
-    /Expect toBeHidden.*getByTestId/,
+    /toHaveText.*locator/,
+    /toBeHidden.*getByTestId/,
+    /toBeHidden.*getByTestId/,
     /Evaluate/,
     /Evaluate/,
     /Click/,
@@ -200,7 +200,7 @@ test('should show action context on locators and other common actions', async ({
     /Set content/,
     /Click.*locator\('input'\)/,
     /Click.*getByRole\('textbox'\)/,
-    /Expect toHaveText.*locator\('input'\)/,
+    /toHaveText.*locator\('input'\)/,
     /Press "Enter".*locator\('input'\)/,
     /Type "Hello world.*/,
     /Press "Control\+c"/,
@@ -271,7 +271,7 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   await expect.soft(traceViewer.consoleLines.filter({ hasText: 'Cheers!' }).locator('.codicon')).toHaveClass('codicon codicon-browser status-none');
   await expect(traceViewer.consoleStacks.first()).toContainText('Error: Unhandled exception');
 
-  await traceViewer.selectAction('EVALUATE');
+  await traceViewer.selectAction('Evaluate');
 
   const listViews = traceViewer.page.locator('.console-tab').locator('.list-view-entry');
   await expect(listViews.nth(0)).toHaveClass('list-view-entry');
@@ -284,17 +284,17 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
 
 test('should open console errors on click', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  expect(await traceViewer.actionIconsText('EVALUATE')).toEqual(['2', '1']);
+  expect(await traceViewer.actionIconsText('Evaluate')).toEqual(['2', '1']);
   expect(await traceViewer.page.isHidden('.console-tab')).toBeTruthy();
-  await (await traceViewer.actionIcons('EVALUATE')).click();
+  await (await traceViewer.actionIcons('Evaluate')).click();
   expect(await traceViewer.page.waitForSelector('.console-tab')).toBeTruthy();
 });
 
 test('should show params and return value', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('EVALUATE');
+  await traceViewer.selectAction('Evaluate');
   await expect(traceViewer.callLines).toHaveText([
-    /Evaluate/,
+    '',
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
@@ -305,7 +305,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
 
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
-    /Expect toHaveText/,
+    /toHaveText/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /locator:locator\('button'\)/,
@@ -318,9 +318,9 @@ test('should show params and return value', async ({ showTraceViewer }) => {
 
 test('should show null as a param', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('EVALUATE', 1);
+  await traceViewer.selectAction('Evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
-    /Evaluate/,
+    '',
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
@@ -354,7 +354,7 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
 
 test('should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
   await expect(traceViewer.networkRequests).toContainText([/style.cssGET200text\/css/]);
@@ -369,7 +369,7 @@ test('should filter network requests by resource type', async ({ page, runAndTra
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
     await page.evaluate(() => (window as any).donePromise);
   });
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
 
   await traceViewer.page.getByText('JS', { exact: true }).click();
@@ -402,7 +402,7 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
     await page.evaluate(() => (window as any).donePromise);
   });
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
 
   await traceViewer.page.getByText('Font', { exact: true }).click();
@@ -417,7 +417,7 @@ test('should filter network requests by url', async ({ page, runAndTrace, server
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
     await page.evaluate(() => (window as any).donePromise);
   });
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
 
   await traceViewer.page.getByPlaceholder('Filter network').fill('script.');
@@ -446,7 +446,7 @@ test('should have network request overrides', async ({ page, server, runAndTrace
     await page.route('**/style.css', route => route.abort());
     await page.goto(server.PREFIX + '/frames/frame.html');
   });
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
   await expect(traceViewer.networkRequests).toContainText([/style.cssGETx-unknown.*aborted/]);
@@ -458,7 +458,7 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
     await page.route('**/script.js', route => route.continue());
     await page.goto(server.PREFIX + '/frames/frame.html');
   });
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
   await expect.soft(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html.*/]);
   await expect.soft(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript.*continued/]);
@@ -1506,7 +1506,7 @@ test('should show correct request start time', {
       return fetch('/api').then(r => r.text());
     });
   });
-  await traceViewer.selectAction('EVALUATE');
+  await traceViewer.selectAction('Evaluate');
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/apiGET200text/]);
   const line = traceViewer.networkRequests.getByText(/apiGET200text/);
@@ -1553,7 +1553,7 @@ test('should show baseURL in metadata pane', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
 }, async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('EVALUATE');
+  await traceViewer.selectAction('Evaluate');
   await traceViewer.showMetadataTab();
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
@@ -1595,22 +1595,22 @@ test('should not leak recorders', {
 
   await expect(traceViewer.snapshotContainer.contentFrame().locator('body')).toContainText(`Hi, I'm frame`);
 
-  const frame1 = await forceRecorder('NAVIGATE');
+  const frame1 = await forceRecorder('Navigate');
   await expect(frame1.locator('body')).toContainText('Hello world');
 
-  const frame2 = await forceRecorder('EVALUATE');
+  const frame2 = await forceRecorder('Evaluate');
   await expect(frame2.locator('button')).toBeVisible();
 
   await traceViewer.page.requestGC();
   await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
 
-  const frame3 = await forceRecorder('SET VIEWPORT SIZE');
+  const frame3 = await forceRecorder('Set viewport size');
   await expect(frame3.locator('body')).toContainText(`Hi, I'm frame`);
 
-  const frame4 = await forceRecorder('NAVIGATE');
+  const frame4 = await forceRecorder('Navigate');
   await expect(frame4.locator('body')).toContainText('Hello world');
 
-  const frame5 = await forceRecorder('EVALUATE');
+  const frame5 = await forceRecorder('Evaluate');
   await expect(frame5.locator('button')).toBeVisible();
 
   await traceViewer.page.requestGC();
@@ -1751,14 +1751,14 @@ test('should show a modal dialog', async ({ runAndTrace, page, platform, browser
 
 test('should open settings dialog', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showSettings();
   await expect(traceViewer.settingsDialog).toBeVisible();
 });
 
 test('should toggle theme color', async ({ showTraceViewer, page }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('NAVIGATE');
+  await traceViewer.selectAction('Navigate');
   await traceViewer.showSettings();
 
   await expect(traceViewer.darkModeSetting).toBeChecked({ checked: false });
@@ -1781,7 +1781,7 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
   let snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'));
 
   // Click on the action with a canvas snapshot
-  await traceViewer.selectAction('NAVIGATE', 0);
+  await traceViewer.selectAction('Navigate', 0);
 
   let snapshotRequest = await snapshotRequestPromise;
 
@@ -1794,12 +1794,12 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
   await expect(traceViewer.displayCanvasContentSetting).toBeChecked({ checked: true });
 
   // Deselect canvas
-  await traceViewer.selectAction('NAVIGATE', 1);
+  await traceViewer.selectAction('Navigate', 1);
 
   snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'));
 
   // Select canvas again
-  await traceViewer.selectAction('NAVIGATE', 0);
+  await traceViewer.selectAction('Navigate', 0);
 
   snapshotRequest = await snapshotRequestPromise;
 
@@ -1828,9 +1828,9 @@ test('should render blob trace received from message', async ({ showTraceViewer 
     /Create page/,
     /Navigate to "data:"/,
     /Set content/,
-    /Expect toHaveText.*locator/,
-    /Expect toBeHidden.*getByTestId/,
-    /Expect toBeHidden.*getByTestId/,
+    /toHaveText.*locator/,
+    /toBeHidden.*getByTestId/,
+    /toBeHidden.*getByTestId/,
     /Evaluate/,
     /Evaluate/,
     /Click.*getByText\('Click'\)/,

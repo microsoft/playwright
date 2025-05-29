@@ -17,8 +17,15 @@
 import { contextTest as it, expect } from '../config/browserTest';
 import type { Page, Frame } from 'playwright-core';
 
-async function generate(pageOrFrame: Page | Frame, target: string): Promise<string> {
-  return pageOrFrame.$eval(target, e => (window as any).playwright.selector(e));
+async function generate(pageOrFrame: Page | Frame, target: string, expected?: string): Promise<string> {
+  return pageOrFrame.$eval(target, (e, expected) => {
+    const playwright = (window as any).playwright;
+    const selector = playwright.selector(e);
+    const expectedTarget = expected ? playwright.$(expected) : e;
+    if (playwright.$(selector) === expectedTarget)
+      return selector;
+    return 'FAILED: ' + selector;
+  }, expected);
 }
 
 async function generateMultiple(pageOrFrame: Page | Frame, target: string): Promise<string> {
@@ -38,12 +45,12 @@ it.describe('selector generator', () => {
 
   it('should prefer button over inner span', async ({ page }) => {
     await page.setContent(`<button><span>text</span></button>`);
-    expect(await generate(page, 'span')).toBe('internal:role=button[name="text"i]');
+    expect(await generate(page, 'span', 'button')).toBe('internal:role=button[name="text"i]');
   });
 
   it('should prefer role=button over inner span', async ({ page }) => {
     await page.setContent(`<div role=button><span>text</span></div>`);
-    expect(await generate(page, 'span')).toBe('internal:role=button[name="text"i]');
+    expect(await generate(page, 'span', 'div')).toBe('internal:role=button[name="text"i]');
   });
 
   it('should not prefer zero-sized button over inner span', async ({ page }) => {
@@ -296,6 +303,23 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) > c');
   });
 
+  it('should prefer class to ordinal', async ({ page }) => {
+    await page.setContent(`
+      <div><c></c><c></c><c></c><c></c><c></c><b></b></div>
+      <div>
+        <b class="foo">
+          <c>
+          </c>
+        </b>
+        <b class="foo bar.baz">
+          <c mark=1></c>
+        </b>
+      </div>
+      <div><b class="foo"></b></div>
+    `);
+    expect(await generate(page, 'c[mark="1"]')).toBe('.foo.bar\\.baz > c');
+  });
+
   it('should properly join child selectors under nested ordinals', async ({ page }) => {
     await page.setContent(`
       <div><c></c><c></c><c></c><c></c><c></c><b></b></div>
@@ -423,19 +447,18 @@ it.describe('selector generator', () => {
 
   it('should work with tricky attributes', async ({ page }) => {
     await page.setContent(`<button id="this:is-my-tricky.id"><span></span></button>`);
-    expect(await generate(page, 'button')).toBe('[id="this\\:is-my-tricky\\.id"]');
+    expect(await generate(page, 'button')).toBe('[id="this:is-my-tricky.id"]');
 
     await page.setContent(`<ng:switch><span></span></ng:switch>`);
     expect(await generate(page, 'ng\\:switch')).toBe('ng\\:switch');
 
     await page.setContent(`<button><span></span></button><button></button>`);
-    await page.$eval('span', span => span.textContent = `!#'!?:`);
-    expect(await generate(page, 'button')).toBe(`internal:role=button[name="!#'!?:"i]`);
-    expect(await page.$(`role=button[name="!#'!?:"]`)).toBeTruthy();
+    await page.$eval('span', span => span.textContent = `!#'!?"\\:`);
+    expect(await generate(page, 'button')).toBe(`internal:role=button[name="!#'!?\\"\\\\:"i]`);
 
     await page.setContent(`<div><span></span></div>`);
-    await page.$eval('div', div => div.id = `!#'!?:`);
-    expect(await generate(page, 'div')).toBe("[id=\"\\!\\#\\'\\!\\?\\:\"]");
+    await page.$eval('div', div => div.id = `!#'!?"\\:`);
+    expect(await generate(page, 'div')).toBe(`[id="!#'!?\\"\\\\:"]`);
   });
 
   it('should work without CSS.escape', async ({ page }) => {
@@ -444,7 +467,12 @@ it.describe('selector generator', () => {
       delete window.CSS.escape;
       button.setAttribute('name', '-tricky\u0001name');
     });
-    expect(await generate(page, 'button')).toBe(`button[name="-tricky\\1 name"]`);
+    expect(await generate(page, 'button')).toBe(`button[name="-tricky\u0001name"]`);
+  });
+
+  it('should not over-escape for CSS syntax', async ({ page }) => {
+    await page.setContent(`<button aria-hidden="false" name="123"></button><div role="button"></div>`);
+    expect(await generate(page, 'button')).toBe(`button[name="123"]`);
   });
 
   it('should ignore empty aria-label for candidate consideration', async ({ page }) => {

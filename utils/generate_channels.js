@@ -157,7 +157,7 @@ export type { Validator, ValidatorContext } from './validatorPrimitives';
 export { ValidationError, findValidator, maybeFindValidator, createMetadataValidator } from './validatorPrimitives';
 `];
 
-const debug_ts = [
+const metainfo_ts = [
 `/**
  * Copyright (c) Microsoft Corporation.
  *
@@ -328,7 +328,7 @@ for (const [name, item] of Object.entries(protocol)) {
   }
 }
 
-debug_ts.push(`export const methodMetainfo = new Map<string, { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean }>([
+metainfo_ts.push(`export const methodMetainfo = new Map<string, { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean }>([
   ${methodMetainfo.join(`,\n  `)}
 ]);`);
 
@@ -348,6 +348,6 @@ function writeFile(filePath, content) {
 }
 
 writeFile(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'channels.d.ts'), channels_ts.join('\n') + '\n');
-writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'debug.ts'), debug_ts.join('\n') + '\n');
+writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'utils', 'isomorphic', 'protocolMetainfo.ts'), metainfo_ts.join('\n') + '\n');
 writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'validator.ts'), validator_ts.join('\n') + '\n');
 process.exit(hasChanges ? 1 : 0);

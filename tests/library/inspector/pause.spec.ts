@@ -290,8 +290,8 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause({ __testHookKeepTestTimeout: true });  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'Pause- XXms',
-      'Expect toHaveText(page.locator(\'button\'))- XXms',
-      'Expect not toHaveText(page.locator(\'button\'))- XXms',
+      'Expect "toHaveText"(page.locator(\'button\'))- XXms',
+      'Expect "not toHaveText"(page.locator(\'button\'))- XXms',
       'Pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');

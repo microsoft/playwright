@@ -26,7 +26,7 @@ import { yazl } from 'playwright-core/lib/zipBundle';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
-import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
+import { resolveReporterOutputPath, stripAnsiEscapes, stepTitle } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
@@ -34,6 +34,7 @@ import type * as api from '../../types/testReporter';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
+import type { TestStepCategory } from '../util';
 
 type TestEntry = {
   testCase: TestCase;
@@ -523,7 +524,7 @@ class HtmlBuilder {
   private _createTestStep(dedupedStep: DedupedStep, result: api.TestResult): TestStep {
     const { step, duration, count } = dedupedStep;
     const skipped = dedupedStep.step.annotations?.find(a => a.type === 'skip');
-    let title = step.title;
+    let title = stepTitle(step.category as TestStepCategory, step.title);
     if (skipped)
       title = `${title} (skipped${skipped.description ? ': ' + skipped.description : ''})`;
     const testStep: TestStep = {

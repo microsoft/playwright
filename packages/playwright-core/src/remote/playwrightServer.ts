@@ -34,7 +34,7 @@ import type  { LaunchOptions } from '../server/types';
 type ServerOptions = {
   path: string;
   maxConnections: number;
-  mode: 'default' | 'launchServer' | 'extension';
+  mode: 'default' | 'launchServer' | 'launchServerShared' | 'extension';
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
@@ -98,7 +98,7 @@ export class PlaywrightServer {
         } else if (isExtension) {
           clientType = 'reuse-browser';
           semaphore = reuseBrowserSemaphore;
-        } else if (this._options.mode === 'launchServer') {
+        } else if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
           clientType = 'pre-launched-browser-or-android';
           semaphore = browserSemaphore;
         }
@@ -106,7 +106,13 @@ export class PlaywrightServer {
         return new PlaywrightConnection(
             semaphore.acquire(),
             clientType, ws,
-            { socksProxyPattern: proxyValue, browserName, launchOptions, allowFSPaths: this._options.mode === 'extension' },
+            {
+              socksProxyPattern: proxyValue,
+              browserName,
+              launchOptions,
+              allowFSPaths: this._options.mode === 'extension',
+              sharedBrowser: this._options.mode === 'launchServerShared',
+            },
             {
               playwright: this._preLaunchedPlaywright,
               browser: this._options.preLaunchedBrowser,

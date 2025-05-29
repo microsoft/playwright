@@ -240,8 +240,8 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame.exposePlaywrightBinding());
   }
 
-  async removeNonInternalInitScripts() {
-    await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument());
+  async removeInitScripts(initScripts: InitScript[]): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument(initScripts));
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -392,7 +392,6 @@ class FrameSession {
   private _videoRecorder: VideoRecorder | null = null;
   private _screencastId: string | null = null;
   private _screencastClients = new Set<any>();
-  private _evaluateOnNewDocumentIdentifiers: string[] = [];
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
 
@@ -818,7 +817,7 @@ class FrameSession {
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     if (!this._page.frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
         this._page,
         event.type,
         event.message,
@@ -974,9 +973,7 @@ class FrameSession {
     };
     if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
       return;
-    const promises = [
-      this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride),
-    ];
+    const promises = [];
     if (!preserveWindowBoundaries && this._windowId) {
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
@@ -1000,6 +997,8 @@ class FrameSession {
         height: viewportSize.height + insets.height
       }));
     }
+    // Make sure that the viewport emulationis set after the embedder window resize.
+    promises.push(this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride));
     await Promise.all(promises);
     this._metricsOverride = metricsOverride;
   }
@@ -1059,14 +1058,11 @@ class FrameSession {
   async _evaluateOnNewDocument(initScript: InitScript, world: types.World, runImmediately?: boolean): Promise<void> {
     const worldName = world === 'utility' ? this._crPage.utilityWorldName : undefined;
     const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName, runImmediately });
-    if (!initScript.internal)
-      this._evaluateOnNewDocumentIdentifiers.push(identifier);
+    initScript.auxData = identifier;
   }
 
-  async _removeEvaluatesOnNewDocument(): Promise<void> {
-    const identifiers = this._evaluateOnNewDocumentIdentifiers;
-    this._evaluateOnNewDocumentIdentifiers = [];
-    await Promise.all(identifiers.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier })));
+  async _removeEvaluatesOnNewDocument(initScripts: InitScript[]): Promise<void> {
+    await Promise.all(initScripts.map(script => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.auxData }).catch(() => {}))); // target can be closed
   }
 
   async exposePlaywrightBinding() {

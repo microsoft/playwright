@@ -27,7 +27,7 @@ import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { LongStandingScope, assert, trimStringWithEllipsis } from '../utils';
+import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
 import { debugLogger } from './utils/debugLogger';
@@ -58,7 +58,7 @@ export interface PageDelegate {
   goForward(): Promise<boolean>;
   requestGC(): Promise<void>;
   addInitScript(initScript: InitScript): Promise<void>;
-  removeNonInternalInitScripts(): Promise<void>;
+  removeInitScripts(initScripts: InitScript[]): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
@@ -258,8 +258,6 @@ export class Page extends SdkObject {
   async resetForReuse(metadata: CallMetadata) {
     this._locatorHandlers.clear();
 
-    await this._removeExposedBindings();
-    await this._removeInitScripts();
     await this.setClientRequestInterceptor(undefined);
     await this.setServerRequestInterceptor(undefined);
     await this.setFileChooserIntercepted(false);
@@ -328,7 +326,7 @@ export class Page extends SdkObject {
     return this.frameManager.frames();
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     if (this.browserContext._pageBindings.has(name))
@@ -338,13 +336,16 @@ export class Page extends SdkObject {
     this._pageBindings.set(name, binding);
     await this.delegate.addInitScript(binding.initScript);
     await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
+    return binding;
   }
 
-  private async _removeExposedBindings() {
-    for (const [key, binding] of this._pageBindings) {
-      if (!binding.internal)
-        this._pageBindings.delete(key);
-    }
+  async removeExposedBindings(bindings: PageBinding[]) {
+    bindings = bindings.filter(binding => this._pageBindings.get(binding.name) === binding);
+    for (const binding of bindings)
+      this._pageBindings.delete(binding.name);
+    await this.delegate.removeInitScripts(bindings.map(binding => binding.initScript));
+    const cleanup = bindings.map(binding => `{ ${binding.cleanupScript} };\n`).join('');
+    await this.safeNonStallingEvaluateInAllFrames(cleanup, 'main');
   }
 
   setExtraHTTPHeaders(headers: types.HeadersArray) {
@@ -560,14 +561,16 @@ export class Page extends SdkObject {
   }
 
   async addInitScript(source: string, name?: string) {
-    const initScript = new InitScript(source, false /* internal */, name);
+    const initScript = new InitScript(source, name);
     this.initScripts.push(initScript);
     await this.delegate.addInitScript(initScript);
+    return initScript;
   }
 
-  private async _removeInitScripts() {
-    this.initScripts = this.initScripts.filter(script => script.internal);
-    await this.delegate.removeNonInternalInitScripts();
+  async removeInitScripts(initScripts: InitScript[]) {
+    const set = new Set(initScripts);
+    this.initScripts = this.initScripts.filter(script => !set.has(script));
+    await this.delegate.removeInitScripts(initScripts);
   }
 
   needsRequestInterception(): boolean {
@@ -624,7 +627,7 @@ export class Page extends SdkObject {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
-      progress.log(`${metadata.title}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
+      progress.log(`${renderTitleForCall(metadata)}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
       if (options.expected)
         progress.log(`  verifying given screenshot expectation`);
       else
@@ -802,9 +805,8 @@ export class Page extends SdkObject {
   }
 
   async snapshotForAI(metadata: CallMetadata): Promise<string> {
-    const frameIds: string[] = [];
-    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, frameIds);
-    this.lastSnapshotFrameIds = frameIds;
+    this.lastSnapshotFrameIds = [];
+    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, this.lastSnapshotFrameIds);
     return snapshot.join('\n');
   }
 }
@@ -862,21 +864,21 @@ export class PageBinding {
         if (!globalThis[property])
           globalThis[property] = new (module.exports.BindingsController())(globalThis, '${PageBinding.kBindingName}');
       })();
-    `, true /* internal */);
+    `);
   }
 
   readonly name: string;
   readonly playwrightFunction: frames.FunctionWithSource;
   readonly initScript: InitScript;
   readonly needsHandle: boolean;
-  readonly internal: boolean;
+  readonly cleanupScript: string;
 
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(`globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`, true /* internal */);
+    this.initScript = new InitScript(`globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`);
     this.needsHandle = needsHandle;
-    this.internal = name.startsWith('__pw');
+    this.cleanupScript = `globalThis['${PageBinding.kController}'].removeBinding(${JSON.stringify(name)})`;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
@@ -905,14 +907,13 @@ export class PageBinding {
 
 export class InitScript {
   readonly source: string;
-  readonly internal: boolean;
   readonly name?: string;
+  auxData: any; // Can be arbitrarily used by a browser-specific implementation.
 
-  constructor(source: string, internal?: boolean, name?: string) {
+  constructor(source: string, name?: string) {
     this.source = `(() => {
       ${source}
     })();`;
-    this.internal = !!internal;
     this.name = name;
   }
 }

@@ -50,7 +50,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Timeout 2000ms exceeded`);
-  expect(result.output).toContain(`Expect toHaveScreenshot with timeout 2000ms`);
+  expect(result.output).toContain(`Expect "toHaveScreenshot" with timeout 2000ms`);
   expect(result.output).toContain(`generating new stable screenshot expectation`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
@@ -238,7 +238,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
     'reporter.ts': `
       class Reporter {
         onStepEnd(test, result, step) {
-          console.log('%% end ' + step.title);
+          console.log('%% end [' + step.category + '] ' + step.title);
         }
       }
       module.exports = Reporter;
@@ -256,18 +256,18 @@ test('should report toHaveScreenshot step with expectation name in title', async
 
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
-    `end Launch browser`,
-    `end fixture: browser`,
-    `end Create context`,
-    `end fixture: context`,
-    `end Create page`,
-    `end fixture: page`,
-    `end Before Hooks`,
-    `end Expect toHaveScreenshot(foo.png)`,
-    `end Expect toHaveScreenshot(is-a-test-1.png)`,
-    `end fixture: page`,
-    `end fixture: context`,
-    `end After Hooks`,
+    `end [pw:api] Launch browser`,
+    `end [fixture] browser`,
+    `end [pw:api] Create context`,
+    `end [fixture] context`,
+    `end [pw:api] Create page`,
+    `end [fixture] page`,
+    `end [hook] Before Hooks`,
+    `end [expect] toHaveScreenshot(foo.png)`,
+    `end [expect] toHaveScreenshot(is-a-test-1.png)`,
+    `end [fixture] page`,
+    `end [fixture] context`,
+    `end [hook] After Hooks`,
   ]);
 });
 
@@ -389,7 +389,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Timeout 2000ms exceeded`);
-  expect(result.output).toContain(`Expect toHaveScreenshot with timeout 2000ms`);
+  expect(result.output).toContain(`Expect "toHaveScreenshot" with timeout 2000ms`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
@@ -683,7 +683,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
       class Reporter {
         onStepEnd(test, result, step) {
           if (step.attachments.length > 0)
-            console.log(\`%%\${step.title}: \${step.attachments.map(a => a.name).join(", ")}\`);
+            console.log(\`%%[\${step.category}] \${step.title}: \${step.attachments.map(a => a.name).join(", ")}\`);
         }
       }
       module.exports = Reporter;
@@ -700,7 +700,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
   }, { reporter: '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.outputLines).toEqual(['Expect toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
+  expect(result.outputLines).toEqual(['[expect] toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
 });
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {

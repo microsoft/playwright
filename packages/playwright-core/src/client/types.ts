@@ -105,31 +105,10 @@ export type ConnectOptions = {
   timeout?: number,
   logger?: Logger,
 };
-export type LaunchServerOptions = {
-  channel?: channels.BrowserTypeLaunchOptions['channel'],
-  executablePath?: string,
-  args?: string[],
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  env?: Env,
-  headless?: boolean,
-  devtools?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string
-  },
-  downloadsPath?: string,
-  chromiumSandbox?: boolean,
+export type LaunchServerOptions = LaunchOptions & {
   host?: string,
   port?: number,
   wsPath?: string,
-  logger?: Logger,
-  firefoxUserPrefs?: { [key: string]: string | number | boolean };
 };
 
 export type LaunchAndroidServerOptions = {

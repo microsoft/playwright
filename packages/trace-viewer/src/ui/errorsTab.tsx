@@ -61,13 +61,6 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
 
-  const prompt = useAsyncMemo(async () => {
-    if (!error.context)
-      return;
-    const response = await fetch(attachmentURL(error.context));
-    return fixTestInstructions + await response.text();
-  }, [error], undefined);
-
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
       alignItems: 'center',
@@ -81,9 +74,6 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
       {location && <div className='action-location'>
         @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
       </div>}
-      <span style={{ position: 'absolute', right: '5px' }}>
-        {prompt && <CopyPromptButton prompt={prompt} />}
-      </span>
     </div>
 
     <ErrorMessage error={message} />
@@ -92,14 +82,27 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
+  model?: modelUtil.MultiTraceModel,
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource, wallTime }) => {
+}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime }) => {
+  const errorContext = useAsyncMemo(async () => {
+    const attachment = model?.attachments.find(a => a.name === 'error-context');
+    if (!attachment)
+      return;
+    return await fetch(attachmentURL(attachment)).then(r => r.text());
+  }, [model], undefined);
+
+  const prompt = fixTestInstructions + (errorContext ?? ''); // TODO in next PR: enrich with test location, error details and source code, similar to errorContext.ts
+
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
+    <span style={{ position: 'absolute', right: '5px', top: '5px', zIndex: 1 }}>
+      {prompt && <CopyPromptButton prompt={prompt} />}
+    </span>
     {[...errorsModel.errors.entries()].map(([message, error]) => {
       const errorId = `error-${wallTime}-${message}`;
       return <ErrorView key={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} />;

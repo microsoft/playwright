@@ -593,7 +593,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
         event.message,
@@ -768,7 +768,7 @@ export class WKPage implements PageDelegate {
     await this._updateBootstrapScript();
   }
 
-  async removeNonInternalInitScripts() {
+  async removeInitScripts(initScripts: InitScript[]): Promise<void> {
     await this._updateBootstrapScript();
   }
 

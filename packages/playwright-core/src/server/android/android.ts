@@ -224,8 +224,15 @@ export class AndroidDevice extends SdkObject {
   }
 
   async send(method: string, params: any = {}): Promise<any> {
-    // Patch the timeout in, just in case it's missing in one of the commands.
-    params.timeout = params.timeout || 0;
+    params = {
+      ...params,
+      // Patch the timeout in, just in case it's missing in one of the commands.
+      timeout: params.timeout || 0,
+    };
+    if (params.androidSelector) {
+      params.selector = params.androidSelector;
+      delete params.androidSelector;
+    }
     const driver = await this._driver();
     if (!driver)
       throw new Error('Device is closed');

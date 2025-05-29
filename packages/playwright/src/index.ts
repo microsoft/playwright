@@ -18,11 +18,11 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, methodMetainfo, asLocatorDescription, formatProtocolParam } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { attachErrorContext } from './errorContext';
+import { stepTitle } from './util';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -55,15 +55,12 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
-type ErrorContextOption = { format: 'json' | 'markdown' } | undefined;
-
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   playwright: PlaywrightImpl;
   _browserOptions: LaunchOptions;
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
-  _optionErrorContext: ErrorContextOption,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -247,13 +244,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, _optionErrorContext }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, _optionErrorContext);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -270,7 +267,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           if (zone.apiName)
             data.apiName = zone.apiName;
           if (zone.title)
-            data.title = zone.title;
+            data.title = stepTitle(zone.category, zone.title);
           data.stepId = zone.stepId;
           return;
         }
@@ -399,7 +396,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
   _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
-  _optionErrorContext: [process.env.PLAYWRIGHT_NO_COPY_PROMPT ? undefined : { format: 'markdown' }, { scope: 'worker', option: true }],
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
@@ -628,12 +624,10 @@ class ArtifactsRecorder {
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
   private _sourceCache: Map<string, string> = new Map();
-  private _errorContext: ErrorContextOption;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, errorContext: ErrorContextOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
-    this._errorContext = errorContext;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -677,7 +671,7 @@ class ArtifactsRecorder {
   }
 
   private async _takePageSnapshot(context: BrowserContext) {
-    if (!this._errorContext)
+    if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
       return;
     if (this._testInfo.errors.length === 0)
       return;
@@ -725,8 +719,23 @@ class ArtifactsRecorder {
     if (context)
       await this._takePageSnapshot(context);
 
-    if (this._errorContext)
-      await attachErrorContext(this._testInfo, this._errorContext.format, this._sourceCache, this._pageSnapshot);
+    if (this._pageSnapshot && this._testInfo.errors.length > 0 && !this._testInfo.attachments.some(a => a.name === 'error-context')) {
+      const lines = [
+        '# Page snapshot',
+        '',
+        '```yaml',
+        this._pageSnapshot,
+        '```',
+      ];
+      const filePath = this._testInfo.outputPath('error-context.md');
+      await fs.promises.writeFile(filePath, lines.join('\n'), 'utf8');
+
+      this._testInfo._attach({
+        name: 'error-context',
+        contentType: 'text/markdown',
+        path: filePath,
+      }, undefined);
+    }
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
@@ -758,10 +767,9 @@ class ArtifactsRecorder {
 }
 
 function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
-  const titleFormat = title ?? methodMetainfo.get(type + '.' + method)?.title ?? method;
-  const prefix = titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => formatProtocolParam(params, p1));
+  const prefix = renderTitleForCall({ title, type, method, params });
   let selector;
-  if (params?.['selector'])
+  if (params?.['selector'] && typeof params.selector === 'string')
     selector = asLocatorDescription('javascript', params.selector);
   return prefix + (selector ? ` ${selector}` : '');
 }

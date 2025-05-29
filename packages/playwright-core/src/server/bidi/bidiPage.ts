@@ -16,7 +16,6 @@
 
 import { assert } from '../../utils';
 import { eventsHelper } from '../utils/eventsHelper';
-import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
@@ -51,7 +50,6 @@ export class BidiPage implements PageDelegate {
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
   private readonly _pdf: BidiPDF;
-  private _initScriptIds: bidi.Script.PreloadScript[] = [];
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -221,7 +219,7 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onUserPromptOpened(event: bidi.BrowsingContext.UserPromptOpenedParameters) {
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
         event.message,
@@ -343,14 +341,11 @@ export class BidiPage implements PageDelegate {
       // TODO: push to iframes?
       contexts: [this._session.sessionId],
     });
-    if (!initScript.internal)
-      this._initScriptIds.push(script);
+    initScript.auxData = script;
   }
 
-  async removeNonInternalInitScripts() {
-    const promises = this._initScriptIds.map(script => this._session.send('script.removePreloadScript', { script }));
-    this._initScriptIds = [];
-    await Promise.all(promises);
+  async removeInitScripts(initScripts: InitScript[]): Promise<void> {
+    await Promise.all(initScripts.map(script => this._session.send('script.removePreloadScript', { script: script.auxData })));
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {

@@ -41,9 +41,9 @@ test('should merge trace events', async ({ runUITest }) => {
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
     /Set content/,
-    /Expect toBe/,
+    /Expect "toBe"/,
     /Click.*getByRole/,
-    /Expect toBe/,
+    /Expect "toBe"/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
@@ -68,12 +68,12 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
     /Set content/,
-    /Expect toBeVisible.*locator/,
+    /Expect "toBeVisible".*locator/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
 
-test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
+test('should merge screenshot assertions', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -93,8 +93,9 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
     /Set content/,
-    /Expect toHaveScreenshot[\d.]+m?s/,
+    /Expect "toHaveScreenshot"[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /Attach "error-context"/,
     /Worker Cleanup[\d.]+m?s/,
   ]);
 });
@@ -110,7 +111,7 @@ test('should locate sync assertions in source', async ({ runUITest }) => {
   });
 
   await page.getByText('trace test').dblclick();
-  await page.getByText('EXPECT toBe').click();
+  await page.getByText('Expect "toBe"').click();
 
   await expect(
       page.locator('.CodeMirror .source-line-running'),
@@ -140,7 +141,7 @@ test('should show snapshots for sync assertions', async ({ runUITest }) => {
     /Before Hooks[\d.]+m?s/,
     /Set content/,
     /Click.*getByRole/,
-    /Expect toBe/,
+    /Expect "toBe"/,
     /After Hooks[\d.]+m?s/,
   ]);
 
@@ -178,9 +179,9 @@ test('should show snapshots for steps', {
   await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks \\d+[hmsp]+/
-      - treeitem /first \\d+[hmsp]+/
-      - treeitem /middle \\d+[hmsp]+/
-      - treeitem /last \\d+[hmsp]+/
+      - treeitem /Step "first" \\d+[hmsp]+/
+      - treeitem /Step "middle" \\d+[hmsp]+/
+      - treeitem /Step "last" \\d+[hmsp]+/
       - treeitem /After Hooks \\d+[hmsp]+/
   `);
 
@@ -302,7 +303,7 @@ test('should not show caught errors in the errors tab', async ({ runUITest }, te
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
     /Set content/,
-    /Expect toBeChecked.*locator/,
+    /Expect "toBeChecked".*locator/,
     /After Hooks/,
   ]);
 
@@ -416,7 +417,7 @@ test('should work behind reverse proxy', { annotation: { type: 'issue', descript
       - treeitem /Before Hooks \\d+[hmsp]+/
       - treeitem /Set content \\d+[hmsp]+/
       - treeitem /Click.*getByRole/
-      - treeitem /Expect toBe/
+      - treeitem /Expect "toBe"/
       - treeitem /After Hooks \\d+[hmsp]+/
   `);
 
@@ -473,8 +474,8 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
   const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(listItem, 'action list').toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /My Custom Fixture[\d.]+m?s/,
-    /fixture2[\d.]+m?s/,
+    /Fixture "My Custom Fixture"[\d.]+m?s/,
+    /Fixture "fixture2"[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
@@ -512,8 +513,8 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
     - tree:
       - treeitem /step/:
         - group:
-          - treeitem /attach \\"foo-attach\\"/
-      - treeitem /attach \\"bar-attach\\"/
+          - treeitem /Attach \\"foo-attach\\"/
+      - treeitem /Attach \\"bar-attach\\"/
   `);
   await page.getByRole('tab', { name: 'Attachments' }).click();
   await expect(page.getByRole('tabpanel', { name: 'Attachments' })).toMatchAriaSnapshot(`
@@ -554,7 +555,7 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
   await expect(skippedMarker).toHaveAccessibleName('skipped');
 });
 
-test('should show copy prompt button in errors tab', async ({ runUITest }) => {
+test.fixme('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
 import { test, expect } from '@playwright/test';

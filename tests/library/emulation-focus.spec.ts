@@ -101,11 +101,11 @@ it('should change document.activeElement', async ({ page, server }) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows, isLinux, isHeadlessShell }) => {
+it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows, isLinux, isHeadlessShell, channel }) => {
   it.skip(browserName === 'webkit' && isWindows && !headless, 'WebKit/Windows/headed has a larger minimal viewport. See https://github.com/microsoft/playwright/issues/22616');
   it.skip(browserName === 'webkit' && isLinux && !headless, 'WebKit headed has a larger minimal viewport on gtk4.');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image');
-  it.fixme(browserName === 'chromium' && !isHeadlessShell, 'https://github.com/microsoft/playwright/issues/33330');
+  it.fixme(browserName === 'chromium' && !isHeadlessShell && channel !== 'chromium-tip-of-tree', 'https://github.com/microsoft/playwright/issues/33330');
 
   const page2 = await page.context().newPage();
   await Promise.all([

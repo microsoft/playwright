@@ -18,13 +18,12 @@ import { EventEmitter } from 'events';
 
 import { eventsHelper } from '../utils/eventsHelper';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
-import { LongStandingScope, assert, formatProtocolParam, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { LongStandingScope, assert, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
-import { methodMetainfo } from '../../protocol/debug';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
@@ -309,7 +308,7 @@ export class DispatcherConnection {
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
       location: validMetadata.location,
-      title: renderTitle(dispatcher._type, method, params, validMetadata.title),
+      title: validMetadata.title,
       internal: validMetadata.internal,
       stepId: validMetadata.stepId,
       objectId: sdkObject?.guid,
@@ -388,11 +387,4 @@ function closeReason(sdkObject: SdkObject): string | undefined {
   return sdkObject.attribution.page?.closeReason ||
     sdkObject.attribution.context?._closeReason ||
     sdkObject.attribution.browser?._closeReason;
-}
-
-function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
-  const titleFormat = title ?? methodMetainfo.get(type + '.' + method)?.title ?? method;
-  return titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => {
-    return formatProtocolParam(params, p1);
-  });
 }

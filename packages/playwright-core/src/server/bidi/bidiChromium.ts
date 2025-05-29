@@ -21,6 +21,7 @@ import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../brows
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
+import { RecentLogsCollector } from '../utils/debugLogger';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -35,13 +36,23 @@ export class BidiChromium extends BrowserType {
     super(parent, 'bidi');
   }
 
-  override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
+  override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<BidiBrowser> {
     // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
     // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
     // we load bidiOverCdp dynamically.
     const bidiTransport = await require('./bidiOverCdp').connectBidiOverCdp(transport);
     (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
-    return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);
+    try {
+      return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);
+    } catch (e) {
+      if (browserLogsCollector.recentLogs().some(log => log.includes('Failed to create a ProcessSingleton for your profile directory.'))) {
+        throw new Error(
+            'Failed to create a ProcessSingleton for your profile directory. ' +
+            'This usually means that the profile is already in use by another instance of Chromium.'
+        );
+      }
+      throw e;
+    }
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
@@ -155,6 +166,10 @@ export class BidiChromium extends BrowserType {
 
 class ChromiumReadyState extends BrowserReadyState {
   override onBrowserOutput(message: string): void {
+    if (message.includes('Failed to create a ProcessSingleton for your profile directory.')) {
+      this._wsEndpoint.reject(new Error('Failed to create a ProcessSingleton for your profile directory. ' +
+        'This usually means that the profile is already in use by another instance of Chromium.'));
+    }
     const match = message.match(/DevTools listening on (.*)/);
     if (match)
       this._wsEndpoint.resolve(match[1]);
