@@ -151,7 +151,7 @@ export class Page extends SdkObject {
   private _emulatedSize: EmulatedSize | undefined;
   private _extraHTTPHeaders: types.HeadersArray | undefined;
   private _emulatedMedia: Partial<EmulatedMedia> = {};
-  private _interceptFileChooser = false;
+  private _fileChooserInterceptedBy = new Set<any>();
   private readonly _pageBindings = new Map<string, PageBinding>();
   initScripts: InitScript[] = [];
   readonly screenshotter: Screenshotter;
@@ -260,19 +260,16 @@ export class Page extends SdkObject {
 
     await this.setClientRequestInterceptor(undefined);
     await this.setServerRequestInterceptor(undefined);
-    await this.setFileChooserIntercepted(false);
     // Re-navigate once init scripts are gone.
     // TODO: we should have a timeout for `resetForReuse`.
     await this.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
     this._extraHTTPHeaders = undefined;
-    this._interceptFileChooser = false;
 
     await Promise.all([
       this.delegate.updateEmulatedViewportSize(),
       this.delegate.updateEmulateMedia(),
-      this.delegate.updateFileChooserInterception(),
     ]);
 
     await this.delegate.resetForReuse();
@@ -744,13 +741,18 @@ export class Page extends SdkObject {
     }
   }
 
-  async setFileChooserIntercepted(enabled: boolean): Promise<void> {
-    this._interceptFileChooser = enabled;
-    await this.delegate.updateFileChooserInterception();
+  async setFileChooserInterceptedBy(enabled: boolean, by: any): Promise<void> {
+    const wasIntercepted = this.fileChooserIntercepted();
+    if (enabled)
+      this._fileChooserInterceptedBy.add(by);
+    else
+      this._fileChooserInterceptedBy.delete(by);
+    if (wasIntercepted !== this.fileChooserIntercepted())
+      await this.delegate.updateFileChooserInterception();
   }
 
   fileChooserIntercepted() {
-    return this._interceptFileChooser;
+    return this._fileChooserInterceptedBy.size > 0;
   }
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
