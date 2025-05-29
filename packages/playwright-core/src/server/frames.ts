@@ -36,7 +36,6 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { compressCallLog } from './callLog';
 
 import type { ConsoleMessage } from './console';
-import type { Dialog } from './dialog';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import type { Progress } from './progress';
@@ -101,8 +100,6 @@ export class FrameManager {
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
-  _openedDialogs: Set<Dialog> = new Set();
-  private _closeAllOpeningDialogs = false;
 
   constructor(page: Page) {
     this._page = page;
@@ -343,29 +340,6 @@ export class FrameManager {
     this._page.emitOnContext(BrowserContext.Events.RequestFailed, request);
   }
 
-  dialogDidOpen(dialog: Dialog) {
-    // Any ongoing evaluations will be stalled until the dialog is closed.
-    for (const frame of this._frames.values())
-      frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
-    if (this._closeAllOpeningDialogs)
-      dialog.close().then(() => {});
-    else
-      this._openedDialogs.add(dialog);
-  }
-
-  dialogWillClose(dialog: Dialog) {
-    this._openedDialogs.delete(dialog);
-  }
-
-  async closeOpenDialogs() {
-    await Promise.all([...this._openedDialogs].map(dialog => dialog.close())).catch(() => {});
-    this._openedDialogs.clear();
-  }
-
-  setCloseAllOpeningDialogs(closeDialogs: boolean) {
-    this._closeAllOpeningDialogs = closeDialogs;
-  }
-
   removeChildFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -563,7 +537,7 @@ export class Frame extends SdkObject {
   async raceAgainstEvaluationStallingEvents<T>(cb: () => Promise<T>): Promise<T> {
     if (this._pendingDocument)
       throw new Error('Frame is currently attempting a navigation');
-    if (this._page.frameManager._openedDialogs.size)
+    if (this._page.browserContext.dialogManager.hasOpenDialogsForPage(this._page))
       throw new Error('Open JavaScript dialog prevents evaluation');
 
     const promise = new ManualPromise<T>();

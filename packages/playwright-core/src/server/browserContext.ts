@@ -22,6 +22,7 @@ import { createGuid } from './utils/crypto';
 import { debugMode } from './utils/debug';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
+import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
 import { mkdirIfNeeded } from './utils/fileUtils';
 import { HarRecorder } from './har/harRecorder';
@@ -51,7 +52,6 @@ export abstract class BrowserContext extends SdkObject {
   static Events = {
     Console: 'console',
     Close: 'close',
-    Dialog: 'dialog',
     Page: 'page',
     // Can't use just 'error' due to node.js special treatment of error events.
     // @see https://nodejs.org/api/events.html#events_error_events
@@ -95,6 +95,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly clock: Clock;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
   private _playwrightBindingExposed = false;
+  readonly dialogManager: DialogManager;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -109,6 +110,7 @@ export abstract class BrowserContext extends SdkObject {
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
+    this.dialogManager = new DialogManager(this.instrumentation);
   }
 
   isPersistentContext(): boolean {
@@ -210,12 +212,8 @@ export abstract class BrowserContext extends SdkObject {
       page = undefined;
     }
 
-    // Unless dialogs are dismissed, setting extra http headers below does not respond.
-    page?.frameManager.setCloseAllOpeningDialogs(true);
-    await page?.frameManager.closeOpenDialogs();
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
-    page?.frameManager.setCloseAllOpeningDialogs(false);
 
     await this._resetStorage();
     await this.clock.resetForReuse();
