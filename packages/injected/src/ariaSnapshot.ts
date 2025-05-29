@@ -165,20 +165,10 @@ function ariaRef(element: Element, role: string, name: string, options?: { forAI
 
 function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaNode | null {
   if (element.nodeName === 'IFRAME') {
-    const iframe = element as HTMLIFrameElement;
-    const isDirectlyActive = element.ownerDocument.activeElement === element;
-    let containsActiveElement = false;
-    try {
-      containsActiveElement = iframe.contentDocument && 
-                              iframe.contentDocument.activeElement && 
-                              iframe.contentDocument.activeElement !== iframe.contentDocument.body;
-    } catch (e) {
-      // Cross-origin iframe, can't access contentDocument
-    }
-    const isActive = isDirectlyActive || !!containsActiveElement;
-    
+    const isActive = element.ownerDocument.activeElement === element;
+
     return {
-      role: 'iframe' as const,
+      role: 'iframe',
       name: '',
       ref: ariaRef(element, 'iframe', '', options),
       children: [],

@@ -237,6 +237,9 @@ it('should include active element information', async ({ page }) => {
     <div>Not focusable</div>
   `);
 
+  // Wait for autofocus to take effect
+  await page.waitForFunction(() => document.activeElement?.id === 'btn2');
+
   const snapshot = await snapshotForAI(page);
 
   expect(snapshot).toContainYaml(`
@@ -266,7 +269,7 @@ it('should update active element on focus', async ({ page }) => {
 
   // After focus, the second input should be active
   const afterFocusSnapshot = await snapshotForAI(page);
-  
+
   expect(afterFocusSnapshot).toContainYaml(`
     - generic [ref=e1]:
       - textbox "First input" [ref=e2]
@@ -284,10 +287,10 @@ it('should mark iframe as active when it contains focused element', async ({ pag
   // Test 1: Focus the input inside the iframe
   await page.frameLocator('iframe').locator('#iframe-input').focus();
   const inputInIframeFocusedSnapshot = await snapshotForAI(page);
-  
+
   // The iframe should be marked as active when it contains a focused element
   expect(inputInIframeFocusedSnapshot).toContain('iframe [active]');
-  
+
   // Also check that the input element inside the iframe is active
   const iframeSnapshot = await page.frameLocator('iframe').locator('body').ariaSnapshot();
   expect(iframeSnapshot).toContain('textbox "Input in iframe" [active]');
