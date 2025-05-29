@@ -2528,6 +2528,8 @@ scheme.ElectronLaunchParams = tObject({
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
   tracesDir: tOptional(tString),
+  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
+  testIdAttributeName: tOptional(tString),
 });
 scheme.ElectronLaunchResult = tObject({
   electronApplication: tChannel(['ElectronApplication']),
@@ -2605,58 +2607,58 @@ scheme.AndroidDeviceWebViewRemovedEvent = tObject({
   socketName: tString,
 });
 scheme.AndroidDeviceWaitParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   state: tOptional(tEnum(['gone'])),
   timeout: tNumber,
 });
 scheme.AndroidDeviceWaitResult = tOptional(tObject({}));
 scheme.AndroidDeviceFillParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   text: tString,
   timeout: tNumber,
 });
 scheme.AndroidDeviceFillResult = tOptional(tObject({}));
 scheme.AndroidDeviceTapParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   duration: tOptional(tNumber),
   timeout: tNumber,
 });
 scheme.AndroidDeviceTapResult = tOptional(tObject({}));
 scheme.AndroidDeviceDragParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   dest: tType('Point'),
   speed: tOptional(tNumber),
   timeout: tNumber,
 });
 scheme.AndroidDeviceDragResult = tOptional(tObject({}));
 scheme.AndroidDeviceFlingParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   direction: tEnum(['up', 'down', 'left', 'right']),
   speed: tOptional(tNumber),
   timeout: tNumber,
 });
 scheme.AndroidDeviceFlingResult = tOptional(tObject({}));
 scheme.AndroidDeviceLongTapParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   timeout: tNumber,
 });
 scheme.AndroidDeviceLongTapResult = tOptional(tObject({}));
 scheme.AndroidDevicePinchCloseParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   percent: tNumber,
   speed: tOptional(tNumber),
   timeout: tNumber,
 });
 scheme.AndroidDevicePinchCloseResult = tOptional(tObject({}));
 scheme.AndroidDevicePinchOpenParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   percent: tNumber,
   speed: tOptional(tNumber),
   timeout: tNumber,
 });
 scheme.AndroidDevicePinchOpenResult = tOptional(tObject({}));
 scheme.AndroidDeviceScrollParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   direction: tEnum(['up', 'down', 'left', 'right']),
   percent: tNumber,
   speed: tOptional(tNumber),
@@ -2664,7 +2666,7 @@ scheme.AndroidDeviceScrollParams = tObject({
 });
 scheme.AndroidDeviceScrollResult = tOptional(tObject({}));
 scheme.AndroidDeviceSwipeParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
   direction: tEnum(['up', 'down', 'left', 'right']),
   percent: tNumber,
   speed: tOptional(tNumber),
@@ -2672,7 +2674,7 @@ scheme.AndroidDeviceSwipeParams = tObject({
 });
 scheme.AndroidDeviceSwipeResult = tOptional(tObject({}));
 scheme.AndroidDeviceInfoParams = tObject({
-  selector: tType('AndroidSelector'),
+  androidSelector: tType('AndroidSelector'),
 });
 scheme.AndroidDeviceInfoResult = tObject({
   info: tType('AndroidElementInfo'),
@@ -2820,10 +2822,10 @@ scheme.AndroidSelector = tObject({
   focusable: tOptional(tBoolean),
   focused: tOptional(tBoolean),
   hasChild: tOptional(tObject({
-    selector: tType('AndroidSelector'),
+    androidSelector: tType('AndroidSelector'),
   })),
   hasDescendant: tOptional(tObject({
-    selector: tType('AndroidSelector'),
+    androidSelector: tType('AndroidSelector'),
     maxDepth: tOptional(tNumber),
   })),
   longClickable: tOptional(tBoolean),

@@ -50,13 +50,15 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     const chromium = new BrowserTypeDispatcher(scope, playwright.chromium);
     const firefox = new BrowserTypeDispatcher(scope, playwright.firefox);
     const webkit = new BrowserTypeDispatcher(scope, playwright.webkit);
+    const bidiChromium = new BrowserTypeDispatcher(scope, playwright.bidiChromium);
+    const bidiFirefox = new BrowserTypeDispatcher(scope, playwright.bidiFirefox);
     const android = new AndroidDispatcher(scope, playwright.android);
     const initializer: channels.PlaywrightInitializer = {
       chromium,
       firefox,
       webkit,
-      bidiChromium: new BrowserTypeDispatcher(scope, playwright.bidiChromium),
-      bidiFirefox: new BrowserTypeDispatcher(scope, playwright.bidiFirefox),
+      bidiChromium,
+      bidiFirefox,
       android,
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),
@@ -65,7 +67,14 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
 
     let browserDispatcher: BrowserDispatcher | undefined;
     if (options.preLaunchedBrowser) {
-      const browserTypeDispatcher = { chromium, firefox, webkit }[options.preLaunchedBrowser.options.name as 'chromium' | 'firefox' | 'webkit'];
+      let browserTypeDispatcher: BrowserTypeDispatcher;
+      switch (options.preLaunchedBrowser.options.name) {
+        case 'chromium': browserTypeDispatcher = chromium; break;
+        case 'firefox': browserTypeDispatcher = firefox; break;
+        case 'webkit': browserTypeDispatcher = webkit; break;
+        case 'bidi': browserTypeDispatcher = options.preLaunchedBrowser.options.channel?.includes('firefox') ? bidiFirefox : bidiChromium; break;
+        default: throw new Error(`Unknown browser name: ${options.preLaunchedBrowser.options.name}`);
+      }
       browserDispatcher = new BrowserDispatcher(browserTypeDispatcher, options.preLaunchedBrowser, {
         ignoreStopAndKill: true,
         isolateContexts: !options.sharedBrowser,

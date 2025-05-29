@@ -20,30 +20,35 @@ import { setTestIdAttribute } from './locator';
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
-import type { Playwright } from './playwright';
+import type { BrowserContext } from './browserContext';
+import type { Platform } from './platform';
 
 export class Selectors implements api.Selectors {
-  _playwrights = new Set<Playwright>();
-  _selectorEngines: channels.SelectorEngine[] = [];
-  _testIdAttributeName: string | undefined;
+  private _platform: Platform;
+  private _selectorEngines: channels.SelectorEngine[] = [];
+  private _testIdAttributeName: string | undefined;
+  readonly _contextsForSelectors = new Set<BrowserContext>();
+
+  constructor(platform: Platform) {
+    this._platform = platform;
+  }
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
-    const platform = this._playwrights.values().next().value!._platform;
-    const source = await evaluationScript(platform, script, undefined, false);
+    const source = await evaluationScript(this._platform, script, undefined, false);
     const selectorEngine: channels.SelectorEngine = { ...options, name, source };
-    for (const playwright of this._playwrights) {
-      for (const context of playwright._allContexts())
-        await context._channel.registerSelectorEngine({ selectorEngine });
-    }
+    for (const context of this._contextsForSelectors)
+      await context._channel.registerSelectorEngine({ selectorEngine });
     this._selectorEngines.push(selectorEngine);
   }
 
   setTestIdAttribute(attributeName: string) {
     this._testIdAttributeName = attributeName;
     setTestIdAttribute(attributeName);
-    for (const playwright of this._playwrights) {
-      for (const context of playwright._allContexts())
-        context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
-    }
+    for (const context of this._contextsForSelectors)
+      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
+  }
+
+  _withSelectorOptions<T>(options: T) {
+    return { ...options, selectorEngines: this._selectorEngines, testIdAttributeName: this._testIdAttributeName };
   }
 }

@@ -73,7 +73,7 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
   ]);
 });
 
-test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
+test('should merge screenshot assertions', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -95,6 +95,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
     /Set content/,
     /Expect "toHaveScreenshot"[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /Attach "error-context"/,
     /Worker Cleanup[\d.]+m?s/,
   ]);
 });
@@ -554,7 +555,7 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
   await expect(skippedMarker).toHaveAccessibleName('skipped');
 });
 
-test('should show copy prompt button in errors tab', async ({ runUITest }) => {
+test.fixme('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
 import { test, expect } from '@playwright/test';

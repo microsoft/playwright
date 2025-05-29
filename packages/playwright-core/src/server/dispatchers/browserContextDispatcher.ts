@@ -53,6 +53,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _bindings: PageBinding[] = [];
   private _initScritps: InitScript[] = [];
+  private _dialogHandler: (dialog: Dialog) => boolean;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -115,12 +116,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         });
       }
     });
-    this.addObjectListener(BrowserContext.Events.Dialog, (dialog: Dialog) => {
-      if (this._shouldDispatchEvent(dialog.page(), 'dialog'))
-        this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) });
-      else
-        dialog.close().catch(() => {});
-    });
+    this._dialogHandler = dialog => {
+      if (!this._shouldDispatchEvent(dialog.page(), 'dialog'))
+        return false;
+      this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) });
+      return true;
+    };
+    context.dialogManager.addDialogHandler(this._dialogHandler);
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
@@ -378,6 +380,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     // Avoid protocol calls for the closed context.
     if (this._context.isClosingOrClosed())
       return;
+    this._context.dialogManager.removeDialogHandler(this._dialogHandler);
     this._context.setRequestInterceptor(undefined).catch(() => {});
     this._context.removeExposedBindings(this._bindings).catch(() => {});
     this._bindings = [];
