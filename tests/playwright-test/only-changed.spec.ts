@@ -182,7 +182,7 @@ test('should throw nice error message if git doesnt work', async ({ runInlineTes
   expect(result.output, 'contains git command output').toContain('unknown revision or path not in the working tree');
 });
 
-test('should suppport component tests', async ({ runInlineTest, git, writeFiles }) => {
+test('should support component tests', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,

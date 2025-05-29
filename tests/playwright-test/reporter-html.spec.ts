@@ -805,7 +805,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step.skip('skipped step title', async () => {`);
     });
 
-    test('step title should inlclude skipped step description', async ({ runInlineTest, page, showReport }) => {
+    test('step title should include skipped step description', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
           export default { testDir: './tests' };
