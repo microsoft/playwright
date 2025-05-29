@@ -4326,7 +4326,7 @@
     if (queueIfContinuousEvent(blockedOn, topLevelType, eventSystemFlags, container, nativeEvent)) {
       return;
     } // We need to clear only if we didn't queue because
-    // queueing is accumulative.
+    // queueing is accummulative.
 
 
     clearIfContinuousEvent(topLevelType, nativeEvent); // This is not replayable so we'll invoke it but without a target,

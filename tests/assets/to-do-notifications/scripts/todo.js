@@ -89,7 +89,7 @@ window.onload = () => {
         note.appendChild(createListItem('Entries all displayed.'));
         return;
       }
-
+      
       // Check which suffix the deadline day of the month needs
       const { hours, minutes, day, month, year, notified, taskTitle } = cursor.value;
       const ordDay = ordinal(day);
@@ -110,10 +110,10 @@ window.onload = () => {
       const deleteButton = document.createElement('button');
       listItem.appendChild(deleteButton);
       deleteButton.textContent = 'X';
-
+      
       // Set a data attribute on our delete button to associate the task it relates to.
       deleteButton.setAttribute('data-task', taskTitle);
-
+      
       // Associate action (deletion) when clicked
       deleteButton.onclick = (event) => {
         deleteItem(event);
@@ -137,7 +137,7 @@ window.onload = () => {
       note.appendChild(createListItem('Data not submitted — form incomplete.'));
       return;
     }
-
+    
     // Grab the values entered into the form fields and store them in an object ready for being inserted into the IndexedDB
     const newItem = [
       { taskTitle: title.value, hours: hours.value, minutes: minutes.value, day: day.value, month: month.value, year: year.value, notified: 'no' },
@@ -223,7 +223,7 @@ window.onload = () => {
 
     // Open a new transaction
     const objectStore = db.transaction(['toDoList'], 'readwrite').objectStore('toDoList');
-
+    
     // Open a cursor to iterate through all the data items in the IndexedDB
     objectStore.openCursor().onsuccess = (event) => {
       const cursor = event.target.result;
