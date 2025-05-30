@@ -23,6 +23,7 @@ import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutMana
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
+import { EventEmitter } from '../isomorphic/events';
 
 import type { RunnableDescription, TimeSlot } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -70,6 +71,8 @@ export class TestInfoImpl implements TestInfo {
 
   private _resumePromise?: ManualPromise<void>;
   private _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
+  private readonly _onPausedEvent = new EventEmitter<void>();
+  readonly _onPaused = this._onPausedEvent.event;
 
   _wasInterrupted = false;
   _lastStepId = 0;
@@ -342,6 +345,9 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _interrupt() {
+    if (this._resumePromise)
+      return this._resume();
+
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
     this._wasInterrupted = true;
     this._timeoutManager.interrupt();
@@ -420,13 +426,15 @@ export class TestInfoImpl implements TestInfo {
     await this._runWithTimeout({ type: 'test', slot: this._pausedSlot }, async () => {
       await this._runAsStep({ title: 'Pause', category: 'hook' }, async () => {
         this._resumePromise = new ManualPromise<void>();
-        return this._resumePromise;
+        this._onPausedEvent.fire();
+        await this._resumePromise;
       });
     });
   }
 
   _resume() {
     this._resumePromise?.resolve();
+    this._resumePromise = undefined;
   }
 
   // ------------ TestInfo methods ------------

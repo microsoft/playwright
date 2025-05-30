@@ -23,6 +23,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { stepTitle } from './util';
+import { Disposable } from './isomorphic/events';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -420,17 +421,24 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await (browser as any)._stopPendingOperations(closeReason);
   },
 
-  page: async ({ context, _reuseContext }, use) => {
-    if (!_reuseContext) {
-      await use(await context.newPage());
-      return;
+  page: async ({ context, _reuseContext, headless }, use, testInfo) => {
+    const existingPage = _reuseContext ? context.pages()[0] : undefined;
+    const page = existingPage ?? await context.newPage();
+
+    const disposables: Disposable[] = [];
+    if (!headless) {
+      const testInfoImpl = testInfo as TestInfoImpl;
+      testInfoImpl._onPaused(() => {
+        const resumeClicked = page.pause();
+        void resumeClicked.then(() => {
+          testInfoImpl._resume();
+        });
+      });
     }
 
-    // First time we are reusing the context, we should create the page.
-    let [page] = context.pages();
-    if (!page)
-      page = await context.newPage();
     await use(page);
+
+    Disposable.disposeAll(disposables);
   },
 
   request: async ({ playwright }, use) => {
