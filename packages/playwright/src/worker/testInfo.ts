@@ -17,14 +17,14 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, ManualPromise } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 
-import type { RunnableDescription } from './timeoutManager';
+import type { RunnableDescription, TimeSlot } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -67,6 +67,9 @@ export class TestInfoImpl implements TestInfo {
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
   readonly _uniqueSymbol;
+
+  private _resumePromise?: ManualPromise<void>;
+  private _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
 
   _wasInterrupted = false;
   _lastStepId = 0;
@@ -411,6 +414,19 @@ export class TestInfoImpl implements TestInfo {
 
   _setDebugMode() {
     this._timeoutManager.setIgnoreTimeouts();
+  }
+
+  async _pause() {
+    await this._runWithTimeout({ type: 'test', slot: this._pausedSlot }, async () => {
+      await this._runAsStep({ title: 'Pause', category: 'hook' }, async () => {
+        this._resumePromise = new ManualPromise<void>();
+        return this._resumePromise;
+      });
+    });
+  }
+
+  _resume() {
+    this._resumePromise?.resolve();
   }
 
   // ------------ TestInfo methods ------------
