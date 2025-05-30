@@ -90,20 +90,18 @@ export const TestResultView: React.FC<{
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
 
-
   const prompt = useAsyncMemo(async () => {
-    const errorContextContent = errorContext?.path ? await fetch(errorContext.path!).then(r => r.text()) : errorContext?.body;
-    return await copyPrompt(
-        [
-          `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
-          `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
-        ].join('\n'),
-        result.errors,
-        testRunMetadata,
-        errorContextContent,
-        async error => error.codeframe,
-    );
-  }, [errorContext, testRunMetadata], undefined);
+    return await copyPrompt({
+      testInfo: [
+        `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
+        `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
+      ].join('\n'),
+      metadata: testRunMetadata,
+      errorContext: errorContext?.path ? await fetch(errorContext.path!).then(r => r.text()) : errorContext?.body,
+      errors: result.errors,
+      buildCodeFrame: async error => error.codeframe,
+    });
+  }, [test, errorContext, testRunMetadata, result], undefined);
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>

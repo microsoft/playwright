@@ -98,43 +98,47 @@ export const ErrorsTab: React.FunctionComponent<{
     return await fetch(attachmentURL(attachment)).then(r => r.text());
   }, [model], undefined);
 
+  const buildCodeFrame = React.useCallback(async (error: modelUtil.ErrorDescription) => {
+    const location = error.stack?.[0];
+    if (!location)
+      return;
+
+    let response = await fetch(`sha1/src@${await calculateSha1(location.file)}.txt`);
+    if (response.status === 404)
+      response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
+    if (response.status >= 400)
+      return;
+
+    const source = await response.text();
+
+    return codeFrameColumns(
+        source,
+        {
+          start: {
+            line: location.line,
+            column: location.column,
+          },
+        },
+        {
+          highlightCode: false,
+          linesAbove: 100,
+          linesBelow: 100,
+          message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
+        }
+    );
+  }, []);
+
   const prompt = useAsyncMemo(
       () => copyPrompt(
-          model?.title ?? '',
-          model?.errorDescriptors ?? [],
-          testRunMetadata,
-          errorContext,
-          async error => {
-            const location = error.stack?.[0];
-            if (!location)
-              return;
-
-            let response = await fetch(`sha1/src@${await calculateSha1(location.file)}.txt`);
-            if (response.status === 404)
-              response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
-            if (response.status >= 400)
-              return;
-
-            const source = await response.text();
-
-            return codeFrameColumns(
-                source,
-                {
-                  start: {
-                    line: location.line,
-                    column: location.column,
-                  },
-                },
-                {
-                  highlightCode: false,
-                  linesAbove: 100,
-                  linesBelow: 100,
-                  message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
-                }
-            );
+          {
+            testInfo: model?.title ?? '',
+            metadata: testRunMetadata,
+            errorContext,
+            errors: model?.errorDescriptors ?? [],
+            buildCodeFrame
           }
       ),
-      [errorContext],
+      [errorContext, testRunMetadata, model, buildCodeFrame],
       undefined
   );
 

@@ -24,7 +24,21 @@ const fixTestInstructions = `
 - Provide a snippet of code with the fix, if possible.
 `.trimStart();
 
-export async function copyPrompt<ErrorInfo extends { message: string }>(testInfo: string, errors: ErrorInfo[], metadata: MetadataWithCommitInfo | undefined, errorContext: string | undefined, buildCodeFrame: (error: ErrorInfo) => Promise<string | undefined>) {
+export async function copyPrompt<ErrorInfo extends { message: string }>({
+  testInfo,
+  metadata,
+  errorContext,
+
+  errors,
+  buildCodeFrame,
+}: {
+  testInfo: string;
+  metadata: MetadataWithCommitInfo | undefined;
+  errorContext: string | undefined;
+
+  errors: ErrorInfo[];
+  buildCodeFrame(error: ErrorInfo): Promise<string | undefined>;
+}) {
   const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of errors) {
     for (const singleLineError of meaningfulSingleLineErrors.keys()) {
