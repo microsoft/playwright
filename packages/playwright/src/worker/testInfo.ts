@@ -423,10 +423,11 @@ export class TestInfoImpl implements TestInfo {
   }
 
   async _pause() {
-    await this._runWithTimeout({ type: 'test', slot: this._pausedSlot }, async () => {
-      await this._runAsStep({ title: 'Pause', category: 'hook' }, async () => {
+    const location = this._steps.findLast(step => step.location)?.location ?? { file: this.file, column: this.column, line: this.line };
+    await this._runWithTimeout({ type: 'test', slot: this._pausedSlot, location }, async () => {
+      await this._runAsStep({ title: 'Pause', category: 'hook', location }, async () => {
         this._resumePromise = new ManualPromise<void>();
-        this._onPausedEvent.fire();
+        this._onPausedEvent.fire(location);
         await this._resumePromise;
       });
     });
