@@ -428,8 +428,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const disposables: Disposable[] = [];
     if (!headless) {
       const testInfoImpl = testInfo as TestInfoImpl;
-      testInfoImpl._onPaused(() => {
-        const resumeClicked = page.pause();
+      testInfoImpl._onPaused(location => {
+        const resumeClicked = (page.pause as any)({ location });
         void resumeClicked.then(() => {
           testInfoImpl._resume();
         });

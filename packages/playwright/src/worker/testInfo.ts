@@ -71,7 +71,7 @@ export class TestInfoImpl implements TestInfo {
 
   private _resumePromise?: ManualPromise<void>;
   private _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
-  private readonly _onPausedEvent = new EventEmitter<void>();
+  private readonly _onPausedEvent = new EventEmitter<Location>();
   readonly _onPaused = this._onPausedEvent.event;
 
   _wasInterrupted = false;
