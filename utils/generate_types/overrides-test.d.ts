@@ -90,6 +90,11 @@ export type TestDetails = {
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<void> | void;
 type ConditionBody<TestArgs> = (args: TestArgs) => boolean;
+export type DescribeConfigureOptions = {
+  mode?: 'default' | 'parallel' | 'serial',
+  retries?: number,
+  timeout?: number
+};
 
 export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   (title: string, body: TestBody<TestArgs & WorkerArgs>): void;
@@ -135,7 +140,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
       only(title: string, details: TestDetails, callback: () => void): void;
     };
 
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: DescribeConfigureOptions) => void;
   };
 
   skip(title: string, body: TestBody<TestArgs & WorkerArgs>): void;

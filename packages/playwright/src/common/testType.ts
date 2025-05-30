@@ -23,7 +23,7 @@ import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
 
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
+import type { DescribeConfigureOptions, Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 const testTypeSymbol = Symbol('testType');
@@ -182,7 +182,7 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(location: Location, options: DescribeConfigureOptions) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)

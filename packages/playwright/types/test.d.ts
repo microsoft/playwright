@@ -2584,6 +2584,11 @@ export type TestDetails = {
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<void> | void;
 type ConditionBody<TestArgs> = (args: TestArgs) => boolean;
+export type DescribeConfigureOptions = {
+  mode?: 'default' | 'parallel' | 'serial',
+  retries?: number,
+  timeout?: number
+};
 
 /**
  * Playwright Test provides a `test` function to declare tests and `expect` function to write assertions.
@@ -4118,7 +4123,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *
      * @param options
      */
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: DescribeConfigureOptions) => void;
   };
 
   /**
