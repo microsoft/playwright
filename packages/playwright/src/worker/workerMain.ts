@@ -381,6 +381,10 @@ export class WorkerMain extends ProcessRunner {
     // No skips in after hooks.
     testInfo._allowSkips = true;
 
+    // TODO: only do this with --debug=end and at the proper end
+    if (true)
+      await testInfo._pause();
+
     // After hooks get an additional timeout.
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
@@ -474,7 +478,7 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed + afterHooksSlot.elapsed) | 0;
+    testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed - testInfo._pausedSlot.elapsed + afterHooksSlot.elapsed) | 0;
 
     this._currentTest = null;
     setCurrentTestInfo(null);

@@ -70,7 +70,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _uniqueSymbol;
 
   private _resumePromise?: ManualPromise<void>;
-  private _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
+  readonly _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
   private readonly _onPausedEvent = new EventEmitter<Location>();
   readonly _onPaused = this._onPausedEvent.event;
 
@@ -423,6 +423,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   async _pause() {
+    this._setDebugMode();
     const location = this._steps.findLast(step => step.location)?.location ?? { file: this.file, column: this.column, line: this.line };
     await this._runWithTimeout({ type: 'test', slot: this._pausedSlot, location }, async () => {
       await this._runAsStep({ title: 'Pause', category: 'hook', location }, async () => {
