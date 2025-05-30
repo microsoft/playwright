@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { codeFrameColumns } from '@babel/code-frame';
 import { ErrorMessage } from '@web/components/errorMessage';
 import * as React from 'react';
 import type * as modelUtil from './modelUtil';
@@ -23,7 +24,9 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
-import { fixTestInstructions } from '@web/prompts';
+import { copyPrompt, stripAnsiEscapes } from '@web/shared/prompts';
+import { MetadataWithCommitInfo } from '@testIsomorphic/types';
+import { calculateSha1 } from './sourceTab';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -86,7 +89,8 @@ export const ErrorsTab: React.FunctionComponent<{
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime }) => {
+  testRunMetadata: MetadataWithCommitInfo | undefined,
+}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
   const errorContext = useAsyncMemo(async () => {
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
@@ -94,7 +98,49 @@ export const ErrorsTab: React.FunctionComponent<{
     return await fetch(attachmentURL(attachment)).then(r => r.text());
   }, [model], undefined);
 
-  const prompt = fixTestInstructions + (errorContext ?? ''); // TODO in next PR: enrich with test location, error details and source code, similar to errorContext.ts
+  const buildCodeFrame = React.useCallback(async (error: modelUtil.ErrorDescription) => {
+    const location = error.stack?.[0];
+    if (!location)
+      return;
+
+    let response = await fetch(`sha1/src@${await calculateSha1(location.file)}.txt`);
+    if (response.status === 404)
+      response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
+    if (response.status >= 400)
+      return;
+
+    const source = await response.text();
+
+    return codeFrameColumns(
+        source,
+        {
+          start: {
+            line: location.line,
+            column: location.column,
+          },
+        },
+        {
+          highlightCode: false,
+          linesAbove: 100,
+          linesBelow: 100,
+          message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
+        }
+    );
+  }, []);
+
+  const prompt = useAsyncMemo(
+      () => copyPrompt(
+          {
+            testInfo: model?.title ?? '',
+            metadata: testRunMetadata,
+            errorContext,
+            errors: model?.errorDescriptors ?? [],
+            buildCodeFrame
+          }
+      ),
+      [errorContext, testRunMetadata, model, buildCodeFrame],
+      undefined
+  );
 
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;

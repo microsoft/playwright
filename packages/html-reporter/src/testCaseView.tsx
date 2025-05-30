@@ -29,14 +29,16 @@ import { hashStringToInt, msToString } from './utils';
 import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { HeaderView } from './headerView';
+import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase,
+  testRunMetadata: MetadataWithCommitInfo | undefined,
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
   run: number,
-}> = ({ projectNames, test, run, next, prev }) => {
+}> = ({ projectNames, test, testRunMetadata, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
 
@@ -83,7 +85,7 @@ export const TestCaseView: React.FC<{
             {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
               {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
             </AutoChip>}
-            <TestResultView test={test!} result={result} />
+            <TestResultView test={test!} result={result} testRunMetadata={testRunMetadata} />
           </>;
         },
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />

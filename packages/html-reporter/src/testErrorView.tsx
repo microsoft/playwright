@@ -19,8 +19,6 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { TestAttachment } from './types';
-import { fixTestInstructions } from '@web/prompts';
 
 export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<{ code: string; testId?: string; }>) => {
   const html = React.useMemo(() => ansiErrorToHtml(code), [code]);
@@ -32,14 +30,12 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
-export const PromptButton: React.FC<{ context?: TestAttachment }> = ({ context }) => {
+export const PromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   const [copied, setCopied] = React.useState(false);
   return <button
     className='button'
     style={{ minWidth: 100 }}
     onClick={async () => {
-      const contextText = context?.path ? await fetch(context.path!).then(r => r.text()) : context?.body;
-      const prompt = fixTestInstructions + contextText; // TODO in next PR: enrich with test location, error details and source code.
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
       setTimeout(() => {

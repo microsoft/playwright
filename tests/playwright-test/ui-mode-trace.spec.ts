@@ -555,7 +555,7 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
   await expect(skippedMarker).toHaveAccessibleName('skipped');
 });
 
-test.fixme('should show copy prompt button in errors tab', async ({ runUITest }) => {
+test('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
 import { test, expect } from '@playwright/test';

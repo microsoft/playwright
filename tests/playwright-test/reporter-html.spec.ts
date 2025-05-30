@@ -2874,7 +2874,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
     });
 
-    test.fixme('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `export default {}`,

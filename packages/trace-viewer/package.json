@@ -4,6 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
+    "@babel/code-frame": "^7.26.2",
     "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/babel__code-frame": "^7.0.6"
   }
 }
