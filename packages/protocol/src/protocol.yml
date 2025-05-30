@@ -223,6 +223,11 @@ SetNetworkCookie:
       - Strict
       - Lax
       - None
+    partitionKey:
+      type: object?
+      properties:
+        topLevelSite: string
+        hasCrossSiteAncestor: boolean
 
 
 NetworkCookie:
@@ -241,6 +246,11 @@ NetworkCookie:
       - Strict
       - Lax
       - None
+    partitionKey:
+      type: object?
+      properties:
+        topLevelSite: string
+        hasCrossSiteAncestor: boolean
 
 
 NameValue:

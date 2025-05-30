@@ -260,6 +260,10 @@ export type SetNetworkCookie = {
   httpOnly?: boolean,
   secure?: boolean,
   sameSite?: 'Strict' | 'Lax' | 'None',
+  partitionKey?: {
+    topLevelSite: string,
+    hasCrossSiteAncestor: boolean,
+  },
 };
 
 export type NetworkCookie = {
@@ -271,6 +275,10 @@ export type NetworkCookie = {
   httpOnly: boolean,
   secure: boolean,
   sameSite: 'Strict' | 'Lax' | 'None',
+  partitionKey?: {
+    topLevelSite: string,
+    hasCrossSiteAncestor: boolean,
+  },
 };
 
 export type NameValue = {
