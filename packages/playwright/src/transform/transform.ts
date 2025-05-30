@@ -260,8 +260,13 @@ export async function requireOrImport(file: string) {
   installTransformIfNeeded();
   const isModule = fileIsModule(file);
   const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
-  if (isModule)
-    return await esmImport();
+  if (isModule) {
+    return await esmImport().finally(async () => {
+      // Compilation cache is populated in a post task.
+      // Skip the task to make sure it has arrived.
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+  }
   const result = require(file);
   const depsCollector = currentFileDepsCollector();
   if (depsCollector) {
