@@ -29,15 +29,15 @@ test.describe(() => {
     await recorder.trustedClick();
 
     await expect.poll(() =>
-      recorder.text('JavaScript')).toContain(`await expect(page.getByRole('button')).toMatchAriaSnapshot(\`- button "Submit"\`);`);
+      recorder.text('JavaScript')).toContain(`await expect(page.getByRole('button')).toMatchAriaSnapshot(\`- button "Submit" [active]\`);`);
     await expect.poll(() =>
-      recorder.text('Python')).toContain(`expect(page.get_by_role("button")).to_match_aria_snapshot("- button \\"Submit\\"")`);
+      recorder.text('Python')).toContain(`expect(page.get_by_role("button")).to_match_aria_snapshot("- button \\"Submit\\" [active]")`);
     await expect.poll(() =>
-      recorder.text('Python Async')).toContain(`await expect(page.get_by_role(\"button\")).to_match_aria_snapshot("- button \\"Submit\\"")`);
+      recorder.text('Python Async')).toContain(`await expect(page.get_by_role(\"button\")).to_match_aria_snapshot("- button \\"Submit\\" [active]")`);
     await expect.poll(() =>
-      recorder.text('Java')).toContain(`assertThat(page.getByRole(AriaRole.BUTTON)).matchesAriaSnapshot("- button \\"Submit\\"");`);
+      recorder.text('Java')).toContain(`assertThat(page.getByRole(AriaRole.BUTTON)).matchesAriaSnapshot("- button \\"Submit\\" [active]");`);
     await expect.poll(() =>
-      recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button \\"Submit\\"");`);
+      recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button \\"Submit\\" [active]");`);
   });
 
   test('should generate regex in aria snapshot', async ({ openRecorder }) => {
@@ -49,15 +49,15 @@ test.describe(() => {
     await recorder.trustedClick();
 
     await expect.poll(() =>
-      recorder.text('JavaScript')).toContain(`await expect(page.getByRole('button')).toMatchAriaSnapshot(\`- button /Submit \\\\d+/\`);`);
+      recorder.text('JavaScript')).toContain(`await expect(page.getByRole('button')).toMatchAriaSnapshot(\`- button /Submit \\\\d+/ [active]\`);`);
     await expect.poll(() =>
-      recorder.text('Python')).toContain(`expect(page.get_by_role("button")).to_match_aria_snapshot("- button /Submit \\\\d+/")`);
+      recorder.text('Python')).toContain(`expect(page.get_by_role("button")).to_match_aria_snapshot("- button /Submit \\\\d+/ [active]")`);
     await expect.poll(() =>
-      recorder.text('Python Async')).toContain(`await expect(page.get_by_role(\"button\")).to_match_aria_snapshot("- button /Submit \\\\d+/")`);
+      recorder.text('Python Async')).toContain(`await expect(page.get_by_role(\"button\")).to_match_aria_snapshot("- button /Submit \\\\d+/ [active]")`);
     await expect.poll(() =>
-      recorder.text('Java')).toContain(`assertThat(page.getByRole(AriaRole.BUTTON)).matchesAriaSnapshot("- button /Submit \\\\d+/");`);
+      recorder.text('Java')).toContain(`assertThat(page.getByRole(AriaRole.BUTTON)).matchesAriaSnapshot("- button /Submit \\\\d+/ [active]");`);
     await expect.poll(() =>
-      recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button /Submit \\\\d+/");`);
+      recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button /Submit \\\\d+/ [active]");`);
   });
 
   test('should inspect aria snapshot', async ({ openRecorder }) => {
