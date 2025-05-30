@@ -306,7 +306,17 @@ class JobDispatcher {
     this._currentlyRunning = { test, result };
   }
 
-  private _onTestEnd(params: TestEndPayload) {
+  private _onTestPaused(params: TestEndPayload) {
+    this._updateTest(params);
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+
+    const { result, test } = data;
+    this._reporter.onTestPaused?.(test, result);
+  }
+
+  private _updateTest(params: TestEndPayload) {
     if (this._failureTracker.hasReachedMaxFailures()) {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
@@ -329,6 +339,14 @@ class JobDispatcher {
     test.annotations = [...params.annotations]; // last test result wins
     test.expectedStatus = params.expectedStatus;
     test.timeout = params.timeout;
+  }
+
+  private _onTestEnd(params: TestEndPayload) {
+    this._updateTest(params);
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+    const { result, test } = data;
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
@@ -563,6 +581,7 @@ class JobDispatcher {
 
     this._listeners = [
       eventsHelper.addEventListener(worker, 'testBegin', this._onTestBegin.bind(this)),
+      eventsHelper.addEventListener(worker, 'testPaused', this._onTestPaused.bind(this)),
       eventsHelper.addEventListener(worker, 'testEnd', this._onTestEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),

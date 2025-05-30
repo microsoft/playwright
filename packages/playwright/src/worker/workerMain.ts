@@ -264,6 +264,7 @@ export class WorkerMain extends ProcessRunner {
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
+    testInfo._onPaused(() => this.dispatchEvent('testPaused', buildTestEndPayload(testInfo)));
 
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);

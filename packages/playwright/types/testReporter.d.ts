@@ -221,6 +221,13 @@ export interface Reporter {
   onTestEnd?(test: TestCase, result: TestResult): void;
 
   /**
+   * Called after a test paused.
+   * @param test Test that has been paused.
+   * @param result Result of the test run up this point.
+   */
+  onTestPaused?(test: TestCase, result: TestResult): void;
+
+  /**
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
    * user experience. If your reporter does not print to the terminal, it is strongly recommended to return `false`.
    */

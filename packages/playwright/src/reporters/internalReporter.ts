@@ -66,6 +66,10 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onStdErr?.(chunk, test, result);
   }
 
+  onTestPaused(test: TestCase, result: TestResult) {
+    this._reporter.onTestPaused?.(test, result);
+  }
+
   onTestEnd(test: TestCase, result: TestResult) {
     this._addSnippetToTestErrors(test, result);
     this._reporter.onTestEnd?.(test, result);

@@ -262,6 +262,22 @@ Test that has been started.
 
 Result of the test run, this object gets populated while the test runs.
 
+## optional method: Reporter.onTestPaused
+* since: v1.54
+
+Called after a test paused.
+
+### param: Reporter.onTestPaused.test
+* since: v1.54
+- `test` <[TestCase]>
+
+Test that has been paused.
+
+### param: Reporter.onTestPaused.result
+* since: v1.54
+- `result` <[TestResult]>
+
+Result of the test run up this point.
 
 ## optional method: Reporter.onTestEnd
 * since: v1.10
