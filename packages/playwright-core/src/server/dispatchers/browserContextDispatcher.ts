@@ -54,6 +54,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _bindings: PageBinding[] = [];
   private _initScritps: InitScript[] = [];
   private _dialogHandler: (dialog: Dialog) => boolean;
+  private _clockPaused = false;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -343,10 +344,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async clockPauseAt(params: channels.BrowserContextClockPauseAtParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockPauseAtResult> {
     await this._context.clock.pauseAt(params.timeString ?? params.timeNumber ?? 0);
+    this._clockPaused = true;
   }
 
   async clockResume(params: channels.BrowserContextClockResumeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockResumeResult> {
     await this._context.clock.resume();
+    this._clockPaused = false;
   }
 
   async clockRunFor(params: channels.BrowserContextClockRunForParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunForResult> {
@@ -386,5 +389,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._bindings = [];
     this._context.removeInitScripts(this._initScritps).catch(() => {});
     this._initScritps = [];
+    if (this._clockPaused)
+      this._context.clock.resume().catch(() => {});
+    this._clockPaused = false;
   }
 }

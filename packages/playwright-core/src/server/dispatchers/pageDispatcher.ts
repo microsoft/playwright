@@ -49,6 +49,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
   private _locatorHandlers = new Set<number>();
+  private _jsCoverageActive = false;
+  private _cssCoverageActive = false;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -229,7 +231,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async updateSubscription(params: channels.PageUpdateSubscriptionParams): Promise<void> {
     if (params.event === 'fileChooser')
-      await this._page.setFileChooserIntercepted(params.enabled);
+      await this._page.setFileChooserInterceptedBy(params.enabled, this);
     if (params.enabled)
       this._subscriptions.add(params.event);
     else
@@ -304,23 +306,29 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async startJSCoverage(params: channels.PageStartJSCoverageParams, metadata: CallMetadata): Promise<void> {
+    this._jsCoverageActive = true;
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startJSCoverage(params);
   }
 
   async stopJSCoverage(params: channels.PageStopJSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopJSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
-    return await coverage.stopJSCoverage();
+    const result = await coverage.stopJSCoverage();
+    this._jsCoverageActive = false;
+    return result;
   }
 
   async startCSSCoverage(params: channels.PageStartCSSCoverageParams, metadata: CallMetadata): Promise<void> {
+    this._cssCoverageActive = true;
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startCSSCoverage(params);
   }
 
   async stopCSSCoverage(params: channels.PageStopCSSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopCSSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
-    return await coverage.stopCSSCoverage();
+    const result = await coverage.stopCSSCoverage();
+    this._cssCoverageActive = false;
+    return result;
   }
 
   _onFrameAttached(frame: Frame) {
@@ -343,6 +351,13 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     for (const uid of this._locatorHandlers)
       this._page.unregisterLocatorHandler(uid);
     this._locatorHandlers.clear();
+    this._page.setFileChooserInterceptedBy(false, this).catch(() => {});
+    if (this._jsCoverageActive)
+      (this._page.coverage as CRCoverage).stopJSCoverage().catch(() => {});
+    this._jsCoverageActive = false;
+    if (this._cssCoverageActive)
+      (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
+    this._cssCoverageActive = false;
   }
 }
 
