@@ -123,19 +123,23 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
 export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, RequestDispatcher> implements channels.RouteChannel {
   _type_Route = true;
 
-  static from(scope: RequestDispatcher, route: Route): RouteDispatcher {
-    const result = scope.connection.existingDispatcher<RouteDispatcher>(route);
-    return result || new RouteDispatcher(scope, route);
-  }
+  private _handled = false;
 
-  private constructor(scope: RequestDispatcher, route: Route) {
+  constructor(scope: RequestDispatcher, route: Route) {
     super(scope, route, 'Route', {
       // Context route can point to a non-reported request, so we send the request in the initializer.
       request: scope
     });
   }
 
+  private _checkNotHandled() {
+    if (this._handled)
+      throw new Error('Route is already handled!');
+    this._handled = true;
+  }
+
   async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
+    this._checkNotHandled();
     await this._object.continue({
       url: params.url,
       method: params.method,
@@ -146,14 +150,17 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   }
 
   async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
+    this._checkNotHandled();
     await this._object.fulfill(params);
   }
 
   async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
+    this._checkNotHandled();
     await this._object.abort(params.errorCode || 'failed');
   }
 
   async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams): Promise<void> {
+    this._checkNotHandled();
     await this._object.redirectNavigationRequest(params.url);
   }
 }
