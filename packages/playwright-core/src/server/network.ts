@@ -43,12 +43,16 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
         continue;
       if (!parsedURL.pathname.startsWith(c.path))
         continue;
-      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure)
+      if (parsedURL.protocol !== 'https:' && !isLocalHostname(parsedURL.hostname) && c.secure)
         continue;
       return true;
     }
     return false;
   });
+}
+
+export function isLocalHostname(hostname: string): boolean {
+  return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
 // Rollover to 5-digit year:
