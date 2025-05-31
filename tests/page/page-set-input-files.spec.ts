@@ -174,13 +174,13 @@ test('should upload large file', async ({ page, server, isAndroid, isWebView2, m
   await input.setInputFiles(uploadFile);
   expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('200MB.zip');
   expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+  server.disableRequestBodyConsumption();
   const serverFilePromise = new Promise<formidable.File>(fulfill => {
     server.setRoute('/upload', async (req, res) => {
-      const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
-      form.parse(req, function(err, fields, f) {
+      const form = formidable({ uploadDir: testInfo.outputPath() });
+      form.parse(req, function(err, fields, files) {
         res.end();
-        const files = f as Record<string, formidable.File>;
-        fulfill(files.file1);
+        fulfill(files.file1[0]);
       });
     });
   });
@@ -234,13 +234,13 @@ test('should upload large file with relative path', async ({ page, server, isAnd
   await input.setInputFiles(relativeUploadPath);
   expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('200MB.zip');
   expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+  server.disableRequestBodyConsumption();
   const serverFilePromise = new Promise<formidable.File>(fulfill => {
     server.setRoute('/upload', async (req, res) => {
-      const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
-      form.parse(req, function(err, fields, f) {
+      const form = formidable({ uploadDir: testInfo.outputPath() });
+      form.parse(req, function(err, fields, files) {
         res.end();
-        const files = f as Record<string, formidable.File>;
-        fulfill(files.file1);
+        fulfill(files.file1[0]);
       });
     });
   });
@@ -298,11 +298,12 @@ test('should work with CSP', async ({ page, server, asset }) => {
 
 test('should detect mime type', async ({ page, server, asset }) => {
 
-  let files: Record<string, formidable.File>;
+  let files: formidable.Files;
+  server.disableRequestBodyConsumption();
   server.setRoute('/upload', async (req, res) => {
-    const form = new formidable.IncomingForm();
+    const form = formidable();
     form.parse(req, function(err, fields, f) {
-      files = f as Record<string, formidable.File>;
+      files = f;
       res.end();
     });
   });
@@ -320,24 +321,25 @@ test('should detect mime type', async ({ page, server, asset }) => {
     server.waitForRequest('/upload'),
   ]);
   const { file1, file2 } = files;
-  expect(file1.originalFilename).toBe('file-to-upload.txt');
-  expect(file1.mimetype).toBe('text/plain');
-  expect(fs.readFileSync(file1.filepath).toString()).toBe(
+  expect(file1[0].originalFilename).toBe('file-to-upload.txt');
+  expect(file1[0].mimetype).toBe('text/plain');
+  expect(fs.readFileSync(file1[0].filepath).toString()).toBe(
       fs.readFileSync(asset('file-to-upload.txt')).toString());
-  expect(file2.originalFilename).toBe('pptr.png');
-  expect(file2.mimetype).toBe('image/png');
-  expect(fs.readFileSync(file2.filepath).toString()).toBe(
+  expect(file2[0].originalFilename).toBe('pptr.png');
+  expect(file2[0].mimetype).toBe('image/png');
+  expect(fs.readFileSync(file2[0].filepath).toString()).toBe(
       fs.readFileSync(asset('pptr.png')).toString());
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
 test('should not trim big uploaded files', async ({ page, server }) => {
 
-  let files: Record<string, formidable.File>;
+  let files: formidable.Files;
+  server.disableRequestBodyConsumption();
   server.setRoute('/upload', async (req, res) => {
-    const form = new formidable.IncomingForm();
+    const form = formidable();
     form.parse(req, function(err, fields, f) {
-      files = f as Record<string, formidable.File>;
+      files = f;
       res.end();
     });
   });
@@ -352,7 +354,7 @@ test('should not trim big uploaded files', async ({ page, server }) => {
     }, DATA_SIZE),
     server.waitForRequest('/upload'),
   ]);
-  expect(files.file.size).toBe(DATA_SIZE);
+  expect(files.file[0].size).toBe(DATA_SIZE);
 });
 
 test('should emit input and change events', async ({ page, asset }) => {
