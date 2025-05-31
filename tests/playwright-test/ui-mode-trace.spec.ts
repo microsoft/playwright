@@ -179,9 +179,9 @@ test('should show snapshots for steps', {
   await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks \\d+[hmsp]+/
-      - treeitem /Step "first" \\d+[hmsp]+/
-      - treeitem /Step "middle" \\d+[hmsp]+/
-      - treeitem /Step "last" \\d+[hmsp]+/
+      - treeitem /first \\d+[hmsp]+/
+      - treeitem /middle \\d+[hmsp]+/
+      - treeitem /last \\d+[hmsp]+/
       - treeitem /After Hooks \\d+[hmsp]+/
   `);
 

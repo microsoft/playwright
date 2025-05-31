@@ -351,13 +351,15 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
       const stackFrames = filteredStackTrace(captureRawStack());
+      const category = matcherName === 'toPass' || this._info.poll ? 'test.step' : 'expect' as TestStepCategory;
+      const formattedTitle = category === 'expect' ? title : `Expect "${title}"`;
 
       // toPass and poll matchers can contain other steps, expects and API calls,
       // so they behave like a retriable step.
       const stepInfo = {
-        category: (matcherName === 'toPass' || this._info.poll) ? 'test.step' : 'expect' as TestStepCategory,
+        category,
         apiName,
-        title,
+        title: formattedTitle,
         params: args[0] ? { expected: args[0] } : undefined,
         infectParentStepsWithError: this._info.isSoft,
       };
