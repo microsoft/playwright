@@ -22,12 +22,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   const textarea = await page.$('textarea');
   await textarea.evaluate(textarea => textarea.value = 'some value');
   await textarea.selectText();
-  if (browserName === 'firefox') {
-    expect(await textarea.evaluate(el => el.selectionStart)).toBe(0);
-    expect(await textarea.evaluate(el => el.selectionEnd)).toBe(10);
-  } else {
-    expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
-  }
+  expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
 });
 
 it('should select input', async ({ page, server, browserName }) => {
@@ -35,12 +30,7 @@ it('should select input', async ({ page, server, browserName }) => {
   const input = await page.$('input');
   await input.evaluate(input => input.value = 'some value');
   await input.selectText();
-  if (browserName === 'firefox') {
-    expect(await input.evaluate(el => el.selectionStart)).toBe(0);
-    expect(await input.evaluate(el => el.selectionEnd)).toBe(10);
-  } else {
-    expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
-  }
+  expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
 });
 
 it('should select plain div', async ({ page, server }) => {

@@ -239,12 +239,7 @@ it('input value retargeting', async ({ page, browserName }) => {
       await expect(target).toHaveValue('bar');
 
       await target.selectText();
-      if (browserName === 'firefox') {
-        expect(await page.locator('#target').evaluate((el: HTMLInputElement) => el.selectionStart)).toBe(0);
-        expect(await page.locator('#target').evaluate((el: HTMLInputElement) => el.selectionEnd)).toBe(3);
-      } else {
-        expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('bar');
-      }
+      expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('bar');
     });
   }
 });
@@ -270,14 +265,7 @@ it('selection retargeting', async ({ page, browserName }) => {
       await expect(page.locator('#target')).toHaveText('foo');
 
       await target.selectText();
-      if (browserName === 'firefox') {
-        expect(await page.$eval('#target', target => {
-          const selection = window.getSelection()!;
-          return selection.anchorNode === target && selection.focusNode === target;
-        })).toBe(true);
-      } else {
-        expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('foo');
-      }
+      expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('foo');
     });
   }
 });
