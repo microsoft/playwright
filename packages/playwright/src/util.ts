@@ -429,7 +429,7 @@ export function stepTitle(category: TestStepCategory, title: string): string {
     case 'expect':
       return `Expect ${escapeWithQuotes(title, '"')}`;
     case 'test.step':
-      return `Step ${escapeWithQuotes(title, '"')}`;
+      return title;
     case 'test.attach':
       return `Attach ${escapeWithQuotes(title, '"')}`;
     case 'hook':

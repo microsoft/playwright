@@ -801,7 +801,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
-      await page.click('text=Step "skipped step title" (skipped)');
+      await page.click('text=skipped step title (skipped)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step.skip('skipped step title', async () => {`);
     });
 
@@ -826,7 +826,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
-      await page.click('text=Step "step title" (skipped: conditional step.skip)');
+      await page.click('text=step title (skipped: conditional step.skip)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step('step title', async (step) => {`);
     });
 
