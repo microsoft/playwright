@@ -17,15 +17,14 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, ManualPromise } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { EventEmitter } from '../isomorphic/events';
 
-import type { RunnableDescription, TimeSlot } from './timeoutManager';
+import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -57,6 +56,11 @@ type SnapshotNames = {
   lastNamedSnapshotIndex: { [key: string]: number };
 };
 
+export interface TestInfoPause {
+  location: Location;
+  resume(): void;
+}
+
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
@@ -69,11 +73,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _tracing: TestTracing;
   readonly _uniqueSymbol;
 
-  private _resumePromise?: ManualPromise<void>;
-  readonly _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
-  private readonly _onPausedEvent = new EventEmitter<Location>();
-  readonly _onPaused = this._onPausedEvent.event;
-
   _wasInterrupted = false;
   _lastStepId = 0;
   private readonly _requireFile: string;
@@ -81,7 +80,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
-  _onDidFinishTestFunction: (() => Promise<void>) | undefined;
+  _onDidFinishTestFunction: ((pause?: TestInfoPause) => Promise<void>) | undefined;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -345,9 +344,6 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _interrupt() {
-    if (this._isPaused())
-      return this._resume();
-
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
     this._wasInterrupted = true;
     this._timeoutManager.interrupt();
@@ -422,25 +418,8 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setIgnoreTimeouts();
   }
 
-  async _pause() {
-    this._setDebugMode();
-    const location = this._steps.findLast(step => step.location)?.location ?? { file: this.file, column: this.column, line: this.line };
-    await this._runWithTimeout({ type: 'test', slot: this._pausedSlot, location }, async () => {
-      await this._runAsStep({ title: 'Pause', category: 'hook', location }, async () => {
-        this._resumePromise = new ManualPromise<void>();
-        this._onPausedEvent.fire(location);
-        await this._resumePromise;
-      });
-    });
-  }
-
-  _isPaused() {
-    return !!this._resumePromise;
-  }
-
-  _resume() {
-    this._resumePromise?.resolve();
-    this._resumePromise = undefined;
+  _lastLocation() {
+    return this._steps.findLast(step => step.location)?.location ?? { file: this.file, column: this.column, line: this.line };
   }
 
   // ------------ TestInfo methods ------------

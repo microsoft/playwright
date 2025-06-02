@@ -264,7 +264,6 @@ export class WorkerMain extends ProcessRunner {
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
-    testInfo._onPaused(() => this.dispatchEvent('testPaused', buildTestEndPayload(testInfo)));
 
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);
@@ -389,14 +388,26 @@ export class WorkerMain extends ProcessRunner {
 
       try {
         // Run "immediately upon test function finish" callback.
-        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => testInfo._onDidFinishTestFunction?.());
+        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => {
+          const shouldPause = entry.shouldPauseAtEnd === true || (entry.shouldPauseAtEnd === 'if-failure' && testInfo._isFailure());
+          if (shouldPause) {
+            this.dispatchEvent('testPaused', buildTestEndPayload(testInfo));
+            const location = testInfo._lastLocation();
+            await testInfo._runAsStep({ title: 'Pause', category: 'hook', location }, async () => {
+              const pausePromise = new ManualPromise<void>();
+              await testInfo._onDidFinishTestFunction?.({
+                location,
+                resume: () => pausePromise.resolve(),
+              });
+              await pausePromise;
+            });
+          } else {
+            await testInfo._onDidFinishTestFunction?.();
+          }
+        });
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
-
-      const shouldPause = entry.shouldPauseAtEnd === true || (entry.shouldPauseAtEnd === 'if-failure' && testInfo._isFailure());
-      if (shouldPause && !testInfo._wasInterrupted)
-        await testInfo._pause();
 
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
@@ -478,7 +489,7 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed - testInfo._pausedSlot.elapsed + afterHooksSlot.elapsed) | 0;
+    testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed + afterHooksSlot.elapsed) | 0;
 
     this._currentTest = null;
     setCurrentTestInfo(null);

@@ -27,7 +27,7 @@ import { Disposable } from './isomorphic/events';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
-import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
+import type { TestInfoImpl, TestInfoPause, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
@@ -422,24 +422,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   },
 
   page: async ({ context, _reuseContext }, use, testInfo) => {
-    const testInfoImpl = testInfo as TestInfoImpl;
     const existingPage = _reuseContext ? context.pages()[0] : undefined;
     const page = existingPage ?? await context.newPage();
-
-    const disposables: Disposable[] = [];
-    if (testInfoImpl._configInternal.configCLIOverrides.debug === 'end') {
-      testInfoImpl._onPaused(location => {
-        // TODO: pass location to debugger
-        const resumeClicked = page.pause();
-        void resumeClicked.then(() => {
-          testInfoImpl._resume();
-        });
-      }, disposables);
-    }
-
     await use(page);
-
-    Disposable.disposeAll(disposables);
   },
 
   request: async ({ playwright }, use) => {
@@ -632,7 +617,6 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
-  private _sourceCache: Map<string, string> = new Map();
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -647,7 +631,11 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
+    testInfo._onDidFinishTestFunction = async pause => {
+      await this.didFinishTestFunction();
+      if (pause)
+        await this.didPauseTest(pause);
+    };
 
     this._screenshotRecorder.fixOrdinal();
 
@@ -706,6 +694,19 @@ class ArtifactsRecorder {
 
   async didFinishTestFunction() {
     await this._screenshotRecorder.maybeCapture();
+  }
+
+  async didPauseTest(pause: TestInfoPause) {
+    if (this._testInfo._configInternal.configCLIOverrides.debug !== 'end')
+      return;
+
+    const page = this._playwright._allPages()[0];
+    if (!page)
+      return;
+
+    // TODO: pass pause.location to debugger
+    await page.pause();
+    pause.resume();
   }
 
   async didFinishTest() {
