@@ -108,7 +108,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     // and will be configured later in `_connectToBrowserType`.
     if (this._browserType)
       this._setupBrowserContext(context);
-    this.emit(Events.Browser.Context, context);
   }
 
   private _setupBrowserContext(context: BrowserContext) {

@@ -63,9 +63,11 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   private async _init() {
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
-    await this._page.setServerRequestInterceptor(route => {
-      if (!route.request().url().startsWith('https://playwright/'))
-        return false;
+    await this._page.addRequestInterceptor(route => {
+      if (!route.request().url().startsWith('https://playwright/')) {
+        route.continue({ isFallback: true }).catch(() => {});
+        return;
+      }
 
       const uri = route.request().url().substring('https://playwright/'.length);
       const file = require.resolve('../../vite/recorder/' + uri);
@@ -79,7 +81,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
           isBase64: true
         }).catch(() => {});
       });
-      return true;
     });
 
     await this._page.exposeBinding('dispatch', false, (_, data: any) => this.emit('event', data));

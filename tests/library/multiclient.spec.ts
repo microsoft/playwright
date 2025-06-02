@@ -15,7 +15,7 @@
  */
 
 import { expect, playwrightTest } from '../config/browserTest';
-import type { Browser, BrowserContext, BrowserServer, ConnectOptions, Page } from 'playwright-core';
+import type { Browser, BrowserServer, ConnectOptions, Page } from 'playwright-core';
 
 type ExtraFixtures = {
   remoteServer: BrowserServer;
@@ -50,7 +50,13 @@ const test = playwrightTest.extend<ExtraFixtures>({
 });
 
 test.slow(true, 'All connect tests are slow');
-test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(({ mode }) => mode !== 'default');
+
+async function disconnect(page: Page) {
+  await page.context().browser().close();
+  // Give disconnect some time to cleanup.
+  await new Promise(f => setTimeout(f, 1000));
+}
 
 test('should connect two clients', async ({ connect, remoteServer, server }) => {
   const browserA = await connect(remoteServer.wsEndpoint());
@@ -66,10 +72,10 @@ test('should connect two clients', async ({ connect, remoteServer, server }) => 
   const pageB1 = contextB1.pages()[0];
   await expect(pageB1).toHaveURL(server.EMPTY_PAGE);
 
-  const contextEventPromise = new Promise<BrowserContext>(f => browserA.on('context', f));
   const contextB2 = await browserB.newContext({ baseURL: server.PREFIX });
   expect(browserB.contexts()).toEqual([contextB1, contextB2]);
-  const contextA2 = await contextEventPromise;
+  await expect.poll(() => browserA.contexts().length).toBe(2);
+  const contextA2 = browserA.contexts()[1];
   expect(browserA.contexts()).toEqual([contextA1, contextA2]);
 
   const pageEventPromise = new Promise<Page>(f => contextB2.on('page', f));
@@ -79,7 +85,8 @@ test('should connect two clients', async ({ connect, remoteServer, server }) => 
   await expect(pageB2).toHaveURL('/frames/frame.html');
 
   // Both contexts and pages should be still operational after any client disconnects.
-  await browserA.close();
+  await disconnect(pageA1);
+
   await expect(pageB1).toHaveURL(server.EMPTY_PAGE);
   await expect(pageB2).toHaveURL(server.PREFIX + '/frames/frame.html');
 });
@@ -109,20 +116,39 @@ test('should receive viewport size changes', async ({ twoPages }) => {
   await expect.poll(() => pageA.viewportSize()).toEqual({ width: 456, height: 567 });
 });
 
-test('should not allow parallel js coverage', async ({ twoPages, browserName }) => {
+test('should not allow parallel js coverage and cleanup upon disconnect', async ({ twoPages, browserName }) => {
   test.skip(browserName !== 'chromium');
+
   const { pageA, pageB } = twoPages;
   await pageA.coverage.startJSCoverage();
   const error = await pageB.coverage.startJSCoverage().catch(e => e);
   expect(error.message).toContain('JSCoverage is already enabled');
+
+  // Should cleanup coverage on disconnect and allow another client to start it.
+  await disconnect(pageA);
+  await pageB.coverage.startJSCoverage();
 });
 
 test('should not allow parallel css coverage', async ({ twoPages, browserName }) => {
   test.skip(browserName !== 'chromium');
+
   const { pageA, pageB } = twoPages;
   await pageA.coverage.startCSSCoverage();
   const error = await pageB.coverage.startCSSCoverage().catch(e => e);
   expect(error.message).toContain('CSSCoverage is already enabled');
+
+  // Should cleanup coverage on disconnect and allow another client to start it.
+  await disconnect(pageA);
+  await pageB.coverage.startCSSCoverage();
+});
+
+test('should unpause clock', async ({ twoPages }) => {
+  const { pageA, pageB } = twoPages;
+  await pageA.clock.install({ time: 1000 });
+  await pageA.clock.pauseAt(2000);
+  const promise = pageB.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+  await disconnect(pageA);
+  await promise;
 });
 
 test('last emulateMedia wins', async ({ twoPages }) => {
@@ -133,6 +159,74 @@ test('last emulateMedia wins', async ({ twoPages }) => {
   await pageB.emulateMedia({ media: 'screen' });
   expect(await pageB.evaluate(() => window.matchMedia('screen').matches)).toBe(true);
   expect(await pageA.evaluate(() => window.matchMedia('print').matches)).toBe(false);
+});
+
+test('should chain routes', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  server.setRoute('/foo', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-foo</div>'));
+  server.setRoute('/bar', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-bar</div>'));
+  server.setRoute('/qux', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-qux</div>'));
+
+  let stall = false;
+  let stallCallback;
+  const stallPromise = new Promise(f => stallCallback = f);
+  await pageA.route('**/foo', async route => {
+    if (stall)
+      stallCallback();
+    else
+      await route.fallback();
+  });
+  await pageA.route('**/bar', async route => {
+    await route.fulfill({ body: '<div>intercepted-bar</div>', contentType: 'text/html' });
+  });
+
+  await pageB.route('**/foo', async route => {
+    await route.fulfill({ body: '<div>intercepted2-foo</div>', contentType: 'text/html' });
+  });
+  await pageB.route('**/bar', async route => {
+    await route.fulfill({ body: '<div>intercepted2-bar</div>', contentType: 'text/html' });
+  });
+  await pageB.route('**/qux', async route => {
+    await route.fulfill({ body: '<div>intercepted2-qux</div>', contentType: 'text/html' });
+  });
+
+  await pageA.goto(server.PREFIX + '/foo');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-foo');
+
+  await pageA.goto(server.PREFIX + '/bar');
+  await expect(pageB.locator('div')).toHaveText('intercepted-bar');
+
+  await pageA.goto(server.PREFIX + '/qux');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-qux');
+
+  stall = true;
+  const gotoPromise = pageB.goto(server.PREFIX + '/foo');
+  await stallPromise;
+  await pageA.context().browser().close();
+
+  await gotoPromise;
+  await expect(pageB.locator('div')).toHaveText('intercepted2-foo');
+
+  await pageB.goto(server.PREFIX + '/bar');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-bar');
+});
+
+test.fixme('should chain routes with changed url', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  server.setRoute('/foo', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-foo</div>'));
+  server.setRoute('/baz', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-baz</div>'));
+
+  await pageA.route('**/foo', async route => {
+    await route.fallback({ url: server.PREFIX + '/baz' });
+  });
+  await pageB.route('**/baz', async route => {
+    await route.fulfill({ body: '<div>intercepted2-baz</div>', contentType: 'text/html' });
+  });
+
+  await pageA.goto(server.PREFIX + '/foo');
+  await expect(pageB.locator('div')).toHaveText('intercepted2-baz');
 });
 
 test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
@@ -153,8 +247,7 @@ test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
   await pageB.context().exposeBinding('contextBindingB', () => 'contextBindingBResult');
   expect(await pageA.evaluate(() => (window as any).contextBindingB())).toBe('contextBindingBResult');
 
-  await pageA.context().browser().close();
-  await new Promise(f => setTimeout(f, 1000)); // Give disconnect some time to cleanup.
+  await disconnect(pageA);
 
   expect(await pageB.evaluate(() => (window as any).pageBindingA)).toBe(undefined);
   expect(await pageB.evaluate(() => (window as any).contextBindingA)).toBe(undefined);
@@ -179,8 +272,7 @@ test('should remove init scripts upon disconnect', async ({ twoPages, server }) 
   expect(await pageA.evaluate(() => (window as any).pageValueB)).toBe('pageValueB');
   expect(await pageA.evaluate(() => (window as any).contextValueB)).toBe('contextValueB');
 
-  await pageB.context().browser().close();
-  await new Promise(f => setTimeout(f, 1000)); // Give disconnect some time to cleanup.
+  await disconnect(pageB);
 
   await pageA.goto(server.EMPTY_PAGE);
   expect(await pageA.evaluate(() => (window as any).pageValueB)).toBe(undefined);
@@ -216,7 +308,8 @@ test('should remove locator handlers upon disconnect', async ({ twoPages, server
     (window as any).setupAnnoyingInterstitial('mouseover', 1);
   });
 
-  await pageA.context().browser().close();
+  await disconnect(pageA);
+
   const error = await pageB.locator('#target').click({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('Timeout 3000ms exceeded');
   expect(error.message).toContain('intercepts pointer events');

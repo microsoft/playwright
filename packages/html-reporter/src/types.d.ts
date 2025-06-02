@@ -94,7 +94,7 @@ export type TestResult = {
   startTime: string;
   duration: number;
   steps: TestStep[];
-  errors: string[];
+  errors: { message: string, codeframe?: string }[];
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
   annotations: TestAnnotation[];

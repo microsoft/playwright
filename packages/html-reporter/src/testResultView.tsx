@@ -27,6 +27,9 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import { CodeSnippet, PromptButton, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
+import { useAsyncMemo } from '@web/uiUtils';
+import { copyPrompt } from '@web/shared/prompts';
+import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
@@ -70,7 +73,8 @@ function groupImageDiffs(screenshots: Set<TestAttachment>, result: TestResult): 
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
-}> = ({ test, result }) => {
+  testRunMetadata: MetadataWithCommitInfo | undefined,
+}> = ({ test, result, testRunMetadata }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -82,15 +86,30 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors, diffs);
+    const errors = classifyErrors(result.errors.map(e => e.message), diffs);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
 
+  const prompt = useAsyncMemo(async () => {
+    return await copyPrompt({
+      testInfo: [
+        `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
+        `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
+      ].join('\n'),
+      metadata: testRunMetadata,
+      errorContext: errorContext?.path ? await fetch(errorContext.path!).then(r => r.text()) : errorContext?.body,
+      errors: result.errors,
+      buildCodeFrame: async error => error.codeframe,
+    });
+  }, [test, errorContext, testRunMetadata, result], undefined);
+
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
-      <div style={{ position: 'absolute', right: '16px', padding: '10px', zIndex: 1 }}>
-        <PromptButton context={errorContext} />
-      </div>
+      {prompt && (
+        <div style={{ position: 'absolute', right: '16px', padding: '10px', zIndex: 1 }}>
+          <PromptButton prompt={prompt} />
+        </div>
+      )}
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
