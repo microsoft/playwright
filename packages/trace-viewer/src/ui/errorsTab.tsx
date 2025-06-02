@@ -154,8 +154,8 @@ function codeFrame({ source, message, location, linesAbove, linesBelow }: { sour
   const end = Math.min(lines.length, location.line + linesBelow);
   const scope = lines.slice(start, end);
   const lineNumberWidth = String(end).length;
-  const frame = scope.map((line, index) => `${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
+  const frame = scope.map((line, index) => `${(start + index + 1) === location.line ? '> ' : '  '}${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
   if (message)
-    frame.splice(location.line - start, 0, `${' '.repeat(lineNumberWidth + location.column + 1)} ^ ${message}`);
+    frame.splice(location.line - start, 0, `${' '.repeat(lineNumberWidth + 2)} | ${' '.repeat(location.column - 2)} ^ ${message}`);
   return frame.join('\n');
 }
