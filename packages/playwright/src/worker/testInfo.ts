@@ -445,17 +445,17 @@ export class TestInfoImpl implements TestInfo {
     this._resumePromise = undefined;
   }
 
-  async _maybeDebugAtEnd(isLastTest: boolean | 'if-failure') {
+  async _maybeDebugAtEnd(shouldPauseAtEnd: boolean | 'if-failure') {
     if (this._configInternal.configCLIOverrides.debug !== 'end')
       return;
 
     if (this._wasInterrupted)
       return;
 
-    if (!isLastTest)
+    if (!shouldPauseAtEnd)
       return;
 
-    if (isLastTest === 'if-failure' && !this._isFailure())
+    if (shouldPauseAtEnd === 'if-failure' && !this._isFailure())
       return;
 
     if (this._willBeRunAgain())

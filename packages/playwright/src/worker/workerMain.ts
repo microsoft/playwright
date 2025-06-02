@@ -394,7 +394,7 @@ export class WorkerMain extends ProcessRunner {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
-      await testInfo._maybeDebugAtEnd(entry.isLastTest);
+      await testInfo._maybeDebugAtEnd(entry.shouldPauseAtEnd);
 
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.

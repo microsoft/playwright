@@ -117,7 +117,7 @@ export type StepEndPayload = {
 export type TestEntry = {
   testId: string;
   retry: number;
-  isLastTest: boolean | 'if-failure';
+  shouldPauseAtEnd: boolean | 'if-failure';
 };
 
 export type RunPayload = {
