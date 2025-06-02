@@ -562,17 +562,20 @@ class JobDispatcher {
     this.jobResult.resolve(result);
   }
 
-  runInWorker(worker: WorkerHost, shouldPauseAtEnd: boolean | 'if-failure') {
+  runInWorker(worker: WorkerHost, shouldPauseAtEnd: boolean) {
     this._parallelIndex = worker.parallelIndex;
     this._workerIndex = worker.workerIndex;
 
     const runPayload: RunPayload = {
       file: this.job.requireFile,
       entries: this.job.tests.map((test, index) => {
+        const isLast = index === this.job.tests.length - 1;
+        const retry = test.results.length;
+        const willBeRetried = retry < test.retries;
         return {
           testId: test.id,
-          retry: test.results.length,
-          shouldPauseAtEnd: index === this.job.tests.length - 1 ? shouldPauseAtEnd : false,
+          retry,
+          shouldPauseAtEnd: shouldPauseAtEnd && isLast && !willBeRetried,
         };
       }),
     };
