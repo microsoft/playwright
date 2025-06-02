@@ -388,7 +388,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 const testOptions: [string, string][] = [
   /* deprecated */ ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
   ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
-  ['--debug [mode]', `Run tests with Playwright Inspector. Possible values are "begin" and "end". Flag without value defaults to "begin". "begin" is a shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options.`],
+  ['--debug [mode]', `Run tests with Playwright Inspector. See docs for more info.`],
   ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`],
   ['--forbid-only', `Fail if test.only is called (default: false)`],
   ['--fully-parallel', `Run all tests in parallel (default: false)`],
