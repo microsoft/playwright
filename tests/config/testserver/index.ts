@@ -18,6 +18,8 @@
 import fs from 'fs';
 import type http from 'http';
 import mime from 'mime';
+import https from 'node:https';
+import crypto from 'node:crypto';
 import type net from 'net';
 import path from 'path';
 import url from 'url';
@@ -202,6 +204,8 @@ export class TestServer {
     for (const subscriber of this._requestSubscribers.values())
       subscriber[rejectSymbol].call(null, error);
     this._requestSubscribers.clear();
+    if (this._server instanceof https.Server)
+      this._server.setTicketKeys(crypto.randomBytes(48));
   }
 
   _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
