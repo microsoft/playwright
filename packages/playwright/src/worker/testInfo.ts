@@ -80,7 +80,8 @@ export class TestInfoImpl implements TestInfo {
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
-  _onDidFinishTestFunction: ((pause?: TestInfoPause) => Promise<void>) | undefined;
+  _onDidFinishTestFunction: (() => Promise<void>) | undefined;
+  _onDidPause?: ((pause: TestInfoPause) => Promise<void>);
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;

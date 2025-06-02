@@ -23,7 +23,6 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { stepTitle } from './util';
-import { Disposable } from './isomorphic/events';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -52,6 +51,7 @@ if ((process as any)['__pw_initiator__']) {
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
+  _setupDebugger: void;
   _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
@@ -327,6 +327,26 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     clientInstrumentation.removeListener(csiListener);
     await artifactsRecorder.didFinishTest();
   }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 0 } as any],
+
+  _setupDebugger: [
+    async ({ playwright }, use, testInfo) => {
+      const testInfoImpl = testInfo as TestInfoImpl;
+      if (testInfoImpl._configInternal.configCLIOverrides.debug === 'end') {
+        testInfoImpl._onDidPause = async pause => {
+          const page = playwright._allPages()[0];
+          if (!page)
+            return;
+
+          // TODO: pass pause.location to debugger
+          await page.pause();
+          pause.resume();
+        };
+      }
+
+
+      await use();
+    },
+    { auto: 'all-hooks-included',  title: 'debugger', box: true, timeout: 0 } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
