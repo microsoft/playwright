@@ -277,7 +277,7 @@ Test that has been paused.
 * since: v1.54
 - `result` <[TestResult]>
 
-Result of the test run up this point.
+Result of the test run up to this point.
 
 ## optional method: Reporter.onTestEnd
 * since: v1.10
