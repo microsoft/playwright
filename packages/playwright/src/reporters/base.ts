@@ -119,7 +119,7 @@ export class TerminalReporter implements ReporterV2 {
   private _omitFailures: boolean;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
-  private _epiloguePrinted = false;
+  private _skipEpilogue = false;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -163,6 +163,7 @@ export class TerminalReporter implements ReporterV2 {
     this.onTestEnd(test, result);
     const fakeEnd: FullResult = { duration: -1, status: 'passed', startTime: new Date() };
     void this.onEnd(fakeEnd).then(() => {
+      this._skipEpilogue = true;
       console.log();
       console.log(this.screen.colors.yellow(`    Keeping test environment up for debugging. Press ${this.screen.colors.cyan('Ctrl+C')} to continue.`));
       console.log();
@@ -288,9 +289,8 @@ export class TerminalReporter implements ReporterV2 {
   }
 
   epilogue(full: boolean) {
-    if (this._epiloguePrinted)
+    if (this._skipEpilogue)
       return;
-    this._epiloguePrinted = true;
 
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
