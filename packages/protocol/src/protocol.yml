@@ -1349,13 +1349,6 @@ BrowserContext:
 
     pause:
       title: Pause
-      parameters:
-        location:
-          type: object?
-          properties:
-            file: string
-            line: number
-            column: number?
 
     enableRecorder:
       internal: true

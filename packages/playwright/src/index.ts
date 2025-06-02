@@ -429,7 +429,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (!headless) {
       const testInfoImpl = testInfo as TestInfoImpl;
       testInfoImpl._onPaused(location => {
-        const resumeClicked = (page.pause as any)({ location });
+        // TODO: pass location to debugger
+        const resumeClicked = page.pause();
         void resumeClicked.then(() => {
           testInfoImpl._resume();
         });

@@ -793,7 +793,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return [...this._workers];
   }
 
-  async pause(_options?: { __testHookKeepTestTimeout: boolean, location: channels.BrowserContextPauseOptions['location'] }) {
+  async pause(_options?: { __testHookKeepTestTimeout: boolean }) {
     if (this._platform.isJSDebuggerAttached())
       return;
     const defaultNavigationTimeout = this._browserContext._timeoutSettings.defaultNavigationTimeout();
@@ -801,8 +801,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._browserContext.setDefaultNavigationTimeout(0);
     this._browserContext.setDefaultTimeout(0);
     this._instrumentation?.onWillPause({ keepTestTimeout: !!_options?.__testHookKeepTestTimeout });
-    // TODO: debugger should take location into account
-    await this._closedOrCrashedScope.safeRace(this.context()._channel.pause({ location: _options?.location }));
+    await this._closedOrCrashedScope.safeRace(this.context()._channel.pause());
     this._browserContext.setDefaultNavigationTimeout(defaultNavigationTimeout);
     this._browserContext.setDefaultTimeout(defaultTimeout);
   }
