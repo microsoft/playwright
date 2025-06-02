@@ -328,8 +328,6 @@ class JobDispatcher {
       // TODO: this should never be the case, report an internal error?
       return;
     }
-    this._dataByTestId.delete(params.testId);
-    this._remainingByTestId.delete(params.testId);
     const { result, test } = data;
     result.duration = params.duration;
     result.errors = params.errors;
@@ -346,6 +344,8 @@ class JobDispatcher {
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
+    this._dataByTestId.delete(params.testId);
+    this._remainingByTestId.delete(params.testId);
     const { result, test } = data;
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)

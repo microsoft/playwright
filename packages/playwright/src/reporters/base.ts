@@ -119,6 +119,7 @@ export class TerminalReporter implements ReporterV2 {
   private _omitFailures: boolean;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
+  private _epiloguePrinted = false;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -150,6 +151,22 @@ export class TerminalReporter implements ReporterV2 {
       return;
     (result as any)[kOutputSymbol] = (result as any)[kOutputSymbol] || [];
     (result as any)[kOutputSymbol].push(output);
+  }
+
+  /**
+   * --debug=end makes the test runner wait at the end of the very last test, but before its teardown.
+   * At this point, both the test result and the full result are unlikely to change,
+   * so for simplicity we pretend both are done.
+   * TODO: check if things changed in real onTestEnd and onEnd.
+   */
+  onTestPaused(test: TestCase, result: TestResult) {
+    this.onTestEnd(test, result);
+    const fakeEnd: FullResult = { duration: -1, status: 'passed', startTime: new Date() };
+    void this.onEnd(fakeEnd).then(() => {
+      console.log();
+      console.log(this.screen.colors.yellow(`    Keeping test environment up for debugging. Press ${this.screen.colors.cyan('Ctrl+C')} to continue.`));
+      console.log();
+    });
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -271,6 +288,10 @@ export class TerminalReporter implements ReporterV2 {
   }
 
   epilogue(full: boolean) {
+    if (this._epiloguePrinted)
+      return;
+    this._epiloguePrinted = true;
+
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
     if (full && summary.failuresToPrint.length && !this._omitFailures)
