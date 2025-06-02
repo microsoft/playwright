@@ -914,7 +914,6 @@ export class PageBinding {
 export class InitScript {
   readonly source: string;
   readonly name?: string;
-  auxData: any; // Can be arbitrarily used by a browser-specific implementation.
 
   constructor(source: string, name?: string) {
     this.source = `(() => {
