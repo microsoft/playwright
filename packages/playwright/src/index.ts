@@ -421,20 +421,20 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await (browser as any)._stopPendingOperations(closeReason);
   },
 
-  page: async ({ context, _reuseContext, headless }, use, testInfo) => {
+  page: async ({ context, _reuseContext }, use, testInfo) => {
+    const testInfoImpl = testInfo as TestInfoImpl;
     const existingPage = _reuseContext ? context.pages()[0] : undefined;
     const page = existingPage ?? await context.newPage();
 
     const disposables: Disposable[] = [];
-    if (!headless) {
-      const testInfoImpl = testInfo as TestInfoImpl;
+    if (testInfoImpl._configInternal.configCLIOverrides.debug === 'end') {
       testInfoImpl._onPaused(location => {
         // TODO: pass location to debugger
         const resumeClicked = page.pause();
         void resumeClicked.then(() => {
           testInfoImpl._resume();
         });
-      });
+      }, disposables);
     }
 
     await use(page);
