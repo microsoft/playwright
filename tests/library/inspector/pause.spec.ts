@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'node:fs';
 import type { Page } from 'playwright-core';
 import { test as it, expect, Recorder } from './inspectorTest';
 import { waitForTestLog } from '../../config/utils';
@@ -115,6 +116,19 @@ it.describe('pause', () => {
     const source = await recorderPage.textContent('.source-line-paused');
     expect(source).toContain('page.pause({ __testHookKeepTestTimeout: true })');
     await recorderPage.click('[title="Resume (F8)"]');
+    await scriptPromise;
+  });
+
+  it('should show passed location', async ({ page, recorderPageGetter }, testInfo) => {
+    const file = testInfo.outputPath('test.spec.ts');
+    await fs.promises.writeFile(file, 'foo\nbar\nbaz');
+    const scriptPromise = (async () => {
+      // @ts-ignore
+      await page.pause({ __testHookKeepTestTimeout: true, location: { file, line: 2, column: 1 } });
+    })();
+    const recorderPage = await recorderPageGetter();
+    await expect(recorderPage.locator('.source-line-paused')).toContainText('bar');
+    await recorderPage.getByTitle('Resume').click();
     await scriptPromise;
   });
 

@@ -326,9 +326,12 @@ export class Recorder implements InstrumentationListener, IRecorder {
     // Apply new decorations.
     let fileToSelect = undefined;
     for (const metadata of this._currentCallsMetadata.keys()) {
-      if (!metadata.location)
+      let location = metadata.location;
+      if (metadata.type === 'BrowserContext' && metadata.method === 'pause')
+        location = metadata.params?.location ?? location;
+      if (!location)
         continue;
-      const { file, line } = metadata.location;
+      const { file, line } = location;
       let source = this._userSources.get(file);
       if (!source) {
         source = { isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file) };
