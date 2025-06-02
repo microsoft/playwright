@@ -323,8 +323,8 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.debug = options.debug;
     if (overrides.debug === 'begin')
       process.env.PWDEBUG = '1';
-    if (overrides.debug === 'end')
-      overrides.updateSnapshots = 'none'; // we have no good way of updating snapshots in the end mode, so we disable it.
+    if (overrides.debug === 'end' && options.updateSnapshots)
+      throw new Error(`--debug=end is not supported with --update-snapshots. If you'd like that to change, file an issue and let us know about your usecase for it.`);
   }
   if (!options.ui && options.trace) {
     if (!kTraceModes.includes(options.trace))
