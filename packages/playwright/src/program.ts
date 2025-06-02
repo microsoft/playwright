@@ -315,6 +315,9 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   if (options.headed || options.debug)
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
+    if (options.debug === true)
+      options.debug = 'begin';
+
     if (!['begin', 'end'].includes(options.debug))
       throw new Error(`Unsupported debug mode "${options.debug}", must be one of "begin" or "end"`);
     overrides.debug = options.debug;
