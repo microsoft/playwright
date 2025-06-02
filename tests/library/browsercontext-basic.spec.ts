@@ -22,14 +22,10 @@ import type { Page } from '@playwright/test';
 
 it('should create new context @smoke', async function({ browser }) {
   expect(browser.contexts().length).toBe(0);
-  let contextFromEvent;
-  browser.on('context', context => contextFromEvent = context);
   const context = await browser.newContext();
-  expect(contextFromEvent).toBe(context);
   expect(browser.contexts()).toEqual([context]);
   expect(browser).toBe(context.browser());
   const context2 = await browser.newContext();
-  expect(contextFromEvent).toBe(context2);
   expect(browser.contexts()).toEqual([context, context2]);
   await context.close();
   expect(browser.contexts()).toEqual([context2]);

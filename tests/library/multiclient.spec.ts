@@ -15,7 +15,7 @@
  */
 
 import { expect, playwrightTest } from '../config/browserTest';
-import type { Browser, BrowserContext, BrowserServer, ConnectOptions, Page } from 'playwright-core';
+import type { Browser, BrowserServer, ConnectOptions, Page } from 'playwright-core';
 
 type ExtraFixtures = {
   remoteServer: BrowserServer;
@@ -72,10 +72,10 @@ test('should connect two clients', async ({ connect, remoteServer, server }) => 
   const pageB1 = contextB1.pages()[0];
   await expect(pageB1).toHaveURL(server.EMPTY_PAGE);
 
-  const contextEventPromise = new Promise<BrowserContext>(f => browserA.on('context', f));
   const contextB2 = await browserB.newContext({ baseURL: server.PREFIX });
   expect(browserB.contexts()).toEqual([contextB1, contextB2]);
-  const contextA2 = await contextEventPromise;
+  await expect.poll(() => browserA.contexts().length).toBe(2);
+  const contextA2 = browserA.contexts()[1];
   expect(browserA.contexts()).toEqual([contextA1, contextA2]);
 
   const pageEventPromise = new Promise<Page>(f => contextB2.on('page', f));
