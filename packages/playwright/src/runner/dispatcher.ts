@@ -574,12 +574,19 @@ class JobDispatcher {
     const runPayload: RunPayload = {
       file: this.job.requireFile,
       entries: this.job.tests.map((test, index) => {
+        const retry = test.results.length;
+
         let shouldPauseAtEnd: boolean | 'if-failure' = isEnd && index === this.job.tests.length - 1;
-        if (!shouldPauseAtEnd && this._failureTracker.nextFailureReachesMaxFailures())
+        if (
+          !shouldPauseAtEnd && (
+            this._failureTracker.nextFailureReachesMaxFailures()
+            || test.retries === retry // TODO: also consider repeat each index
+          )
+        )
           shouldPauseAtEnd = 'if-failure';
         return {
           testId: test.id,
-          retry: test.results.length,
+          retry,
           shouldPauseAtEnd,
         };
       }),

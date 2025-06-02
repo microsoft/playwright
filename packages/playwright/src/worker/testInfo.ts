@@ -458,18 +458,10 @@ export class TestInfoImpl implements TestInfo {
     if (shouldPauseAtEnd === 'if-failure' && !this._isFailure())
       return;
 
-    if (this._willBeRunAgain())
+    if (this.repeatEachIndex + 1 < this.project.repeatEach)
       return;
 
     await this._pause();
-  }
-
-  _willBeRunAgain() {
-    if (this._isFailure())
-      return this.retry < this._retries;
-    if (this.repeatEachIndex + 1 < this.project.repeatEach)
-      return true;
-    return false;
   }
 
   // ------------ TestInfo methods ------------
