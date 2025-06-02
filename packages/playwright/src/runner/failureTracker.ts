@@ -44,10 +44,6 @@ export class FailureTracker {
     return this.maxFailures() > 0 && this._failureCount >= this.maxFailures();
   }
 
-  nextFailureReachesMaxFailures() {
-    return this.maxFailures() > 0 && this._failureCount >= this.maxFailures() - 1;
-  }
-
   hasWorkerErrors() {
     return this._hasWorkerErrors;
   }

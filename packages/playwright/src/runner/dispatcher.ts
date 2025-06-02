@@ -572,12 +572,7 @@ class JobDispatcher {
         const retry = test.results.length;
 
         let shouldPauseAtEnd: boolean | 'if-failure' = isEnd && index === this.job.tests.length - 1;
-        if (
-          !shouldPauseAtEnd && (
-            this._failureTracker.nextFailureReachesMaxFailures()
-            || test.retries === retry
-          )
-        )
+        if (!shouldPauseAtEnd && test.retries === retry)
           shouldPauseAtEnd = 'if-failure';
         return {
           testId: test.id,

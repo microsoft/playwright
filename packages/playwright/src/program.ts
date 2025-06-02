@@ -211,6 +211,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
   }
 
+  if (cliOverrides.debug === 'end' && config.config.maxFailures > 0)
+    throw new Error(`--debug=end is not supported with --max-failures. If you'd like that to change, file an issue and let us know about your use case for it.`);
+
   const runner = new Runner(config);
   const status = await runner.runAllTests();
   await stopProfiling('runner');
