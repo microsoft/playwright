@@ -309,28 +309,21 @@ class JobDispatcher {
   }
 
   private _onTestPaused(params: TestEndPayload) {
-    this._updateTest(params);
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
-
-    const { result, test } = data;
+    const { test, result } = data;
+    this._updateTest(params, data.test, data.result);
     this._reporter.onTestPaused?.(test, result);
   }
 
-  private _updateTest(params: TestEndPayload) {
+  private _updateTest(params: TestEndPayload, test: TestCase, result: TestResult) {
     if (this._failureTracker.hasReachedMaxFailures()) {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
       params.status = 'interrupted';
       params.errors = [];
     }
-    const data = this._dataByTestId.get(params.testId);
-    if (!data) {
-      // TODO: this should never be the case, report an internal error?
-      return;
-    }
-    const { result, test } = data;
     result.duration = params.duration;
     result.errors = params.errors;
     result.error = result.errors[0];
@@ -342,13 +335,13 @@ class JobDispatcher {
   }
 
   private _onTestEnd(params: TestEndPayload) {
-    this._updateTest(params);
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
     this._dataByTestId.delete(params.testId);
     this._remainingByTestId.delete(params.testId);
-    const { result, test } = data;
+    const { test, result } = data;
+    this._updateTest(params, test, result);
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
