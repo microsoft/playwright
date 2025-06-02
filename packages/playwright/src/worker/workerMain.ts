@@ -33,7 +33,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestEntry, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
 import type { TestAnnotation } from '../../types/test';
 
@@ -229,7 +229,7 @@ export class WorkerMain extends ProcessRunner {
           const entry = entries.get(tests[i].id)!;
           entries.delete(tests[i].id);
           debugTest(`test started "${tests[i].title}"`);
-          await this._runTest(tests[i], entry.retry, tests[i + 1]);
+          await this._runTest(tests[i], entry, tests[i + 1]);
           debugTest(`test finished "${tests[i].title}"`);
         }
       } else {
@@ -259,8 +259,8 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
-  private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
-    const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
+  private async _runTest(test: TestCase, entry: TestEntry, nextTest: TestCase | undefined) {
+    const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, entry.retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
@@ -381,9 +381,7 @@ export class WorkerMain extends ProcessRunner {
     // No skips in after hooks.
     testInfo._allowSkips = true;
 
-    // TODO: only do this with --debug=end and at the proper end
-    if (true)
-      await testInfo._pause();
+    await testInfo._maybeDebugAtEnd(entry.isLastTest);
 
     // After hooks get an additional timeout.
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);

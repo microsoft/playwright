@@ -147,7 +147,7 @@ export class Dispatcher {
     if (startError)
       jobDispatcher.onExit(startError);
     else
-      jobDispatcher.runInWorker(worker);
+      jobDispatcher.runInWorker(worker, this._queue.length === 0);
     const result = await jobDispatcher.jobResult;
     this._updateCounterForWorkerHash(job.workerHash, -1);
 
@@ -567,14 +567,21 @@ class JobDispatcher {
     this.jobResult.resolve(result);
   }
 
-  runInWorker(worker: WorkerHost) {
+  runInWorker(worker: WorkerHost, isEnd: boolean) {
     this._parallelIndex = worker.parallelIndex;
     this._workerIndex = worker.workerIndex;
 
     const runPayload: RunPayload = {
       file: this.job.requireFile,
-      entries: this.job.tests.map(test => {
-        return { testId: test.id, retry: test.results.length };
+      entries: this.job.tests.map((test, index) => {
+        let isLastTest: boolean | 'if-failure' = isEnd && index === this.job.tests.length - 1;
+        if (!isLastTest && this._failureTracker.hasReachedMaxFailures())
+          isLastTest = 'if-failure';
+        return {
+          testId: test.id,
+          retry: test.results.length,
+          isLastTest,
+        };
       }),
     };
     worker.runTestGroup(runPayload);

@@ -73,6 +73,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _pausedSlot: TimeSlot = { elapsed: 0, timeout: 0 };
   private readonly _onPausedEvent = new EventEmitter<Location>();
   readonly _onPaused = this._onPausedEvent.event;
+  private readonly _retries: number;
 
   _wasInterrupted = false;
   _lastStepId = 0;
@@ -178,6 +179,7 @@ export class TestInfoImpl implements TestInfo {
     this.tags = test?.tags ?? [];
     this.fn = test?.fn ?? (() => {});
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
+    this._retries = test?.retries ?? 0;
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
     if (configInternal.configCLIOverrides.debug)
@@ -437,6 +439,34 @@ export class TestInfoImpl implements TestInfo {
   _resume() {
     this._resumePromise?.resolve();
     this._resumePromise = undefined;
+  }
+
+  async _maybeDebugAtEnd(isLastTest: boolean | 'if-failure') {
+    // TODO: debug=end
+    if (!this._configInternal.configCLIOverrides.debug)
+      return;
+
+    if (this._wasInterrupted)
+      return;
+
+    if (!isLastTest)
+      return;
+
+    if (isLastTest === 'if-failure' && !this._isFailure())
+      return;
+
+    if (this._willBeRunAgain())
+      return;
+
+    await this._pause();
+  }
+
+  _willBeRunAgain() {
+    if (this._isFailure())
+      return this.retry < this._retries;
+    if (this.repeatEachIndex + 1 < this.project.repeatEach)
+      return true;
+    return false;
   }
 
   // ------------ TestInfo methods ------------
