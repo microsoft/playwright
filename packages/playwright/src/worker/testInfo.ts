@@ -347,7 +347,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _interrupt() {
-    if (this._resumePromise)
+    if (this._isPaused())
       return this._resume();
 
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
@@ -434,6 +434,10 @@ export class TestInfoImpl implements TestInfo {
         await this._resumePromise;
       });
     });
+  }
+
+  _isPaused() {
+    return !!this._resumePromise;
   }
 
   _resume() {
