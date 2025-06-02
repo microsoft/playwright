@@ -394,6 +394,7 @@ class FrameSession {
   private _screencastClients = new Set<any>();
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
+  private _initScriptIds = new Map<InitScript, string>();
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -1058,11 +1059,18 @@ class FrameSession {
   async _evaluateOnNewDocument(initScript: InitScript, world: types.World, runImmediately?: boolean): Promise<void> {
     const worldName = world === 'utility' ? this._crPage.utilityWorldName : undefined;
     const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName, runImmediately });
-    initScript.auxData = identifier;
+    this._initScriptIds.set(initScript, identifier);
   }
 
   async _removeEvaluatesOnNewDocument(initScripts: InitScript[]): Promise<void> {
-    await Promise.all(initScripts.map(script => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.auxData }).catch(() => {}))); // target can be closed
+    const ids: string[] = [];
+    for (const script of initScripts) {
+      const id = this._initScriptIds.get(script);
+      if (id)
+        ids.push(id);
+      this._initScriptIds.delete(script);
+    }
+    await Promise.all(ids.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier }).catch(() => {}))); // target can be closed
   }
 
   async exposePlaywrightBinding() {
