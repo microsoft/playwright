@@ -178,6 +178,10 @@ export class TeleReporterReceiver {
       this._onTestBegin(params.testId, params.result);
       return;
     }
+    if (method === 'onTestPaused') {
+      this._onTestPaused(params.test, params.result);
+      return;
+    }
     if (method === 'onTestEnd') {
       this._onTestEnd(params.test, params.result);
       return;
@@ -240,6 +244,22 @@ export class TeleReporterReceiver {
     testResult.parallelIndex = payload.parallelIndex;
     testResult.setStartTimeNumber(payload.startTime);
     this._reporter.onTestBegin?.(test, testResult);
+  }
+
+  private _onTestPaused(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {
+    const test = this._tests.get(testEndPayload.testId)!;
+    test.timeout = testEndPayload.timeout;
+    test.expectedStatus = testEndPayload.expectedStatus;
+    const result = test.results.find(r => r._id === payload.id)!;
+    result.duration = payload.duration;
+    result.status = payload.status;
+    result.errors = payload.errors;
+    result.error = result.errors?.[0];
+    if (payload.annotations) {
+      result.annotations = payload.annotations;
+      test.annotations = result.annotations;
+    }
+    this._reporter.onTestPaused?.(test, result);
   }
 
   private _onTestEnd(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {

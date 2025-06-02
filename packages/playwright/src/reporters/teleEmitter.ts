@@ -70,6 +70,23 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
+  onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
+    const testEnd: teleReceiver.JsonTestEnd = {
+      testId: test.id,
+      expectedStatus: test.expectedStatus,
+      timeout: test.timeout,
+      annotations: []
+    };
+    this._sendNewAttachments(result, test.id);
+    this._messageSink({
+      method: 'onTestPaused',
+      params: {
+        test: testEnd,
+        result: this._serializeResultEnd(result),
+      }
+    });
+  }
+
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
