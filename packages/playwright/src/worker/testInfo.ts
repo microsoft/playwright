@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, ManualPromise } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -56,7 +56,7 @@ type SnapshotNames = {
   lastNamedSnapshotIndex: { [key: string]: number };
 };
 
-export interface TestInfoPause {
+interface TestInfoPause {
   location: Location;
   resume(): void;
 }
@@ -81,7 +81,8 @@ export class TestInfoImpl implements TestInfo {
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
-  _onDidPause?: ((pause: TestInfoPause) => Promise<void>);
+  _onDidPause?: ((pause: TestInfoPause) => void);
+  private _currentPause?: TestInfoPause;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -345,6 +346,11 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _interrupt() {
+    if (this._currentPause) {
+      this._currentPause.resume();
+      return;
+    }
+
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
     this._wasInterrupted = true;
     this._timeoutManager.interrupt();
@@ -421,6 +427,16 @@ export class TestInfoImpl implements TestInfo {
 
   _lastLocation() {
     return this._steps.findLast(step => step.location)?.location ?? { file: this.file, column: this.column, line: this.line };
+  }
+
+  async _pause(location: Location) {
+    const promise = new ManualPromise();
+    this._currentPause = {
+      location,
+      resume: () => promise.resolve()
+    };
+    this._onDidPause?.(this._currentPause);
+    await promise;
   }
 
   // ------------ TestInfo methods ------------

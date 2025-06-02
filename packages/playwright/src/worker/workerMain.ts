@@ -388,25 +388,18 @@ export class WorkerMain extends ProcessRunner {
 
       try {
         // Run "immediately upon test function finish" callback.
-        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => {
-          const shouldPause = entry.shouldPauseAtEnd === true || (entry.shouldPauseAtEnd === 'if-failure' && testInfo._isFailure());
-          if (shouldPause) {
-            this.dispatchEvent('testPaused', buildTestEndPayload(testInfo));
-            const location = testInfo._lastLocation();
-            await testInfo._runAsStep({ title: 'Pause', category: 'hook', location }, async () => {
-              const pausePromise = new ManualPromise<void>();
-              await testInfo._onDidFinishTestFunction?.({
-                location,
-                resume: () => pausePromise.resolve(),
-              });
-              await pausePromise;
-            });
-          } else {
-            await testInfo._onDidFinishTestFunction?.();
-          }
-        });
+        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => testInfo._onDidFinishTestFunction?.());
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
+      }
+
+      const shouldPause = entry.shouldPauseAtEnd === true || (entry.shouldPauseAtEnd === 'if-failure' && testInfo._isFailure());
+      if (shouldPause) {
+        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => {
+          this.dispatchEvent('testPaused', buildTestEndPayload(testInfo));
+          const location = testInfo._lastLocation();
+          await testInfo._runAsStep({ title: 'Pause', category: 'hook', location }, () => testInfo._pause(location));
+        });
       }
 
       try {
