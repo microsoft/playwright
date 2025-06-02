@@ -17,6 +17,8 @@
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { Dispatcher } from './dispatcher';
 import { AndroidDevice } from '../android/android';
+import { eventsHelper } from '../utils/eventsHelper';
+import { SdkObject } from '../instrumentation';
 
 import type { RootDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
@@ -145,7 +147,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async open(params: channels.AndroidDeviceOpenParams, metadata: CallMetadata): Promise<channels.AndroidDeviceOpenResult> {
     const socket = await this._object.open(params.command);
-    return { socket: new AndroidSocketDispatcher(this, socket) };
+    return { socket: new AndroidSocketDispatcher(this, new SocketSdkObject(this._object, socket)) };
   }
 
   async installApk(params: channels.AndroidDeviceInstallApkParams) {
@@ -170,10 +172,33 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 }
 
-export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketChannel, AndroidDeviceDispatcher> implements channels.AndroidSocketChannel {
+class SocketSdkObject extends SdkObject implements SocketBackend {
+  private _socket: SocketBackend;
+  private _eventListeners;
+
+  constructor(parent: SdkObject, socket: SocketBackend) {
+    super(parent, 'socket');
+    this._socket = socket;
+    this._eventListeners = [
+      eventsHelper.addEventListener(socket, 'data', data => this.emit('data', data)),
+      eventsHelper.addEventListener(socket, 'close', () => this.emit('close')),
+    ];
+  }
+
+  async write(data: Buffer) {
+    await this._socket.write(data);
+  }
+
+  close() {
+    this._socket.close();
+    eventsHelper.removeEventListeners(this._eventListeners);
+  }
+}
+
+export class AndroidSocketDispatcher extends Dispatcher<SocketSdkObject, channels.AndroidSocketChannel, AndroidDeviceDispatcher> implements channels.AndroidSocketChannel {
   _type_AndroidSocket = true;
 
-  constructor(scope: AndroidDeviceDispatcher, socket: SocketBackend) {
+  constructor(scope: AndroidDeviceDispatcher, socket: SocketSdkObject) {
     super(scope, socket, 'AndroidSocket', {});
     this.addObjectListener('data', (data: Buffer) => this._dispatchEvent('data', { data }));
     this.addObjectListener('close', () => {

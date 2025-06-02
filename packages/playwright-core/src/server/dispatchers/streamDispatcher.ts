@@ -16,18 +16,27 @@
 
 import { Dispatcher } from './dispatcher';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { createGuid } from '../utils/crypto';
+import { SdkObject } from '../instrumentation';
 
 import type { ArtifactDispatcher } from './artifactDispatcher';
 import type * as channels from '@protocol/channels';
 import type * as stream from 'stream';
 
-export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel, ArtifactDispatcher> implements channels.StreamChannel {
+class StreamSdkObject extends SdkObject {
+  readonly stream: stream.Readable;
+
+  constructor(parent: SdkObject, stream: stream.Readable) {
+    super(parent, 'stream');
+    this.stream = stream;
+  }
+}
+
+export class StreamDispatcher extends Dispatcher<StreamSdkObject, channels.StreamChannel, ArtifactDispatcher> implements channels.StreamChannel {
   _type_Stream = true;
   private _ended: boolean = false;
 
   constructor(scope: ArtifactDispatcher, stream: stream.Readable) {
-    super(scope, { guid: 'stream@' + createGuid(), stream }, 'Stream', {});
+    super(scope, new StreamSdkObject(scope._object, stream), 'Stream', {});
     // In Node v12.9.0+ we can use readableEnded.
     stream.once('end', () => this._ended =  true);
     stream.once('error', () => this._ended =  true);
