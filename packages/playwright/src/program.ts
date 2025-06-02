@@ -174,7 +174,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
     if (cliOverrides.debug === 'end')
-      throw new Error(`--debug=end is not supported in UI mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+      throw new Error(`--debug=end is not supported in UI mode. If you'd like that to change, file an issue and let us know about your use case for it.`);
 
     const status = await testServer.runUIMode(opts.config, cliOverrides, {
       host: opts.uiHost,
@@ -193,9 +193,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   if (process.env.PWTEST_WATCH) {
     if (opts.onlyChanged)
-      throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+      throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your use case for it.`);
     if (cliOverrides.debug === 'end')
-      throw new Error(`--debug=end is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+      throw new Error(`--debug=end is not supported in watch mode. If you'd like that to change, file an issue and let us know about your use case for it.`);
 
     const status = await runWatchModeLoop(
         resolveConfigLocation(opts.config),
@@ -324,7 +324,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     if (overrides.debug === 'begin')
       process.env.PWDEBUG = '1';
     if (overrides.debug === 'end' && options.updateSnapshots)
-      throw new Error(`--debug=end is not supported with --update-snapshots. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+      throw new Error(`--debug=end is not supported with --update-snapshots. If you'd like that to change, file an issue and let us know about your use case for it.`);
   }
   if (!options.ui && options.trace) {
     if (!kTraceModes.includes(options.trace))
