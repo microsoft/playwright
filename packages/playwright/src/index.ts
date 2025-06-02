@@ -421,9 +421,16 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await (browser as any)._stopPendingOperations(closeReason);
   },
 
-  page: async ({ context, _reuseContext }, use, testInfo) => {
-    const existingPage = _reuseContext ? context.pages()[0] : undefined;
-    const page = existingPage ?? await context.newPage();
+  page: async ({ context, _reuseContext }, use) => {
+    if (!_reuseContext) {
+      await use(await context.newPage());
+      return;
+    }
+
+    // First time we are reusing the context, we should create the page.
+    let [page] = context.pages();
+    if (!page)
+      page = await context.newPage();
     await use(page);
   },
 
