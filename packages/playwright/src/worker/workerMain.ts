@@ -394,7 +394,9 @@ export class WorkerMain extends ProcessRunner {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
-      await testInfo._maybeDebugAtEnd(entry.shouldPauseAtEnd);
+      const shouldPause = entry.shouldPauseAtEnd === true || (entry.shouldPauseAtEnd === 'if-failure' && testInfo._isFailure());
+      if (shouldPause && !testInfo._wasInterrupted)
+        await testInfo._pause();
 
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
