@@ -318,8 +318,6 @@ function createPhasesTask(): Task<TestRun> {
       }
 
       for (let i = 0; i < projectToSuite.size; i++) {
-        const isLastPhase = i === projectToSuite.size - 1;
-
         // Find all projects that have all their dependencies processed by previous phases.
         const phaseProjects: FullProjectInternal[] = [];
         for (const project of projectToSuite.keys()) {
@@ -336,8 +334,7 @@ function createPhasesTask(): Task<TestRun> {
           processed.add(project);
         if (phaseProjects.length) {
           let testGroupsInPhase = 0;
-          const shouldPauseAtEnd = isLastPhase && testRun.config.configCLIOverrides.debug === 'end';
-          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker, shouldPauseAtEnd), projects: [] };
+          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker), projects: [] };
           testRun.phases.push(phase);
           for (const project of phaseProjects) {
             const projectSuite = projectToSuite.get(project)!;
@@ -358,12 +355,15 @@ function createPhasesTask(): Task<TestRun> {
 function createRunTestsTask(): Task<TestRun> {
   return {
     title: 'test suite',
-    setup: async ({ phases, failureTracker }) => {
+    setup: async ({ phases, failureTracker, config }) => {
       const successfulProjects = new Set<FullProjectInternal>();
       const extraEnvByProjectId: EnvByProjectId = new Map();
       const teardownToSetups = buildTeardownToSetupsMap(phases.map(phase => phase.projects.map(p => p.project)).flat());
 
-      for (const { dispatcher, projects } of phases) {
+      for (const [i, { dispatcher, projects }] of phases.entries()) {
+        const isLastPhase = i === phases.length - 1;
+        const shouldPauseAtEnd = isLastPhase && config.configCLIOverrides.debug === 'end';
+
         // Each phase contains dispatcher and a set of test groups.
         // We don't want to run the test groups belonging to the projects
         // that depend on the projects that failed previously.
@@ -383,7 +383,7 @@ function createRunTestsTask(): Task<TestRun> {
         }
 
         if (phaseTestGroups.length) {
-          await dispatcher!.run(phaseTestGroups, extraEnvByProjectId);
+          await dispatcher!.run(phaseTestGroups, extraEnvByProjectId, shouldPauseAtEnd);
           await dispatcher.stop();
           for (const [projectId, envProduced] of dispatcher.producedEnvByProjectId()) {
             const extraEnv = extraEnvByProjectId.get(projectId) || {};

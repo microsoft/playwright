@@ -46,16 +46,15 @@ export class Dispatcher {
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
-  private _shouldPauseAtEnd: boolean;
+  private _shouldPauseAtEnd = false;
 
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker, shouldPauseAtEnd: boolean) {
+  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker) {
     this._config = config;
     this._reporter = reporter;
     this._failureTracker = failureTracker;
-    this._shouldPauseAtEnd = shouldPauseAtEnd;
     for (const project of config.projects) {
       if (project.workers)
         this._workerLimitPerProjectId.set(project.id, project.workers);
@@ -195,8 +194,9 @@ export class Dispatcher {
     this._queuedOrRunningHashCount.set(hash, delta + (this._queuedOrRunningHashCount.get(hash) || 0));
   }
 
-  async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
+  async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId, shouldPauseAtEnd: boolean) {
     this._extraEnvByProjectId = extraEnvByProjectId;
+    this._shouldPauseAtEnd = shouldPauseAtEnd;
     this._queue = testGroups;
     for (const group of testGroups)
       this._updateCounterForWorkerHash(group.workerHash, +1);
