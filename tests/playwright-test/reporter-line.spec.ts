@@ -15,7 +15,6 @@
  */
 
 import path from 'path';
-import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
@@ -195,7 +194,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const result = await runInlineTest({
         'a.test.js': `
           const { test, expect } = require('@playwright/test');
-          test('one', async ({}) => {
+          test('one', async ({ page }) => {
+            await page.setContent('<div>hello</div>');
             expect(1).toBe(0);
           });
         `,
@@ -205,27 +205,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(text).toContain(`Error Context: ${path.join('blob-report', 'resources')}`);
       else
         expect(text).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
-      expect(result.exitCode).toBe(1);
-    });
-
-    test('should show error context if exception contains non-existent file', async ({ runInlineTest, useIntermediateMergeReport }) => {
-      const result = await runInlineTest({
-        'a.test.js': `
-          const { test, expect } = require('@playwright/test');
-          test('one', async ({ page }) => {
-            await page.evaluate(() => {
-              throw new Error('error');
-            });
-          });
-        `,
-      }, { reporter: 'line' });
-      if (useIntermediateMergeReport)
-        expect(result.output).toContain(`Error Context: ${path.join('blob-report', 'resources')}`);
-      else
-        expect(result.output).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
-      const file = /Error Context: (.*)/.exec(result.output)?.[1];
-      const content = await fs.promises.readFile(path.join(result.report.config.rootDir, file), 'utf8');
-      expect(content).toContain('^ Error: page.evaluate: Error: error');
       expect(result.exitCode).toBe(1);
     });
   });

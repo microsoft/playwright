@@ -108,7 +108,7 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.addInitScript(new InitScript('', true), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
   async _markAsError(error: Error) {
@@ -237,7 +237,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
         this._page,
         params.type,
         params.message,
@@ -334,7 +334,7 @@ export class FFPage implements PageDelegate {
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
-    const viewportSize = this._page.viewportSize();
+    const viewportSize = this._page.emulatedSize()?.viewport ?? null;
     await this._session.send('Page.setViewportSize', { viewportSize });
   }
 
@@ -387,11 +387,16 @@ export class FFPage implements PageDelegate {
 
   async addInitScript(initScript: InitScript, worldName?: string): Promise<void> {
     this._initScripts.push({ initScript, worldName });
-    await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
+    await this._updateInitScripts();
   }
 
-  async removeNonInternalInitScripts() {
-    this._initScripts = this._initScripts.filter(s => s.initScript.internal);
+  async removeInitScripts(initScripts: InitScript[]): Promise<void> {
+    const set = new Set(initScripts);
+    this._initScripts = this._initScripts.filter(s => !set.has(s.initScript));
+    await this._updateInitScripts();
+  }
+
+  private async _updateInitScripts() {
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
   }
 

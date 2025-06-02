@@ -516,7 +516,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
 
-  const errorPrompt = expect.objectContaining({ name: '_error-context-0' });
+  const errorPrompt = expect.objectContaining({ name: 'error-context' });
   expect(result.report.suites[0].specs[1].tests[0].results[0].attachments).toEqual([errorPrompt]);
   expect(result.report.suites[0].specs[1].tests[0].results[1].attachments).toEqual([{
     name: 'video',

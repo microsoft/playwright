@@ -26,11 +26,9 @@ import { Frame } from '../frames';
 import { Page } from '../page';
 import { ThrottledFile } from './throttledFile';
 import { generateCode } from '../codegen/language';
-import { prepareGeneratedScript } from '../javascript';
 
 import type { RegisteredListener } from '../../utils';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from '../codegen/types';
-import type { Dialog } from '../dialog';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { Source } from '@recorder/recorderTypes';
@@ -136,7 +134,11 @@ export class ContextRecorder extends EventEmitter {
     this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
     for (const page of this._context.pages())
       this._onPage(page);
-    this._context.on(BrowserContext.Events.Dialog, (dialog: Dialog) => this._onDialog(dialog.page()));
+    this._context.dialogManager.addDialogHandler(dialog => {
+      this._onDialog(dialog.page());
+      // Not handling the dialog, let it automatically close.
+      return false;
+    });
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
@@ -147,7 +149,7 @@ export class ContextRecorder extends EventEmitter {
     await this._context.exposeBinding('__pw_recorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-    await this._context.extendInjectedScript(prepareGeneratedScript(rawRecorderSource.source));
+    await this._context.extendInjectedScript(rawRecorderSource.source);
   }
 
   setEnabled(enabled: boolean) {

@@ -24,9 +24,10 @@ import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 import { connectOverWebSocket } from './webSocket';
+import { TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
-import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions, Logger } from './types';
+import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
@@ -73,10 +74,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
+      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
-      this._didLaunchBrowser(browser, options, logger);
+      browser._connectToBrowserType(this, options, logger);
       return browser;
     });
   }
@@ -91,7 +93,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-    options = { ...this._playwright._defaultLaunchOptions, ...this._playwright._defaultContextOptions, ...options };
+    options = this._playwright.selectors._withSelectorOptions({
+      ...this._playwright._defaultLaunchOptions,
+      ...this._playwright._defaultContextOptions,
+      ...options,
+    });
     const contextParams = await prepareBrowserContextParams(this._platform, options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
@@ -100,11 +106,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
       userDataDir: (this._platform.path().isAbsolute(userDataDir) || !userDataDir) ? userDataDir : this._platform.path().resolve(userDataDir),
+      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
+      const browser = Browser.from(result.browser);
+      browser._connectToBrowserType(this, options, logger);
       const context = BrowserContext.from(result.context);
-      await this._didCreateContext(context, contextParams, options, logger);
+      await context._initializeHarFromOptions(options.recordHar);
+      await this._instrumentation.runAfterCreateBrowserContext(context);
       return context;
     });
   }
@@ -128,7 +138,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         headers,
         exposeNetwork: params.exposeNetwork ?? params._exposeNetwork,
         slowMo: params.slowMo,
-        timeout: params.timeout,
+        timeout: params.timeout || 0,
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
@@ -154,9 +164,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           connection.close();
           throw new Error('Malformed endpoint. Did you use BrowserType.launchServer method?');
         }
-        playwright._setSelectors(this._playwright.selectors);
+        playwright.selectors = this._playwright.selectors;
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-        this._didLaunchBrowser(browser, {}, logger);
+        browser._connectToBrowserType(this, {}, logger);
         browser._shouldCloseConnectionOnClose = true;
         browser.on(Events.Browser.Disconnected, () => connection.close());
         return browser;
@@ -188,35 +198,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       endpointURL,
       headers,
       slowMo: params.slowMo,
-      timeout: params.timeout
+      timeout: new TimeoutSettings(this._platform).timeout(params),
     });
     const browser = Browser.from(result.browser);
-    this._didLaunchBrowser(browser, {}, params.logger);
+    browser._connectToBrowserType(this, {}, params.logger);
     if (result.defaultContext)
-      await this._didCreateContext(BrowserContext.from(result.defaultContext), {}, {}, params.logger);
+      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
     return browser;
-  }
-
-  _didLaunchBrowser(browser: Browser, browserOptions: LaunchOptions, logger: Logger | undefined) {
-    browser._browserType = this;
-    browser._options = browserOptions;
-    browser._logger = logger;
-  }
-
-  async _didCreateContext(context: BrowserContext, contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions, logger: Logger | undefined) {
-    context._logger = logger;
-    context._browserType = this;
-    this._contexts.add(context);
-    context._setOptions(contextOptions, browserOptions);
-    if (this._playwright._defaultContextTimeout !== undefined)
-      context.setDefaultTimeout(this._playwright._defaultContextTimeout);
-    if (this._playwright._defaultContextNavigationTimeout !== undefined)
-      context.setDefaultNavigationTimeout(this._playwright._defaultContextNavigationTimeout);
-    await this._instrumentation.runAfterCreateBrowserContext(context);
-  }
-
-  async _willCloseContext(context: BrowserContext) {
-    this._contexts.delete(context);
-    await this._instrumentation.runBeforeCloseBrowserContext(context);
   }
 }

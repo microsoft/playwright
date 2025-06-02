@@ -19,14 +19,12 @@ import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
 import { nodePlatform } from './server/utils/nodePlatform';
 import { Connection } from './client/connection';
-import { setPlatformForSelectors } from './client/selectors';
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from './utils';
 
 export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
-  setPlatformForSelectors(nodePlatform);
   const clientConnection = new Connection(nodePlatform);
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
@@ -51,7 +49,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
   clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
 
-  clientConnection.toImpl = (x: any) => x ? dispatcherConnection._dispatchers.get(x._guid)!._object : dispatcherConnection._dispatchers.get('');
+  clientConnection.toImpl = (x: any) => x ? dispatcherConnection._dispatcherByGuid.get(x._guid)!._object : dispatcherConnection._dispatcherByGuid.get('');
   (playwrightAPI as any)._toImpl = clientConnection.toImpl;
   return playwrightAPI;
 }

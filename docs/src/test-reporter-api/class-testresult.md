@@ -52,7 +52,7 @@ Errors thrown during the test execution.
 * since: v1.10
 - type: <[int]>
 
-When test is retries multiple times, each retry attempt is given a sequential number.
+When test is retried multiple times, each retry attempt is given a sequential number.
 
 Learn more about [test retries](../test-retries.md#retries).
 

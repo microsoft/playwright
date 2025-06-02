@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export type { Executable } from './registry';
+export type {  BrowserInfo, Executable } from './registry';
 export {
   Registry,
   installBrowsersForNpmInstall,

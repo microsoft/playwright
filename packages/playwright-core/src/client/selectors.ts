@@ -14,56 +14,41 @@
  * limitations under the License.
  */
 
-import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
-import { setTestIdAttribute, testIdAttributeName } from './locator';
-import { emptyPlatform } from './platform';
+import { setTestIdAttribute } from './locator';
 
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
+import type { BrowserContext } from './browserContext';
 import type { Platform } from './platform';
 
-let platform = emptyPlatform;
-
-export function setPlatformForSelectors(p: Platform) {
-  platform = p;
-}
-
 export class Selectors implements api.Selectors {
-  private _channels = new Set<SelectorsOwner>();
-  private _registrations: channels.SelectorsRegisterParams[] = [];
+  private _platform: Platform;
+  private _selectorEngines: channels.SelectorEngine[] = [];
+  private _testIdAttributeName: string | undefined;
+  readonly _contextsForSelectors = new Set<BrowserContext>();
+
+  constructor(platform: Platform) {
+    this._platform = platform;
+  }
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
-    const source = await evaluationScript(platform, script, undefined, false);
-    const params = { ...options, name, source };
-    for (const channel of this._channels)
-      await channel._channel.register(params);
-    this._registrations.push(params);
+    const source = await evaluationScript(this._platform, script, undefined, false);
+    const selectorEngine: channels.SelectorEngine = { ...options, name, source };
+    for (const context of this._contextsForSelectors)
+      await context._channel.registerSelectorEngine({ selectorEngine });
+    this._selectorEngines.push(selectorEngine);
   }
 
   setTestIdAttribute(attributeName: string) {
+    this._testIdAttributeName = attributeName;
     setTestIdAttribute(attributeName);
-    for (const channel of this._channels)
-      channel._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
+    for (const context of this._contextsForSelectors)
+      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
   }
 
-  _addChannel(channel: SelectorsOwner) {
-    this._channels.add(channel);
-    for (const params of this._registrations) {
-      // This should not fail except for connection closure, but just in case we catch.
-      channel._channel.register(params).catch(() => {});
-      channel._channel.setTestIdAttributeName({ testIdAttributeName: testIdAttributeName() }).catch(() => {});
-    }
-  }
-
-  _removeChannel(channel: SelectorsOwner) {
-    this._channels.delete(channel);
-  }
-}
-
-export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel> {
-  static from(browser: channels.SelectorsChannel): SelectorsOwner {
-    return (browser as any)._object;
+  _withSelectorOptions<T>(options: T) {
+    return { ...options, selectorEngines: this._selectorEngines, testIdAttributeName: this._testIdAttributeName };
   }
 }

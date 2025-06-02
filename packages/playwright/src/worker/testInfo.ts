@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -31,7 +31,7 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
-
+import type { TestStepCategory } from '../util';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
@@ -39,7 +39,7 @@ export interface TestStepInternal {
   attachmentIndices: number[];
   stepId: string;
   title: string;
-  category: string;
+  category: TestStepCategory;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
@@ -329,7 +329,12 @@ export class TestInfoImpl implements TestInfo {
       location: data.location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.category, data.apiName || data.title, data.params, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, {
+      title: data.title,
+      category: data.category,
+      params: data.params,
+      stack: data.location ? [data.location] : []
+    });
     return step;
   }
 
@@ -412,8 +417,8 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: `attach "${name}"`,
-      category: 'attach',
+      title: name,
+      category: 'test.attach',
     });
     this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
     step.complete({});
@@ -421,10 +426,13 @@ export class TestInfoImpl implements TestInfo {
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    if (stepId)
+    if (stepId) {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
-    else
-      this._tracing.appendTopLevelAttachment(attachment);
+    } else {
+      const callId = `attach@${createGuid()}`;
+      this._tracing.appendBeforeActionForStep(callId, undefined, { title: attachment.name, category: 'test.attach', stack: [] });
+      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
+    }
 
     this._onAttach({
       testId: this.testId,

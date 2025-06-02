@@ -31,6 +31,7 @@ import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
+import type { Playwright } from './playwright';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: Env,
@@ -38,11 +39,14 @@ type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHead
   recordHar?: BrowserContextOptions['recordHar'],
   colorScheme?: 'dark' | 'light' | 'no-preference' | null,
   acceptDownloads?: boolean,
+  timeout?: number,
 };
 
 type ElectronAppType = typeof import('electron');
 
 export class Electron extends ChannelOwner<channels.ElectronChannel> implements api.Electron {
+  _playwright!: Playwright;
+
   static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
   }
@@ -52,13 +56,18 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
   }
 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
+    options = this._playwright.selectors._withSelectorOptions(options);
     const params: channels.ElectronLaunchParams = {
       ...await prepareBrowserContextParams(this._platform, options),
       env: envObjectToArray(options.env ? options.env : this._platform.env),
       tracesDir: options.tracesDir,
+      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
-    app._context._setOptions(params, options);
+    this._playwright.selectors._contextsForSelectors.add(app._context);
+    app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
+    await app._context._initializeHarFromOptions(options.recordHar);
+    app._context.tracing._tracesDir = options.tracesDir;
     return app;
   }
 }

@@ -43,6 +43,7 @@ import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
 import type { TestAnnotation } from '@playwright/test';
+import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -56,7 +57,8 @@ export const Workbench: React.FunctionComponent<{
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
+  testRunMetadata?: MetadataWithCommitInfo,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, testRunMetadata }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -105,7 +107,7 @@ export const Workbench: React.FunctionComponent<{
       // Select the last non-after hooks item.
       let index = model.actions.length - 1;
       for (let i = 0; i < model.actions.length; ++i) {
-        if (model.actions[i].apiName === 'After Hooks' && i) {
+        if (model.actions[i].title === 'After Hooks' && i) {
           index = i - 1;
           break;
         }
@@ -190,7 +192,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'errors',
     title: 'Errors',
     errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={error => {
+    render: () => <ErrorsTab errorsModel={errorsModel} model={model} testRunMetadata={testRunMetadata} sdkLanguage={sdkLanguage} revealInSource={error => {
       if (error.action)
         setSelectedAction(error.action);
       else

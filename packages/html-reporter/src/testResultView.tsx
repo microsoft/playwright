@@ -24,9 +24,12 @@ import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './link
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { CodeSnippet, TestErrorView, TestScreenshotErrorView } from './testErrorView';
+import { CodeSnippet, PromptButton, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
+import { useAsyncMemo } from '@web/uiUtils';
+import { copyPrompt } from '@web/shared/prompts';
+import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
@@ -70,27 +73,47 @@ function groupImageDiffs(screenshots: Set<TestAttachment>, result: TestResult): 
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
-}> = ({ test, result }) => {
-  const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
+  testRunMetadata: MetadataWithCommitInfo | undefined,
+}> = ({ test, result, testRunMetadata }) => {
+  const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const screenshotAnchors = [...screenshots].map(a => `attachment-${attachments.indexOf(a)}`);
     const videos = attachments.filter(a => a.contentType.startsWith('video/'));
     const traces = attachments.filter(a => a.name === 'trace');
+    const errorContext = attachments.find(a => a.name === 'error-context');
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors, diffs, result.attachments);
-    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
+    const errors = classifyErrors(result.errors.map(e => e.message), diffs);
+    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
+
+  const prompt = useAsyncMemo(async () => {
+    return await copyPrompt({
+      testInfo: [
+        `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
+        `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
+      ].join('\n'),
+      metadata: testRunMetadata,
+      errorContext: errorContext?.path ? await fetch(errorContext.path!).then(r => r.text()) : errorContext?.body,
+      errors: result.errors,
+      buildCodeFrame: async error => error.codeframe,
+    });
+  }, [test, errorContext, testRunMetadata, result], undefined);
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
+      {prompt && (
+        <div style={{ position: 'absolute', right: '16px', padding: '10px', zIndex: 1 }}>
+          <PromptButton prompt={prompt} />
+        </div>
+      )}
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} context={error.context}></TestErrorView>;
+        return <CodeSnippet key={'test-result-error-message-' + index} code={error.error!}/>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
@@ -144,8 +167,8 @@ export const TestResultView: React.FC<{
   </div>;
 };
 
-function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: TestAttachment[]) {
-  return testErrors.map((error, i) => {
+function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
+  return testErrors.map(error => {
     const firstLine = error.split('\n')[0];
     if (firstLine.includes('toHaveScreenshot') || firstLine.includes('toMatchSnapshot')) {
       const matchingDiff = diffs.find(diff => {
@@ -165,8 +188,7 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: T
       }
     }
 
-    const context = attachments.find(a => a.name === `_error-context-${i}`);
-    return { type: 'regular', error, context };
+    return { type: 'regular', error };
   });
 }
 

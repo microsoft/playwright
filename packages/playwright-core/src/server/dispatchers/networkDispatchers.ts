@@ -15,7 +15,7 @@
  */
 
 import { WebSocket } from '../network';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
@@ -34,7 +34,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   private _browserContextDispatcher: BrowserContextDispatcher;
 
   static from(scope: BrowserContextDispatcher, request: Request): RequestDispatcher {
-    const result = existingDispatcher<RequestDispatcher>(request);
+    const result = scope.connection.existingDispatcher<RequestDispatcher>(request);
     return result || new RequestDispatcher(scope, request);
   }
 
@@ -47,7 +47,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
     // Always try to attach request to the page, if not, frame.
     const frame = request.frame();
     const page = request.frame()?._page;
-    const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : null;
+    const pageDispatcher = page ? scope.connection.existingDispatcher<PageDispatcher>(page) : null;
     const frameDispatcher = frame ? FrameDispatcher.from(scope, frame) : null;
     super(pageDispatcher || frameDispatcher || scope, request, 'Request', {
       frame: FrameDispatcher.fromNullable(scope, request.frame()),
@@ -77,7 +77,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   _type_Response = true;
 
   static from(scope: BrowserContextDispatcher, response: Response): ResponseDispatcher {
-    const result = existingDispatcher<ResponseDispatcher>(response);
+    const result = scope.connection.existingDispatcher<ResponseDispatcher>(response);
     const requestDispatcher = RequestDispatcher.from(scope, response.request());
     return result || new ResponseDispatcher(requestDispatcher, response);
   }
@@ -123,19 +123,23 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
 export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, RequestDispatcher> implements channels.RouteChannel {
   _type_Route = true;
 
-  static from(scope: RequestDispatcher, route: Route): RouteDispatcher {
-    const result = existingDispatcher<RouteDispatcher>(route);
-    return result || new RouteDispatcher(scope, route);
-  }
+  private _handled = false;
 
-  private constructor(scope: RequestDispatcher, route: Route) {
+  constructor(scope: RequestDispatcher, route: Route) {
     super(scope, route, 'Route', {
       // Context route can point to a non-reported request, so we send the request in the initializer.
       request: scope
     });
   }
 
+  private _checkNotHandled() {
+    if (this._handled)
+      throw new Error('Route is already handled!');
+    this._handled = true;
+  }
+
   async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
+    this._checkNotHandled();
     await this._object.continue({
       url: params.url,
       method: params.method,
@@ -146,14 +150,17 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   }
 
   async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
+    this._checkNotHandled();
     await this._object.fulfill(params);
   }
 
   async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
+    this._checkNotHandled();
     await this._object.abort(params.errorCode || 'failed');
   }
 
   async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams): Promise<void> {
+    this._checkNotHandled();
     await this._object.redirectNavigationRequest(params.url);
   }
 }
@@ -177,7 +184,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   _type_APIRequestContext = true;
 
   static from(scope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext): APIRequestContextDispatcher {
-    const result = existingDispatcher<APIRequestContextDispatcher>(request);
+    const result = scope.connection.existingDispatcher<APIRequestContextDispatcher>(request);
     return result || new APIRequestContextDispatcher(scope, request);
   }
 

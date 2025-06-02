@@ -57,6 +57,12 @@ const injectedScripts = [
     true,
   ],
   [
+    path.join(ROOT, 'packages', 'injected', 'src', 'bindingsController.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
     path.join(ROOT, 'packages', 'injected', 'src', 'webSocketMock.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
@@ -130,7 +136,6 @@ const inlineCSSPlugin = {
       platform: 'browser',
       target: 'ES2019',
       plugins: [inlineCSSPlugin],
-      inject: hasExports ? [require.resolve('./generate_injected_builtins.js')] : [],
     });
     for (const message of [...buildOutput.errors, ...buildOutput.warnings])
       console.log(message.text);
@@ -139,9 +144,6 @@ const inlineCSSPlugin = {
     let content = await fs.promises.readFile(outFileJs, 'utf-8');
     if (hasExports)
       content = await replaceEsbuildHeader(content, outFileJs);
-    if (injected.endsWith('utilityScript.ts') && !content.includes('kUtilityScriptIsUnderTest = false')) {
-      throw new Error(`Utility script must include "kUtilityScriptIsUnderTest = false"\n\n${content}`);
-    }
     const newContent = `export const source = ${JSON.stringify(content)};`;
     await fs.promises.writeFile(path.join(generatedFolder, baseName.replace('.ts', 'Source.ts')), newContent);
   }

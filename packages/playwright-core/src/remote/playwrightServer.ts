@@ -18,6 +18,7 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
 import { debugLogger } from '../server/utils/debugLogger';
 import { Semaphore } from '../utils/isomorphic/semaphore';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
@@ -33,7 +34,7 @@ import type  { LaunchOptions } from '../server/types';
 type ServerOptions = {
   path: string;
   maxConnections: number;
-  mode: 'default' | 'launchServer' | 'extension';
+  mode: 'default' | 'launchServer' | 'launchServerShared' | 'extension';
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
@@ -76,7 +77,7 @@ export class PlaywrightServer {
         const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
         const launchOptionsHeaderValue = Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader;
         const launchOptionsParam = url.searchParams.get('launch-options');
-        let launchOptions: LaunchOptions = {};
+        let launchOptions: LaunchOptions = { timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT };
         try {
           launchOptions = JSON.parse(launchOptionsParam || launchOptionsHeaderValue);
         } catch (e) {
@@ -97,7 +98,7 @@ export class PlaywrightServer {
         } else if (isExtension) {
           clientType = 'reuse-browser';
           semaphore = reuseBrowserSemaphore;
-        } else if (this._options.mode === 'launchServer') {
+        } else if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
           clientType = 'pre-launched-browser-or-android';
           semaphore = browserSemaphore;
         }
@@ -105,7 +106,13 @@ export class PlaywrightServer {
         return new PlaywrightConnection(
             semaphore.acquire(),
             clientType, ws,
-            { socksProxyPattern: proxyValue, browserName, launchOptions, allowFSPaths: this._options.mode === 'extension' },
+            {
+              socksProxyPattern: proxyValue,
+              browserName,
+              launchOptions,
+              allowFSPaths: this._options.mode === 'extension',
+              sharedBrowser: this._options.mode === 'launchServerShared',
+            },
             {
               playwright: this._preLaunchedPlaywright,
               browser: this._options.preLaunchedBrowser,

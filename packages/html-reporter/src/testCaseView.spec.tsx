@@ -66,7 +66,7 @@ const testCase: TestCase = {
 };
 
 test('should render test case', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={testCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
   await expect(component.getByText('Hidden annotation')).toBeHidden();
   await component.getByText('Annotations').click();
@@ -82,7 +82,7 @@ test('should render test case', async ({ mount }) => {
 test('should render copy buttons for annotations', async ({ mount, page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={testCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
   await component.getByText('Annotation text', { exact: false }).first().hover();
   await expect(component.locator('.test-case-annotation').getByLabel('Copy to clipboard').first()).toBeVisible();
@@ -113,7 +113,7 @@ const annotationLinkRenderingTestCase: TestCase = {
 };
 
 test('should correctly render links in annotations', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={annotationLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={annotationLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
 
   const firstLink = await component.getByText('https://playwright.dev/docs/intro').first();
   await expect(firstLink).toBeVisible();
@@ -188,7 +188,7 @@ const testCaseSummary: TestCaseSummary = {
 
 
 test('should correctly render links in attachments', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={attachmentLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await component.getByText('first attachment').click();
   const body = await component.getByText('The body with https://playwright.dev/docs/intro link');
   await expect(body).toBeVisible();
@@ -201,7 +201,7 @@ test('should correctly render links in attachments', async ({ mount }) => {
 });
 
 test('should correctly render links in attachment name', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={attachmentLinkRenderingTestCase} prev={undefined} next={undefined} run={0}></TestCaseView>);
   const link = component.getByText('attachment with inline link').locator('a');
   await expect(link).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
   await expect(link).toHaveText('https://github.com/microsoft/playwright/issues/31284');
@@ -211,7 +211,7 @@ test('should correctly render links in attachment name', async ({ mount }) => {
 });
 
 test('should correctly render prev and next', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={testCaseSummary} next={testCaseSummary} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={attachmentLinkRenderingTestCase} prev={testCaseSummary} next={testCaseSummary} run={0}></TestCaseView>);
   await expect(component).toMatchAriaSnapshot(`
     - text: group
     - link "« previous"
@@ -226,7 +226,7 @@ const testCaseWithTwoAttempts: TestCase = {
   results: [
     {
       ...result,
-      errors: ['Error message'],
+      errors: [{ message: 'Error message' }],
       status: 'failed',
       duration: 50,
     },
@@ -239,7 +239,7 @@ const testCaseWithTwoAttempts: TestCase = {
 };
 
 test('total duration is selected run duration', async ({ mount, page }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0}></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} testRunMetadata={{}} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await expect(component).toMatchAriaSnapshot(`
     - text: "My test test.spec.ts:42 200ms"
     - tablist:

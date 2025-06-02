@@ -38,10 +38,10 @@ test('should show screenshots', async ({ runUITest }) => {
   await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
 
   await page.getByText('test 1', { exact: true }).click();
-  await expect(page.getByTestId('actions-tree')).toContainText('expect.toBeVisible');
+  await expect(page.getByTestId('actions-tree')).toContainText('Expect');
   await expect(page.locator('.film-strip-frame').first()).toBeVisible();
 
   await page.getByText('test 2', { exact: true }).click();
-  await expect(page.getByTestId('actions-tree')).toContainText('expect.toHaveText');
+  await expect(page.getByTestId('actions-tree')).toContainText('Expect');
   await expect(page.locator('.film-strip-frame').first()).toBeVisible();
 });

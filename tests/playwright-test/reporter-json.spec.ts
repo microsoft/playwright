@@ -355,26 +355,3 @@ test('should report parallelIndex', async ({ runInlineTest }, testInfo) => {
   expect(result.report.suites[0].specs[1].tests[0].results[0].parallelIndex).toBe(1);
   expect(result.report.suites[0].specs[2].tests[0].results[0].parallelIndex).toBe(1);
 });
-
-test('attaches error context', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-          export default { use: { _optionErrorContext: { format: 'json' } } };
-    `,
-    'a.test.js': `
-      const { test, expect } = require('@playwright/test');
-      test('one', async ({ page }, testInfo) => {
-        await page.setContent('<button>Click me</button>');
-        throw new Error('kaboom');
-      });
-    `,
-  }, { reporter: 'json' });
-
-  const errorContext = result.report.suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === '_error-context');
-  expect(errorContext).toBeDefined();
-  expect(errorContext!.contentType).toBe('application/json');
-  const json = JSON.parse(Buffer.from(errorContext!.body, 'base64').toString('utf-8'));
-  expect(json).toEqual({
-    pageSnapshot: expect.any(String),
-  });
-});

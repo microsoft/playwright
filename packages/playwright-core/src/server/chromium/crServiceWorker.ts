@@ -84,7 +84,7 @@ export class CRServiceWorker extends Worker {
   }
 
   needsRequestInterception(): boolean {
-    return this._isNetworkInspectionEnabled() && !!this.browserContext._requestInterceptor;
+    return this._isNetworkInspectionEnabled() && this.browserContext.requestInterceptors.length > 0;
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
@@ -101,12 +101,8 @@ export class CRServiceWorker extends Worker {
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
     this.browserContext.emit(BrowserContext.Events.Request, request);
-    if (route) {
-      const r = new network.Route(request, route);
-      if (this.browserContext._requestInterceptor?.(r, request))
-        return;
-      r.continue({ isFallback: true }).catch(() => {});
-    }
+    if (route)
+      new network.Route(request, route).handle(this.browserContext.requestInterceptors);
   }
 
   private _isNetworkInspectionEnabled(): boolean {

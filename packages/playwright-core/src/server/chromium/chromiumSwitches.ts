@@ -50,7 +50,7 @@ const disabledFeatures = (assistantMode?: boolean) => [
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
-export const chromiumSwitches = (assistantMode?: boolean) => [
+export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--disable-background-timer-throttling',
@@ -65,6 +65,7 @@ export const chromiumSwitches = (assistantMode?: boolean) => [
   '--disable-dev-shm-usage',
   '--disable-extensions',
   '--disable-features=' + disabledFeatures(assistantMode).join(','),
+  channel === 'chromium-tip-of-tree' ? '--enable-features=CDPScreenshotNewSurface' : '',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',

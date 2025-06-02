@@ -68,14 +68,16 @@ test.describe('toHaveCount', () => {
     await page.setContent('<div><span></span></div>');
     const locator = page.locator('span');
     const error = await expect(locator).toHaveCount(0, { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveCount with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveCount(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveCount" with timeout 1000ms`);
   });
 
   test('fail zero 2', async ({ page }) => {
     await page.setContent('<div><span></span></div>');
     const locator = page.locator('span');
     const error = await expect(locator).not.toHaveCount(1, { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.not.toHaveCount with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveCount(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveCount" with timeout 1000ms`);
   });
 });
 
@@ -107,7 +109,8 @@ test.describe('toHaveJSProperty', () => {
     await page.$eval('div', e => (e as any).foo = 'string');
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', 'error', { timeout: 200 }).catch(e => e);
-    expect(error.message).toContain(`expect.toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass number', async ({ page }) => {
@@ -122,7 +125,8 @@ test.describe('toHaveJSProperty', () => {
     await page.$eval('div', e => (e as any).foo = 2021);
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', 1, { timeout: 200 }).catch(e => e);
-    expect(error.message).toContain(`expect.toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass boolean', async ({ page }) => {
@@ -137,7 +141,8 @@ test.describe('toHaveJSProperty', () => {
     await page.$eval('div', e => (e as any).foo = false);
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', true, { timeout: 200 }).catch(e => e);
-    expect(error.message).toContain(`expect.toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass boolean 2', async ({ page }) => {
@@ -152,7 +157,8 @@ test.describe('toHaveJSProperty', () => {
     await page.$eval('div', e => (e as any).foo = false);
     const locator = page.locator('div');
     const error = await expect(locator).toHaveJSProperty('foo', true, { timeout: 200 }).catch(e => e);
-    expect(error.message).toContain(`expect.toHaveJSProperty with timeout 200ms`);
+    expect(stripAnsi(error.message)).toContain(`Timed out 200ms waiting for expect(locator).toHaveJSProperty(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
   test('pass undefined', async ({ page }) => {
@@ -205,7 +211,8 @@ test.describe('toHaveClass', () => {
     await page.setContent('<div class="bar baz"></div>');
     const locator = page.locator('div');
     const error = await expect(locator).toHaveClass('foo bar baz', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveClass with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveClass(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveClass" with timeout 1000ms`);
   });
 
   test('pass with array', async ({ page }) => {
@@ -218,7 +225,8 @@ test.describe('toHaveClass', () => {
     await page.setContent('<div class="foo"></div><div class="bar"></div><div class="bar"></div>');
     const locator = page.locator('div');
     const error = await expect(locator).toHaveClass(['foo', 'bar', /[a-z]az/], { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveClass with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveClass(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveClass" with timeout 1000ms`);
   });
 });
 
@@ -243,7 +251,8 @@ test.describe('toContainClass', () => {
     await page.setContent('<div class="bar baz"></div>');
     const locator = page.locator('div');
     const error = await expect(locator).toContainClass('does-not-exist', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toContainClass with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toContainClass(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toContainClass" with timeout 1000ms`);
   });
 
   test('pass with array', async ({ page }) => {
@@ -259,7 +268,8 @@ test.describe('toContainClass', () => {
     await page.setContent('<div class="foo"></div><div class="bar"></div><div class="bar"></div>');
     const locator = page.locator('div');
     const error = await expect(locator).toContainClass(['foo', 'bar', 'baz'], { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toContainClass with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toContainClass(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toContainClass" with timeout 1000ms`);
   });
 });
 
@@ -272,7 +282,8 @@ test.describe('toHaveTitle', () => {
   test('fail', async ({ page }) => {
     await page.setContent('<title>Bye</title>');
     const error = await expect(page).toHaveTitle('Hello', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveTitle with timeout 1000ms');
+    expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(page).toHaveTitle(expected)`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveTitle" with timeout 1000ms`);
   });
 });
 
@@ -341,11 +352,13 @@ test.describe('toHaveAttribute', () => {
     const locator = page.locator('#node');
     {
       const error = await expect(locator).toHaveAttribute('disabled', '', { timeout: 1000 }).catch(e => e);
-      expect(error.message).toContain('expect.toHaveAttribute with timeout 1000ms');
+      expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveAttribute(expected)`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "toHaveAttribute" with timeout 1000ms`);
     }
     {
       const error = await expect(locator).toHaveAttribute('disabled', /.*/, { timeout: 1000 }).catch(e => e);
-      expect(error.message).toContain('expect.toHaveAttribute with timeout 1000ms');
+      expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).toHaveAttribute(expected)`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "toHaveAttribute" with timeout 1000ms`);
     }
     await expect(locator).not.toHaveAttribute('disabled', '');
     await expect(locator).not.toHaveAttribute('disabled', /.*/);
@@ -358,11 +371,13 @@ test.describe('toHaveAttribute', () => {
     await expect(locator).toHaveAttribute('checked', /.*/);
     {
       const error = await expect(locator).not.toHaveAttribute('checked', '', { timeout: 1000 }).catch(e => e);
-      expect(error.message).toContain('expect.not.toHaveAttribute with timeout 1000ms');
+      expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveAttribute(expected)`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveAttribute" with timeout 1000ms`);
     }
     {
       const error = await expect(locator).not.toHaveAttribute('checked', /.*/, { timeout: 1000 }).catch(e => e);
-      expect(error.message).toContain('expect.not.toHaveAttribute with timeout 1000ms');
+      expect(stripAnsi(error.message)).toContain(`Timed out 1000ms waiting for expect(locator).not.toHaveAttribute(expected)`);
+      expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveAttribute" with timeout 1000ms`);
     }
   });
 
@@ -496,180 +511,4 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
   expect(error.message).toContain(waitingForMessage);
   expect(error.message).not.toContain('locator resolved to');
   expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
-});
-
-test('toHaveAccessibleName', async ({ page }) => {
-  await page.setContent(`
-    <div role="button" aria-label="Hello"></div>
-  `);
-  await expect(page.locator('div')).toHaveAccessibleName('Hello');
-  await expect(page.locator('div')).not.toHaveAccessibleName('hello');
-  await expect(page.locator('div')).toHaveAccessibleName('hello', { ignoreCase: true });
-  await expect(page.locator('div')).toHaveAccessibleName(/ell\w/);
-  await expect(page.locator('div')).not.toHaveAccessibleName(/hello/);
-  await expect(page.locator('div')).toHaveAccessibleName(/hello/, { ignoreCase: true });
-
-  await page.setContent(`<button>foo&nbsp;bar\nbaz</button>`);
-  await expect(page.locator('button')).toHaveAccessibleName('foo bar baz');
-});
-
-test('toHaveAccessibleDescription', async ({ page }) => {
-  await page.setContent(`
-    <div role="button" aria-description="Hello"></div>
-  `);
-  await expect(page.locator('div')).toHaveAccessibleDescription('Hello');
-  await expect(page.locator('div')).not.toHaveAccessibleDescription('hello');
-  await expect(page.locator('div')).toHaveAccessibleDescription('hello', { ignoreCase: true });
-  await expect(page.locator('div')).toHaveAccessibleDescription(/ell\w/);
-  await expect(page.locator('div')).not.toHaveAccessibleDescription(/hello/);
-  await expect(page.locator('div')).toHaveAccessibleDescription(/hello/, { ignoreCase: true });
-
-  await page.setContent(`
-    <div role="button" aria-describedby="desc"></div>
-    <span id="desc">foo&nbsp;bar\nbaz</span>
-  `);
-  await expect(page.locator('div')).toHaveAccessibleDescription('foo bar baz');
-});
-
-test('toHaveAccessibleErrorMessage', async ({ page }) => {
-  await page.setContent(`
-    <form>
-      <input role="textbox" aria-invalid="true" aria-errormessage="error-message" />
-      <div id="error-message">Hello</div>
-      <div id="irrelevant-error">This should not be considered.</div>
-    </form>
-  `);
-
-  const locator = page.locator('input[role="textbox"]');
-  await expect(locator).toHaveAccessibleErrorMessage('Hello');
-  await expect(locator).not.toHaveAccessibleErrorMessage('hello');
-  await expect(locator).toHaveAccessibleErrorMessage('hello', { ignoreCase: true });
-  await expect(locator).toHaveAccessibleErrorMessage(/ell\w/);
-  await expect(locator).not.toHaveAccessibleErrorMessage(/hello/);
-  await expect(locator).toHaveAccessibleErrorMessage(/hello/, { ignoreCase: true });
-  await expect(locator).not.toHaveAccessibleErrorMessage('This should not be considered.');
-});
-
-test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage references', async ({ page }) => {
-  await page.setContent(`
-    <form>
-      <input role="textbox" aria-invalid="true" aria-errormessage="error1 error2" />
-      <div id="error1">First error message.</div>
-      <div id="error2">Second error message.</div>
-      <div id="irrelevant-error">This should not be considered.</div>
-    </form>
-  `);
-
-  const locator = page.locator('input[role="textbox"]');
-
-  await expect(locator).toHaveAccessibleErrorMessage('First error message. Second error message.');
-  await expect(locator).toHaveAccessibleErrorMessage(/first error message./i);
-  await expect(locator).toHaveAccessibleErrorMessage(/second error message./i);
-  await expect(locator).not.toHaveAccessibleErrorMessage(/This should not be considered./i);
-});
-
-test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
-  const errorMessageText = 'Error message';
-
-  async function setupPage(page, ariaInvalidValue: string | null) {
-    const ariaInvalidAttr = ariaInvalidValue === null ? '' : `aria-invalid="${ariaInvalidValue}"`;
-    await page.setContent(`
-        <form>
-          <input id="node" role="textbox" ${ariaInvalidAttr} aria-errormessage="error-msg" />
-          <div id="error-msg">${errorMessageText}</div>
-        </form>
-      `);
-    return page.locator('#node');
-  }
-
-  test.describe('evaluated in false', () => {
-    test('no aria-invalid attribute', async ({ page }) => {
-      const locator = await setupPage(page, null);
-      await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
-    });
-    test('aria-invalid="false"', async ({ page }) => {
-      const locator = await setupPage(page, 'false');
-      await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
-    });
-    test('aria-invalid="" (empty string)', async ({ page }) => {
-      const locator = await setupPage(page, '');
-      await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
-    });
-  });
-  test.describe('evaluated in true', () => {
-    test('aria-invalid="true"', async ({ page }) => {
-      const locator = await setupPage(page, 'true');
-      await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
-    });
-    test('aria-invalid="foo" (unrecognized value)', async ({ page }) => {
-      const locator = await setupPage(page, 'foo');
-      await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
-    });
-  });
-});
-
-test.describe('toHaveAccessibleErrorMessage should handle validity state with aria-invalid', () => {
-  const errorMessageText = 'Error message';
-
-  test('should show error message when validity is false and aria-invalid is true', async ({ page }) => {
-    await page.setContent(`
-      <form>
-        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
-        <div id="error-msg">${errorMessageText}</div>
-      </form>
-    `);
-    const locator = page.locator('#node');
-    await locator.fill('101');
-    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
-  });
-
-  test('should show error message when validity is true and aria-invalid is true', async ({ page }) => {
-    await page.setContent(`
-      <form>
-        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
-        <div id="error-msg">${errorMessageText}</div>
-      </form>
-    `);
-    const locator = page.locator('#node');
-    await locator.fill('99');
-    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
-  });
-
-  test('should show error message when validity is false and aria-invalid is false', async ({ page }) => {
-    await page.setContent(`
-      <form>
-        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
-        <div id="error-msg">${errorMessageText}</div>
-      </form>
-    `);
-    const locator = page.locator('#node');
-    await locator.fill('101');
-    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
-  });
-
-  test('should not show error message when validity is true and aria-invalid is false', async ({ page }) => {
-    await page.setContent(`
-      <form>
-        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
-        <div id="error-msg">${errorMessageText}</div>
-      </form>
-    `);
-    const locator = page.locator('#node');
-    await locator.fill('99');
-    await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
-  });
-});
-
-
-test('toHaveRole', async ({ page }) => {
-  await page.setContent(`<div role="button">Button!</div>`);
-  await expect(page.locator('div')).toHaveRole('button');
-  await expect(page.locator('div')).not.toHaveRole('checkbox');
-  try {
-    // @ts-expect-error
-    await expect(page.locator('div')).toHaveRole(/button|checkbox/);
-    expect(1, 'Must throw when given a regular expression').toBe(2);
-  } catch (error) {
-    expect(error.message).toBe(`"role" argument in toHaveRole must be a string`);
-  }
 });

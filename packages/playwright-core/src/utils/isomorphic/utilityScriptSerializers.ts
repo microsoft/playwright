@@ -45,8 +45,10 @@ function isRegExp(obj: any): obj is RegExp {
   }
 }
 
+// eslint-disable-next-line no-restricted-globals
 function isDate(obj: any): obj is Date {
   try {
+    // eslint-disable-next-line no-restricted-globals
     return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
   } catch (error) {
     return false;
@@ -132,8 +134,10 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
         return -0;
       return undefined;
     }
-    if ('d' in value)
+    if ('d' in value) {
+      // eslint-disable-next-line no-restricted-globals
       return new Date(value.d);
+    }
     if ('u' in value)
       return new URL(value.u);
     if ('bi' in value)

@@ -42,7 +42,7 @@ export class HarRecorder implements HarTracerDelegate {
   constructor(context: BrowserContext, page: Page | null, options: channels.RecordHarOptions) {
     this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
-    const expectsZip = options.path.endsWith('.zip');
+    const expectsZip = !!options.zip;
     const content = options.content || (expectsZip ? 'attach' : 'embed');
     this._tracer = new HarTracer(context, page, this, {
       content,

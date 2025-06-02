@@ -659,7 +659,7 @@ export interface TestResult {
   parallelIndex: number;
 
   /**
-   * When test is retries multiple times, each retry attempt is given a sequential number.
+   * When test is retried multiple times, each retry attempt is given a sequential number.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
@@ -753,10 +753,12 @@ export interface TestStep {
 
   /**
    * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
-   * - `hook` for fixtures and hooks initialization and teardown
    * - `expect` for expect calls
+   * - `fixture` for fixtures setup and teardown
+   * - `hook` for hooks initialization and teardown
    * - `pw:api` for Playwright API calls.
    * - `test.step` for test.step API calls.
+   * - `test.attach` for test attachmen calls.
    */
   category: string;
 

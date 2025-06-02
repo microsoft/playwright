@@ -23,12 +23,14 @@ import type { Page } from '@playwright/test';
 it('should create new context @smoke', async function({ browser }) {
   expect(browser.contexts().length).toBe(0);
   const context = await browser.newContext();
-  expect(browser.contexts().length).toBe(1);
-  expect(browser.contexts().indexOf(context) !== -1).toBe(true);
+  expect(browser.contexts()).toEqual([context]);
   expect(browser).toBe(context.browser());
+  const context2 = await browser.newContext();
+  expect(browser.contexts()).toEqual([context, context2]);
   await context.close();
-  expect(browser.contexts().length).toBe(0);
+  expect(browser.contexts()).toEqual([context2]);
   expect(browser).toBe(context.browser());
+  await context2.close();
 });
 
 it('should be able to click across browser contexts', async function({ browser }) {

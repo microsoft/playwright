@@ -469,7 +469,7 @@ Learn more about the execution modes [here](../test-parallel.md).
   test('runs in parallel 2', async ({ page }) => {});
   ```
 
-* Running tests in order, retrying each failed test independetly.
+* Running tests in order, retrying each failed test independently.
 
   This is the default mode. It can be useful to set it explicitly to override project configuration that uses `fullyParallel`.
 

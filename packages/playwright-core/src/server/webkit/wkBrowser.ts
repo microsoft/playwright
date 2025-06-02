@@ -319,7 +319,7 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage)._updateBootstrapScript();
   }
 
-  async doRemoveNonInternalInitScripts() {
+  async doRemoveInitScripts(initScripts: InitScript[]) {
     for (const page of this.pages())
       await (page.delegate as WKPage)._updateBootstrapScript();
   }
@@ -358,7 +358,7 @@ export class WKBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('Playwright.cancelDownload', { uuid });
   }
 
-  _validateEmulatedViewport(viewportSize?: types.Size | null) {
+  _validateEmulatedViewport(viewportSize: types.Size | undefined) {
     if (!viewportSize)
       return;
     if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 240))

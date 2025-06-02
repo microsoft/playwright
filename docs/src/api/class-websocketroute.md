@@ -5,7 +5,7 @@ Whenever a [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSoc
 
 **Mocking**
 
-By default, the routed WebSocket will not connect to the server. This way, you can mock entire communcation over the WebSocket. Here is an example that responds to a `"request"` with a `"response"`.
+By default, the routed WebSocket will not connect to the server. This way, you can mock entire communication over the WebSocket. Here is an example that responds to a `"request"` with a `"response"`.
 
 ```js
 await page.routeWebSocket('wss://example.com/ws', ws => {
@@ -333,7 +333,7 @@ Function that will handle WebSocket closure. Received an optional [close code](h
 ### param: WebSocketRoute.onClose.handler
 * since: v1.48
 * langs: csharp
-- `handler` <[function]\([int?], [string]\)>
+- `handler` <[function]\([int?], [string?]\)>
 
 Function that will handle WebSocket closure. Received an optional [close code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code) and an optional [close reason](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
 

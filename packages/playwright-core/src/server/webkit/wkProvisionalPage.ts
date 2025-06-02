@@ -86,7 +86,7 @@ export class WKProvisionalPage {
       this._wkPage._adoptRequestFromNewProcess(this._coopNavigationRequest, this._session, event.requestId);
       // Simply ignore this event as it has already been dispatched from the original process
       // and there will ne no requestIntercepted event from the provisional process as it resumes
-      // existing network load (that has already received reponse headers).
+      // existing network load (that has already received response headers).
       return;
     }
     this._wkPage._onRequestWillBeSent(this._session, event);

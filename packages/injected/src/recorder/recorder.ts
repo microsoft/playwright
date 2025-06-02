@@ -197,7 +197,7 @@ class RecordActionTool implements RecorderTool {
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
-    this._performingActions = new recorder.injectedScript.utils.builtins.Set();
+    this._performingActions = new Set();
   }
 
   cursor() {
@@ -603,7 +603,7 @@ class TextAssertionTool implements RecorderTool {
 
   constructor(recorder: Recorder, kind: 'text' | 'value' | 'snapshot') {
     this._recorder = recorder;
-    this._textCache = new recorder.injectedScript.utils.builtins.Map();
+    this._textCache = new Map();
     this._kind = kind;
     this._dialog = new Dialog(recorder);
   }

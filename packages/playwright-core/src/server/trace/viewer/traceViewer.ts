@@ -177,6 +177,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       cdpPort: isUnderTest() ? 0 : undefined,
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
+      timeout: 0,
     },
   });
 
@@ -194,7 +195,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   if (isUnderTest())
     page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
 
-  await page.mainFrame().goto(serverSideCallMetadata(), url);
+  await page.mainFrame().goto(serverSideCallMetadata(), url, { timeout: 0 });
   return page;
 }
 

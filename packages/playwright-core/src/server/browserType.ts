@@ -19,10 +19,10 @@ import os from 'os';
 import path from 'path';
 
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import { DEFAULT_TIMEOUT, TimeoutSettings } from './timeoutSettings';
 import { debugMode } from './utils/debug';
 import { assert } from '../utils/isomorphic/assert';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
+import { DEFAULT_PLAYWRIGHT_TIMEOUT } from '../utils/isomorphic/time';
 import { existsAsync } from './utils/fileUtils';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';
@@ -91,11 +91,11 @@ export abstract class BrowserType extends SdkObject {
       if (seleniumHubUrl)
         return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
       return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
-    }, TimeoutSettings.launchTimeout(options));
+    }, options.timeout);
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean }): Promise<BrowserContext> {
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { timeout: number, cdpPort?: number, internalIgnoreHTTPSErrors?: boolean }): Promise<BrowserContext> {
     const launchOptions = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
@@ -112,7 +112,7 @@ export abstract class BrowserType extends SdkObject {
       const browser = await this._innerLaunchWithRetries(progress, launchOptions, options, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
       browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
       return browser;
-    }, TimeoutSettings.launchTimeout(launchOptions));
+    }, launchOptions.timeout);
     return browser._defaultContext!;
   }
 
@@ -157,7 +157,7 @@ export abstract class BrowserType extends SdkObject {
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
     copyTestHooks(options, browserOptions);
-    const browser = await this.connectToTransport(transport, browserOptions);
+    const browser = await this.connectToTransport(transport, browserOptions, browserLogsCollector);
     (browser as any)._userDataDirForTest = userDataDir;
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
     if (persistent && !options.ignoreAllDefaultArgs)
@@ -266,7 +266,7 @@ export abstract class BrowserType extends SdkObject {
     browserProcess = {
       onclose: undefined,
       process: launchedProcess,
-      close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_TIMEOUT),
+      close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_PLAYWRIGHT_TIMEOUT),
       kill
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
@@ -342,7 +342,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
-  abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
+  abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
   abstract amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;

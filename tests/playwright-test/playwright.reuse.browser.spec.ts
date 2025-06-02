@@ -105,10 +105,10 @@ test('should produce correct test steps', async ({ runInlineTest, runServer }) =
     'reporter.ts': `
       class Reporter {
         onStepBegin(test, result, step) {
-          console.log('%% onStepBegin ' + step.title);
+          console.log('%% onStepBegin [' + step.category + '] ' + step.title);
         }
         onStepEnd(test, result, step) {
-            console.log('%% onStepEnd ' + step.title);
+            console.log('%% onStepEnd [' + step.category + '] ' + step.title);
         }
       }
       module.exports = Reporter;
@@ -125,27 +125,27 @@ test('should produce correct test steps', async ({ runInlineTest, runServer }) =
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.outputLines).toEqual([
-    'onStepBegin Before Hooks',
-    'onStepBegin fixture: browser',
-    'onStepBegin browserType.connect',
-    'onStepEnd browserType.connect',
-    'onStepEnd fixture: browser',
-    'onStepBegin fixture: context',
-    'onStepEnd fixture: context',
-    'onStepBegin fixture: page',
-    'onStepBegin browserContext.newPage',
-    'onStepEnd browserContext.newPage',
-    'onStepEnd fixture: page',
-    'onStepEnd Before Hooks',
-    'onStepBegin page.goto(about:blank)',
-    'onStepEnd page.goto(about:blank)',
-    'onStepBegin page.evaluate',
-    'onStepEnd page.evaluate',
-    'onStepBegin After Hooks',
-    'onStepBegin fixture: page',
-    'onStepEnd fixture: page',
-    'onStepBegin fixture: context',
-    'onStepEnd fixture: context',
-    'onStepEnd After Hooks'
+    'onStepBegin [hook] Before Hooks',
+    'onStepBegin [fixture] browser',
+    'onStepBegin [pw:api] connect',
+    'onStepEnd [pw:api] connect',
+    'onStepEnd [fixture] browser',
+    'onStepBegin [fixture] context',
+    'onStepEnd [fixture] context',
+    'onStepBegin [fixture] page',
+    'onStepBegin [pw:api] Create page',
+    'onStepEnd [pw:api] Create page',
+    'onStepEnd [fixture] page',
+    'onStepEnd [hook] Before Hooks',
+    'onStepBegin [pw:api] Navigate to "about:blank"',
+    'onStepEnd [pw:api] Navigate to "about:blank"',
+    'onStepBegin [pw:api] Evaluate',
+    'onStepEnd [pw:api] Evaluate',
+    'onStepBegin [hook] After Hooks',
+    'onStepBegin [fixture] page',
+    'onStepEnd [fixture] page',
+    'onStepBegin [fixture] context',
+    'onStepEnd [fixture] context',
+    'onStepEnd [hook] After Hooks'
   ]);
 });

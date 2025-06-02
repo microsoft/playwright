@@ -29,10 +29,20 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should deny permission when not listed', async ({ page, context, server }) => {
+  it('should deny permission when not listed', async ({ page, context, server, browserName, isMac, macVersion }) => {
+    it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
+
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions([], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'geolocation')).toBe('denied');
+    if (browserName === 'webkit') {
+      expect(await getPermission(page, 'geolocation')).toBe('prompt');
+      // Since https://github.com/WebKit/WebKit/pull/45470 WebKit only returns actual
+      // permission value, if the API has been accessed.
+      await page.evaluate(() => navigator.geolocation.getCurrentPosition(() => { }));
+      expect(await getPermission(page, 'geolocation')).toBe('denied');
+    } else {
+      expect(await getPermission(page, 'geolocation')).toBe('denied');
+    }
   });
 
   it('should fail when bad permission is given', async ({ page, context, server }) => {
@@ -122,7 +132,9 @@ it.describe('permissions', () => {
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
   });
 
-  it('should isolate permissions between browser contexts', async ({ server, browser }) => {
+  it('should isolate permissions between browser contexts', async ({ server, browser, browserName, isMac, macVersion }) => {
+    it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
+
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -134,11 +146,34 @@ it.describe('permissions', () => {
 
     await context.grantPermissions([], { origin: server.EMPTY_PAGE });
     await otherContext.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'geolocation')).toBe('denied');
+    if (browserName === 'webkit') {
+      expect(await getPermission(page, 'geolocation')).toBe('prompt');
+      // Since https://github.com/WebKit/WebKit/pull/45470 WebKit only returns actual
+      // permission value, if the API has been accessed.
+      await page.evaluate(() => navigator.geolocation.getCurrentPosition(() => { }));
+      expect(await getPermission(page, 'geolocation')).toBe('denied');
+    } else {
+      expect(await getPermission(page, 'geolocation')).toBe('denied');
+    }
     expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
 
     await context.clearPermissions();
-    expect(await getPermission(page, 'geolocation')).toBe('prompt');
+    if (browserName === 'webkit') {
+      // Since https://github.com/WebKit/WebKit/pull/45470 WebKit returns the cached
+      // permission value, if the geolocation API has been accessed.
+      // TODO: We can probably reset the cached state in the Web Process when resetting
+      // permissions.
+      expect(await getPermission(page, 'geolocation')).toBe('denied');
+
+      // Geolocation API in the new page in the same context has not been accessed yet,
+      // so the permission status should be prompt.
+      const page2 = await context.newPage();
+      await page2.goto(server.EMPTY_PAGE);
+      expect(await getPermission(page2, 'geolocation')).toBe('prompt');
+      await page2.close();
+    } else {
+      expect(await getPermission(page, 'geolocation')).toBe('prompt');
+    }
     expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
     await otherContext.close();
     await context.close();

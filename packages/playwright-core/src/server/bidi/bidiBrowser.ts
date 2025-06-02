@@ -21,8 +21,7 @@ import * as network from '../network';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 import { BidiPage, kPlaywrightBindingChannel } from './bidiPage';
-import { kUtilityInitScript } from '../page';
-import { kPlaywrightBinding } from '../javascript';
+import { PageBinding } from '../page';
 import * as bidi from './third_party/bidiProtocol';
 
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -125,7 +124,9 @@ export class BidiBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    const { userContext } = await this._browserSession.send('browser.createUserContext', {});
+    const { userContext } = await this._browserSession.send('browser.createUserContext', {
+      acceptInsecureCerts: options.ignoreHTTPSErrors,
+    });
     const context = new BidiBrowserContext(this, userContext, options);
     await context._initialize();
     this._contexts.set(userContext, context);
@@ -206,7 +207,6 @@ export class BidiBrowser extends Browser {
 
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
-  private _initScriptIds: bidi.Script.PreloadScript[] = [];
   private _originToPermissions = new Map<string, string[]>();
   private _blockingPageCreations: Set<Promise<unknown>> = new Set();
 
@@ -222,7 +222,6 @@ export class BidiBrowserContext extends BrowserContext {
   override async _initialize() {
     const promises: Promise<any>[] = [
       super._initialize(),
-      this._installUtilityScript(),
     ];
     if (this._options.viewport) {
       promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
@@ -237,13 +236,6 @@ export class BidiBrowserContext extends BrowserContext {
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     await Promise.all(promises);
-  }
-
-  private async _installUtilityScript() {
-    await this._browser._browserSession.send('script.addPreloadScript', {
-      functionDeclaration: `() => { return${kUtilityInitScript.source} }`,
-      userContexts: [this._userContextId()],
-    });
   }
 
   override possiblyUninitializedPages(): Page[] {
@@ -379,14 +371,11 @@ export class BidiBrowserContext extends BrowserContext {
       functionDeclaration: `() => { return ${initScript.source} }`,
       userContexts: [this._browserContextId || 'default'],
     });
-    if (!initScript.internal)
-      this._initScriptIds.push(script);
+    initScript.auxData = script;
   }
 
-  async doRemoveNonInternalInitScripts() {
-    const promise = Promise.all(this._initScriptIds.map(script => this._browser._browserSession.send('script.removePreloadScript', { script })));
-    this._initScriptIds = [];
-    await promise;
+  async doRemoveInitScripts(initScripts: InitScript[]) {
+    await Promise.all(initScripts.map(script => this._browser._browserSession.send('script.removePreloadScript', { script: script.auxData })));
   }
 
   async doUpdateRequestInterception(): Promise<void> {
@@ -400,11 +389,26 @@ export class BidiBrowserContext extends BrowserContext {
         ownership: bidi.Script.ResultOwnership.Root,
       }
     }];
-    await this._browser._browserSession.send('script.addPreloadScript', {
-      functionDeclaration: `function addMainBinding(callback) { globalThis['${kPlaywrightBinding}'] = callback; }`,
+    const functionDeclaration = `function addMainBinding(callback) { globalThis['${PageBinding.kBindingName}'] = callback; }`;
+    const promises = [];
+    promises.push(this._browser._browserSession.send('script.addPreloadScript', {
+      functionDeclaration,
       arguments: args,
       userContexts: [this._userContextId()],
-    });
+    }));
+    promises.push(...this._bidiPages().map(page => {
+      const realms = [...page._realmToContext].filter(([realm, context]) => context.world === 'main').map(([realm, context]) => realm);
+      return Promise.all(realms.map(realm => {
+        return page._session.send('script.callFunction', {
+          functionDeclaration,
+          arguments: args,
+          target: { realm },
+          awaitPromise: false,
+          userActivation: false,
+        });
+      }));
+    }));
+    await Promise.all(promises);
   }
 
   onClosePersistent() {}

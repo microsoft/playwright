@@ -21,7 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { TimeoutError } from './errors';
 import { APIRequest } from './fetch';
-import { Selectors, SelectorsOwner } from './selectors';
+import { Selectors } from './selectors';
 
 import type * as channels from '@protocol/channels';
 import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
@@ -55,28 +55,17 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit = BrowserType.from(initializer.webkit);
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
+    this._android._playwright = this;
     this._electron = Electron.from(initializer.electron);
+    this._electron._playwright = this;
     this._bidiChromium = BrowserType.from(initializer.bidiChromium);
     this._bidiChromium._playwright = this;
     this._bidiFirefox = BrowserType.from(initializer.bidiFirefox);
     this._bidiFirefox._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
-    this.selectors = new Selectors();
+    this.selectors = new Selectors(this._connection._platform);
     this.errors = { TimeoutError };
-
-    const selectorsOwner = SelectorsOwner.from(initializer.selectors);
-    this.selectors._addChannel(selectorsOwner);
-    this._connection.on('close', () => {
-      this.selectors._removeChannel(selectorsOwner);
-    });
     (global as any)._playwrightInstance = this;
-  }
-
-  _setSelectors(selectors: Selectors) {
-    const selectorsOwner = SelectorsOwner.from(this._initializer.selectors);
-    this.selectors._removeChannel(selectorsOwner);
-    this.selectors = selectors;
-    this.selectors._addChannel(selectorsOwner);
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {
@@ -89,7 +78,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   _preLaunchedBrowser(): Browser {
     const browser = Browser.from(this._initializer.preLaunchedBrowser!);
-    browser._browserType = this[browser._name as 'chromium' | 'firefox' | 'webkit'];
+    browser._connectToBrowserType(this[browser._name as 'chromium' | 'firefox' | 'webkit'], {}, undefined);
     return browser;
   }
 
