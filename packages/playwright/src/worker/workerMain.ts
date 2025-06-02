@@ -381,8 +381,6 @@ export class WorkerMain extends ProcessRunner {
     // No skips in after hooks.
     testInfo._allowSkips = true;
 
-    await testInfo._maybeDebugAtEnd(entry.isLastTest);
-
     // After hooks get an additional timeout.
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
@@ -395,6 +393,8 @@ export class WorkerMain extends ProcessRunner {
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
+
+      await testInfo._maybeDebugAtEnd(entry.isLastTest);
 
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.

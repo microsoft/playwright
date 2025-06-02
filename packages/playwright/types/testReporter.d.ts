@@ -223,7 +223,7 @@ export interface Reporter {
   /**
    * Called after a test paused.
    * @param test Test that has been paused.
-   * @param result Result of the test run up this point.
+   * @param result Result of the test run up to this point.
    */
   onTestPaused?(test: TestCase, result: TestResult): void;
 
