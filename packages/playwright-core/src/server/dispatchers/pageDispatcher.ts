@@ -25,7 +25,7 @@ import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
-import { createGuid } from '../utils/crypto';
+import { SdkObject } from '../instrumentation';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
 import type { Artifact } from '../artifact';
@@ -403,7 +403,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 }
 
-export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels.BindingCallChannel, PageDispatcher | BrowserContextDispatcher> implements channels.BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.BindingCallChannel, PageDispatcher | BrowserContextDispatcher> implements channels.BindingCallChannel {
   _type_BindingCall = true;
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
@@ -411,7 +411,7 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
 
   constructor(scope: PageDispatcher, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     const frameDispatcher = FrameDispatcher.from(scope.parentScope(), source.frame);
-    super(scope, { guid: 'bindingCall@' + createGuid() }, 'BindingCall', {
+    super(scope, new SdkObject(scope._object, 'bindingCall'), 'BindingCall', {
       frame: frameDispatcher,
       name,
       args: needsHandle ? undefined : args.map(serializeResult),

@@ -250,7 +250,7 @@ export class Electron extends SdkObject {
 
       const nodeMatch = await nodeMatchPromise;
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
+      const nodeConnection = new CRConnection(this, nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
 
       // Immediately release exiting process under debug.
       debuggerDisconnectPromise.then(() => {
