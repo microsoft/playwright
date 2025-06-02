@@ -151,10 +151,10 @@ export const ErrorsTab: React.FunctionComponent<{
 function codeFrame({ source, message, location, linesAbove, linesBelow }: { source: string, message?: string, location: StackFrame, linesAbove: number, linesBelow: number }): string {
   const lines = source.split('\n').slice();
   const start = Math.max(0, location.line - linesAbove - 1);
-  const end = Math.min(source.split('\n').length, location.line + linesBelow);
-  const window = lines.slice(start, end);
+  const end = Math.min(lines.length, location.line + linesBelow);
+  const scope = lines.slice(start, end);
   const lineNumberWidth = String(end).length;
-  const frame = window.map((line, index) => `${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
+  const frame = scope.map((line, index) => `${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
   if (message)
     frame.splice(location.line - start, 0, `${' '.repeat(lineNumberWidth + location.column + 1)} ^ ${message}`);
   return frame.join('\n');
