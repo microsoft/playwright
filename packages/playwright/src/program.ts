@@ -311,8 +311,11 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   if (options.headed || options.debug)
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
-    overrides.debug = true;
-    process.env.PWDEBUG = '1';
+    if (!['begin', 'end'].includes(options.debug))
+      throw new Error(`Unsupported debug mode "${options.debug}", must be one of "begin" or "end"`);
+    overrides.debug = options.debug;
+    if (overrides.debug === 'begin')
+      process.env.PWDEBUG = '1';
   }
   if (!options.ui && options.trace) {
     if (!kTraceModes.includes(options.trace))
@@ -376,7 +379,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 const testOptions: [string, string][] = [
   /* deprecated */ ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
   ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
-  ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
+  ['--debug [mode]', `Run tests with Playwright Inspector. Possible values are "begin" and "end". Flag without value defaults to "begin". "begin" is a shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options.`],
   ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`],
   ['--forbid-only', `Fail if test.only is called (default: false)`],
   ['--fully-parallel', `Run all tests in parallel (default: false)`],

@@ -442,8 +442,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   async _maybeDebugAtEnd(isLastTest: boolean | 'if-failure') {
-    // TODO: debug=end
-    if (!this._configInternal.configCLIOverrides.debug)
+    if (this._configInternal.configCLIOverrides.debug !== 'end')
       return;
 
     if (this._wasInterrupted)
