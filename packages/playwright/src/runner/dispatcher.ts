@@ -46,14 +46,16 @@ export class Dispatcher {
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
+  private _shouldPauseAtEnd: boolean;
 
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker) {
+  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker, shouldPauseAtEnd: boolean) {
     this._config = config;
     this._reporter = reporter;
     this._failureTracker = failureTracker;
+    this._shouldPauseAtEnd = shouldPauseAtEnd;
     for (const project of config.projects) {
       if (project.workers)
         this._workerLimitPerProjectId.set(project.id, project.workers);
@@ -147,7 +149,7 @@ export class Dispatcher {
     if (startError)
       jobDispatcher.onExit(startError);
     else
-      jobDispatcher.runInWorker(worker, this._queue.length === 0);
+      jobDispatcher.runInWorker(worker, this._shouldPauseAtEnd && this._queue.length === 0);
     const result = await jobDispatcher.jobResult;
     this._updateCounterForWorkerHash(job.workerHash, -1);
 
@@ -580,7 +582,7 @@ class JobDispatcher {
         if (
           !shouldPauseAtEnd && (
             this._failureTracker.nextFailureReachesMaxFailures()
-            || test.retries === retry // TODO: also consider repeat each index
+            || test.retries === retry
           )
         )
           shouldPauseAtEnd = 'if-failure';

@@ -318,6 +318,8 @@ function createPhasesTask(): Task<TestRun> {
       }
 
       for (let i = 0; i < projectToSuite.size; i++) {
+        const isLastPhase = i === projectToSuite.size - 1;
+
         // Find all projects that have all their dependencies processed by previous phases.
         const phaseProjects: FullProjectInternal[] = [];
         for (const project of projectToSuite.keys()) {
@@ -334,7 +336,7 @@ function createPhasesTask(): Task<TestRun> {
           processed.add(project);
         if (phaseProjects.length) {
           let testGroupsInPhase = 0;
-          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker), projects: [] };
+          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker, isLastPhase), projects: [] };
           testRun.phases.push(phase);
           for (const project of phaseProjects) {
             const projectSuite = projectToSuite.get(project)!;
