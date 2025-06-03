@@ -51,10 +51,12 @@
   ],
   "devDependencies": {
     "@actions/core": "^1.10.0",
+    "@actions/github": "^6.0.0",
     "@babel/code-frame": "^7.26.2",
     "@eslint/compat": "^1.2.6",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.19.0",
+    "@octokit/graphql-schema": "^15.26.0",
     "@stylistic/eslint-plugin": "^3.0.1",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",

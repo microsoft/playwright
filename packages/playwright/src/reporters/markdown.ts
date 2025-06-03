@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import type {  FullConfig, FullResult, Reporter, Suite, TestCase, TestError } from '@playwright/test/reporter';
+import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError } from '@playwright/test/reporter';
 
 type MarkdownReporterOptions = {
   configDir: string, // TODO: make it public?
