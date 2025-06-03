@@ -1900,10 +1900,12 @@ test('should not trip over complex urls in style tags', {
 test('should render locator descriptions', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<input type="text" />');
-    await page.locator('input').describe('main input').click({ button: 'right' });
+    await page.locator('input').describe('custom').click();
+    await page.locator('input').describe('custom').first().click();
   });
 
   await expect(traceViewer.page.locator('body')).toMatchAriaSnapshot(`
-    - treeitem /Click.*main input/
+    - treeitem /Click.*custom/
+    - treeitem /Click.*input.*first/
   `);
 });
