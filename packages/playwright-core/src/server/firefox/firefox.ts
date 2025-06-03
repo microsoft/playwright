@@ -22,7 +22,7 @@ import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
-import { BrowserReadyState } from '../browserType';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -30,6 +30,7 @@ import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type { RecentLogsCollector } from '../utils/debugLogger';
 
 export class Firefox extends BrowserType {
   constructor(parent: SdkObject) {
@@ -92,14 +93,12 @@ export class Firefox extends BrowserType {
     return firefoxArguments;
   }
 
-  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    return new JugglerReadyState();
-  }
-}
-
-class JugglerReadyState extends BrowserReadyState {
-  override onBrowserOutput(message: string): void {
-    if (message.includes('Juggler listening to the pipe'))
-      this._wsEndpoint.resolve(undefined);
+  override waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+    const result = new ManualPromise<{ wsEndpoint?: string }>();
+    browserLogsCollector.onMessage(message => {
+      if (message.includes('Juggler listening to the pipe'))
+        result.resolve({});
+    });
+    return result;
   }
 }
