@@ -127,6 +127,11 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
     }
     // Escaped `\\?` behaves the same as `?` in our glob patterns.
     match = match.replaceAll(/\\\\\?/g, '?');
+    // Node URL constructors automatically uses colon as an indicator of a base URL, such as with `about:blank`
+    const splitScheme = match.split('://');
+    const schemelessPath = splitScheme.length === 1 ? splitScheme[0] : splitScheme[1];
+    if (schemelessPath !== undefined && schemelessPath.indexOf(':') !== -1)
+      return match;
     // Glob symbols may be escaped in the URL and some of them such as ? affect resolution,
     // so we replace them with safe components first.
     const relativePath = match.split('/').map((token, index) => {
