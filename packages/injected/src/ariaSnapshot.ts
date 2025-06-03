@@ -31,7 +31,6 @@ export type AriaNode = AriaProps & {
   element: Element;
   box: Box;
   receivesPointerEvents: boolean;
-  active?: boolean;
   props: Record<string, string>;
 };
 
@@ -436,7 +435,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [disabled]`;
     if (ariaNode.expanded)
       key += ` [expanded]`;
-    if (ariaNode.active)
+    if (ariaNode.active && options?.forAI)
       key += ` [active]`;
     if (ariaNode.level)
       key += ` [level=${ariaNode.level}]`;
