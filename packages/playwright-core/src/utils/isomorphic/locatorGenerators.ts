@@ -39,9 +39,9 @@ export interface LocatorFactory {
 
 export function asLocatorDescription(lang: Language, selector: string): string | undefined {
   const parsed = parseSelector(selector);
-  const describe = parsed.parts.findLast(part => part.name === 'internal:describe');
-  if (describe)
-    return JSON.parse(describe.body as string);
+  const lastPart = parsed.parts[parsed.parts.length - 1];
+  if (lastPart?.name === 'internal:describe')
+    return JSON.parse(lastPart.body as string);
   return asLocator(lang, selector);
 }
 
