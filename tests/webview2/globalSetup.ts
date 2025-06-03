@@ -26,13 +26,19 @@ export default async () => {
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort}`,
     }
   });
-  await new Promise<void>(resolve => spawnedProcess.stdout.on('data', (data: Buffer): void => {
-    if (data.toString().includes('WebView2 initialized'))
-      resolve();
-  }));
+  await new Promise<void>((resolve, reject) => {
+    spawnedProcess.on('error', error => {
+      reject(error);
+    });
+    spawnedProcess.stdout.on('data', (data: Buffer): void => {
+      if (data.toString().includes('WebView2 initialized'))
+        resolve();
+    });
+  });
   const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
   console.log(`Using version ${browser.version()} WebView2 runtime`);
   const page = browser.contexts()[0].pages()[0];
+  await page.waitForURL('about:blank');
   await page.goto('data:text/html,');
   const chromeVersion = await page.evaluate(() => navigator.userAgent.match(/Chrome\/(.*?) /)[1]);
   process.env.PWTEST_WEBVIEW2_CHROMIUM_VERSION = chromeVersion;
