@@ -135,7 +135,9 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${assertion};`;
       }
       case 'assertSnapshot':
-        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).matchesAriaSnapshot(${quote(action.snapshot)});`;
+        // Remove [active] attribute from codegen snapshots as it's too transient for stable tests
+        const cleanedSnapshot = action.snapshot.replace(/\s\[active\]/g, '');
+        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).matchesAriaSnapshot(${quote(cleanedSnapshot)});`;
     }
   }
 

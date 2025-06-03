@@ -435,7 +435,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [disabled]`;
     if (ariaNode.expanded)
       key += ` [expanded]`;
-    if (ariaNode.active && options?.forAI)
+    if (ariaNode.active)
       key += ` [active]`;
     if (ariaNode.level)
       key += ` [level=${ariaNode.level}]`;
