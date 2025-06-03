@@ -17,7 +17,7 @@
 import { context, getOctokit } from '@actions/github';
 import * as core from '@actions/core';
 
-import MarkdownReporter from './markdownReporter';
+import MarkdownReporter from '../../packages/playwright/src/reporters/markdown';
 
 import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
 import type { IssueCommentEdge, Repository } from '@octokit/graphql-schema';
