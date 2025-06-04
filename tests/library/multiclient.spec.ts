@@ -315,3 +315,11 @@ test('should remove locator handlers upon disconnect', async ({ twoPages, server
   expect(error.message).toContain('intercepts pointer events');
   expect(error.message).not.toContain('locator handler');
 });
+
+test('should launch persistent', async ({ browserType }) => {
+  const browserServer = await browserType.launchServer({ _userDataDir: '', _sharedBrowser: true } as any);
+  const browser = await browserType.connect(browserServer.wsEndpoint());
+  expect(browser.contexts().length).toBe(1);
+  await browser.close();
+  await browserServer.close();
+});
