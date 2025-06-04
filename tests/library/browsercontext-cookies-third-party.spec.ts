@@ -38,6 +38,16 @@ function addCommonCookieHandlers(httpsServer: TestServer) {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<iframe src='${httpsServer.PREFIX}/read-cookie.html'></iframe>`);
   });
+  // Nested cross-origin iframe:
+  //   main frame: (origin1 or origin2) -> iframe1: origin2 -> iframe2: origin1
+  httpsServer.setRoute('/nested-frame-set-cookie.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<iframe src='${httpsServer.CROSS_PROCESS_PREFIX}/frame-set-cookie.html'></iframe>`);
+  });
+  httpsServer.setRoute('/nested-frame-read-cookie.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<iframe src='${httpsServer.CROSS_PROCESS_PREFIX}/frame-read-cookie.html'></iframe>`);
+  });
 }
 
 async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean) {
@@ -223,23 +233,70 @@ test(`same origin third party 'Partitioned;' cookie with different origin interm
     res.end();
   });
   // main frame: origin1 -> iframe1: origin2 -> iframe2: origin1
-  // In this case the cookie in iframe2 will have hasCrossSiteAncestor=true even though
-  // the innermost frame is in origin1.
-  httpsServer.setRoute('/top-frame-set-cookie.html', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.end(`<iframe src='${httpsServer.CROSS_PROCESS_PREFIX}/frame-set-cookie.html'></iframe>`);
-  });
-  httpsServer.setRoute('/top-frame-read-cookie.html', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.end(`<iframe src='${httpsServer.CROSS_PROCESS_PREFIX}/frame-read-cookie.html'></iframe>`);
-  });
-
-  await page.goto(httpsServer.PREFIX + '/top-frame-set-cookie.html');
+  // In this case the cookie in iframe2 is a third-party partitioned cookie, even though
+  // it's the same origin as the main frame.
+  await page.goto(httpsServer.PREFIX + '/nested-frame-set-cookie.html');
 
   async function checkCookies(page: Page) {
-    await page.goto(httpsServer.PREFIX + '/top-frame-read-cookie.html');
+    await page.goto(httpsServer.PREFIX + '/nested-frame-read-cookie.html');
     const frameBody = page.locator('iframe').contentFrame().locator('iframe').contentFrame().locator('body');
     await expect.soft(frameBody).toHaveText('Received cookie: name=value-partitioned; nonPartitionedName=value');
+  }
+
+  await checkCookies(page);
+
+  await test.step('export via cookies/addCookies', async () => {
+    const cookies = await page.context().cookies();
+    const context2 = await browser.newContext();
+    await context2.addCookies(cookies);
+    const page2 = await context2.newPage();
+    await checkCookies(page2);
+  });
+
+  await test.step('export via storageState', async () => {
+    const storageState = await page.context().storageState();
+    const context3 = await browser.newContext({ storageState });
+    const page3 = await context3.newPage();
+    await checkCookies(page3);
+  });
+});
+
+test(`top level 'Partitioned;' cookie and same origin iframe`, async ({ page, browserName, httpsServer, isMac, browser }) => {
+  addCommonCookieHandlers(httpsServer);
+  httpsServer.setRoute('/set-cookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [
+      `name=value${req.headers.referer ? '-partitioned' : '-top-level'}; SameSite=None; Path=/; Secure; Partitioned;`,
+      `nonPartitionedName=value; SameSite=None; Path=/; Secure;`
+    ]);
+    res.end();
+  });
+
+  // Same origin iframe cookies are partitioned the same way as top-level cookies.
+  await page.goto(httpsServer.PREFIX + '/set-cookie.html');
+  await page.context().storageState({ path: '/tmp/state2.json' });
+
+  async function checkCookies(page: Page) {
+    {
+      // Check top-level cookie first.
+      await page.goto(httpsServer.PREFIX + '/read-cookie.html');
+      expect.soft(await page.locator('body').textContent()).toBe('Received cookie: name=value-top-level; nonPartitionedName=value');
+    }
+    {
+      // Same origin iframe.
+      await page.goto(httpsServer.PREFIX + '/frame-read-cookie.html');
+      const frameBody = page.locator('iframe').contentFrame().locator('body');
+      await expect.soft(frameBody).toHaveText('Received cookie: name=value-top-level; nonPartitionedName=value', { timeout: 1000 });
+    }
+    {
+      // Check third-party cookie.
+      // main frame: origin1 -> iframe1: origin2 -> iframe2: origin1
+      await page.goto(httpsServer.PREFIX + '/nested-frame-read-cookie.html');
+      const frameBody = page.locator('iframe').contentFrame().locator('iframe').contentFrame().locator('body');
+      const expectedThirdParty = browserName === 'chromium'
+        ? 'Received cookie: nonPartitionedName=value'
+        : 'Received cookie: name=value-top-level; nonPartitionedName=value'
+      await expect.soft(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
+    }
   }
 
   await checkCookies(page);
