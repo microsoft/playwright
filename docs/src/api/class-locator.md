@@ -587,6 +587,33 @@ When all steps combined have not finished during the specified [`option: timeout
 Describes the locator, description is used in the trace viewer and reports.
 Returns the locator pointing to the same element.
 
+**Usage**
+
+```js
+const button = page.getByTestId('btn-sub').describe('Subscribe button');
+await button.click();
+```
+
+```java
+Locator button = page.getByTestId("btn-sub").describe("Subscribe button");
+button.click();
+```
+
+```python async
+button = page.get_by_test_id("btn-sub").describe("Subscribe button")
+await button.click()
+```
+
+```python sync
+button = page.get_by_test_id("btn-sub").describe("Subscribe button")
+button.click()
+```
+
+```csharp
+var button = Page.GetByTestId("btn-sub").Describe("Subscribe button");
+await button.ClickAsync();
+```
+
 ### param: Locator.describe.description
 * since: v1.53
 - `description` <[string]>

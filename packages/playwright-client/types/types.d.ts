@@ -12913,6 +12913,14 @@ export interface Locator {
   /**
    * Describes the locator, description is used in the trace viewer and reports. Returns the locator pointing to the
    * same element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const button = page.getByTestId('btn-sub').describe('Subscribe button');
+   * await button.click();
+   * ```
+   *
    * @param description Locator description.
    */
   describe(description: string): Locator;
