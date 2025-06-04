@@ -32,7 +32,7 @@
     <script>
       if (!/^https?:/.test(window.location.protocol)) {
         const fallbackErrorDialog = document.getElementById('fallback-error');
-        const isTraceViewerInsidePlaywrightReport = window.location.protocol === 'file:' && window.location.pathname.endsWith('/playwright-report/trace/index.html');
+        const isTraceViewerInsidePlaywrightReport = window.location.protocol === 'file:' && window.location.pathname.endsWith('/trace/index.html');
         // Best-effort to show the report path in the dialog.
         if (isTraceViewerInsidePlaywrightReport) {
           const reportPath = (() => {
