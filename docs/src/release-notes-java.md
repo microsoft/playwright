@@ -10,14 +10,18 @@ toc_max_heading_level: 2
 
 - New Steps in Trace Viewer: 
   ![New Trace Viewer Steps](https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2)
-- New method [`method: Locator.describe`] to describe a locator. Used for trace viewer and reports.
+- New method [`method: Locator.describe`] to describe a locator. Used for trace viewer.
+  ```java
+  Locator button = page.getByTestId("btn-sub").describe("Subscribe button");
+  button.click();
+  ```
 - `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --list"` will now list all installed browsers, versions and locations.
 
 ### Browser Versions
 
 - Chromium 138.0.7204.4
 - Mozilla Firefox 139.0
-- WebKit 18.4
+- WebKit 18.5
 
 This version was also tested against the following stable channels:
 

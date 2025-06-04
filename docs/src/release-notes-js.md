@@ -25,13 +25,17 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 - New option [`option: TestInfo.snapshotPath.kind`] in [`method: TestInfo.snapshotPath`] controls which snapshot path template is used.
 - New method [`method: Locator.describe`] to describe a locator. Used for trace viewer and reports.
+  ```js
+  const button = page.getByTestId('btn-sub').describe('Subscribe button');
+  await button.click();
+  ```
 - `npx playwright install --list` will now list all installed browsers, versions and locations.
 
 ### Browser Versions
 
 - Chromium 138.0.7204.4
 - Mozilla Firefox 139.0
-- WebKit 18.4
+- WebKit 18.5
 
 This version was also tested against the following stable channels:
 
