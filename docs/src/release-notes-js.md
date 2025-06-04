@@ -6,6 +6,29 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.53
+
+- New option [`option: TestInfo.snapshotPath.kind`] in [`method: TestInfo.snapshotPath`] controls which snapshot path template is used.
+- New method [`method: Locator.describe`] to describe a locator. Used for trace viewer and reports.
+- `npx playwright install --list` will now list all installed browsers, versions and locations.
+- New option in `'html'` reporter to set the title of a specific test run:
+  ```js
+  reporter: [['html', { title: 'Custom test run #1028' }]],
+  ```
+- New Steps in Trace Viewer and HTML reporter: 
+  ![New Trace Viewer Steps](https://github.com/user-attachments/assets/47965a24-5864-499d-9791-551b88811225)
+
+### Browser Versions
+
+- Chromium 138.0.7204.4
+- Mozilla Firefox 139.0
+- WebKit 18.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 137
+- Microsoft Edge 137
+
 ## Version 1.52
 
 ### Highlights
