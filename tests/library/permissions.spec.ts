@@ -136,6 +136,7 @@ it.describe('permissions', () => {
 
   it('should isolate permissions between browser contexts', async ({ server, browser, browserName, isMac, macVersion }) => {
     it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
+    it.skip(hostPlatform.startsWith('debian11'), 'WebKit on Debian 11 is frozen.');
 
     const context = await browser.newContext();
     const page = await context.newPage();
