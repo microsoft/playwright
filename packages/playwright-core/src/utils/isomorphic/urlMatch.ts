@@ -127,26 +127,18 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
     }
     // Escaped `\\?` behaves the same as `?` in our glob patterns.
     match = match.replaceAll(/\\\\\?/g, '?');
-    // Node URL constructors automatically uses colon as an indicator of a base URL, such as with `about:blank`
-    // Only perform special handling if we have a specified base URL
-    let ignoreBaseURL = false;
+    // Special case about: URLs as they are not relative to baseURL
+    if (match.startsWith('about:'))
+      return match;
     // Glob symbols may be escaped in the URL and some of them such as ? affect resolution,
     // so we replace them with safe components first.
     const relativePath = match.split('/').map((token, index) => {
       if (token === '.' || token === '..' || token === '')
         return token;
-      if (index === 0) {
-        // Handle special case of http*://, note that the new schema has to be
-        // a web schema so that slashes are properly inserted after domain.
-        if (token.endsWith(':')) {
-          return mapToken(token, 'http:');
-        } else if (token.indexOf(':') !== -1) {
-          // First token wasn't of the form /\w+:\//, but it still contains a colon
-          // Node URL constructors automatically uses colon as an indicator of a base URL, such as with `about:blank`
-          // Ignore baseURL but tokenize normally
-          ignoreBaseURL = true;
-        }
-      }
+      // Handle special case of http*://, note that the new schema has to be
+      // a web schema so that slashes are properly inserted after domain.
+      if (index === 0 && token.endsWith(':'))
+        return mapToken(token, 'http:');
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);
@@ -154,7 +146,7 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
       const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
       return newPrefix + newSuffix;
     }).join('/');
-    let resolved = constructURLBasedOnBaseURL(!ignoreBaseURL ? baseURL : undefined, relativePath);
+    let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);
     for (const [token, original] of tokenMap)
       resolved = resolved.replace(token, original);
     match = resolved;
