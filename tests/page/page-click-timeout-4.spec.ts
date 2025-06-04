@@ -49,7 +49,8 @@ it('should click for the second time after first timeout', async ({ page, server
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should fail to click the button behind a large header after scrolling around', async ({ page }) => {
+it('should fail to click the button behind a large header after scrolling around', async ({ page, isAndroid }) => {
+  it.skip(isAndroid, 'Different viewport size');
   await page.setViewportSize({ width: 500, height: 240 });
   await page.setContent(`
     <style>
