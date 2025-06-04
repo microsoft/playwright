@@ -229,3 +229,14 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
       - iframe [ref=e3]
   `);
 });
+
+it('should auto-wait for navigation', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/frame.html');
+  const [, snapshot] = await Promise.all([
+    page.evaluate(() => window.location.reload()),
+    snapshotForAI(page)
+  ]);
+  expect(snapshot).toContainYaml(`
+    - generic [ref=e2]: Hi, I'm frame
+  `);
+});
