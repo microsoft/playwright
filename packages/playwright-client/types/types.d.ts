@@ -8830,6 +8830,13 @@ export interface BrowserContext {
      * Optional.
      */
     sameSite?: "Strict"|"Lax"|"None";
+
+    /**
+     * For partitioned third-party cookies (aka
+     * [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the top
+     * level site (scheme and host) used as the partition key. Optional.
+     */
+    topLevelSite?: string;
   }>): Promise<void>;
 
   /**
@@ -8908,7 +8915,7 @@ export interface BrowserContext {
 
   /**
    * If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those
-   * URLs are returned.
+   * URLs are returned. Note that cookies are matched based on the URLs regardless of their `topLevelSite` value.
    * @param urls Optional list of URLs.
    */
   cookies(urls?: string|ReadonlyArray<string>): Promise<Array<Cookie>>;
@@ -9304,6 +9311,8 @@ export interface BrowserContext {
       secure: boolean;
 
       sameSite: "Strict"|"Lax"|"None";
+
+      topLevelSite?: string;
     }>;
 
     origins: Array<{
@@ -22501,6 +22510,8 @@ export interface Cookie {
   secure: boolean;
 
   sameSite: "Strict"|"Lax"|"None";
+
+  topLevelSite?: string;
 }
 
 interface PageWaitForSelectorOptions {

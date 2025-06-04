@@ -363,6 +363,7 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
   - `httpOnly` ?<[boolean]> Optional.
   - `secure` ?<[boolean]> Optional.
   - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
+  - `topLevelSite` ?<[string]> For partitioned third-party cookies (aka [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the top level site (scheme and host) used as the partition key. Optional.
 
 ## async method: BrowserContext.addInitScript
 * since: v1.8
@@ -602,9 +603,10 @@ The default browser context cannot be closed.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
   - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+  - `topLevelSite` ?<[string]>
 
 If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs
-are returned.
+are returned. Note that cookies are matched based on the URLs regardless of their `topLevelSite` value.
 
 ### param: BrowserContext.cookies.urls
 * since: v1.8
@@ -1504,6 +1506,7 @@ Whether to emulate network being offline for the browser context.
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
     - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+    - `topLevelSite` ?<[string]>
   - `origins` <[Array]<[Object]>>
     - `origin` <[string]>
     - `localStorage` <[Array]<[Object]>>
