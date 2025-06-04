@@ -1216,7 +1216,7 @@ function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   const metadata: Protocol.Emulation.UserAgentMetadata = {
     mobile: !!options.isMobile,
     model: '',
-    architecture: 'x64',
+    architecture: 'x86',
     platform: 'Windows',
     platformVersion: '',
   };
