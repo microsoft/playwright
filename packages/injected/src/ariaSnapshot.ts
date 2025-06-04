@@ -164,6 +164,8 @@ function ariaRef(element: Element, role: string, name: string, options?: { forAI
 
 function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaNode | null {
   if (element.nodeName === 'IFRAME') {
+    const isActive = element.ownerDocument.activeElement === element;
+
     return {
       role: 'iframe',
       name: '',
@@ -172,7 +174,8 @@ function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: s
       props: {},
       element,
       box: box(element),
-      receivesPointerEvents: true
+      receivesPointerEvents: true,
+      active: isActive
     };
   }
 
@@ -192,7 +195,8 @@ function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: s
     props: {},
     element,
     box: box(element),
-    receivesPointerEvents
+    receivesPointerEvents,
+    active: element.ownerDocument.activeElement === element
   };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
@@ -431,6 +435,8 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [disabled]`;
     if (ariaNode.expanded)
       key += ` [expanded]`;
+    if (ariaNode.active)
+      key += ` [active]`;
     if (ariaNode.level)
       key += ` [level=${ariaNode.level}]`;
     if (ariaNode.pressed === 'mixed')

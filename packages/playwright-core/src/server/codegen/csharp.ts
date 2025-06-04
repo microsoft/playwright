@@ -148,7 +148,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         return `await Expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
       case 'assertSnapshot':
-        return `await Expect(${subject}.${this._asLocator(action.selector)}).ToMatchAriaSnapshotAsync(${quote(action.snapshot)});`;
+        // Remove [active] attribute from codegen snapshots as it's too transient for stable tests
+        const cleanedSnapshot = action.snapshot.replace(/\s\[active\]/g, '');
+        return `await Expect(${subject}.${this._asLocator(action.selector)}).ToMatchAriaSnapshotAsync(${quote(cleanedSnapshot)});`;
     }
   }
 

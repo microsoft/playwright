@@ -128,7 +128,9 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         return `expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
       case 'assertSnapshot':
-        return `expect(${subject}.${this._asLocator(action.selector)}).to_match_aria_snapshot(${quote(action.snapshot)})`;
+        // Remove [active] attribute from codegen snapshots as it's too transient for stable tests
+        const cleanedSnapshot = action.snapshot.replace(/\s\[active\]/g, '');
+        return `expect(${subject}.${this._asLocator(action.selector)}).to_match_aria_snapshot(${quote(cleanedSnapshot)})`;
     }
   }
 

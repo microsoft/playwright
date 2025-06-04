@@ -120,7 +120,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       }
       case 'assertSnapshot': {
         const commentIfNeeded = this._isTest ? '' : '// ';
-        return `${commentIfNeeded}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.snapshot, `${commentIfNeeded}  `)});`;
+        // Remove [active] attribute from codegen snapshots as it's too transient for stable tests
+        const cleanedSnapshot = action.snapshot.replace(/\s\[active\]/g, '');
+        return `${commentIfNeeded}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(cleanedSnapshot, `${commentIfNeeded}  `)});`;
       }
     }
   }
