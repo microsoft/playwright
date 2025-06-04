@@ -11,7 +11,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### Trace Viewer and HTML Reporter Updates
 
 - New Steps in Trace Viewer and HTML reporter: 
-  ![New Trace Viewer Steps](https://github.com/user-attachments/assets/47965a24-5864-499d-9791-551b88811225)
+  ![New Trace Viewer Steps](https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2)
 - New option in `'html'` reporter to set the title of a specific test run:
   ```js
   import { defineConfig } from '@playwright/test';
