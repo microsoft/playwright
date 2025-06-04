@@ -72,8 +72,12 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   const transformed = transformHook(code, filename, moduleUrl);
 
   // Flush the source maps to the main thread, so that errors during import() are source-mapped.
-  if (transformed.serializedCache)
-    await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
+  if (transformed.serializedCache) {
+    if (legacyWaitForSourceMaps)
+      await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
+    else
+      transport?.post('pushToCompilationCache', { cache: transformed.serializedCache });
+  }
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
@@ -85,9 +89,11 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 }
 
 let transport: PortTransport | undefined;
+let legacyWaitForSourceMaps = false;
 
 function initialize(data: { port: MessagePort }) {
   transport = createTransport(data?.port);
+  legacyWaitForSourceMaps = !!process.env.PLAYWRIGHT_WAIT_FOR_SOURCE_MAPS;
 }
 
 function createTransport(port: MessagePort) {
