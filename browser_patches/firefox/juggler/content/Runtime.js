@@ -8,8 +8,8 @@
 
 if (!this.Debugger) {
   // Worker has a Debugger defined already.
-  const {addDebuggerToGlobal} = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm", {});
-  addDebuggerToGlobal(Components.utils.getGlobalForObject(this));
+  const {addDebuggerToGlobal} = ChromeUtils.importESModule("resource://gre/modules/jsdebugger.sys.mjs");
+  addDebuggerToGlobal(Components.utils.getGlobalForObject(globalThis));
 }
 
 let lastId = 0;
@@ -596,5 +596,5 @@ function emitEvent(event, ...args) {
     listener.call(null, ...args);
 }
 
-var EXPORTED_SYMBOLS = ['Runtime'];
-this.Runtime = Runtime;
+// Export Runtime to global.
+globalThis.Runtime = Runtime;

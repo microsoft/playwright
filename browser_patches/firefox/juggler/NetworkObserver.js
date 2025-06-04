@@ -4,9 +4,9 @@
 
 "use strict";
 
-const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
-const { ChannelEventSinkFactory } = ChromeUtils.import("chrome://remote/content/cdp/observers/ChannelEventSink.jsm");
+const {Helper} = ChromeUtils.importESModule('chrome://juggler/content/Helper.js');
+const {NetUtil} = ChromeUtils.importESModule('resource://gre/modules/NetUtil.sys.mjs');
+const { ChannelEventSinkFactory } = ChromeUtils.importESModule("chrome://remote/content/cdp/observers/ChannelEventSink.sys.mjs");
 
 
 const Cc = Components.classes;
@@ -28,7 +28,7 @@ const MAX_RESPONSE_STORAGE_SIZE = 100 * 1024 * 1024;
 
 const pageNetworkSymbol = Symbol('PageNetwork');
 
-class PageNetwork {
+export class PageNetwork {
   static forPageTarget(target) {
     if (!target)
       return undefined;
@@ -143,9 +143,10 @@ class NetworkRequest {
       const target = this._networkObserver._targetRegistry.targetForBrowserId(browsingContext.browserId);
       this._pageNetwork = PageNetwork.forPageTarget(target);
     }
-    this._expectingInterception = false;
+    this._shouldYieldInterceptionToServiceWorker = false;
     this._expectingResumedRequest = undefined;  // { method, headers, postData }
     this._overriddenHeadersForRedirect = redirectedFrom?._overriddenHeadersForRedirect;
+    this._sentOnRequest = false;
     this._sentOnResponse = false;
     this._fulfilled = false;
 
@@ -318,9 +319,8 @@ class NetworkRequest {
     const interceptController = this._fallThroughInterceptController();
     if (interceptController && interceptController.shouldPrepareForIntercept(aURI, channel)) {
       // We assume that interceptController is a service worker if there is one,
-      // and yield interception to it. We are not going to intercept ourselves,
-      // so we send onRequest now.
-      this._sendOnRequest(false);
+      // and yield interception to it.
+      this._shouldYieldInterceptionToServiceWorker = true;
       return true;
     }
 
@@ -329,12 +329,6 @@ class NetworkRequest {
       return false;
     }
 
-    // We do not want to intercept any redirects, because we are not able
-    // to intercept subresource redirects, and it's unreliable for main requests.
-    // We do not sendOnRequest here, because redirects do that in constructor.
-    if (this.redirectedFromId)
-      return false;
-
     const shouldIntercept = this._shouldIntercept();
     if (!shouldIntercept) {
       // We are not intercepting - ready to issue onRequest.
@@ -342,21 +336,24 @@ class NetworkRequest {
       return false;
     }
 
-    this._expectingInterception = true;
     return true;
   }
 
   // nsINetworkInterceptController
   channelIntercepted(intercepted) {
-    if (!this._expectingInterception) {
-      // We are not intercepting, fall-through.
-      const interceptController = this._fallThroughInterceptController();
-      if (interceptController)
-        interceptController.channelIntercepted(intercepted);
+    // Yield to a service worker if determined so in shouldPrepareForIntercept().
+    const serviceWorker = this._shouldYieldInterceptionToServiceWorker ? this._fallThroughInterceptController() : undefined;
+    // Clear the flag to avoid an infinite loop. After service worker, we should intercept ourselves.
+    this._shouldYieldInterceptionToServiceWorker = false;
+
+    if (serviceWorker) {
+      const interceptedChannel = intercepted.QueryInterface(Ci.nsIInterceptedChannel);
+      // If service worker will not actually intercept the request, we want to be called again.
+      interceptedChannel.interceptAfterServiceWorkerResets();
+      serviceWorker.channelIntercepted(intercepted);
       return;
     }
 
-    this._expectingInterception = false;
     this._interceptedChannel = intercepted.QueryInterface(Ci.nsIInterceptedChannel);
 
     const pageNetwork = this._pageNetwork;
@@ -410,6 +407,7 @@ class NetworkRequest {
     // See https://github.com/microsoft/playwright/issues/9418#issuecomment-944836244
     if (aRequest !== this.httpChannel)
       return;
+    this._sendOnRequest(false);
     try {
       this._originalListener.onStartRequest(aRequest);
     } catch (e) {
@@ -447,6 +445,10 @@ class NetworkRequest {
   }
 
   _shouldIntercept() {
+    // We do not want to intercept any redirects, because we are not able
+    // to intercept subresource redirects, and it's unreliable for main requests.
+    if (this.redirectedFromId)
+      return false;
     const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return false;
@@ -467,8 +469,15 @@ class NetworkRequest {
   }
 
   _sendOnRequest(isIntercepted) {
-    // Note: we call _sendOnRequest either after we intercepted the request,
-    // or at the first moment we know that we are not going to intercept.
+    if (this._sentOnRequest) {
+      // We can come here twice because:
+      // - Redirects call _sendOnRequest in the constructor and from inside interception.
+      // - All other requests might call _sendOnRequest from onStartRequest and from inside interception.
+      // - All requests call _sendOnRequest from _sendOnResponse to avoid responses without requests.
+      return;
+    }
+    this._sentOnRequest = true;
+
     const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return;
@@ -491,11 +500,21 @@ class NetworkRequest {
   }
 
   _sendOnResponse(fromCache, opt_statusCode, opt_statusText) {
+    // For internal redirects, and perhaps something else that we lack test coverage for,
+    // we can arrive here before onStartRequest has fired. Make sure we
+    // notify about the request first.
+    this._sendOnRequest(false);
+
     if (this._sentOnResponse) {
-      // We can come here twice because of internal redirects, e.g. service workers.
+      // We can come here twice because of an internal redirect, for example:
+      // - request was intercepted by a service worker;
+      // - HSTS redirect;
+      // - CORS preflight;
+      // - who knows what else?
       return;
     }
     this._sentOnResponse = true;
+
     const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return;
@@ -576,7 +595,7 @@ class NetworkRequest {
   }
 }
 
-class NetworkObserver {
+export class NetworkObserver {
   static instance() {
     return NetworkObserver._instance || null;
   }
@@ -776,6 +795,10 @@ function clearRequestHeaders(httpChannel) {
     // We cannot remove the "host" header.
     if (header.name.toLowerCase() === 'host')
       continue;
+    // Keep the "cookie" header. If there is an override, it will be set anyway.
+    // Otherwise, we may delete a cookie that was set for a redirect.
+    if (header.name.toLowerCase() === 'cookie')
+      continue;
     httpChannel.setRequestHeader(header.name, '', false /* merge */);
   }
 }
@@ -964,6 +987,3 @@ PageNetwork.Events = {
   RequestFailed: Symbol('PageNetwork.Events.RequestFailed'),
 };
 
-var EXPORTED_SYMBOLS = ['NetworkObserver', 'PageNetwork'];
-this.NetworkObserver = NetworkObserver;
-this.PageNetwork = PageNetwork;

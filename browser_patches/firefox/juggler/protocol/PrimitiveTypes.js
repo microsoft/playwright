@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const t = {};
+export const t = {};
 
 t.String = function(x, details = {}, path = ['<root>']) {
   if (typeof x === 'string' || typeof x === 'String')
@@ -96,7 +96,7 @@ function beauty(path, obj) {
   return `property "${path.join('.')}" - ${JSON.stringify(obj, null, 2)}`;
 }
 
-function checkScheme(scheme, x, details = {}, path = ['<root>']) {
+export function checkScheme(scheme, x, details = {}, path = ['<root>']) {
   if (!scheme)
     throw new Error(`ILLDEFINED SCHEME: ${path.join('.')}`);
   if (typeof scheme === 'object') {
@@ -142,6 +142,3 @@ test(t.Either(t.String, t.Number), {});
 
 */
 
-this.t = t;
-this.checkScheme = checkScheme;
-this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
