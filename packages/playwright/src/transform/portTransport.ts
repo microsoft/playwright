@@ -24,11 +24,6 @@ export class PortTransport {
     port.addEventListener('message', async event => {
       const message = event.data;
       const { id, ackId, method, params, result } = message;
-      if (id) {
-        const result = await handler(method, params);
-        this._port.postMessage({ ackId: id, result });
-        return;
-      }
 
       if (ackId) {
         const callback = this._callbacks.get(ackId);
@@ -37,10 +32,18 @@ export class PortTransport {
         callback?.(result);
         return;
       }
+
+      const handlerResult = await handler(method, params);
+      if (id)
+        this._port.postMessage({ ackId: id, result: handlerResult });
     });
     // Make sure to unref **after** adding a 'message' event listener.
     // https://nodejs.org/api/worker_threads.html#portref
     this._resetRef();
+  }
+
+  post(method: string, params: any) {
+    this._port.postMessage({ method, params });
   }
 
   async send(method: string, params: any) {
