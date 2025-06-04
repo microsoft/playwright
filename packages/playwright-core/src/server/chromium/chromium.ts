@@ -30,7 +30,6 @@ import { fetchData } from '../utils/network';
 import { getUserAgent } from '../utils/userAgent';
 import { validateBrowserContextOptions } from '../browserContext';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
-import { BrowserReadyState } from '../browserType';
 import { helper } from '../helper';
 import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
@@ -353,10 +352,8 @@ export class Chromium extends BrowserType {
     return chromeArguments;
   }
 
-  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    if (options.cdpPort !== undefined || options.args?.some(a => a.startsWith('--remote-debugging-port')))
-      return new ChromiumReadyState();
-    return undefined;
+  override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+    return waitForReadyState(options, browserLogsCollector);
   }
 
   override getExecutableName(options: types.LaunchOptions): string {
@@ -366,16 +363,21 @@ export class Chromium extends BrowserType {
   }
 }
 
-class ChromiumReadyState extends BrowserReadyState {
-  override onBrowserOutput(message: string): void {
+export async function waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+  if (options.cdpPort === undefined && !options.args?.some(a => a.startsWith('--remote-debugging-port')))
+    return {};
+
+  const result = new ManualPromise<{ wsEndpoint?: string }>();
+  browserLogsCollector.onMessage(message => {
     if (message.includes('Failed to create a ProcessSingleton for your profile directory.')) {
-      this._wsEndpoint.reject(new Error('Failed to create a ProcessSingleton for your profile directory. ' +
+      result.reject(new Error('Failed to create a ProcessSingleton for your profile directory. ' +
         'This usually means that the profile is already in use by another instance of Chromium.'));
     }
     const match = message.match(/DevTools listening on (.*)/);
     if (match)
-      this._wsEndpoint.resolve(match[1]);
-  }
+      result.resolve({ wsEndpoint: match[1] });
+  });
+  return result;
 }
 
 async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers: { [key: string]: string; }) {

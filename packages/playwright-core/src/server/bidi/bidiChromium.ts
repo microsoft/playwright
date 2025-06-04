@@ -17,11 +17,12 @@
 import os from 'os';
 
 import { wrapInASCIIBox } from '../utils/ascii';
-import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { RecentLogsCollector } from '../utils/debugLogger';
+import { waitForReadyState } from '../chromium/chromium';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -102,8 +103,8 @@ export class BidiChromium extends BrowserType {
     return chromeArguments;
   }
 
-  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    return new ChromiumReadyState();
+  override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+    return waitForReadyState({ ...options, cdpPort: 0 }, browserLogsCollector);
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
@@ -161,18 +162,6 @@ export class BidiChromium extends BrowserType {
     }
     chromeArguments.push(...args);
     return chromeArguments;
-  }
-}
-
-class ChromiumReadyState extends BrowserReadyState {
-  override onBrowserOutput(message: string): void {
-    if (message.includes('Failed to create a ProcessSingleton for your profile directory.')) {
-      this._wsEndpoint.reject(new Error('Failed to create a ProcessSingleton for your profile directory. ' +
-        'This usually means that the profile is already in use by another instance of Chromium.'));
-    }
-    const match = message.match(/DevTools listening on (.*)/);
-    if (match)
-      this._wsEndpoint.resolve(match[1]);
   }
 }
 

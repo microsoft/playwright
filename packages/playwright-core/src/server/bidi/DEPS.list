@@ -11,3 +11,4 @@
 
 [bidiChromium.ts]
 ../chromium/chromiumSwitches.ts
+../chromium/chromium.ts
