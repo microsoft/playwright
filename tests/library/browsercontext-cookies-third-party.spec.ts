@@ -330,7 +330,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       secure: true,
       sameSite: 'None',
       partitionKey: 'https://localhost',
-      _chromiumHasCrossSiteAncestor: false
+      _crHasCrossSiteAncestor: false
     } as any,
     {
       name: 'top-level-non-partitioned',
@@ -352,7 +352,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       secure: true,
       sameSite: 'None',
       partitionKey: 'https://127.0.0.1',
-      _chromiumHasCrossSiteAncestor: true
+      _crHasCrossSiteAncestor: true
     } as any,
     {
       name: 'frame-non-partitioned',

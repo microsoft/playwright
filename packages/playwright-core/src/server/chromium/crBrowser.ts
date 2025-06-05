@@ -396,7 +396,7 @@ export class CRBrowserContext extends BrowserContext {
       // this is Chromium specific, see https://chromestatus.com/feature/5144832583663616
       // and https://github.com/explainers-by-googlers/CHIPS-spec.
       if (c.partitionKey) {
-        copy._chromiumHasCrossSiteAncestor = c.partitionKey.hasCrossSiteAncestor;
+        copy._crHasCrossSiteAncestor = c.partitionKey.hasCrossSiteAncestor;
         copy.partitionKey = c.partitionKey.topLevelSite;
       }
       return copy;
@@ -405,7 +405,7 @@ export class CRBrowserContext extends BrowserContext {
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
     function toChromiumCookie(cookie: channels.SetNetworkCookie) {
-      const { name, value, url, domain, path, expires, httpOnly, secure, sameSite, partitionKey, _chromiumHasCrossSiteAncestor } = cookie;
+      const { name, value, url, domain, path, expires, httpOnly, secure, sameSite, partitionKey, _crHasCrossSiteAncestor } = cookie;
       const copy: Protocol.Network.CookieParam = {
         name,
         value,
@@ -420,8 +420,8 @@ export class CRBrowserContext extends BrowserContext {
       if (partitionKey) {
         copy.partitionKey = {
           topLevelSite: partitionKey,
-          // _chromiumHasCrossSiteAncestor is non-standard, set it true by default if the cookie is partitioned.
-          hasCrossSiteAncestor: _chromiumHasCrossSiteAncestor ?? true,
+          // _crHasCrossSiteAncestor is non-standard, set it true by default if the cookie is partitioned.
+          hasCrossSiteAncestor: _crHasCrossSiteAncestor ?? true,
         };
       }
       return copy;

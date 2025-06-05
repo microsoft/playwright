@@ -224,7 +224,7 @@ SetNetworkCookie:
       - Lax
       - None
     partitionKey: string?
-    _chromiumHasCrossSiteAncestor: boolean?
+    _crHasCrossSiteAncestor: boolean?
 
 
 NetworkCookie:
@@ -244,7 +244,7 @@ NetworkCookie:
       - Lax
       - None
     partitionKey: string?
-    _chromiumHasCrossSiteAncestor: boolean?
+    _crHasCrossSiteAncestor: boolean?
 
 
 NameValue:

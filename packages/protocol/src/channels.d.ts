@@ -261,7 +261,7 @@ export type SetNetworkCookie = {
   secure?: boolean,
   sameSite?: 'Strict' | 'Lax' | 'None',
   partitionKey?: string,
-  _chromiumHasCrossSiteAncestor?: boolean,
+  _crHasCrossSiteAncestor?: boolean,
 };
 
 export type NetworkCookie = {
@@ -274,7 +274,7 @@ export type NetworkCookie = {
   secure: boolean,
   sameSite: 'Strict' | 'Lax' | 'None',
   partitionKey?: string,
-  _chromiumHasCrossSiteAncestor?: boolean,
+  _crHasCrossSiteAncestor?: boolean,
 };
 
 export type NameValue = {
