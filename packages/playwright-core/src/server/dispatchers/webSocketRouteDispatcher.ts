@@ -18,7 +18,7 @@ import { Page } from '../page';
 import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as rawWebSocketMockSource from '../../generated/webSocketMockSource';
-import { createGuid } from '../utils/crypto';
+import { SdkObject } from '../instrumentation';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import { eventsHelper } from '../utils/eventsHelper';
 
@@ -29,14 +29,14 @@ import type { Frame } from '../frames';
 import type * as ws from '@injected/webSocketMock';
 import type * as channels from '@protocol/channels';
 
-export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
+export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
   _type_WebSocketRoute = true;
   private _id: string;
   private _frame: Frame;
   private static _idToDispatcher = new Map<string, WebSocketRouteDispatcher>();
 
   constructor(scope: PageDispatcher | BrowserContextDispatcher, id: string, url: string, frame: Frame) {
-    super(scope, { guid: 'webSocketRoute@' + createGuid() }, 'WebSocketRoute', { url });
+    super(scope, new SdkObject(scope._object, 'webSocketRoute'), 'WebSocketRoute', { url });
     this._id = id;
     this._frame = frame;
     this._eventListeners.push(

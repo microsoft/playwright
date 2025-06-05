@@ -29,6 +29,7 @@ import type { Page } from './page';
 import type { Playwright } from './playwright';
 import type { CallMetadata } from '@protocol/callMetadata';
 export type { CallMetadata } from '@protocol/callMetadata';
+import type { LogName } from './utils/debugLogger';
 
 export type Attribution = {
   playwright: Playwright;
@@ -43,6 +44,7 @@ export class SdkObject extends EventEmitter {
   guid: string;
   attribution: Attribution;
   instrumentation: Instrumentation;
+  logName?: LogName;
 
   constructor(parent: SdkObject, guidPrefix?: string, guid?: string) {
     super();
@@ -51,6 +53,13 @@ export class SdkObject extends EventEmitter {
     this.attribution = { ...parent.attribution };
     this.instrumentation = parent.instrumentation;
   }
+}
+
+export function createRootSdkObject() {
+  const fakeParent = { attribution: {}, instrumentation: createInstrumentation() };
+  const root = new SdkObject(fakeParent as any);
+  root.guid = '';
+  return root;
 }
 
 export interface Instrumentation {

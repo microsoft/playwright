@@ -56,6 +56,7 @@ export abstract class BrowserType extends SdkObject {
     super(parent, 'browser-type');
     this.attribution.browserType = this;
     this._name = browserName;
+    this.logName = 'browser';
   }
 
   executablePath(): string {
@@ -69,7 +70,6 @@ export abstract class BrowserType extends SdkObject {
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
-    controller.setLogName('browser');
     const browser = await controller.run(progress => {
       const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
       if (seleniumHubUrl)
@@ -82,7 +82,6 @@ export abstract class BrowserType extends SdkObject {
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { timeout: number, cdpPort?: number, internalIgnoreHTTPSErrors?: boolean }): Promise<BrowserContext> {
     const launchOptions = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
-    controller.setLogName('browser');
     const browser = await controller.run(async progress => {
       // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
       let clientCertificatesProxy: ClientCertificatesProxy | undefined;
