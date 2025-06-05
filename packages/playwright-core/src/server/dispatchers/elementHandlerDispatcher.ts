@@ -16,6 +16,7 @@
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { PageDispatcher } from './pageDispatcher';
 import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
 
 import type { ElementHandle } from '../dom';
@@ -48,6 +49,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
     const elementHandle = handle.asElement();
     if (!elementHandle)
       return new JSHandleDispatcher(scope, handle);
+    if (scope instanceof PageDispatcher)
+      scope = FrameDispatcher.from(scope.parentScope(), elementHandle._frame);
     if (!(scope instanceof FrameDispatcher))
       throw new Error('ElementHandle can only be created from FrameDispatcher');
     return new ElementHandleDispatcher(scope, elementHandle);
