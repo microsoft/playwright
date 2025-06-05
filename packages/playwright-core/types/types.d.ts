@@ -8840,7 +8840,8 @@ export interface BrowserContext {
   backgroundPages(): Array<Page>;
 
   /**
-   * Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
+   * Gets the browser instance that owns the context. Returns `null` if the context is created outside of normal
+   * browser, e.g. Android or Electron.
    */
   browser(): null|Browser;
 

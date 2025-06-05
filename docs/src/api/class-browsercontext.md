@@ -467,7 +467,7 @@ All existing background pages in the context.
 * since: v1.8
 - returns: <[null]|[Browser]>
 
-Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
+Gets the browser instance that owns the context. Returns `null` if the context is created outside of normal browser, e.g. Android or Electron.
 
 ## async method: BrowserContext.clearCookies
 * since: v1.8
