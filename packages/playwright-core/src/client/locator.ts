@@ -142,7 +142,7 @@ export class Locator implements api.Locator {
   }
 
   async clear(options: channels.ElementHandleFillOptions = {}): Promise<void> {
-    return this._frame._wrapApiCall(() => this.fill('', options), { title: 'Clear' });
+    await this._frame._wrapApiCall(() => this.fill('', options), { title: 'Clear' });
   }
 
   async _highlight() {
