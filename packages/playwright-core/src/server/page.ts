@@ -997,9 +997,15 @@ async function snapshotFrameForAI(metadata: CallMetadata, frame: frames.Frame, f
       try {
         const context = await frame._utilityContext();
         const injectedScript = await context.injectedScript();
-        return await injectedScript.evaluate((injected, refPrefix) => {
-          return injected.ariaSnapshot(injected.document.body, { forAI: true, refPrefix });
+        const snapshotOrRetry = await injectedScript.evaluate((injected, refPrefix) => {
+          const node = injected.document.body;
+          if (!node)
+            return true;
+          return injected.ariaSnapshot(node, { forAI: true, refPrefix });
         }, frameOrdinal ? 'f' + frameOrdinal : '');
+        if (snapshotOrRetry === true)
+          return continuePolling;
+        return snapshotOrRetry;
       } catch (e) {
         if (js.isJavaScriptErrorInEvaluate(e))
           throw e;
