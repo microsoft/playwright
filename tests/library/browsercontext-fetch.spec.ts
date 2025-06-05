@@ -877,7 +877,7 @@ it('should support timeout option', async function({ context, server }) {
   });
 
   const error = await context.request.get(server.PREFIX + '/slow', { timeout: 10 }).catch(e => e);
-  expect(error.message).toContain(`Request timed out after 10ms`);
+  expect(error.message).toContain(`apiRequestContext.get: Timeout 10ms exceeded`);
 });
 
 it('should support a timeout of 0', async function({ context, server }) {
@@ -908,7 +908,7 @@ it('should respect timeout after redirects', async function({ context, server })
 
   context.setDefaultTimeout(100);
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain(`Request timed out after 100ms`);
+  expect(error.message).toContain(`apiRequestContext.get: Timeout 100ms exceeded`);
 });
 
 it('should not hang on a brotli encoded Range request', async ({ context, server, nodeVersion }) => {

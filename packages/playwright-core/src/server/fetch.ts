@@ -208,7 +208,7 @@ export abstract class APIRequestContext extends SdkObject {
     const controller = new ProgressController(metadata, this);
     const fetchResponse = await controller.run(progress => {
       return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
-    });
+    }, timeout);
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
     const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.failOnStatusCode;
