@@ -58,21 +58,26 @@ export type Screen = {
   colors: Colors;
   isTTY: boolean;
   ttyWidth: number;
+  ttyHeight: number;
 };
 
 // Output goes to terminal.
 export const terminalScreen: Screen = (() => {
   let isTTY = !!process.stdout.isTTY;
   let ttyWidth = process.stdout.columns || 0;
+  let ttyHeight = process.stdout.rows || 0;
   if (process.env.PLAYWRIGHT_FORCE_TTY === 'false' || process.env.PLAYWRIGHT_FORCE_TTY === '0') {
     isTTY = false;
     ttyWidth = 0;
+    ttyHeight = 0;
   } else if (process.env.PLAYWRIGHT_FORCE_TTY === 'true' || process.env.PLAYWRIGHT_FORCE_TTY === '1') {
     isTTY = true;
     ttyWidth = process.stdout.columns || 100;
+    ttyHeight = process.stdout.rows || 40;
   } else if (process.env.PLAYWRIGHT_FORCE_TTY) {
     isTTY = true;
     ttyWidth = +process.env.PLAYWRIGHT_FORCE_TTY;
+    ttyHeight = process.stdout.rows || 40;
     if (isNaN(ttyWidth))
       ttyWidth = 100;
   }
@@ -89,6 +94,7 @@ export const terminalScreen: Screen = (() => {
     resolveFiles: 'cwd',
     isTTY,
     ttyWidth,
+    ttyHeight,
     colors
   };
 })();
@@ -98,6 +104,7 @@ export const nonTerminalScreen: Screen = {
   colors: terminalScreen.colors,
   isTTY: false,
   ttyWidth: 0,
+  ttyHeight: 0,
   resolveFiles: 'rootDir',
 };
 
@@ -106,6 +113,7 @@ export const internalScreen: Screen = {
   colors: realColors,
   isTTY: false,
   ttyWidth: 0,
+  ttyHeight: 0,
   resolveFiles: 'rootDir',
 };
 

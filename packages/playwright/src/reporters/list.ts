@@ -102,7 +102,7 @@ class ListReporter extends TerminalReporter {
       const line = test.title + this.screen.colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
     } else {
-      this._updateLine(this._testRows.get(test)!, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      this._updateOrAppendLine(this._testRows.get(test)!, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
@@ -113,7 +113,7 @@ class ListReporter extends TerminalReporter {
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
       if (this.screen.isTTY)
-        this._updateLine(this._testRows.get(test)!, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+        this._updateOrAppendLine(this._testRows.get(test)!, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
 
@@ -200,7 +200,8 @@ class ListReporter extends TerminalReporter {
   }
 
   private _updateOrAppendLine(row: number, text: string, prefix: string) {
-    if (this.screen.isTTY) {
+    // Only update the line if we assume that the line is still on the screen
+    if (this.screen.isTTY && this._lastRow - row < this.screen.ttyHeight) {
       this._updateLine(row, text, prefix);
     } else {
       this._maybeWriteNewLine();
