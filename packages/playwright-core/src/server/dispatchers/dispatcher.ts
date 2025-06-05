@@ -24,6 +24,7 @@ import { TargetClosedError, isTargetClosedError, serializeError } from '../error
 import { SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
+import { methodMetainfo } from '../../utils/isomorphic/protocolMetainfo';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
@@ -302,6 +303,12 @@ export class DispatcherConnection {
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
       return;
+    }
+
+    if (methodMetainfo.get(dispatcher._type + '.' + method)?.internal) {
+      // For non-js ports, it is easier to detect internal calls here rather
+      // than generate protocol metainfo for each language.
+      validMetadata.internal = true;
     }
 
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
