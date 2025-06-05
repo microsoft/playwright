@@ -244,7 +244,7 @@ it('should auto-wait for navigation', async ({ page, server }) => {
 it('should auto-wait for blocking CSS', async ({ page, server }) => {
   server.setRoute('/css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
-    setTimeout(() => res.end(`body { monospace }`), 50);
+    setTimeout(() => res.end(`body { monospace }`), 1000);
   });
   await page.setContent(`
     <script src="${server.PREFIX}/css"></script>
