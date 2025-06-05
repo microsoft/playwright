@@ -240,3 +240,15 @@ it('should auto-wait for navigation', async ({ page, server }) => {
     - generic [ref=e2]: Hi, I'm frame
   `);
 });
+
+it('should auto-wait for blocking CSS', async ({ page, server }) => {
+  server.setRoute('/css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    setTimeout(() => res.end(`body { monospace }`), 1000);
+  });
+  await page.setContent(`
+    <script src="${server.PREFIX}/css"></script>
+    <p>Hello World</p>
+  `, { waitUntil: 'commit' });
+  expect(await snapshotForAI(page)).toContainYaml('Hello World');
+});
