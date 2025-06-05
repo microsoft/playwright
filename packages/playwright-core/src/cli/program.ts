@@ -70,6 +70,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
+      ['--user-data-dir <directory>', 'use the specified user data directory instead of a new context'],
     ]).action(function(url, options) {
   codegen(options, url).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -423,6 +424,7 @@ type Options = {
   timezone?: string;
   viewportSize?: string;
   userAgent?: string;
+  userDataDir?: string;
 };
 
 type CaptureOptions = {
@@ -470,33 +472,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     };
     if (options.proxyBypass)
       launchOptions.proxy.bypass = options.proxyBypass;
-  }
-
-  const browser = await browserType.launch(launchOptions);
-
-  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
-    (process as any)._didSetSourcesForTest = (text: string) => {
-      process.stdout.write('\n-------------8<-------------\n');
-      process.stdout.write(text);
-      process.stdout.write('\n-------------8<-------------\n');
-      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
-        closeBrowser();
-    };
-    // Make sure we exit abnormally when browser crashes.
-    const logs: string[] = [];
-    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
-      const line = require('util').format(...args) + '\n';
-      logs.push(line);
-      process.stderr.write(line);
-    };
-    browser.on('disconnected', () => {
-      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
-      if (hasCrashLine) {
-        process.stderr.write('Detected browser crash.\n');
-        gracefullyProcessExitDoNotHang(1);
-      }
-    });
   }
 
   // Viewport size
@@ -563,9 +538,45 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     contextOptions.serviceWorkers = 'block';
   }
 
-  // Close app when the last window closes.
+  let browser: Browser;
+  let context: BrowserContext;
 
-  const context = await browser.newContext(contextOptions);
+  if (options.userDataDir) {
+    context = await browserType.launchPersistentContext(options.userDataDir, { ...launchOptions, ...contextOptions });
+    const persistentBrowser = context.browser();
+    assert(persistentBrowser, 'Could not launch persistent browser context');
+    browser = persistentBrowser;
+  } else {
+    browser = await browserType.launch(launchOptions);
+    context = await browser.newContext(contextOptions);
+  }
+
+  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
+    (process as any)._didSetSourcesForTest = (text: string) => {
+      process.stdout.write('\n-------------8<-------------\n');
+      process.stdout.write(text);
+      process.stdout.write('\n-------------8<-------------\n');
+      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
+      if (autoExitCondition && text.includes(autoExitCondition))
+        closeBrowser();
+    };
+    // Make sure we exit abnormally when browser crashes.
+    const logs: string[] = [];
+    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+      const line = require('util').format(...args) + '\n';
+      logs.push(line);
+      process.stderr.write(line);
+    };
+    browser.on('disconnected', () => {
+      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
+      if (hasCrashLine) {
+        process.stderr.write('Detected browser crash.\n');
+        gracefullyProcessExitDoNotHang(1);
+      }
+    });
+  }
+
+  // Close app when the last window closes.
 
   let closingBrowser = false;
   async function closeBrowser() {
@@ -608,8 +619,10 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
 }
 
-async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
-  const page = await context.newPage();
+async function openPage(context: BrowserContext, url: string | undefined, allowPageReuse: boolean = false): Promise<Page> {
+  let page = allowPageReuse ? context.pages()[0] : undefined;
+  if (!page)
+    page = await context.newPage();
   if (url) {
     if (fs.existsSync(url))
       url = 'file://' + path.resolve(url);
@@ -660,7 +673,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
   });
-  await openPage(context, url);
+  await openPage(context, url, true);
 }
 
 async function waitForPage(page: Page, captureOptions: CaptureOptions) {
