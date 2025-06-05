@@ -606,7 +606,7 @@ The default browser context cannot be closed.
   - `partitionKey` ?<[string]>
 
 If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs
-are returned. Note that cookies are matched based on the URLs regardless of their `partitionKey` value.
+are returned.
 
 ### param: BrowserContext.cookies.urls
 * since: v1.8

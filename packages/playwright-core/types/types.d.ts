@@ -8915,7 +8915,7 @@ export interface BrowserContext {
 
   /**
    * If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those
-   * URLs are returned. Note that cookies are matched based on the URLs regardless of their `partitionKey` value.
+   * URLs are returned.
    * @param urls Optional list of URLs.
    */
   cookies(urls?: string|ReadonlyArray<string>): Promise<Array<Cookie>>;
