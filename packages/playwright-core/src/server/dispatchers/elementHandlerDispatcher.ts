@@ -16,14 +16,12 @@
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { PageDispatcher } from './pageDispatcher';
 import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
 
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type * as js from '../javascript';
-import type { JSHandleDispatcherParentScope } from './jsHandleDispatcher';
 import type * as channels from '@protocol/channels';
 
 
@@ -42,17 +40,13 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
     return scope.connection.existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
   }
 
-  static fromJSHandle(scope: JSHandleDispatcherParentScope, handle: js.JSHandle): JSHandleDispatcher {
+  static fromJSOrElementHandle(scope: FrameDispatcher, handle: js.JSHandle): JSHandleDispatcher {
     const result = scope.connection.existingDispatcher<JSHandleDispatcher>(handle);
     if (result)
       return result;
     const elementHandle = handle.asElement();
     if (!elementHandle)
       return new JSHandleDispatcher(scope, handle);
-    if (scope instanceof PageDispatcher)
-      scope = FrameDispatcher.from(scope.parentScope(), elementHandle._frame);
-    if (!(scope instanceof FrameDispatcher))
-      throw new Error('ElementHandle can only be created from FrameDispatcher');
     return new ElementHandleDispatcher(scope, elementHandle);
   }
 
