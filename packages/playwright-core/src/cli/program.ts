@@ -576,8 +576,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     });
   }
 
-  // Close app when the last window closes.
-
   let closingBrowser = false;
   async function closeBrowser() {
     // We can come here multiple times. For example, saving storage creates
