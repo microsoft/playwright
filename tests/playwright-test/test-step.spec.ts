@@ -1180,6 +1180,8 @@ test('should report api steps', async ({ runInlineTest, server }) => {
         });
         test('pass3', async () => {
           await myPage.getByRole('textbox').fill('foo');
+          await myPage.getByRole('textbox').fill('');
+          await myPage.getByRole('textbox').clear();
         });
 
         test.afterAll(async () => {
@@ -1202,9 +1204,11 @@ pw:api    |Click locator('button') @ a.test.ts:25
 hook      |After Hooks
 hook      |Before Hooks
 pw:api    |Fill "foo" getByRole('textbox') @ a.test.ts:28
+pw:api    |Fill "" getByRole('textbox') @ a.test.ts:29
+pw:api    |Clear getByRole('textbox') @ a.test.ts:30
 hook      |After Hooks
-hook      |  afterAll hook @ a.test.ts:31
-pw:api    |    Close context @ a.test.ts:32
+hook      |  afterAll hook @ a.test.ts:33
+pw:api    |    Close context @ a.test.ts:34
 hook      |Before Hooks
 fixture   |  browser
 pw:api    |    Launch browser
