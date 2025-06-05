@@ -305,10 +305,14 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    const cc = network.rewriteCookies(cookies).map(c => ({
-      ...c,
-      expires: c.expires === -1 ? undefined : c.expires,
-    }));
+    const cc = network.rewriteCookies(cookies).map(c => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _chromiumHasCrossSiteAncestor, topLevelSite, ...rest } = c;
+      return {
+        ...rest,
+        expires: c.expires === -1 ? undefined : c.expires,
+      };
+    });
     await this._browser.session.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: cc });
   }
 

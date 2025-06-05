@@ -388,12 +388,37 @@ export class CRBrowserContext extends BrowserContext {
       delete copy.sameParty;
       delete copy.sourceScheme;
       delete copy.sourcePort;
+      delete copy.partitionKey;
+      // If hasCrossSiteAncestor is false, the cookie is a partitioned first party cookie,
+      // this is Chromium specific, see https://chromestatus.com/feature/5144832583663616
+      // and https://github.com/explainers-by-googlers/CHIPS-spec.
+      if (c.partitionKey) {
+        copy._chromiumHasCrossSiteAncestor = c.partitionKey.hasCrossSiteAncestor;
+        copy.topLevelSite = c.partitionKey.topLevelSite;
+      }
       return copy as channels.NetworkCookie;
     }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId });
+    function toChromiumCookie(cookie: channels.SetNetworkCookie) {
+      const { topLevelSite, _chromiumHasCrossSiteAncestor, ...rest } = cookie;
+      if (!topLevelSite)
+        return cookie;
+      return {
+        ...rest,
+        partitionKey: {
+          topLevelSite,
+          // _chromiumHasCrossSiteAncestor is non-standard, set it true by default if the cookie is partitioned.
+          hasCrossSiteAncestor: _chromiumHasCrossSiteAncestor ?? true,
+        },
+      };
+    }
+
+    await this._browser._session.send('Storage.setCookies', {
+      cookies: network.rewriteCookies(cookies.map(toChromiumCookie)),
+      browserContextId: this._browserContextId
+    });
   }
 
   async doClearCookies() {

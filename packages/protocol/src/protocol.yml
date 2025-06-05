@@ -223,11 +223,8 @@ SetNetworkCookie:
       - Strict
       - Lax
       - None
-    partitionKey:
-      type: object?
-      properties:
-        topLevelSite: string
-        hasCrossSiteAncestor: boolean
+    topLevelSite: string?
+    _chromiumHasCrossSiteAncestor: boolean?
 
 
 NetworkCookie:
@@ -246,11 +243,8 @@ NetworkCookie:
       - Strict
       - Lax
       - None
-    partitionKey:
-      type: object?
-      properties:
-        topLevelSite: string
-        hasCrossSiteAncestor: boolean
+    topLevelSite: string?
+    _chromiumHasCrossSiteAncestor: boolean?
 
 
 NameValue:

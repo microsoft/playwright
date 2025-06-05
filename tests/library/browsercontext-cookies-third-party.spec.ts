@@ -16,7 +16,7 @@
 
 import { contextTest, expect } from '../config/browserTest';
 
-import type { Page, BrowserContext } from 'playwright';
+import type { Page, BrowserContext, Cookie } from 'playwright';
 import type { TestServer } from '../config/testserver';
 
 type TestUrls = {
@@ -63,6 +63,12 @@ test.use({
  *     frame-partitioned=value
  *     frame-non-partitioned=value
  *
+ * origin1:
+ *   origin2:
+ *     origin1:
+ *       frame-partitioned=value
+ *       frame-non-partitioned=value
+ *
  * origin1 = httpsServer.PREFIX
  * origin2 = httpsServer.CROSS_PROCESS_PREFIX
  */
@@ -91,6 +97,17 @@ function addCommonCookieHandlers(httpsServer: TestServer, urls: TestUrls) {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<iframe src='${urls.origin2}/frame-read-cookie.html'></iframe>`);
   });
+}
+
+function findCookie(cookies: Cookie[], name: string) {
+  const result = cookies.find(cookie => cookie.name === name);
+  expect(result, `Cookie ${name} not found in ${JSON.stringify(cookies, null, 2)}`).toBeTruthy();
+  return result;
+}
+
+function expectTopLevelSite(cookies: Cookie[], name: string, topLevelSite: string) {
+  const cookie = findCookie(cookies, name);
+  expect(cookie.topLevelSite, `Cookie ${name}`).toBe(topLevelSite);
 }
 
 async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean, urls: TestUrls) {
@@ -264,6 +281,23 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
 
   await checkCookies(page);
 
+  function checkStorageCookies(cookies: Cookie[]) {
+    const expectedTopLevelPartitioned = browserName === 'webkit' && isMac ?
+      undefined :
+      'https://localhost';
+    expectTopLevelSite(cookies, 'top-level-partitioned', expectedTopLevelPartitioned);
+    expectTopLevelSite(cookies, 'top-level-non-partitioned', undefined);
+    if (browserName === 'webkit' && isMac) {
+      expect(cookies.find(cookie => cookie.name === 'frame-partitioned')).toBeUndefined();
+      expect(cookies.find(cookie => cookie.name === 'frame-non-partitioned')).toBeUndefined();
+    } else {
+      expectTopLevelSite(cookies, 'frame-partitioned', 'https://127.0.0.1');
+      expectTopLevelSite(cookies, 'frame-non-partitioned', undefined);
+    }
+  }
+  checkStorageCookies(await page.context().cookies());
+  checkStorageCookies((await page.context().storageState()).cookies);
+
   await test.step('export via cookies/addCookies', async () => {
     const cookies = await page.context().cookies();
     const context2 = await browser.newContext();
@@ -280,20 +314,90 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
   });
 });
 
-/**
- * origin1:
- *     top-level-partitioned=value
- *     top-level-non-partitioned=value
- *
- * origin1:
- *   origin2:
- *     origin1:
- *       frame-partitioned=value
- *       frame-non-partitioned=value
- *
- * origin1 = httpsServer.PREFIX
- * origin2 = httpsServer.CROSS_PROCESS_PREFIX
- */
+test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, httpsServer, isMac, urls }) => {
+  // test.fixme(browserName === 'firefox', 'Firefox cookie partitioning is disabled in Firefox.');
+  // test.fixme(browserName === 'webkit' && !isMac, 'Linux and Windows WebKit builds do not partition third-party cookies at all.');
+  addCommonCookieHandlers(httpsServer, urls);
+
+  await context.addCookies([
+    {
+      name: 'top-level-partitioned',
+      value: 'value',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: true,
+      sameSite: 'None',
+      topLevelSite: 'https://localhost',
+      _chromiumHasCrossSiteAncestor: false
+    } as any,
+    {
+      name: 'top-level-non-partitioned',
+      value: 'value',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: true,
+      sameSite: 'None'
+    },
+    {
+      name: 'frame-partitioned',
+      value: 'value',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: true,
+      sameSite: 'None',
+      topLevelSite: 'https://127.0.0.1',
+      _chromiumHasCrossSiteAncestor: true
+    } as any,
+    {
+      name: 'frame-non-partitioned',
+      value: 'value',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: true,
+      sameSite: 'None'
+    }
+  ]);
+
+  async function checkCookies(page: Page) {
+    {
+      // Check top-level cookie first.
+      await page.goto(urls.read_origin1);
+      const expectedTopLevel = browserName === 'webkit' || browserName === 'firefox' ?
+        'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value' :
+        'Received cookie: frame-non-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
+      expect.soft(await page.locator('body').textContent()).toBe(expectedTopLevel);
+    }
+    {
+      // Check third-party cookie.
+      await page.goto(urls.read_origin2_origin1);
+      const frameBody = page.locator('iframe').contentFrame().locator('body');
+      const expectedThirdParty = browserName === 'webkit' ?
+        'Received cookie: undefined' : browserName === 'firefox' ?
+          'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value' :
+          'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value';
+      await expect.soft(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
+    }
+    {
+      await page.goto(urls.read_origin1_origin2_origin1); // read-origin1-origin2-origin1.html
+      const frameBody = page.locator('iframe').contentFrame().locator('iframe').contentFrame().locator('body');
+      const expectedThirdParty = browserName === 'webkit' || browserName === 'firefox' ?
+        'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value' :
+        'Received cookie: frame-non-partitioned=value; top-level-non-partitioned=value';
+      await expect.soft(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
+    }
+  }
+
+  await checkCookies(page);
+});
+
 
 test(`same origin third party 'Partitioned;' cookie with different origin intermediate iframe`, async ({ page, httpsServer, browser, urls }) => {
   addCommonCookieHandlers(httpsServer, urls);
