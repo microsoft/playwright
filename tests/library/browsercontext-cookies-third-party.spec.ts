@@ -134,14 +134,15 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
   // Set cookie and do second navigation.
   await page.goto(urls.set_origin2_origin1);
   await page.goto(urls.read_origin2_origin1);
-  const expectedThirdParty = browserName === 'webkit' ?
-    'Received cookie: undefined' :
-    'Received cookie: frame=value; top-level=value';
-  await expect(frameBody).toHaveText(expectedThirdParty);
+  const expectedThirdParty = browserName === 'webkit' && isMac ?
+    'Received cookie: undefined' : browserName === 'webkit' ?
+      'Received cookie: top-level=value' :
+      'Received cookie: frame=value; top-level=value';
+  await expect(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
 
   // Check again the top-level cookie.
   await page.goto(urls.read_origin1);
-  const expectedTopLevel = browserName === 'webkit' && isMac ?
+  const expectedTopLevel = browserName === 'webkit' ?
     'Received cookie: top-level=value' :
     'Received cookie: frame=value; top-level=value';
   expect(await page.locator('body').textContent()).toBe(expectedTopLevel);
@@ -315,8 +316,6 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
 });
 
 test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, httpsServer, isMac, urls }) => {
-  // test.fixme(browserName === 'firefox', 'Firefox cookie partitioning is disabled in Firefox.');
-  // test.fixme(browserName === 'webkit' && !isMac, 'Linux and Windows WebKit builds do not partition third-party cookies at all.');
   addCommonCookieHandlers(httpsServer, urls);
 
   await context.addCookies([
@@ -379,10 +378,11 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       // Check third-party cookie.
       await page.goto(urls.read_origin2_origin1);
       const frameBody = page.locator('iframe').contentFrame().locator('body');
-      const expectedThirdParty = browserName === 'webkit' ?
-        'Received cookie: undefined' : browserName === 'firefox' ?
-          'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value' :
-          'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value';
+      const expectedThirdParty = browserName === 'webkit' && isMac ?
+        'Received cookie: undefined' : browserName === 'chromium' ?
+          'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value' :
+          // Firefox and WebKit on Linux/Windows do not partition third-party cookies.
+          'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
       await expect.soft(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
     }
     {
