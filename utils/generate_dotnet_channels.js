@@ -136,7 +136,7 @@ function properties(properties, indent, onlyOptional, parentName, level) {
       if (name === 'android' || name === 'electron')
         continue;
       if (name.startsWith('$mixin')) {
-        visitProperties(mixins.get(value).properties, parentName + toTitleCase(name));
+        visitProperties(mixins.get(value).properties, parentName);
         continue;
       }
       const inner = inlineType(value, indent, parentName + toTitleCase(name), level + 1);
