@@ -105,9 +105,10 @@ function findCookie(cookies: Cookie[], name: string) {
   return result;
 }
 
-function expectTopLevelSite(cookies: Cookie[], name: string, topLevelSite: string) {
+function expectPartitionKey(cookies: Cookie[], name: string, partitionKey: string) {
   const cookie = findCookie(cookies, name);
-  expect(cookie.topLevelSite, `Cookie ${name}`).toBe(topLevelSite);
+  if (partitionKey !== cookie.partitionKey)
+    throw new Error(`Cookie ${name} has partitionKey ${cookie.partitionKey} but expected ${partitionKey}.`);
 }
 
 async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean, urls: TestUrls) {
@@ -286,14 +287,14 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
     const expectedTopLevelPartitioned = browserName === 'webkit' && isMac ?
       undefined :
       'https://localhost';
-    expectTopLevelSite(cookies, 'top-level-partitioned', expectedTopLevelPartitioned);
-    expectTopLevelSite(cookies, 'top-level-non-partitioned', undefined);
+    expectPartitionKey(cookies, 'top-level-partitioned', expectedTopLevelPartitioned);
+    expectPartitionKey(cookies, 'top-level-non-partitioned', undefined);
     if (browserName === 'webkit' && isMac) {
       expect(cookies.find(cookie => cookie.name === 'frame-partitioned')).toBeUndefined();
       expect(cookies.find(cookie => cookie.name === 'frame-non-partitioned')).toBeUndefined();
     } else {
-      expectTopLevelSite(cookies, 'frame-partitioned', 'https://127.0.0.1');
-      expectTopLevelSite(cookies, 'frame-non-partitioned', undefined);
+      expectPartitionKey(cookies, 'frame-partitioned', 'https://127.0.0.1');
+      expectPartitionKey(cookies, 'frame-non-partitioned', undefined);
     }
   }
   checkStorageCookies(await page.context().cookies());
@@ -328,7 +329,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       httpOnly: false,
       secure: true,
       sameSite: 'None',
-      topLevelSite: 'https://localhost',
+      partitionKey: 'https://localhost',
       _chromiumHasCrossSiteAncestor: false
     } as any,
     {
@@ -350,7 +351,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       httpOnly: false,
       secure: true,
       sameSite: 'None',
-      topLevelSite: 'https://127.0.0.1',
+      partitionKey: 'https://127.0.0.1',
       _chromiumHasCrossSiteAncestor: true
     } as any,
     {

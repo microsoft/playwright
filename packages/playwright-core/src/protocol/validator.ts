@@ -136,7 +136,7 @@ scheme.SetNetworkCookie = tObject({
   httpOnly: tOptional(tBoolean),
   secure: tOptional(tBoolean),
   sameSite: tOptional(tEnum(['Strict', 'Lax', 'None'])),
-  topLevelSite: tOptional(tString),
+  partitionKey: tOptional(tString),
   _chromiumHasCrossSiteAncestor: tOptional(tBoolean),
 });
 scheme.NetworkCookie = tObject({
@@ -148,7 +148,7 @@ scheme.NetworkCookie = tObject({
   httpOnly: tBoolean,
   secure: tBoolean,
   sameSite: tEnum(['Strict', 'Lax', 'None']),
-  topLevelSite: tOptional(tString),
+  partitionKey: tOptional(tString),
   _chromiumHasCrossSiteAncestor: tOptional(tBoolean),
 });
 scheme.NameValue = tObject({
