@@ -32,7 +32,7 @@ import { TimeoutSettings } from './timeoutSettings';
 
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
-import type { FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
+import type { FilePayload, FrameExpectParams, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
@@ -459,6 +459,15 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async title(): Promise<string> {
     return (await this._channel.title()).value;
+  }
+
+  async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
+    params.expectedValue = serializeArgument(options.expectedValue);
+    const result = (await this._channel.expect(params));
+    if (result.received !== undefined)
+      result.received = parseResult(result.received);
+    return result;
   }
 }
 
