@@ -20140,6 +20140,10 @@ export interface Logger {
  * Every `page` object has its own Mouse, accessible with
  * [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse).
  *
+ * **NOTE** If you want to debug where the mouse moved, you can use the [Trace viewer](https://playwright.dev/docs/trace-viewer-intro) or
+ * [Playwright Inspector](https://playwright.dev/docs/running-tests). A red dot showing the location of the mouse will be shown for every
+ * mouse action.
+ *
  * ```js
  * // Using ‘page.mouse’ to trace a 100x100 square.
  * await page.mouse.move(0, 0);
