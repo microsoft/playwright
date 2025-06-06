@@ -405,7 +405,7 @@ export function toHaveTitle(
   expected: string | RegExp,
   options: { timeout?: number } = {},
 ) {
-  return toMatchText.call(this, 'toHaveTitle', page.locator(':root'), 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveTitle', undefined, 'Locator', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await (page.mainFrame() as FrameEx)._expect('to.have.title', { expectedText, isNot, timeout });
   }, expected, { receiverLabel: 'page', ...options });
@@ -423,7 +423,7 @@ export function toHaveURL(
 
   const baseURL = (page.context() as any)._options.baseURL;
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
-  return toMatchText.call(this, 'toHaveURL', page.locator(':root'), 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveURL', undefined, 'Locator', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
