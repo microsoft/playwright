@@ -88,7 +88,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.FrameEvaluateExpressionHandleResult> {
-    return { handle: ElementHandleDispatcher.fromJSHandle(this, await this._frame.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
   }
 
   async waitForSelector(params: channels.FrameWaitForSelectorParams, metadata: CallMetadata): Promise<channels.FrameWaitForSelectorResult> {
@@ -246,7 +246,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams, metadata: CallMetadata): Promise<channels.FrameWaitForFunctionResult> {
-    return { handle: ElementHandleDispatcher.fromJSHandle(this, await this._frame._waitForFunctionExpression(metadata, params.expression, params.isFunction, parseArgument(params.arg), params)) };
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame._waitForFunctionExpression(metadata, params.expression, params.isFunction, parseArgument(params.arg), params)) };
   }
 
   async title(params: channels.FrameTitleParams, metadata: CallMetadata): Promise<channels.FrameTitleResult> {

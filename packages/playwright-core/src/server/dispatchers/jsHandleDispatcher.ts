@@ -30,6 +30,10 @@ export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | W
 export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScope = JSHandleDispatcherParentScope> extends Dispatcher<js.JSHandle, channels.JSHandleChannel, ParentScope> implements channels.JSHandleChannel {
   _type_JSHandle = true;
 
+  static fromJSHandle(scope: JSHandleDispatcherParentScope, handle: js.JSHandle): JSHandleDispatcher {
+    return scope.connection.existingDispatcher<JSHandleDispatcher>(handle) || new JSHandleDispatcher(scope, handle);
+  }
+
   protected constructor(scope: ParentScope, jsHandle: js.JSHandle) {
     // Do not call this directly, use createHandle() instead.
     super(scope, jsHandle, jsHandle.asElement() ? 'ElementHandle' : 'JSHandle', {
@@ -44,19 +48,23 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
 
   async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
     const jsHandle = await this._object.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
-    return { handle: ElementHandleDispatcher.fromJSHandle(this.parentScope(), jsHandle) };
+    // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
 
   async getProperty(params: channels.JSHandleGetPropertyParams): Promise<channels.JSHandleGetPropertyResult> {
     const jsHandle = await this._object.getProperty(params.name);
-    return { handle: ElementHandleDispatcher.fromJSHandle(this.parentScope(), jsHandle) };
+    // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
 
   async getPropertyList(): Promise<channels.JSHandleGetPropertyListResult> {
     const map = await this._object.getProperties();
     const properties = [];
-    for (const [name, value] of map)
-      properties.push({ name, value: ElementHandleDispatcher.fromJSHandle(this.parentScope(), value) });
+    for (const [name, value] of map) {
+      // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
+      properties.push({ name, value: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, value) });
+    }
     return { properties };
   }
 
