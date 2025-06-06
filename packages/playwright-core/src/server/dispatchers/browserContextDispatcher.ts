@@ -23,6 +23,8 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { FrameDispatcher } from './frameDispatcher';
+import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { CRBrowserContext } from '../chromium/crBrowser';
@@ -42,7 +44,6 @@ import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, RouteHandler } from '../network';
 import type { InitScript, Page, PageBinding } from '../page';
 import type { DispatcherScope } from './dispatcher';
-import type { FrameDispatcher } from './frameDispatcher';
 import type * as channels from '@protocol/channels';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
@@ -126,7 +127,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
           page: pageDispatcher,
           type: message.type(),
           text: message.text(),
-          args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(pageDispatcher, a)),
+          args: message.args().map(a => {
+            const elementHandle = a.asElement();
+            if (elementHandle)
+              return ElementHandleDispatcher.from(FrameDispatcher.from(this, elementHandle._frame), elementHandle);
+            return JSHandleDispatcher.fromJSHandle(pageDispatcher, a);
+          }),
           location: message.location(),
         });
       }
