@@ -20161,6 +20161,10 @@ export interface Logger {
 /**
  * The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
  *
+ * **NOTE** If you want to debug where the mouse moved, you can use the [Trace viewer](https://playwright.dev/docs/trace-viewer-intro) or
+ * [Playwright Inspector](https://playwright.dev/docs/running-tests). A red dot showing the location of the mouse will be shown for every
+ * mouse action.
+ *
  * Every `page` object has its own Mouse, accessible with
  * [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse).
  *
