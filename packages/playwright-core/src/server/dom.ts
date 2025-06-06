@@ -86,7 +86,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const customEngines: InjectedScriptOptions['customEngines'] = [];
       const selectorsRegistry = this.frame._page.browserContext.selectors();
       for (const [name, { source }] of selectorsRegistry._engines)
-        customEngines.push({ name, source });
+        customEngines.push({ name, source: `(${source})` });
       const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
       const options: InjectedScriptOptions = {
         isUnderTest: isUnderTest(),
