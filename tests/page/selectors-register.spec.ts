@@ -138,7 +138,7 @@ it('should take java-style string', async ({ playwright, page }) => {
       return root.querySelectorAll(selector);
     }
   }`;
-  await playwright.selectors.register('textContent', createDummySelector);
+  await playwright.selectors.register('objectLiteral', createDummySelector);
   await page.setContent(`<div>Hello</div>`);
-  await page.textContent('textContent=div');
+  await page.textContent('objectLiteral=div');
 });
