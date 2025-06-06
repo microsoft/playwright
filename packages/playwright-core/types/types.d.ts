@@ -8830,6 +8830,13 @@ export interface BrowserContext {
      * Optional.
      */
     sameSite?: "Strict"|"Lax"|"None";
+
+    /**
+     * For partitioned third-party cookies (aka
+     * [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the
+     * partition key. Optional.
+     */
+    partitionKey?: string;
   }>): Promise<void>;
 
   /**
@@ -9305,6 +9312,8 @@ export interface BrowserContext {
       secure: boolean;
 
       sameSite: "Strict"|"Lax"|"None";
+
+      partitionKey?: string;
     }>;
 
     origins: Array<{
@@ -22502,6 +22511,8 @@ export interface Cookie {
   secure: boolean;
 
   sameSite: "Strict"|"Lax"|"None";
+
+  partitionKey?: string;
 }
 
 interface PageWaitForSelectorOptions {
