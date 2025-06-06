@@ -16,7 +16,6 @@
 
 .network-filters {
   display: flex;
-  gap: 16px;
   background-color: var(--vscode-sideBar-background);
   padding: 4px 8px;
   min-height: 32px;
@@ -24,12 +23,13 @@
 
 .network-filters input[type="search"] {
   padding: 0 5px;
+  margin-right: 8px;
 }
 
 .network-filters-resource-types {
   display: flex;
-  gap: 8px;
   align-items: center;
+  width: 100%
 }
 
 .network-filters-resource-type {

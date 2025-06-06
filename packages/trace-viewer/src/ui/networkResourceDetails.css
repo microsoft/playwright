@@ -68,7 +68,6 @@
 .tab-network .toolbar {
   min-height: 30px !important;
   background-color: initial !important;
-  border-bottom: 1px solid var(--vscode-panel-border);
 }
 
 .tab-network .toolbar::after {
@@ -77,6 +76,7 @@
 
 .tab-network .tabbed-pane-tab.selected {
   font-weight: bold;
+  background-color: var(--vscode-list-inactiveSelectionBackground) !important;
 }
 
 .copy-request-dropdown {
