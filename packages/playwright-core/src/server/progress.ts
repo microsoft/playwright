@@ -27,6 +27,7 @@ export interface Progress {
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
+  runAtomic<T>(task: () => Promise<T>): Promise<T>;
   metadata: CallMetadata;
 }
 
@@ -69,6 +70,16 @@ export class ProgressController {
     this._state = 'running';
     this.sdkObject.attribution.context?._activeProgressControllers.add(this);
 
+    let timer: NodeJS.Timeout | undefined;
+    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
+    const stopTimer = () => {
+      clearTimeout(timer);
+      timer = undefined;
+    };
+    const startTimer = () => {
+      timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), Math.max(0, progress.timeUntilDeadline()));
+    };
+
     const progress: Progress = {
       log: message => {
         if (this._state === 'running')
@@ -88,12 +99,19 @@ export class ProgressController {
         if (this._state === 'aborted')
           throw new AbortedError();
       },
-      metadata: this.metadata
+      metadata: this.metadata,
+      runAtomic: async <T>(task: () => Promise<T>): Promise<T> => {
+        stopTimer();
+        try {
+          return await task();
+        } finally {
+          startTimer();
+        }
+      },
     };
 
-    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
-    const timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), progress.timeUntilDeadline());
     try {
+      startTimer();
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
       this._state = 'finished';
@@ -104,7 +122,7 @@ export class ProgressController {
       throw e;
     } finally {
       this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
-      clearTimeout(timer);
+      stopTimer();
     }
   }
 }
