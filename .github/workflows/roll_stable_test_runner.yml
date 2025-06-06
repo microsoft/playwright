@@ -4,6 +4,9 @@ on:
   schedule:
     # At 10:00am UTC  (3AM PST) every Monday
     - cron: "0 10 * * 1"
+  push:
+    branches:
+      - roll-stable-test-runner012212
 jobs:
   trigger-roll:
     name: Trigger Roll
@@ -17,10 +20,10 @@ jobs:
         with:
           node-version: 22
       - run: |
-          npm install -D @playwright/test@beta
+          npm install @playwright/test@beta
           VERSION=$(node -e "console.log(require('./package.json').dependencies['@playwright/test'].replace('^', ''))")
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-        cwd: tests/playwright-test/stable-test-runner/
+        working-directory: tests/playwright-test/stable-test-runner/
         id: bump
       - name: Prepare branch
         id: prepare-branch
