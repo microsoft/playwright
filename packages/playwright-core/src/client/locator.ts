@@ -15,6 +15,7 @@
  */
 
 import { ElementHandle } from './elementHandle';
+import { TargetClosedError, TimeoutError } from './errors';
 import { parseResult, serializeArgument } from './jsHandle';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
@@ -374,12 +375,23 @@ export class Locator implements api.Locator {
   }
 
   async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-    params.expectedValue = serializeArgument(options.expectedValue);
-    const result = (await this._frame._channel.expect(params));
-    if (result.received !== undefined)
-      result.received = parseResult(result.received);
-    return result;
+    try {
+      const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
+      params.expectedValue = serializeArgument(options.expectedValue);
+      const result = await this._frame._channel.expect(params);
+      if (result.received !== undefined)
+        result.received = parseResult(result.received);
+      return { matches: !options.isNot, received: result.received };
+    } catch (error) {
+      if (error instanceof TimeoutError || error instanceof TargetClosedError) {
+        // Timeout error comes with extra details.
+        const details = error.details as channels.FrameExpectErrorDetails;
+        const received = details.received !== undefined ? parseResult(details.received) : undefined;
+        return { matches: options.isNot, received, log: error.log, timedOut: error instanceof TimeoutError };
+      }
+      // Any other error, e.g. "invalid selector", should be thrown directly.
+      throw error;
+    }
   }
 
   private _inspect() {

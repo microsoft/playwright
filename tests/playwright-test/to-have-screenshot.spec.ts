@@ -49,7 +49,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Timeout 2000ms exceeded`);
+  expect(result.output).toContain(`Timed out 2000ms waiting for expect(page).toHaveScreenshot(expected)`);
   expect(result.output).toContain(`Expect "toHaveScreenshot" with timeout 2000ms`);
   expect(result.output).toContain(`generating new stable screenshot expectation`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
@@ -388,7 +388,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Timeout 2000ms exceeded`);
+  expect(result.output).toContain(`Timed out 2000ms waiting for expect(locator).toHaveScreenshot(expected)`);
   expect(result.output).toContain(`Expect "toHaveScreenshot" with timeout 2000ms`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);

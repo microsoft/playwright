@@ -37,6 +37,7 @@ export type CallMetadata = {
   location?: { file: string, line?: number, column?: number };
   log: string[];
   error?: SerializedError;
+  errorDetails?: any;
   result?: any;
   point?: Point;
   objectId?: string;

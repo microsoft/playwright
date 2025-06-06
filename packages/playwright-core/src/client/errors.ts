@@ -19,14 +19,19 @@ import { isError } from '../utils/isomorphic/rtti';
 
 import type { SerializedError } from '@protocol/channels';
 
-export class TimeoutError extends Error {
+export class PlaywrightError extends Error {
+  log: string[] = [];
+  details?: any;
+}
+
+export class TimeoutError extends PlaywrightError {
   constructor(message: string) {
     super(message);
     this.name = 'TimeoutError';
   }
 }
 
-export class TargetClosedError extends Error {
+export class TargetClosedError extends PlaywrightError {
   constructor(cause?: string) {
     super(cause || 'Target page, context or browser has been closed');
   }
@@ -42,7 +47,7 @@ export function serializeError(e: any): SerializedError {
   return { value: serializeValue(e, value => ({ fallThrough: value })) };
 }
 
-export function parseError(error: SerializedError): Error {
+export function parseError(error: SerializedError): PlaywrightError {
   if (!error.error) {
     if (error.value === undefined)
       throw new Error('Serialized error must have either an error or a value');
@@ -58,7 +63,7 @@ export function parseError(error: SerializedError): Error {
     e.stack = error.error.stack || '';
     return e;
   }
-  const e = new Error(error.error.message);
+  const e = new PlaywrightError(error.error.message);
   e.stack = error.error.stack || '';
   e.name = error.error.name;
   return e;

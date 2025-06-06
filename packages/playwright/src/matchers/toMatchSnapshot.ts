@@ -382,7 +382,8 @@ export async function toHaveScreenshot(
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
     if (errorMessage) {
       const header = matcherHint(this, locator, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
-      return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log, this._stepInfo);
+      const errorText = timedOut && previous ? `Failed to take two consecutive stable screenshots.` : errorMessage;
+      return helper.handleDifferent(actual, undefined, previous, diff, header, errorText, log, this._stepInfo);
     }
 
     // We successfully generated new screenshot.
@@ -416,8 +417,9 @@ export async function toHaveScreenshot(
   if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all')
     return writeFiles();
 
+  const errorText = timedOut && previous ? `Failed to take two consecutive stable screenshots.` : errorMessage;
   const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
-  return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
+  return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorText, log, this._stepInfo);
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {

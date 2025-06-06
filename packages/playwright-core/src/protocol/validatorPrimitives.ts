@@ -23,13 +23,13 @@ export type ValidatorContext = {
 };
 export const scheme: { [key: string]: Validator } = {};
 
-export function findValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result'): Validator {
+export function findValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result' | 'ErrorDetails'): Validator {
   const validator = maybeFindValidator(type, method, kind);
   if (!validator)
     throw new ValidationError(`Unknown scheme for ${kind}: ${type}.${method}`);
   return validator;
 }
-export function maybeFindValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result'): Validator | undefined {
+export function maybeFindValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result' | 'ErrorDetails'): Validator | undefined {
   const schemeName = type + (kind === 'Initializer' ? '' : method[0].toUpperCase() + method.substring(1)) + kind;
   return scheme[schemeName];
 }

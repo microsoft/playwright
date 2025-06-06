@@ -18,7 +18,7 @@
 import * as accessibility from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
-import { TargetClosedError, TimeoutError } from './errors';
+import { TargetClosedError } from './errors';
 import { FileChooser } from './fileChooser';
 import * as frames from './frames';
 import { helper } from './helper';
@@ -31,10 +31,8 @@ import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis }
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
 import { debugLogger } from './utils/debugLogger';
-import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
-import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 
 import type { Artifact } from './artifact';
@@ -588,7 +586,7 @@ export class Page extends SdkObject {
     await this.delegate.updateRequestInterception();
   }
 
-  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
+  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer }> {
     const locator = options.locator;
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
@@ -601,27 +599,17 @@ export class Page extends SdkObject {
     const comparator = getComparator('image/png');
     const controller = new ProgressController(metadata, this);
     if (!options.expected && options.isNot)
-      return { errorMessage: '"not" matcher requires expected result' };
-    try {
-      const format = validateScreenshotOptions(options || {});
-      if (format !== 'png')
-        throw new Error('Only PNG screenshots are supported');
-    } catch (error) {
-      return { errorMessage: error.message };
-    }
-    let intermediateResult: {
-      actual?: Buffer,
-      previous?: Buffer,
-      errorMessage: string,
-      diff?: Buffer,
-    } | undefined = undefined;
-    const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
+      throw new Error('"not" matcher requires expected result');
+    const format = validateScreenshotOptions(options || {});
+    if (format !== 'png')
+      throw new Error('Only PNG screenshots are supported');
+    const compareScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined): string | undefined => {
       const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
       if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
-        return true;
+        return;
       if (comparatorResult)
-        intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
-      return false;
+        metadata.errorDetails = { diff: comparatorResult.diff, actual, previous };
+      return comparatorResult?.errorMessage || '';
     };
     const callTimeout = options.timeout;
     return controller.run(async progress => {
@@ -650,10 +638,11 @@ export class Page extends SdkObject {
           continue;
         // Compare against expectation for the first iteration.
         const expectation = options.expected && isFirstIteration ? options.expected : previous;
-        if (areEqualScreenshots(actual, expectation, previous))
+        const comparatorError = compareScreenshots(actual, expectation, previous);
+        if (comparatorError === undefined)
           break;
-        if (intermediateResult)
-          progress.log(intermediateResult.errorMessage);
+        if (comparatorError)
+          progress.log(comparatorError);
         isFirstIteration = false;
       }
 
@@ -668,26 +657,13 @@ export class Page extends SdkObject {
         return {};
       }
 
-      if (areEqualScreenshots(actual, options.expected, undefined)) {
+      const comparatorError = compareScreenshots(actual, options.expected, undefined);
+      if (comparatorError === undefined) {
         progress.log(`screenshot matched expectation`);
         return {};
       }
-      throw new Error(intermediateResult!.errorMessage);
-    }, callTimeout).catch(e => {
-      // Q: Why not throw upon isSessionClosedError(e) as in other places?
-      // A: We want user to receive a friendly diff between actual and expected/previous.
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
-        throw e;
-      let errorMessage = e.message;
-      if (e instanceof TimeoutError && intermediateResult?.previous)
-        errorMessage = `Failed to take two consecutive stable screenshots.`;
-      return {
-        log: compressCallLog(e.message ? [...metadata.log, e.message] : metadata.log),
-        ...intermediateResult,
-        errorMessage,
-        timedOut: (e instanceof TimeoutError),
-      };
-    });
+      throw new Error(comparatorError);
+    }, callTimeout);
   }
 
   async screenshot(metadata: CallMetadata, options: ScreenshotOptions & types.TimeoutOptions): Promise<Buffer> {

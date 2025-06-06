@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
@@ -47,7 +48,7 @@ test('should not print timed out error message when page closes', async ({ page 
     expect(page.locator('div')).toHaveText('hey', { timeout: 100000 }).catch(e => e),
     page.close(),
   ]);
-  expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected)`);
+  expect(stripAnsi(error.message)).toContain(`expect.toHaveText: ${kTargetClosedErrorMessage}`);
   expect(stripAnsi(error.message)).not.toContain('Timed out');
 });
 

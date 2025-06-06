@@ -1300,12 +1300,12 @@ scheme.PageExpectScreenshotParams = tObject({
   style: tOptional(tString),
 });
 scheme.PageExpectScreenshotResult = tObject({
+  actual: tOptional(tBinary),
+});
+scheme.PageExpectScreenshotErrorDetails = tObject({
   diff: tOptional(tBinary),
-  errorMessage: tOptional(tString),
   actual: tOptional(tBinary),
   previous: tOptional(tBinary),
-  timedOut: tOptional(tBoolean),
-  log: tOptional(tArray(tString)),
 });
 scheme.PageScreenshotParams = tObject({
   timeout: tNumber,
@@ -1889,10 +1889,10 @@ scheme.FrameExpectParams = tObject({
   timeout: tNumber,
 });
 scheme.FrameExpectResult = tObject({
-  matches: tBoolean,
   received: tOptional(tType('SerializedValue')),
-  timedOut: tOptional(tBoolean),
-  log: tOptional(tArray(tString)),
+});
+scheme.FrameExpectErrorDetails = tObject({
+  received: tOptional(tType('SerializedValue')),
 });
 scheme.WorkerInitializer = tObject({
   url: tString,
