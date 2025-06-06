@@ -85,12 +85,12 @@ export const terminalScreen: Screen = (() => {
       ttyHeight = +sizeMatch[2];
     } else {
       ttyWidth = +process.env.PLAYWRIGHT_FORCE_TTY;
-      ttyHeight = process.stdout.rows || DEFAULT_TTY_HEIGHT;
+      ttyHeight = DEFAULT_TTY_HEIGHT;
     }
     if (isNaN(ttyWidth))
       ttyWidth = DEFAULT_TTY_WIDTH;
     if (isNaN(ttyHeight))
-      ttyWidth = DEFAULT_TTY_HEIGHT;
+      ttyHeight = DEFAULT_TTY_HEIGHT;
   }
 
   let useColors = isTTY;

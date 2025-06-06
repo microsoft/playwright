@@ -308,19 +308,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const result = await runInlineTest({
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
-          import { ManualPromise } from '../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
-          const semaphoreAComplete = new ManualPromise();
           test('A', async ({}) => {
             for (let i = 0; i < 20; ++i) {
               console.log('line ' + i);
             }
-            
-            semaphoreAComplete.resolve();
           });
 
           test('B', async ({}) => {
-            await semaphoreAComplete;
-
             // Go past end of the screen
             for (let i = 20; i < 60; ++i) {
               console.log('line ' + i);
@@ -345,24 +339,24 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(2);
       const expected = [
-        '#0 :      1 a.test.ts:5:15 › A',
+        '#0 :      1 a.test.ts:3:15 › A',
       ];
       for (let i = 0; i < 20; ++i)
         expected.push(`line ${i}`);
       // Update to initial test status row
-      expected.push(`#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:5:15 › A`);
-      expected.push(`#21 :      2 a.test.ts:13:15 › B`);
+      expected.push(`#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:15 › A`);
+      expected.push(`#21 :      2 a.test.ts:9:15 › B`);
       for (let i = 20; i < 60; ++i)
         expected.push(`line ${i}`);
-      expected.push(`#62 :      2 a.test.ts:13:15 › B › First step`);
+      expected.push(`#62 :      2 a.test.ts:9:15 › B › First step`);
       expected.push(`step 1`);
-      expected.push(`#62 :      2 a.test.ts:13:15 › B`);
+      expected.push(`#62 :      2 a.test.ts:9:15 › B`);
       for (let i = 60; i < 80; ++i)
         expected.push(`line ${i}`);
-      expected.push(`#62 :      2 a.test.ts:13:15 › B › Second step`);
+      expected.push(`#62 :      2 a.test.ts:9:15 › B › Second step`);
       expected.push(`step 2`);
-      expected.push(`#62 :      2 a.test.ts:13:15 › B`);
-      expected.push(`#62 :   ${POSITIVE_STATUS_MARK} 2 a.test.ts:13:15 › B`);
+      expected.push(`#62 :      2 a.test.ts:9:15 › B`);
+      expected.push(`#62 :   ${POSITIVE_STATUS_MARK} 2 a.test.ts:9:15 › B`);
       const lines = result.output.split('\n');
       const firstIndex = lines.indexOf(expected[0]);
       expect(firstIndex, 'first line should be there').not.toBe(-1);
