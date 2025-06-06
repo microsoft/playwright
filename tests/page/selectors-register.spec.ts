@@ -128,3 +128,17 @@ it('isVisible should be atomic', async ({ playwright, page }) => {
   expect(result).toBe(true);
   expect(await page.evaluate(() => document.querySelector('div').style.display)).toBe('none');
 });
+
+it('should take java-style string', async ({ playwright, page }) => {
+  const createDummySelector = `{
+    query(root, selector) {
+      return root.querySelector(selector);
+    },
+    queryAll(root, selector) {
+      return root.querySelectorAll(selector);
+    }
+  }`;
+  await playwright.selectors.register('objectLiteral', createDummySelector);
+  await page.setContent(`<div>Hello</div>`);
+  await page.textContent('objectLiteral=div');
+});
