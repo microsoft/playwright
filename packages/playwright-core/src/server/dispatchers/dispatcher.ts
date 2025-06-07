@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 
 import { eventsHelper } from '../utils/eventsHelper';
-import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
+import { ValidationError, createMetadataValidator, findValidator, maybeFindValidator  } from '../../protocol/validator';
 import { LongStandingScope, assert, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
@@ -376,9 +376,11 @@ export class DispatcherConnection {
           rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
         }
       }
-      response.error = serializeError(e);
-      // The command handler could have set error in the metadata, do not reset it if there was no exception.
-      callMetadata.error = response.error;
+      callMetadata.error = serializeError(e);
+      response.error = callMetadata.error;
+      const validator = maybeFindValidator(dispatcher._type, method, 'ErrorDetails');
+      if (validator)
+        response.errorDetails = validator(callMetadata.errorDetails || {}, '', this._validatorToWireContext());
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);

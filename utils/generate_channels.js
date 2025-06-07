@@ -304,6 +304,15 @@ for (const [name, item] of Object.entries(protocol)) {
         addScheme(`${derived}${titleCase(methodName)}Result`, `tType('${resultName}')`);
 
       channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, metadata?: CallMetadata): Promise<${resultName}>;`);
+
+      if (method.errorDetails) {
+        const errorDetailsName = `${channelName}${titleCase(methodName)}ErrorDetails`;
+        const details = objectType(method.errorDetails, '');
+        ts_types.set(errorDetailsName, details.ts);
+        addScheme(errorDetailsName, details.scheme);
+        for (const derived of derivedClasses.get(channelName) || [])
+          addScheme(`${derived}${titleCase(methodName)}ErrorDetails`, `tType('${errorDetailsName}')`);
+      }
     }
 
     channels_ts.push(`}`);

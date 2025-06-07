@@ -33,7 +33,6 @@ import { debugLogger } from './utils/debugLogger';
 import { eventsHelper } from './utils/eventsHelper';
 import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
-import { compressCallLog } from './callLog';
 
 import type { ConsoleMessage } from './console';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
@@ -1382,77 +1381,55 @@ export class Frame extends SdkObject {
     }, options.timeout);
   }
 
-  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    const result = await this._expectImpl(metadata, selector, options);
-    // Library mode special case for the expect errors which are return values, not exceptions.
-    if (result.matches === options.isNot)
-      metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
-    return result;
-  }
+  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ received?: any }> {
+    let timeout = options.timeout;
+    const start = timeout > 0 ? monotonicTime() : 0;
 
-  private async _expectImpl(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
+    // Step 1: perform locator handlers checkpoint with a specified timeout.
+    await (new ProgressController(metadata, this)).run(async progress => {
+      progress.log(`${renderTitleForCall(metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
+      progress.log(`waiting for ${this._asLocator(selector)}`);
+      await this._page.performActionPreChecks(progress);
+    }, timeout);
+
+    // Step 2: perform one-shot expect check without a timeout.
+    // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
+    // that should succeed when the locator is already visible.
     try {
-      let timeout = options.timeout;
-      const start = timeout > 0 ? monotonicTime() : 0;
-
-      // Step 1: perform locator handlers checkpoint with a specified timeout.
-      await (new ProgressController(metadata, this)).run(async progress => {
-        progress.log(`${renderTitleForCall(metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
-        progress.log(`waiting for ${this._asLocator(selector)}`);
-        await this._page.performActionPreChecks(progress);
-      }, timeout);
-
-      // Step 2: perform one-shot expect check without a timeout.
-      // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
-      // that should succeed when the locator is already visible.
-      try {
-        const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
-          return await this._expectInternal(progress, selector, options, lastIntermediateResult);
-        });
-        if (resultOneShot.matches !== options.isNot)
-          return resultOneShot;
-      } catch (e) {
-        if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
-          throw e;
-        // Ignore any other errors from one-shot, we'll handle them during retries.
-      }
-      if (timeout > 0) {
-        const elapsed = monotonicTime() - start;
-        timeout -= elapsed;
-      }
-      if (timeout < 0)
-        return { matches: options.isNot, log: compressCallLog(metadata.log), timedOut: true, received: lastIntermediateResult.received };
-
-      // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      return await (new ProgressController(metadata, this)).run(async progress => {
-        return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
-          await this._page.performActionPreChecks(progress);
-          const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult);
-          if (matches === options.isNot) {
-            // Keep waiting in these cases:
-            // expect(locator).conditionThatDoesNotMatch
-            // expect(locator).not.conditionThatDoesMatch
-            return continuePolling;
-          }
-          return { matches, received };
-        });
-      }, timeout);
+      const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
+        return await this._expectInternal(progress, selector, options);
+      });
+      if (resultOneShot.matches !== options.isNot)
+        return { received: resultOneShot.received };
     } catch (e) {
-      // Q: Why not throw upon isSessionClosedError(e) as in other places?
-      // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
-      const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: compressCallLog(metadata.log) };
-      if (lastIntermediateResult.isSet)
-        result.received = lastIntermediateResult.received;
-      if (e instanceof TimeoutError)
-        result.timedOut = true;
-      return result;
+      // Ignore any other errors from one-shot, we'll handle them during retries.
     }
+    if (timeout > 0) {
+      const elapsed = monotonicTime() - start;
+      timeout -= elapsed;
+    }
+    if (timeout < 0)
+      throw new TimeoutError(`Timeout ${options.timeout}ms exceeded.`);
+
+    // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
+    return await (new ProgressController(metadata, this)).run(async progress => {
+      return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
+        await this._page.performActionPreChecks(progress);
+        const { matches, received } = await this._expectInternal(progress, selector, options);
+        if (matches === options.isNot) {
+          // Keep waiting in these cases:
+          // expect(locator).conditionThatDoesNotMatch
+          // expect(locator).not.conditionThatDoesMatch
+          return continuePolling;
+        }
+        return { received };
+      });
+    }, timeout);
   }
 
-  private async _expectInternal(progress: Progress, selector: string, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }) {
+  private async _expectInternal(progress: Progress, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any }> {
     const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
     progress.throwIfAborted();
 
@@ -1481,12 +1458,17 @@ export class Frame extends SdkObject {
       progress.log(log);
     // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
     if (matches === options.isNot) {
-      lastIntermediateResult.received = missingReceived ? '<element(s) not found>' : received;
-      lastIntermediateResult.isSet = true;
+      progress.metadata.errorDetails = { received: missingReceived ? '<element(s) not found>' : received };
       if (!missingReceived && !Array.isArray(received))
         progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
     }
-    return { matches, received };
+
+    let returnedReceived = received;
+    if (matches !== options.isNot && options.expression !== 'to.match.aria') {
+      // When expect is passing, we only need the received value for aria snapshots to perform the rebaseline.
+      returnedReceived = undefined;
+    }
+    return { matches, received: returnedReceived };
   }
 
   async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions, world: types.World = 'main'): Promise<js.SmartHandle<R>> {

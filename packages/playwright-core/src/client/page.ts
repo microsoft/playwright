@@ -22,7 +22,7 @@ import { evaluationScript } from './clientHelper';
 import { Coverage } from './coverage';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
-import { TargetClosedError, isTargetClosedError, serializeError } from './errors';
+import { PlaywrightError, TargetClosedError, TimeoutError, isTargetClosedError, serializeError } from './errors';
 import { Events } from './events';
 import { FileChooser } from './fileChooser';
 import { Frame, verifyLoadState } from './frame';
@@ -598,19 +598,30 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean}> {
-    const mask = options?.mask ? options?.mask.map(locator => ({
-      frame: (locator as Locator)._frame._channel,
-      selector: (locator as Locator)._selector,
-    })) : undefined;
-    const locator = options.locator ? {
-      frame: (options.locator as Locator)._frame._channel,
-      selector: (options.locator as Locator)._selector,
-    } : undefined;
-    return await this._channel.expectScreenshot({
-      ...options,
-      isNot: !!options.isNot,
-      locator,
-      mask,
+    // This extra wrapApiCall avoids prepending apiName to the error message.
+    return await this._wrapApiCall(async () => {
+      try {
+        const mask = options?.mask ? options?.mask.map(locator => ({
+          frame: (locator as Locator)._frame._channel,
+          selector: (locator as Locator)._selector,
+        })) : undefined;
+        const locator = options.locator ? {
+          frame: (options.locator as Locator)._frame._channel,
+          selector: (options.locator as Locator)._selector,
+        } : undefined;
+        return await this._channel.expectScreenshot({
+          ...options,
+          isNot: !!options.isNot,
+          locator,
+          mask,
+        });
+      } catch (error) {
+        if (error instanceof PlaywrightError) {
+          const details = error.details as channels.PageExpectScreenshotErrorDetails;
+          return { ...details, errorMessage: error.message, log: error.log, timedOut: error instanceof TimeoutError };
+        }
+        throw error;
+      }
     });
   }
 

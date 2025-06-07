@@ -2294,12 +2294,12 @@ export type PageExpectScreenshotOptions = {
   style?: string,
 };
 export type PageExpectScreenshotResult = {
+  actual?: Binary,
+};
+export type PageExpectScreenshotErrorDetails = {
   diff?: Binary,
-  errorMessage?: string,
   actual?: Binary,
   previous?: Binary,
-  timedOut?: boolean,
-  log?: string[],
 };
 export type PageScreenshotParams = {
   timeout: number,
@@ -3256,10 +3256,10 @@ export type FrameExpectOptions = {
   useInnerText?: boolean,
 };
 export type FrameExpectResult = {
-  matches: boolean,
   received?: SerializedValue,
-  timedOut?: boolean,
-  log?: string[],
+};
+export type FrameExpectErrorDetails = {
+  received?: SerializedValue,
 };
 
 export interface FrameEvents {
