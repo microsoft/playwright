@@ -16,6 +16,7 @@
 import { test, expect } from './npmTest';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 test('cli should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i playwright');
@@ -29,6 +30,23 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
       }
     });
     expect(result).toContain(`{ page }`);
+  });
+
+  await test.step('codegen with user data dir', async () => {
+    const userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-custom-user-data-dir'));
+
+    try {
+      const result = await exec(`npx playwright codegen --user-data-dir ${userDataDir} about:blank`, {
+        env: {
+          PWTEST_CLI_IS_UNDER_TEST: '1',
+          PWTEST_CLI_AUTO_EXIT_WHEN: `goto('about:blank')`,
+        }
+      });
+      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+      expect(result).toContain(`{ page }`);
+    } finally {
+      fs.rmdirSync(userDataDir, { recursive: true });
+    }
   });
 
   await test.step('codegen --target=javascript', async () => {
