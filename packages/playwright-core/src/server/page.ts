@@ -623,8 +623,24 @@ export class Page extends SdkObject {
         intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
       return false;
     };
+    const errorHandler = (e: any) => {
+      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // A: We want user to receive a friendly diff between actual and expected/previous.
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        throw e;
+      let errorMessage = e.message;
+      if (e instanceof TimeoutError && intermediateResult?.previous)
+        errorMessage = `Failed to take two consecutive stable screenshots.`;
+      return {
+        log: compressCallLog(e.message ? [...metadata.log, e.message] : metadata.log),
+        ...intermediateResult,
+        errorMessage,
+        timedOut: (e instanceof TimeoutError),
+      };
+    };
     const callTimeout = options.timeout;
     return controller.run(async progress => {
+      progress.setCustomErrorHandler(errorHandler);
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
@@ -673,21 +689,7 @@ export class Page extends SdkObject {
         return {};
       }
       throw new Error(intermediateResult!.errorMessage);
-    }, callTimeout).catch(e => {
-      // Q: Why not throw upon isSessionClosedError(e) as in other places?
-      // A: We want user to receive a friendly diff between actual and expected/previous.
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
-        throw e;
-      let errorMessage = e.message;
-      if (e instanceof TimeoutError && intermediateResult?.previous)
-        errorMessage = `Failed to take two consecutive stable screenshots.`;
-      return {
-        log: compressCallLog(e.message ? [...metadata.log, e.message] : metadata.log),
-        ...intermediateResult,
-        errorMessage,
-        timedOut: (e instanceof TimeoutError),
-      };
-    });
+    }, callTimeout);
   }
 
   async screenshot(metadata: CallMetadata, options: ScreenshotOptions & types.TimeoutOptions): Promise<Buffer> {

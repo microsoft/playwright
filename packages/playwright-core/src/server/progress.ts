@@ -28,6 +28,9 @@ export interface Progress {
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
   metadata: CallMetadata;
+  setCustomErrorHandler(handler: (error: Error) => any): void;
+  pause(): void;
+  resume(): void;
 }
 
 export class ProgressController {
@@ -40,6 +43,7 @@ export class ProgressController {
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
+  private _errorHandler: (error: Error) => any;
   readonly metadata: CallMetadata;
   readonly instrumentation: Instrumentation;
   readonly sdkObject: SdkObject;
@@ -49,6 +53,7 @@ export class ProgressController {
     this.sdkObject = sdkObject;
     this.instrumentation = sdkObject.instrumentation;
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
+    this._errorHandler = error => { throw error; };  // Default error handler does not handle the error.
   }
 
   setLogName(logName: LogName) {
@@ -68,6 +73,8 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
     this.sdkObject.attribution.context?._activeProgressControllers.add(this);
+    let timer: NodeJS.Timeout | undefined;
+    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
 
     const progress: Progress = {
       log: message => {
@@ -88,12 +95,25 @@ export class ProgressController {
         if (this._state === 'aborted')
           throw new AbortedError();
       },
-      metadata: this.metadata
+      metadata: this.metadata,
+      setCustomErrorHandler: handler => this._errorHandler = handler,
+      pause: () => {
+        if (timer) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+      },
+      resume: () => {
+        const remaining = progress.timeUntilDeadline();
+        if (remaining <= 0)
+          this._forceAbortPromise.reject(timeoutError);
+        else
+          timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), remaining);
+      },
     };
 
-    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
-    const timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), progress.timeUntilDeadline());
     try {
+      progress.resume();
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
       this._state = 'finished';
@@ -101,10 +121,10 @@ export class ProgressController {
     } catch (e) {
       this._state = 'aborted';
       await Promise.all(this._cleanups.splice(0).map(runCleanup));
-      throw e;
+      return this._errorHandler(e);
     } finally {
       this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
-      clearTimeout(timer);
+      progress.pause();
     }
   }
 }
