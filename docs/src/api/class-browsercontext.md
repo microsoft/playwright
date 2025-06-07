@@ -987,6 +987,7 @@ Here are some permissions that may be supported by some browsers:
 * `'notifications'`
 * `'payment-handler'`
 * `'storage-access'`
+* `'local-fonts'`
 
 ### option: BrowserContext.grantPermissions.origin
 * since: v1.8

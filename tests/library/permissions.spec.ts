@@ -236,3 +236,19 @@ it('storage access', {
   expect(access).toBe(true);
   expect(await frame.evaluate(() => document.hasStorageAccess())).toBe(true);
 });
+
+it.describe(() => {
+  // Secure context
+  it.use({ ignoreHTTPSErrors: true, });
+
+  it('should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName }) => {
+    it.skip(browserName !== 'chromium', 'chromium-only api');
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36113' });
+
+    await page.goto(httpsServer.EMPTY_PAGE);
+    expect(await getPermission(page, 'local-fonts')).toBe('prompt');
+    await context.grantPermissions(['local-fonts']);
+    expect(await getPermission(page, 'local-fonts')).toBe('granted');
+    expect(await page.evaluate(async () => (await (window as any).queryLocalFonts()).length > 0)).toBe(true);
+  });
+});
