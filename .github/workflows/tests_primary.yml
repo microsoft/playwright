@@ -118,13 +118,19 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         node-version: ${{matrix.node-version}}
-        command: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        command: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --trace=on
         bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: test-results-${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}
+        path: test-results/
+        retention-days: 30
 
   test_web_components:
     name: Web Components
