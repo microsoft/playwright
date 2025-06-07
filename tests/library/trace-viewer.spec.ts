@@ -40,7 +40,9 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   });
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
   const page = await context.newPage();
-  await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
+  await page.goto(`data:text/html,<!DOCTYPE html><html><title>Hello</title><body>Hello world</body></html>`);
+  await expect(page).toHaveTitle('Hello');
+  await expect(page).toHaveURL('data:text/html,<!DOCTYPE html><html><title>Hello</title><body>Hello world</body></html>');
   await page.setContent('<!DOCTYPE html><button>Click</button>');
   await expect(page.locator('button')).toHaveText('Click');
   await expect(page.getByTestId('amazing-btn')).toBeHidden();
@@ -149,20 +151,22 @@ test('should show tracing.group in the action list with location', async ({ runA
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await expect(traceViewer.actionTitles).toHaveText([
-    /Create page/,
-    /Navigate to "data:"/,
-    /Set content/,
-    /toHaveText.*locator/,
-    /toBeHidden.*getByTestId/,
-    /toBeHidden.*getByTestId/,
-    /Evaluate/,
-    /Evaluate/,
-    /Click/,
-    /Wait for navigation/,
-    /Wait for event "response"/,
-    /Wait for timeout/,
-    /Navigate to "\/frames\/frame.html"/,
-    /Set viewport size/,
+    /^Create page[\d]+ms$/,
+    /^Navigate to "data:"[\d]+ms$/,
+    /^Expect "toHaveTitle"[\d]+ms$/,
+    /^Expect "toHaveURL"[\d]+ms$/,
+    /^Set content[\d]+ms$/,
+    /^Expect "toHaveText"[\d]+mslocator\('button'\)$/,
+    /^Expect "toBeHidden"[\d]+msgetByTestId\('amazing-btn'\)$/,
+    /^Expect "toBeHidden"[\d]+msgetByTestId\(\/amazing-btn-regex\/\)$/,
+    /^Evaluate[\d]+ms21$/,
+    /^Evaluate[\d]+ms$/,
+    /^Click[\d]+msgetByText\('Click'\)$/,
+    /^Wait for navigation[\d]+ms$/,
+    /^Wait for event "response"[\d]+ms$/,
+    /^Wait for timeout[\d]+ms$/,
+    /^Navigate to "\/frames\/frame.html"[\d]+ms1$/,
+    /^Set viewport size[\d]+ms$/,
   ]);
 });
 
@@ -1827,6 +1831,8 @@ test('should render blob trace received from message', async ({ showTraceViewer 
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
     /Navigate to "data:"/,
+    /toHaveTitle/,
+    /toHaveURL/,
     /Set content/,
     /toHaveText.*locator/,
     /toBeHidden.*getByTestId/,

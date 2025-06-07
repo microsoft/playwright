@@ -3238,7 +3238,7 @@ export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,
 };
 export type FrameExpectParams = {
-  selector: string,
+  selector?: string,
   expression: string,
   expressionArg?: any,
   expectedText?: ExpectedTextValue[],
@@ -3249,6 +3249,7 @@ export type FrameExpectParams = {
   timeout: number,
 };
 export type FrameExpectOptions = {
+  selector?: string,
   expressionArg?: any,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,

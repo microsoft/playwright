@@ -1882,7 +1882,7 @@ scheme.FrameWaitForSelectorResult = tObject({
   element: tOptional(tChannel(['ElementHandle'])),
 });
 scheme.FrameExpectParams = tObject({
-  selector: tString,
+  selector: tOptional(tString),
   expression: tString,
   expressionArg: tOptional(tAny),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
