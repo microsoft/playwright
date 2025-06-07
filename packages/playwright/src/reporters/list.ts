@@ -102,7 +102,7 @@ class ListReporter extends TerminalReporter {
       const line = test.title + this.screen.colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
     } else {
-      this._updateLine(this._testRows.get(test)!, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
@@ -113,7 +113,7 @@ class ListReporter extends TerminalReporter {
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
       if (this.screen.isTTY)
-        this._updateLine(this._testRows.get(test)!, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+        this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
 
@@ -127,7 +127,7 @@ class ListReporter extends TerminalReporter {
       text = title;
     text += this.screen.colors.dim(` (${milliseconds(step.duration)})`);
 
-    this._updateOrAppendLine(this._stepRows.get(step)!, text, prefix);
+    this._updateOrAppendLine(this._stepRows, step, text, prefix);
   }
 
   private _maybeWriteNewLine() {
@@ -196,14 +196,17 @@ class ListReporter extends TerminalReporter {
       text += this._retrySuffix(result) + this.screen.colors.dim(` (${milliseconds(result.duration)})`);
     }
 
-    this._updateOrAppendLine(this._testRows.get(test)!, text, prefix);
+    this._updateOrAppendLine(this._testRows, test, text, prefix);
   }
 
-  private _updateOrAppendLine(row: number, text: string, prefix: string) {
-    if (this.screen.isTTY) {
+  private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
+    const row = entityRowNumbers.get(entity);
+    // Only update the line if we assume that the line is still on the screen
+    if (row !== undefined && this.screen.isTTY && this._lastRow - row < this.screen.ttyHeight) {
       this._updateLine(row, text, prefix);
     } else {
       this._maybeWriteNewLine();
+      entityRowNumbers.set(entity, this._lastRow);
       this._appendLine(text, prefix);
     }
   }
