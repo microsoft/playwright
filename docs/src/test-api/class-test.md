@@ -1425,7 +1425,7 @@ Timeout in milliseconds.
 
 Skip a test. Playwright will not run the test past the `test.skip()` call.
 
-Skipped tests are not supposed to be ever run. If you intent to fix the test, use [`method: Test.fixme`] instead.
+Skipped tests are not supposed to be ever run. If you intend to fix the test, use [`method: Test.fixme`] instead.
 
 To declare a skipped test:
 * `test.skip(title, body)`
