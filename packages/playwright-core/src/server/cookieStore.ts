@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { kMaxCookieExpiresDateInSeconds } from './network';
+import { isLocalHostname, kMaxCookieExpiresDateInSeconds } from './network';
 
 import type * as channels from '@protocol/channels';
 
@@ -30,7 +30,7 @@ export class Cookie {
 
   // https://datatracker.ietf.org/doc/html/rfc6265#section-5.4
   matches(url: URL): boolean {
-    if (this._raw.secure && (url.protocol !== 'https:' && url.hostname !== 'localhost'))
+    if (this._raw.secure && (url.protocol !== 'https:' && !isLocalHostname(url.hostname)))
       return false;
     if (!domainMatches(url.hostname, this._raw.domain))
       return false;
