@@ -161,22 +161,18 @@ test('Intercept network requests', async ({ page }) => {
 ```
 ---
 
-## 📘 Test Report Download Instructions
+## 📘 Test Report Download Instructions 
 
 After running your tests using:
 
 ```bash
 npx playwright test
 
-
----
-
-## 📘 How to View Playwright Test Report Locally
-
-After running your tests using:
+To generate an HTML report, run:
 
 ```bash
-npx playwright test
+npx playwright test --reporter=html
+npx playwright show-report
 
 ## Resources
 
