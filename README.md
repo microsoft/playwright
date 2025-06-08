@@ -168,6 +168,16 @@ After running your tests using:
 ```bash
 npx playwright test
 
+
+---
+
+## 📘 How to View Playwright Test Report Locally
+
+After running your tests using:
+
+```bash
+npx playwright test
+
 ## Resources
 
 * [Documentation](https://playwright.dev)
