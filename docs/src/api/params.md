@@ -1302,6 +1302,14 @@ Whether to find an exact match: case-sensitive and whole-string. Default to fals
 
 Required aria role.
 
+## locator-get-by-role-option-busy
+* since: v1.27
+- `busy` <[boolean]>
+
+An attribute that is usually set by `aria-busy`.
+
+Learn more about [`aria-busy`](https://www.w3.org/TR/wai-aria-1.2/#aria-busy).
+
 ## locator-get-by-role-option-checked
 * since: v1.27
 - `checked` <[boolean]>
@@ -1376,6 +1384,7 @@ An attribute that is usually set by `aria-selected`.
 Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
 
 ## locator-get-by-role-option-list-v1.27
+- %%-locator-get-by-role-option-busy-%%
 - %%-locator-get-by-role-option-checked-%%
 - %%-locator-get-by-role-option-disabled-%%
 - %%-locator-get-by-role-option-expanded-%%
