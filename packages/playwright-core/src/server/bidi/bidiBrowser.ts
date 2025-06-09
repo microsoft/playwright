@@ -209,6 +209,7 @@ export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _originToPermissions = new Map<string, string[]>();
   private _blockingPageCreations: Set<Promise<unknown>> = new Set();
+  private _initScriptIds = new Map<InitScript, string>();
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -371,11 +372,18 @@ export class BidiBrowserContext extends BrowserContext {
       functionDeclaration: `() => { return ${initScript.source} }`,
       userContexts: [this._browserContextId || 'default'],
     });
-    initScript.auxData = script;
+    this._initScriptIds.set(initScript, script);
   }
 
   async doRemoveInitScripts(initScripts: InitScript[]) {
-    await Promise.all(initScripts.map(script => this._browser._browserSession.send('script.removePreloadScript', { script: script.auxData })));
+    const ids: string[] = [];
+    for (const script of initScripts) {
+      const id = this._initScriptIds.get(script);
+      if (id)
+        ids.push(id);
+      this._initScriptIds.delete(script);
+    }
+    await Promise.all(ids.map(script => this._browser._browserSession.send('script.removePreloadScript', { script })));
   }
 
   async doUpdateRequestInterception(): Promise<void> {

@@ -3,6 +3,10 @@
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
+:::tip
+If you want to debug where the mouse moved, you can use the [Trace viewer](../trace-viewer-intro.md) or [Playwright Inspector](../running-tests.md). A red dot showing the location of the mouse will be shown for every mouse action.
+:::
+
 Every `page` object has its own Mouse, accessible with [`property: Page.mouse`].
 
 ```js

@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { expect, test } from './playwright-test-fixtures';
 
-const markdownReporter = require.resolve('../../packages/playwright-dashboard/lib/markdownReporter');
+const markdownReporter = require.resolve('../../packages/playwright/lib/reporters/markdown');
 
 test('simple report', async ({ runInlineTest }) => {
   const files = {

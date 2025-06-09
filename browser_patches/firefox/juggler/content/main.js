@@ -2,14 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
-const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
-const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
+// Load SimpleChannel and Runtime in content process's global.
+// NOTE: since these have to exist in both Worker and main threads, and we do
+// not know a way to load ES Modules in worker threads, we have to use the loadSubScript
+// utility instead.
+Services.scriptloader.loadSubScript('chrome://juggler/content/SimpleChannel.js');
+Services.scriptloader.loadSubScript('chrome://juggler/content/content/Runtime.js');
+
+const {Helper} = ChromeUtils.importESModule('chrome://juggler/content/Helper.js');
+const {FrameTree} = ChromeUtils.importESModule('chrome://juggler/content/content/FrameTree.js');
+const {PageAgent} = ChromeUtils.importESModule('chrome://juggler/content/content/PageAgent.js');
 
 const helper = new Helper();
 
-function initialize(browsingContext, docShell) {
+export function initialize(browsingContext, docShell) {
   const data = { channel: undefined, pageAgent: undefined, frameTree: undefined, failedToOverrideTimezone: false };
 
   const applySetting = {
@@ -114,6 +120,3 @@ function initialize(browsingContext, docShell) {
 
   return data;
 }
-
-var EXPORTED_SYMBOLS = ['initialize'];
-this.initialize = initialize;

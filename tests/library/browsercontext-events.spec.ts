@@ -15,6 +15,7 @@
  */
 
 import { browserTest as test, expect } from '../config/browserTest';
+import type { ElementHandle } from 'playwright-core';
 
 test('console event should work @smoke', async ({ page }) => {
   const [, message] = await Promise.all([
@@ -24,6 +25,17 @@ test('console event should work @smoke', async ({ page }) => {
 
   expect(message.text()).toBe('hello');
   expect(message.page()).toBe(page);
+});
+
+test('console event should work with element handles', async ({ page }) => {
+  await page.setContent('<body>hello</body>');
+  const [, message] = await Promise.all([
+    page.evaluate(() => console.log(document.body)),
+    page.context().waitForEvent('console'),
+  ]);
+  const body = message.args()[0];
+  expect(await body.evaluate(x => x.nodeName)).toBe('BODY');
+  await (body as ElementHandle).click();
 });
 
 test('console event should work in popup', async ({ page }) => {

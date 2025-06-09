@@ -812,7 +812,7 @@ export class Page extends SdkObject {
 
   async snapshotForAI(metadata: CallMetadata): Promise<string> {
     this.lastSnapshotFrameIds = [];
-    const snapshot = await snapshotFrameForAI(this.mainFrame(), 0, this.lastSnapshotFrameIds);
+    const snapshot = await snapshotFrameForAI(metadata, this.mainFrame(), 0, this.lastSnapshotFrameIds);
     return snapshot.join('\n');
   }
 }
@@ -914,7 +914,6 @@ export class PageBinding {
 export class InitScript {
   readonly source: string;
   readonly name?: string;
-  auxData: any; // Can be arbitrarily used by a browser-specific implementation.
 
   constructor(source: string, name?: string) {
     this.source = `(() => {
@@ -990,12 +989,30 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
-  const context = await frame._utilityContext();
-  const injectedScript = await context.injectedScript();
-  const snapshot = await injectedScript.evaluate((injected, refPrefix) => {
-    return injected.ariaSnapshot(injected.document.body, { forAI: true, refPrefix });
-  }, frameOrdinal ? 'f' + frameOrdinal : '');
+async function snapshotFrameForAI(metadata: CallMetadata, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
+  // Only await the topmost navigations, inner frames will be empty when racing.
+  const controller = new ProgressController(metadata, frame);
+  const snapshot = await controller.run(progress => {
+    return frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+      try {
+        const context = await frame._utilityContext();
+        const injectedScript = await context.injectedScript();
+        const snapshotOrRetry = await injectedScript.evaluate((injected, refPrefix) => {
+          const node = injected.document.body;
+          if (!node)
+            return true;
+          return injected.ariaSnapshot(node, { forAI: true, refPrefix });
+        }, frameOrdinal ? 'f' + frameOrdinal : '');
+        if (snapshotOrRetry === true)
+          return continuePolling;
+        return snapshotOrRetry;
+      } catch (e) {
+        if (js.isJavaScriptErrorInEvaluate(e))
+          throw e;
+        return continuePolling;
+      }
+    });
+  });
 
   const lines = snapshot.split('\n');
   const result = [];
@@ -1018,7 +1035,7 @@ async function snapshotFrameForAI(frame: frames.Frame, frameOrdinal: number, fra
     const frameOrdinal = frameIds.length + 1;
     frameIds.push(child.frame._id);
     try {
-      const childSnapshot = await snapshotFrameForAI(child.frame, frameOrdinal, frameIds);
+      const childSnapshot = await snapshotFrameForAI(metadata, child.frame, frameOrdinal, frameIds);
       result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
     } catch {
       result.push(line);

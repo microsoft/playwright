@@ -18,10 +18,11 @@ import os from 'os';
 import path from 'path';
 
 import { wrapInASCIIBox } from '../utils/ascii';
-import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { createProfile } from './third_party/firefoxPrefs';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -29,6 +30,7 @@ import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type { RecentLogsCollector } from '../utils/debugLogger';
 
 
 export class BidiFirefox extends BrowserType {
@@ -101,16 +103,13 @@ export class BidiFirefox extends BrowserType {
     return firefoxArguments;
   }
 
-  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    return new FirefoxReadyState();
-  }
-}
-
-class FirefoxReadyState extends BrowserReadyState {
-  override onBrowserOutput(message: string): void {
-    // Bidi WebSocket in Firefox.
-    const match = message.match(/WebDriver BiDi listening on (ws:\/\/.*)$/);
-    if (match)
-      this._wsEndpoint.resolve(match[1] + '/session');
+  override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+    const result = new ManualPromise<{ wsEndpoint?: string }>();
+    browserLogsCollector.onMessage(message => {
+      const match = message.match(/WebDriver BiDi listening on (ws:\/\/.*)$/);
+      if (match)
+        result.resolve({ wsEndpoint: match[1] + '/session' });
+    });
+    return result;
   }
 }

@@ -58,8 +58,10 @@ it('should not allow to override unsafe HTTP headers', async ({ page, server, br
     // Electron doesn't send the request if the host header is overridden,
     // but doesn't throw an error either.
     expect(error).toBeFalsy();
+    serverRequestPromise.catch(() => {});
   } else if (browserName === 'chromium') {
     expect(error.message).toContain('Unsafe header');
+    serverRequestPromise.catch(() => {});
   } else {
     expect(error).toBeFalsy();
     // These lines just document current behavior in FF and WK,

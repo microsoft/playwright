@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { codeFrameColumns } from '@babel/code-frame';
 import { ErrorMessage } from '@web/components/errorMessage';
 import * as React from 'react';
 import type * as modelUtil from './modelUtil';
@@ -27,6 +26,7 @@ import { attachmentURL } from './attachmentsTab';
 import { copyPrompt, stripAnsiEscapes } from '@web/shared/prompts';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { calculateSha1 } from './sourceTab';
+import type { StackFrame } from '@protocol/channels';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -111,21 +111,13 @@ export const ErrorsTab: React.FunctionComponent<{
 
     const source = await response.text();
 
-    return codeFrameColumns(
-        source,
-        {
-          start: {
-            line: location.line,
-            column: location.column,
-          },
-        },
-        {
-          highlightCode: false,
-          linesAbove: 100,
-          linesBelow: 100,
-          message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
-        }
-    );
+    return codeFrame({
+      source,
+      message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
+      location,
+      linesAbove: 100,
+      linesBelow: 100,
+    });
   }, []);
 
   const prompt = useAsyncMemo(
@@ -155,3 +147,15 @@ export const ErrorsTab: React.FunctionComponent<{
     })}
   </div>;
 };
+
+function codeFrame({ source, message, location, linesAbove, linesBelow }: { source: string, message?: string, location: StackFrame, linesAbove: number, linesBelow: number }): string {
+  const lines = source.split('\n').slice();
+  const start = Math.max(0, location.line - linesAbove - 1);
+  const end = Math.min(lines.length, location.line + linesBelow);
+  const scope = lines.slice(start, end);
+  const lineNumberWidth = String(end).length;
+  const frame = scope.map((line, index) => `${(start + index + 1) === location.line ? '> ' : '  '}${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
+  if (message)
+    frame.splice(location.line - start, 0, `${' '.repeat(lineNumberWidth + 2)} | ${' '.repeat(location.column - 2)} ^ ${message}`);
+  return frame.join('\n');
+}

@@ -8830,6 +8830,13 @@ export interface BrowserContext {
      * Optional.
      */
     sameSite?: "Strict"|"Lax"|"None";
+
+    /**
+     * For partitioned third-party cookies (aka
+     * [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the
+     * partition key. Optional.
+     */
+    partitionKey?: string;
   }>): Promise<void>;
 
   /**
@@ -8840,7 +8847,8 @@ export interface BrowserContext {
   backgroundPages(): Array<Page>;
 
   /**
-   * Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
+   * Gets the browser instance that owns the context. Returns `null` if the context is created outside of normal
+   * browser, e.g. Android or Electron.
    */
   browser(): null|Browser;
 
@@ -9304,6 +9312,8 @@ export interface BrowserContext {
       secure: boolean;
 
       sameSite: "Strict"|"Lax"|"None";
+
+      partitionKey?: string;
     }>;
 
     origins: Array<{
@@ -12913,6 +12923,14 @@ export interface Locator {
   /**
    * Describes the locator, description is used in the trace viewer and reports. Returns the locator pointing to the
    * same element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const button = page.getByTestId('btn-sub').describe('Subscribe button');
+   * await button.click();
+   * ```
+   *
    * @param description Locator description.
    */
   describe(description: string): Locator;
@@ -20143,6 +20161,10 @@ export interface Logger {
 /**
  * The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
  *
+ * **NOTE** If you want to debug where the mouse moved, you can use the [Trace viewer](https://playwright.dev/docs/trace-viewer-intro) or
+ * [Playwright Inspector](https://playwright.dev/docs/running-tests). A red dot showing the location of the mouse will be shown for every
+ * mouse action.
+ *
  * Every `page` object has its own Mouse, accessible with
  * [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse).
  *
@@ -22493,6 +22515,8 @@ export interface Cookie {
   secure: boolean;
 
   sameSite: "Strict"|"Lax"|"None";
+
+  partitionKey?: string;
 }
 
 interface PageWaitForSelectorOptions {

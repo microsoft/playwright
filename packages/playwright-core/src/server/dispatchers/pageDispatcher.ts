@@ -20,7 +20,7 @@ import { parseError } from '../errors';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { parseArgument, serializeResult } from './jsHandleDispatcher';
+import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
 import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
@@ -399,7 +399,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionHandleResult> {
-    return { handle: ElementHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { handle: JSHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 
@@ -415,7 +415,7 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
       frame: frameDispatcher,
       name,
       args: needsHandle ? undefined : args.map(serializeResult),
-      handle: needsHandle ? ElementHandleDispatcher.fromJSHandle(frameDispatcher, args[0] as JSHandle) : undefined,
+      handle: needsHandle ? ElementHandleDispatcher.fromJSOrElementHandle(frameDispatcher, args[0] as JSHandle) : undefined,
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

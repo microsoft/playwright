@@ -50,6 +50,7 @@ export class BidiPage implements PageDelegate {
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
   private readonly _pdf: BidiPDF;
+  private _initScriptIds = new Map<InitScript, string>();
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -341,11 +342,18 @@ export class BidiPage implements PageDelegate {
       // TODO: push to iframes?
       contexts: [this._session.sessionId],
     });
-    initScript.auxData = script;
+    this._initScriptIds.set(initScript, script);
   }
 
   async removeInitScripts(initScripts: InitScript[]): Promise<void> {
-    await Promise.all(initScripts.map(script => this._session.send('script.removePreloadScript', { script: script.auxData })));
+    const ids: string[] = [];
+    for (const script of initScripts) {
+      const id = this._initScriptIds.get(script);
+      if (id)
+        ids.push(id);
+      this._initScriptIds.delete(script);
+    }
+    await Promise.all(ids.map(script => this._session.send('script.removePreloadScript', { script })));
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {

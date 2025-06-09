@@ -140,7 +140,7 @@ void MainWindow::createToolbar(HINSTANCE hInstance)
     SendMessage(m_hToolbarWnd, TB_ADDBUTTONS, _countof(tbButtons), reinterpret_cast<LPARAM>(&tbButtons));
     ShowWindow(m_hToolbarWnd, true);
 
-    m_hURLBarWnd = CreateWindow(L"EDIT", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOVSCROLL, 0, 0, 0, 0, m_hToolbarWnd, 0, hInstance, 0);
+    m_hURLBarWnd = CreateWindow(L"EDIT", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOHSCROLL, 0, 0, 0, 0, m_hToolbarWnd, 0, hInstance, 0);
 
     DefEditProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC));
     SetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditProc));
@@ -210,7 +210,9 @@ bool MainWindow::init(HINSTANCE hInstance, WKPageConfigurationRef conf)
     resizeSubViews();
 
     if (s_headless) {
+        auto menu = GetMenu(m_hMainWnd);
         SetMenu(m_hMainWnd, NULL);
+        DestroyMenu(menu);
     } else {
         SetFocus(m_hURLBarWnd);
         ShowWindow(m_hMainWnd, SW_SHOW);

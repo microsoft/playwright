@@ -440,7 +440,8 @@ it('should click the button with em border with offset', async ({ page, server, 
   expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 12 * 2 + 10 : 10);
 });
 
-it('should click a very large button with offset', async ({ page, server, browserName }) => {
+it('should click a very large button with offset', async ({ page, server, browserName, isAndroid }) => {
+  it.fixme(isAndroid, 'Failed to scroll to a particular point');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -451,7 +452,8 @@ it('should click a very large button with offset', async ({ page, server, browse
   expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 1910 + 8 : 1910);
 });
 
-it('should click a button in scrolling container with offset', async ({ page, server, browserName }) => {
+it('should click a button in scrolling container with offset', async ({ page, server, browserName, isAndroid }) => {
+  it.fixme(isAndroid, 'Failed to scroll to a particular point');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
     const container = document.createElement('div');

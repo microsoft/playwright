@@ -229,3 +229,26 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
       - iframe [ref=e3]
   `);
 });
+
+it('should auto-wait for navigation', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/frame.html');
+  const [, snapshot] = await Promise.all([
+    page.evaluate(() => window.location.reload()),
+    snapshotForAI(page)
+  ]);
+  expect(snapshot).toContainYaml(`
+    - generic [ref=e2]: Hi, I'm frame
+  `);
+});
+
+it('should auto-wait for blocking CSS', async ({ page, server }) => {
+  server.setRoute('/css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    setTimeout(() => res.end(`body { monospace }`), 1000);
+  });
+  await page.setContent(`
+    <script src="${server.PREFIX}/css"></script>
+    <p>Hello World</p>
+  `, { waitUntil: 'commit' });
+  expect(await snapshotForAI(page)).toContainYaml('Hello World');
+});

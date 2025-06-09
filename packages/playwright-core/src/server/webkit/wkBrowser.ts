@@ -32,8 +32,8 @@ import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import type * as channels from '@protocol/channels';
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15';
-const BROWSER_VERSION = '18.4';
+const BROWSER_VERSION = '18.5';
+const DEFAULT_USER_AGENT = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${BROWSER_VERSION} Safari/605.1.15`;
 
 export class WKBrowser extends Browser {
   private readonly _connection: WKConnection;
@@ -255,19 +255,37 @@ export class WKBrowserContext extends BrowserContext {
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: channels.NetworkCookie) => {
-      const copy: any = { ... c };
-      copy.expires = c.expires === -1 ? -1 : c.expires / 1000;
-      delete copy.session;
-      return copy as channels.NetworkCookie;
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const copy: channels.NetworkCookie = {
+        name,
+        value,
+        domain,
+        path,
+        expires: expires === -1 ? -1 : expires / 1000,
+        httpOnly,
+        secure,
+        sameSite,
+      };
+      return copy;
     }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    const cc = network.rewriteCookies(cookies).map(c => ({
-      ...c,
-      session: c.expires === -1 || c.expires === undefined,
-      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires,
-    })) as Protocol.Playwright.SetCookieParam[];
+    const cc = network.rewriteCookies(cookies).map(c => {
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const copy: Protocol.Playwright.SetCookieParam = {
+        name,
+        value,
+        domain: domain!,
+        path: path!,
+        expires: expires && expires !== -1 ? expires * 1000 : expires,
+        httpOnly,
+        secure,
+        sameSite,
+        session: expires === -1 || expires === undefined,
+      };
+      return copy;
+    });
     await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }
 
