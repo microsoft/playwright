@@ -41,6 +41,10 @@
   text-overflow: ellipsis;
 }
 
+.network-filters-resource-types .tabbed-pane-tab {
+  min-width: 50px;
+}
+
 .network-filters-resource-type.selected {
   background-color: var(--vscode-list-inactiveSelectionBackground);
 }
