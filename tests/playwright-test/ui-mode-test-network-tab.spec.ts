@@ -200,3 +200,25 @@ test('should not duplicate network entries from beforeAll', {
   await page.getByText('Network', { exact: true }).click();
   await expect(page.getByTestId('network-list').getByText('empty.html')).toHaveCount(1);
 });
+
+test('should render network tabs with overflow dropdown', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByText('network tab test').dblclick();
+  await page.getByText('Network', { exact: true }).click();
+
+  const sidebar = await page.locator('.network-filters-resource-types');
+  await sidebar.evaluate(element => {
+    element.style.width = '300px';
+  });
+
+  await expect(page.locator('.network-filters-resource-types .tabbed-pane-tab')).toHaveCount(4);
+});
