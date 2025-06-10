@@ -4124,7 +4124,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   /**
    * Skip a test. Playwright will not run the test past the `test.skip()` call.
    *
-   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * Skipped tests are not supposed to be ever run. If you intend to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
    *
@@ -4205,7 +4205,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   /**
    * Skip a test. Playwright will not run the test past the `test.skip()` call.
    *
-   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * Skipped tests are not supposed to be ever run. If you intend to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
    *
@@ -4286,7 +4286,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   /**
    * Skip a test. Playwright will not run the test past the `test.skip()` call.
    *
-   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * Skipped tests are not supposed to be ever run. If you intend to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
    *
@@ -4367,7 +4367,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   /**
    * Skip a test. Playwright will not run the test past the `test.skip()` call.
    *
-   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * Skipped tests are not supposed to be ever run. If you intend to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
    *
@@ -4448,7 +4448,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   /**
    * Skip a test. Playwright will not run the test past the `test.skip()` call.
    *
-   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * Skipped tests are not supposed to be ever run. If you intend to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
    *
