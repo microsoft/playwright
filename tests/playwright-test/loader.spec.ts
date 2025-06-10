@@ -224,6 +224,84 @@ test('should load esm when package.json has type module', async ({ runInlineTest
   expect(result.passed).toBe(1);
 });
 
+test('should fail to load CJS reporter from type:module package via exports.require', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+
+    // --- The main project's Playwright config ---
+    'playwright.config.js': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        reporter: [['my-buggy-reporter']],
+        testDir: './tests',
+        projects: [{ name: 'test-project' }],
+        use: {
+          trace: 'off',
+        }
+      });
+    `,
+
+    // --- A minimal test file to trigger the Playwright run ---
+    'tests/example.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('dummy test to trigger reporter load', ({}) => {
+        expect(true).toBe(true);
+      });
+    `,
+
+    // --- Simulate the 'my-buggy-reporter' package within node_modules ---
+    'node_modules/my-buggy-reporter/package.json': JSON.stringify({
+      'name': 'my-buggy-reporter',
+      'version': '1.0.0',
+      'type': 'module',
+      'exports': {
+        '.': {
+          'types': './dist/types/index.d.ts',
+          'import': './dist/esm/index.js',
+          'require': './dist/cjs/index.js',
+          'default': './dist/esm/index.js'
+        }
+      },
+      // Adding main/module/types for realism, though exports should take precedence
+      'main': './dist/cjs/index.js',
+      'module': './dist/esm/index.js',
+      'types': './dist/types/index.d.ts'
+    }),
+
+    // --- Simulated CJS build output for the reporter ---
+    'node_modules/my-buggy-reporter/dist/cjs/index.js': `
+      class MyBuggyReporter {
+        onBegin(config, suite) { console.log('MyBuggyReporter: onBegin (CJS)'); }
+        onTestEnd(test, result) { console.log('MyBuggyReporter: onTestEnd (CJS)'); }
+      }
+      module.exports = MyBuggyReporter;
+    `,
+
+    // --- Simulated ESM build output for the reporter ---
+    'node_modules/my-buggy-reporter/dist/esm/index.js': `
+      export default class MyBuggyReporter {
+        onBegin(config, suite) { console.log('MyBuggyReporter: onBegin (ESM)'); }
+        onTestEnd(test, result) { console.log('MyBuggyReporter: onTestEnd (ESM)'); }
+      }
+    `,
+
+    // --- Simulated TypeScript declaration file ---
+    'node_modules/my-buggy-reporter/dist/types/index.d.ts': `
+      import type { Reporter } from '@playwright/test';
+      declare class MyBuggyReporter implements Reporter {
+        onBegin(config: any, suite: any): void;
+        onTestEnd(test: any, result: any): void;
+      }
+      export default MyBuggyReporter;
+    `
+  });
+
+  expect(result.exitCode).not.toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain('ReferenceError: module is not defined in ES module scope');
+  expect(result.output).not.toContain('node_modules/my-buggy-reporter/dist/cjs/index.js');
+});
+
 test('should load mjs config file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.mjs': `

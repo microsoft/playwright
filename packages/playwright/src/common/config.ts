@@ -17,6 +17,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { createRequire } from 'module';
 
 import { getPackageJsonPath, mergeObjects } from '../util';
 
@@ -38,6 +39,20 @@ export type FixturesWithLocation = {
 };
 
 export const defaultTimeout = 30000;
+
+let packageResolver: NodeJS.RequireResolve;
+
+try {
+  // TS1343: `import.meta` is not allowed when '--module' is commonjs.
+  // This line is needed to get an ESM-aware `require.resolve` for dual packages.
+  // Changing the module target in tsconfig.json will be a larger and breaking change.
+  // https://github.com/microsoft/playwright/issues/36252
+  // @ts-ignore
+  packageResolver = createRequire(import.meta.url).resolve;
+} catch (e) {
+  // Fallback for environments where import.meta.url is not available (e.g., pure CJS context)
+  packageResolver = require.resolve;
+}
 
 export class FullConfigInternal {
   readonly config: FullConfig;
@@ -223,7 +238,7 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
   return toReporters(reporters as any)?.map(([id, arg]) => {
     if (builtInReporters.includes(id as any))
       return [id, arg];
-    return [require.resolve(id, { paths: [rootDir] }), arg];
+    return [packageResolver(id, { paths: [rootDir] }), arg];
   });
 }
 
