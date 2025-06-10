@@ -62,7 +62,7 @@ export const GlobalFilterView: React.FC<{
           const url = new URL(window.location.href);
           // If <form/> onSubmit happens immediately after <input/> onChange, the filterText state is not updated yet.
           // Using FormData here is a workaround to get the latest value.
-          const q = new FormData(event.target as HTMLFormElement).get('q') as string;
+          const q = new FormData(event.currentTarget).get('q') as string;
           url.hash = q ? '?' + new URLSearchParams({ q }) : '';
           navigate(url);
         }
