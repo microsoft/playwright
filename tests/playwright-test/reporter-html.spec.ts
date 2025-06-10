@@ -1875,6 +1875,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
         await smokeLabelButton.click();
         await expect(page).toHaveURL(/@smoke/);
+        await expect(searchInput).toHaveValue('@smoke ');
         await searchInput.clear();
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
@@ -1883,6 +1884,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const regressionLabelButton = page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
         await regressionLabelButton.click();
         await expect(page).toHaveURL(/@regression/);
+        await expect(searchInput).toHaveValue('@regression ');
         await searchInput.clear();
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
