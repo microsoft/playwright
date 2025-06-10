@@ -1,0 +1,58 @@
+name: "PR: bump stable-test-runner"
+on:
+  workflow_dispatch:
+  schedule:
+    # At 10:00am UTC  (3AM PST) every Monday
+    - cron: "0 10 * * 1"
+jobs:
+  trigger-roll:
+    name: Trigger Roll
+    runs-on: ubuntu-24.04
+    if: github.repository == 'microsoft/playwright'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install @playwright/test@next
+          VERSION=$(node -e "console.log(require('./package.json').dependencies['@playwright/test'].replace('^', ''))")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        working-directory: tests/playwright-test/stable-test-runner/
+        id: bump
+      - name: Prepare branch
+        id: prepare-branch
+        run: |
+          if [[ "$(git status --porcelain)" == "" ]]; then
+              echo "there are no changes";
+              exit 0;
+          fi
+          echo "HAS_CHANGES=1" >> $GITHUB_OUTPUT
+          BRANCH_NAME="roll-stable-test-runner/$(date +%Y-%b-%d)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          git config --global user.name microsoft-playwright-automation[bot]
+          git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH_NAME"
+          git add .
+          git commit -m "test: roll stable-test-runner to ${{ steps.bump.outputs.VERSION }}"
+          git push origin $BRANCH_NAME
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+          private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+      - name: Create Pull Request
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            await github.rest.pulls.create({
+              owner: 'microsoft',
+              repo: 'playwright',
+              head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
+              base: 'main',
+              title: 'test: roll stable-test-runner to ${{ steps.bump.outputs.VERSION }}',
+            });
