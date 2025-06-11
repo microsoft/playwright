@@ -31,7 +31,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   constructor(
     private _client: CRSession,
     private _isMac: boolean,
-    private _dragManger: DragManager,
+    private _dragManager: DragManager | undefined,
   ) { }
 
   _commandsForCode(code: string, modifiers: Set<types.KeyboardModifier>) {
@@ -55,8 +55,11 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
   async keydown(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
     const { code, key, location, text } = description;
-    if (code === 'Escape' && await progress.race(this._dragManger.cancelDrag()))
-      return;
+    if (code === 'Escape') {
+      if (this._dragManager && await progress.race(this._dragManager.cancelDrag()))
+        return;
+      await progress.race(this._client.send('Input.cancelDragging', {}));
+    }
     const commands = this._commandsForCode(code, modifiers);
     await progress.race(this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
@@ -93,9 +96,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 export class RawMouseImpl implements input.RawMouse {
   private _client: CRSession;
   private _page: CRPage;
-  private _dragManager: DragManager;
+  private _dragManager: DragManager | undefined;
 
-  constructor(page: CRPage, client: CRSession, dragManager: DragManager) {
+  constructor(page: CRPage, client: CRSession, dragManager: DragManager | undefined) {
     this._page = page;
     this._client = client;
     this._dragManager = dragManager;
@@ -113,7 +116,7 @@ export class RawMouseImpl implements input.RawMouse {
         force: buttons.size > 0 ? 0.5 : 0,
       }));
     };
-    if (forClick) {
+    if (!this._dragManager || forClick) {
       // Avoid extra protocol calls related to drag and drop, because click relies on
       // move-down-up protocol commands being sent synchronously.
       await actualMove();
@@ -123,7 +126,7 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
-    if (this._dragManager.isDragging())
+    if (this._dragManager?.isDragging())
       return;
     await progress.race(this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
@@ -138,7 +141,7 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async up(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
-    if (this._dragManager.isDragging()) {
+    if (this._dragManager?.isDragging()) {
       await this._dragManager.drop(progress, x, y, modifiers);
       return;
     }
