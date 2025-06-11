@@ -73,7 +73,6 @@ export type InjectedScriptOptions = {
   testIdAttributeName: string;
   stableRafCount: number;
   browserName: string;
-  inputFileRoleTextbox: boolean;
   customEngines: { name: string, source: string }[];
 };
 
@@ -236,7 +235,7 @@ export class InjectedScript {
 
     this._stableRafCount = options.stableRafCount;
     this._browserName = options.browserName;
-    setGlobalOptions({ browserNameForWorkarounds: options.browserName, inputFileRoleTextbox: options.inputFileRoleTextbox });
+    setGlobalOptions({ browserNameForWorkarounds: options.browserName });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();

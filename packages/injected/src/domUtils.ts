@@ -16,7 +16,6 @@
 
 type GlobalOptions = {
   browserNameForWorkarounds?: string;
-  inputFileRoleTextbox?: boolean;
 };
 let globalOptions: GlobalOptions = {};
 export function setGlobalOptions(options: GlobalOptions) {

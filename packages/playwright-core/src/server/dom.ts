@@ -94,7 +94,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
         testIdAttributeName: selectorsRegistry.testIdAttributeName(),
         stableRafCount: this.frame._page.delegate.rafCountForStablePosition(),
         browserName: this.frame._page.browserContext._browser.options.name,
-        inputFileRoleTextbox: process.env.PLAYWRIGHT_INPUT_FILE_TEXTBOX ? true : false,
         customEngines,
       };
       const source = `
