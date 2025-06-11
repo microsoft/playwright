@@ -19,6 +19,7 @@ import { assert } from '../../utils';
 import type { CRPage } from './crPage';
 import type * as types from '../types';
 import type { Protocol } from './protocol';
+import type { Progress } from '../progress';
 
 
 declare global {
@@ -51,7 +52,7 @@ export class DragManager {
     return true;
   }
 
-  async interceptDragCausedByMove(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
+  async interceptDragCausedByMove(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
     this._lastPosition = { x, y };
     if (this._dragState) {
       await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
@@ -61,6 +62,7 @@ export class DragManager {
         data: this._dragState,
         modifiers: toModifiersMask(modifiers),
       });
+      progress.throwIfAborted();
       return;
     }
     if (button !== 'left')
@@ -91,6 +93,7 @@ export class DragManager {
     }
 
     await this._crPage._page.safeNonStallingEvaluateInAllFrames(`(${setupDragListeners.toString()})()`, 'utility');
+    progress.cleanupWhenAborted(() => this._crPage._page.safeNonStallingEvaluateInAllFrames('window.__cleanupDrag && window.__cleanupDrag()', 'utility'));
 
     client.on('Input.dragIntercepted', onDragIntercepted!);
     try {
@@ -109,7 +112,7 @@ export class DragManager {
     this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
     client.off('Input.dragIntercepted', onDragIntercepted!);
     await client.send('Input.setInterceptDrags', { enabled: false });
-
+    progress.throwIfAborted();
 
     if (this._dragState) {
       await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
@@ -119,6 +122,7 @@ export class DragManager {
         data: this._dragState,
         modifiers: toModifiersMask(modifiers),
       });
+      progress.throwIfAborted();
     }
   }
 
@@ -126,7 +130,7 @@ export class DragManager {
     return !!this._dragState;
   }
 
-  async drop(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+  async drop(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
     assert(this._dragState, 'missing drag state');
     await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
       type: 'drop',
@@ -136,5 +140,6 @@ export class DragManager {
       modifiers: toModifiersMask(modifiers),
     });
     this._dragState = null;
+    progress.throwIfAborted();
   }
 }

@@ -604,7 +604,7 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(serverSideCallMetadata(), this);
     const data = {
       url,
-      gotoPromise: controller.run(progress => this._gotoAction(progress, url, { referer }), 0),
+      gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), 0),
     };
     this._redirectedNavigations.set(documentId, data);
     data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
@@ -614,11 +614,11 @@ export class Frame extends SdkObject {
     const constructedNavigationURL = constructURLBasedOnBaseURL(this._page.browserContext._options.baseURL, url);
     const controller = new ProgressController(metadata, this);
     return controller.run(progress => {
-      return this.raceNavigationAction(progress, options, async () => this._gotoAction(progress, constructedNavigationURL, options));
+      return this.raceNavigationAction(progress, options, async () => this.gotoImpl(progress, constructedNavigationURL, options));
     }, options.timeout);
   }
 
-  private async _gotoAction(progress: Progress, url: string, options: Omit<types.GotoOptions, 'timeout'>): Promise<network.Response | null> {
+  async gotoImpl(progress: Progress, url: string, options: Omit<types.GotoOptions, 'timeout'>): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
     const headers = this._page.extraHTTPHeaders() || [];
@@ -1162,8 +1162,8 @@ export class Frame extends SdkObject {
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, !options.force /* performActionPreChecks */, async handle => {
         return handle._retryPointerAction(progress, 'move and down', false, async point => {
-          await this._page.mouse.move(point.x, point.y);
-          await this._page.mouse.down();
+          await this._page.mouse._move(progress, point.x, point.y);
+          await this._page.mouse._down(progress);
         }, {
           ...options,
           waitAfter: 'disabled',
@@ -1174,8 +1174,8 @@ export class Frame extends SdkObject {
       // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, false /* performActionPreChecks */, async handle => {
         return handle._retryPointerAction(progress, 'move and up', false, async point => {
-          await this._page.mouse.move(point.x, point.y);
-          await this._page.mouse.up();
+          await this._page.mouse._move(progress, point.x, point.y);
+          await this._page.mouse._up(progress);
         }, {
           ...options,
           waitAfter: 'disabled',

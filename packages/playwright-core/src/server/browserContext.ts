@@ -36,13 +36,14 @@ import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
+import { ProgressController } from './progress';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
 import type * as frames from './frames';
 import type { CallMetadata } from './instrumentation';
-import type { Progress, ProgressController } from './progress';
+import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
@@ -191,6 +192,11 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(progress => this.resetForReuseImpl(progress, params));
+  }
+
+  async resetForReuseImpl(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
     await this.tracing.resetForReuse();
 
     if (params) {
@@ -204,14 +210,14 @@ export abstract class BrowserContext extends SdkObject {
     let page: Page | undefined = this.pages()[0];
     const [, ...otherPages] = this.pages();
     for (const p of otherPages)
-      await p.close(metadata);
+      await p.close();
     if (page && page.hasCrashed()) {
-      await page.close(metadata);
+      await page.close();
       page = undefined;
     }
 
     // Navigate to about:blank first to ensure no page scripts are running after this point.
-    await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
+    await page?.mainFrame().gotoImpl(progress, 'about:blank', {});
 
     await this._resetStorage();
     await this.clock.resetForReuse();
@@ -227,7 +233,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.clearCache();
     await this._resetCookies();
 
-    await page?.resetForReuse(metadata);
+    await page?.resetForReuse(progress);
   }
 
   _browserClosed() {
@@ -398,7 +404,7 @@ export abstract class BrowserContext extends SdkObject {
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
       await this.newPage(progress.metadata);
-      await defaultPage.close(progress.metadata);
+      await defaultPage.close();
     }
   }
 
@@ -564,7 +570,7 @@ export abstract class BrowserContext extends SdkObject {
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
-      await page.close(internalMetadata);
+      await page.close();
     }
     return result;
   }
@@ -632,7 +638,7 @@ export abstract class BrowserContext extends SdkObject {
           })()`;
           await frame.evaluateExpression(restoreScript, { world: 'utility' });
         }
-        await page.close(internalMetadata);
+        await page.close();
       }
     } finally {
       this._settingStorageState = false;

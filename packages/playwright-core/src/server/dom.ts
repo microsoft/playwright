@@ -505,11 +505,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
-        restoreModifiers = await this._page.keyboard.ensureModifiers(options.modifiers);
+        restoreModifiers = await this._page.keyboard.ensureModifiers(progress, options.modifiers);
       progress.log(`  performing ${actionName} action`);
       await action(point);
       if (restoreModifiers)
-        await this._page.keyboard.ensureModifiers(restoreModifiers);
+        await this._page.keyboard.ensureModifiers(progress, restoreModifiers);
       if (hitTargetInterceptionHandle) {
         const stopHitTargetInterception = this._frame.raceAgainstEvaluationStallingEvents(() => {
           return hitTargetInterceptionHandle.evaluate(h => h.stop());
@@ -555,7 +555,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(point.x, point.y), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse._move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
   async click(metadata: CallMetadata, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -568,7 +568,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _click(progress: Progress, options: { waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse.click(point.x, point.y, options), options);
+    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse._click(progress, point.x, point.y, options), options);
   }
 
   async dblclick(metadata: CallMetadata, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -581,7 +581,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.dblclick(point.x, point.y, options), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse._click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' });
   }
 
   async tap(metadata: CallMetadata, options: types.PointerActionWaitOptions): Promise<void> {
@@ -594,7 +594,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen.tap(point.x, point.y), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen._tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
   async selectOption(metadata: CallMetadata, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
@@ -659,9 +659,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (result === 'needsinput') {
         if (value)
-          await this._page.keyboard.insertText(value);
+          await this._page.keyboard._insertText(progress, value);
         else
-          await this._page.keyboard.press('Delete');
+          await this._page.keyboard._press(progress, 'Delete');
         return 'done';
       } else {
         return result;
@@ -774,7 +774,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (result !== 'done')
       return result;
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    await this._page.keyboard.type(text, options);
+    await this._page.keyboard._type(progress, text, options);
     return 'done';
   }
 
@@ -795,7 +795,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page.keyboard.press(key, options);
+      await this._page.keyboard._press(progress, key, options);
       return 'done';
     });
   }

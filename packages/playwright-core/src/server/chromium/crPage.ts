@@ -339,9 +339,9 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Page.enable').catch(e => {});
   }
 
-  async resetForReuse(): Promise<void> {
+  async resetForReuse(progress: Progress): Promise<void> {
     // See https://github.com/microsoft/playwright/issues/22432.
-    await this.rawMouse.move(-1, -1, 'none', new Set(), new Set(), true);
+    await this.rawMouse.move(progress, -1, -1, 'none', new Set(), new Set(), true);
   }
 
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {
