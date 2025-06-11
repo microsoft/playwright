@@ -36,7 +36,7 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _logName = 'api';
+  private _logName: LogName;
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
@@ -48,6 +48,7 @@ export class ProgressController {
     this.metadata = metadata;
     this.sdkObject = sdkObject;
     this.instrumentation = sdkObject.instrumentation;
+    this._logName = sdkObject.logName || 'api';
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
   }
 

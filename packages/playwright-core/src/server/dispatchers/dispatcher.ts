@@ -21,7 +21,7 @@ import { ValidationError, createMetadataValidator, findValidator  } from '../../
 import { LongStandingScope, assert, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
-import { SdkObject } from '../instrumentation';
+import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
 import { methodMetainfo } from '../../utils/isomorphic/protocolMetainfo';
@@ -45,7 +45,7 @@ function maxDispatchersForBucket(gcBucket: string) {
   }[gcBucket] ?? 10000;
 }
 
-export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   readonly connection: DispatcherConnection;
   // Parent is always "isScope".
   private _parent: ParentScopeType | undefined;
@@ -162,13 +162,13 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 }
 
-export type DispatcherScope = Dispatcher<any, any, any>;
+export type DispatcherScope = Dispatcher<SdkObject, any, any>;
 
-export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
+export class RootDispatcher extends Dispatcher<SdkObject, any, any> {
   private _initialized = false;
 
   constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: RootDispatcher, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
-    super(connection, { guid: '' }, 'Root', {});
+    super(connection, createRootSdkObject(), 'Root', {});
   }
 
   async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
@@ -311,16 +311,16 @@ export class DispatcherConnection {
       validMetadata.internal = true;
     }
 
-    const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
+    const sdkObject = dispatcher._object;
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
       location: validMetadata.location,
       title: validMetadata.title,
       internal: validMetadata.internal,
       stepId: validMetadata.stepId,
-      objectId: sdkObject?.guid,
-      pageId: sdkObject?.attribution?.page?.guid,
-      frameId: sdkObject?.attribution?.frame?.guid,
+      objectId: sdkObject.guid,
+      pageId: sdkObject.attribution?.page?.guid,
+      frameId: sdkObject.attribution?.frame?.guid,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
@@ -329,7 +329,7 @@ export class DispatcherConnection {
       log: [],
     };
 
-    if (sdkObject && params?.info?.waitId) {
+    if (params?.info?.waitId) {
       // Process logs for waitForNavigation/waitForLoadState/etc.
       const info = params.info;
       switch (info.phase) {
@@ -356,7 +356,7 @@ export class DispatcherConnection {
       }
     }
 
-    await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
+    await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
     const response: any = { id };
     try {
       const result = await dispatcher._handleCommand(callMetadata, method, validParams);
@@ -364,24 +364,22 @@ export class DispatcherConnection {
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;
     } catch (e) {
-      if (isTargetClosedError(e) && sdkObject) {
+      if (isTargetClosedError(e)) {
         const reason = closeReason(sdkObject);
         if (reason)
           rewriteErrorMessage(e, reason);
       } else if (isProtocolError(e)) {
-        if (e.type === 'closed') {
-          const reason = sdkObject ? closeReason(sdkObject) : undefined;
-          e = new TargetClosedError(reason, e.browserLogMessage());
-        } else if (e.type === 'crashed') {
+        if (e.type === 'closed')
+          e = new TargetClosedError(closeReason(sdkObject), e.browserLogMessage());
+        else if (e.type === 'crashed')
           rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
-        }
       }
       response.error = serializeError(e);
       // The command handler could have set error in the metadata, do not reset it if there was no exception.
       callMetadata.error = response.error;
     } finally {
       callMetadata.endTime = monotonicTime();
-      await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
+      await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
     if (response.error)

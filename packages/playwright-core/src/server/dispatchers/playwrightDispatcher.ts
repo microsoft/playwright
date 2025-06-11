@@ -24,7 +24,7 @@ import { Dispatcher } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
-import { createGuid } from '../utils/crypto';
+import { SdkObject } from '../instrumentation';
 import { eventsHelper  } from '../utils/eventsHelper';
 
 import type { RootDispatcher } from './dispatcher';
@@ -62,7 +62,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       android,
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),
-      socksSupport: options.socksProxy ? new SocksSupportDispatcher(scope, options.socksProxy) : undefined,
+      socksSupport: options.socksProxy ? new SocksSupportDispatcher(scope, playwright, options.socksProxy) : undefined,
     };
 
     let browserDispatcher: BrowserDispatcher | undefined;
@@ -101,13 +101,13 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   }
 }
 
-class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.SocksSupportChannel, RootDispatcher> implements channels.SocksSupportChannel {
+class SocksSupportDispatcher extends Dispatcher<SdkObject, channels.SocksSupportChannel, RootDispatcher> implements channels.SocksSupportChannel {
   _type_SocksSupport: boolean;
   private _socksProxy: SocksProxy;
   private _socksListeners: RegisteredListener[];
 
-  constructor(scope: RootDispatcher, socksProxy: SocksProxy) {
-    super(scope, { guid: 'socksSupport@' + createGuid() }, 'SocksSupport', {});
+  constructor(scope: RootDispatcher, parent: SdkObject, socksProxy: SocksProxy) {
+    super(scope, new SdkObject(parent, 'socksSupport'), 'SocksSupport', {});
     this._type_SocksSupport = true;
     this._socksProxy = socksProxy;
     this._socksListeners = [

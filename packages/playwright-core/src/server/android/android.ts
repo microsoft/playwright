@@ -59,7 +59,6 @@ export interface DeviceBackend {
 }
 
 export interface SocketBackend extends EventEmitter {
-  guid: string;
   write(data: Buffer): Promise<void>;
   close(): void;
 }

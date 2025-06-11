@@ -23,7 +23,7 @@ import { Chromium } from './chromium/chromium';
 import { DebugController } from './debugController';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
-import { SdkObject, createInstrumentation } from './instrumentation';
+import { SdkObject, createRootSdkObject } from './instrumentation';
 import { WebKit } from './webkit/webkit';
 
 import type { BrowserType } from './browserType';
@@ -53,7 +53,7 @@ export class Playwright extends SdkObject {
   private _allBrowsers = new Set<Browser>();
 
   constructor(options: PlaywrightOptions) {
-    super({ attribution: {}, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
+    super(createRootSdkObject(), undefined, 'Playwright');
     this.options = options;
     this.attribution.playwright = this;
     this.instrumentation.addListener({
