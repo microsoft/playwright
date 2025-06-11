@@ -65,7 +65,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors(this._connection._platform);
     this.errors = { TimeoutError };
-    (global as any)._playwrightInstance = this;
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {

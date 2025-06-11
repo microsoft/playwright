@@ -382,24 +382,6 @@ test('should respect --trace', async ({ runInlineTest }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
 });
 
-test('should respect PW_TEST_DISABLE_TRACING', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      export default { use: { trace: 'on' } };
-    `,
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test 1', async ({ page }) => {
-        await page.goto('about:blank');
-      });
-    `,
-  }, {}, { PW_TEST_DISABLE_TRACING: '1' });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBe(false);
-});
-
 for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'retain-on-first-failure']) {
   test(`trace:${mode} should not create trace zip artifact if page test passed`, async ({ runInlineTest }) => {
     const result = await runInlineTest({
@@ -1010,7 +992,7 @@ test('should not produce an action entry for calling a binding', async ({ runInl
             wasCalled = true;
             return 'foo';
           });
-        
+
           const output = await page.evaluate(() => window['customBinding']());
           expect(wasCalled).toBe(true);
           expect(output).toBe('foo');
