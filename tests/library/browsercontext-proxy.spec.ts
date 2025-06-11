@@ -64,6 +64,41 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
+it('should send secure cookies to subdomain.localhost', async ({ contextFactory, browserName, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
+  const context = await contextFactory({
+    proxy: { server: `localhost:${proxyServer.PORT}` },
+  });
+  server.setRoute('/set-cookie.html', async (req, res) => {
+    res.setHeader('Set-Cookie', [`non-secure=1; HttpOnly`, `secure=1; HttpOnly; Secure`]);
+    res.end();
+  });
+  server.setRoute('/read-cookie.html', async (req, res) => {
+    res.setHeader('Content-Type', `text/html`);
+    res.end(`<div>Cookie: ${req.headers.cookie.split(';').map(c => c.trim()).sort().join('; ')}</div>`);
+  });
+
+  const page = await context.newPage();
+
+  await page.goto(`http://subdomain.localhost/set-cookie.html`);
+
+  const cookies = await context.cookies('http://subdomain.localhost');
+  expect(cookies.map(({ name, domain }) => ({ name, domain }))).toEqual([
+    {
+      name: 'non-secure',
+      domain: 'subdomain.localhost',
+    },
+    ...(browserName === 'webkit' ? [] : [{
+      name: 'secure',
+      domain: 'subdomain.localhost',
+    }]),
+  ]);
+
+  await page.goto(`http://subdomain.localhost/read-cookie.html`);
+  await expect(page.locator('div')).toHaveText(browserName === 'webkit' ? 'Cookie: non-secure=1' : 'Cookie: non-secure=1; secure=1');
+
+  await context.close();
+});
 
 it('should set cookie for top-level domain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18362' }
