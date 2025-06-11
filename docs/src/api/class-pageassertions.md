@@ -183,59 +183,6 @@ Snapshot name.
 ### option: PageAssertions.toHaveScreenshot#1.threshold = %%-assertions-threshold-%%
 * since: v1.23
 
-## async method: PageAssertions.toHaveScreenshot#2
-* since: v1.23
-* langs: js
-
-This function will wait until two consecutive page screenshots
-yield the same result, and then compare the last screenshot with the expectation.
-
-**Usage**
-
-```js
-await expect(page).toHaveScreenshot();
-```
-
-Note that screenshot assertions only work with Playwright test runner.
-
-### option: PageAssertions.toHaveScreenshot#2.timeout = %%-js-assertions-timeout-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.animations = %%-screenshot-option-animations-default-disabled-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.caret = %%-screenshot-option-caret-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.clip = %%-screenshot-option-clip-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.fullPage = %%-screenshot-option-full-page-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.mask = %%-screenshot-option-mask-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.maskColor = %%-screenshot-option-mask-color-%%
-* since: v1.35
-
-### option: PageAssertions.toHaveScreenshot#2.stylePath = %%-screenshot-option-style-path-%%
-* since: v1.41
-
-### option: PageAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-default-css-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
-* since: v1.23
-
-### option: PageAssertions.toHaveScreenshot#2.threshold = %%-assertions-threshold-%%
-* since: v1.23
 
 ## async method: PageAssertions.toHaveTitle
 * since: v1.20
