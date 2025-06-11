@@ -146,7 +146,7 @@ it('should send secure cookie over http for subdomains of localhost', async ({ r
     res.end();
   });
   const prefix = `http://a.b.localhost:${server.PORT}`;
-  await request.get(`${prefix}/setcookie.html`);
+  await request.get(`${prefix}/setcookie.html`, {  __testHookLookup } as any);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
     request.get(`${prefix}/empty.html`)
