@@ -136,7 +136,7 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
 }
 
 export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
-  const reList = Array.isArray(patterns) ? patterns : [patterns];
+  const reList = Array.isArray(patterns);
   return (value: string) => {
     for (const re of reList) {
       re.lastIndex = 0;

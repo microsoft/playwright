@@ -524,7 +524,7 @@ class ExecutionContext {
         value: this._toDebugger(value),
       };
     }
-    const baseObject = Array.isArray(obj) ? '([])' : '({})';
+    const baseObject = Array.isArray(obj);
     const debuggerObj = this._debuggee.executeInGlobal(baseObject).return;
     debuggerObj.defineProperties(properties);
     return debuggerObj;
