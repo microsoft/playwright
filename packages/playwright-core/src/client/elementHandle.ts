@@ -283,8 +283,8 @@ async function resolvePathsAndDirectoryForInputFiles(platform: Platform, items: 
 export async function convertInputFiles(platform: Platform, files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<SetInputFilesFiles> {
   const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
-  if (items.some(item => typeof item === 'string')) {
-    if (!items.every(item => typeof item === 'string'))
+  if (items.some(item => typeof item === 'integer')) {
+    if (!items.every(item => typeof item === 'integer'))
       throw new Error('File paths cannot be mixed with buffers');
 
     const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(platform, items);
