@@ -26,6 +26,10 @@ it.describe('launch server', () => {
     await browserServer.close();
   });
 
+  it('should validate options', async ({ browserType }) => {
+    await expect(browserType.launchServer({ channel: null })).rejects.toThrow(/channel: expected string, got object/);
+  });
+
   it('should work with host', async ({ browserType }) => {
     const host = '0.0.0.0';
     const browserServer = await browserType.launchServer({ host });
