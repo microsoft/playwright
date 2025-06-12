@@ -649,7 +649,7 @@ class TextAssertionTool implements RecorderTool {
     if (this._hoverHighlight?.elements[0] === target)
       return;
     if (this._kind === 'text' || this._kind === 'snapshot') {
-      this._hoverHighlight = this._recorder.injectedScript.utils.elementText(this._textCache, target).full ? { elements: [target], selector: '', color: HighlightColors.assert } : null;
+      this._hoverHighlight = { elements: [target], selector: '', color: HighlightColors.assert } ;
     } else if (this._elementHasValue(target)) {
       const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
       this._hoverHighlight = { selector: generated.selector, elements: generated.elements, color: HighlightColors.assert };
@@ -711,7 +711,7 @@ class TextAssertionTool implements RecorderTool {
         snapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'regex' }),
       };
     } else {
-      const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
+      const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
       this._hoverHighlight = { selector: generated.selector, elements: generated.elements, color: HighlightColors.assert };
       // forTextExpect can update the target, re-highlight it.
       this._recorder.updateHighlight(this._hoverHighlight, true);
