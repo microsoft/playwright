@@ -2655,7 +2655,7 @@ Frame:
     expect:
       title: Expect "{expression}"
       parameters:
-        selector: string
+        selector: string?
         expression: string
         expressionArg: json?
         expectedText:

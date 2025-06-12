@@ -27,13 +27,13 @@ import { EXPECTED_COLOR } from '../common/expectBundle';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
-import type { Locator } from 'playwright-core';
+import type { Page, Locator } from 'playwright-core';
 
 export async function toMatchText(
   this: ExpectMatcherState,
   matcherName: string,
-  receiver: Locator,
-  receiverType: string,
+  receiver: Locator | Page,
+  receiverType: 'Locator' | 'Page',
   query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean, receiverLabel?: string } = {},
@@ -51,7 +51,7 @@ export async function toMatchText(
   ) {
     // Same format as jest's matcherErrorMessage
     throw new Error([
-      matcherHint(this, receiver, matcherName, receiver, expected, matcherOptions),
+      matcherHint(this, receiver, matcherName, options.receiverLabel ?? receiver, expected, matcherOptions),
       `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected',)} value must be a string or regular expression`,
       this.utils.printWithType('Expected', expected, this.utils.printExpected)
     ].join('\n\n'));
