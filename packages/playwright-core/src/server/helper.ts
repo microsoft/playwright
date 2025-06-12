@@ -55,7 +55,7 @@ class Helper {
     return null;
   }
 
-  static waitForEvent(progress: Progress | null, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
+  static waitForEvent(progress: Progress, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
     const listeners: RegisteredListener[] = [];
     const promise = new Promise((resolve, reject) => {
       listeners.push(eventsHelper.addEventListener(emitter, event, eventArg => {
@@ -71,8 +71,7 @@ class Helper {
       }));
     });
     const dispose = () => eventsHelper.removeEventListeners(listeners);
-    if (progress)
-      progress.cleanupWhenAborted(dispose);
+    progress.cleanupWhenAborted(dispose);
     return { promise, dispose };
   }
 

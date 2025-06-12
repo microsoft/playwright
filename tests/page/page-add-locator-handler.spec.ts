@@ -313,7 +313,7 @@ test('should wait for hidden by default 2', async ({ page, server }) => {
   });
   const error = await page.locator('#target').click({ timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.clicked')).toBe(0);
-  await expect(page.locator('#interstitial')).toBeVisible();
+  expect(await page.locator('#interstitial').isVisible()).toBe(true);
   expect(called).toBe(1);
   expect(error.message).toContain(`locator handler has finished, waiting for getByRole('button', { name: 'close' }) to be hidden`);
 });
