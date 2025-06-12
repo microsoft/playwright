@@ -53,9 +53,7 @@ it.describe('Drag and drop', () => {
     ]);
   });
 
-  it('should not send dragover on the first mousemove', async ({ server, page, browserName }) => {
-    it.fixme(browserName !== 'chromium');
-
+  it.fixme('should not send dragover on the first mousemove', async ({ server, page, browserName }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     const events = await trackEvents(await page.$('body'));
     await page.hover('#source');
@@ -115,14 +113,15 @@ it.describe('Drag and drop', () => {
       browserName === 'firefox' ? 'dragstart at 120;86' : 'mousemove at 240;350',
       browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
       'dragenter at 240;350',
-      browserName === 'chromium' ? null : 'dragover at 240;350',
+      'dragover at 240;350',
+      browserName === 'chromium' ? 'dragleave at 240;350' : null,
       'dragend',
       'mouseup at 240;350',
     ].filter(Boolean));
   });
 
   it.describe('iframe', () => {
-    it.fixme(true, 'implement dragging with iframes');
+    it.fixme(({ browserName }) => browserName !== 'chromium', 'iframes dragging is not implemented');
 
     it('should drag into an iframe', async ({ server, page, browserName }) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
@@ -133,7 +132,6 @@ it.describe('Drag and drop', () => {
         iframe.style.marginLeft = '500px';
         iframe.style.marginTop = '60px';
       });
-      await page.waitForTimeout(5000);
       const pageEvents = await trackEvents(await page.$('body'));
       const frameEvents = await trackEvents(await frame.$('body'));
       await page.hover('#source');
@@ -142,21 +140,28 @@ it.describe('Drag and drop', () => {
       await page.mouse.up();
       expect(await frame.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
       expect(await pageEvents.jsonValue()).toEqual([
-        'mousemove',
-        'mousedown',
-        browserName === 'firefox' ? 'dragstart' : 'mousemove',
-        browserName === 'firefox' ? 'mousemove' : 'dragstart',
+        'mousemove at 120;86',
+        'mousedown at 120;86',
+        'mousemove at 742;412',
+        'dragstart at 120;86',
+        'dragend',
       ]);
       expect(await frameEvents.jsonValue()).toEqual([
-        'dragenter',
-        'dragover',
-        'drop',
+        'dragenter at 240;350',
+        'dragover at 240;350',
+        'drop at 240;350',
       ]);
     });
 
     it('should drag out of an iframe', async ({ server, page }) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
       const frame = await attachFrame(page, 'oopif', server.PREFIX + '/drag-n-drop.html');
+      await page.$eval('iframe', iframe => {
+        iframe.style.width = '500px';
+        iframe.style.height = '600px';
+        iframe.style.marginLeft = '500px';
+        iframe.style.marginTop = '60px';
+      });
       const pageEvents = await trackEvents(await page.$('body'));
       const frameEvents = await trackEvents(await frame.$('body'));
       await frame.hover('#source');
@@ -165,15 +170,15 @@ it.describe('Drag and drop', () => {
       await page.mouse.up();
       expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
       expect(await frameEvents.jsonValue()).toEqual([
-        'mousemove',
-        'mousedown',
-        'dragstart',
+        'mousemove at 120;86',
+        'mousedown at 120;86',
+        'dragstart at 120;86',
         'dragend',
       ]);
       expect(await pageEvents.jsonValue()).toEqual([
-        'dragenter',
-        'dragover',
-        'drop',
+        'dragenter at 240;350',
+        'dragover at 240;350',
+        'drop at 240;350',
       ]);
     });
   });
