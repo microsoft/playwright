@@ -181,7 +181,10 @@ class SocketSdkObject extends SdkObject implements SocketBackend {
     this._socket = socket;
     this._eventListeners = [
       eventsHelper.addEventListener(socket, 'data', data => this.emit('data', data)),
-      eventsHelper.addEventListener(socket, 'close', () => this.emit('close')),
+      eventsHelper.addEventListener(socket, 'close', () => {
+        eventsHelper.removeEventListeners(this._eventListeners);
+        this.emit('close');
+      }),
     ];
   }
 
@@ -191,7 +194,6 @@ class SocketSdkObject extends SdkObject implements SocketBackend {
 
   close() {
     this._socket.close();
-    eventsHelper.removeEventListeners(this._eventListeners);
   }
 }
 
