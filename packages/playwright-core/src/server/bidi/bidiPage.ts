@@ -510,7 +510,7 @@ export class BidiPage implements PageDelegate {
   async inputActionEpilogue(): Promise<void> {
   }
 
-  async resetForReuse(): Promise<void> {
+  async resetForReuse(progress: Progress): Promise<void> {
   }
 
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {

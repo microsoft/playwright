@@ -22,6 +22,7 @@ import { macEditingCommands } from '../macEditingCommands';
 import type * as types from '../types';
 import type { WKSession } from './wkConnection';
 import type { Page } from '../page';
+import type { Progress } from '../progress';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
@@ -60,7 +61,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
+  async keydown(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
     const parts = [];
     for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
       if (modifiers.has(modifier))
@@ -84,9 +85,10 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       macCommands: commands,
       isKeypad: description.location === input.keypadLocation
     });
+    progress.throwIfAborted();
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
+  async keyup(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
     const { code, key } = description;
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
@@ -96,10 +98,12 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       code,
       isKeypad: description.location === input.keypadLocation
     });
+    progress.throwIfAborted();
   }
 
-  async sendText(text: string): Promise<void> {
+  async sendText(progress: Progress, text: string): Promise<void> {
     await this._session!.send('Page.insertText', { text });
+    progress.throwIfAborted();
   }
 }
 
@@ -116,7 +120,7 @@ export class RawMouseImpl implements input.RawMouse {
     this._session = session;
   }
 
-  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
+  async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'move',
       button,
@@ -125,9 +129,10 @@ export class RawMouseImpl implements input.RawMouse {
       y,
       modifiers: toModifiersMask(modifiers)
     });
+    progress.throwIfAborted();
   }
 
-  async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+  async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'down',
       button,
@@ -137,9 +142,10 @@ export class RawMouseImpl implements input.RawMouse {
       modifiers: toModifiersMask(modifiers),
       clickCount
     });
+    progress.throwIfAborted();
   }
 
-  async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+  async up(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'up',
       button,
@@ -149,14 +155,16 @@ export class RawMouseImpl implements input.RawMouse {
       modifiers: toModifiersMask(modifiers),
       clickCount
     });
+    progress.throwIfAborted();
   }
 
-  async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+  async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
     if (this._page?.browserContext._options.isMobile)
       throw new Error('Mouse wheel is not supported in mobile WebKit');
     await this._session!.send('Page.updateScrollingState');
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
     await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, { world: 'utility' });
+    progress.throwIfAborted();
     await this._pageProxySession.send('Input.dispatchWheelEvent', {
       x,
       y,
@@ -164,6 +172,7 @@ export class RawMouseImpl implements input.RawMouse {
       deltaY,
       modifiers: toModifiersMask(modifiers),
     });
+    progress.throwIfAborted();
   }
 
   setPage(page: Page) {
@@ -178,11 +187,12 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
     this._pageProxySession = session;
   }
 
-  async tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+  async tap(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
     await this._pageProxySession.send('Input.dispatchTapEvent', {
       x,
       y,
       modifiers: toModifiersMask(modifiers),
     });
+    progress.throwIfAborted();
   }
 }

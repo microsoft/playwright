@@ -39,7 +39,7 @@ export async function performAction(pageAliases: Map<Page, string>, actionInCont
     throw Error('Not reached');
 
   if (action.name === 'closePage') {
-    await mainFrame._page.close(callMetadata);
+    await mainFrame._page.close();
     return;
   }
 

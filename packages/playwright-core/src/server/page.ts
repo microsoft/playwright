@@ -94,7 +94,7 @@ export interface PageDelegate {
   // Work around for asynchronously dispatched CSP errors in Firefox.
   readonly cspErrorsAsynchronousForInlineScripts?: boolean;
   // Work around for mouse position in Firefox.
-  resetForReuse(): Promise<void>;
+  resetForReuse(progress: Progress): Promise<void>;
   // WebKit hack.
   shouldToggleStyleSheetToSyncAnimations(): boolean;
 }
@@ -180,7 +180,7 @@ export class Page extends SdkObject {
     this.delegate = delegate;
     this.browserContext = browserContext;
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
-    this.keyboard = new input.Keyboard(delegate.rawKeyboard);
+    this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this.screenshotter = new Screenshotter(this);
@@ -254,12 +254,12 @@ export class Page extends SdkObject {
       this._eventsToEmitAfterInitialized.push({ event, args });
   }
 
-  async resetForReuse(metadata: CallMetadata) {
+  async resetForReuse(progress: Progress) {
     this._locatorHandlers.clear();
 
     // Re-navigate once init scripts are gone.
     // TODO: we should have a timeout for `resetForReuse`.
-    await this.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
+    await this.mainFrame().gotoImpl(progress, 'about:blank', {});
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
     this._extraHTTPHeaders = undefined;
@@ -269,7 +269,7 @@ export class Page extends SdkObject {
       this.delegate.updateEmulateMedia(),
     ]);
 
-    await this.delegate.resetForReuse();
+    await this.delegate.resetForReuse(progress);
   }
 
   _didClose() {
@@ -695,7 +695,7 @@ export class Page extends SdkObject {
         options.timeout);
   }
 
-  async close(metadata: CallMetadata, options: { runBeforeUnload?: boolean, reason?: string } = {}) {
+  async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     if (this._closedState === 'closed')
       return;
     if (options.reason)
