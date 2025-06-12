@@ -282,12 +282,12 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   await expect(listViews.filter({ hasText: 'Cheers!' })).toHaveClass('list-view-entry');
 });
 
-test('should open console errors on click', async ({ showTraceViewer, browserName }) => {
+test('should open console errors on click', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  expect(await traceViewer.actionIconsText('Evaluate')).toEqual(['2', '1']);
-  expect(await traceViewer.page.isHidden('.console-tab')).toBeTruthy();
-  await (await traceViewer.actionIcons('Evaluate')).click();
-  expect(await traceViewer.page.waitForSelector('.console-tab')).toBeTruthy();
+  await expect(traceViewer.actionIconsText('Evaluate')).toHaveText(['2', '1']);
+  await expect(traceViewer.page.getByRole('tabpanel', { name: 'Console' })).toBeHidden();
+  await traceViewer.actionIcons('Evaluate').click();
+  await traceViewer.page.getByRole('tabpanel', { name: 'Console' }).waitFor();
 });
 
 test('should show params and return value', async ({ showTraceViewer }) => {
@@ -977,14 +977,13 @@ test('should highlight expect failure', async ({ page, server, runAndTrace }) =>
 test('should show action source', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('Click');
-  const page = traceViewer.page;
 
-  await page.click('text=Source');
-  await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
-  await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+  await traceViewer.showSourceTab();
+  await expect(traceViewer.page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
+  await expect(traceViewer.stackFrames.and(traceViewer.page.locator('.selected'))).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 
   await traceViewer.hoverAction('Wait for navigation');
-  await expect(page.locator('.source-line-running')).toContainText('page.waitForNavigation()');
+  await expect(traceViewer.page.locator('.source-line-running')).toContainText('page.waitForNavigation()');
 });
 
 test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
@@ -1015,7 +1014,7 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
 
 test('should include metainfo', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.page.locator('text=Metadata').click();
+  await traceViewer.page.getByRole('tab', { name: 'Metadata' }).click();
   const callLine = traceViewer.metadataTab.locator('.call-line');
   await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
   await expect(callLine.getByText('duration')).toHaveText(/duration:[\dms]+/);
@@ -1065,7 +1064,7 @@ test('should open two trace files', async ({ context, page, request, server, sho
     /Fetch "\/one-style\.css"/,
   ]);
 
-  await traceViewer.page.locator('text=Metadata').click();
+  await traceViewer.page.getByRole('tab', { name: 'Metadata' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   // Should get metadata from the context trace
   await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
