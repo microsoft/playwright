@@ -31,7 +31,6 @@ import type { LocatorEx } from './matchers';
 import type { ExpectMatcherState } from '../../types/test';
 import type { MatcherReceived } from '@injected/ariaSnapshot';
 
-
 type ToMatchAriaSnapshotExpected = {
   name?: string;
   path?: string;
@@ -103,7 +102,17 @@ export async function toMatchAriaSnapshot(
     };
   }
 
+  const expectedLines = expected.split('\n');
+  const actualLines = typedReceived.raw.split('\n');
+
+  for (const { templateLineNumber, actualLineNumber } of typedReceived.matchEntries) {
+    if (templateLineNumber === undefined)
+      continue;
+    expectedLines[templateLineNumber] = actualLines[actualLineNumber];
+  }
+
   const receivedText = typedReceived.raw;
+  expected = expectedLines.join('\n');
   const message = () => {
     if (pass) {
       if (notFound)
