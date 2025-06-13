@@ -481,7 +481,7 @@ test('errors', async ({ page }) => {
   expect(e0.message).toContain(`Role must not be empty`);
 
   const e1 = await page.$('role=foo[sElected]').catch(e => e);
-  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "checked", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
+  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "busy", "checked", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
 
   const e2 = await page.$('role=foo[bar . qux=true]').catch(e => e);
   expect(e2.message).toContain(`Unknown attribute "bar.qux"`);
@@ -558,4 +558,61 @@ test('should not match scope by default', async ({ page }) => {
   const children = page.getByRole('listitem', { name: 'Parent list' }).getByRole('listitem');
   await expect(children).toHaveCount(2);
   await expect(children).toHaveText(['child 1', 'child 2']);
+});
+
+test('should support busy', async ({ page }) => {
+  await page.setContent(`
+    <div role="button">Normal button</div>
+    <div role="button" aria-busy="true">Busy button</div>
+    <div role="button" aria-busy="false">Not busy button</div>
+    <div role="status">Normal status</div>
+    <div role="status" aria-busy="true">Loading status</div>
+    <div role="status" aria-busy="false">Ready status</div>
+  `);
+
+  expect(await page.locator('role=button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button">Normal button</div>`,
+    `<div role="button" aria-busy="true">Busy button</div>`,
+    `<div role="button" aria-busy="false">Not busy button</div>`,
+  ]);
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button">Normal button</div>`,
+    `<div role="button" aria-busy="true">Busy button</div>`,
+    `<div role="button" aria-busy="false">Not busy button</div>`,
+  ]);
+
+  expect(await page.locator(`role=button[busy]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-busy="true">Busy button</div>`,
+  ]);
+  expect(await page.locator(`role=button[busy=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-busy="true">Busy button</div>`,
+  ]);
+  expect(await page.getByRole('button', { busy: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-busy="true">Busy button</div>`,
+  ]);
+
+  expect(await page.locator(`role=button[busy=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button">Normal button</div>`,
+    `<div role="button" aria-busy="false">Not busy button</div>`,
+  ]);
+  expect(await page.getByRole('button', { busy: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button">Normal button</div>`,
+    `<div role="button" aria-busy="false">Not busy button</div>`,
+  ]);
+
+  expect(await page.locator(`role=status[busy=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="status" aria-busy="true">Loading status</div>`,
+  ]);
+  expect(await page.getByRole('status', { busy: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="status" aria-busy="true">Loading status</div>`,
+  ]);
+
+  expect(await page.locator(`role=status[busy=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="status">Normal status</div>`,
+    `<div role="status" aria-busy="false">Ready status</div>`,
+  ]);
+  expect(await page.getByRole('status', { busy: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="status">Normal status</div>`,
+    `<div role="status" aria-busy="false">Ready status</div>`,
+  ]);
 });

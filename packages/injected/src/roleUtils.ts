@@ -1018,6 +1018,11 @@ export function getAriaPressed(element: Element): boolean | 'mixed' {
   return false;
 }
 
+export function getAriaBusy(element: Element): boolean {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-busy
+  return getAriaBoolean(element.getAttribute('aria-busy')) === true;
+}
+
 export const kAriaExpandedRoles = ['application', 'button', 'checkbox', 'combobox', 'gridcell', 'link', 'listbox', 'menuitem', 'row', 'rowheader', 'tab', 'treeitem', 'columnheader', 'menuitemcheckbox', 'menuitemradio', 'rowheader', 'switch'];
 export function getAriaExpanded(element: Element): boolean | undefined {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-expanded
