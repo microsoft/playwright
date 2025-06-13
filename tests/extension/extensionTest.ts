@@ -45,16 +45,16 @@ export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFix
       ],
       channel: 'chromium',
     });
-    const { CDPBridgeServer } = await import('../../../playwright-mcp/src/cdp-relay.ts');
-    const server = new CDPBridgeServer(httpServer);
+    const { CDPRelayServer } = await import('../../../playwright-mcp/src/cdpRelay.ts');
+    new CDPRelayServer(httpServer);
     const origin = `ws://localhost:${(httpServer.address() as AddressInfo).port}`;
     await expect.poll(() => context?.serviceWorkers()).toHaveLength(1);
     await context.pages()[0].goto(new URL('/popup.html', context.serviceWorkers()[0].url()).toString());
     await context.pages()[0].getByRole('textbox', { name: 'Bridge Server URL:' }).clear();
-    await context.pages()[0].getByRole('textbox', { name: 'Bridge Server URL:' }).fill(`${origin}${server.EXTENSION_PATH}`);
+    await context.pages()[0].getByRole('textbox', { name: 'Bridge Server URL:' }).fill(`${origin}/extension`);
     await context.pages()[0].getByRole('button', { name: 'Share This Tab' }).click();
     await context.pages()[0].goto('about:blank');
-    const browser = await playwright.chromium.connectOverCDP(`${origin}${server.CDP_PATH}`);
+    const browser = await playwright.chromium.connectOverCDP(`${origin}/cdp`);
     context.on('dialog', dialog => {
       // Make sure the dialog is not dismissed automatically.
     });
