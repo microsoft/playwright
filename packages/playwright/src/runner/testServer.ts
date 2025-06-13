@@ -34,7 +34,7 @@ import { internalScreen } from '../reporters/base';
 import { InternalReporter } from '../reporters/internalReporter';
 import ListReporter from '../reporters/list';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
-import { serializeError } from '../util';
+import { serializeLoadError } from '../util';
 
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
@@ -427,7 +427,7 @@ export class TestServerDispatcher implements TestServerInterface {
       }
       return { config };
     } catch (e) {
-      return { config: null, error: serializeError(e) };
+      return { config: null, error: serializeLoadError(e, this._configLocation.resolvedConfigFile) };
     }
   }
 
