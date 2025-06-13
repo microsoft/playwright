@@ -28,12 +28,16 @@ import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
-import type { APIResponse, Locator, Page } from 'playwright-core';
+import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 
 export type ExpectMatcherStateInternal = ExpectMatcherState & { _stepInfo?: TestStepInfoImpl };
 
 export interface LocatorEx extends Locator {
+  _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
+}
+
+export interface FrameEx extends Frame {
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
 }
 
@@ -401,10 +405,9 @@ export function toHaveTitle(
   expected: string | RegExp,
   options: { timeout?: number } = {},
 ) {
-  const locator = page.locator(':root') as LocatorEx;
-  return toMatchText.call(this, 'toHaveTitle', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveTitle', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
-    return await locator._expect('to.have.title', { expectedText, isNot, timeout });
+    return await (page.mainFrame() as FrameEx)._expect('to.have.title', { expectedText, isNot, timeout });
   }, expected, { receiverLabel: 'page', ...options });
 }
 
@@ -420,11 +423,10 @@ export function toHaveURL(
 
   const baseURL = (page.context() as any)._options.baseURL;
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
-  const locator = page.locator(':root') as LocatorEx;
-  return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveURL', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
-    return await locator._expect('to.have.url', { expectedText, isNot, timeout });
-  }, expected, options);
+    return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout });
+  }, expected, { receiverLabel: 'page', ...options });
 }
 
 export async function toBeOK(

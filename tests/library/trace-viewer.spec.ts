@@ -40,7 +40,9 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   });
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
   const page = await context.newPage();
-  await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
+  await page.goto(`data:text/html,<!DOCTYPE html><html><title>Hello</title><body>Hello world</body></html>`);
+  await expect(page).toHaveTitle('Hello');
+  await expect(page).toHaveURL('data:text/html,<!DOCTYPE html><html><title>Hello</title><body>Hello world</body></html>');
   await page.setContent('<!DOCTYPE html><button>Click</button>');
   await expect(page.locator('button')).toHaveText('Click');
   await expect(page.getByTestId('amazing-btn')).toBeHidden();
@@ -151,6 +153,8 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
     /Navigate to "data:"/,
+    /^Expect "toHaveTitle"[\d]+ms$/,
+    /^Expect "toHaveURL"[\d]+ms$/,
     /Set content/,
     /toHaveText.*locator/,
     /toBeHidden.*getByTestId/,
@@ -1827,6 +1831,8 @@ test('should render blob trace received from message', async ({ showTraceViewer 
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
     /Navigate to "data:"/,
+    /toHaveTitle/,
+    /toHaveURL/,
     /Set content/,
     /toHaveText.*locator/,
     /toBeHidden.*getByTestId/,
