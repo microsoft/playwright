@@ -58,23 +58,39 @@ export type Screen = {
   colors: Colors;
   isTTY: boolean;
   ttyWidth: number;
+  ttyHeight: number;
 };
+
+const DEFAULT_TTY_WIDTH = 100;
+const DEFAULT_TTY_HEIGHT = 40;
 
 // Output goes to terminal.
 export const terminalScreen: Screen = (() => {
   let isTTY = !!process.stdout.isTTY;
   let ttyWidth = process.stdout.columns || 0;
+  let ttyHeight = process.stdout.rows || 0;
   if (process.env.PLAYWRIGHT_FORCE_TTY === 'false' || process.env.PLAYWRIGHT_FORCE_TTY === '0') {
     isTTY = false;
     ttyWidth = 0;
+    ttyHeight = 0;
   } else if (process.env.PLAYWRIGHT_FORCE_TTY === 'true' || process.env.PLAYWRIGHT_FORCE_TTY === '1') {
     isTTY = true;
-    ttyWidth = process.stdout.columns || 100;
+    ttyWidth = process.stdout.columns || DEFAULT_TTY_WIDTH;
+    ttyHeight = process.stdout.rows || DEFAULT_TTY_HEIGHT;
   } else if (process.env.PLAYWRIGHT_FORCE_TTY) {
     isTTY = true;
-    ttyWidth = +process.env.PLAYWRIGHT_FORCE_TTY;
+    const sizeMatch = process.env.PLAYWRIGHT_FORCE_TTY.match(/^(\d+)x(\d+)$/);
+    if (sizeMatch) {
+      ttyWidth = +sizeMatch[1];
+      ttyHeight = +sizeMatch[2];
+    } else {
+      ttyWidth = +process.env.PLAYWRIGHT_FORCE_TTY;
+      ttyHeight = DEFAULT_TTY_HEIGHT;
+    }
     if (isNaN(ttyWidth))
-      ttyWidth = 100;
+      ttyWidth = DEFAULT_TTY_WIDTH;
+    if (isNaN(ttyHeight))
+      ttyHeight = DEFAULT_TTY_HEIGHT;
   }
 
   let useColors = isTTY;
@@ -89,6 +105,7 @@ export const terminalScreen: Screen = (() => {
     resolveFiles: 'cwd',
     isTTY,
     ttyWidth,
+    ttyHeight,
     colors
   };
 })();
@@ -98,6 +115,7 @@ export const nonTerminalScreen: Screen = {
   colors: terminalScreen.colors,
   isTTY: false,
   ttyWidth: 0,
+  ttyHeight: 0,
   resolveFiles: 'rootDir',
 };
 
@@ -106,6 +124,7 @@ export const internalScreen: Screen = {
   colors: realColors,
   isTTY: false,
   ttyWidth: 0,
+  ttyHeight: 0,
   resolveFiles: 'rootDir',
 };
 
