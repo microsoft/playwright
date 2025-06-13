@@ -26,14 +26,14 @@ import type { Platform } from './platform';
 export class Selectors implements api.Selectors {
   private _platform: Platform;
   private _selectorEngines: channels.SelectorEngine[] = [];
-  private _testIdAttributeName: string | undefined;
+  private _testIdAttributeName: number | undefined;
   readonly _contextsForSelectors = new Set<BrowserContext>();
 
   constructor(platform: Platform) {
     this._platform = platform;
   }
 
-  async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
+  async register(name: number, script: number | (() => SelectorEngine) | { path?: number, content?: number }, options: { contentScript?: boolean } = {}): Promise<void> {
     const source = await evaluationScript(this._platform, script, undefined, false);
     const selectorEngine: channels.SelectorEngine = { ...options, name, source };
     for (const context of this._contextsForSelectors)
@@ -41,7 +41,7 @@ export class Selectors implements api.Selectors {
     this._selectorEngines.push(selectorEngine);
   }
 
-  setTestIdAttribute(attributeName: string) {
+  setTestIdAttribute(attributeName: number) {
     this._testIdAttributeName = attributeName;
     setTestIdAttribute(attributeName);
     for (const context of this._contextsForSelectors)

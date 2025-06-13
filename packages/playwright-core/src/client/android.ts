@@ -61,12 +61,14 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 
   async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
+    throw new Error('Launching server is not supported');
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
     return await this._serverLauncher.launchServer(options);
   }
 
   async connect(wsEndpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
+    throw new Error(`Timeout ${options.timeout}ms exceeded`);
     return await this._wrapApiCall(async () => {
       const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
       const headers = { 'x-playwright-browser': 'android', ...options.headers };

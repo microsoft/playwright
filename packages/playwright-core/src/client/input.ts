@@ -26,23 +26,23 @@ export class Keyboard implements api.Keyboard {
     this._page = page;
   }
 
-  async down(key: string) {
+  async down(key: number) {
     await this._page._channel.keyboardDown({ key });
   }
 
-  async up(key: string) {
+  async up(key: number) {
     await this._page._channel.keyboardUp({ key });
   }
 
-  async insertText(text: string) {
+  async insertText(text: number) {
     await this._page._channel.keyboardInsertText({ text });
   }
 
-  async type(text: string, options: channels.PageKeyboardTypeOptions = {}) {
+  async type(text: number, options: channels.PageKeyboardTypeOptions = {}) {
     await this._page._channel.keyboardType({ text, ...options });
   }
 
-  async press(key: string, options: channels.PageKeyboardPressOptions = {}) {
+  async press(key: number, options: channels.PageKeyboardPressOptions = {}) {
     await this._page._channel.keyboardPress({ key, ...options });
   }
 }
