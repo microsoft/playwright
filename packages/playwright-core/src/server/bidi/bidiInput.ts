@@ -59,7 +59,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   private async _performActions(progress: Progress, actions: bidi.Input.KeySourceAction[]) {
-    await this._session.send('input.performActions', {
+    await progress.race(this._session.send('input.performActions', {
       context: this._session.sessionId,
       actions: [
         {
@@ -68,8 +68,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
           actions,
         }
       ]
-    });
-    progress.throwIfAborted();
+    }));
   }
 }
 
@@ -96,7 +95,7 @@ export class RawMouseImpl implements input.RawMouse {
     // Bidi throws when x/y are not integers.
     x = Math.floor(x);
     y = Math.floor(y);
-    await this._session.send('input.performActions', {
+    await progress.race(this._session.send('input.performActions', {
       context: this._session.sessionId,
       actions: [
         {
@@ -105,12 +104,11 @@ export class RawMouseImpl implements input.RawMouse {
           actions: [{ type: 'scroll', x, y, deltaX, deltaY }],
         }
       ]
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   private async _performActions(progress: Progress, actions: bidi.Input.PointerSourceAction[]) {
-    await this._session.send('input.performActions', {
+    await progress.race(this._session.send('input.performActions', {
       context: this._session.sessionId,
       actions: [
         {
@@ -122,8 +120,7 @@ export class RawMouseImpl implements input.RawMouse {
           actions,
         }
       ]
-    });
-    progress.throwIfAborted();
+    }));
   }
 }
 

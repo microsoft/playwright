@@ -168,8 +168,7 @@ export abstract class BrowserContext extends SdkObject {
   async stopPendingOperations(reason: string) {
     // When using context reuse, stop pending operations to gracefully terminate all the actions
     // with a user-friendly error message containing operation log.
-    for (const controller of this._activeProgressControllers)
-      controller.abort(new Error(reason));
+    await Promise.all(Array.from(this._activeProgressControllers).map(controller => controller.abort(reason)));
     // Let rejections in microtask generate events before returning.
     await new Promise(f => setTimeout(f, 0));
   }

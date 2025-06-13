@@ -68,7 +68,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     if (text === '\r')
       text = '';
     const { code, key, location } = description;
-    await this._client.send('Page.dispatchKeyEvent', {
+    await progress.race(this._client.send('Page.dispatchKeyEvent', {
       type: 'keydown',
       keyCode: description.keyCodeWithoutLocation,
       code,
@@ -76,26 +76,23 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       repeat: autoRepeat,
       location,
       text,
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   async keyup(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
     const { code, key, location } = description;
-    await this._client.send('Page.dispatchKeyEvent', {
+    await progress.race(this._client.send('Page.dispatchKeyEvent', {
       type: 'keyup',
       key,
       keyCode: description.keyCodeWithoutLocation,
       code,
       location,
       repeat: false
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   async sendText(progress: Progress, text: string): Promise<void> {
-    await this._client.send('Page.insertText', { text });
-    progress.throwIfAborted();
+    await progress.race(this._client.send('Page.insertText', { text }));
   }
 }
 
@@ -108,19 +105,18 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    await this._client.send('Page.dispatchMouseEvent', {
+    await progress.race(this._client.send('Page.dispatchMouseEvent', {
       type: 'mousemove',
       button: 0,
       buttons: toButtonsMask(buttons),
       x: Math.floor(x),
       y: Math.floor(y),
       modifiers: toModifiersMask(modifiers)
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
-    await this._client.send('Page.dispatchMouseEvent', {
+    await progress.race(this._client.send('Page.dispatchMouseEvent', {
       type: 'mousedown',
       button: toButtonNumber(button),
       buttons: toButtonsMask(buttons),
@@ -128,12 +124,11 @@ export class RawMouseImpl implements input.RawMouse {
       y: Math.floor(y),
       modifiers: toModifiersMask(modifiers),
       clickCount
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   async up(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
-    await this._client.send('Page.dispatchMouseEvent', {
+    await progress.race(this._client.send('Page.dispatchMouseEvent', {
       type: 'mouseup',
       button: toButtonNumber(button),
       buttons: toButtonsMask(buttons),
@@ -141,22 +136,20 @@ export class RawMouseImpl implements input.RawMouse {
       y: Math.floor(y),
       modifiers: toModifiersMask(modifiers),
       clickCount
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
     await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, { world: 'utility' });
-    await this._client.send('Page.dispatchWheelEvent', {
+    await progress.race(this._client.send('Page.dispatchWheelEvent', {
       deltaX,
       deltaY,
       x: Math.floor(x),
       y: Math.floor(y),
       deltaZ: 0,
       modifiers: toModifiersMask(modifiers)
-    });
-    progress.throwIfAborted();
+    }));
   }
 
   setPage(page: Page) {
@@ -171,11 +164,10 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
     this._client = client;
   }
   async tap(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
-    await this._client.send('Page.dispatchTapEvent', {
+    await progress.race(this._client.send('Page.dispatchTapEvent', {
       x,
       y,
       modifiers: toModifiersMask(modifiers),
-    });
-    progress.throwIfAborted();
+    }));
   }
 }
