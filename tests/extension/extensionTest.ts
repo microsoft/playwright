@@ -25,7 +25,7 @@ import path from 'node:path';
 import { AddressInfo } from 'node:net';
 
 export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixtures).extend<PageTestFixtures, PageWorkerFixtures>({
-  browserVersion: [({ browser }) => browser.version(), { scope: 'worker' }],
+  browserVersion: [({ browser }, use) => use(browser.version()), { scope: 'worker' }],
   browserMajorVersion: [({ browserVersion }, use) => use(Number(browserVersion.split('.')[0])), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [false, { scope: 'worker' }],
