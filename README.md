@@ -159,6 +159,20 @@ test('Intercept network requests', async ({ page }) => {
   await page.goto('http://todomvc.com');
 });
 ```
+---
+
+## 📘 Test Report Download Instructions 
+
+After running your tests using:
+
+```bash
+npx playwright test
+
+To generate an HTML report, run:
+
+```bash
+npx playwright test --reporter=html
+npx playwright show-report
 
 ## Resources
 
