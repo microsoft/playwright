@@ -58,6 +58,7 @@ export const LogTab: React.FunctionComponent<{
 
   return <LogList
     name='log'
+    ariaLabel='Log entries'
     items={entries}
     render={entry => <div className='log-list-item'>
       <span className='log-list-duration'>{entry.time}</span>

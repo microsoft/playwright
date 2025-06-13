@@ -27,6 +27,7 @@ export type ListViewProps<T> = {
   isError?: (item: T, index: number) => boolean,
   isWarning?: (item: T, index: number) => boolean,
   isInfo?: (item: T, index: number) => boolean,
+  ariaLabel?: string,
   selectedItem?: T,
   onAccepted?: (item: T, index: number) => void,
   onSelected?: (item: T, index: number) => void,
@@ -56,6 +57,7 @@ export function ListView<T>({
   noItemsMessage,
   dataTestId,
   notSelectable,
+  ariaLabel,
 }: ListViewProps<T>) {
   const itemListRef = React.useRef<HTMLDivElement>(null);
   const [highlightedItem, setHighlightedItem] = React.useState<any>();
@@ -80,7 +82,7 @@ export function ListView<T>({
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
   }, [name]);
 
-  return <div className={clsx(`list-view vbox`, name + '-list-view')} role={items.length > 0 ? 'list' : undefined} data-testid={dataTestId || (name + '-list')}>
+  return <div className={clsx(`list-view vbox`, name + '-list-view')} role={items.length > 0 ? 'list' : undefined} aria-label={ariaLabel}>
     <div
       className={clsx('list-view-content', notSelectable && 'not-selectable')}
       tabIndex={0}
@@ -132,6 +134,7 @@ export function ListView<T>({
               isError?.(item, index) && 'error',
               isWarning?.(item, index) && 'warning',
               isInfo?.(item, index) && 'info')}
+          aria-selected={selectedItem === item}
           onClick={() => onSelected?.(item, index)}
           onMouseEnter={() => setHighlightedItem(item)}
           onMouseLeave={() => setHighlightedItem(undefined)}

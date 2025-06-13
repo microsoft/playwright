@@ -32,7 +32,7 @@ test('should filter network requests by resource type', async ({ runUITest, serv
   await page.getByText('network tab test').dblclick();
   await page.getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByTestId('network-list').getByRole('listitem');
+  const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
 
   await page.getByText('JS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
@@ -73,7 +73,7 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
   await page.getByText('network tab test').dblclick();
   await page.getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByTestId('network-list').getByRole('listitem');
+  const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
 
   await page.getByPlaceholder('Filter network').fill('script.');
   await expect(networkItems).toHaveCount(1);
@@ -198,5 +198,5 @@ test('should not duplicate network entries from beforeAll', {
 
   await page.getByText('first test').dblclick();
   await page.getByText('Network', { exact: true }).click();
-  await expect(page.getByTestId('network-list').getByText('empty.html')).toHaveCount(1);
+  await expect(page.getByRole('list', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
 });
