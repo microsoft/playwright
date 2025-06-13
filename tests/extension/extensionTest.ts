@@ -55,6 +55,9 @@ export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFix
     await context.pages()[0].getByRole('button', { name: 'Share This Tab' }).click();
     await context.pages()[0].goto('about:blank');
     const browser = await playwright.chromium.connectOverCDP(`${origin}${server.CDP_PATH}`);
+    context.on('dialog', dialog => {
+      // Make sure the dialog is not dismissed automatically.
+    });
     await use(browser);
     httpServer.close();
   }, { scope: 'worker' }],
