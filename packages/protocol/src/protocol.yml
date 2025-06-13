@@ -1680,14 +1680,11 @@ Page:
         clip: Rect?
         $mixin: CommonScreenshotOptions
       returns:
+        actual: binary?
+      errorDetails:
         diff: binary?
-        errorMessage: string?
         actual: binary?
         previous: binary?
-        timedOut: boolean?
-        log:
-          type: array?
-          items: string
       flags:
         snapshot: true
 
@@ -2671,12 +2668,9 @@ Frame:
         isNot: boolean
         timeout: number
       returns:
-        matches: boolean
         received: SerializedValue?
-        timedOut: boolean?
-        log:
-          type: array?
-          items: string
+      errorDetails:
+        received: SerializedValue?
       flags:
         snapshot: true
 

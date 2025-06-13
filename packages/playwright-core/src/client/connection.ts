@@ -39,7 +39,7 @@ import { Stream } from './stream';
 import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
-import { ValidationError, findValidator  } from '../protocol/validator';
+import { ValidationError, findValidator, maybeFindValidator  } from '../protocol/validator';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
@@ -159,7 +159,7 @@ export class Connection extends EventEmitter {
     if (this._closedError)
       return;
 
-    const { id, guid, method, params, result, error, log } = message as any;
+    const { id, guid, method, params, result, error, errorDetails, log } = message as any;
     if (id) {
       if (this._platform.isLogEnabled('channel'))
         this._platform.log('channel', '<RECV ' + JSON.stringify(message));
@@ -169,7 +169,12 @@ export class Connection extends EventEmitter {
       this._callbacks.delete(id);
       if (error && !result) {
         const parsedError = parseError(error);
-        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this._platform, log));
+        const validator = maybeFindValidator(callback.type, callback.method, 'ErrorDetails');
+        parsedError.log = log || [];
+        if (validator)
+          parsedError.details = validator(errorDetails, '', this._validatorFromWireContext());
+        else
+          rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this._platform, log));
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
