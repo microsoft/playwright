@@ -43,7 +43,6 @@ class TraceViewerPage {
   errorMessages: Locator;
   consoleLineMessages: Locator;
   consoleStacks: Locator;
-  stackFrames: Locator;
   networkRequests: Locator;
   metadataTab: Locator;
   snapshotContainer: Locator;
@@ -62,7 +61,6 @@ class TraceViewerPage {
     this.consoleLineMessages = page.locator('.console-line-message');
     this.errorMessages = page.locator('.error-message');
     this.consoleStacks = page.locator('.console-stack');
-    this.stackFrames = page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
     this.networkRequests = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
     this.metadataTab = page.getByRole('tabpanel', { name: 'Metadata' });
@@ -71,6 +69,13 @@ class TraceViewerPage {
     this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
     this.darkModeSetting = page.locator('.setting').getByText('Dark mode');
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
+  }
+
+  stackFrames(selected?: boolean) {
+    const entry = this.page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
+    if (selected)
+      return entry.and(this.page.locator('.selected'));
+    return entry;
   }
 
   actionIconsText(action: string) {
@@ -94,7 +99,7 @@ class TraceViewerPage {
 
   @step
   async hoverAction(title: string, ordinal: number = 0) {
-    await this.actionTitles.filter({ hasText: title }).nth(ordinal).hover();
+    await this.actionsTree.getByRole('treeitem', { name: title }).nth(ordinal).hover();
   }
 
   @step

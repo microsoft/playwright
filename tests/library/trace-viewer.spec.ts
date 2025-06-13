@@ -346,7 +346,7 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
 
   await traceViewer.selectAction('Click');
   await traceViewer.showSourceTab();
-  await expect(traceViewer.stackFrames).toContainText([
+  await expect(traceViewer.stackFrames()).toContainText([
     /doClick\s+trace-viewer.spec.ts\s+:\d+/,
     /recordTrace\s+trace-viewer.spec.ts\s+:\d+/,
   ], { useInnerText: true });
@@ -980,7 +980,7 @@ test('should show action source', async ({ showTraceViewer }) => {
 
   await traceViewer.showSourceTab();
   await expect(traceViewer.page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
-  await expect(traceViewer.stackFrames.and(traceViewer.page.locator('.selected'))).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+  await expect(traceViewer.stackFrames(true)).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 
   await traceViewer.hoverAction('Wait for navigation');
   await expect(traceViewer.page.locator('.source-line-running')).toContainText('page.waitForNavigation()');
