@@ -103,33 +103,111 @@ const CopyDropdown: React.FC<{
   );
 };
 
+const CollapsibleSection: React.FC<{
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  collapsedSuffix?: React.ReactNode;
+}> = ({ title, children, defaultOpen = true, collapsedSuffix }) => {
+  const [isOpen, setIsOpen] = React.useState(defaultOpen);
+
+  return (
+    <div className='network-collapsible-section'>
+      <div
+        className='network-collapsible-header'
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+      >
+        <span
+          className={`codicon ${isOpen ? 'codicon-chevron-down' : 'codicon-chevron-right'}`}
+          style={{ marginRight: 4 }}
+        />
+        <span>{title}</span>
+        {!isOpen && collapsedSuffix && (
+          <span
+            className='network-collapsible-suffix'
+          >
+            {collapsedSuffix}
+          </span>
+        )}
+      </div>
+      {isOpen && <div className='network-collapsible-content'>{children}</div>}
+    </div>
+  );
+};
+
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
   return <div className='network-request-details-tab'>
-    <div className='network-request-details-header'>General</div>
-    <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
-    <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
-      Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
-        {`${resource.response.status} ${resource.response.statusText}`}
-      </span></div>}
-    {resource.request.queryString.length ? <>
-      <div className='network-request-details-header'>Query String Parameters</div>
-      <div className='network-request-details-headers'>
-        {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
-      </div>
-    </> : null}
-    <div className='network-request-details-header'>Request Headers</div>
-    <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    <div className='network-request-details-header'>Time</div>
-    <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
-    <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
+    <CollapsibleSection title="General" defaultOpen={true}>
+    <div className='network-key-value'>
+      <div className='network-key'>URL</div>
+      <div className='network-value'>{resource.request.url}</div>
+    </div>
+    <div className='network-key-value'>
+      <div className='network-key'>Method</div>
+      <div className='network-value'>{resource.request.method}</div>
+    </div>
+      {resource.response.status !== -1 && (
+        <div className='network-key-value'>
+        <div className='network-key'>Status Code</div>
+        <div className='network-value'>
+          <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+            {`${resource.response.status} ${resource.response.statusText}`}
+          </span>
+        </div>
+      </div>      
+      )}
+    </CollapsibleSection>
 
-    {requestBody && <div className='network-request-details-header'>Request Body</div>}
-    {requestBody && <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>}
+    {resource.request.queryString.length > 0 && (
+  <CollapsibleSection title="Query String Parameters" defaultOpen={false}>
+    {resource.request.queryString.map(param => (
+      <div className='network-key-value' key={param.name}>
+        <div className='network-key'>{param.name}</div>
+        <div className='network-value'>{param.value}</div>
+      </div>
+    ))}
+  </CollapsibleSection>
+)}
+
+<CollapsibleSection   
+  title="Request Headers"
+  collapsedSuffix={`(${resource.request.headers.length})`}
+  defaultOpen={true}
+>
+  {resource.request.headers.map(header => (
+    <div className='network-key-value' key={header.name}>
+      <div className='network-key'>{header.name}</div>
+      <div className='network-value'>{header.value}</div>
+    </div>
+  ))}
+</CollapsibleSection>
+
+<CollapsibleSection title="Time" defaultOpen={true}>
+  <div className='network-key-value'>
+    <div className='network-key'>Start</div>
+    <div className='network-value'>{msToString(startTimeOffset)}</div>
+  </div>
+  <div className='network-key-value'>
+    <div className='network-key'>Duration</div>
+    <div className='network-value'>{msToString(resource.time)}</div>
+  </div>
+</CollapsibleSection>
+
+{requestBody && (
+  <CollapsibleSection title="Request Body" defaultOpen={true}>
+    <CodeMirrorWrapper
+      text={requestBody.text}
+      mimeType={requestBody.mimeType}
+      readOnly
+      lineNumbers={true}
+    />
+  </CollapsibleSection>
+)}
   </div>;
 };
 
