@@ -142,72 +142,72 @@ const RequestTab: React.FunctionComponent<{
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
   return <div className='network-request-details-tab'>
-    <CollapsibleSection title="General" defaultOpen={true}>
-    <div className='network-key-value'>
-      <div className='network-key'>URL</div>
-      <div className='network-value'>{resource.request.url}</div>
-    </div>
-    <div className='network-key-value'>
-      <div className='network-key'>Method</div>
-      <div className='network-value'>{resource.request.method}</div>
-    </div>
+    <CollapsibleSection title='General' defaultOpen={true}>
+      <div className='network-key-value'>
+        <div className='network-key'>URL</div>
+        <div className='network-value'>{resource.request.url}</div>
+      </div>
+      <div className='network-key-value'>
+        <div className='network-key'>Method</div>
+        <div className='network-value'>{resource.request.method}</div>
+      </div>
       {resource.response.status !== -1 && (
         <div className='network-key-value'>
-        <div className='network-key'>Status Code</div>
-        <div className='network-value'>
-          <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
-            {`${resource.response.status} ${resource.response.statusText}`}
-          </span>
+          <div className='network-key'>Status Code</div>
+          <div className='network-value'>
+            <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+              {`${resource.response.status} ${resource.response.statusText}`}
+            </span>
+          </div>
         </div>
-      </div>      
       )}
     </CollapsibleSection>
 
     {resource.request.queryString.length > 0 && (
-  <CollapsibleSection title="Query String Parameters" defaultOpen={false}>
-    {resource.request.queryString.map(param => (
-      <div className='network-key-value' key={param.name}>
-        <div className='network-key'>{param.name}</div>
-        <div className='network-value'>{param.value}</div>
+      <CollapsibleSection title='Query String Parameters' defaultOpen={false}>
+        {resource.request.queryString.map(param => (
+          <div className='network-key-value' key={param.name}>
+            <div className='network-key'>{param.name}</div>
+            <div className='network-value'>{param.value}</div>
+          </div>
+        ))}
+      </CollapsibleSection>
+    )}
+
+    <CollapsibleSection
+      title='Request Headers'
+      collapsedSuffix={`(${resource.request.headers.length})`}
+      defaultOpen={true}
+    >
+      {resource.request.headers.map(header => (
+        <div className='network-key-value' key={header.name}>
+          <div className='network-key'>{header.name}</div>
+          <div className='network-value'>{header.value}</div>
+        </div>
+      ))}
+    </CollapsibleSection>
+
+    <CollapsibleSection title='Time' defaultOpen={true}>
+      <div className='network-key-value'>
+        <div className='network-key'>Start</div>
+        <div className='network-value'>{msToString(startTimeOffset)}</div>
       </div>
-    ))}
-  </CollapsibleSection>
-)}
+      <div className='network-key-value'>
+        <div className='network-key'>Duration</div>
+        <div className='network-value'>{msToString(resource.time)}</div>
+      </div>
+    </CollapsibleSection>
 
-<CollapsibleSection   
-  title="Request Headers"
-  collapsedSuffix={`(${resource.request.headers.length})`}
-  defaultOpen={true}
->
-  {resource.request.headers.map(header => (
-    <div className='network-key-value' key={header.name}>
-      <div className='network-key'>{header.name}</div>
-      <div className='network-value'>{header.value}</div>
-    </div>
-  ))}
-</CollapsibleSection>
-
-<CollapsibleSection title="Time" defaultOpen={true}>
-  <div className='network-key-value'>
-    <div className='network-key'>Start</div>
-    <div className='network-value'>{msToString(startTimeOffset)}</div>
-  </div>
-  <div className='network-key-value'>
-    <div className='network-key'>Duration</div>
-    <div className='network-value'>{msToString(resource.time)}</div>
-  </div>
-</CollapsibleSection>
-
-{requestBody && (
-  <CollapsibleSection title="Request Body" defaultOpen={true}>
-    <CodeMirrorWrapper
-      text={requestBody.text}
-      mimeType={requestBody.mimeType}
-      readOnly
-      lineNumbers={true}
-    />
-  </CollapsibleSection>
-)}
+    {requestBody && (
+      <CollapsibleSection title='Request Body' defaultOpen={true}>
+        <CodeMirrorWrapper
+          text={requestBody.text}
+          mimeType={requestBody.mimeType}
+          readOnly
+          lineNumbers={true}
+        />
+      </CollapsibleSection>
+    )}
   </div>;
 };
 
