@@ -20,9 +20,10 @@ import './colors.css';
 import './common.css';
 import './headerView.css';
 import * as icons from './icons';
-import { Link, LinkifyText, navigate, SearchParamsContext } from './links';
+import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
+import { linkifyText } from '@web/renderUtils';
 
 export const HeaderView: React.FC<{
   title: string | undefined,
@@ -35,7 +36,7 @@ export const HeaderView: React.FC<{
       <div style={{ flex: 'auto' }}></div>
       {rightSuperHeader}
     </div>
-    {title && <div className='header-title'><LinkifyText text={title} /></div>}
+    {title && <div className='header-title'>{linkifyText(title)}</div>}
   </div>;
 };
 
