@@ -435,7 +435,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
     });
 
-    test('should display title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
+    test('should display report title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = {
@@ -454,6 +454,31 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await expect(page.locator('.header-title')).toHaveText('Custom report title');
+    });
+
+    test('should process URLs as links in report title', async ({ runInlineTest, page, showReport }, testInfo) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['html', { title: 'Custom report title https://playwright.dev separator http://microsoft.com end' }], ['line']]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('fails', async ({ page }) => {
+            expect(1).toBe(2);
+          });
+        `
+      }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+
+      await showReport();
+      const anchorLocator = page.locator('.header-title a');
+      await expect(page.locator('.header-title')).toHaveText('Custom report title https://playwright.dev separator http://microsoft.com end');
+      await expect(anchorLocator).toHaveCount(2);
+      await expect(anchorLocator.nth(0)).toHaveAttribute('href', 'https://playwright.dev');
+      await expect(anchorLocator.nth(1)).toHaveAttribute('href', 'http://microsoft.com');
     });
 
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
