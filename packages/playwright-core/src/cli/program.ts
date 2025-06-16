@@ -28,6 +28,7 @@ import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/tra
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
+import { launchOptionsHash } from '../remote/playwrightConnection';
 
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
@@ -472,7 +473,29 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       launchOptions.proxy.bypass = options.proxyBypass;
   }
 
-  const browser = await browserType.launch(launchOptions);
+  let browser: Browser;
+  if (process.env.PW_BROWSER_SERVER) {
+    const baseUrl = new URL(process.env.PW_BROWSER_SERVER);
+    const launchUrl = new URL('/json/launch', baseUrl);
+    launchUrl.protocol = 'http';
+    const response = await fetch(launchUrl, {
+      method: 'POST',
+      body: JSON.stringify({
+        browserName: browserType.name(),
+        launchOptions,
+        reuseGroup: launchOptionsHash(launchOptions as any),
+      })
+    });
+    if (!response.ok)
+      throw new Error(`Failed to launch browser: ${response.status} ${response.statusText}`);
+
+    const { wsPath } = await response.json();
+    const wsURL = new URL(wsPath, baseUrl);
+    wsURL.protocol = 'ws';
+    browser = await browserType.connect(wsURL.toString());
+  } else {
+    browser = await browserType.launch(launchOptions);
+  }
 
   if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
     (process as any)._didSetSourcesForTest = (text: string) => {
@@ -638,6 +661,8 @@ async function open(options: Options, url: string | undefined, language: string)
     handleSIGINT: false,
   });
   await openPage(context, url);
+  if (process.env.PW_BROWSER_SERVER)
+    gracefullyProcessExitDoNotHang(0);
 }
 
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {

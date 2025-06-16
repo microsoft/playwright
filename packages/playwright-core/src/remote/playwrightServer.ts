@@ -22,11 +22,12 @@ import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
+import { serverSideCallMetadata } from '../server';
+import { Browser } from '../server/browser';
 
 import type { ClientType } from './playwrightConnection';
 import type { SocksProxy } from '../server/utils/socksProxy';
 import type { AndroidDevice } from '../server/android/android';
-import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
 import type  { LaunchOptions } from '../server/types';
 
@@ -44,6 +45,8 @@ export class PlaywrightServer {
   private _preLaunchedPlaywright: Playwright | undefined;
   private _options: ServerOptions;
   private _wsServer: WSServer;
+
+  private _nonTestingBrowsers = new Map<Browser, { reuseGroup?: string }>();
 
   constructor(options: ServerOptions) {
     this._options = options;
@@ -68,11 +71,42 @@ export class PlaywrightServer {
           headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);
       },
 
+      onList: () => {
+        const browsers = this._preLaunchedPlaywright?.allBrowsers() ?? [];
+        return browsers.map(browser => this._browserToJSON(browser));
+      },
+
+      onLaunch: async request => {
+        if (!this._preLaunchedPlaywright)
+          this._preLaunchedPlaywright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
+        const playwright = this._preLaunchedPlaywright;
+        const browserType = playwright[request.browserName];
+        const callMetadata = serverSideCallMetadata();
+
+        let browser: Browser | undefined;
+        if (request.reuseGroup)
+          browser = playwright.allBrowsers().find(b => b.options.name === request.browserName && this._nonTestingBrowsers.get(b)?.reuseGroup === request.reuseGroup);
+        if (!browser) {
+          if (request.userDataDir) {
+            const context = await browserType.launchPersistentContext(callMetadata, request.userDataDir, request.launchOptions);
+            browser = context._browser;
+          } else {
+            browser = await browserType.launch(callMetadata, request.launchOptions);
+          }
+        }
+
+        this._nonTestingBrowsers.set(browser, { reuseGroup: request.reuseGroup });
+        browser.on(Browser.Events.Disconnected, () => this._nonTestingBrowsers.delete(browser));
+
+        return this._browserToJSON(browser);
+      },
+
       onConnection: (request, url, ws, id) => {
         const browserHeader = request.headers['x-playwright-browser'];
         const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
         const proxyHeader = request.headers['x-playwright-proxy'];
         const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
+        const browserGuid = url.searchParams.get('browserGuid');
 
         const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
         const launchOptionsHeaderValue = Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader;
@@ -92,7 +126,16 @@ export class PlaywrightServer {
 
         let clientType: ClientType = 'launch-browser';
         let semaphore: Semaphore = browserSemaphore;
-        if (isExtension && url.searchParams.has('debug-controller')) {
+        let browser: Browser | undefined;
+        let sharedBrowser = this._options.mode === 'launchServerShared';
+        if (browserGuid) {
+          clientType = 'pre-launched-browser-or-android';
+          semaphore = browserSemaphore;
+          sharedBrowser = true;
+          browser = this._preLaunchedPlaywright?.allBrowsers().find(b => b.guid === browserGuid);
+          if (!browser)
+            throw new Error(`Browser not found.`);
+        } else if (isExtension && url.searchParams.has('debug-controller')) {
           clientType = 'controller';
           semaphore = controllerSemaphore;
         } else if (isExtension) {
@@ -101,6 +144,7 @@ export class PlaywrightServer {
         } else if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
           clientType = 'pre-launched-browser-or-android';
           semaphore = browserSemaphore;
+          browser = this._options.preLaunchedBrowser;
         }
 
         return new PlaywrightConnection(
@@ -111,15 +155,18 @@ export class PlaywrightServer {
               browserName,
               launchOptions,
               allowFSPaths: this._options.mode === 'extension',
-              sharedBrowser: this._options.mode === 'launchServerShared',
+              sharedBrowser,
             },
             {
               playwright: this._preLaunchedPlaywright,
-              browser: this._options.preLaunchedBrowser,
+              browser,
               androidDevice: this._options.preLaunchedAndroidDevice,
               socksProxy: this._options.preLaunchedSocksProxy,
             },
-            id, () => semaphore.release());
+            id,
+            browser => this._nonTestingBrowsers.has(browser),
+            () => semaphore.release(),
+        );
       },
 
       onClose: async () => {
@@ -137,6 +184,20 @@ export class PlaywrightServer {
 
   async close() {
     await this._wsServer.close();
+  }
+
+  private _browserToJSON(browser: Browser) {
+    return {
+      browserName: browser.options.name,
+      launchOptions: browser.options.originalLaunchOptions,
+      reuseGroup: this._nonTestingBrowsers.get(browser)?.reuseGroup,
+      wsPath: this._options.path + '?' + new URLSearchParams({ browserGuid: browser.guid }),
+      contexts: browser.contexts().map(context => ({
+        pages: context.pages().map(page => ({
+          url: page.mainFrame().url()
+        })),
+      })),
+    };
   }
 }
 

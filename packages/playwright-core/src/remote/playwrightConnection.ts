@@ -50,6 +50,7 @@ type PreLaunched = {
 
 export class PlaywrightConnection {
   private _ws: WebSocket;
+  private _keepBrowser: (browser: Browser) => boolean;
   private _onClose: () => void;
   private _dispatcherConnection: DispatcherConnection;
   private _cleanups: (() => Promise<void>)[] = [];
@@ -60,7 +61,7 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, preLaunched: PreLaunched, id: string, onClose: () => void) {
+  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, preLaunched: PreLaunched, id: string, keepBrowser: (browser: Browser) => boolean, onClose: () => void) {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
@@ -69,6 +70,7 @@ export class PlaywrightConnection {
       assert(preLaunched.playwright);
     if (clientType === 'pre-launched-browser-or-android')
       assert(preLaunched.browser || preLaunched.androidDevice);
+    this._keepBrowser = keepBrowser;
     this._onClose = onClose;
     this._id = id;
     this._profileName = `${new Date().toISOString()}-${clientType}`;
@@ -162,8 +164,11 @@ export class PlaywrightConnection {
     });
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of playwright.allBrowsers()) {
-      if (b !== browser)
-        await b.close({ reason: 'Connection terminated' });
+      if (b === browser)
+        continue;
+      if (this._keepBrowser(b))
+        continue;
+      await b.close({ reason: 'Connection terminated' });
     }
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
@@ -207,6 +212,8 @@ export class PlaywrightConnection {
     // Close remaining browsers of this type+channel. Keep different browser types for the speed.
     for (const b of playwright.allBrowsers()) {
       if (b === browser)
+        continue;
+      if (this._keepBrowser(b))
         continue;
       if (b.options.name === this._options.browserName && b.options.channel === this._options.launchOptions.channel)
         await b.close({ reason: 'Connection terminated' });
@@ -287,7 +294,7 @@ export class PlaywrightConnection {
   }
 }
 
-function launchOptionsHash(options: LaunchOptions) {
+export function launchOptionsHash(options: LaunchOptions) {
   const copy = { ...options };
   for (const k of Object.keys(copy)) {
     const key = k as keyof LaunchOptions;
