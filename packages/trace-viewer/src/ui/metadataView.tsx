@@ -27,7 +27,7 @@ export const MetadataView: React.FunctionComponent<{
 
   const wallTime = model.wallTime !== undefined ? new Date(model.wallTime).toLocaleString(undefined, { timeZoneName: 'short' }) : undefined;
 
-  return <div data-testid='metadata-view' className='vbox' style={{ flexShrink: 0 }}>
+  return <div className='vbox' style={{ flexShrink: 0 }}>
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
     {!!wallTime && <div className='call-line'>start time:<span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
     <div className='call-line'>duration:<span className='call-value number' title={msToString(model.endTime - model.startTime)}>{msToString(model.endTime - model.startTime)}</span></div>
