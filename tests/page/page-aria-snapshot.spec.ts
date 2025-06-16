@@ -658,3 +658,17 @@ it('should not report textarea textContent', async ({ page }) => {
     - textbox: After
   `);
 });
+
+it('show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+  await page.setContent(`
+    <div style="visibility: hidden;">
+      <div style="visibility: visible;">
+        <button>Button</button>
+      </div>
+    </div>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "Button"
+  `);
+});

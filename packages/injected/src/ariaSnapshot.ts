@@ -47,6 +47,14 @@ type AriaRef = {
 
 let lastRef = 0;
 
+function isVisible(element: Element, options?: { forAI?: boolean }): boolean {
+  if (!roleUtils.isElementHiddenForAria(element))
+    return true;
+  if (options?.forAI && isElementVisible(element))
+    return true;
+  return false;
+}
+
 export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
   const visited = new Set<Node>();
 
@@ -61,6 +69,9 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
+      if (node.parentElement && !isVisible(node.parentElement, options))
+        return;
+
       const text = node.nodeValue;
       // <textarea>AAA</textarea> should not report AAA as a child of the textarea.
       if (ariaNode.role !== 'textbox' && text)
@@ -72,11 +83,11 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       return;
 
     const element = node as Element;
-    let isVisible = !roleUtils.isElementHiddenForAria(element);
-    if (options?.forAI)
-      isVisible = isVisible || isElementVisible(element);
-    if (!isVisible)
+    if (!isVisible(element, options)) {
+      // skip this element, but still process its children: https://github.com/w3c/aria/issues/1055
+      processElement(ariaNode, element, []);
       return;
+    }
 
     const ariaChildren: Element[] = [];
     if (element.hasAttribute('aria-owns')) {
