@@ -980,7 +980,7 @@ test('should show action source', async ({ showTraceViewer }) => {
 
   await traceViewer.showSourceTab();
   await expect(traceViewer.page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
-  await expect(traceViewer.stackFrames(true)).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+  await expect(traceViewer.stackFrames({ selected: true })).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 
   await traceViewer.hoverAction('Wait for navigation');
   await expect(traceViewer.page.locator('.source-line-running')).toContainText('page.waitForNavigation()');

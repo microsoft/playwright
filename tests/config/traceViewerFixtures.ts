@@ -71,9 +71,9 @@ class TraceViewerPage {
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
   }
 
-  stackFrames(selected?: boolean) {
+  stackFrames(options: { selected?: boolean } = {}) {
     const entry = this.page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
-    if (selected)
+    if (options.selected)
       return entry.locator(':scope.selected');
     return entry;
   }
