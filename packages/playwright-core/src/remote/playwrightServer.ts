@@ -41,16 +41,17 @@ type ServerOptions = {
 };
 
 export class PlaywrightServer {
-  private _preLaunchedPlaywright: Playwright | undefined;
+  private _playwright: Playwright;
   private _options: ServerOptions;
   private _wsServer: WSServer;
 
   constructor(options: ServerOptions) {
     this._options = options;
     if (options.preLaunchedBrowser)
-      this._preLaunchedPlaywright = options.preLaunchedBrowser.attribution.playwright;
+      this._playwright = options.preLaunchedBrowser.attribution.playwright;
     if (options.preLaunchedAndroidDevice)
-      this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android.attribution.playwright;
+      this._playwright = options.preLaunchedAndroidDevice._android.attribution.playwright;
+    this._playwright ??= createPlaywright({ sdkLanguage: 'javascript', isServer: true });
 
     const browserSemaphore = new Semaphore(this._options.maxConnections);
     const controllerSemaphore = new Semaphore(1);
@@ -85,11 +86,6 @@ export class PlaywrightServer {
 
         // Instantiate playwright for the extension modes.
         const isExtension = this._options.mode === 'extension';
-        if (isExtension) {
-          if (!this._preLaunchedPlaywright)
-            this._preLaunchedPlaywright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
-        }
-
         let clientType: ClientType = 'launch-browser';
         let semaphore: Semaphore = browserSemaphore;
         if (isExtension && url.searchParams.has('debug-controller')) {
@@ -113,8 +109,8 @@ export class PlaywrightServer {
               allowFSPaths: this._options.mode === 'extension',
               sharedBrowser: this._options.mode === 'launchServerShared',
             },
+            this._playwright,
             {
-              playwright: this._preLaunchedPlaywright,
               browser: this._options.preLaunchedBrowser,
               androidDevice: this._options.preLaunchedAndroidDevice,
               socksProxy: this._options.preLaunchedSocksProxy,
@@ -124,8 +120,8 @@ export class PlaywrightServer {
 
       onClose: async () => {
         debugLogger.log('server', 'closing browsers');
-        if (this._preLaunchedPlaywright)
-          await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
+        if (this._playwright)
+          await Promise.all(this._playwright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
         debugLogger.log('server', 'closed browsers');
       }
     });
