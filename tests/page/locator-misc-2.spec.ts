@@ -184,3 +184,20 @@ it('Locator.locator() and FrameLocator.locator() should accept locator', async (
   expect(await divLocator.locator('input').inputValue()).toBe('outer');
   expect(await page.frameLocator('iframe').locator(divLocator).locator('input').inputValue()).toBe('inner');
 });
+
+it('should fill programmatically enabled textarea', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36307' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Enable</button>
+    <form>
+      <textarea id="text" disabled></textarea>
+    </form>
+    <script>
+      document.querySelector('button').addEventListener('click', () => {
+        document.querySelector('#text').disabled = false;
+      });
+    </script>
+  `);
+  await page.locator('button').click();
+  await page.locator('#text').fill('Hello');
+  await expect(page.locator('#text')).toHaveValue('Hello');
+});
