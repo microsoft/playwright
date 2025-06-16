@@ -114,41 +114,6 @@ export const SearchParamsProvider: React.FunctionComponent<React.PropsWithChildr
   return <SearchParamsContext.Provider value={searchParams}>{children}</SearchParamsContext.Provider>;
 };
 
-const LINKIFY_REGEX = /https?:\/\/[^\s]+/g;
-
-export const LinkifyText: React.FunctionComponent<{ text: string }> = ({ text }) => {
-  const parts = React.useMemo(() => {
-    const matches = [...text.matchAll(LINKIFY_REGEX)];
-    if (matches.length === 0)
-      return [text];
-    const result: Array<React.ReactElement | string> = [];
-    let lastIndex = 0;
-
-    for (const match of matches) {
-      const url = match[0];
-      const startIndex = match.index!;
-
-      // Add text before the URL
-      if (startIndex > lastIndex)
-        result.push(text.slice(lastIndex, startIndex));
-      result.push(
-          <a key={startIndex} href={url} target='_blank' rel='noopener noreferrer'>
-            {url}
-          </a>
-      );
-
-      lastIndex = startIndex + url.length;
-    }
-
-    // Add any text after the last URL
-    if (lastIndex < text.length)
-      result.push(text.slice(lastIndex));
-    return result;
-  }, [text]);
-
-  return <>{parts}</>;
-};
-
 function downloadFileNameForAttachment(attachment: TestAttachment): string {
   if (attachment.name.includes('.') || !attachment.path)
     return attachment.name;
