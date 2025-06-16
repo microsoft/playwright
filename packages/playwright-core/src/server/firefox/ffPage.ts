@@ -419,7 +419,6 @@ export class FFPage implements PageDelegate {
         height: viewportRect!.height,
       };
     }
-    progress.throwIfAborted();
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       clip: documentRect,

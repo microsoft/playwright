@@ -1135,7 +1135,7 @@ export class Frame extends SdkObject {
 
   async rafrafTimeoutScreenshotElementWithProgress(progress: Progress, selector: string, timeout: number, options: ScreenshotOptions): Promise<Buffer> {
     return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, async handle => {
-      await handle._frame.rafrafTimeout(timeout);
+      await handle._frame.rafrafTimeout(progress, timeout);
       return await this._page.screenshotter.screenshotElement(progress, handle, options);
     });
   }
@@ -1482,63 +1482,67 @@ export class Frame extends SdkObject {
     return { matches, received };
   }
 
-  async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
-    const controller = new ProgressController(metadata, this);
+  async waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>> {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(progress => this.waitForFunctionExpressionImpl(progress, expression, isFunction, arg, options, 'main'), options.timeout);
+  }
+
+  async waitForFunctionExpressionImpl<R>(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any, options: { pollingInterval?: number }, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     expression = js.normalizeEvaluationExpression(expression, isFunction);
-    return controller.run(async progress => {
-      return this.retryWithProgressAndTimeouts(progress, [100], async () => {
-        const context = world === 'main' ? await this._mainContext() : await this._utilityContext();
-        const injectedScript = await context.injectedScript();
-        const handle = await injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
-          const predicate = (): R => {
-            // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
-            // in firefox.
-            // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
-            let result = globalThis.eval(expression);
-            if (isFunction === true) {
+    return this.retryWithProgressAndTimeouts(progress, [100], async () => {
+      const context = world === 'main' ? await progress.race(this._mainContext()) : await progress.race(this._utilityContext());
+      const injectedScript = await progress.race(context.injectedScript());
+      const handle = await progress.race(injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
+        const predicate = (): R => {
+          // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
+          // in firefox.
+          // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
+          let result = globalThis.eval(expression);
+          if (isFunction === true) {
+            result = result(arg);
+          } else if (isFunction === false) {
+            result = result;
+          } else {
+            // auto detect.
+            if (typeof result === 'function')
               result = result(arg);
-            } else if (isFunction === false) {
-              result = result;
-            } else {
-              // auto detect.
-              if (typeof result === 'function')
-                result = result(arg);
-            }
-            return result;
-          };
+          }
+          return result;
+        };
 
-          let fulfill: (result: R) => void;
-          let reject: (error: Error) => void;
-          let aborted = false;
-          const result = new Promise<R>((f, r) => { fulfill = f; reject = r; });
+        let fulfill: (result: R) => void;
+        let reject: (error: Error) => void;
+        let aborted = false;
+        const result = new Promise<R>((f, r) => { fulfill = f; reject = r; });
 
-          const next = () => {
-            if (aborted)
+        const next = () => {
+          if (aborted)
+            return;
+          try {
+            const success = predicate();
+            if (success) {
+              fulfill(success);
               return;
-            try {
-              const success = predicate();
-              if (success) {
-                fulfill(success);
-                return;
-              }
-              if (typeof polling !== 'number')
-                injected.utils.builtins.requestAnimationFrame(next);
-              else
-                injected.utils.builtins.setTimeout(next, polling);
-            } catch (e) {
-              reject(e);
             }
-          };
+            if (typeof polling !== 'number')
+              injected.utils.builtins.requestAnimationFrame(next);
+            else
+              injected.utils.builtins.setTimeout(next, polling);
+          } catch (e) {
+            reject(e);
+          }
+        };
 
-          next();
-          return { result, abort: () => aborted = true };
-        }, { expression, isFunction, polling: options.pollingInterval, arg });
-        progress.cleanupWhenAborted(() => handle.evaluate(h => h.abort()).catch(() => {}));
-        return handle.evaluateHandle(h => h.result);
-      });
-    }, options.timeout);
+        next();
+        return { result, abort: () => aborted = true };
+      }, { expression, isFunction, polling: options.pollingInterval, arg }));
+      progress.cleanupWhenAborted(() => handle.evaluate(h => h.abort()).finally(() => handle.dispose()));
+      const result = await progress.race(handle.evaluateHandle(h => h.result));
+      handle.dispose();
+      return result;
+    });
   }
 
   async waitForFunctionValueInUtility<R>(progress: Progress, pageFunction: js.Func1<any, R>) {
@@ -1548,7 +1552,7 @@ export class Frame extends SdkObject {
         return result;
       return JSON.stringify(result);
     }`;
-    const handle = await this._waitForFunctionExpression(serverSideCallMetadata(), expression, true, undefined, { timeout: progress.timeUntilDeadline() }, 'utility');
+    const handle = await this.waitForFunctionExpressionImpl(progress, expression, true, undefined, {}, 'utility');
     return JSON.parse(handle.rawValue()) as R;
   }
 
@@ -1557,18 +1561,18 @@ export class Frame extends SdkObject {
     return context.evaluate(() => document.title);
   }
 
-  async rafrafTimeout(timeout: number): Promise<void> {
+  async rafrafTimeout(progress: Progress, timeout: number): Promise<void> {
     if (timeout === 0)
       return;
-    const context = await this._utilityContext();
+    const context = await progress.race(this._utilityContext());
     await Promise.all([
       // wait for double raf
-      context.evaluate(() => new Promise(x => {
+      progress.race(context.evaluate(() => new Promise(x => {
         requestAnimationFrame(() => {
           requestAnimationFrame(x);
         });
-      })),
-      new Promise(fulfill => setTimeout(fulfill, timeout)),
+      }))),
+      progress.wait(timeout),
     ]);
   }
 
