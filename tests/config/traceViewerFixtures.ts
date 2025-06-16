@@ -74,7 +74,7 @@ class TraceViewerPage {
   stackFrames(selected?: boolean) {
     const entry = this.page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
     if (selected)
-      return entry.and(this.page.locator('.selected'));
+      return entry.locator(':scope.selected');
     return entry;
   }
 
