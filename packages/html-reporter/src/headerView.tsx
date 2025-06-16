@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import './headerView.css';
 import * as icons from './icons';
-import { Link, navigate, SearchParamsContext } from './links';
+import { Link, LinkifyText, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
 
@@ -35,7 +35,7 @@ export const HeaderView: React.FC<{
       <div style={{ flex: 'auto' }}></div>
       {rightSuperHeader}
     </div>
-    {title && <div className='header-title'>{title}</div>}
+    {title && <div className='header-title'><LinkifyText text={title} /></div>}
   </div>;
 };
 
