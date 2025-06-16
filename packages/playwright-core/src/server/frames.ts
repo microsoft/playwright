@@ -593,7 +593,7 @@ export class Frame extends SdkObject {
         const data = this._redirectedNavigations.get(e.documentId);
         if (data) {
           progress.log(`waiting for redirected navigation to "${data.url}"`);
-          return data.gotoPromise;
+          return progress.race(data.gotoPromise);
         }
       }
       throw e;
@@ -601,7 +601,7 @@ export class Frame extends SdkObject {
   }
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
-    const controller = new ProgressController(serverSideCallMetadata(), this);
+    const controller = new ProgressController(serverSideCallMetadata(), this, 'strict');
     const data = {
       url,
       gotoPromise: controller.run(progress => this._gotoAction(progress, url, { referer }), 0),
@@ -614,7 +614,8 @@ export class Frame extends SdkObject {
     const constructedNavigationURL = constructURLBasedOnBaseURL(this._page.browserContext._options.baseURL, url);
     const controller = new ProgressController(metadata, this);
     return controller.run(progress => {
-      return this.raceNavigationAction(progress, options, async () => this._gotoAction(progress, constructedNavigationURL, options));
+      const constructedNavigationURL = constructURLBasedOnBaseURL(this._page.browserContext._options.baseURL, url);
+      return this.raceNavigationAction(progress, async () => this.gotoImpl(progress, constructedNavigationURL, options));
     }, options.timeout);
   }
 
@@ -634,7 +635,7 @@ export class Frame extends SdkObject {
     const navigationEvents: NavigationEvent[] = [];
     const collectNavigations = (arg: NavigationEvent) => navigationEvents.push(arg);
     this.on(Frame.Events.InternalNavigation, collectNavigations);
-    const navigateResult = await this._page.delegate.navigateFrame(this, url, referer).finally(
+    const navigateResult = await progress.race(this._page.delegate.navigateFrame(this, url, referer)).finally(
         () => this.off(Frame.Events.InternalNavigation, collectNavigations));
 
     let event: NavigationEvent;
@@ -670,7 +671,7 @@ export class Frame extends SdkObject {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = event.newDocument ? event.newDocument.request : undefined;
-    const response = request ? request._finalRequest().response() : null;
+    const response = request ? progress.race(request._finalRequest().response()) : null;
     return response;
   }
 
@@ -871,27 +872,29 @@ export class Frame extends SdkObject {
     }
   }
 
+
   async setContent(metadata: CallMetadata, html: string, options: types.NavigateOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this);
+    const controller = new ProgressController(metadata, this, 'strict');
     return controller.run(async progress => {
-      await this.raceNavigationAction(progress, options, async () => {
+      await this.raceNavigationAction(progress, async () => {
         const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
         progress.log(`setting frame content, waiting until "${waitUntil}"`);
         const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
-        const context = await this._utilityContext();
-        const lifecyclePromise = new Promise((resolve, reject) => {
-          this._page.frameManager._consoleMessageTags.set(tag, () => {
-            // Clear lifecycle right after document.open() - see 'tag' below.
-            this._onClearLifecycle();
-            this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
-          });
+        const context = await progress.race(this._utilityContext());
+        const tagPromise = new ManualPromise<void>();
+        this._page.frameManager._consoleMessageTags.set(tag, () => {
+          // Clear lifecycle right after document.open() - see 'tag' below.
+          this._onClearLifecycle();
+          tagPromise.resolve();
         });
-        const contentPromise = context.evaluate(({ html, tag }) => {
+        progress.cleanupWhenAborted(() => this._page.frameManager._consoleMessageTags.delete(tag));
+        const lifecyclePromise = progress.race(tagPromise).then(() => this._waitForLoadState(progress, waitUntil));
+        const contentPromise = progress.race(context.evaluate(({ html, tag }) => {
           document.open();
           console.debug(tag);  // eslint-disable-line no-console
           document.write(html);
           document.close();
-        }, { html, tag });
+        }, { html, tag }));
         await Promise.all([contentPromise, lifecyclePromise]);
         return null;
       });

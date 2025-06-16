@@ -73,7 +73,7 @@ class Helper {
     const dispose = () => eventsHelper.removeEventListeners(listeners);
     if (progress)
       progress.cleanupWhenAborted(dispose);
-    return { promise, dispose };
+    return { promise: progress.race(promise), dispose };
   }
 
   static secondsToRoundishMillis(value: number): number {
