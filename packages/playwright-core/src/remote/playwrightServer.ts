@@ -57,6 +57,17 @@ export class PlaywrightServer {
     const reuseBrowserSemaphore = new Semaphore(1);
 
     this._wsServer = new WSServer({
+      onRequest: (request, response) => {
+        if (request.method === 'GET' && request.url === '/json') {
+          response.setHeader('Content-Type', 'application/json');
+          response.end(JSON.stringify({
+            wsEndpointPath: this._options.path,
+          }));
+          return;
+        }
+        response.end('Running');
+      },
+
       onUpgrade: (request, socket) => {
         const uaError = userAgentVersionMatchesErrorMessage(request.headers['user-agent'] || '');
         if (uaError)
