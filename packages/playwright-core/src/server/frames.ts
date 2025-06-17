@@ -1711,7 +1711,7 @@ export class Frame extends SdkObject {
   }
 
   private _asLocator(selector: string) {
-    return asLocator(this._page.attribution.playwright.options.sdkLanguage, selector);
+    return asLocator(this._page.browserContext._browser.sdkLanguage(), selector);
   }
 }
 

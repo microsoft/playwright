@@ -27,6 +27,7 @@ import type { ProxySettings } from './types';
 import type { RecentLogsCollector } from './utils/debugLogger';
 import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
+import type { Language } from '../utils';
 
 
 export interface BrowserProcess {
@@ -52,6 +53,7 @@ export type BrowserOptions = {
   browserLogsCollector: RecentLogsCollector,
   slowMo?: number;
   wsEndpoint?: string;  // Only there when connected over web socket.
+  sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
 };
 
@@ -83,6 +85,10 @@ export abstract class Browser extends SdkObject {
   abstract isConnected(): boolean;
   abstract version(): string;
   abstract userAgent(): string;
+
+  sdkLanguage() {
+    return this.options.sdkLanguage || this.attribution.playwright.options.sdkLanguage;
+  }
 
   async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);

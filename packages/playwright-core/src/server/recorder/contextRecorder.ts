@@ -63,7 +63,7 @@ export class ContextRecorder extends EventEmitter {
     this._params = params;
     this._delegate = delegate;
     this._recorderSources = [];
-    const language = params.language || context.attribution.playwright.options.sdkLanguage;
+    const language = params.language || context._browser.sdkLanguage();
     this.setOutput(language, params.outputFile);
 
     // Make a copy of options to modify them later.

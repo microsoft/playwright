@@ -484,11 +484,11 @@ export class Page extends SdkObject {
       }
       if (handler.resolved) {
         ++this._locatorHandlerRunningCounter;
-        progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
+        progress.log(`  found ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)}, intercepting action to run the handler`);
         const promise = handler.resolved.then(async () => {
           progress.throwIfAborted();
           if (!handler.noWaitAfter) {
-            progress.log(`  locator handler has finished, waiting for ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)} to be hidden`);
+            progress.log(`  locator handler has finished, waiting for ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)} to be hidden`);
             await this.mainFrame().waitForSelectorInternal(progress, handler.selector, false, { state: 'hidden' });
           } else {
             progress.log(`  locator handler has finished`);
