@@ -42,6 +42,7 @@ export type WSConnection = {
 };
 
 export type WSServerDelegate = {
+  onRequest: (request: http.IncomingMessage, response: http.ServerResponse) => void;
   onHeaders?: (headers: string[]) => void;
   onUpgrade?: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
   onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
@@ -60,16 +61,7 @@ export class WSServer {
   async listen(port: number = 0, hostname: string | undefined, path: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
-    const server = createHttpServer((request: http.IncomingMessage, response: http.ServerResponse) => {
-      if (request.method === 'GET' && request.url === '/json') {
-        response.setHeader('Content-Type', 'application/json');
-        response.end(JSON.stringify({
-          wsEndpointPath: path,
-        }));
-        return;
-      }
-      response.end('Running');
-    });
+    const server = createHttpServer(this._delegate.onRequest);
     server.on('error', error => debugLogger.log('server', String(error)));
     this.server = server;
 
