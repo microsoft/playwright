@@ -156,6 +156,7 @@ test('should display list of query parameters (only if present)', async ({ runUI
   await page.getByText('call-with-query-params').click();
 
   await expect(page.getByText('Query String Parameters')).toBeVisible();
+  
   await expect(
       page.locator('.network-key-value:has(.network-key:text("param1"))').nth(0).locator('.network-value')
   ).toHaveText('value1');
