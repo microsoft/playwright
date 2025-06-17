@@ -156,9 +156,9 @@ test('should display list of query parameters (only if present)', async ({ runUI
   await page.getByText('call-with-query-params').click();
 
   await expect(page.getByText('Query String Parameters')).toBeVisible();
-  await expect(page.getByText('param1: value1')).toBeVisible();
-  await expect(page.getByText('param1: value2')).toBeVisible();
-  await expect(page.getByText('param2: value2')).toBeVisible();
+  await expect(page.getByText('param1 value1')).toBeVisible();
+  await expect(page.getByText('param1 value2')).toBeVisible();
+  await expect(page.getByText('param2 value2')).toBeVisible();
 
   await page.getByText('endpoint').click();
 
