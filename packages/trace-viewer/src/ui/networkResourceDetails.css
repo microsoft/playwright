@@ -101,19 +101,19 @@
 .network-collapsible-suffix {
   margin-left: 6px;
   opacity: 0.7;
-  font-size: 14px; /* 90% of 16px default font size */
+  font-size: 14px;
 }
 
 .network-key-value {
   display: flex;
-  margin-bottom: 4px; /* 0.25rem ≈ 4px */
+  margin-bottom: 4px;
   align-items: center;
 }
 
 .network-key {
   font-weight: 400;
-  margin-right: 8px; /* 0.5rem ≈ 8px */
-  min-width: 144px; /* 9rem ≈ 144px */
+  margin-right: 8px;
+  min-width: 144px;
   white-space: nowrap;
 }
 
