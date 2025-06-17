@@ -59,7 +59,7 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, playwright: Playwright, preLaunched: PreLaunched, id: string, onClose: () => void) {
+  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, playwright: Playwright, preLaunched: PreLaunched, id: string, onClose: () => Promise<void>) {
     this._ws = ws;
     this._playwright = playwright;
     this._preLaunched = preLaunched;
@@ -250,7 +250,7 @@ export class PlaywrightConnection {
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
     await stopProfiling(this._profileName);
-    this._onClose();
+    await this._onClose();
     debugLogger.log('server', `[${this._id}] finished cleanup`);
   }
 
