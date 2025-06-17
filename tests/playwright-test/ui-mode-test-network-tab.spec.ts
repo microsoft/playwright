@@ -156,9 +156,17 @@ test('should display list of query parameters (only if present)', async ({ runUI
   await page.getByText('call-with-query-params').click();
 
   await expect(page.getByText('Query String Parameters')).toBeVisible();
-  await expect(page.getByText('param1 value1')).toBeVisible();
-  await expect(page.getByText('param1 value2')).toBeVisible();
-  await expect(page.getByText('param2 value2')).toBeVisible();
+  await expect(
+      page.locator('.network-key-value', { hasText: 'param1' }).nth(0).locator('.network-value')
+  ).toHaveText('value1');
+
+  await expect(
+      page.locator('.network-key-value', { hasText: 'param1' }).nth(1).locator('.network-value')
+  ).toHaveText('value2');
+
+  await expect(
+      page.locator('.network-key-value', { hasText: 'param2' }).locator('.network-value')
+  ).toHaveText('value2');
 
   await page.getByText('endpoint').click();
 
