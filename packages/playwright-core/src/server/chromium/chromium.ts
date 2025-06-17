@@ -63,7 +63,7 @@ export class Chromium extends BrowserType {
   }
 
   override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, timeout: number }) {
-    const controller = new ProgressController(metadata, this);
+    const controller = new ProgressController(metadata, this, 'strict');
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
     }, options.timeout);
@@ -79,12 +79,11 @@ export class Chromium extends BrowserType {
     else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
       headersMap['User-Agent'] = getUserAgent();
 
-    const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+    const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
 
     const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
-    progress.throwIfAborted();
-
     const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap });
+    progress.cleanupWhenAborted(() => chromeTransport.close());
     const cleanedUp = new ManualPromise<void>();
     const doCleanup = async () => {
       await removeFolders([artifactsDir]);
@@ -111,8 +110,7 @@ export class Chromium extends BrowserType {
       originalLaunchOptions: { timeout: options.timeout },
     };
     validateBrowserContextOptions(persistent, browserOptions);
-    progress.throwIfAborted();
-    const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
+    const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));
     browser._isCollocatedWithServer = false;
     browser.on(Browser.Events.Disconnected, doCleanup);
     return browser;
@@ -174,7 +172,7 @@ export class Chromium extends BrowserType {
   }
 
   override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
-    await this._createArtifactDirs(options);
+    await progress.race(this._createArtifactDirs(options));
 
     if (!hubUrl.endsWith('/'))
       hubUrl = hubUrl + '/';
@@ -390,6 +388,7 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
   const json = await fetchData({
     url: httpURL,
     headers,
+    timeout: progress.timeUntilDeadline(),
   }, async (_, resp) => new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
     `This does not look like a DevTools server, try connecting via ws://.`)
   );
