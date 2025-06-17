@@ -65,6 +65,10 @@
   text-align: center;
 }
 
+.codicon-chevron {
+  margin-right: 4px;
+}
+
 .network-collapsible-section {
   margin-bottom: 12px;
 }
@@ -117,6 +121,7 @@
   font-weight: 600;
   word-break: break-word;
   flex: 1;
+  display: 'inline-flex';
 }
 
 .tab-network .toolbar {

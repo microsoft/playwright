@@ -116,11 +116,9 @@ const CollapsibleSection: React.FC<{
       <div
         className='network-collapsible-header'
         onClick={() => setIsOpen(!isOpen)}
-        style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
       >
         <span
           className={`codicon ${isOpen ? 'codicon-chevron-down' : 'codicon-chevron-right'}`}
-          style={{ marginRight: 4 }}
         />
         <span>{title}</span>
         {!isOpen && collapsedSuffix && (
@@ -155,7 +153,7 @@ const RequestTab: React.FunctionComponent<{
         <div className='network-key-value'>
           <div className='network-key'>Status Code</div>
           <div className='network-value'>
-            <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+            <span className={statusClass(resource.response.status)}>
               {`${resource.response.status} ${resource.response.statusText}`}
             </span>
           </div>
