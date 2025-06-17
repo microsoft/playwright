@@ -16,7 +16,6 @@
 
 import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
-import { debugLogger } from '../server/utils/debugLogger';
 import { Semaphore } from '../utils/isomorphic/semaphore';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
@@ -117,13 +116,6 @@ export class PlaywrightServer {
             },
             id, () => semaphore.release());
       },
-
-      onClose: async () => {
-        debugLogger.log('server', 'closing browsers');
-        if (this._playwright)
-          await Promise.all(this._playwright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
-        debugLogger.log('server', 'closed browsers');
-      }
     });
   }
 

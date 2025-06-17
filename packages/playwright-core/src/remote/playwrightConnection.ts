@@ -15,7 +15,7 @@
  */
 
 import { SocksProxy } from '../server/utils/socksProxy';
-import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
+import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher } from '../server';
 import { AndroidDevice } from '../server/android/android';
 import { Browser } from '../server/browser';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
@@ -29,7 +29,6 @@ import { debugLogger } from '../server/utils/debugLogger';
 import type { DispatcherScope, Playwright } from '../server';
 import type { LaunchOptions } from '../server/types';
 import type { WebSocket } from '../utilsBundle';
-import type * as channels from '@protocol/channels';
 
 export type ClientType = 'controller' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
@@ -103,19 +102,19 @@ export class PlaywrightConnection {
       return;
     }
 
-    this._root = new RootDispatcher(this._dispatcherConnection, async (scope, options) => {
+    this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
       await startProfiling();
       if (clientType === 'reuse-browser')
         return await this._initReuseBrowsersMode(scope);
       if (clientType === 'pre-launched-browser-or-android')
         return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
       if (clientType === 'launch-browser')
-        return await this._initLaunchBrowserMode(scope, options);
+        return await this._initLaunchBrowserMode(scope);
       throw new Error('Unsupported client type: ' + clientType);
     });
   }
 
-  private async _initLaunchBrowserMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
+  private async _initLaunchBrowserMode(scope: RootDispatcher) {
     debugLogger.log('server', `[${this._id}] engaged launch mode for "${this._options.browserName}"`);
     const ownedSocksProxy = await this._createOwnedSocksProxy(this._playwright);
     let browserName = this._options.browserName;
@@ -127,10 +126,7 @@ export class PlaywrightConnection {
     }
     const browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
-    this._cleanups.push(async () => {
-      for (const browser of this._playwright.allBrowsers())
-        await browser.close({ reason: 'Connection terminated' });
-    });
+    this._cleanups.push(() => browser.close({ reason: 'Connection terminated' }));
     browser.on(Browser.Events.Disconnected, () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Browser closed' });
