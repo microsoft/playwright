@@ -37,6 +37,7 @@ import type * as channels from '@protocol/channels';
 
 type PlaywrightDispatcherOptions = {
   socksProxy?: SocksProxy;
+  denyLaunch?: boolean;
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   sharedBrowser?: boolean;
@@ -47,7 +48,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   private _browserDispatcher: BrowserDispatcher | undefined;
 
   constructor(scope: RootDispatcher, playwright: Playwright, options: PlaywrightDispatcherOptions = {}) {
-    const denyLaunch = !!options.preLaunchedBrowser;
+    const denyLaunch = options.denyLaunch ?? false;
     const chromium = new BrowserTypeDispatcher(scope, playwright.chromium, denyLaunch);
     const firefox = new BrowserTypeDispatcher(scope, playwright.firefox, denyLaunch);
     const webkit = new BrowserTypeDispatcher(scope, playwright.webkit, denyLaunch);
