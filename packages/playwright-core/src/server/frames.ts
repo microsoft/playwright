@@ -1370,9 +1370,9 @@ export class Frame extends SdkObject {
   }
 
   async ariaSnapshot(metadata: CallMetadata, selector: string, options: { forAI?: boolean } & types.TimeoutOptions): Promise<string> {
-    const controller = new ProgressController(metadata, this);
+    const controller = new ProgressController(metadata, this, 'strict');
     return controller.run(async progress => {
-      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot(options));
+      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot(options)));
     }, options.timeout);
   }
 
@@ -1391,7 +1391,7 @@ export class Frame extends SdkObject {
       const start = timeout > 0 ? monotonicTime() : 0;
 
       // Step 1: perform locator handlers checkpoint with a specified timeout.
-      await (new ProgressController(metadata, this)).run(async progress => {
+      await (new ProgressController(metadata, this, 'strict')).run(async progress => {
         progress.log(`${renderTitleForCall(metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
         if (selector)
           progress.log(`waiting for ${this._asLocator(selector)}`);
@@ -1402,7 +1402,7 @@ export class Frame extends SdkObject {
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
-        const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
+        const resultOneShot = await (new ProgressController(metadata, this, 'strict')).run(async progress => {
           return await this._expectInternal(progress, selector, options, lastIntermediateResult);
         });
         if (resultOneShot.matches !== options.isNot)
@@ -1420,7 +1420,7 @@ export class Frame extends SdkObject {
         return { matches: options.isNot, log: compressCallLog(metadata.log), timedOut: true, received: lastIntermediateResult.received };
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      return await (new ProgressController(metadata, this)).run(async progress => {
+      return await (new ProgressController(metadata, this, 'strict')).run(async progress => {
         return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
           await this._page.performActionPreChecks(progress);
           const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult);
@@ -1448,16 +1448,14 @@ export class Frame extends SdkObject {
   }
 
   private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }) {
-    const selectorInFrame = selector ? await this.selectors.resolveFrameForSelector(selector, { strict: true }) : undefined;
-    progress.throwIfAborted();
+    const selectorInFrame = selector ? await progress.race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
 
     const { frame, info } = selectorInFrame || { frame: this, info: undefined };
     const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
-    const context = await frame._context(world);
-    const injected = await context.injectedScript();
-    progress.throwIfAborted();
+    const context = await progress.race(frame._context(world));
+    const injected = await progress.race(context.injectedScript());
 
-    const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
+    const { log, matches, received, missingReceived } = await progress.race(injected.evaluate(async (injected, { info, options, callId }) => {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
       if (callId)
         injected.markTargetElements(new Set(elements), callId);
@@ -1470,7 +1468,7 @@ export class Frame extends SdkObject {
       else if (elements.length)
         log = `  locator resolved to ${injected.previewNode(elements[0])}`;
       return { log, ...await injected.expect(elements[0], options, elements) };
-    }, { info, options, callId: progress.metadata.id });
+    }, { info, options, callId: progress.metadata.id }));
 
     if (log)
       progress.log(log);

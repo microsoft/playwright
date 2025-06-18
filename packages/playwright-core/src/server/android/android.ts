@@ -32,9 +32,9 @@ import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { CRBrowser } from '../chromium/crBrowser';
 import { removeFolders } from '../utils/fileUtils';
 import { helper } from '../helper';
-import { SdkObject, serverSideCallMetadata } from '../instrumentation';
+import { CallMetadata, SdkObject } from '../instrumentation';
 import { gracefullyCloseSet } from '../utils/processLauncher';
-import { ProgressController } from '../progress';
+import { Progress, ProgressController } from '../progress';
 import { registry } from '../registry';
 
 import type { BrowserOptions, BrowserProcess } from '../browser';
@@ -122,6 +122,7 @@ export class AndroidDevice extends SdkObject {
     this.model = model;
     this.serial = backend.serial;
     this._options = options;
+    this.logName = 'browser';
   }
 
   static async create(android: Android, backend: DeviceBackend, options: channels.AndroidDevicesOptions): Promise<AndroidDevice> {
@@ -258,18 +259,21 @@ export class AndroidDevice extends SdkObject {
     this.emit(AndroidDevice.Events.Close);
   }
 
-  async launchBrowser(pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
-    debug('pw:android')('Force-stopping', pkg);
-    await this._backend.runCommand(`shell:am force-stop ${pkg}`);
-    const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright_' + createGuid() + '_devtools_remote');
-    const commandLine = this._defaultArgs(options, socketName).join(' ');
-    debug('pw:android')('Starting', pkg, commandLine);
-    // encode commandLine to base64 to avoid issues (bash encoding) with special characters
-    await this._backend.runCommand(`shell:echo "${Buffer.from(commandLine).toString('base64')}" | base64 -d > /data/local/tmp/chrome-command-line`);
-    await this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`);
-    const browserContext = await this._connectToBrowser(socketName, options);
-    await this._backend.runCommand(`shell:rm /data/local/tmp/chrome-command-line`);
-    return browserContext;
+  async launchBrowser(metadata: CallMetadata, pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(async progress => {
+      debug('pw:android')('Force-stopping', pkg);
+      await this._backend.runCommand(`shell:am force-stop ${pkg}`);
+      const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright_' + createGuid() + '_devtools_remote');
+      const commandLine = this._defaultArgs(options, socketName).join(' ');
+      debug('pw:android')('Starting', pkg, commandLine);
+      // encode commandLine to base64 to avoid issues (bash encoding) with special characters
+      await progress.race(this._backend.runCommand(`shell:echo "${Buffer.from(commandLine).toString('base64')}" | base64 -d > /data/local/tmp/chrome-command-line`));
+      await progress.race(this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`));
+      const browserContext = await this._connectToBrowser(progress, socketName, options);
+      await progress.race(this._backend.runCommand(`shell:rm /data/local/tmp/chrome-command-line`));
+      return browserContext;
+    });
   }
 
   private _defaultArgs(options: channels.AndroidDeviceLaunchBrowserParams, socketName: string): string[] {
@@ -301,25 +305,30 @@ export class AndroidDevice extends SdkObject {
     return chromeArguments;
   }
 
-  async connectToWebView(socketName: string): Promise<BrowserContext> {
-    const webView = this._webViews.get(socketName);
-    if (!webView)
-      throw new Error('WebView has been closed');
-    return await this._connectToBrowser(socketName);
+  async connectToWebView(metadata: CallMetadata, socketName: string): Promise<BrowserContext> {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(async progress => {
+      const webView = this._webViews.get(socketName);
+      if (!webView)
+        throw new Error('WebView has been closed');
+      return await this._connectToBrowser(progress, socketName);
+    });
   }
 
-  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    const socket = await this._waitForLocalAbstract(socketName);
+  private async _connectToBrowser(progress: Progress, socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    const socket = await progress.race(this._waitForLocalAbstract(socketName));
     const androidBrowser = new AndroidBrowser(this, socket);
-    await androidBrowser._init();
+    progress.cleanupWhenAborted(() => androidBrowser.close());
+    await progress.race(androidBrowser._init());
     this._browserConnections.add(androidBrowser);
 
-    const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+    const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
     const cleanupArtifactsDir = async () => {
       const errors = (await removeFolders([artifactsDir])).filter(Boolean);
       for (let i = 0; i < (errors || []).length; ++i)
         debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
     };
+    progress.cleanupWhenAborted(cleanupArtifactsDir);
     gracefullyCloseSet.add(cleanupArtifactsDir);
     socket.on('close', async () => {
       gracefullyCloseSet.delete(cleanupArtifactsDir);
@@ -341,12 +350,9 @@ export class AndroidDevice extends SdkObject {
     };
     validateBrowserContextOptions(options, browserOptions);
 
-    const browser = await CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions);
-    const controller = new ProgressController(serverSideCallMetadata(), this);
+    const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions));
     const defaultContext = browser._defaultContext!;
-    await controller.run(async progress => {
-      await defaultContext._loadDefaultContextAsIs(progress);
-    });
+    await defaultContext._loadDefaultContextAsIs(progress);
     return defaultContext;
   }
 
