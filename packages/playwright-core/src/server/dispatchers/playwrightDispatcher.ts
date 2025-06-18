@@ -47,11 +47,12 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   private _browserDispatcher: BrowserDispatcher | undefined;
 
   constructor(scope: RootDispatcher, playwright: Playwright, options: PlaywrightDispatcherOptions = {}) {
-    const chromium = new BrowserTypeDispatcher(scope, playwright.chromium);
-    const firefox = new BrowserTypeDispatcher(scope, playwright.firefox);
-    const webkit = new BrowserTypeDispatcher(scope, playwright.webkit);
-    const bidiChromium = new BrowserTypeDispatcher(scope, playwright.bidiChromium);
-    const bidiFirefox = new BrowserTypeDispatcher(scope, playwright.bidiFirefox);
+    const denyLaunch = !!options.preLaunchedBrowser;
+    const chromium = new BrowserTypeDispatcher(scope, playwright.chromium, denyLaunch);
+    const firefox = new BrowserTypeDispatcher(scope, playwright.firefox, denyLaunch);
+    const webkit = new BrowserTypeDispatcher(scope, playwright.webkit, denyLaunch);
+    const bidiChromium = new BrowserTypeDispatcher(scope, playwright.bidiChromium, denyLaunch);
+    const bidiFirefox = new BrowserTypeDispatcher(scope, playwright.bidiFirefox, denyLaunch);
     const android = new AndroidDispatcher(scope, playwright.android);
     const initializer: channels.PlaywrightInitializer = {
       chromium,

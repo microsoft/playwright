@@ -1051,7 +1051,7 @@ test.describe('launchServer only', () => {
             { timeout: 0 },
             {}
         )
-    ).rejects.toBe('');
+    ).rejects.toThrowError('Launching more browsers is not allowed.');
   });
 });
 
