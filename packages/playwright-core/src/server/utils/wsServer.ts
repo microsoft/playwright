@@ -42,10 +42,11 @@ export type WSConnection = {
 };
 
 export type WSServerDelegate = {
-  onHeaders?: (headers: string[]) => void;
-  onUpgrade?: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
+  onRequest: (request: http.IncomingMessage, response: http.ServerResponse) => void;
+  onHeaders: (headers: string[]) => void;
+  onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
   onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
-  onClose?(): Promise<void>;
+  onClose(): Promise<void>;
 };
 
 export class WSServer {
@@ -60,16 +61,7 @@ export class WSServer {
   async listen(port: number = 0, hostname: string | undefined, path: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
-    const server = createHttpServer((request: http.IncomingMessage, response: http.ServerResponse) => {
-      if (request.method === 'GET' && request.url === '/json') {
-        response.setHeader('Content-Type', 'application/json');
-        response.end(JSON.stringify({
-          wsEndpointPath: path,
-        }));
-        return;
-      }
-      response.end('Running');
-    });
+    const server = createHttpServer(this._delegate.onRequest);
     server.on('error', error => debugLogger.log('server', String(error)));
     this.server = server;
 
@@ -92,8 +84,7 @@ export class WSServer {
       perMessageDeflate,
     });
 
-    if (this._delegate.onHeaders)
-      this._wsServer.on('headers', headers => this._delegate.onHeaders!(headers));
+    this._wsServer.on('headers', headers => this._delegate.onHeaders(headers));
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
@@ -102,13 +93,13 @@ export class WSServer {
         socket.destroy();
         return;
       }
-      const upgradeResult = this._delegate.onUpgrade?.(request, socket);
+      const upgradeResult = this._delegate.onUpgrade(request, socket);
       if (upgradeResult) {
         socket.write(upgradeResult.error);
         socket.destroy();
         return;
       }
-      this._wsServer?.handleUpgrade(request, socket, head, ws => this._wsServer?.emit('connection', ws, request));
+      this._wsServer!.handleUpgrade(request, socket, head, ws => this._wsServer!.emit('connection', ws, request));
     });
 
     this._wsServer.on('connection', (ws, request) => {

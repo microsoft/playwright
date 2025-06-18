@@ -1375,7 +1375,7 @@ export class Frame extends SdkObject {
     }, options.timeout);
   }
 
-  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  async expect(metadata: CallMetadata, selector: string | undefined, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const result = await this._expectImpl(metadata, selector, options);
     // Library mode special case for the expect errors which are return values, not exceptions.
     if (result.matches === options.isNot)
@@ -1383,7 +1383,7 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  private async _expectImpl(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  private async _expectImpl(metadata: CallMetadata, selector: string | undefined, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
     try {
       let timeout = options.timeout;
@@ -1392,7 +1392,8 @@ export class Frame extends SdkObject {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       await (new ProgressController(metadata, this)).run(async progress => {
         progress.log(`${renderTitleForCall(metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
-        progress.log(`waiting for ${this._asLocator(selector)}`);
+        if (selector)
+          progress.log(`waiting for ${this._asLocator(selector)}`);
         await this._page.performActionPreChecks(progress);
       }, timeout);
 
@@ -1445,8 +1446,8 @@ export class Frame extends SdkObject {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }) {
-    const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }) {
+    const selectorInFrame = selector ? await this.selectors.resolveFrameForSelector(selector, { strict: true }) : undefined;
     progress.throwIfAborted();
 
     const { frame, info } = selectorInFrame || { frame: this, info: undefined };

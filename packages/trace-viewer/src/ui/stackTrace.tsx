@@ -29,6 +29,7 @@ export const StackTraceView: React.FunctionComponent<{
   const frames = stack || [];
   return <StackFrameListView
     name='stack-trace'
+    ariaLabel='Stack trace'
     items={frames}
     selectedItem={frames[selectedFrame]}
     render={frame => {

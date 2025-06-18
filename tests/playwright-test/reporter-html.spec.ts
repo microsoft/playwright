@@ -543,7 +543,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
       await page.click('.action-title >> text=EVALUATE');
-      await page.click('text=Source');
+      await page.getByRole('tab', { name: 'Source' }).click();
 
       await expect(page.locator('.CodeMirror-line')).toContainText([
         /import.*test/,
@@ -551,10 +551,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await expect(page.getByTestId('stack-trace-list')).toContainText([
+      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem')).toContainText([
         /a.test.js:[\d]+/,
       ]);
-      await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toContainText('a.test.js');
+      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem').and(page.locator('.selected'))).toContainText('a.test.js');
     });
 
     test('should not show stack trace', async ({ runInlineTest, page, showReport }) => {

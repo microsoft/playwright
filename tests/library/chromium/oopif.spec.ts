@@ -371,6 +371,23 @@ it('should intercept response body from oopif', async function({ page, browser, 
   expect(await response.text()).toBeTruthy();
 });
 
+it.fail('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36095' });
+
+  const cdpPort = 10123 + it.info().parallelIndex * 4;
+  const hostBrowser = await browserType.launch({ cdpPort } as any);
+  const hostPage = await hostBrowser.newPage();
+  await hostPage.goto(server.PREFIX + '/dynamic-oopif.html');
+
+  const browser = await browserType.connectOverCDP(`http://localhost:${cdpPort}`);
+  const page = browser.contexts()[0].pages()[0];
+  // can be fixed by reloading first
+  // await page.reload();
+  expect(page.frames().length).toBe(2);
+  await assertOOPIFCount(browser, 1);
+  expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+});
+
 async function assertOOPIFCount(browser: Browser, count: number) {
   if (browser.browserType().name() !== 'chromium')
     return;
