@@ -637,7 +637,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await page.click('.action-title >> text=FETCH');
+      await page.click('.action-title >> text=GET');
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('request.get');
     });
@@ -668,10 +668,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
-      await expect(page.getByTestId('actions-tree')).toContainText('Fetch');
-      await page.getByText('Fetch').nth(2).click();
-      await page.getByText('Fetch').nth(1).click();
-      await page.getByText('Fetch').nth(0).click();
+      await expect(page.getByTestId('actions-tree')).toContainText('GET');
+      await page.getByText('GET').nth(2).click();
+      await page.getByText('GET').nth(1).click();
+      await page.getByText('GET').nth(0).click();
     });
 
     test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {

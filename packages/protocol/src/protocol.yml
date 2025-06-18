@@ -366,7 +366,7 @@ APIRequestContext:
   commands:
 
     fetch:
-      title: Fetch "{url}"
+      title: '{method} "{url}"'
       parameters:
         url: string
         encodedParams: string?
