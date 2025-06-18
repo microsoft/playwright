@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { SocksProxy } from './server/utils/socksProxy';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { serverSideCallMetadata } from './server/instrumentation';
@@ -41,10 +40,6 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
   async launchServer(options: LaunchServerOptions & { _sharedBrowser?: boolean, _userDataDir?: string } = {}): Promise<BrowserServer> {
     const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
-    // TODO: enable socks proxy once ipv6 is supported.
-    const socksProxy = false ? new SocksProxy() : undefined;
-    playwright.options.socksProxyPort = await socksProxy?.listen(0);
-
     // 1. Pre-launch the browser
     const metadata = serverSideCallMetadata();
     const validatorContext = {
@@ -83,7 +78,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser, preLaunchedSocksProxy: socksProxy });
+    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser });
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
@@ -96,7 +91,6 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
     browser.options.browserProcess.onclose = (exitCode, signal) => {
-      socksProxy?.close().catch(() => {});
       server.close();
       browserServer.emit('close', exitCode, signal);
     };

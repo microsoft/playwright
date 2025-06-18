@@ -33,7 +33,6 @@ import type { CallMetadata } from './instrumentation';
 import type { Page } from './page';
 
 type PlaywrightOptions = {
-  socksProxyPort?: number;
   sdkLanguage: Language;
   isInternalPlaywright?: boolean;
   isServer?: boolean;
