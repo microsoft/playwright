@@ -53,6 +53,9 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
   }
 
   async connectOverCDP(params: channels.BrowserTypeConnectOverCDPParams, metadata: CallMetadata): Promise<channels.BrowserTypeConnectOverCDPResult> {
+    if (this._denyLaunch)
+      throw new Error(`Launching more browsers is not allowed.`);
+
     const browser = await this._object.connectOverCDP(metadata, params.endpointURL, params);
     const browserDispatcher = new BrowserDispatcher(this, browser);
     return {

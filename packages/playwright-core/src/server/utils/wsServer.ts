@@ -46,7 +46,6 @@ export type WSServerDelegate = {
   onHeaders: (headers: string[]) => void;
   onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
   onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
-  onClose(): Promise<void>;
 };
 
 export class WSServer {
@@ -137,7 +136,5 @@ export class WSServer {
     this._wsServer = undefined;
     this.server = undefined;
     debugLogger.log('server', 'closed server');
-
-    await this._delegate.onClose?.();
   }
 }

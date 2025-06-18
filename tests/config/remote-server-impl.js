@@ -47,7 +47,6 @@ async function start() {
   console.log(`(tempDir=>${browserServer._userDataDirForTest})`);
   console.log(`(pid=>${browserServer.process().pid})`);
   console.log(`(wsEndpoint=>${browserServer.wsEndpoint()})`);
-  console.log(`(browserType=>${browserServer._playwrightForTest[browserTypeName].guid})`);
 }
 
 process.on('uncaughtException', error => console.log(error));
