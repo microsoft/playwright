@@ -360,10 +360,19 @@ it('should roundtrip local storage in third-party context', async ({ page, conte
 
 it('should support IndexedDB', async ({ page, server, contextFactory }) => {
   await page.goto(server.PREFIX + '/to-do-notifications/index.html');
+
+  await expect(page.locator('#notifications')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: Database initialised.
+  `);
   await page.getByLabel('Task title').fill('Pet the cat');
   await page.getByLabel('Hours').fill('1');
   await page.getByLabel('Mins').fill('1');
   await page.getByText('Add Task').click();
+  await expect(page.locator('#notifications')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: "Transaction completed: database modification finished."
+  `);
 
   const storageState = await page.context().storageState({ indexedDB: true });
   expect(storageState.origins).toEqual([
