@@ -37,6 +37,7 @@ import type * as channels from '@protocol/channels';
 
 type PlaywrightDispatcherOptions = {
   socksProxy?: SocksProxy;
+  denyLaunch?: boolean;
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   sharedBrowser?: boolean;
@@ -47,12 +48,13 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   private _browserDispatcher: BrowserDispatcher | undefined;
 
   constructor(scope: RootDispatcher, playwright: Playwright, options: PlaywrightDispatcherOptions = {}) {
-    const chromium = new BrowserTypeDispatcher(scope, playwright.chromium);
-    const firefox = new BrowserTypeDispatcher(scope, playwright.firefox);
-    const webkit = new BrowserTypeDispatcher(scope, playwright.webkit);
-    const bidiChromium = new BrowserTypeDispatcher(scope, playwright.bidiChromium);
-    const bidiFirefox = new BrowserTypeDispatcher(scope, playwright.bidiFirefox);
-    const android = new AndroidDispatcher(scope, playwright.android);
+    const denyLaunch = options.denyLaunch ?? false;
+    const chromium = new BrowserTypeDispatcher(scope, playwright.chromium, denyLaunch);
+    const firefox = new BrowserTypeDispatcher(scope, playwright.firefox, denyLaunch);
+    const webkit = new BrowserTypeDispatcher(scope, playwright.webkit, denyLaunch);
+    const bidiChromium = new BrowserTypeDispatcher(scope, playwright.bidiChromium, denyLaunch);
+    const bidiFirefox = new BrowserTypeDispatcher(scope, playwright.bidiFirefox, denyLaunch);
+    const android = new AndroidDispatcher(scope, playwright.android, denyLaunch);
     const initializer: channels.PlaywrightInitializer = {
       chromium,
       firefox,
@@ -60,7 +62,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       bidiChromium,
       bidiFirefox,
       android,
-      electron: new ElectronDispatcher(scope, playwright.electron),
+      electron: new ElectronDispatcher(scope, playwright.electron, denyLaunch),
       utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),
       socksSupport: options.socksProxy ? new SocksSupportDispatcher(scope, playwright, options.socksProxy) : undefined,
     };

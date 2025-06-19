@@ -131,16 +131,13 @@ export class PlaywrightConnection {
     const browser = await playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
     browser.options.sdkLanguage = options.sdkLanguage;
 
-    this._cleanups.push(async () => {
-      for (const browser of playwright.allBrowsers())
-        await browser.close({ reason: 'Connection terminated' });
-    });
+    this._cleanups.push(() => browser.close({ reason: 'Connection terminated' }));
     browser.on(Browser.Events.Disconnected, () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Browser closed' });
     });
 
-    return new PlaywrightDispatcher(scope, playwright, { socksProxy: ownedSocksProxy, preLaunchedBrowser: browser });
+    return new PlaywrightDispatcher(scope, playwright, { socksProxy: ownedSocksProxy, preLaunchedBrowser: browser, denyLaunch: true, });
   }
 
   private async _initPreLaunchedBrowserMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
@@ -161,6 +158,7 @@ export class PlaywrightConnection {
       socksProxy: this._preLaunched.socksProxy,
       preLaunchedBrowser: browser,
       sharedBrowser: this._options.sharedBrowser,
+      denyLaunch: true,
     });
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of playwright.allBrowsers()) {
@@ -179,7 +177,7 @@ export class PlaywrightConnection {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Android device disconnected' });
     });
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, { preLaunchedAndroidDevice: androidDevice });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, { preLaunchedAndroidDevice: androidDevice, denyLaunch: true });
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
   }
@@ -241,7 +239,7 @@ export class PlaywrightConnection {
       }
     });
 
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, { preLaunchedBrowser: browser });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, { preLaunchedBrowser: browser, denyLaunch: true });
     return playwrightDispatcher;
   }
 
