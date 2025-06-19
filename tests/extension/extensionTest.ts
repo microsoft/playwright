@@ -38,6 +38,7 @@ export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFix
     await new Promise<void>(resolve => httpServer.listen(0, resolve));
     const pathToExtension = path.join(__dirname, '../../../playwright-mcp/extension');
     const context = await chromium.launchPersistentContext('', {
+      executablePath: process.env.CRPATH,
       args: [
         `--disable-extensions-except=${pathToExtension}`,
         `--load-extension=${pathToExtension}`,
