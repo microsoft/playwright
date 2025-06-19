@@ -64,7 +64,7 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
-it('should send secure cookies to subdomain.localhost', async ({ contextFactory, browserName, server, proxyServer }) => {
+it('should send secure cookies to subdomain.localhost', async ({ contextFactory, browserName, server, isWindows, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: `localhost:${proxyServer.PORT}` },
@@ -88,7 +88,7 @@ it('should send secure cookies to subdomain.localhost', async ({ contextFactory,
       name: 'non-secure',
       domain: 'subdomain.localhost',
     },
-    ...(browserName === 'webkit' ? [] : [{
+    ...((browserName === 'webkit') && !isWindows ? [] : [{
       name: 'secure',
       domain: 'subdomain.localhost',
     }]),
