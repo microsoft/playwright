@@ -223,8 +223,16 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return {
       rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
       writableStreams: await Promise.all(params.items.map(async item => {
-        await fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true });
-        const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));
+        // Normalize the file name to prevent path traversal attacks
+        // Replace Windows-style backslashes and check for traversal patterns
+        if (item.name.includes('..') || item.name.includes('\\') || path.isAbsolute(item.name))
+          throw new Error(`Invalid file path: ${item.name}`);
+        
+        const resolvedPath = path.resolve(tempDirWithRootName, item.name);
+        if (!resolvedPath.startsWith(path.resolve(tempDirWithRootName)))
+          throw new Error(`Invalid file path: ${item.name}`);
+        await fs.promises.mkdir(path.dirname(resolvedPath), { recursive: true });
+        const file = fs.createWriteStream(resolvedPath);
         return new WritableStreamDispatcher(this, file, item.lastModifiedMs);
       }))
     };
