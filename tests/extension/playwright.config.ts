@@ -31,6 +31,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   timeout: 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
+  fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
