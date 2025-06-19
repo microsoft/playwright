@@ -60,7 +60,7 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, playwright: Playwright, preLaunched: PreLaunched, id: string, onClose: () => Promise<void>) {
+  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, playwright: Playwright, preLaunched: PreLaunched, id: string, onClose: () => void) {
     this._ws = ws;
     this._playwright = playwright;
     this._preLaunched = preLaunched;

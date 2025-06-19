@@ -125,15 +125,7 @@ export class PlaywrightServer {
               androidDevice: this._options.preLaunchedAndroidDevice,
               socksProxy: this._options.preLaunchedSocksProxy,
             },
-            id,
-            async () => {
-              semaphore.release();
-
-              // in non-extension mode, we expect a single connection at a time. when it closes, we clean up everything.
-              if (this._options.mode !== 'extension')
-                await Promise.all(this._playwright.allBrowsers().map(browser => browser.close({ reason: 'Connection closed' })));
-            }
-        );
+            id, () => semaphore.release());
       },
     });
   }
