@@ -257,7 +257,7 @@ export class PlaywrightConnection {
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
     await stopProfiling(this._profileName);
-    await this._onClose();
+    this._onClose();
     debugLogger.log('server', `[${this._id}] finished cleanup`);
   }
 
