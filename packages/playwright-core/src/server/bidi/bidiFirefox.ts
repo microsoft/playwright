@@ -35,7 +35,11 @@ import type { RecentLogsCollector } from '../utils/debugLogger';
 
 export class BidiFirefox extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, 'bidi');
+    super(parent, '_bidiFirefox');
+  }
+
+  override executablePath(): string {
+    return '';
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
