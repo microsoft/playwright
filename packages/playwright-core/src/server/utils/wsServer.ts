@@ -86,12 +86,6 @@ export class WSServer {
     this._wsServer.on('headers', headers => this._delegate.onHeaders(headers));
 
     server.on('upgrade', (request, socket, head) => {
-      const pathname = new URL('http://localhost' + request.url!).pathname;
-      if (pathname !== path) {
-        socket.write(`HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n`);
-        socket.destroy();
-        return;
-      }
       const upgradeResult = this._delegate.onUpgrade(request, socket);
       if (upgradeResult) {
         socket.write(upgradeResult.error);

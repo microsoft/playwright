@@ -112,6 +112,13 @@ export class PlaywrightServer {
       },
 
       onUpgrade: (request, socket) => {
+        const url = new URL('http://localhost' + request.url!);
+
+        const hasFullAccess = url.pathname === this._options.path;
+        const hasScopedAccess = this._playwright.allBrowsers().some(browser => browser.guid === url.searchParams.get('browserGuid'));
+        if (!hasFullAccess && !hasScopedAccess)
+          return { error: `HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n` };
+
         const uaError = userAgentVersionMatchesErrorMessage(request.headers['user-agent'] || '');
         if (uaError)
           return { error: `HTTP/${request.httpVersion} 428 Precondition Required\r\n\r\n${uaError}` };
@@ -200,7 +207,7 @@ export class PlaywrightServer {
       browserName: browser.options.name,
       launchOptions: browser.options.originalLaunchOptions,
       reuseGroup: this._nonTestingBrowsers.get(browser)?.reuseGroup,
-      wsPath: this._options.path + '?' + new URLSearchParams({ browserGuid: browser.guid }),
+      wsPath: '?' + new URLSearchParams({ browserGuid: browser.guid }),
       contexts: browser.contexts().map(context => ({
         pages: context.pages().map(page => ({
           url: page.mainFrame().url()
