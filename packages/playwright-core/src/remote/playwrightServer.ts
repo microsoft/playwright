@@ -21,7 +21,6 @@ import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
-import { debugLogger } from '../utils';
 
 import type { ClientType } from './playwrightConnection';
 import type { SocksProxy } from '../server/utils/socksProxy';
@@ -136,13 +135,6 @@ export class PlaywrightServer {
             }
         );
       },
-
-      onClose: async () => {
-        debugLogger.log('server', 'closing browsers');
-        if (this._playwright)
-          await Promise.all(this._playwright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
-        debugLogger.log('server', 'closed browsers');
-      }
     });
   }
 

@@ -134,7 +134,7 @@ export class PlaywrightConnection {
       this.close({ code: 1001, reason: 'Browser closed' });
     });
 
-    return new PlaywrightDispatcher(scope, this._playwright, { socksProxy: ownedSocksProxy, preLaunchedBrowser: browser });
+    return new PlaywrightDispatcher(scope, this._playwright, { socksProxy: ownedSocksProxy, preLaunchedBrowser: browser, denyLaunch: true, });
   }
 
   private async _initPreLaunchedBrowserMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
@@ -154,6 +154,7 @@ export class PlaywrightConnection {
       socksProxy: this._preLaunched.socksProxy,
       preLaunchedBrowser: browser,
       sharedBrowser: this._options.sharedBrowser,
+      denyLaunch: true,
     });
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of this._playwright.allBrowsers()) {
@@ -171,7 +172,7 @@ export class PlaywrightConnection {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Android device disconnected' });
     });
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, { preLaunchedAndroidDevice: androidDevice });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, { preLaunchedAndroidDevice: androidDevice, denyLaunch: true });
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
   }
@@ -231,7 +232,7 @@ export class PlaywrightConnection {
       }
     });
 
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, { preLaunchedBrowser: browser });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, { preLaunchedBrowser: browser, denyLaunch: true });
     return playwrightDispatcher;
   }
 

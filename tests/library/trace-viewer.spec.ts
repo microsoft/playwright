@@ -1056,16 +1056,16 @@ test('should open two trace files', async ({ context, page, request, server, sho
 
   const traceViewer = await showTraceViewer([contextTrace, apiTrace]);
 
-  await traceViewer.selectAction('FETCH', 0);
-  await traceViewer.selectAction('FETCH', 1);
-  await traceViewer.selectAction('FETCH', 2);
+  await traceViewer.selectAction('GET');
+  await traceViewer.selectAction('HEAD');
+  await traceViewer.selectAction('POST');
   await expect(traceViewer.actionTitles).toHaveText([
-    /Fetch "\/simple\.json"/,
+    /GET "\/simple\.json"/,
     /Navigate to "\/input\/button\.html"/,
-    /Fetch "\/simplezip\.json"/,
+    /HEAD "\/simplezip\.json"/,
     /Click.*locator\('button'\)/,
     /Click.*locator\('button'\)/,
-    /Fetch "\/one-style\.css"/,
+    /POST "\/one-style\.css"/,
   ]);
 
   await traceViewer.page.getByRole('tab', { name: 'Metadata' }).click();

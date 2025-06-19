@@ -419,6 +419,54 @@ it('should click the button behind sticky header', async ({ page }) => {
   expect(await page.evaluate(() => window['__clicked'])).toBe(true);
 });
 
+it('should click the button behind position:absolute header', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36339' },
+}, async ({ page }) => {
+  await page.setViewportSize({ width: 500, height: 240 });
+  await page.setContent(`
+    <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      height: 80px;
+      border: 1px solid black;
+    }
+    ol {
+      height: 100vh;
+      overflow: scroll;
+      padding-top: 160px;
+    }
+    body {
+      position: relative;
+    }
+    div.fixed {
+      position: absolute;
+      top: 0;
+      z-index: 1001;
+      width: 100%;
+      background: red;
+      height: 160px;
+    }
+    </style>
+
+    <ol>
+    <li>hi1</li><li>hi2</li><li>hi3</li><li>hi4</li><li>hi5</li><li>hi6</li><li>hi7</li><li>hi8</li>
+    <li id=target onclick="window.__clicked = true">hi9</li>
+    <li>hi10</li><li>hi11</li><li>hi12</li><li>hi13</li><li id=li14>hi14</li>
+    </ol>
+
+    <div class=fixed>Overlay</div>
+  `);
+  await page.$eval('ol', e => {
+    const target = document.querySelector('#target') as HTMLElement;
+    e.scrollTo({ top: target.offsetTop, behavior: 'instant' });
+  });
+  await page.click('#target');
+  expect(await page.evaluate(() => window['__clicked'])).toBe(true);
+});
+
 it('should click the button with px border with offset', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');

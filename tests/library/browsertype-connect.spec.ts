@@ -1039,6 +1039,12 @@ test.describe('launchServer only', () => {
       });
     }
   });
+
+  test('cannot launch another browser', async ({ connect, startRemoteServer }) => {
+    const remoteServer = await startRemoteServer('launchServer');
+    const browser = await connect(remoteServer.wsEndpoint()) as any;
+    await expect(browser._parent.launch({ timeout: 0 })).rejects.toThrowError('Launching more browsers is not allowed.');
+  });
 });
 
 test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
