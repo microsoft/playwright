@@ -16,7 +16,6 @@
 
 import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
-import { debugLogger } from '../server/utils/debugLogger';
 import { Semaphore } from '../utils/isomorphic/semaphore';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
@@ -25,6 +24,7 @@ import { getPlaywrightVersion } from '../server/utils/userAgent';
 import { serverSideCallMetadata } from '../server';
 import { Browser } from '../server/browser';
 
+import type http from 'http';
 import type { ClientType } from './playwrightConnection';
 import type { SocksProxy } from '../server/utils/socksProxy';
 import type { AndroidDevice } from '../server/android/android';
@@ -41,8 +41,15 @@ type ServerOptions = {
   preLaunchedSocksProxy?: SocksProxy;
 };
 
+interface LaunchRequest {
+  browserName: 'chromium' | 'firefox' | 'webkit';
+  launchOptions: LaunchOptions;
+  reuseGroup?: string;
+  userDataDir?: string;
+}
+
 export class PlaywrightServer {
-  private _preLaunchedPlaywright: Playwright | undefined;
+  private _playwright: Playwright;
   private _options: ServerOptions;
   private _wsServer: WSServer;
 
@@ -51,15 +58,59 @@ export class PlaywrightServer {
   constructor(options: ServerOptions) {
     this._options = options;
     if (options.preLaunchedBrowser)
-      this._preLaunchedPlaywright = options.preLaunchedBrowser.attribution.playwright;
+      this._playwright = options.preLaunchedBrowser.attribution.playwright;
     if (options.preLaunchedAndroidDevice)
-      this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android.attribution.playwright;
+      this._playwright = options.preLaunchedAndroidDevice._android.attribution.playwright;
+    this._playwright ??= createPlaywright({ sdkLanguage: 'javascript', isServer: true });
 
     const browserSemaphore = new Semaphore(this._options.maxConnections);
     const controllerSemaphore = new Semaphore(1);
     const reuseBrowserSemaphore = new Semaphore(1);
 
     this._wsServer = new WSServer({
+      onRequest: async (request, response) => {
+        if (request.method === 'GET' && request.url === '/json') {
+          response.setHeader('Content-Type', 'application/json');
+          response.end(JSON.stringify({
+            wsEndpointPath: this._options.path,
+          }));
+          return;
+        }
+
+        if (request.method === 'GET' && request.url === '/json/list') {
+          const browsers = this._playwright.allBrowsers().map(browser => this._browserToJSON(browser));
+          response.setHeader('Content-Type', 'application/json');
+          response.end(JSON.stringify(browsers));
+          return;
+        }
+
+        if (request.method === 'POST' && request.url === '/json/launch') {
+          const params = await readBodyJSON(request) as LaunchRequest;
+          const browserType = this._playwright[params.browserName];
+          const callMetadata = serverSideCallMetadata();
+
+          let browser: Browser | undefined;
+          if (params.reuseGroup)
+            browser = this._playwright.allBrowsers().find(b => b.options.name === params.browserName && this._nonTestingBrowsers.get(b)?.reuseGroup === params.reuseGroup);
+          if (!browser) {
+            if (params.userDataDir) {
+              const context = await browserType.launchPersistentContext(callMetadata, params.userDataDir, params.launchOptions);
+              browser = context._browser;
+            } else {
+              browser = await browserType.launch(callMetadata, params.launchOptions);
+            }
+          }
+
+          this._nonTestingBrowsers.set(browser, { reuseGroup: params.reuseGroup });
+          browser.on(Browser.Events.Disconnected, () => this._nonTestingBrowsers.delete(browser));
+
+          response.setHeader('Content-Type', 'application/json');
+          response.end(JSON.stringify(this._browserToJSON(browser)));
+          return;
+        }
+        response.end('Running');
+      },
+
       onUpgrade: (request, socket) => {
         const uaError = userAgentVersionMatchesErrorMessage(request.headers['user-agent'] || '');
         if (uaError)
@@ -69,36 +120,6 @@ export class PlaywrightServer {
       onHeaders: headers => {
         if (process.env.PWTEST_SERVER_WS_HEADERS)
           headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);
-      },
-
-      onList: () => {
-        const browsers = this._preLaunchedPlaywright?.allBrowsers() ?? [];
-        return browsers.map(browser => this._browserToJSON(browser));
-      },
-
-      onLaunch: async request => {
-        if (!this._preLaunchedPlaywright)
-          this._preLaunchedPlaywright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
-        const playwright = this._preLaunchedPlaywright;
-        const browserType = playwright[request.browserName];
-        const callMetadata = serverSideCallMetadata();
-
-        let browser: Browser | undefined;
-        if (request.reuseGroup)
-          browser = playwright.allBrowsers().find(b => b.options.name === request.browserName && this._nonTestingBrowsers.get(b)?.reuseGroup === request.reuseGroup);
-        if (!browser) {
-          if (request.userDataDir) {
-            const context = await browserType.launchPersistentContext(callMetadata, request.userDataDir, request.launchOptions);
-            browser = context._browser;
-          } else {
-            browser = await browserType.launch(callMetadata, request.launchOptions);
-          }
-        }
-
-        this._nonTestingBrowsers.set(browser, { reuseGroup: request.reuseGroup });
-        browser.on(Browser.Events.Disconnected, () => this._nonTestingBrowsers.delete(browser));
-
-        return this._browserToJSON(browser);
       },
 
       onConnection: (request, url, ws, id) => {
@@ -119,11 +140,6 @@ export class PlaywrightServer {
 
         // Instantiate playwright for the extension modes.
         const isExtension = this._options.mode === 'extension';
-        if (isExtension) {
-          if (!this._preLaunchedPlaywright)
-            this._preLaunchedPlaywright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
-        }
-
         let clientType: ClientType = 'launch-browser';
         let semaphore: Semaphore = browserSemaphore;
         let browser: Browser | undefined;
@@ -132,7 +148,7 @@ export class PlaywrightServer {
           clientType = 'pre-launched-browser-or-android';
           semaphore = browserSemaphore;
           sharedBrowser = true;
-          browser = this._preLaunchedPlaywright?.allBrowsers().find(b => b.guid === browserGuid);
+          browser = this._playwright.allBrowsers().find(b => b.guid === browserGuid);
           if (!browser)
             throw new Error(`Browser not found.`);
         } else if (isExtension && url.searchParams.has('debug-controller')) {
@@ -157,8 +173,8 @@ export class PlaywrightServer {
               allowFSPaths: this._options.mode === 'extension',
               sharedBrowser,
             },
+            this._playwright,
             {
-              playwright: this._preLaunchedPlaywright,
               browser,
               androidDevice: this._options.preLaunchedAndroidDevice,
               socksProxy: this._options.preLaunchedSocksProxy,
@@ -168,13 +184,6 @@ export class PlaywrightServer {
             () => semaphore.release(),
         );
       },
-
-      onClose: async () => {
-        debugLogger.log('server', 'closing browsers');
-        if (this._preLaunchedPlaywright)
-          await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
-        debugLogger.log('server', 'closed browsers');
-      }
     });
   }
 
@@ -223,5 +232,24 @@ function userAgentVersionMatchesErrorMessage(userAgent: string) {
       ``,
       `<3 Playwright Team`
     ].join('\n'), 1);
+  }
+}
+
+
+async function readBody(request: http.IncomingMessage): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    request.on('data', chunk => chunks.push(chunk));
+    request.on('end', () => resolve(Buffer.concat(chunks)));
+    request.on('error', reject);
+  });
+}
+
+async function readBodyJSON(request: http.IncomingMessage): Promise<any> {
+  const body = await readBody(request);
+  try {
+    return JSON.parse(body.toString());
+  } catch (e) {
+    throw new Error(`Failed to parse JSON body: ${e.message}`);
   }
 }

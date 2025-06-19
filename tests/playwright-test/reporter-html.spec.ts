@@ -435,7 +435,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
     });
 
-    test('should display title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
+    test('should display report title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = {
@@ -454,6 +454,31 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await expect(page.locator('.header-title')).toHaveText('Custom report title');
+    });
+
+    test('should process URLs as links in report title', async ({ runInlineTest, page, showReport }, testInfo) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['html', { title: 'Custom report title https://playwright.dev separator http://microsoft.com end' }], ['line']]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('fails', async ({ page }) => {
+            expect(1).toBe(2);
+          });
+        `
+      }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+
+      await showReport();
+      const anchorLocator = page.locator('.header-title a');
+      await expect(page.locator('.header-title')).toHaveText('Custom report title https://playwright.dev separator http://microsoft.com end');
+      await expect(anchorLocator).toHaveCount(2);
+      await expect(anchorLocator.nth(0)).toHaveAttribute('href', 'https://playwright.dev');
+      await expect(anchorLocator.nth(1)).toHaveAttribute('href', 'http://microsoft.com');
     });
 
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
@@ -518,7 +543,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
       await page.click('.action-title >> text=EVALUATE');
-      await page.click('text=Source');
+      await page.getByRole('tab', { name: 'Source' }).click();
 
       await expect(page.locator('.CodeMirror-line')).toContainText([
         /import.*test/,
@@ -526,10 +551,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await expect(page.getByTestId('stack-trace-list')).toContainText([
+      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem')).toContainText([
         /a.test.js:[\d]+/,
       ]);
-      await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toContainText('a.test.js');
+      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem').and(page.locator('.selected'))).toContainText('a.test.js');
     });
 
     test('should not show stack trace', async ({ runInlineTest, page, showReport }) => {
@@ -612,7 +637,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await page.click('.action-title >> text=FETCH');
+      await page.click('.action-title >> text=GET');
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('request.get');
     });
@@ -643,10 +668,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
-      await expect(page.getByTestId('actions-tree')).toContainText('Fetch');
-      await page.getByText('Fetch').nth(2).click();
-      await page.getByText('Fetch').nth(1).click();
-      await page.getByText('Fetch').nth(0).click();
+      await expect(page.getByTestId('actions-tree')).toContainText('GET');
+      await page.getByText('GET').nth(2).click();
+      await page.getByText('GET').nth(1).click();
+      await page.getByText('GET').nth(0).click();
     });
 
     test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {

@@ -28,12 +28,16 @@ import type * as channels from '@protocol/channels';
 
 export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronChannel, RootDispatcher> implements channels.ElectronChannel {
   _type_Electron = true;
+  _denyLaunch: boolean;
 
-  constructor(scope: RootDispatcher, electron: Electron) {
+  constructor(scope: RootDispatcher, electron: Electron, denyLaunch: boolean) {
     super(scope, electron, 'Electron', {});
+    this._denyLaunch = denyLaunch;
   }
 
   async launch(params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
+    if (this._denyLaunch)
+      throw new Error(`Launching more browsers is not allowed.`);
     const electronApplication = await this._object.launch(params);
     return { electronApplication: new ElectronApplicationDispatcher(this, electronApplication) };
   }

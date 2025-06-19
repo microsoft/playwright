@@ -25,7 +25,7 @@ import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
-import { ProgressController } from './progress';
+import { isAbortError, ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
@@ -36,6 +36,7 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
+import { isSessionClosedError } from './protocolError';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
@@ -476,26 +477,24 @@ export class Page extends SdkObject {
       return;
     for (const [uid, handler] of this._locatorHandlers) {
       if (!handler.resolved) {
-        if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
+        if (await this.mainFrame().isVisibleInternal(progress, handler.selector, { strict: true })) {
           handler.resolved = new ManualPromise();
           this.emit(Page.Events.LocatorHandlerTriggered, uid);
         }
       }
       if (handler.resolved) {
         ++this._locatorHandlerRunningCounter;
-        progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
+        progress.log(`  found ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)}, intercepting action to run the handler`);
         const promise = handler.resolved.then(async () => {
           progress.throwIfAborted();
           if (!handler.noWaitAfter) {
-            progress.log(`  locator handler has finished, waiting for ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)} to be hidden`);
+            progress.log(`  locator handler has finished, waiting for ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)} to be hidden`);
             await this.mainFrame().waitForSelectorInternal(progress, handler.selector, false, { state: 'hidden' });
           } else {
             progress.log(`  locator handler has finished`);
           }
         });
-        await this.openScope.race(promise).finally(() => --this._locatorHandlerRunningCounter);
-        // Avoid side-effects after long-running operation.
-        progress.throwIfAborted();
+        await progress.race(this.openScope.race(promise)).finally(() => --this._locatorHandlerRunningCounter);
         progress.log(`  interception handler has finished, continuing`);
       }
     }
@@ -1005,7 +1004,7 @@ async function snapshotFrameForAI(metadata: CallMetadata, frame: frames.Frame, f
           return continuePolling;
         return snapshotOrRetry;
       } catch (e) {
-        if (js.isJavaScriptErrorInEvaluate(e))
+        if (isAbortError(e) || isSessionClosedError(e) || js.isJavaScriptErrorInEvaluate(e))
           throw e;
         return continuePolling;
       }

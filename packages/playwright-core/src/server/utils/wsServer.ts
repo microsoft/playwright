@@ -17,7 +17,6 @@
 import { createHttpServer } from './network';
 import { wsServer } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
-import { LaunchOptions } from '../types';
 
 import type { WebSocket, WebSocketServer } from '../../utilsBundle';
 import type http from 'http';
@@ -42,20 +41,11 @@ export type WSConnection = {
   close: () => Promise<void>;
 };
 
-interface LaunchRequest {
-  browserName: 'chromium' | 'firefox' | 'webkit';
-  launchOptions: LaunchOptions;
-  reuseGroup?: string;
-  userDataDir?: string;
-}
-
 export type WSServerDelegate = {
-  onHeaders(headers: string[]): void;
-  onList(): any[];
-  onLaunch(request: LaunchRequest): Promise<any>;
-  onUpgrade(request: http.IncomingMessage, socket: stream.Duplex): { error: string } | undefined;
-  onConnection(request: http.IncomingMessage, url: URL, ws: WebSocket, id: string): WSConnection;
-  onClose(): Promise<void>;
+  onRequest: (request: http.IncomingMessage, response: http.ServerResponse) => void;
+  onHeaders: (headers: string[]) => void;
+  onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
+  onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
 };
 
 export class WSServer {
@@ -70,32 +60,7 @@ export class WSServer {
   async listen(port: number = 0, hostname: string | undefined, path: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
-    const server = createHttpServer(async (request: http.IncomingMessage, response: http.ServerResponse) => {
-      if (request.method === 'GET' && request.url === '/json') {
-        response.setHeader('Content-Type', 'application/json');
-        response.end(JSON.stringify({
-          wsEndpointPath: path,
-        }));
-        return;
-      }
-
-      if (request.method === 'GET' && request.url === '/json/list') {
-        const listResult = this._delegate.onList();
-        response.setHeader('Content-Type', 'application/json');
-        response.end(JSON.stringify(listResult));
-        return;
-      }
-
-      if (request.method === 'POST' && request.url === '/json/launch') {
-        const body = await readBodyJSON(request) as LaunchRequest;
-        const launchResult = await this._delegate.onLaunch(body);
-        response.setHeader('Content-Type', 'application/json');
-        response.end(JSON.stringify(launchResult));
-        return;
-      }
-
-      response.end('Running');
-    });
+    const server = createHttpServer(this._delegate.onRequest);
     server.on('error', error => debugLogger.log('server', String(error)));
     this.server = server;
 
@@ -118,8 +83,7 @@ export class WSServer {
       perMessageDeflate,
     });
 
-    if (this._delegate.onHeaders)
-      this._wsServer.on('headers', headers => this._delegate.onHeaders!(headers));
+    this._wsServer.on('headers', headers => this._delegate.onHeaders(headers));
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
@@ -128,13 +92,13 @@ export class WSServer {
         socket.destroy();
         return;
       }
-      const upgradeResult = this._delegate.onUpgrade?.(request, socket);
+      const upgradeResult = this._delegate.onUpgrade(request, socket);
       if (upgradeResult) {
         socket.write(upgradeResult.error);
         socket.destroy();
         return;
       }
-      this._wsServer?.handleUpgrade(request, socket, head, ws => this._wsServer?.emit('connection', ws, request));
+      this._wsServer!.handleUpgrade(request, socket, head, ws => this._wsServer!.emit('connection', ws, request));
     });
 
     this._wsServer.on('connection', (ws, request) => {
@@ -172,25 +136,5 @@ export class WSServer {
     this._wsServer = undefined;
     this.server = undefined;
     debugLogger.log('server', 'closed server');
-
-    await this._delegate.onClose?.();
-  }
-}
-
-async function readBody(request: http.IncomingMessage): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    request.on('data', chunk => chunks.push(chunk));
-    request.on('end', () => resolve(Buffer.concat(chunks)));
-    request.on('error', reject);
-  });
-}
-
-async function readBodyJSON(request: http.IncomingMessage): Promise<any> {
-  const body = await readBody(request);
-  try {
-    return JSON.parse(body.toString());
-  } catch (e) {
-    throw new Error(`Failed to parse JSON body: ${e.message}`);
   }
 }
