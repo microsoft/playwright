@@ -131,6 +131,7 @@ export class PlaywrightConnection {
     const browser = await playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
     browser.options.sdkLanguage = options.sdkLanguage;
 
+    this._cleanups.push(() => browser.close({ reason: 'Connection terminated' }));
     browser.on(Browser.Events.Disconnected, () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Browser closed' });
