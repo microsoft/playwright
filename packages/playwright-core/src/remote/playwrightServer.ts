@@ -39,6 +39,7 @@ type ServerOptions = {
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
+  browserServer?: boolean;
 };
 
 interface LaunchRequest {
@@ -69,11 +70,16 @@ export class PlaywrightServer {
 
     this._wsServer = new WSServer({
       onRequest: async (request, response) => {
-        if (request.method === 'GET' && request.url === '/json') {
-          response.setHeader('Content-Type', 'application/json');
-          response.end(JSON.stringify({
-            wsEndpointPath: this._options.path,
-          }));
+        if (!options.browserServer) {
+          if (request.method === 'GET' && request.url === '/json') {
+            response.setHeader('Content-Type', 'application/json');
+            response.end(JSON.stringify({
+              wsEndpointPath: this._options.path,
+            }));
+            return;
+          }
+
+          response.end('Running');
           return;
         }
 
@@ -108,6 +114,7 @@ export class PlaywrightServer {
           response.end(JSON.stringify(this._browserToJSON(browser)));
           return;
         }
+
         response.end('Running');
       },
 
@@ -115,7 +122,7 @@ export class PlaywrightServer {
         const url = new URL('http://localhost' + request.url!);
 
         const hasFullAccess = url.pathname === this._options.path;
-        const hasScopedAccess = this._playwright.allBrowsers().some(browser => browser.guid === url.searchParams.get('browserGuid'));
+        const hasScopedAccess = !!options.browserServer && this._playwright.allBrowsers().some(browser => browser.guid === url.searchParams.get('browserGuid'));
         if (!hasFullAccess && !hasScopedAccess)
           return { error: `HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n` };
 
@@ -134,7 +141,7 @@ export class PlaywrightServer {
         const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
         const proxyHeader = request.headers['x-playwright-proxy'];
         const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
-        const browserGuid = url.searchParams.get('browserGuid');
+        const browserGuid = options.browserServer ? url.searchParams.get('browserGuid') : null;
 
         const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
         const launchOptionsHeaderValue = Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader;
