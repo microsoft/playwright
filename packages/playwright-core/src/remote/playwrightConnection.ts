@@ -36,7 +36,7 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(semaphore: Semaphore, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightDispatcherOptions & { cleanups: (() => Promise<void>)[] }>, id: string) {
+  constructor(semaphore: Semaphore, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightDispatcherOptions & { dispose?(): Promise<void> }>, id: string) {
     this._ws = ws;
     this._semaphore = semaphore;
     this._id = id;
@@ -95,7 +95,8 @@ export class PlaywrightConnection {
           this.close({ code: 1001, reason: 'Android device disconnected' });
         });
       }
-      this._cleanups.push(...options.cleanups);
+      if (options.dispose)
+        this._cleanups.push(options.dispose);
 
       const dispatcher = new PlaywrightDispatcher(scope, playwright, options);
       this._cleanups.push(() => dispatcher.cleanup());

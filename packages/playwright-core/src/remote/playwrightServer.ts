@@ -149,22 +149,20 @@ export class PlaywrightServer {
                 return {
                   preLaunchedBrowser: browser,
                   denyLaunch: true,
-                  cleanups: [
-                    async () => {
-                      // Don't close the pages so that user could debug them,
-                      // but close all the empty browsers and contexts to clean up.
-                      for (const browser of this._playwright.allBrowsers()) {
-                        for (const context of browser.contexts()) {
-                          if (!context.pages().length)
-                            await context.close({ reason: 'Connection terminated' });
-                          else
-                            await context.stopPendingOperations('Connection closed');
-                        }
-                        if (!browser.contexts().length)
-                          await browser.close({ reason: 'Connection terminated' });
+                  dispose: async () => {
+                    // Don't close the pages so that user could debug them,
+                    // but close all the empty browsers and contexts to clean up.
+                    for (const browser of this._playwright.allBrowsers()) {
+                      for (const context of browser.contexts()) {
+                        if (!context.pages().length)
+                          await context.close({ reason: 'Connection terminated' });
+                        else
+                          await context.stopPendingOperations('Connection closed');
                       }
+                      if (!browser.contexts().length)
+                        await browser.close({ reason: 'Connection terminated' });
                     }
-                  ],
+                  }
                 };
               },
               id,
@@ -181,9 +179,6 @@ export class PlaywrightServer {
                 async () => {
                   debugLogger.log('server', `[${id}] engaged pre-launched (browser) mode`);
 
-                  // Note: connected client owns the socks proxy and configures the pattern.
-                  this._options.preLaunchedSocksProxy?.setPattern(proxyValue);
-
                   const browser = this._options.preLaunchedBrowser!;
 
                   // In pre-launched mode, keep only the pre-launched browser.
@@ -197,7 +192,6 @@ export class PlaywrightServer {
                     socksProxy: this._options.preLaunchedSocksProxy,
                     sharedBrowser: this._options.mode === 'launchServerShared',
                     denyLaunch: true,
-                    cleanups: [],
                   };
                 },
                 id,
@@ -215,7 +209,6 @@ export class PlaywrightServer {
                 return {
                   preLaunchedAndroidDevice: androidDevice,
                   denyLaunch: true,
-                  cleanups: [],
                 };
               },
               id,
@@ -254,10 +247,10 @@ export class PlaywrightServer {
                 socksProxy,
                 sharedBrowser: true,
                 denyLaunch: true,
-                cleanups: [
-                  async () => browser.close({ reason: 'Connection terminated' }),
-                  async () => socksProxy?.close(),
-                ]
+                dispose: async () => {
+                  await browser.close({ reason: 'Connection terminated' });
+                  socksProxy?.close();
+                },
               };
             },
             id,
