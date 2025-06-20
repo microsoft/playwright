@@ -138,6 +138,7 @@ export class PlaywrightConnection {
     return new PlaywrightDispatcher(scope, this._playwright, { socksProxy: ownedSocksProxy, preLaunchedBrowser: browser, denyLaunch: true, });
   }
 
+  // done
   private async _initPreLaunchedBrowserMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
     debugLogger.log('server', `[${this._id}] engaged pre-launched (browser) mode`);
 
@@ -166,6 +167,7 @@ export class PlaywrightConnection {
     return playwrightDispatcher;
   }
 
+  // done
   private async _initPreLaunchedAndroidMode(scope: RootDispatcher) {
     debugLogger.log('server', `[${this._id}] engaged pre-launched (Android) mode`);
     const androidDevice = this._preLaunched.androidDevice!;
@@ -184,6 +186,7 @@ export class PlaywrightConnection {
     return new DebugControllerDispatcher(this._dispatcherConnection, this._playwright.debugController);
   }
 
+  // done
   private async _initReuseBrowsersMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
     // Note: reuse browser mode does not support socks proxy, because
     // clients come and go, while the browser stays the same.
