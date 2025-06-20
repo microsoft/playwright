@@ -103,17 +103,16 @@ export class PlaywrightServer {
         if (isExtension) {
           if (url.searchParams.has('debug-controller')) {
             return new PlaywrightConnection(
-                controllerSemaphore.acquire(),
+                controllerSemaphore,
                 ws,
                 true,
                 this._playwright,
                 async () => { throw new Error('shouldnt be used'); },
                 id,
-                () => controllerSemaphore.release()
             );
           }
           return new PlaywrightConnection(
-              reuseBrowserSemaphore.acquire(),
+              reuseBrowserSemaphore,
               ws,
               false,
               this._playwright,
@@ -169,14 +168,13 @@ export class PlaywrightServer {
                 };
               },
               id,
-              () => reuseBrowserSemaphore.release()
           );
         }
 
         if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
           if (this._options.preLaunchedBrowser) {
             return new PlaywrightConnection(
-                browserSemaphore.acquire(),
+                browserSemaphore,
                 ws,
                 false,
                 this._playwright,
@@ -202,12 +200,11 @@ export class PlaywrightServer {
                   };
                 },
                 id,
-                () => browserSemaphore.release()
             );
           }
 
           return new PlaywrightConnection(
-              browserSemaphore.acquire(),
+              browserSemaphore,
               ws,
               false,
               this._playwright,
@@ -221,12 +218,11 @@ export class PlaywrightServer {
                 };
               },
               id,
-              () => browserSemaphore.release()
           );
         }
 
         return new PlaywrightConnection(
-            browserSemaphore.acquire(),
+            browserSemaphore,
             ws,
             false,
             this._playwright,
@@ -264,7 +260,6 @@ export class PlaywrightServer {
               };
             },
             id,
-            () => browserSemaphore.release()
         );
       },
     });

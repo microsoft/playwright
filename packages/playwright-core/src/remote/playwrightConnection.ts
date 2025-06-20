@@ -19,7 +19,7 @@ import { AndroidDevice } from '../server/android/android';
 import { Browser } from '../server/browser';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 import { startProfiling, stopProfiling } from '../server/utils/profiler';
-import { monotonicTime } from '../utils';
+import { monotonicTime, Semaphore } from '../utils';
 import { debugLogger } from '../server/utils/debugLogger';
 import { PlaywrightDispatcherOptions } from '../server/dispatchers/playwrightDispatcher';
 
@@ -28,7 +28,7 @@ import type { WebSocket } from '../utilsBundle';
 
 export class PlaywrightConnection {
   private _ws: WebSocket;
-  private _onClose: () => void;
+  private _semaphore: Semaphore;
   private _dispatcherConnection: DispatcherConnection;
   private _cleanups: (() => Promise<void>)[] = [];
   private _id: string;
@@ -36,11 +36,13 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(lock: Promise<void>, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightDispatcherOptions & { cleanups: (() => Promise<void>)[] }>, id: string, onClose: () => void) {
+  constructor(semaphore: Semaphore, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightDispatcherOptions & { cleanups: (() => Promise<void>)[] }>, id: string) {
     this._ws = ws;
-    this._onClose = onClose;
+    this._semaphore = semaphore;
     this._id = id;
     this._profileName = new Date().toISOString();
+
+    const lock = this._semaphore.acquire();
 
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = async message => {
@@ -110,7 +112,7 @@ export class PlaywrightConnection {
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
     await stopProfiling(this._profileName);
-    this._onClose();
+    this._semaphore.release();
     debugLogger.log('server', `[${this._id}] finished cleanup`);
   }
 
