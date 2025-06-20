@@ -864,7 +864,7 @@ export class Frame extends SdkObject {
         return retVal;
       });
     } catch (e) {
-      if (isAbortError(e) || js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+      if (this.isNonRetriableError(e))
         throw e;
       throw new Error(`Unable to retrieve content because the page is navigating and changing the content.`);
     }
@@ -1060,14 +1060,14 @@ export class Frame extends SdkObject {
           continue;
         return result as R;
       } catch (e) {
-        if (this._isErrorThatCannotBeRetried(e))
+        if (this.isNonRetriableError(e))
           throw e;
         continue;
       }
     }
   }
 
-  private _isErrorThatCannotBeRetried(e: Error) {
+  isNonRetriableError(e: Error) {
     if (isAbortError(e))
       return true;
     // Always fail on JavaScript errors or when the main connection is closed.
@@ -1288,7 +1288,7 @@ export class Frame extends SdkObject {
         return state.matches;
       }, { info: resolved.info, root: resolved.frame === this ? scope : undefined }));
     } catch (e) {
-      if (isAbortError(e) || js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e) || isSessionClosedError(e))
+      if (this.isNonRetriableError(e))
         throw e;
       return false;
     }
@@ -1408,7 +1408,7 @@ export class Frame extends SdkObject {
         if (resultOneShot.matches !== options.isNot)
           return resultOneShot;
       } catch (e) {
-        if (isAbortError(e) || js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        if (this.isNonRetriableError(e))
           throw e;
         // Ignore any other errors from one-shot, we'll handle them during retries.
       }
@@ -1434,7 +1434,7 @@ export class Frame extends SdkObject {
         });
       }, timeout);
     } catch (e) {
-      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // Q: Why not throw upon isNonRetriableError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
