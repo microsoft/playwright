@@ -93,7 +93,7 @@ export abstract class Browser extends SdkObject {
   }
 
   newContextFromMetadata(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => this.newContext(progress, options));
   }
 

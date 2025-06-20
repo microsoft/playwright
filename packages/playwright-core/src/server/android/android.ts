@@ -260,7 +260,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   async launchBrowser(metadata: CallMetadata, pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       debug('pw:android')('Force-stopping', pkg);
       await this._backend.runCommand(`shell:am force-stop ${pkg}`);
@@ -306,7 +306,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   async connectToWebView(metadata: CallMetadata, socketName: string): Promise<BrowserContext> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const webView = this._webViews.get(socketName);
       if (!webView)

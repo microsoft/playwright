@@ -156,7 +156,7 @@ export class Electron extends SdkObject {
   }
 
   async launch(metadata: CallMetadata, options: channels.ElectronLaunchParams): Promise<ElectronApplication> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
       // --remote-debugging-port=0 must be the last playwright's argument, loader.ts relies on it.

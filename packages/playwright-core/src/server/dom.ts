@@ -258,7 +258,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async scrollIntoViewIfNeeded(metadata: CallMetadata, options: types.TimeoutOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._waitAndScrollIntoViewIfNeeded(progress, false /* waitForVisible */),
         options.timeout);
@@ -337,7 +337,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const waitTime = [0, 20, 100, 100, 500];
 
     while (true) {
-      progress.throwIfAborted();
       if (retry) {
         progress.log(`retrying ${actionName} action${options.trial ? ' (trial run)' : ''}`);
         const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
@@ -427,7 +426,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Best-effort scroll to make sure any iframes containing this element are scrolled
       // into view and visible, so they are not throttled.
       // See https://github.com/microsoft/playwright/issues/27196 for an example.
-      progress.throwIfAborted();  // Avoid action that has side-effects.
       await progress.race(doScrollIntoView().catch(() => {}));
     }
 
@@ -449,7 +447,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await progress.race((options as any).__testHookAfterStable());
 
     progress.log('  scrolling into view if needed');
-    progress.throwIfAborted();  // Avoid action that has side-effects.
     const scrolled = await progress.race(doScrollIntoView());
     if (scrolled !== 'done')
       return scrolled;
@@ -495,7 +492,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const actionResult = await this._page.frameManager.waitForSignalsCreatedBy(progress, options.waitAfter === true, async () => {
       if ((options as any).__testHookBeforePointerAction)
         await progress.race((options as any).__testHookBeforePointerAction());
-      progress.throwIfAborted();  // Avoid action that has side-effects.
       let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard.ensureModifiers(progress, options.modifiers);
@@ -539,7 +535,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async hover(metadata: CallMetadata, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._hover(progress, options);
@@ -552,7 +548,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async click(metadata: CallMetadata, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._click(progress, { ...options, waitAfter: !options.noWaitAfter });
@@ -565,7 +561,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dblclick(metadata: CallMetadata, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._dblclick(progress, options);
@@ -578,7 +574,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async tap(metadata: CallMetadata, options: types.PointerActionWaitOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._tap(progress, options);
@@ -591,7 +587,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectOption(metadata: CallMetadata, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._selectOption(progress, elements, values, options);
@@ -627,7 +623,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async fill(metadata: CallMetadata, value: string, options: types.CommonActionOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._fill(progress, value, options);
@@ -649,7 +645,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         }
         return injected.fill(node, value);
       }, { value, force: options.force }));
-      progress.throwIfAborted();  // Avoid action that has side-effects.
       if (result === 'needsinput') {
         if (value)
           await this._page.keyboard._insertText(progress, value);
@@ -663,7 +658,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectText(metadata: CallMetadata, options: types.CommonActionOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._retryAction(progress, 'selectText', async () => {
         if (!options.force)
@@ -682,7 +677,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async setInputFiles(metadata: CallMetadata, params: channels.ElementHandleSetInputFilesParams) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const inputFileItems = await progress.race(prepareFilesForUpload(this._frame, params));
       await this._markAsTargetElement(progress);
@@ -732,7 +727,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus(metadata: CallMetadata): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._focus(progress);
@@ -749,7 +744,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(metadata: CallMetadata, text: string, options: { delay?: number } & types.TimeoutOptions & types.StrictOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._type(progress, text, options);
@@ -768,7 +763,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async press(metadata: CallMetadata, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & types.StrictOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this._markAsTargetElement(progress);
       const result = await this._press(progress, key, options);
@@ -789,7 +784,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async check(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setChecked(progress, true, options);
       return assertDone(throwRetargetableDOMError(result));
@@ -797,7 +792,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async uncheck(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setChecked(progress, false, options);
       return assertDone(throwRetargetableDOMError(result));
@@ -833,7 +828,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async screenshot(metadata: CallMetadata, options: ScreenshotOptions & types.TimeoutOptions): Promise<Buffer> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._page.screenshotter.screenshotElement(progress, this, options),
         options.timeout);
@@ -880,7 +875,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async waitForElementState(metadata: CallMetadata, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const actionName = `wait for ${state}`;
       const result = await this._retryAction(progress, actionName, async () => {

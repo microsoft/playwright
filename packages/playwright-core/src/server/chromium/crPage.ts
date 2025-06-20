@@ -256,7 +256,7 @@ export class CRPage implements PageDelegate {
   }
 
   async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
-    const { visualViewport } = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
+    const { visualViewport } = await progress.race(this._mainFrameSession._client.send('Page.getLayoutMetrics'));
     if (!documentRect) {
       documentRect = {
         x: visualViewport.pageX + viewportRect!.x,
@@ -274,8 +274,7 @@ export class CRPage implements PageDelegate {
       const deviceScaleFactor = this._browserContext._options.deviceScaleFactor || 1;
       clip.scale /= deviceScaleFactor;
     }
-    progress.throwIfAborted();
-    const result = await this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport });
+    const result = await progress.race(this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport }));
     return Buffer.from(result.data, 'base64');
   }
 

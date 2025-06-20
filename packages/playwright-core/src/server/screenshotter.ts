@@ -303,7 +303,7 @@ export class Screenshotter {
 
     const cleanupHighlight = await this._maskElements(progress, options);
     const quality = format === 'jpeg' ? options.quality ?? 80 : undefined;
-    const buffer = await progress.race(this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device'));
+    const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
     await cleanupHighlight();
 
     if (shouldSetDefaultBackground)
