@@ -160,7 +160,7 @@ export class PlaywrightServer {
                           else
                             await context.stopPendingOperations('Connection closed');
                         }
-                        if (!browser.contexts())
+                        if (!browser.contexts().length)
                           await browser.close({ reason: 'Connection terminated' });
                       }
                     }
