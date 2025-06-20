@@ -40,7 +40,7 @@ export class PlaywrightConnection {
     this._ws = ws;
     this._onClose = onClose;
     this._id = id;
-    this._profileName = `${new Date().toISOString()}`;
+    this._profileName = new Date().toISOString();
 
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = async message => {

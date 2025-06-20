@@ -26,7 +26,6 @@ import { serverSideCallMetadata } from '../server';
 import { BrowserType } from '../server/browserType';
 import { SocksProxy } from '../server/utils/socksProxy';
 
-import type { ClientType } from './playwrightConnection';
 import type { AndroidDevice } from '../server/android/android';
 import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
@@ -97,26 +96,22 @@ export class PlaywrightServer {
         } catch (e) {
         }
 
-        const allowFSPaths = this._options.mode === 'extension';
+        const isExtension = this._options.mode === 'extension';
+        const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
 
-        // Instantiate playwright for the extension modes.
-        const isExtension = this._options.mode === 'extension';
-        let clientType: ClientType = 'launch-browser';
-        let semaphore: Semaphore = browserSemaphore;
-        if (isExtension && url.searchParams.has('debug-controller')) {
-          return new PlaywrightConnection(
-              controllerSemaphore.acquire(),
-              ws,
-              true,
-              this._playwright,
-              async () => { throw new Error('shouldnt be used'); },
-              id,
-              () => controllerSemaphore.release()
-          );
-        } else if (isExtension) {
-          clientType = 'reuse-browser';
-          semaphore = reuseBrowserSemaphore;
+        if (isExtension) {
+          if (url.searchParams.has('debug-controller')) {
+            return new PlaywrightConnection(
+                controllerSemaphore.acquire(),
+                ws,
+                true,
+                this._playwright,
+                async () => { throw new Error('shouldnt be used'); },
+                id,
+                () => controllerSemaphore.release()
+            );
+          }
           return new PlaywrightConnection(
               reuseBrowserSemaphore.acquire(),
               ws,
@@ -176,10 +171,9 @@ export class PlaywrightServer {
               id,
               () => reuseBrowserSemaphore.release()
           );
-        } else if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
-          clientType = 'pre-launched-browser-or-android';
-          semaphore = browserSemaphore;
+        }
 
+        if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
           if (this._options.preLaunchedBrowser) {
             return new PlaywrightConnection(
                 browserSemaphore.acquire(),
@@ -210,68 +204,68 @@ export class PlaywrightServer {
                 id,
                 () => browserSemaphore.release()
             );
-          } else {
-            return new PlaywrightConnection(
-                browserSemaphore.acquire(),
-                ws,
-                false,
-                this._playwright,
-                async () => {
-                  debugLogger.log('server', `[${id}] engaged pre-launched (Android) mode`);
-                  const androidDevice = this._options.preLaunchedAndroidDevice!;
-                  return {
-                    preLaunchedAndroidDevice: androidDevice,
-                    denyLaunch: true,
-                    cleanups: [],
-                  };
-                },
-                id,
-                () => browserSemaphore.release()
-            );
           }
-        } else {
+
           return new PlaywrightConnection(
               browserSemaphore.acquire(),
               ws,
               false,
               this._playwright,
               async () => {
-                debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
-                let socksProxy: SocksProxy | undefined;
-                if (proxyValue) {
-                  socksProxy = new SocksProxy();
-                  socksProxy.setPattern(proxyValue);
-                  launchOptions.socksProxyPort = await socksProxy.listen(0);
-                  debugLogger.log('server', `[${id}] started socks proxy on port ${launchOptions.socksProxyPort}`);
-                } else {
-                  launchOptions.socksProxyPort = undefined;
-                }
-
-                let browserType: BrowserType;
-                if ('bidi' === browserName) {
-                  if (launchOptions.channel?.toLocaleLowerCase().includes('firefox'))
-                    browserType = this._playwright.bidiFirefox;
-                  else
-                    browserType = this._playwright.bidiChromium;
-                } else {
-                  browserType = this._playwright[browserName as 'chromium' | 'firefox' | 'webkit'];
-                }
-                const browser = await browserType.launch(serverSideCallMetadata(), launchOptions);
+                debugLogger.log('server', `[${id}] engaged pre-launched (Android) mode`);
+                const androidDevice = this._options.preLaunchedAndroidDevice!;
                 return {
-                  preLaunchedBrowser: browser,
-                  socksProxy,
-                  sharedBrowser: true,
+                  preLaunchedAndroidDevice: androidDevice,
                   denyLaunch: true,
-                  cleanups: [
-                    async () => browser.close({ reason: 'Connection terminated' }),
-                    async () => socksProxy?.close(),
-                  ]
+                  cleanups: [],
                 };
               },
               id,
               () => browserSemaphore.release()
           );
         }
+
+        return new PlaywrightConnection(
+            browserSemaphore.acquire(),
+            ws,
+            false,
+            this._playwright,
+            async () => {
+              debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
+              let socksProxy: SocksProxy | undefined;
+              if (proxyValue) {
+                socksProxy = new SocksProxy();
+                socksProxy.setPattern(proxyValue);
+                launchOptions.socksProxyPort = await socksProxy.listen(0);
+                debugLogger.log('server', `[${id}] started socks proxy on port ${launchOptions.socksProxyPort}`);
+              } else {
+                launchOptions.socksProxyPort = undefined;
+              }
+
+              let browserType: BrowserType;
+              if ('bidi' === browserName) {
+                if (launchOptions.channel?.toLocaleLowerCase().includes('firefox'))
+                  browserType = this._playwright.bidiFirefox;
+                else
+                  browserType = this._playwright.bidiChromium;
+              } else {
+                browserType = this._playwright[browserName as 'chromium' | 'firefox' | 'webkit'];
+              }
+              const browser = await browserType.launch(serverSideCallMetadata(), launchOptions);
+              return {
+                preLaunchedBrowser: browser,
+                socksProxy,
+                sharedBrowser: true,
+                denyLaunch: true,
+                cleanups: [
+                  async () => browser.close({ reason: 'Connection terminated' }),
+                  async () => socksProxy?.close(),
+                ]
+              };
+            },
+            id,
+            () => browserSemaphore.release()
+        );
       },
     });
   }
