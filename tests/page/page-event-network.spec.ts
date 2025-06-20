@@ -17,7 +17,6 @@
 
 import type { ServerResponse } from 'http';
 import { test as it, expect } from './pageTest';
-import { kTargetClosedErrorMessage } from '../config/errors';
 
 it('Page.Events.Request @smoke', async ({ page, server }) => {
   const requests = [];

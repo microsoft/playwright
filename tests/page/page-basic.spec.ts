@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { kTargetClosedErrorMessage } from '../config/errors';
 import { test as it, expect } from './pageTest';
 
 it('page.url should work', async ({ page, server }) => {

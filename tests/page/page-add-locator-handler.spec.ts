@@ -15,7 +15,6 @@
  */
 
 import { test, expect } from './pageTest';
-import { kTargetClosedErrorMessage } from '../config/errors';
 
 test('should work', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
