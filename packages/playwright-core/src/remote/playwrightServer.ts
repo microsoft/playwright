@@ -188,7 +188,7 @@ export class PlaywrightServer {
       denyLaunch: true,
       dispose: async () => {
         // Don't close the pages so that user could debug them,
-        // but close all the empty browsers and contexts to clean up.
+        // but close all the empty contexts to clean up.
         // keep around browser so it can be reused by the next connection.
         for (const context of browser.contexts()) {
           if (!context.pages().length)
