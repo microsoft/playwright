@@ -191,12 +191,12 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
-    const controller = new ProgressController(metadata, this);
+    const controller = new ProgressController(metadata, this, 'strict');
     return controller.run(progress => this.resetForReuseImpl(progress, params));
   }
 
   async resetForReuseImpl(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
-    await this.tracing.resetForReuse();
+    await progress.race(this.tracing.resetForReuse());
 
     if (params) {
       for (const key of paramsThatAllowContextReuse)
@@ -219,18 +219,22 @@ export abstract class BrowserContext extends SdkObject {
     await page?.mainFrame().gotoImpl(progress, 'about:blank', {});
 
     await this._resetStorage(progress);
-    await this.clock.resetForReuse();
-    // TODO: following can be optimized to not perform noops.
-    if (this._options.permissions)
-      await this.grantPermissions(this._options.permissions);
-    else
-      await this.clearPermissions();
-    await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
-    await this.setGeolocation(this._options.geolocation);
-    await this.setOffline(!!this._options.offline);
-    await this.setUserAgent(this._options.userAgent);
-    await this.clearCache();
-    await this._resetCookies();
+
+    const resetOptions = async () => {
+      await this.clock.resetForReuse();
+      // TODO: following can be optimized to not perform noops.
+      if (this._options.permissions)
+        await this.grantPermissions(this._options.permissions);
+      else
+        await this.clearPermissions();
+      await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
+      await this.setGeolocation(this._options.geolocation);
+      await this.setOffline(!!this._options.offline);
+      await this.setUserAgent(this._options.userAgent);
+      await this.clearCache();
+      await this._resetCookies();
+    };
+    await progress.race(resetOptions());
 
     await page?.resetForReuse(progress);
   }

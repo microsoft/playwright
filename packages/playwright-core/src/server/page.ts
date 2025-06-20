@@ -812,10 +812,13 @@ export class Page extends SdkObject {
     this._isServerSideOnly = true;
   }
 
-  async snapshotForAI(metadata: CallMetadata): Promise<string> {
-    this.lastSnapshotFrameIds = [];
-    const snapshot = await snapshotFrameForAI(metadata, this.mainFrame(), 0, this.lastSnapshotFrameIds);
-    return snapshot.join('\n');
+  snapshotForAI(metadata: CallMetadata): Promise<string> {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(async progress => {
+      this.lastSnapshotFrameIds = [];
+      const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
+      return snapshot.join('\n');
+    });
   }
 }
 
@@ -991,29 +994,26 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(metadata: CallMetadata, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
   // Only await the topmost navigations, inner frames will be empty when racing.
-  const controller = new ProgressController(metadata, frame);
-  const snapshot = await controller.run(progress => {
-    return frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
-      try {
-        const context = await frame._utilityContext();
-        const injectedScript = await context.injectedScript();
-        const snapshotOrRetry = await injectedScript.evaluate((injected, refPrefix) => {
-          const node = injected.document.body;
-          if (!node)
-            return true;
-          return injected.ariaSnapshot(node, { forAI: true, refPrefix });
-        }, frameOrdinal ? 'f' + frameOrdinal : '');
-        if (snapshotOrRetry === true)
-          return continuePolling;
-        return snapshotOrRetry;
-      } catch (e) {
-        if (isAbortError(e) || isSessionClosedError(e) || js.isJavaScriptErrorInEvaluate(e))
-          throw e;
+  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+    try {
+      const context = await progress.race(frame._utilityContext());
+      const injectedScript = await progress.race(context.injectedScript());
+      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, refPrefix) => {
+        const node = injected.document.body;
+        if (!node)
+          return true;
+        return injected.ariaSnapshot(node, { forAI: true, refPrefix });
+      }, frameOrdinal ? 'f' + frameOrdinal : ''));
+      if (snapshotOrRetry === true)
         return continuePolling;
-      }
-    });
+      return snapshotOrRetry;
+    } catch (e) {
+      if (isAbortError(e) || isSessionClosedError(e) || js.isJavaScriptErrorInEvaluate(e))
+        throw e;
+      return continuePolling;
+    }
   });
 
   const lines = snapshot.split('\n');
@@ -1029,7 +1029,7 @@ async function snapshotFrameForAI(metadata: CallMetadata, frame: frames.Frame, f
     const ref = match[2];
     const frameSelector = `aria-ref=${ref} >> internal:control=enter-frame`;
     const frameBodySelector = `${frameSelector} >> body`;
-    const child = await frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true });
+    const child = await progress.race(frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
     if (!child) {
       result.push(line);
       continue;
@@ -1037,7 +1037,7 @@ async function snapshotFrameForAI(metadata: CallMetadata, frame: frames.Frame, f
     const frameOrdinal = frameIds.length + 1;
     frameIds.push(child.frame._id);
     try {
-      const childSnapshot = await snapshotFrameForAI(metadata, child.frame, frameOrdinal, frameIds);
+      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds);
       result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
     } catch {
       result.push(line);

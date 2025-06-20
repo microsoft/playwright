@@ -160,10 +160,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.push(params.file, params.path, params.mode);
   }
 
-  async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
+  async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams, metadata: CallMetadata): Promise<channels.AndroidDeviceLaunchBrowserResult> {
     if (this.parentScope()._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
-    const context = await this._object.launchBrowser(params.pkg, params);
+    const context = await this._object.launchBrowser(metadata, params.pkg, params);
     return { context: BrowserContextDispatcher.from(this, context) };
   }
 
@@ -171,10 +171,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.close();
   }
 
-  async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
+  async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams, metadata: CallMetadata): Promise<channels.AndroidDeviceConnectToWebViewResult> {
     if (this.parentScope()._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
-    return { context: BrowserContextDispatcher.from(this, await this._object.connectToWebView(params.socketName)) };
+    return { context: BrowserContextDispatcher.from(this, await this._object.connectToWebView(metadata, params.socketName)) };
   }
 }
 
