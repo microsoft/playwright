@@ -1933,6 +1933,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             const names = ['one foo', 'two foo', 'three bar', 'four bar', 'five baz'];
             for (const name of names) {
               test('b-' + name, async ({}) => {
+                test.info().annotations.push({ type: 'issue', description: 'test issue' });
                 expect(name).not.toContain('one');
                 await new Promise(f => setTimeout(f, 1100));
               });
@@ -1988,6 +1989,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
         await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
         await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('0');
+
+        await searchInput.fill('annot:issue');
+        await expect(page.getByTestId('filtered-tests-count')).toContainText(`Filtered: 5`);
       });
 
       test('labels should be applied together with status filter', async ({ runInlineTest, showReport, page }) => {
