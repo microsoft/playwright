@@ -86,7 +86,7 @@ export class CRPage implements PageDelegate {
     this._targetId = targetId;
     this._opener = opener;
     this._isBackgroundPage = bits.isBackgroundPage;
-    const dragManager = new DragManager(this);
+    const dragManager = process.env.PLAYWRIGHT_LEGACY_DRAG_AND_DROP ? new DragManager(this) : undefined;
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._platform() === 'mac', dragManager);
     this.rawMouse = new RawMouseImpl(this, client, dragManager);
     this.rawTouchscreen = new RawTouchscreenImpl(client);
