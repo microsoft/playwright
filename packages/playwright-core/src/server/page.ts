@@ -25,7 +25,7 @@ import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
-import { isAbortError, ProgressController } from './progress';
+import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
@@ -36,7 +36,6 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
-import { isSessionClosedError } from './protocolError';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
@@ -643,7 +642,7 @@ export class Page extends SdkObject {
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
         previous = actual;
         actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
-          if (isAbortError(e))
+          if (this.mainFrame().isNonRetriableError(e))
             throw e;
           progress.log(`failed to take screenshot - ` + e.message);
           return undefined;
@@ -676,7 +675,7 @@ export class Page extends SdkObject {
       }
       throw new Error(intermediateResult!.errorMessage);
     }, callTimeout).catch(e => {
-      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // Q: Why not throw upon isNonRetriableError(e) as in other places?
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
@@ -1010,7 +1009,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
         return continuePolling;
       return snapshotOrRetry;
     } catch (e) {
-      if (isAbortError(e) || isSessionClosedError(e) || js.isJavaScriptErrorInEvaluate(e))
+      if (frame.isNonRetriableError(e))
         throw e;
       return continuePolling;
     }

@@ -17,10 +17,9 @@
 import fs from 'fs';
 
 import * as js from './javascript';
-import { isAbortError, ProgressController } from './progress';
+import { ProgressController } from './progress';
 import { asLocator, isUnderTest } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
-import { isSessionClosedError } from './protocolError';
 import * as rawInjectedScriptSource from '../generated/injectedScriptSource';
 
 import type * as frames from './frames';
@@ -141,7 +140,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const utility = await this._frame._utilityContext();
       return await utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
     } catch (e) {
-      if (isAbortError(e) || js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+      if (this._frame.isNonRetriableError(e))
         throw e;
       return 'error:notconnected';
     }
@@ -152,7 +151,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const utility = await this._frame._utilityContext();
       return await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
     } catch (e) {
-      if (isAbortError(e) || js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+      if (this._frame.isNonRetriableError(e))
         throw e;
       return 'error:notconnected';
     }
