@@ -135,7 +135,7 @@ class SnapshotHelper {
     this.locator = locator;
 
     this.updateSnapshots = testInfo.config.updateSnapshots;
-    this.mimeType = mime.getType(path.basename(this.expectedPath)) ?? 'application/octet-string';
+    this.mimeType = mime.getType(path.basename(this.expectedPath)) ?? 'application/octet-stream';
     this.comparator = getComparator(this.mimeType);
 
     this.testInfo = testInfo;
