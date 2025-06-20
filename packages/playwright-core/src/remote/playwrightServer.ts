@@ -116,55 +116,7 @@ export class PlaywrightServer {
               ws,
               false,
               this._playwright,
-              async () => {
-                // Note: reuse browser mode does not support socks proxy, because
-                // clients come and go, while the browser stays the same.
-
-                debugLogger.log('server', `[${id}] engaged reuse browsers mode for ${browserName}`);
-
-                const requestedOptions = launchOptionsHash(launchOptions);
-                let browser = this._playwright.allBrowsers().find(b => {
-                  if (b.options.name !== browserName)
-                    return false;
-                  const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
-                  return existingOptions === requestedOptions;
-                });
-
-                // Close remaining browsers of this type+channel. Keep different browser types for the speed.
-                for (const b of this._playwright.allBrowsers()) {
-                  if (b === browser)
-                    continue;
-                  if (b.options.name === browserName && b.options.channel === launchOptions.channel)
-                    await b.close({ reason: 'Connection terminated' });
-                }
-
-                if (!browser) {
-                  browser = await this._playwright[(browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
-                    ...launchOptions,
-                    headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
-                  });
-                }
-
-
-                return {
-                  preLaunchedBrowser: browser,
-                  denyLaunch: true,
-                  dispose: async () => {
-                    // Don't close the pages so that user could debug them,
-                    // but close all the empty browsers and contexts to clean up.
-                    for (const browser of this._playwright.allBrowsers()) {
-                      for (const context of browser.contexts()) {
-                        if (!context.pages().length)
-                          await context.close({ reason: 'Connection terminated' });
-                        else
-                          await context.stopPendingOperations('Connection closed');
-                      }
-                      if (!browser.contexts().length)
-                        await browser.close({ reason: 'Connection terminated' });
-                    }
-                  }
-                };
-              },
+              () => this._initReuseBrowsersMode(browserName, launchOptions, id),
               id,
           );
         }
@@ -176,24 +128,7 @@ export class PlaywrightServer {
                 ws,
                 false,
                 this._playwright,
-                async () => {
-                  debugLogger.log('server', `[${id}] engaged pre-launched (browser) mode`);
-
-                  const browser = this._options.preLaunchedBrowser!;
-
-                  // In pre-launched mode, keep only the pre-launched browser.
-                  for (const b of this._playwright.allBrowsers()) {
-                    if (b !== browser)
-                      await b.close({ reason: 'Connection terminated' });
-                  }
-
-                  return {
-                    preLaunchedBrowser: browser,
-                    socksProxy: this._options.preLaunchedSocksProxy,
-                    sharedBrowser: this._options.mode === 'launchServerShared',
-                    denyLaunch: true,
-                  };
-                },
+                () => this._initPreLaunchedBrowserMode(id),
                 id,
             );
           }
@@ -203,14 +138,7 @@ export class PlaywrightServer {
               ws,
               false,
               this._playwright,
-              async () => {
-                debugLogger.log('server', `[${id}] engaged pre-launched (Android) mode`);
-                const androidDevice = this._options.preLaunchedAndroidDevice!;
-                return {
-                  preLaunchedAndroidDevice: androidDevice,
-                  denyLaunch: true,
-                };
-              },
+              () => this._initPreLaunchedAndroidMode(id),
               id,
           );
         }
@@ -220,43 +148,122 @@ export class PlaywrightServer {
             ws,
             false,
             this._playwright,
-            async () => {
-              debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
-              let socksProxy: SocksProxy | undefined;
-              if (proxyValue) {
-                socksProxy = new SocksProxy();
-                socksProxy.setPattern(proxyValue);
-                launchOptions.socksProxyPort = await socksProxy.listen(0);
-                debugLogger.log('server', `[${id}] started socks proxy on port ${launchOptions.socksProxyPort}`);
-              } else {
-                launchOptions.socksProxyPort = undefined;
-              }
-
-              let browserType: BrowserType;
-              if ('bidi' === browserName) {
-                if (launchOptions.channel?.toLocaleLowerCase().includes('firefox'))
-                  browserType = this._playwright.bidiFirefox;
-                else
-                  browserType = this._playwright.bidiChromium;
-              } else {
-                browserType = this._playwright[browserName as 'chromium' | 'firefox' | 'webkit'];
-              }
-              const browser = await browserType.launch(serverSideCallMetadata(), launchOptions);
-              return {
-                preLaunchedBrowser: browser,
-                socksProxy,
-                sharedBrowser: true,
-                denyLaunch: true,
-                dispose: async () => {
-                  await browser.close({ reason: 'Connection terminated' });
-                  socksProxy?.close();
-                },
-              };
-            },
+            () => this._initLaunchBrowserMode(browserName, proxyValue, launchOptions, id),
             id,
         );
       },
     });
+  }
+
+  private async _initReuseBrowsersMode(browserName: string | null, launchOptions: LaunchOptions, id: string) {
+    // Note: reuse browser mode does not support socks proxy, because
+    // clients come and go, while the browser stays the same.
+
+    debugLogger.log('server', `[${id}] engaged reuse browsers mode for ${browserName}`);
+
+    const requestedOptions = launchOptionsHash(launchOptions);
+    let browser = this._playwright.allBrowsers().find(b => {
+      if (b.options.name !== browserName)
+        return false;
+      const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
+      return existingOptions === requestedOptions;
+    });
+
+    // Close remaining browsers of this type+channel. Keep different browser types for the speed.
+    for (const b of this._playwright.allBrowsers()) {
+      if (b === browser)
+        continue;
+      if (b.options.name === browserName && b.options.channel === launchOptions.channel)
+        await b.close({ reason: 'Connection terminated' });
+    }
+
+    if (!browser) {
+      browser = await this._playwright[(browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+        ...launchOptions,
+        headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
+      });
+    }
+
+    return {
+      preLaunchedBrowser: browser,
+      denyLaunch: true,
+      dispose: async () => {
+        // Don't close the pages so that user could debug them,
+        // but close all the empty browsers and contexts to clean up.
+        for (const browser of this._playwright.allBrowsers()) {
+          for (const context of browser.contexts()) {
+            if (!context.pages().length)
+              await context.close({ reason: 'Connection terminated' });
+            else
+              await context.stopPendingOperations('Connection closed');
+          }
+          if (!browser.contexts().length)
+            await browser.close({ reason: 'Connection terminated' });
+        }
+      }
+    };
+  }
+
+  private async _initPreLaunchedBrowserMode(id: string) {
+    debugLogger.log('server', `[${id}] engaged pre-launched (browser) mode`);
+
+    const browser = this._options.preLaunchedBrowser!;
+
+    // In pre-launched mode, keep only the pre-launched browser.
+    for (const b of this._playwright.allBrowsers()) {
+      if (b !== browser)
+        await b.close({ reason: 'Connection terminated' });
+    }
+
+    return {
+      preLaunchedBrowser: browser,
+      socksProxy: this._options.preLaunchedSocksProxy,
+      sharedBrowser: this._options.mode === 'launchServerShared',
+      denyLaunch: true,
+    };
+  }
+
+  private async _initPreLaunchedAndroidMode(id: string) {
+    debugLogger.log('server', `[${id}] engaged pre-launched (Android) mode`);
+    const androidDevice = this._options.preLaunchedAndroidDevice!;
+    return {
+      preLaunchedAndroidDevice: androidDevice,
+      denyLaunch: true,
+    };
+  }
+
+  private async _initLaunchBrowserMode(browserName: string | null, proxyValue: string | undefined, launchOptions: LaunchOptions, id: string) {
+    debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
+    let socksProxy: SocksProxy | undefined;
+    if (proxyValue) {
+      socksProxy = new SocksProxy();
+      socksProxy.setPattern(proxyValue);
+      launchOptions.socksProxyPort = await socksProxy.listen(0);
+      debugLogger.log('server', `[${id}] started socks proxy on port ${launchOptions.socksProxyPort}`);
+    } else {
+      launchOptions.socksProxyPort = undefined;
+    }
+
+    let browserType: BrowserType;
+    if ('bidi' === browserName) {
+      if (launchOptions.channel?.toLocaleLowerCase().includes('firefox'))
+        browserType = this._playwright.bidiFirefox;
+      else
+        browserType = this._playwright.bidiChromium;
+    } else {
+      browserType = this._playwright[browserName as 'chromium' | 'firefox' | 'webkit'];
+    }
+    const browser = await browserType.launch(serverSideCallMetadata(), launchOptions);
+    return {
+      preLaunchedBrowser: browser,
+      socksProxy,
+      sharedBrowser: true,
+      denyLaunch: true,
+      dispose: async () => {
+        await browser.close({ reason: 'Connection terminated' });
+        socksProxy?.close();
+      },
+    };
   }
 
   async listen(port: number = 0, hostname?: string): Promise<string> {
