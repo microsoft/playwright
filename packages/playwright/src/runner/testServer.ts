@@ -142,7 +142,7 @@ export class TestServerDispatcher implements TestServerInterface {
     process.stdout.columns = params.cols;
     process.stdout.rows = params.rows;
     process.stderr.columns = params.cols;
-    process.stderr.columns = params.rows;
+    process.stderr.rows = params.rows;
   }
 
   async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
