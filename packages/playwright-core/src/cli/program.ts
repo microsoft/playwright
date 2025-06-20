@@ -472,7 +472,15 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       launchOptions.proxy.bypass = options.proxyBypass;
   }
 
-  const browser = await browserType.launch(launchOptions);
+  let browser: Browser;
+  if (process.env.PW_BROWSER_SERVER) {
+    const url = new URL(process.env.PW_BROWSER_SERVER);
+    url.searchParams.set('connect', 'first');
+    url.searchParams.set('launch-options', JSON.stringify(launchOptions));
+    browser = await browserType.connect(url.toString());
+  } else {
+    browser = await browserType.launch(launchOptions);
+  }
 
   if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
     (process as any)._didSetSourcesForTest = (text: string) => {
@@ -638,6 +646,8 @@ async function open(options: Options, url: string | undefined, language: string)
     handleSIGINT: false,
   });
   await openPage(context, url);
+  if (process.env.PW_BROWSER_SERVER)
+    gracefullyProcessExitDoNotHang(0);
 }
 
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
