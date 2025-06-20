@@ -31,7 +31,7 @@ export type ExtensionTestFixtures = {
 
 
 export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixtures).extend<PageTestFixtures, PageWorkerFixtures & ExtensionTestFixtures>({
-  browserVersion: [({ browser }, use) => use(browser.version()), { scope: 'worker' }],
+  browserVersion: [({ persistentContext }, use) => use(persistentContext.browser().version()), { scope: 'worker' }],
   browserMajorVersion: [({ browserVersion }, use) => use(Number(browserVersion.split('.')[0])), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [false, { scope: 'worker' }],
@@ -66,23 +66,15 @@ export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFix
     await context.close();
   }, { scope: 'worker' }],
 
-  browser: [async ({ persistentContext, relayServer, playwright }, use, testInfo) => {
-    const origin = `ws://localhost:${(relayServer.address() as AddressInfo).port}`;
-    await expect.poll(() => persistentContext.serviceWorkers()).toHaveLength(1);
-    await persistentContext.pages()[0].goto(new URL('/popup.html', persistentContext.serviceWorkers()[0].url()).toString());
-    await persistentContext.pages()[0].getByRole('textbox', { name: 'Bridge Server URL:' }).clear();
-    await persistentContext.pages()[0].getByRole('textbox', { name: 'Bridge Server URL:' }).fill(`${origin}/extension`);
-    await persistentContext.pages()[0].getByRole('button', { name: 'Share This Tab' }).click();
-    await persistentContext.pages()[0].goto('about:blank');
-    const browser = await playwright.chromium.connectOverCDP(`${origin}/cdp`);
-    await use(browser);
+  browser: [async ({ }, use) => {
+    throw new Error('Not supported in the extension tests');
   }, { scope: 'worker' }],
 
-  context: async ({ browser }, use) => {
-    await use(browser.contexts()[0]);
+  context: async ({ }, use) => {
+    throw new Error('Not supported in the extension tests');
   },
 
-  page: async ({ persistentContext, relayServer, playwright }, use) => {
+  page: async ({ persistentContext, relayServer, playwright, server }, use) => {
     const page = await persistentContext.newPage();
     const origin = `ws://localhost:${(relayServer.address() as AddressInfo).port}`;
     await expect.poll(() => persistentContext.serviceWorkers()).toHaveLength(1);
