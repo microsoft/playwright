@@ -17,6 +17,7 @@
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
 export type ByRoleOptions = {
+  busy?: boolean;
   checked?: boolean;
   disabled?: boolean;
   exact?: boolean;
@@ -58,6 +59,8 @@ export function getByTextSelector(text: string | RegExp, options?: { exact?: boo
 
 export function getByRoleSelector(role: string, options: ByRoleOptions = {}): string {
   const props: string[][] = [];
+  if (options.busy !== undefined)
+    props.push(['busy', String(options.busy)]);
   if (options.checked !== undefined)
     props.push(['checked', String(options.checked)]);
   if (options.disabled !== undefined)
