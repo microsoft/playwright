@@ -84,12 +84,8 @@ export class WebSocketTransport implements ConnectionTransport {
     const logUrl = stripQueryParams(url);
     progress?.log(`<ws connecting> ${logUrl}`);
     const transport = new WebSocketTransport(progress, url, logUrl, { ...options, followRedirects: !!options.followRedirects && hadRedirects });
-    let success = false;
-    progress?.cleanupWhenAborted(async () => {
-      if (!success)
-        await transport.closeAndWait().catch(e => null);
-    });
-    const result = await new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
+    progress?.cleanupWhenAborted(() => transport.closeAndWait());
+    const resultPromise = new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
       transport._ws.on('open', async () => {
         progress?.log(`<ws connected> ${logUrl}`);
         fulfill({ transport });
@@ -120,6 +116,7 @@ export class WebSocketTransport implements ConnectionTransport {
         });
       });
     });
+    const result = progress ? await progress.race(resultPromise) : await resultPromise;
 
     if (result.redirect) {
       // Strip authorization headers from the redirected request.
@@ -128,8 +125,6 @@ export class WebSocketTransport implements ConnectionTransport {
       }));
       return WebSocketTransport._connect(progress, result.redirect.headers.location!, { ...options, headers: newHeaders }, true /* hadRedirects */);
     }
-
-    success = true;
     return transport;
   }
 

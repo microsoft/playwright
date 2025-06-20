@@ -83,7 +83,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   }
 
   async connect(params: channels.LocalUtilsConnectParams, metadata: CallMetadata): Promise<channels.LocalUtilsConnectResult> {
-    const controller = new ProgressController(metadata, this._object);
+    const controller = new ProgressController(metadata, this._object, 'strict');
     return await controller.run(async progress => {
       const wsHeaders = {
         'User-Agent': getUserAgent(),
@@ -146,7 +146,6 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
     return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
         `This does not look like a Playwright server, try connecting via ws://.`);
   });
-  progress.throwIfAborted();
 
   const wsUrl = new URL(endpointURL);
   let wsEndpointPath = JSON.parse(json).wsEndpointPath;

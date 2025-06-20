@@ -24,6 +24,7 @@ import type { PageDispatcher } from './pageDispatcher';
 import type { ConsoleMessage } from '../console';
 import type { Electron } from '../electron/electron';
 import type * as channels from '@protocol/channels';
+import type { CallMetadata } from '@protocol/callMetadata';
 
 
 export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronChannel, RootDispatcher> implements channels.ElectronChannel {
@@ -35,10 +36,10 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronCh
     this._denyLaunch = denyLaunch;
   }
 
-  async launch(params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
+  async launch(params: channels.ElectronLaunchParams, metadata: CallMetadata): Promise<channels.ElectronLaunchResult> {
     if (this._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
-    const electronApplication = await this._object.launch(params);
+    const electronApplication = await this._object.launch(metadata, params);
     return { electronApplication: new ElectronApplicationDispatcher(this, electronApplication) };
   }
 }

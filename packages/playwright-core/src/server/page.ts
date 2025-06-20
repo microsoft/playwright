@@ -369,22 +369,22 @@ export class Page extends SdkObject {
   }
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, options, async () => {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
         // Reload must be a new document, and should not be confused with a stray pushState.
         this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options),
-        this.delegate.reload(),
+        progress.race(this.delegate.reload()),
       ]);
       return response;
     }), options.timeout);
   }
 
   async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, options, async () => {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -392,9 +392,11 @@ export class Page extends SdkObject {
         error = e;
         return null;
       });
-      const result = await this.delegate.goBack();
-      if (!result)
+      const result = await progress.race(this.delegate.goBack());
+      if (!result) {
+        waitPromise.catch(() => {}); // Avoid an unhandled rejection.
         return null;
+      }
       const response = await waitPromise;
       if (error)
         throw error;
@@ -403,8 +405,8 @@ export class Page extends SdkObject {
   }
 
   async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, options, async () => {
+    const controller = new ProgressController(metadata, this, 'strict');
+    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -412,9 +414,11 @@ export class Page extends SdkObject {
         error = e;
         return null;
       });
-      const result = await this.delegate.goForward();
-      if (!result)
+      const result = await progress.race(this.delegate.goForward());
+      if (!result) {
+        waitPromise.catch(() => {}); // Avoid an unhandled rejection.
         return null;
+      }
       const response = await waitPromise;
       if (error)
         throw error;
@@ -591,12 +595,12 @@ export class Page extends SdkObject {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
     } : async (progress: Progress, timeout: number) => {
       await this.performActionPreChecks(progress);
-      await this.mainFrame().rafrafTimeout(timeout);
+      await this.mainFrame().rafrafTimeout(progress, timeout);
       return await this.screenshotter.screenshotPage(progress, options || {});
     };
 
     const comparator = getComparator('image/png');
-    const controller = new ProgressController(metadata, this);
+    const controller = new ProgressController(metadata, this, 'strict');
     if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
     try {
@@ -632,7 +636,6 @@ export class Page extends SdkObject {
         progress.log(`  generating new stable screenshot expectation`);
       let isFirstIteration = true;
       while (true) {
-        progress.throwIfAborted();
         if (this.isClosed())
           throw new Error('The page has closed');
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
@@ -640,6 +643,8 @@ export class Page extends SdkObject {
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
         previous = actual;
         actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
+          if (isAbortError(e))
+            throw e;
           progress.log(`failed to take screenshot - ` + e.message);
           return undefined;
         });
