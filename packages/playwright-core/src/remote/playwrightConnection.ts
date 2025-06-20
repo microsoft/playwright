@@ -91,7 +91,7 @@ export class PlaywrightConnection {
       if (options.preLaunchedAndroidDevice) {
         const androidDevice = options.preLaunchedAndroidDevice;
         androidDevice.on(AndroidDevice.Events.Close, () => {
-          // Underlying browser did close for some reason - force disconnect the client.
+          // Underlying android device did close for some reason - force disconnect the client.
           this.close({ code: 1001, reason: 'Android device disconnected' });
         });
       }
