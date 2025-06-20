@@ -190,7 +190,7 @@ export class Request extends SdkObject {
     return this._overrides?.headers || this._rawRequestHeadersPromise;
   }
 
-  response(): PromiseLike<Response | null> {
+  response(): Promise<Response | null> {
     return this._waitForResponsePromise;
   }
 
