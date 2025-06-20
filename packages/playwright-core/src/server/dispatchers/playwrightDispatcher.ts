@@ -35,7 +35,7 @@ import type { Browser } from '../browser';
 import type { Playwright } from '../playwright';
 import type * as channels from '@protocol/channels';
 
-type PlaywrightDispatcherOptions = {
+export type PlaywrightDispatcherOptions = {
   socksProxy?: SocksProxy;
   denyLaunch?: boolean;
   preLaunchedBrowser?: Browser;

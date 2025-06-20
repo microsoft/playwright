@@ -21,9 +21,10 @@ import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
+import { debugLogger, isUnderTest } from '../utils';
+import { serverSideCallMetadata } from '../server';
+import { SocksProxy } from '../server/utils/socksProxy';
 
-import type { ClientType } from './playwrightConnection';
-import type { SocksProxy } from '../server/utils/socksProxy';
 import type { AndroidDevice } from '../server/android/android';
 import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
@@ -94,40 +95,164 @@ export class PlaywrightServer {
         } catch (e) {
         }
 
-        // Instantiate playwright for the extension modes.
         const isExtension = this._options.mode === 'extension';
-        let clientType: ClientType = 'launch-browser';
-        let semaphore: Semaphore = browserSemaphore;
-        if (isExtension && url.searchParams.has('debug-controller')) {
-          clientType = 'controller';
-          semaphore = controllerSemaphore;
-        } else if (isExtension) {
-          clientType = 'reuse-browser';
-          semaphore = reuseBrowserSemaphore;
-        } else if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
-          clientType = 'pre-launched-browser-or-android';
-          semaphore = browserSemaphore;
+        const allowFSPaths = isExtension;
+        launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
+
+        if (isExtension) {
+          if (url.searchParams.has('debug-controller')) {
+            return new PlaywrightConnection(
+                controllerSemaphore,
+                ws,
+                true,
+                this._playwright,
+                async () => { throw new Error('shouldnt be used'); },
+                id,
+            );
+          }
+          return new PlaywrightConnection(
+              reuseBrowserSemaphore,
+              ws,
+              false,
+              this._playwright,
+              () => this._initReuseBrowsersMode(browserName, launchOptions, id),
+              id,
+          );
+        }
+
+        if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
+          if (this._options.preLaunchedBrowser) {
+            return new PlaywrightConnection(
+                browserSemaphore,
+                ws,
+                false,
+                this._playwright,
+                () => this._initPreLaunchedBrowserMode(id),
+                id,
+            );
+          }
+
+          return new PlaywrightConnection(
+              browserSemaphore,
+              ws,
+              false,
+              this._playwright,
+              () => this._initPreLaunchedAndroidMode(id),
+              id,
+          );
         }
 
         return new PlaywrightConnection(
-            semaphore.acquire(),
-            clientType, ws,
-            {
-              socksProxyPattern: proxyValue,
-              browserName,
-              launchOptions,
-              allowFSPaths: this._options.mode === 'extension',
-              sharedBrowser: this._options.mode === 'launchServerShared',
-            },
+            browserSemaphore,
+            ws,
+            false,
             this._playwright,
-            {
-              browser: this._options.preLaunchedBrowser,
-              androidDevice: this._options.preLaunchedAndroidDevice,
-              socksProxy: this._options.preLaunchedSocksProxy,
-            },
-            id, () => semaphore.release());
+            () => this._initLaunchBrowserMode(browserName, proxyValue, launchOptions, id),
+            id,
+        );
       },
     });
+  }
+
+  private async _initReuseBrowsersMode(browserName: string | null, launchOptions: LaunchOptions, id: string) {
+    // Note: reuse browser mode does not support socks proxy, because
+    // clients come and go, while the browser stays the same.
+
+    debugLogger.log('server', `[${id}] engaged reuse browsers mode for ${browserName}`);
+
+    const requestedOptions = launchOptionsHash(launchOptions);
+    let browser = this._playwright.allBrowsers().find(b => {
+      if (b.options.name !== browserName)
+        return false;
+      const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
+      return existingOptions === requestedOptions;
+    });
+
+    // Close remaining browsers of this type+channel. Keep different browser types for the speed.
+    for (const b of this._playwright.allBrowsers()) {
+      if (b === browser)
+        continue;
+      if (b.options.name === browserName && b.options.channel === launchOptions.channel)
+        await b.close({ reason: 'Connection terminated' });
+    }
+
+    if (!browser) {
+      browser = await this._playwright[(browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+        ...launchOptions,
+        headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
+      });
+    }
+
+    return {
+      preLaunchedBrowser: browser,
+      denyLaunch: true,
+      dispose: async () => {
+        // Don't close the pages so that user could debug them,
+        // but close all the empty browsers and contexts to clean up.
+        for (const browser of this._playwright.allBrowsers()) {
+          for (const context of browser.contexts()) {
+            if (!context.pages().length)
+              await context.close({ reason: 'Connection terminated' });
+            else
+              await context.stopPendingOperations('Connection closed');
+          }
+          if (!browser.contexts())
+            await browser.close({ reason: 'Connection terminated' });
+        }
+      }
+    };
+  }
+
+  private async _initPreLaunchedBrowserMode(id: string) {
+    debugLogger.log('server', `[${id}] engaged pre-launched (browser) mode`);
+
+    const browser = this._options.preLaunchedBrowser!;
+
+    // In pre-launched mode, keep only the pre-launched browser.
+    for (const b of this._playwright.allBrowsers()) {
+      if (b !== browser)
+        await b.close({ reason: 'Connection terminated' });
+    }
+
+    return {
+      preLaunchedBrowser: browser,
+      socksProxy: this._options.preLaunchedSocksProxy,
+      sharedBrowser: this._options.mode === 'launchServerShared',
+      denyLaunch: true,
+    };
+  }
+
+  private async _initPreLaunchedAndroidMode(id: string) {
+    debugLogger.log('server', `[${id}] engaged pre-launched (Android) mode`);
+    const androidDevice = this._options.preLaunchedAndroidDevice!;
+    return {
+      preLaunchedAndroidDevice: androidDevice,
+      denyLaunch: true,
+    };
+  }
+
+  private async _initLaunchBrowserMode(browserName: string | null, proxyValue: string | undefined, launchOptions: LaunchOptions, id: string) {
+    debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
+    let socksProxy: SocksProxy | undefined;
+    if (proxyValue) {
+      socksProxy = new SocksProxy();
+      socksProxy.setPattern(proxyValue);
+      launchOptions.socksProxyPort = await socksProxy.listen(0);
+      debugLogger.log('server', `[${id}] started socks proxy on port ${launchOptions.socksProxyPort}`);
+    } else {
+      launchOptions.socksProxyPort = undefined;
+    }
+    const browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), launchOptions);
+    return {
+      preLaunchedBrowser: browser,
+      socksProxy,
+      sharedBrowser: true,
+      denyLaunch: true,
+      dispose: async () => {
+        await browser.close({ reason: 'Connection terminated' });
+        socksProxy?.close();
+      },
+    };
   }
 
   async listen(port: number = 0, hostname?: string): Promise<string> {
@@ -163,3 +288,47 @@ function userAgentVersionMatchesErrorMessage(userAgent: string) {
     ].join('\n'), 1);
   }
 }
+
+function launchOptionsHash(options: LaunchOptions) {
+  const copy = { ...options };
+  for (const k of Object.keys(copy)) {
+    const key = k as keyof LaunchOptions;
+    if (copy[key] === defaultLaunchOptions[key])
+      delete copy[key];
+  }
+  for (const key of optionsThatAllowBrowserReuse)
+    delete copy[key];
+  return JSON.stringify(copy);
+}
+
+function filterLaunchOptions(options: LaunchOptions, allowFSPaths: boolean): LaunchOptions {
+  return {
+    channel: options.channel,
+    args: options.args,
+    ignoreAllDefaultArgs: options.ignoreAllDefaultArgs,
+    ignoreDefaultArgs: options.ignoreDefaultArgs,
+    timeout: options.timeout,
+    headless: options.headless,
+    proxy: options.proxy,
+    chromiumSandbox: options.chromiumSandbox,
+    firefoxUserPrefs: options.firefoxUserPrefs,
+    slowMo: options.slowMo,
+    executablePath: (isUnderTest() || allowFSPaths) ? options.executablePath : undefined,
+    downloadsPath: allowFSPaths ? options.downloadsPath : undefined,
+  };
+}
+
+const defaultLaunchOptions: Partial<LaunchOptions> = {
+  ignoreAllDefaultArgs: false,
+  handleSIGINT: false,
+  handleSIGTERM: false,
+  handleSIGHUP: false,
+  headless: true,
+  devtools: false,
+};
+
+const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
+  'headless',
+  'timeout',
+  'tracesDir',
+];
