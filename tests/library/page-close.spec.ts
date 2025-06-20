@@ -47,8 +47,7 @@ test('expect should not print timed out error message when page closes', async (
   expect(stripAnsi(error.message)).not.toContain('Timed out');
 });
 
-test('addLocatorHandler should throw when page closes', async ({ page, server, isAndroid }) => {
-  test.fixme(isAndroid, 'GPU process crash: https://issues.chromium.org/issues/324909825');
+test('addLocatorHandler should throw when page closes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
@@ -64,9 +63,7 @@ test('addLocatorHandler should throw when page closes', async ({ page, server, i
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
-test('should reject all promises when page is closed', async ({ page, isAndroid }) => {
-  test.fixme(isAndroid, '"Target crashed" instead of "Target closed"');
-
+test('should reject all promises when page is closed', async ({ page }) => {
   let error = null;
   await Promise.all([
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
@@ -81,9 +78,7 @@ test('should set the page close state', async ({ page }) => {
   expect(page.isClosed()).toBe(true);
 });
 
-test('should pass page to close event', async ({ page, isAndroid }) => {
-  test.fixme(isAndroid);
-
+test('should pass page to close event', async ({ page }) => {
   const [closedPage] = await Promise.all([
     page.waitForEvent('close'),
     page.close()
@@ -91,9 +86,7 @@ test('should pass page to close event', async ({ page, isAndroid }) => {
   expect(closedPage).toBe(page);
 });
 
-test('should terminate network waiters', async ({ page, server, isAndroid }) => {
-  test.fixme(isAndroid);
-
+test('should terminate network waiters', async ({ page, server }) => {
   const results = await Promise.all([
     page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
     page.waitForResponse(server.EMPTY_PAGE).catch(e => e),
@@ -124,9 +117,7 @@ test('should return null if parent page has been closed', async ({ page }) => {
   expect(opener).toBe(null);
 });
 
-test('should fail with error upon disconnect', async ({ page, isAndroid }) => {
-  test.fixme(isAndroid);
-
+test('should fail with error upon disconnect', async ({ page }) => {
   let error;
   const waitForPromise = page.waitForEvent('download').catch(e => error = e);
   await page.close();
@@ -182,9 +173,7 @@ test('should not treat navigations as new popups', async ({ page, server }) => {
   expect(badSecondPopup).toBe(false);
 });
 
-test('should not result in unhandled rejection', async ({ page, isAndroid }) => {
-  test.fixme(isAndroid);
-
+test('should not result in unhandled rejection', async ({ page }) => {
   const closedPromise = page.waitForEvent('close');
   await page.exposeFunction('foo', async () => {
     await page.close();
