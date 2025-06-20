@@ -243,17 +243,7 @@ export class PlaywrightServer {
     } else {
       launchOptions.socksProxyPort = undefined;
     }
-
-    let browserType: BrowserType;
-    if ('bidi' === browserName) {
-      if (launchOptions.channel?.toLocaleLowerCase().includes('firefox'))
-        browserType = this._playwright.bidiFirefox;
-      else
-        browserType = this._playwright.bidiChromium;
-    } else {
-      browserType = this._playwright[browserName as 'chromium' | 'firefox' | 'webkit'];
-    }
-    const browser = await browserType.launch(serverSideCallMetadata(), launchOptions);
+    const browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), launchOptions);
     return {
       preLaunchedBrowser: browser,
       socksProxy,
