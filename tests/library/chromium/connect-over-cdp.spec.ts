@@ -287,7 +287,7 @@ test('should keep URL parameters when adding json/version', {
 test('should append /json/version with a slash if there isnt one', {
   annotation: {
     type: 'issue',
-    description: 'https://github.com/microsoft/playwright/issues/36357'
+    description: 'https://github.com/microsoft/playwright/issues/36378'
   }
 }, async ({ browserType, server }) => {
   await Promise.all([
