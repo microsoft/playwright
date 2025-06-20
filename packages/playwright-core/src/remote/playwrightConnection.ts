@@ -26,6 +26,10 @@ import { PlaywrightDispatcherOptions } from '../server/dispatchers/playwrightDis
 import type { DispatcherScope, Playwright } from '../server';
 import type { WebSocket } from '../utilsBundle';
 
+export interface PlaywrightInitializeResult extends PlaywrightDispatcherOptions {
+  dispose?(): Promise<void>;
+}
+
 export class PlaywrightConnection {
   private _ws: WebSocket;
   private _semaphore: Semaphore;
@@ -36,7 +40,7 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(semaphore: Semaphore, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightDispatcherOptions & { dispose?(): Promise<void> }>, id: string) {
+  constructor(semaphore: Semaphore, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightInitializeResult>, id: string) {
     this._ws = ws;
     this._semaphore = semaphore;
     this._id = id;
