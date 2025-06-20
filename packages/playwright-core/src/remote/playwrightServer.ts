@@ -23,7 +23,6 @@ import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
 import { debugLogger, isUnderTest } from '../utils';
 import { serverSideCallMetadata } from '../server';
-import { BrowserType } from '../server/browserType';
 import { SocksProxy } from '../server/utils/socksProxy';
 
 import type { AndroidDevice } from '../server/android/android';
