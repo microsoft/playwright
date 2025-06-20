@@ -118,14 +118,7 @@ export class PlaywrightConnection {
   private async _initLaunchBrowserMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
     debugLogger.log('server', `[${this._id}] engaged launch mode for "${this._options.browserName}"`);
     const ownedSocksProxy = await this._createOwnedSocksProxy();
-    let browserName = this._options.browserName;
-    if ('bidi' === browserName) {
-      if (this._options.launchOptions?.channel?.toLocaleLowerCase().includes('firefox'))
-        browserName = 'bidiFirefox';
-      else
-        browserName = 'bidiChromium';
-    }
-    const browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
+    const browser = await this._playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
     browser.options.sdkLanguage = options.sdkLanguage;
 
     this._cleanups.push(() => browser.close({ reason: 'Connection terminated' }));

@@ -258,9 +258,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }).catch(() => {})
       ]);
       expect(request.headers['user-agent']).toBe(getUserAgent());
-      // _bidiFirefox and _bidiChromium are initialized with 'bidi' as browser name.
-      const bidiAwareBrowserName = browserName.startsWith('_bidi') ? 'bidi' : browserName;
-      expect(request.headers['x-playwright-browser']).toBe(bidiAwareBrowserName);
+      expect(request.headers['x-playwright-browser']).toBe(browserName);
       expect(request.headers['foo']).toBe('bar');
     });
 
