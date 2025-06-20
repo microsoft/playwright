@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { TabbedPane } from '@web/components/tabbedPane';
 import './networkFilters.css';
 
 const resourceTypes = ['All', 'Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image'] as const;
@@ -41,16 +42,17 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
       />
 
       <div className='network-filters-resource-types'>
-        {resourceTypes.map(resourceType => (
-          <div
-            key={resourceType}
-            title={resourceType}
-            onClick={() => onFilterStateChange({ ...filterState, resourceType })}
-            className={`network-filters-resource-type ${filterState.resourceType === resourceType ? 'selected' : ''}`}
-          >
-            {resourceType}
-          </div>
-        ))}
+        <TabbedPane
+          tabs={resourceTypes.map(resourceType => ({
+            id: resourceType,
+            title: resourceType,
+            render: () => <></>
+          }))}
+          selectedTab={filterState.resourceType}
+          setSelectedTab={tabId => onFilterStateChange({ ...filterState, resourceType: tabId as ResourceType })}
+          mode='default'
+          overflowMode='select'
+        />
       </div>
     </div>
   );
