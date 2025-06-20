@@ -196,6 +196,7 @@ export class PlaywrightServer {
                     preLaunchedBrowser: browser,
                     socksProxy: this._options.preLaunchedSocksProxy,
                     sharedBrowser: this._options.mode === 'launchServerShared',
+                    denyLaunch: true,
                     cleanups: [],
                   };
                 },
