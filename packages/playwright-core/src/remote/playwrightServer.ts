@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PlaywrightConnection } from './playwrightConnection';
+import { PlaywrightConnection, PlaywrightInitializeResult } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
 import { Semaphore } from '../utils/isomorphic/semaphore';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
@@ -24,9 +24,9 @@ import { getPlaywrightVersion } from '../server/utils/userAgent';
 import { debugLogger, isUnderTest } from '../utils';
 import { serverSideCallMetadata } from '../server';
 import { SocksProxy } from '../server/utils/socksProxy';
+import { Browser } from '../server/browser';
 
 import type { AndroidDevice } from '../server/android/android';
-import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
 import type  { LaunchOptions } from '../server/types';
 
@@ -45,10 +45,14 @@ export class PlaywrightServer {
   private _options: ServerOptions;
   private _wsServer: WSServer;
 
+  private _dontReuseBrowsers = new Set<Browser>();
+
   constructor(options: ServerOptions) {
     this._options = options;
-    if (options.preLaunchedBrowser)
+    if (options.preLaunchedBrowser) {
       this._playwright = options.preLaunchedBrowser.attribution.playwright;
+      this._dontReuse(options.preLaunchedBrowser);
+    }
     if (options.preLaunchedAndroidDevice)
       this._playwright = options.preLaunchedAndroidDevice._android.attribution.playwright;
     this._playwright ??= createPlaywright({ sdkLanguage: 'javascript', isServer: true });
@@ -98,6 +102,20 @@ export class PlaywrightServer {
         const isExtension = this._options.mode === 'extension';
         const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
+
+        if (process.env.PW_BROWSER_SERVER && url.searchParams.has('connect')) {
+          const filter = url.searchParams.get('connect');
+          if (filter !== 'first')
+            throw new Error(`Unknown connect filter: ${filter}`);
+          return new PlaywrightConnection(
+              browserSemaphore,
+              ws,
+              false,
+              this._playwright,
+              () => this._initConnectMode(id, filter, browserName, launchOptions),
+              id,
+          );
+        }
 
         if (isExtension) {
           if (url.searchParams.has('debug-controller')) {
@@ -154,7 +172,7 @@ export class PlaywrightServer {
     });
   }
 
-  private async _initReuseBrowsersMode(browserName: string | null, launchOptions: LaunchOptions, id: string) {
+  private async _initReuseBrowsersMode(browserName: string | null, launchOptions: LaunchOptions, id: string): Promise<PlaywrightInitializeResult> {
     // Note: reuse browser mode does not support socks proxy, because
     // clients come and go, while the browser stays the same.
 
@@ -164,6 +182,8 @@ export class PlaywrightServer {
     let browser = this._playwright.allBrowsers().find(b => {
       if (b.options.name !== browserName)
         return false;
+      if (this._dontReuseBrowsers.has(b))
+        return false;
       const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
       return existingOptions === requestedOptions;
     });
@@ -171,6 +191,8 @@ export class PlaywrightServer {
     // Close remaining browsers of this type+channel. Keep different browser types for the speed.
     for (const b of this._playwright.allBrowsers()) {
       if (b === browser)
+        continue;
+      if (this._dontReuseBrowsers.has(b))
         continue;
       if (b.options.name === browserName && b.options.channel === launchOptions.channel)
         await b.close({ reason: 'Connection terminated' });
@@ -203,7 +225,25 @@ export class PlaywrightServer {
     };
   }
 
-  private async _initPreLaunchedBrowserMode(id: string) {
+  private async _initConnectMode(id: string, filter: 'first', browserName: string | null, launchOptions: LaunchOptions): Promise<PlaywrightInitializeResult> {
+    browserName ??= 'chromium';
+
+    debugLogger.log('server', `[${id}] engaged connect mode`);
+
+    let browser = this._playwright.allBrowsers().find(b => b.options.name === browserName);
+    if (!browser) {
+      browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), launchOptions);
+      this._dontReuse(browser);
+    }
+
+    return {
+      preLaunchedBrowser: browser,
+      denyLaunch: true,
+      sharedBrowser: true,
+    };
+  }
+
+  private async _initPreLaunchedBrowserMode(id: string): Promise<PlaywrightInitializeResult> {
     debugLogger.log('server', `[${id}] engaged pre-launched (browser) mode`);
 
     const browser = this._options.preLaunchedBrowser!;
@@ -222,7 +262,7 @@ export class PlaywrightServer {
     };
   }
 
-  private async _initPreLaunchedAndroidMode(id: string) {
+  private async _initPreLaunchedAndroidMode(id: string): Promise<PlaywrightInitializeResult> {
     debugLogger.log('server', `[${id}] engaged pre-launched (Android) mode`);
     const androidDevice = this._options.preLaunchedAndroidDevice!;
     return {
@@ -231,7 +271,7 @@ export class PlaywrightServer {
     };
   }
 
-  private async _initLaunchBrowserMode(browserName: string | null, proxyValue: string | undefined, launchOptions: LaunchOptions, id: string) {
+  private async _initLaunchBrowserMode(browserName: string | null, proxyValue: string | undefined, launchOptions: LaunchOptions, id: string): Promise<PlaywrightInitializeResult> {
     debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
     let socksProxy: SocksProxy | undefined;
     if (proxyValue) {
@@ -243,6 +283,7 @@ export class PlaywrightServer {
       launchOptions.socksProxyPort = undefined;
     }
     const browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), launchOptions);
+    this._dontReuseBrowsers.add(browser);
     return {
       preLaunchedBrowser: browser,
       socksProxy,
@@ -253,6 +294,13 @@ export class PlaywrightServer {
         socksProxy?.close();
       },
     };
+  }
+
+  private _dontReuse(browser: Browser) {
+    this._dontReuseBrowsers.add(browser);
+    browser.on(Browser.Events.Disconnected, () => {
+      this._dontReuseBrowsers.delete(browser);
+    });
   }
 
   async listen(port: number = 0, hostname?: string): Promise<string> {
