@@ -114,32 +114,6 @@ test('should be callable twice', async ({ page }) => {
   await page.close();
 });
 
-test('should fire load when expected', async ({ page }) => {
-  await Promise.all([
-    page.goto('about:blank'),
-    page.waitForEvent('load'),
-  ]);
-});
-
-test('async stacks should work', async ({ page, server }) => {
-  server.setRoute('/empty.html', (req, res) => {
-    req.socket.end();
-  });
-  let error = null;
-  await page.goto(server.EMPTY_PAGE).catch(e => error = e);
-  expect(error).not.toBe(null);
-  expect(error.stack).toContain(__filename);
-});
-
-test('should provide access to the opener page', async ({ page }) => {
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(() => window.open('about:blank')),
-  ]);
-  const opener = await popup.opener();
-  expect(opener).toBe(page);
-});
-
 test('should return null if parent page has been closed', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -148,28 +122,6 @@ test('should return null if parent page has been closed', async ({ page }) => {
   await page.close();
   const opener = await popup.opener();
   expect(opener).toBe(null);
-});
-
-test('should fire domcontentloaded when expected', async ({ page }) => {
-  const navigatedPromise = page.goto('about:blank');
-  await page.waitForEvent('domcontentloaded');
-  await navigatedPromise;
-});
-
-test('should pass self as argument to domcontentloaded event', async ({ page }) => {
-  const [eventArg] = await Promise.all([
-    new Promise(f => page.on('domcontentloaded', f)),
-    page.goto('about:blank')
-  ]);
-  expect(eventArg).toBe(page);
-});
-
-test('should pass self as argument to load event', async ({ page }) => {
-  const [eventArg] = await Promise.all([
-    new Promise(f => page.on('load', f)),
-    page.goto('about:blank')
-  ]);
-  expect(eventArg).toBe(page);
 });
 
 test('should fail with error upon disconnect', async ({ page, isAndroid }) => {

@@ -17,6 +17,54 @@
 
 import { test as it, expect } from './pageTest';
 
+it('should fire load when expected', async ({ page }) => {
+  await Promise.all([
+    page.goto('about:blank'),
+    page.waitForEvent('load'),
+  ]);
+});
+
+it('async stacks should work', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    req.socket.end();
+  });
+  let error = null;
+  await page.goto(server.EMPTY_PAGE).catch(e => error = e);
+  expect(error).not.toBe(null);
+  expect(error.stack).toContain(__filename);
+});
+
+it('should provide access to the opener page', async ({ page }) => {
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('about:blank')),
+  ]);
+  const opener = await popup.opener();
+  expect(opener).toBe(page);
+});
+
+it('should fire domcontentloaded when expected', async ({ page }) => {
+  const navigatedPromise = page.goto('about:blank');
+  await page.waitForEvent('domcontentloaded');
+  await navigatedPromise;
+});
+
+it('should pass self as argument to domcontentloaded event', async ({ page }) => {
+  const [eventArg] = await Promise.all([
+    new Promise(f => page.on('domcontentloaded', f)),
+    page.goto('about:blank')
+  ]);
+  expect(eventArg).toBe(page);
+});
+
+it('should pass self as argument to load event', async ({ page }) => {
+  const [eventArg] = await Promise.all([
+    new Promise(f => page.on('load', f)),
+    page.goto('about:blank')
+  ]);
+  expect(eventArg).toBe(page);
+});
+
 it('page.url should work', async ({ page, server }) => {
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
