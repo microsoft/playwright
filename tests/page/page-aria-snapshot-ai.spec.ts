@@ -101,6 +101,10 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
     const locator = await (page.locator('aria-ref=f2e2').describe('foo bar') as any)._generateLocatorString();
     expect(locator).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
+  {
+    const error = await (page.locator('aria-ref=e1000') as any)._generateLocatorString().catch(e => e);
+    expect(error.message).toContain(`No element matching locator('aria-ref=e1000')`);
+  }
 });
 
 it('should not generate refs for elements with pointer-events:none', async ({ page }) => {

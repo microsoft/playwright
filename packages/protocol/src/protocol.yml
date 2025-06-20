@@ -2289,6 +2289,14 @@ Frame:
       returns:
         element: ElementHandle
 
+    generateLocatorString:
+      title: Generate locator
+      internal: true
+      parameters:
+        selector: string
+      returns:
+        value: string?
+
     highlight:
       internal: true
       parameters:
@@ -2936,11 +2944,6 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
-
-    generateLocatorString:
-      internal: true
-      returns:
-        value: string?
 
     getAttribute:
       internal: true

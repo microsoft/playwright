@@ -250,7 +250,8 @@ export class Locator implements api.Locator {
   }
 
   async _generateLocatorString(): Promise<string | null> {
-    return await this._withElement(h => h._generateLocatorString(), { title: 'Generate locator string', internal: true });
+    const { value } = await this._frame._channel.generateLocatorString({ selector: this._selector });
+    return value === undefined ? null : value;
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
