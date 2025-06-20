@@ -87,7 +87,7 @@ export class WKBrowser extends Browser {
     const createOptions = proxy ? {
       // Enable socks5 hostname resolution on Windows.
       // See https://github.com/microsoft/playwright/issues/20451
-      proxyServer: process.platform === 'win32' ? proxy.server.replace(/^socks5:\/\//, 'socks5h://') : proxy.server,
+      proxyServer: process.platform === 'win32' && this.attribution.browser?.options.channel !== 'webkit-wsl' ? proxy.server.replace(/^socks5:\/\//, 'socks5h://') : proxy.server,
       proxyBypassList: proxy.bypass
     } : undefined;
     const { browserContextId } = await this._browserSession.send('Playwright.createContext', createOptions);
