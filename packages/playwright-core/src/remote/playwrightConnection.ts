@@ -115,6 +115,7 @@ export class PlaywrightConnection {
     });
   }
 
+  // DONE
   private async _initLaunchBrowserMode(scope: RootDispatcher, options: channels.RootInitializeParams) {
     debugLogger.log('server', `[${this._id}] engaged launch mode for "${this._options.browserName}"`);
     const ownedSocksProxy = await this._createOwnedSocksProxy();

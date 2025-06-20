@@ -21,9 +21,12 @@ import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
+import { debugLogger } from '../utils';
+import { serverSideCallMetadata } from '../server';
+import { BrowserType } from '../server/browserType';
 
 import type { ClientType } from './playwrightConnection';
-import type { SocksProxy } from '../server/utils/socksProxy';
+import { SocksProxy } from '../server/utils/socksProxy';
 import type { AndroidDevice } from '../server/android/android';
 import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
@@ -79,7 +82,7 @@ export class PlaywrightServer {
           headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);
       },
 
-      onConnection: (request, url, ws, id) => {
+      onConnection: async (request, url, ws, id) => {
         const browserHeader = request.headers['x-playwright-browser'];
         const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
         const proxyHeader = request.headers['x-playwright-proxy'];
@@ -107,6 +110,36 @@ export class PlaywrightServer {
         } else if (this._options.mode === 'launchServer' || this._options.mode === 'launchServerShared') {
           clientType = 'pre-launched-browser-or-android';
           semaphore = browserSemaphore;
+        } else {
+          debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
+          let socksProxy: SocksProxy | undefined;
+          if (proxyValue) {
+            const socksProxy = new SocksProxy();
+            socksProxy.setPattern(proxyValue);
+            launchOptions.socksProxyPort = await socksProxy.listen(0);
+            debugLogger.log('server', `[${id}] started socks proxy on port ${launchOptions.socksProxyPort}`);
+            // this._cleanups.push(() => socksProxy.close());
+          } else {
+            launchOptions.socksProxyPort = undefined;
+          }
+
+          let browserType: BrowserType;
+          if ('bidi' === browserName) {
+            if (launchOptions.channel?.toLocaleLowerCase().includes('firefox'))
+              browserType = this._playwright.bidiFirefox;
+            else
+              browserType = this._playwright.bidiChromium;
+          } else {
+            browserType = this._playwright[browserName as 'chromium' | 'firefox' | 'webkit'];
+          }
+          const browser = await browserType.launch(serverSideCallMetadata(), launchOptions);
+          // browser.options.sdkLanguage = options.sdkLanguage;
+
+          // this._cleanups.push(() => browser.close({ reason: 'Connection terminated' }));
+          // browser.on(Browser.Events.Disconnected, () => {
+          //   // Underlying browser did close for some reason - force disconnect the client.
+          //   this.close({ code: 1001, reason: 'Browser closed' });
+          // });
         }
 
         return new PlaywrightConnection(
