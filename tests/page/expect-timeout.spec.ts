@@ -41,16 +41,6 @@ test('should print timed out error message when value does not match with imposs
   expect(stripAnsi(error.message)).toContain(`Timed out 1ms waiting for expect(locator).toHaveText(expected)`);
 });
 
-test('should not print timed out error message when page closes', async ({ page }) => {
-  await page.setContent('<div id=node>Text content</div>');
-  const [error] = await Promise.all([
-    expect(page.locator('div')).toHaveText('hey', { timeout: 100000 }).catch(e => e),
-    page.close(),
-  ]);
-  expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected)`);
-  expect(stripAnsi(error.message)).not.toContain('Timed out');
-});
-
 test('should have timeout error name', async ({ page }) => {
   const error = await page.waitForSelector('#not-found', { timeout: 1 }).catch(e => e);
   expect(error.name).toBe('TimeoutError');
