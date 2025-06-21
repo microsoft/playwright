@@ -396,10 +396,9 @@ export async function toHaveScreenshot(
   expectScreenshotOptions.expected = helper.updateSnapshots === 'all' ? undefined : expected;
 
   const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
-  const writeFiles = () => {
-    writeFileSync(helper.expectedPath, actual!);
-    writeFileSync(helper.actualPath, actual!);
-    /* eslint-disable no-console */
+  const writeFiles = (actual: Buffer) => {
+    writeFileSync(helper.expectedPath, actual);
+    writeFileSync(helper.actualPath, actual);
     console.log(helper.expectedPath + ' is re-generated, writing actual.');
     return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
   };
@@ -408,13 +407,13 @@ export async function toHaveScreenshot(
     // Screenshot is matching, but is not necessarily the same as the expected.
     if (helper.updateSnapshots === 'all' && actual && compareBuffersOrStrings(actual, expected)) {
       console.log(helper.expectedPath + ' is re-generated, writing actual.');
-      return writeFiles();
+      return writeFiles(actual);
     }
     return helper.handleMatching();
   }
 
-  if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all')
-    return writeFiles();
+  if (actual && (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all'))
+    return writeFiles(actual);
 
   const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
   return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
