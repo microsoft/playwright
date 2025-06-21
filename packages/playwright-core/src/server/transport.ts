@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { DEFAULT_PLAYWRIGHT_TIMEOUT, makeWaitForNextTask } from '../utils';
+import { makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './utils/happyEyeballs';
 import { ws } from '../utilsBundle';
 
@@ -133,8 +133,6 @@ export class WebSocketTransport implements ConnectionTransport {
     this._logUrl = logUrl;
     this._ws = new ws(url, [], {
       maxPayload: 256 * 1024 * 1024, // 256Mb,
-      // Prevent internal http client error when passing negative timeout.
-      handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? DEFAULT_PLAYWRIGHT_TIMEOUT, 1),
       headers: options.headers,
       followRedirects: options.followRedirects,
       agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,

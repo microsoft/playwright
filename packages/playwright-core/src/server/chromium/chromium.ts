@@ -63,7 +63,7 @@ export class Chromium extends BrowserType {
   }
 
   override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, timeout: number }) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
     }, options.timeout);
@@ -199,7 +199,7 @@ export class Chromium extends BrowserType {
     }
 
     progress.log(`<selenium> connecting to ${hubUrl}`);
-    const response = await fetchData({
+    const response = await fetchData(progress, {
       url: hubUrl + 'session',
       method: 'POST',
       headers: {
@@ -209,7 +209,6 @@ export class Chromium extends BrowserType {
       data: JSON.stringify({
         capabilities: { alwaysMatch: desiredCapabilities }
       }),
-      timeout: progress.timeUntilDeadline(),
     }, seleniumErrorHandler);
     const value = JSON.parse(response).value;
     const sessionId = value.sessionId;
@@ -217,7 +216,8 @@ export class Chromium extends BrowserType {
 
     const disconnectFromSelenium = async () => {
       progress.log(`<selenium> disconnecting from sessionId=${sessionId}`);
-      await fetchData({
+      // Do not pass "progress" to disconnect even after the progress has aborted.
+      await fetchData(undefined, {
         url: hubUrl + 'session/' + sessionId,
         method: 'DELETE',
         headers,
@@ -253,10 +253,9 @@ export class Chromium extends BrowserType {
         if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1') {
           const sessionInfoUrl = new URL(hubUrl).origin + '/grid/api/testsession?session=' + sessionId;
           try {
-            const sessionResponse = await fetchData({
+            const sessionResponse = await fetchData(progress, {
               url: sessionInfoUrl,
               method: 'GET',
-              timeout: progress.timeUntilDeadline(),
               headers,
             }, seleniumErrorHandler);
             const proxyId = JSON.parse(sessionResponse).proxyId;
@@ -387,10 +386,9 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
   url.pathname += 'json/version/';
   const httpURL = url.toString();
 
-  const json = await fetchData({
+  const json = await fetchData(progress, {
     url: httpURL,
     headers,
-    timeout: progress.timeUntilDeadline(),
   }, async (_, resp) => new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
     `This does not look like a DevTools server, try connecting via ws://.`)
   );

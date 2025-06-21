@@ -83,7 +83,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   }
 
   async connect(params: channels.LocalUtilsConnectParams, metadata: CallMetadata): Promise<channels.LocalUtilsConnectResult> {
-    const controller = new ProgressController(metadata, this._object, 'strict');
+    const controller = new ProgressController(metadata, this._object);
     return await controller.run(async progress => {
       const wsHeaders = {
         'User-Agent': getUserAgent(),
@@ -137,10 +137,9 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
   if (!fetchUrl.pathname.endsWith('/'))
     fetchUrl.pathname += '/';
   fetchUrl.pathname += 'json';
-  const json = await fetchData({
+  const json = await fetchData(progress, {
     url: fetchUrl.toString(),
     method: 'GET',
-    timeout: progress.timeUntilDeadline(),
     headers: { 'User-Agent': getUserAgent() },
   }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
     return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +

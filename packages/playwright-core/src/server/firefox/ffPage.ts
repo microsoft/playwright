@@ -419,12 +419,12 @@ export class FFPage implements PageDelegate {
         height: viewportRect!.height,
       };
     }
-    const { data } = await this._session.send('Page.screenshot', {
+    const { data } = await progress.race(this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       clip: documentRect,
       quality,
       omitDeviceScaleFactor: scale === 'css',
-    });
+    }));
     return Buffer.from(data, 'base64');
   }
 

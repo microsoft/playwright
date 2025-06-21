@@ -1197,7 +1197,7 @@ export class Registry {
   private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
     const scriptArgs: string[] = [];
     if (process.platform !== 'linux') {
-      const products = lowercaseAllKeys(JSON.parse(await fetchData({ url: 'https://edgeupdates.microsoft.com/api/products' })));
+      const products = lowercaseAllKeys(JSON.parse(await fetchData(undefined, { url: 'https://edgeupdates.microsoft.com/api/products' })));
 
       const productName = {
         'msedge': 'Stable',

@@ -180,7 +180,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     },
   });
 
-  const controller = new ProgressController(serverSideCallMetadata(), context._browser, 'strict');
+  const controller = new ProgressController(serverSideCallMetadata(), context._browser);
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
   });

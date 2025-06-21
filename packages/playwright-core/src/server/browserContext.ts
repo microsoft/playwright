@@ -191,7 +191,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => this.resetForReuseImpl(progress, params));
   }
 
@@ -515,7 +515,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   newPageFromMetadata(metadata: CallMetadata): Promise<Page> {
-    const contoller = new ProgressController(metadata, this, 'strict');
+    const contoller = new ProgressController(metadata, this);
     return contoller.run(progress => this.newPage(progress, false));
   }
 
@@ -535,7 +535,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   storageState(indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
-    const controller = new ProgressController(serverSideCallMetadata(), this, 'strict');
+    const controller = new ProgressController(serverSideCallMetadata(), this);
     return controller.run(progress => this.storageStateImpl(progress, indexedDB));
   }
 

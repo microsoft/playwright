@@ -1054,3 +1054,14 @@ test('should refuse connecting when versions do not match', async ({ connect, ch
   expect(error.message).toContain('server version: v1.2');
   expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
 });
+
+test('should timeout after redirect when connecting over http', async ({ connect, server }) => {
+  server.setRedirect('/connect/json', '/connect/slow');
+  let aborted = false;
+  server.setRoute('/connect/slow', (req, res) => {
+    req.socket.on('close', () => aborted = true);
+  });
+  const error = await connect(`${server.PREFIX}/connect`, { timeout: 2000, headers: { 'Connection': 'Close' } }).catch(e => e);
+  expect(error.message).toContain('Timeout 2000ms exceeded.');
+  await expect.poll(() => aborted).toBe(true);
+});

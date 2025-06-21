@@ -42,7 +42,7 @@ export class VideoRecorder {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
-    const controller = new ProgressController(serverSideCallMetadata(), page, 'strict');
+    const controller = new ProgressController(serverSideCallMetadata(), page);
     controller.setLogName('browser');
     return await controller.run(async progress => {
       const recorder = new VideoRecorder(page, ffmpegPath, progress);
