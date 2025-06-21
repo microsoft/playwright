@@ -75,7 +75,8 @@ function transformValue(input, isSync) {
 function generateComment(node, isSync) {
   const commentNode = md.clone(node)
   commentNode.codeLang = isSync ? "python sync" : "python async";
-  commentNode.lines = ['# FIXME', ...transformValue(node.lines, isSync).split("\n")];
+  // Remove placeholder and directly include transformed snippet lines
+  commentNode.lines = [...transformValue(node.lines, isSync).split("\n")];
   return commentNode;
 }
 

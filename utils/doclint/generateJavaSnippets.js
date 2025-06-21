@@ -116,7 +116,8 @@ function toTitleCase(name) {
 function generateComment(node) {
   const commentNode = md.clone(node)
   commentNode.codeLang = 'java';
-  commentNode.lines = ['// FIXME', ...transformValue(node.lines).split("\n")];
+  // Remove placeholder and directly include transformed snippet lines
+  commentNode.lines = [...transformValue(node.lines).split("\n")];
   return commentNode;
 }
 
