@@ -416,13 +416,12 @@ test('expected formatter', async ({ page }) => {
 
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
-- Expected  - 2
-+ Received  + 3
+- Expected  - 1
++ Received  + 2
 
-- - heading "todos"
-- - textbox "Wrong text"
 + - banner:
-+   - heading "todos" [level=1]
+    - heading "todos" [level=1]
+- - textbox "Wrong text"
 +   - textbox "What needs to be done?"`);
 });
 
@@ -790,4 +789,355 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
           - /children: contain
           - listitem: 1.1
   `);
+});
+
+test(`should only highlight regex patterns that don't match`, async ({ page }) => {
+  await test.step('simple regex', async () => {
+    await page.setContent(`
+      <h1>Title 123</h1>
+      <div>Content with value 456</div>
+    `);
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Title \\d+/
+      - text: /Content with value \\d+/
+      - text: "This text doesn't exist"
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+  - heading "Title 123" [level=1]
+  - text: Content with value 456
+- - text: "This text doesn't exist"`);
+  });
+
+  await test.step('nested regex', async () => {
+    await page.setContent(`
+      <ul>
+        <li>
+          <a href='about:blank'>Link 123</a>
+        </li>
+        <li>Another row</li>
+        <li>One more row</li>
+      </ul>
+    `);
+
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - list:
+        - listitem:
+          - link /Link \\d+/:
+            - /url: about:blank
+        - listitem: "One more row"
+    `, { timeout: 1000 });
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - list:
+        - listitem:
+          - link /Link2 \\d+/:
+            - /url: about:blank
+        - listitem: "One more row"
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+  - list:
+    - listitem:
+-     - link /Link2 \\d+/:
++     - link "Link 123":
+        - /url: about:blank
++   - listitem: Another row
+    - listitem: One more row`);
+  });
+
+  await test.step('regex with attributes', async () => {
+    await page.setContent(`
+      <h1>Title 123</h1>
+      <h2>Heading 2 456</h2>
+    `);
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Title \\d+/ [level=1]
+      - heading /Heading 2 \\d+/ [level=2]
+      - text: "This text doesn't exist"
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+  - heading "Title 123" [level=1]
+  - heading "Heading 2 456" [level=2]
+- - text: "This text doesn't exist"`);
+
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Title \\d+/
+      - heading /Heading 2 \\d+/
+    `, { timeout: 1000 });
+  });
+});
+
+test('should handle various regex failure scenarios', async ({ page }) => {
+  await test.step('regex with special characters', async () => {
+    await page.setContent(`
+      <div>Item A.1</div>
+      <div>Item B*2</div>
+      <p>This matches</p>
+      <div>Ignored</div>
+      <button>Submit+Now</button>
+      <p>Parentheses (example)</p>
+      <p>Brackets [example]</p>
+    `);
+
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - text: Item A.1 Item B*2
+    `, { timeout: 1000 });
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - text: /Item A\\\\.X Item B\\\\*2/
+      - paragraph: This matches
+      - button: /Submit\\\\?Now/
+      - paragraph: /Parentheses \\\\(example\\\\)/
+      - paragraph: /Brackets \\\\[example\\\\]/
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+- - text: /Item A\\\\.X Item B\\\\*2/
++ - text: Item A.1 Item B*2
+  - paragraph: This matches
+- - button: /Submit\\\\?Now/
++ - text: Ignored
++ - button "Submit+Now"
+- - paragraph: /Parentheses \\\\(example\\\\)/
++ - paragraph: Parentheses (example)
+- - paragraph: /Brackets \\\\[example\\\\]/
++ - paragraph: Brackets [example]`);
+  });
+
+  await test.step('regex case sensitivity', async () => {
+    await page.setContent(`
+      <h1>Hello World</h1>
+      <p>another example</p>
+    `);
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /hello world/
+      - paragraph: /Another Example/
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+- - heading /hello world/
++ - heading "Hello World" [level=1]
+- - paragraph: /Another Example/
++ - paragraph: another example`);
+  });
+
+  await test.step('name regex matches, attribute does not', async () => {
+    await page.setContent(`
+      <button aria-pressed="true">Action Button 007</button>
+    `);
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Action Button \\d+/ [pressed=false]
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+Expected: \"- button /Action Button \\\\d+/ [pressed=false]\"
+Received: \"- button \\"Action Button 007\\" [pressed]\"`);
+  });
+
+  await test.step('name regex mismatches, attribute matches', async () => {
+    await page.setContent(`
+      <h2 aria-level="2">Actual Section Title</h2>
+    `);
+
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /Expected Section \\d+/ [level=2]
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+Expected: \"- heading /Expected Section \\\\d+/ [level=2]\"
+Received: \"- heading \\\"Actual Section Title\\\" [level=2]\"`);
+  });
+
+  await test.step('name regex mismatches with an attribute', async () => {
+    await page.setContent(`
+      <button aria-pressed="true">Actual Button A</button>
+      <button aria-pressed="true">Expected Button B</button>
+    `);
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /NonExistent Button C/ [pressed]
+      - button /Actual Button A/ [pressed=false]
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+- - button /NonExistent Button C/ [pressed]
++ - button "Actual Button A" [pressed]
+- - button /Actual Button A/ [pressed=false]
++ - button "Expected Button B" [pressed]`);
+  });
+
+  await test.step('missing label', async () => {
+    await page.setContent(`
+      <div role="status" aria-label=""></div>
+      <div role="row" aria-label="some label"></div>
+      <button aria-label="">Submit</button>
+      <img src="logo.png" alt="" />
+    `);
+
+    let error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - status /.+/
+      - row /.+/
+      - button /Submit/
+      - image /.*/
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+- - status /.+/
++ - status
+  - row "some label"
+  - button "Submit"
+- - image /.*/`);
+
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - status
+      - button "Submit"
+    `, { timeout: 1000 });
+
+    error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - status /^\$/
+      - button /Submit/
+      - image /^\$/
+    `, { timeout: 1000 }).catch(e => e);
+
+    expect(stripAnsi(error.message)).toContain(`
+- - status /^\$/
++ - status
++ - row "some label"
+  - button "Submit"
+- - image /^\$/`);
+  });
+
+  await test.step('incorrect order', async () => {
+    await page.setContent(`
+      <p>Numeric 123</p>
+      <p>Alpha ABC</p>
+    `);
+
+    // TODO: This error message could be better; while "Alpha ABC" is found, it is not the first element, which causes this confusing diff
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - paragraph: /Alpha [A-Z]+/
+      - paragraph: /Numeric \\\\d+/
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`
+- - paragraph: Alpha ABC
++ - paragraph: Numeric 123
+- - paragraph: /Numeric \\\\d+/
++ - paragraph: Alpha ABC`);
+  });
+
+  await test.step('regex partially matches', async () => {
+    await page.setContent(`
+      <div>Product Code ABC-123-XYZ</div>
+      <h1>Other text</h1>
+    `);
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - text: /Product Code [A-Z]{3}-\\d{3}-[A-Z]{4}/
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`
+- - text: /Product Code [A-Z]{3}-\\d{3}-[A-Z]{4}/
++ - text: Product Code ABC-123-XYZ
++ - heading "Other text" [level=1]`);
+  });
+});
+
+test('should properly highlight regex failures in equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+      <li>
+        <ul>
+          <li>2.1</li>
+          <li>2.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+      - listitem:
+        - list:
+          - listitem: 2.1
+  `, { timeout: 1000 });
+
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: equal
+      - listitem:
+        - list:
+          - listitem: /a value/
+      - listitem:
+        - list:
+          - listitem: 2.1
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`
+  - list:
+-   - /children: equal
+-   - listitem:
++   - listitem:
+-     - list:
++     - list:
++       - listitem: \"1.1\"
+-       - listitem: /a value/
++       - listitem: \"1.2\"
+    - listitem:
+      - list:
+        - listitem: \"2.1\"
++       - listitem: \"2.2\"`);
+});
+
+test('should properly highlight regex failures in deep-equal', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+          - listitem: /1\\.\\d/
+  `, { timeout: 1000 });
+
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - list:
+      - /children: deep-equal
+      - listitem:
+        - list:
+          - listitem: 1.1
+          - listitem: /2\\.\\d/
+          - listitem: another
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`
+  - list:
+-   - /children: deep-equal
+    - listitem:
+      - list:
+        - listitem: \"1.1\"
+-       - listitem: /2\\.\\d/
+-       - listitem: another
++       - listitem: \"1.2\"`);
 });
