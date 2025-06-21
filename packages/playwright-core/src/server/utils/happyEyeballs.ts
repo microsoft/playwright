@@ -83,6 +83,10 @@ export async function createTLSSocket(options: tls.ConnectionOptions): Promise<t
       createConnectionAsync(options, (err, socket) => {
         if (err)
           reject(err);
+
+        if (socket && options.socket !== undefined && socket.authorized !== undefined && socket.readyState === 'open')
+          resolve(socket);
+
         if (socket) {
           socket.on('secureConnect', () => resolve(socket));
           socket.on('error', error => reject(error));
@@ -140,9 +144,9 @@ export async function createConnectionAsync(
 
     (socket as any)[kDNSLookupAt] = dnsLookupAt;
 
-    // Each socket may fire only one of 'connect', 'timeout' or 'error' events.
+    // Each socket may fire only one of 'secureConnect' 'connect', 'timeout' or 'error' events.
     // None of these events are fired after socket.destroy() is called.
-    socket.on('connect', () => {
+    const handleSocketConnect = () => {
       (socket as any)[kTCPConnectionAt] = monotonicTime();
 
       connected.resolve();
@@ -153,7 +157,10 @@ export async function createConnectionAsync(
       for (const s of sockets)
         s.destroy();
       sockets.clear();
-    });
+    };
+
+    socket.on('connect', handleSocketConnect);
+    socket.on('secureConnect', handleSocketConnect);
     socket.on('timeout', () => {
       // Timeout is not an error, so we have to manually close the socket.
       socket.destroy();
