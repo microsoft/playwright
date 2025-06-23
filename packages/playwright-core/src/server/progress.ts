@@ -15,17 +15,30 @@
  */
 
 import { TimeoutError } from './errors';
-import { assert, monotonicTime } from '../utils';
+import { assert } from '../utils';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import type { LogName } from './utils/debugLogger';
 
+// Most server operations are run inside a Progress instance.
+// Each method that takes a Progress must result in one of the three outcomes:
+//   - It finishes successfully, returning a value, before the Progress is aborted.
+//   - It throws some error, before the Progress is aborted.
+//   - It throws the Progress's aborted error, because the Progress was aborted before
+//     the method could finish.
+// As a rule of thumb, the above is achieved by:
+//   - Passing the Progress instance when awaiting other methods.
+//   - Using `progress.race()` when awaiting other methods that do not take a Progress argument.
+//     In this case, it is important that awaited method has no side effects, for example
+//     it is a read-only browser protocol call.
+//   - In rare cases, when the awaited method does not take a Progress argument,
+//     but it does have side effects such as creating a page -  a proper cleanup
+//     must be taken in case Progress is aborted before the awaited method finishes.
+//     That's usually done by `progress.raceWithCleanup()` or `progress.cleanupWhenAborted()`.
 export interface Progress {
   log(message: string): void;
-  timeUntilDeadline(): number;
-  cleanupWhenAborted(cleanup: () => any): void;
-  throwIfAborted(): void;
+  cleanupWhenAborted(cleanup: (error: Error | undefined) => any): void;
   race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
   raceWithCleanup<T>(promise: Promise<T>, cleanup: (result: T) => any): Promise<T>;
   wait(timeout: number): Promise<void>;
@@ -37,7 +50,7 @@ export class ProgressController {
   private _donePromise = new ManualPromise<void>();
 
   // Cleanups to be run only in the case of abort.
-  private _cleanups: (() => any)[] = [];
+  private _cleanups: ((error: Error | undefined) => any)[] = [];
 
   // Lenient mode races against the timeout. This guarantees that timeout is respected,
   // but may have some work being done after the timeout due to parallel control flow.
@@ -48,13 +61,12 @@ export class ProgressController {
 
   private _logName: LogName;
   private _state: 'before' | 'running' | { error: Error } | 'finished' = 'before';
-  private _deadline: number = 0;
   readonly metadata: CallMetadata;
   readonly instrumentation: Instrumentation;
   readonly sdkObject: SdkObject;
 
-  constructor(metadata: CallMetadata, sdkObject: SdkObject, strictMode?: 'strict') {
-    this._strictMode = strictMode === 'strict';
+  constructor(metadata: CallMetadata, sdkObject: SdkObject) {
+    this._strictMode = !process.env.PLAYWRIGHT_LEGACY_TIMEOUTS;
     this.metadata = metadata;
     this.sdkObject = sdkObject;
     this.instrumentation = sdkObject.instrumentation;
@@ -77,8 +89,6 @@ export class ProgressController {
   }
 
   async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
-    this._deadline = timeout ? monotonicTime() + timeout : 0;
-
     assert(this._state === 'before');
     this._state = 'running';
     this.sdkObject.attribution.context?._activeProgressControllers.add(this);
@@ -90,16 +100,17 @@ export class ProgressController {
         // Note: we might be sending logs after progress has finished, for example browser logs.
         this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
       },
-      timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
-      cleanupWhenAborted: (cleanup: () => any) => {
+      cleanupWhenAborted: (cleanup: (error: Error | undefined) => any) => {
+        if (this._strictMode) {
+          if (this._state !== 'running')
+            throw new Error('Internal error: cannot register cleanup after operation has finished.');
+          this._cleanups.push(cleanup);
+          return;
+        }
         if (this._state === 'running')
           this._cleanups.push(cleanup);
         else
-          runCleanup(cleanup);
-      },
-      throwIfAborted: () => {
-        if (typeof this._state === 'object')
-          throw this._state.error;
+          runCleanup(typeof this._state === 'object' ? this._state.error : undefined, cleanup);
       },
       metadata: this.metadata,
       race: <T>(promise: Promise<T> | Promise<T>[]) => {
@@ -119,13 +130,17 @@ export class ProgressController {
       },
     };
 
-    const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
-    const timer = setTimeout(() => {
-      if (this._state === 'running') {
-        this._state = { error: timeoutError };
-        this._forceAbortPromise.reject(timeoutError);
-      }
-    }, progress.timeUntilDeadline());
+    let timer: NodeJS.Timeout | undefined;
+    if (timeout) {
+      const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
+      timer = setTimeout(() => {
+        if (this._state === 'running') {
+          this._state = { error: timeoutError };
+          this._forceAbortPromise.reject(timeoutError);
+        }
+      }, Math.min(timeout, 2147483647)); // 2^31-1 safe setTimeout in Node.
+    }
+
     try {
       const promise = task(progress);
       const result = this._strictMode ? await promise : await Promise.race([promise, this._forceAbortPromise]);
@@ -133,7 +148,7 @@ export class ProgressController {
       return result;
     } catch (error) {
       this._state = { error };
-      await Promise.all(this._cleanups.splice(0).map(runCleanup));
+      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(error, cleanup)));
       throw error;
     } finally {
       this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
@@ -143,9 +158,9 @@ export class ProgressController {
   }
 }
 
-async function runCleanup(cleanup: () => any) {
+async function runCleanup(error: Error | undefined, cleanup: (error: Error | undefined) => any) {
   try {
-    await cleanup();
+    await cleanup(error);
   } catch (e) {
   }
 }

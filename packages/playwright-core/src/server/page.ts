@@ -368,7 +368,7 @@ export class Page extends SdkObject {
   }
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
@@ -382,7 +382,7 @@ export class Page extends SdkObject {
   }
 
   async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
@@ -404,7 +404,7 @@ export class Page extends SdkObject {
   }
 
   async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
@@ -451,9 +451,7 @@ export class Page extends SdkObject {
 
   async performActionPreChecks(progress: Progress) {
     await this._performWaitForNavigationCheck(progress);
-    progress.throwIfAborted();
     await this._performLocatorHandlersCheckpoint(progress);
-    progress.throwIfAborted();
     // Wait once again, just in case a locator handler caused a navigation.
     await this._performWaitForNavigationCheck(progress);
   }
@@ -489,7 +487,6 @@ export class Page extends SdkObject {
         ++this._locatorHandlerRunningCounter;
         progress.log(`  found ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)}, intercepting action to run the handler`);
         const promise = handler.resolved.then(async () => {
-          progress.throwIfAborted();
           if (!handler.noWaitAfter) {
             progress.log(`  locator handler has finished, waiting for ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)} to be hidden`);
             await this.mainFrame().waitForSelectorInternal(progress, handler.selector, false, { state: 'hidden' });
@@ -599,7 +596,7 @@ export class Page extends SdkObject {
     };
 
     const comparator = getComparator('image/png');
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
     try {
@@ -812,7 +809,7 @@ export class Page extends SdkObject {
   }
 
   snapshotForAI(metadata: CallMetadata): Promise<string> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       this.lastSnapshotFrameIds = [];
       const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);

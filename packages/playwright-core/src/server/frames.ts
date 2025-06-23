@@ -600,7 +600,7 @@ export class Frame extends SdkObject {
   }
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
-    const controller = new ProgressController(serverSideCallMetadata(), this, 'strict');
+    const controller = new ProgressController(serverSideCallMetadata(), this);
     const data = {
       url,
       gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), 0),
@@ -610,7 +610,7 @@ export class Frame extends SdkObject {
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => {
       const constructedNavigationURL = constructURLBasedOnBaseURL(this._page.browserContext._options.baseURL, url);
       return this.raceNavigationAction(progress, async () => this.gotoImpl(progress, constructedNavigationURL, options));
@@ -744,7 +744,7 @@ export class Frame extends SdkObject {
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       if ((options as any).visibility)
         throw new Error('options.visibility is not supported, did you mean options.state?');
@@ -871,7 +871,7 @@ export class Frame extends SdkObject {
   }
 
   async setContent(metadata: CallMetadata, html: string, options: types.NavigateOptions): Promise<void> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       await this.raceNavigationAction(progress, async () => {
         const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
@@ -1142,21 +1142,21 @@ export class Frame extends SdkObject {
   }
 
   async click(metadata: CallMetadata, selector: string, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter })));
     }, options.timeout);
   }
 
   async dblclick(metadata: CallMetadata, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._dblclick(progress, options)));
     }, options.timeout);
   }
 
   async dragAndDrop(metadata: CallMetadata, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, !options.force /* performActionPreChecks */, async handle => {
         return handle._retryPointerAction(progress, 'move and down', false, async point => {
@@ -1183,7 +1183,7 @@ export class Frame extends SdkObject {
   }
 
   async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       if (!this._page.browserContext._options.hasTouch)
         throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
@@ -1192,21 +1192,21 @@ export class Frame extends SdkObject {
   }
 
   async fill(metadata: CallMetadata, selector: string, value: string, options: types.TimeoutOptions & types.StrictOptions & { force?: boolean }) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._fill(progress, value, options)));
     }, options.timeout);
   }
 
   async focus(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._focus(progress)));
     }, options.timeout);
   }
 
   async blur(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._blur(progress)));
     }, options.timeout);
@@ -1270,7 +1270,7 @@ export class Frame extends SdkObject {
   }
 
   async isVisible(metadata: CallMetadata, selector: string, options: types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  checking visibility of ${this._asLocator(selector)}`);
       return await this.isVisibleInternal(progress, selector, options, scope);
@@ -1315,14 +1315,14 @@ export class Frame extends SdkObject {
   }
 
   async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._hover(progress, options)));
     }, options.timeout);
   }
 
   async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._selectOption(progress, elements, values, options));
     }, options.timeout);
@@ -1330,47 +1330,47 @@ export class Frame extends SdkObject {
 
   async setInputFiles(metadata: CallMetadata, selector: string, params: channels.FrameSetInputFilesParams): Promise<channels.FrameSetInputFilesResult> {
     const inputFileItems = await prepareFilesForUpload(this, params);
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params.strict, true /* performActionPreChecks */, handle => handle._setInputFiles(progress, inputFileItems)));
     }, params.timeout);
   }
 
   async type(metadata: CallMetadata, selector: string, text: string, options: { delay?: number } & types.TimeoutOptions & types.StrictOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._type(progress, text, options)));
     }, options.timeout);
   }
 
   async press(metadata: CallMetadata, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & types.StrictOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._press(progress, key, options)));
     }, options.timeout);
   }
 
   async check(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._setChecked(progress, true, options)));
     }, options.timeout);
   }
 
   async uncheck(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._setChecked(progress, false, options)));
     }, options.timeout);
   }
 
   async waitForTimeout(metadata: CallMetadata, timeout: number) {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => progress.wait(timeout));
   }
 
   async ariaSnapshot(metadata: CallMetadata, selector: string, options: { forAI?: boolean } & types.TimeoutOptions): Promise<string> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot(options)));
     }, options.timeout);
@@ -1391,7 +1391,7 @@ export class Frame extends SdkObject {
       const start = timeout > 0 ? monotonicTime() : 0;
 
       // Step 1: perform locator handlers checkpoint with a specified timeout.
-      await (new ProgressController(metadata, this, 'strict')).run(async progress => {
+      await (new ProgressController(metadata, this)).run(async progress => {
         progress.log(`${renderTitleForCall(metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
         if (selector)
           progress.log(`waiting for ${this._asLocator(selector)}`);
@@ -1402,7 +1402,7 @@ export class Frame extends SdkObject {
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
-        const resultOneShot = await (new ProgressController(metadata, this, 'strict')).run(async progress => {
+        const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
           return await this._expectInternal(progress, selector, options, lastIntermediateResult);
         });
         if (resultOneShot.matches !== options.isNot)
@@ -1420,7 +1420,7 @@ export class Frame extends SdkObject {
         return { matches: options.isNot, log: compressCallLog(metadata.log), timedOut: true, received: lastIntermediateResult.received };
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      return await (new ProgressController(metadata, this, 'strict')).run(async progress => {
+      return await (new ProgressController(metadata, this)).run(async progress => {
         return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
           await this._page.performActionPreChecks(progress);
           const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult);
@@ -1483,7 +1483,7 @@ export class Frame extends SdkObject {
   }
 
   async waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(progress => this.waitForFunctionExpressionImpl(progress, expression, isFunction, arg, options, 'main'), options.timeout);
   }
 
@@ -1590,7 +1590,7 @@ export class Frame extends SdkObject {
   }
 
   private async _callOnElementOnceMatches<T, R>(metadata: CallMetadata, selector: string, body: ElementCallback<T, R>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean }, scope?: dom.ElementHandle): Promise<R> {
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const callbackText = body.toString();
       progress.log(`waiting for ${this._asLocator(selector)}`);

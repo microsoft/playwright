@@ -201,7 +201,7 @@ export abstract class APIRequestContext extends SdkObject {
     const postData = serializePostData(params, headers);
     if (postData)
       setHeader(headers, 'content-length', String(postData.byteLength));
-    const controller = new ProgressController(metadata, this, 'strict');
+    const controller = new ProgressController(metadata, this);
     const fetchResponse = await controller.run(progress => {
       return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
     }, params.timeout);
