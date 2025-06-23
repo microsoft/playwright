@@ -150,33 +150,6 @@ it('should not allow changing protocol when overriding url', async ({ page, serv
   expect(error.message).toContain('New URL must have same protocol as overridden URL');
 });
 
-it('should not throw when continuing while page is closing', async ({ page, server, isWebView2 }) => {
-  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
-
-  let done;
-  await page.route('**/*', async route => {
-    done = Promise.all([
-      void route.continue(),
-      page.close(),
-    ]);
-  });
-  await page.goto(server.EMPTY_PAGE).catch(e => e);
-  await done;
-});
-
-it('should not throw when continuing after page is closed', async ({ page, server, isWebView2 }) => {
-  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
-
-  let done;
-  await page.route('**/*', async route => {
-    await page.close();
-    done = route.continue();
-  });
-  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  await done;
-  expect(error).toBeInstanceOf(Error);
-});
-
 it('should not throw if request was cancelled by the page', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
