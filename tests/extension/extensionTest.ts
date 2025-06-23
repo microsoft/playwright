@@ -57,7 +57,8 @@ export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFix
         `--load-extension=${pathToExtension}`,
         '--enable-features=AllowContentInitiatedDataUrlNavigations',
       ],
-      channel: 'chromium',
+      // Depends on http://crrev.com/c/6639022.
+      channel: 'chromium-tip-of-tree',
     });
     context.on('dialog', dialog => {
       // Make sure the dialog is not dismissed automatically.
