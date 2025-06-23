@@ -54,7 +54,11 @@ it('should run with custom categories if provided', async ({ browser }, testInfo
   await browser.stopTracing();
 
   const traceJson = JSON.parse(fs.readFileSync(outputTraceFile).toString());
-  expect(traceJson.traceEvents.filter(event => event.cat === 'disabled-by-default-cc.debug').length).toBeGreaterThan(0);
+  expect(
+      // NOTE: trace-config is deprecated as per http://crrev.com/c/6628182
+      traceJson.metadata['trace-config']?.includes('disabled-by-default-cc.debug') ||
+      traceJson.traceEvents.filter(event => event.cat === 'disabled-by-default-cc.debug').length > 0
+  ).toBe(true);
   await page.close();
 });
 
