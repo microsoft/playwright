@@ -210,16 +210,13 @@ export class PlaywrightServer {
       denyLaunch: true,
       dispose: async () => {
         // Don't close the pages so that user could debug them,
-        // but close all the empty browsers and contexts to clean up.
-        for (const browser of this._playwright.allBrowsers()) {
-          for (const context of browser.contexts()) {
-            if (!context.pages().length)
-              await context.close({ reason: 'Connection terminated' });
-            else
-              await context.stopPendingOperations('Connection closed');
-          }
-          if (!browser.contexts())
-            await browser.close({ reason: 'Connection terminated' });
+        // but close all the empty contexts to clean up.
+        // keep around browser so it can be reused by the next connection.
+        for (const context of browser.contexts()) {
+          if (!context.pages().length)
+            await context.close({ reason: 'Connection terminated' });
+          else
+            await context.stopPendingOperations('Connection closed');
         }
       }
     };
