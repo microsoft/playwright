@@ -33,6 +33,7 @@ export type HTTPRequestParams = {
   headers?: http.OutgoingHttpHeaders,
   data?: string | Buffer,
   rejectUnauthorized?: boolean,
+  socketTimeout?: number,
 };
 
 export const NET_DEFAULT_TIMEOUT = 30_000;
@@ -83,6 +84,12 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     https.request(options, requestCallback) :
     http.request(options, requestCallback);
   request.on('error', onError);
+  if (params.socketTimeout !== undefined) {
+    request.setTimeout(params.socketTimeout, () =>  {
+      onError(new Error(`Request to ${params.url} timed out after ${params.socketTimeout}ms`));
+      request.abort();
+    });
+  }
   cancelRequest = e => request.destroy(e);
   request.end(params.data);
   return { cancel: e => cancelRequest(e) };

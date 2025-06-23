@@ -45,13 +45,6 @@ export interface Progress {
   metadata: CallMetadata;
 }
 
-let isStrictModeCached: boolean | undefined;
-function isStrictMode() {
-  if (isStrictModeCached === undefined)
-    isStrictModeCached = !process.env.PLAYWRIGHT_LEGACY_TIMEOUTS;
-  return isStrictModeCached;
-}
-
 export class ProgressController {
   private _forceAbortPromise = new ManualPromise<any>();
   private _donePromise = new ManualPromise<void>();
@@ -73,7 +66,7 @@ export class ProgressController {
   readonly sdkObject: SdkObject;
 
   constructor(metadata: CallMetadata, sdkObject: SdkObject) {
-    this._strictMode = isStrictMode();
+    this._strictMode = !process.env.PLAYWRIGHT_LEGACY_TIMEOUTS;
     this.metadata = metadata;
     this.sdkObject = sdkObject;
     this.instrumentation = sdkObject.instrumentation;

@@ -48,11 +48,12 @@ function downloadFile(options: DownloadParams): Promise<void> {
   let totalBytes = 0;
 
   const promise = new ManualPromise<void>();
-  const { cancel } = httpRequest({
+  httpRequest({
     url: options.url,
     headers: {
       'User-Agent': options.userAgent,
     },
+    socketTimeout: options.socketTimeout,
   }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
@@ -95,8 +96,6 @@ function downloadFile(options: DownloadParams): Promise<void> {
       }
     });
   }, (error: any) => promise.reject(error));
-  const timer = setTimeout(() => cancel(new Error(`Request to ${options.url} timed out after ${options.socketTimeout}ms`)), options.socketTimeout);
-  promise.finally(() => clearTimeout(timer));
   return promise;
 
   function onData(chunk: string) {

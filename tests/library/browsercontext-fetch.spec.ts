@@ -1283,7 +1283,7 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
   // we do HTTPS navigation.
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
-  for (const value of ['None', 'Lax']) {
+  for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       httpsServer.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', `SID=2022; Path=/; Secure; SameSite=${value}`);
@@ -1323,7 +1323,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
 });
 
 it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux }) => {
-  for (const value of ['None', 'Lax']) {
+  for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', `SID=2022; Path=/; SameSite=${value}`);
