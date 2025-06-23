@@ -141,6 +141,7 @@ export abstract class Browser extends SdkObject {
     const download = this._downloads.get(uuid);
     if (!download)
       return;
+    console.log('downloadFilenameSuggested', uuid, suggestedFilename);
     download._filenameSuggested(suggestedFilename);
   }
 

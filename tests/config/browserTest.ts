@@ -28,6 +28,7 @@ import type { RemoteServerOptions, PlaywrightServer } from './remoteServer';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
 import type { Log } from '../../packages/trace/src/har';
 import type { TestInfo } from '@playwright/test';
+import { execSync } from 'child_process';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
@@ -57,6 +58,21 @@ type BrowserTestTestFixtures = PageTestFixtures & {
 };
 
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
+  loopback: [async ({ channel }, use) => {
+    if (!channel)
+      return await use(undefined);
+    if (execSync('wsl -d playwright --cd /home/pwuser wslinfo --networking-mode').includes('nat'))
+      return await use(execSync('wsl -d playwright --cd /home/pwuser cat /etc/resolv.conf').toString().split('\n').find(line => line.startsWith('nameserver')).split(' ')[1]);
+    return await use(undefined);
+  }, { scope: 'worker', timeout: 10000 }],
+  loopback2: [async ({ channel }, use) => {
+    if (!channel)
+      return await use(undefined);
+    if (execSync('wsl -d playwright --cd /home/pwuser wslinfo --networking-mode').includes('nat'))
+      return await use(execSync('wsl -d playwright --cd /home/pwuser cat /etc/resolv.conf').toString().split('\n').find(line => line.startsWith('nameserver')).split(' ')[1]);
+    return await use(undefined);
+  }, { scope: 'worker', timeout: 10000 }],
+
   browserVersion: [async ({ browser }, run) => {
     await run(browser.version());
   }, { scope: 'worker' }],
