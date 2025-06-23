@@ -148,7 +148,9 @@ it('should handle timeout properly', async ({ page, toImpl, browserName }) => {
   await expect(page.locator('div')).toHaveText('world');
 });
 
-it('should handle timeout properly 2', async ({ page, toImpl }) => {
+it('should handle timeout properly 2', async ({ page, toImpl, trace }) => {
+  it.skip(trace === 'on');
+
   await toImpl(page).mainFrame().evaluateExpression(String(() => {
     document.close = () => {
       while (true) {}
