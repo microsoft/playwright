@@ -382,7 +382,7 @@ const testOptions: [string, string][] = [
   ['--fully-parallel', `Run all tests in parallel (default: false)`],
   ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`],
   ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`],
-  ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
+  ['--gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--last-failed', `Only re-run the failures`],
