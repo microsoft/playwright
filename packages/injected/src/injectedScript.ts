@@ -748,7 +748,7 @@ export class InjectedScript {
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | 'error:optionsnotfound' {
+  selectOptions(node: Node, optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | 'error:optionsnotfound' | 'error:optionnotenabled' {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
@@ -776,6 +776,8 @@ export class InjectedScript {
       };
       if (!remainingOptionsToSelect.some(filter))
         continue;
+      if (!this.elementState(option, 'enabled').matches)
+        return 'error:optionnotenabled';
       selectedOptions.push(option);
       if (select.multiple) {
         remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));

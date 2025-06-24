@@ -38,7 +38,7 @@ export type InputFilesItems = {
 };
 
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
-type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
+type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | 'error:optionnotenabled' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
 
 export class NonRecoverableDOMError extends Error {
 }
@@ -334,6 +334,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       if (result === 'error:optionsnotfound') {
         progress.log('  did not find some options');
+        continue;
+      }
+      if (result === 'error:optionnotenabled') {
+        progress.log('  option being selected is not enabled');
         continue;
       }
       if (typeof result === 'object' && 'hitTargetDescription' in result) {
