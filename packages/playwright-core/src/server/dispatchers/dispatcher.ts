@@ -105,7 +105,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   private _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
     if (progressTypes.has(this._type)) {
       const controller = new ProgressController(callMetadata, this._object);
-      return controller.run(progress => (this as any)[method](validParams, progress), validParams.timeout);
+      return controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
     }
     return (this as any)[method](validParams, callMetadata);
   }

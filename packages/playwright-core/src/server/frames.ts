@@ -1335,7 +1335,8 @@ export class Frame extends SdkObject {
   }
 
   async waitForTimeout(progress: Progress, timeout: number) {
-    return progress.wait(timeout);
+    // Silent catch to avoid the self-inflicted timeout error.
+    return progress.wait(timeout).catch(() => {});
   }
 
   async ariaSnapshot(progress: Progress, selector: string, options: { forAI?: boolean }): Promise<string> {
