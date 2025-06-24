@@ -1,20 +1,21 @@
+// @ts-check
 import net from 'net';
 import { execSync, spawn } from 'child_process';
 import { readFileSync } from 'fs';
 
-const socketAddress = process.env.SOCKET_ADDRESS;
+const socketPort = process.env.SOCKET_ADDRESS;
 
-if (!socketAddress)
+if (!socketPort)
     throw new Error('SOCKET_ADDRESS is not set');
-
-let address = (() => {
-  if (execSync('wslinfo --networking-mode').trim() === 'nat') {
-    return readFileSync('/etc/resolv.conf', 'utf8').split('\n').find(line => line.startsWith('nameserver')).split(' ')[1];
+const address = (() => {
+  if (execSync('wslinfo --networking-mode', { encoding: 'utf8' }).trim() === 'nat') {
+    const nameserverLine = readFileSync('/etc/resolv.conf', 'utf8').split('\n').find(line => line.startsWith('nameserver'));
+    return nameserverLine?.split(' ')[1] || '127.0.0.1';
   }
   return '127.0.0.1';
-})()
+})();
 
-const socket = net.createConnection(socketAddress, address);
+const socket = net.createConnection(parseInt(socketPort), address);
 socket.on('error', (error) => console.log('socket error from wrapper', error));
 
 await new Promise((resolve, reject) => {
