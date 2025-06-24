@@ -42,7 +42,8 @@ export const extensionTest = baseTest.extend<TraceViewerFixtures>(traceViewerFix
   relayServer: [async ({ }, use) => {
     const httpServer = http.createServer();
     await new Promise<void>(resolve => httpServer.listen(0, resolve));
-    const { CDPRelayServer } = await import('../../../playwright-mcp/src/cdpRelay.ts');
+    // @ts-ignore TS1323
+    const { CDPRelayServer } = await import('../../../playwright-mcp/src/cdpRelay.ts' as string as any /* make TypeScript treat it as a generic import it can't type-check */);
     new CDPRelayServer(httpServer);
     await use(httpServer);
     httpServer.close();
