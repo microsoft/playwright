@@ -18,6 +18,8 @@ import { EventEmitter } from 'events';
 
 import { RecorderCollection } from './recorderCollection';
 import * as rawRecorderSource from '../../generated/pollingRecorderSource';
+import fs from 'fs';
+import path from 'path';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue  } from '../../utils';
 import { raceAgainstDeadline } from '../../utils/isomorphic/timeoutRunner';
 import { BrowserContext } from '../browserContext';
@@ -161,8 +163,24 @@ export class ContextRecorder extends EventEmitter {
   }
 
   private async _onPage(page: Page) {
+    console.log('there')
+    const frame: Frame = page.mainFrame();
+    page.on('load', async () => {
+      try {
+        const html = await page.mainFrame().content();
+        const url = page.mainFrame().url();
+        const safeHost = new URL(url).hostname.replace(/\W+/g, '_') || 'aboutblank';
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const dir = '/tmp/html_files';
+        fs.mkdirSync(dir, { recursive: true });
+        const filePath = path.join(dir, `${timestamp}_${safeHost}.html`);
+        fs.writeFileSync(filePath, html);
+        console.log(`[codegen] Saved HTML to ${filePath}`);
+      } catch (err) {
+        console.warn(`[codegen] Failed to save HTML: ${err}`);
+      }
+    })
     // First page is called page, others are called popup1, popup2, etc.
-    const frame = page.mainFrame();
     page.on('close', () => {
       this._collection.addRecordedAction({
         frame: this._describeMainFrame(page),
