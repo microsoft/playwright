@@ -50,6 +50,8 @@ function addTestCommand(program: Command) {
       option.choices(choices);
     if (preset)
       option.preset(preset);
+    // We don't set the default value here, because we want not specified options to
+    // fall back to the user config, which we haven't parsed yet.
     command.addOption(option);
     return command;
   });
