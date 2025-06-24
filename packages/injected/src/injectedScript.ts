@@ -1321,7 +1321,7 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
+  async expect(element: Element | undefined, options: Omit<FrameExpectParams, 'timeout'>, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);
@@ -1357,7 +1357,7 @@ export class InjectedScript {
     return await this.expectSingleElement(element, options);
   }
 
-  private async expectSingleElement(element: Element, options: FrameExpectParams): Promise<{ matches: boolean, received?: any }> {
+  private async expectSingleElement(element: Element, options: Omit<FrameExpectParams, 'timeout'>): Promise<{ matches: boolean, received?: any }> {
     const expression = options.expression;
 
     {
@@ -1516,7 +1516,7 @@ export class InjectedScript {
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
 
-  private expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
+  private expectArray(elements: Element[], options: Omit<FrameExpectParams, 'timeout'>): { matches: boolean, received?: any } {
     const expression = options.expression;
 
     if (expression === 'to.have.count') {

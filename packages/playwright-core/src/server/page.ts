@@ -489,7 +489,7 @@ export class Page extends SdkObject {
         const promise = handler.resolved.then(async () => {
           if (!handler.noWaitAfter) {
             progress.log(`  locator handler has finished, waiting for ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)} to be hidden`);
-            await this.mainFrame().waitForSelectorInternal(progress, handler.selector, false, { state: 'hidden' });
+            await this.mainFrame().waitForSelector(progress, handler.selector, false, { state: 'hidden' });
           } else {
             progress.log(`  locator handler has finished`);
           }

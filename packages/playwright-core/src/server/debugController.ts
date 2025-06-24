@@ -22,6 +22,7 @@ import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { ProgressController } from './progress';
 
 import type { Language } from '../utils';
 import type { Browser } from './browser';
@@ -83,8 +84,10 @@ export class DebugController extends SdkObject {
   }
 
   async navigate(url: string) {
-    for (const p of this._playwright.allPages())
-      await p.mainFrame().goto(internalMetadata, url, { timeout: DEFAULT_PLAYWRIGHT_TIMEOUT });
+    for (const p of this._playwright.allPages()) {
+      const controller = new ProgressController(internalMetadata, this);
+      await controller.run(progress => p.mainFrame().goto(progress, url), DEFAULT_PLAYWRIGHT_TIMEOUT);
+    }
   }
 
   async setRecorderMode(params: { mode: Mode, file?: string, testIdAttributeName?: string }) {

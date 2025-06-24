@@ -183,18 +183,18 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+
+    if (process.env.PWTEST_PRINT_WS_ENDPOINT)
+      process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
+
+    if (!isUnderTest())
+      await syncLocalStorageWithSettings(page, 'traceviewer');
+
+    if (isUnderTest())
+      page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
+
+    await page.mainFrame().goto(progress, url);
   });
-
-  if (process.env.PWTEST_PRINT_WS_ENDPOINT)
-    process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
-
-  if (!isUnderTest())
-    await syncLocalStorageWithSettings(page, 'traceviewer');
-
-  if (isUnderTest())
-    page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
-
-  await page.mainFrame().goto(serverSideCallMetadata(), url, { timeout: 0 });
   return page;
 }
 
