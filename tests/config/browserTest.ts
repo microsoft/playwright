@@ -62,14 +62,15 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     if (!channel)
       return await use(undefined);
     if (execSync('wsl -d playwright --cd /home/pwuser wslinfo --networking-mode').includes('nat'))
-      return await use(execSync('wsl -d playwright --cd /home/pwuser cat /etc/resolv.conf').toString().split('\n').find(line => line.startsWith('nameserver')).split(' ')[1]);
+      return await use(execSync('wsl -d playwright --cd /home/pwuser ip route show', { encoding: 'utf8' }).trim().split('\n').find(line => line.includes('default'))?.split(' ')[2]);
     return await use(undefined);
   }, { scope: 'worker', timeout: 10000 }],
+
   loopback2: [async ({ channel }, use) => {
     if (!channel)
       return await use(undefined);
     if (execSync('wsl -d playwright --cd /home/pwuser wslinfo --networking-mode').includes('nat'))
-      return await use(execSync('wsl -d playwright --cd /home/pwuser cat /etc/resolv.conf').toString().split('\n').find(line => line.startsWith('nameserver')).split(' ')[1]);
+      return await use(execSync('wsl -d playwright --cd /home/pwuser ip route show', { encoding: 'utf8' }).trim().split('\n').find(line => line.includes('default'))?.split(' ')[2]);
     return await use(undefined);
   }, { scope: 'worker', timeout: 10000 }],
 

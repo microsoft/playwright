@@ -24,6 +24,7 @@ import { SocksProxy } from '../../packages/playwright-core/lib/server/utils/sock
 
 export type ServerWorkerOptions = {
   loopback?: string;
+  loopback2?: string;
   __servers: ServerFixtures;
 };
 
@@ -37,16 +38,16 @@ export type ServerFixtures = {
 
 export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
   loopback: [undefined, { scope: 'worker', option: true }],
-  __servers: [async ({ loopback }, run, workerInfo) => {
+  __servers: [async ({ loopback, loopback2 }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 4;
-    const server = await TestServer.create(assetsPath, port, loopback);
+    const server = await TestServer.create(assetsPath, port, loopback, loopback2);
     server.enableHTTPCache(cachedPath);
 
     const httpsPort = port + 1;
-    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback);
+    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback, loopback2);
     httpsServer.enableHTTPCache(cachedPath);
 
     const socksServer = new MockSocksServer();

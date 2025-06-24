@@ -9,9 +9,11 @@ if (!socketPort)
     throw new Error('SOCKET_ADDRESS is not set');
 const address = (() => {
   if (execSync('wslinfo --networking-mode', { encoding: 'utf8' }).trim() === 'nat') {
-    const nameserverLine = readFileSync('/etc/resolv.conf', 'utf8').split('\n').find(line => line.startsWith('nameserver'));
-    return nameserverLine?.split(' ')[1] || '127.0.0.1';
-  }
+    const ip = execSync('ip route show', { encoding: 'utf8' }).trim().split('\n').find(line => line.includes('default'))?.split(' ')[2];
+    if (!ip)
+      throw new Error('Could not determine WSL IP address');
+    return ip;
+}
   return '127.0.0.1';
 })();
 
