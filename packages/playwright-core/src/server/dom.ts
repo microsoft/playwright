@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import * as js from './javascript';
 import { ProgressController } from './progress';
-import { asLocator, isUnderTest } from '../utils';
+import { isUnderTest } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import * as rawInjectedScriptSource from '../generated/injectedScriptSource';
 
@@ -181,38 +181,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!isFrameElement)
       return null;
     return this._page.delegate.getContentFrame(this);
-  }
-
-  async generateLocatorString(): Promise<string | undefined> {
-    const selectors = await this._generateSelectorString();
-    if (!selectors.length)
-      return;
-    return asLocator('javascript', selectors.reverse().join(' >> internal:control=enter-frame >> '));
-  }
-
-  private async _generateSelectorString(): Promise<string[]> {
-    const selector = await this.evaluateInUtility(async ([injected, node]) => {
-      return injected.generateSelectorSimple(node as unknown as Element);
-    }, {});
-    if (selector === 'error:notconnected')
-      return [];
-
-    let frame: frames.Frame | null = this._frame;
-    const result: string[] = [selector];
-    while (frame?.parentFrame()) {
-      const frameElement = await frame.frameElement();
-      if (frameElement) {
-        const selector = await frameElement.evaluateInUtility(async ([injected, node]) => {
-          return injected.generateSelectorSimple(node as unknown as Element);
-        }, {});
-        frameElement.dispose();
-        if (selector === 'error:notconnected')
-          return [];
-        result.push(selector);
-      }
-      frame = frame.parentFrame();
-    }
-    return result;
   }
 
   async getAttribute(metadata: CallMetadata, name: string): Promise<string | null> {

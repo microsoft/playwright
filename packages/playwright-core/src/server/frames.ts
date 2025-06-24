@@ -1212,6 +1212,38 @@ export class Frame extends SdkObject {
     }, options.timeout);
   }
 
+  async generateLocatorString(metadata: CallMetadata, selector: string): Promise<string | undefined> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      const element = await progress.race(this.selectors.query(selector));
+      if (!element)
+        throw new Error(`No element matching ${this._asLocator(selector)}`);
+
+      const generated = await progress.race(element.evaluateInUtility(async ([injected, node]) => {
+        return injected.generateSelectorSimple(node as unknown as Element);
+      }, {}));
+      if (!generated)
+        throw new Error(`Unable to generate locator for ${this._asLocator(selector)}`);
+
+      let frame: Frame | null = element._frame;
+      const result = [generated];
+      while (frame?.parentFrame()) {
+        const frameElement = await progress.race(frame.frameElement());
+        if (frameElement) {
+          const generated = await progress.race(frameElement.evaluateInUtility(async ([injected, node]) => {
+            return injected.generateSelectorSimple(node as unknown as Element);
+          }, {}));
+          frameElement.dispose();
+          if (generated === 'error:notconnected' || !generated)
+            throw new Error(`Unable to generate locator for ${this._asLocator(selector)}`);
+          result.push(generated);
+        }
+        frame = frame.parentFrame();
+      }
+      return asLocator(this._page.browserContext._browser.sdkLanguage(), result.reverse().join(' >> internal:control=enter-frame >> '));
+    });
+  }
+
   async textContent(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string | null> {
     return this._callOnElementOnceMatches(metadata, selector, (injected, element) => element.textContent, undefined, options, scope);
   }

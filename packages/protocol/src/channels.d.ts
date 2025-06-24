@@ -2635,6 +2635,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   fill(params: FrameFillParams, metadata?: CallMetadata): Promise<FrameFillResult>;
   focus(params: FrameFocusParams, metadata?: CallMetadata): Promise<FrameFocusResult>;
   frameElement(params?: FrameFrameElementParams, metadata?: CallMetadata): Promise<FrameFrameElementResult>;
+  generateLocatorString(params: FrameGenerateLocatorStringParams, metadata?: CallMetadata): Promise<FrameGenerateLocatorStringResult>;
   highlight(params: FrameHighlightParams, metadata?: CallMetadata): Promise<FrameHighlightResult>;
   getAttribute(params: FrameGetAttributeParams, metadata?: CallMetadata): Promise<FrameGetAttributeResult>;
   goto(params: FrameGotoParams, metadata?: CallMetadata): Promise<FrameGotoResult>;
@@ -2889,6 +2890,15 @@ export type FrameFrameElementParams = {};
 export type FrameFrameElementOptions = {};
 export type FrameFrameElementResult = {
   element: ElementHandleChannel,
+};
+export type FrameGenerateLocatorStringParams = {
+  selector: string,
+};
+export type FrameGenerateLocatorStringOptions = {
+
+};
+export type FrameGenerateLocatorStringResult = {
+  value?: string,
 };
 export type FrameHighlightParams = {
   selector: string,
@@ -3395,7 +3405,6 @@ export interface ElementHandleChannel extends ElementHandleEventTarget, JSHandle
   dispatchEvent(params: ElementHandleDispatchEventParams, metadata?: CallMetadata): Promise<ElementHandleDispatchEventResult>;
   fill(params: ElementHandleFillParams, metadata?: CallMetadata): Promise<ElementHandleFillResult>;
   focus(params?: ElementHandleFocusParams, metadata?: CallMetadata): Promise<ElementHandleFocusResult>;
-  generateLocatorString(params?: ElementHandleGenerateLocatorStringParams, metadata?: CallMetadata): Promise<ElementHandleGenerateLocatorStringResult>;
   getAttribute(params: ElementHandleGetAttributeParams, metadata?: CallMetadata): Promise<ElementHandleGetAttributeResult>;
   hover(params: ElementHandleHoverParams, metadata?: CallMetadata): Promise<ElementHandleHoverResult>;
   innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: CallMetadata): Promise<ElementHandleInnerHTMLResult>;
@@ -3531,11 +3540,6 @@ export type ElementHandleFillResult = void;
 export type ElementHandleFocusParams = {};
 export type ElementHandleFocusOptions = {};
 export type ElementHandleFocusResult = void;
-export type ElementHandleGenerateLocatorStringParams = {};
-export type ElementHandleGenerateLocatorStringOptions = {};
-export type ElementHandleGenerateLocatorStringResult = {
-  value?: string,
-};
 export type ElementHandleGetAttributeParams = {
   name: string,
 };

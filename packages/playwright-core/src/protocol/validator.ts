@@ -1651,6 +1651,12 @@ scheme.FrameFrameElementParams = tOptional(tObject({}));
 scheme.FrameFrameElementResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameGenerateLocatorStringParams = tObject({
+  selector: tString,
+});
+scheme.FrameGenerateLocatorStringResult = tObject({
+  value: tOptional(tString),
+});
 scheme.FrameHighlightParams = tObject({
   selector: tString,
 });
@@ -2044,10 +2050,6 @@ scheme.ElementHandleFillParams = tObject({
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
 scheme.ElementHandleFocusResult = tOptional(tObject({}));
-scheme.ElementHandleGenerateLocatorStringParams = tOptional(tObject({}));
-scheme.ElementHandleGenerateLocatorStringResult = tObject({
-  value: tOptional(tString),
-});
 scheme.ElementHandleGetAttributeParams = tObject({
   name: tString,
 });
