@@ -27,7 +27,7 @@ import * as network from './network';
 import { Page } from './page';
 import { isAbortError, ProgressController } from './progress';
 import * as types from './types';
-import { LongStandingScope, asLocator, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime, renderTitleForCall } from '../utils';
+import { LongStandingScope, asLocator, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, renderTitleForCall } from '../utils';
 import { isSessionClosedError } from './protocolError';
 import { debugLogger } from './utils/debugLogger';
 import { eventsHelper } from './utils/eventsHelper';
@@ -1417,26 +1417,21 @@ export class Frame extends SdkObject {
   }
 
   private async _expectImpl(metadata: CallMetadata, selector: string | undefined, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    const controller = new ProgressController(metadata, this);
     const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
-    try {
-      let timeout = options.timeout;
-      const start = timeout > 0 ? monotonicTime() : 0;
-
+    return await controller.run(async progress => {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
-      await (new ProgressController(metadata, this)).run(async progress => {
-        progress.log(`${renderTitleForCall(metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
-        if (selector)
-          progress.log(`waiting for ${this._asLocator(selector)}`);
-        await this._page.performActionPreChecks(progress);
-      }, timeout);
+      progress.log(`${renderTitleForCall(metadata)}${options.timeout ? ` with timeout ${options.timeout}ms` : ''}`);
+      if (selector)
+        progress.log(`waiting for ${this._asLocator(selector)}`);
+      await this._page.performActionPreChecks(progress);
 
       // Step 2: perform one-shot expect check without a timeout.
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
+      progress.legacyDisableTimeout();
       try {
-        const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
-          return await this._expectInternal(progress, selector, options, lastIntermediateResult);
-        });
+        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
         if (resultOneShot.matches !== options.isNot)
           return resultOneShot;
       } catch (e) {
@@ -1444,28 +1439,21 @@ export class Frame extends SdkObject {
           throw e;
         // Ignore any other errors from one-shot, we'll handle them during retries.
       }
-      if (timeout > 0) {
-        const elapsed = monotonicTime() - start;
-        timeout -= elapsed;
-      }
-      if (timeout < 0)
-        return { matches: options.isNot, log: compressCallLog(metadata.log), timedOut: true, received: lastIntermediateResult.received };
+      progress.legacyEnableTimeout();
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      return await (new ProgressController(metadata, this)).run(async progress => {
-        return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
-          await this._page.performActionPreChecks(progress);
-          const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult);
-          if (matches === options.isNot) {
-            // Keep waiting in these cases:
-            // expect(locator).conditionThatDoesNotMatch
-            // expect(locator).not.conditionThatDoesMatch
-            return continuePolling;
-          }
-          return { matches, received };
-        });
-      }, timeout);
-    } catch (e) {
+      return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
+        await this._page.performActionPreChecks(progress);
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
+        if (matches === options.isNot) {
+          // Keep waiting in these cases:
+          // expect(locator).conditionThatDoesNotMatch
+          // expect(locator).not.conditionThatDoesMatch
+          return continuePolling;
+        }
+        return { matches, received };
+      });
+    }, options.timeout).catch(e => {
       // Q: Why not throw upon isNonRetriableError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
@@ -1476,18 +1464,20 @@ export class Frame extends SdkObject {
       if (e instanceof TimeoutError)
         result.timedOut = true;
       return result;
-    }
+    });
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }) {
-    const selectorInFrame = selector ? await progress.race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }, noAbort: boolean) {
+    // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
+    const race = <T>(p: Promise<T>) => noAbort ? p : progress.race(p);
+    const selectorInFrame = selector ? await race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
 
     const { frame, info } = selectorInFrame || { frame: this, info: undefined };
     const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
-    const context = await progress.race(frame._context(world));
-    const injected = await progress.race(context.injectedScript());
+    const context = await race(frame._context(world));
+    const injected = await race(context.injectedScript());
 
-    const { log, matches, received, missingReceived } = await progress.race(injected.evaluate(async (injected, { info, options, callId }) => {
+    const { log, matches, received, missingReceived } = await race(injected.evaluate(async (injected, { info, options, callId }) => {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
       if (callId)
         injected.markTargetElements(new Set(elements), callId);

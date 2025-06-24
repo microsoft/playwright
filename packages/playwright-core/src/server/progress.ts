@@ -15,7 +15,7 @@
  */
 
 import { TimeoutError } from './errors';
-import { assert } from '../utils';
+import { assert, monotonicTime } from '../utils';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
@@ -43,6 +43,10 @@ export interface Progress {
   raceWithCleanup<T>(promise: Promise<T>, cleanup: (result: T) => any): Promise<T>;
   wait(timeout: number): Promise<void>;
   metadata: CallMetadata;
+
+  // Legacy lenient mode api only. To be removed.
+  legacyDisableTimeout(): void;
+  legacyEnableTimeout(): void;
 }
 
 export class ProgressController {
@@ -93,6 +97,26 @@ export class ProgressController {
     this._state = 'running';
     this.sdkObject.attribution.context?._activeProgressControllers.add(this);
 
+    const deadline = timeout ? Math.min(monotonicTime() + timeout, 2147483647) : 0; // 2^31-1 safe setTimeout in Node.
+    const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
+
+    let timer: NodeJS.Timeout | undefined;
+    const startTimer = () => {
+      if (!deadline)
+        return;
+      const onTimeout = () => {
+        if (this._state === 'running') {
+          this._state = { error: timeoutError };
+          this._forceAbortPromise.reject(timeoutError);
+        }
+      };
+      const remaining = deadline - monotonicTime();
+      if (remaining <= 0)
+        onTimeout();
+      else
+        timer = setTimeout(onTimeout, remaining);
+    };
+
     const progress: Progress = {
       log: message => {
         if (this._state === 'running')
@@ -128,18 +152,19 @@ export class ProgressController {
         const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
         return progress.race(promise).finally(() => clearTimeout(timer));
       },
+      legacyDisableTimeout: () => {
+        if (this._strictMode)
+          return;
+        clearTimeout(timer);
+      },
+      legacyEnableTimeout: () => {
+        if (this._strictMode)
+          return;
+        startTimer();
+      },
     };
 
-    let timer: NodeJS.Timeout | undefined;
-    if (timeout) {
-      const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
-      timer = setTimeout(() => {
-        if (this._state === 'running') {
-          this._state = { error: timeoutError };
-          this._forceAbortPromise.reject(timeoutError);
-        }
-      }, Math.min(timeout, 2147483647)); // 2^31-1 safe setTimeout in Node.
-    }
+    startTimer();
 
     try {
       const promise = task(progress);
