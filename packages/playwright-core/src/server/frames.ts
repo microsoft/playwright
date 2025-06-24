@@ -608,12 +608,12 @@ export class Frame extends SdkObject {
     data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
   }
 
-  async goto(progress: Progress, url: string, options: Omit<types.GotoOptions, 'timeout'> = {}): Promise<network.Response | null> {
+  async goto(progress: Progress, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     const constructedNavigationURL = constructURLBasedOnBaseURL(this._page.browserContext._options.baseURL, url);
     return this.raceNavigationAction(progress, async () => this.gotoImpl(progress, constructedNavigationURL, options));
   }
 
-  async gotoImpl(progress: Progress, url: string, options: Omit<types.GotoOptions, 'timeout'>): Promise<network.Response | null> {
+  async gotoImpl(progress: Progress, url: string, options: types.GotoOptions): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
     const headers = this._page.extraHTTPHeaders() || [];
@@ -669,7 +669,7 @@ export class Frame extends SdkObject {
     return response;
   }
 
-  async _waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: types.NavigateOptions): Promise<network.Response | null> {
+  async _waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: Omit<types.NavigateOptions, 'timeout'>): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`waiting for navigation until "${waitUntil}"`);
 
@@ -739,7 +739,7 @@ export class Frame extends SdkObject {
     return this.selectors.query(selector, options);
   }
 
-  async waitForSelector(progress: Progress, selector: string, performActionPreChecksAndLog: boolean, options: Omit<types.WaitForElementOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+  async waitForSelector(progress: Progress, selector: string, performActionPreChecksAndLog: boolean, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     if ((options as any).visibility)
       throw new Error('options.visibility is not supported, did you mean options.state?');
     if ((options as any).waitFor && (options as any).waitFor !== 'visible')
@@ -803,7 +803,7 @@ export class Frame extends SdkObject {
     return scope ? scope._context._raceAgainstContextDestroyed(promise) : promise;
   }
 
-  async dispatchEvent(progress: Progress, selector: string, type: string, eventInit: Object = {}, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<void> {
+  async dispatchEvent(progress: Progress, selector: string, type: string, eventInit: Object = {}, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<void> {
     await this._callOnElementOnceMatches(progress, selector, (injectedScript, element, data) => {
       injectedScript.dispatchEvent(element, data.type, data.eventInit);
     }, { type, eventInit }, { mainWorld: true, ...options }, scope);
@@ -1127,15 +1127,15 @@ export class Frame extends SdkObject {
     });
   }
 
-  async click(progress: Progress, selector: string, options: Omit<{ noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions, 'timeout'>) {
+  async click(progress: Progress, selector: string, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter })));
   }
 
-  async dblclick(progress: Progress, selector: string, options: Omit<types.MouseMultiClickOptions & types.PointerActionWaitOptions, 'timeout'>) {
+  async dblclick(progress: Progress, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._dblclick(progress, options)));
   }
 
-  async dragAndDrop(progress: Progress, source: string, target: string, options: Omit<types.DragActionOptions & types.PointerActionWaitOptions, 'timeout'>) {
+  async dragAndDrop(progress: Progress, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions) {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, !options.force /* performActionPreChecks */, async handle => {
       return handle._retryPointerAction(progress, 'move and down', false, async point => {
         await this._page.mouse._move(progress, point.x, point.y);
@@ -1159,7 +1159,7 @@ export class Frame extends SdkObject {
     }));
   }
 
-  async tap(progress: Progress, selector: string, options: Omit<types.PointerActionWaitOptions, 'timeout'>) {
+  async tap(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
     if (!this._page.browserContext._options.hasTouch)
       throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._tap(progress, options)));
@@ -1206,11 +1206,11 @@ export class Frame extends SdkObject {
     return asLocator(this._page.browserContext._browser.sdkLanguage(), result.reverse().join(' >> internal:control=enter-frame >> '));
   }
 
-  async textContent(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<string | null> {
+  async textContent(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string | null> {
     return this._callOnElementOnceMatches(progress, selector, (injected, element) => element.textContent, undefined, options, scope);
   }
 
-  async innerText(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<string> {
+  async innerText(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string> {
     return this._callOnElementOnceMatches(progress, selector, (injectedScript, element) => {
       if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
         throw injectedScript.createStacklessError('Node is not an HTMLElement');
@@ -1218,11 +1218,11 @@ export class Frame extends SdkObject {
     }, undefined, options, scope);
   }
 
-  async innerHTML(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<string> {
+  async innerHTML(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string> {
     return this._callOnElementOnceMatches(progress, selector, (injected, element) => element.innerHTML, undefined, options, scope);
   }
 
-  async getAttribute(progress: Progress, selector: string, name: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<string | null> {
+  async getAttribute(progress: Progress, selector: string, name: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string | null> {
     return this._callOnElementOnceMatches(progress, selector, (injected, element, data) => element.getAttribute(data.name), { name }, options, scope);
   }
 
@@ -1254,7 +1254,7 @@ export class Frame extends SdkObject {
     });
   }
 
-  private async _elementState(progress: Progress, selector: string, state: ElementStateWithoutStable, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<boolean> {
+  private async _elementState(progress: Progress, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     const result = await this._callOnElementOnceMatches(progress, selector, (injected, element, data) => {
       return injected.elementState(element, data.state);
     }, { state }, options, scope);
@@ -1289,27 +1289,27 @@ export class Frame extends SdkObject {
     return !(await this.isVisible(progress, selector, options, scope));
   }
 
-  async isDisabled(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<boolean> {
+  async isDisabled(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'disabled', options, scope);
   }
 
-  async isEnabled(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<boolean> {
+  async isEnabled(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'enabled', options, scope);
   }
 
-  async isEditable(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<boolean> {
+  async isEditable(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'editable', options, scope);
   }
 
-  async isChecked(progress: Progress, selector: string, options: Omit<types.QueryOnSelectorOptions, 'timeout'>, scope?: dom.ElementHandle): Promise<boolean> {
+  async isChecked(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'checked', options, scope);
   }
 
-  async hover(progress: Progress, selector: string, options: Omit<types.PointerActionOptions & types.PointerActionWaitOptions, 'timeout'>) {
+  async hover(progress: Progress, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._hover(progress, options)));
   }
 
-  async selectOption(progress: Progress, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: Omit<types.CommonActionOptions, 'timeout'>): Promise<string[]> {
+  async selectOption(progress: Progress, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
     return await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._selectOption(progress, elements, values, options));
   }
 
@@ -1326,11 +1326,11 @@ export class Frame extends SdkObject {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._press(progress, key, options)));
   }
 
-  async check(progress: Progress, selector: string, options: Omit<types.PointerActionWaitOptions, 'timeout'>) {
+  async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._setChecked(progress, true, options)));
   }
 
-  async uncheck(progress: Progress, selector: string, options: Omit<types.PointerActionWaitOptions, 'timeout'>) {
+  async uncheck(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._setChecked(progress, false, options)));
   }
 
@@ -1342,7 +1342,7 @@ export class Frame extends SdkObject {
     return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot(options)));
   }
 
-  async expect(progress: Progress, selector: string | undefined, options: Omit<FrameExpectParams, 'timeout'>, timeout?: number): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams, timeout?: number): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     progress.log(`${renderTitleForCall(progress.metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
     const result = await this._expectImpl(progress, selector, options);
     // Library mode special case for the expect errors which are return values, not exceptions.
@@ -1351,7 +1351,7 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  private async _expectImpl(progress: Progress, selector: string | undefined, options: Omit<FrameExpectParams, 'timeout'>): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  private async _expectImpl(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
     try {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
@@ -1400,7 +1400,7 @@ export class Frame extends SdkObject {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: Omit<FrameExpectParams, 'timeout'>, lastIntermediateResult: { received?: any, isSet: boolean }, noAbort: boolean) {
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }, noAbort: boolean) {
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
     const race = <T>(p: Promise<T>) => noAbort ? p : progress.race(p);
     const selectorInFrame = selector ? await race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;

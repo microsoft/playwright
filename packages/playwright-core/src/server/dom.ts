@@ -348,7 +348,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
-    options: Omit<{ waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+    options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
     const skipActionPreChecks = actionName === 'move and up';
     return await this._retryAction(progress, actionName, async retry => {
@@ -373,7 +373,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     waitForEnabled: boolean,
     action: (point: types.Point) => Promise<void>,
     forceScrollOptions: ScrollIntoViewOptions | undefined,
-    options: Omit<{ waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions, 'timeout'>,
+    options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions,
   ): Promise<PerformActionResult> {
     const { force = false, position } = options;
 
@@ -500,53 +500,53 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, progress.metadata.id));
   }
 
-  async hover(progress: Progress, options: Omit<types.PointerActionOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<void> {
+  async hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._hover(progress, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  _hover(progress: Progress, options: Omit<types.PointerActionOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+  _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse._move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
-  async click(progress: Progress, options: Omit<{ noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<void> {
+  async click(progress: Progress, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._click(progress, { ...options, waitAfter: !options.noWaitAfter });
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  _click(progress: Progress, options: Omit<{ waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+  _click(progress: Progress, options: { waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse._click(progress, point.x, point.y, options), options);
   }
 
-  async dblclick(progress: Progress, options: Omit<types.MouseMultiClickOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<void> {
+  async dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._dblclick(progress, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  _dblclick(progress: Progress, options: Omit<types.MouseMultiClickOptions & types.PointerActionWaitOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+  _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse._click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' });
   }
 
-  async tap(progress: Progress, options: Omit<types.PointerActionWaitOptions, 'timeout'>): Promise<void> {
+  async tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._tap(progress, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  _tap(progress: Progress, options: Omit<types.PointerActionWaitOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+  _tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen._tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
-  async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: Omit<types.CommonActionOptions, 'timeout'>): Promise<string[]> {
+  async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
     await this._markAsTargetElement(progress);
     const result = await this._selectOption(progress, elements, values, options);
     return throwRetargetableDOMError(result);
   }
 
-  async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: Omit<types.CommonActionOptions, 'timeout'>): Promise<string[] | 'error:notconnected'> {
+  async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
     let resultingOptions: string[] = [];
     const result = await this._retryAction(progress, 'select option', async () => {
       await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
@@ -573,13 +573,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return resultingOptions;
   }
 
-  async fill(progress: Progress, value: string, options: Omit<types.CommonActionOptions, 'timeout'>): Promise<void> {
+  async fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._fill(progress, value, options);
     assertDone(throwRetargetableDOMError(result));
   }
 
-  async _fill(progress: Progress, value: string, options: Omit<types.CommonActionOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+  async _fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`  fill("${value}")`);
     return await this._retryAction(progress, 'fill', async () => {
       await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
@@ -605,7 +605,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options);
   }
 
-  async selectText(progress: Progress, options: Omit<types.CommonActionOptions, 'timeout'>): Promise<void> {
+  async selectText(progress: Progress, options: types.CommonActionOptions): Promise<void> {
     const result = await this._retryAction(progress, 'selectText', async () => {
       if (!options.force)
         progress.log('  waiting for element to be visible');
@@ -716,17 +716,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     });
   }
 
-  async check(progress: Progress, options: Omit<{ position?: types.Point } & types.PointerActionWaitOptions, 'timeout'>) {
+  async check(progress: Progress, options: { position?: types.Point } & types.PointerActionWaitOptions) {
     const result = await this._setChecked(progress, true, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async uncheck(progress: Progress, options: Omit<{ position?: types.Point } & types.PointerActionWaitOptions, 'timeout'>) {
+  async uncheck(progress: Progress, options: { position?: types.Point } & types.PointerActionWaitOptions) {
     const result = await this._setChecked(progress, false, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _setChecked(progress: Progress, state: boolean, options: Omit<{ position?: types.Point } & types.PointerActionWaitOptions, 'timeout'>): Promise<'error:notconnected' | 'done'> {
+  async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
       const result = await progress.race(this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {}));
       if (result === 'error:notconnected' || result.received === 'error:notconnected')
@@ -808,7 +808,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assertDone(throwRetargetableDOMError(result));
   }
 
-  async waitForSelector(progress: Progress, selector: string, options: Omit<types.WaitForElementOptions, 'timeout'>): Promise<ElementHandle<Element> | null> {
+  async waitForSelector(progress: Progress, selector: string, options: types.WaitForElementOptions): Promise<ElementHandle<Element> | null> {
     return await this._frame.waitForSelector(progress, selector, true, options, this);
   }
 

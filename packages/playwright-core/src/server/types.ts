@@ -25,9 +25,9 @@ export type StrictOptions = {
   strict?: boolean,
 };
 
-export type QueryOnSelectorOptions = StrictOptions & TimeoutOptions;
+export type QueryOnSelectorOptions = StrictOptions;
 
-export type WaitForElementOptions = TimeoutOptions & StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' } & { omitReturnValue?: boolean };
+export type WaitForElementOptions = StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' } & { omitReturnValue?: boolean };
 
 export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number };
 
@@ -38,7 +38,7 @@ export type NavigateOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
 };
 
-export type CommonActionOptions = TimeoutOptions & StrictOptions & {
+export type CommonActionOptions = StrictOptions & {
   force?: boolean,
 };
 
@@ -133,7 +133,7 @@ export type MouseMultiClickOptions = PointerActionOptions & {
 
 export type World = 'main' | 'utility';
 
-export type GotoOptions = NavigateOptions & {
+export type GotoOptions = Omit<NavigateOptions, 'timeout'> & {
   referer?: string,
 };
 
