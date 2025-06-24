@@ -252,3 +252,16 @@ it('should auto-wait for blocking CSS', async ({ page, server }) => {
   `, { waitUntil: 'commit' });
   expect(await snapshotForAI(page)).toContainYaml('Hello World');
 });
+
+it('should show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+  await page.setContent(`
+    <div style="visibility: hidden;">
+      <div style="visibility: visible;">
+        <button>Foo</button>
+      </div>
+      <button>Bar</button>
+    </div>
+  `);
+
+  expect(await snapshotForAI(page)).toEqual(`- button "Foo" [ref=e3]`);
+});

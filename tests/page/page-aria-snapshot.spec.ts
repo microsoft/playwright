@@ -659,7 +659,7 @@ it('should not report textarea textContent', async ({ page }) => {
   `);
 });
 
-it('should show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+it('should not show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
   await page.setContent(`
     <div style="visibility: hidden;">
       <div style="visibility: visible;">
@@ -668,9 +668,7 @@ it('should show visible children of hidden elements', { annotation: { type: 'iss
     </div>
   `);
 
-  await checkAndMatchSnapshot(page.locator('body'), `
-    - button "Button"
-  `);
+  expect(await page.locator('body').ariaSnapshot()).toBe('');
 });
 
 it('should not show unhidden children of aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {

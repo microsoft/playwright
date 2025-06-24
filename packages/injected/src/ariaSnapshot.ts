@@ -84,8 +84,9 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
     const element = node as Element;
     if (!isVisible(element, options)) {
-      // skip this element, but still process its children: https://github.com/w3c/aria/issues/1055
-      processElement(ariaNode, element, []);
+      if (options?.forAI)
+        // skip this element, but still process its children https://github.com/microsoft/playwright/issues/36296
+        processElement(ariaNode, element, []);
       return;
     }
 
