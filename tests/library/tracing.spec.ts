@@ -165,7 +165,7 @@ test('should include context API requests', async ({ context, page, server }, te
   await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  expect(actions).toContain('Fetch "/simple.json"');
+  expect(actions).toContain('POST "/simple.json"');
   const harEntry = events.find(e => e.type === 'resource-snapshot');
   expect(harEntry).toBeTruthy();
   expect(harEntry.snapshot.request.url).toBe(server.PREFIX + '/simple.json');

@@ -115,7 +115,7 @@ export class Keyboard {
         await this._press(progress, char, { delay });
       } else {
         if (delay)
-          await wait(progress, delay);
+          await progress.wait(delay);
         await this._insertText(progress, char);
       }
     }
@@ -148,7 +148,7 @@ export class Keyboard {
       await this._down(progress, tokens[i]);
     await this._down(progress, key);
     if (options.delay)
-      await wait(progress, options.delay);
+      await progress.wait(options.delay);
     await this._up(progress, key);
     for (let i = tokens.length - 2; i >= 0; --i)
       await this._up(progress, tokens[i]);
@@ -266,10 +266,10 @@ export class Mouse {
       this._move(progress, x, y, { forClick: true });
       for (let cc = 1; cc <= clickCount; ++cc) {
         await this._down(progress, { ...options, clickCount: cc });
-        await wait(progress, delay);
+        await progress.wait(delay);
         await this._up(progress, { ...options, clickCount: cc });
         if (cc < clickCount)
-          await wait(progress, delay);
+          await progress.wait(delay);
       }
     } else {
       const promises = [];
@@ -373,9 +373,4 @@ export class Touchscreen {
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(progress, x, y, this._page.keyboard._modifiers());
   }
-}
-
-async function wait(progress: Progress, ms: number) {
-  await new Promise(f => setTimeout(f, Math.min(ms, progress.timeUntilDeadline())));
-  progress.throwIfAborted();
 }

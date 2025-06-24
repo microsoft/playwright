@@ -109,7 +109,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       platform: process.platform,
       wallTime: 0,
       monotonicTime: 0,
-      sdkLanguage: context.attribution.playwright.options.sdkLanguage,
+      sdkLanguage: this._sdkLanguage(),
       testIdAttributeName,
       contextId: context.guid,
     };
@@ -120,6 +120,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._contextCreatedEvent.channel = context._browser.options.channel;
       this._contextCreatedEvent.options = context._options;
     }
+  }
+
+  private _sdkLanguage() {
+    return this._context instanceof BrowserContext ? this._context._browser.sdkLanguage() : this._context.attribution.playwright.options.sdkLanguage;
   }
 
   async resetForReuse() {
@@ -136,7 +140,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error('Tracing has been already started');
 
     // Re-write for testing.
-    this._contextCreatedEvent.sdkLanguage = this._context.attribution.playwright.options.sdkLanguage;
+    this._contextCreatedEvent.sdkLanguage = this._sdkLanguage();
 
     // TODO: passing the same name for two contexts makes them write into a single file
     // and conflict.

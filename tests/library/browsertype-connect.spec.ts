@@ -258,9 +258,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }).catch(() => {})
       ]);
       expect(request.headers['user-agent']).toBe(getUserAgent());
-      // _bidiFirefox and _bidiChromium are initialized with 'bidi' as browser name.
-      const bidiAwareBrowserName = browserName.startsWith('_bidi') ? 'bidi' : browserName;
-      expect(request.headers['x-playwright-browser']).toBe(bidiAwareBrowserName);
+      expect(request.headers['x-playwright-browser']).toBe(browserName);
       expect(request.headers['foo']).toBe('bar');
     });
 
@@ -1039,6 +1037,12 @@ test.describe('launchServer only', () => {
       });
     }
   });
+
+  test('cannot launch another browser', async ({ connect, startRemoteServer }) => {
+    const remoteServer = await startRemoteServer('launchServer');
+    const browser = await connect(remoteServer.wsEndpoint()) as any;
+    await expect(browser._parent.launch({ timeout: 0 })).rejects.toThrowError('Launching more browsers is not allowed.');
+  });
 });
 
 test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
@@ -1049,4 +1053,15 @@ test('should refuse connecting when versions do not match', async ({ connect, ch
   expect(error.message).toContain('Playwright version mismatch');
   expect(error.message).toContain('server version: v1.2');
   expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
+});
+
+test('should timeout after redirect when connecting over http', async ({ connect, server }) => {
+  server.setRedirect('/connect/json', '/connect/slow');
+  let aborted = false;
+  server.setRoute('/connect/slow', (req, res) => {
+    req.socket.on('close', () => aborted = true);
+  });
+  const error = await connect(`${server.PREFIX}/connect`, { timeout: 2000, headers: { 'Connection': 'Close' } }).catch(e => e);
+  expect(error.message).toContain('Timeout 2000ms exceeded.');
+  await expect.poll(() => aborted).toBe(true);
 });

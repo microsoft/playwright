@@ -55,14 +55,13 @@ export class DragManager {
   async interceptDragCausedByMove(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
     this._lastPosition = { x, y };
     if (this._dragState) {
-      await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
+      await progress.race(this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
         type: 'dragOver',
         x,
         y,
         data: this._dragState,
         modifiers: toModifiersMask(modifiers),
-      });
-      progress.throwIfAborted();
+      }));
       return;
     }
     if (button !== 'left')
@@ -111,18 +110,16 @@ export class DragManager {
     }))).some(x => x);
     this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
     client.off('Input.dragIntercepted', onDragIntercepted!);
-    await client.send('Input.setInterceptDrags', { enabled: false });
-    progress.throwIfAborted();
+    await progress.race(client.send('Input.setInterceptDrags', { enabled: false }));
 
     if (this._dragState) {
-      await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
+      await progress.race(this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
         type: 'dragEnter',
         x,
         y,
         data: this._dragState,
         modifiers: toModifiersMask(modifiers),
-      });
-      progress.throwIfAborted();
+      }));
     }
   }
 
@@ -132,14 +129,13 @@ export class DragManager {
 
   async drop(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
     assert(this._dragState, 'missing drag state');
-    await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
+    await progress.race(this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
       type: 'drop',
       x,
       y,
       data: this._dragState,
       modifiers: toModifiersMask(modifiers),
-    });
+    }));
     this._dragState = null;
-    progress.throwIfAborted();
   }
 }

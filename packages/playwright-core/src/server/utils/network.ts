@@ -25,19 +25,20 @@ import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs
 
 import type net from 'net';
 import type { ProxySettings } from '../types';
+import type { Progress } from '../progress';
 
 export type HTTPRequestParams = {
   url: string,
   method?: string,
   headers?: http.OutgoingHttpHeaders,
   data?: string | Buffer,
-  timeout?: number,
   rejectUnauthorized?: boolean,
+  socketTimeout?: number,
 };
 
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
-export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
+export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void): { cancel(error: Error | undefined): void } {
   const parsedUrl = url.parse(params.url);
   let options: https.RequestOptions = {
     ...parsedUrl,
@@ -47,8 +48,6 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   };
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
-
-  const timeout = params.timeout ?? NET_DEFAULT_TIMEOUT;
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
@@ -69,13 +68,14 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     }
   }
 
+  let cancelRequest: (e: Error | undefined) => void;
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
     if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
       // Close the original socket before following the redirect. Otherwise
       // it may stay idle and cause a timeout error.
       request.destroy();
-      httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError);
+      cancelRequest = httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError).cancel;
     } else {
       onResponse(res);
     }
@@ -84,23 +84,20 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     https.request(options, requestCallback) :
     http.request(options, requestCallback);
   request.on('error', onError);
-  if (timeout !== undefined) {
-    const rejectOnTimeout = () =>  {
-      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
+  if (params.socketTimeout !== undefined) {
+    request.setTimeout(params.socketTimeout, () =>  {
+      onError(new Error(`Request to ${params.url} timed out after ${params.socketTimeout}ms`));
       request.abort();
-    };
-    if (timeout <= 0) {
-      rejectOnTimeout();
-      return;
-    }
-    request.setTimeout(timeout, rejectOnTimeout);
+    });
   }
+  cancelRequest = e => request.destroy(e);
   request.end(params.data);
+  return { cancel: e => cancelRequest(e) };
 }
 
-export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    httpRequest(params, async response => {
+export function fetchData(progress: Progress | undefined, params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
+  const promise = new Promise<string>((resolve, reject) => {
+    const { cancel } = httpRequest(params, async response => {
       if (response.statusCode !== 200) {
         const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
         reject(error);
@@ -111,7 +108,9 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
       response.on('error', (error: any) => reject(error));
       response.on('end', () => resolve(body));
     }, reject);
+    progress?.cleanupWhenAborted(cancel);
   });
+  return progress ? progress.race(promise) : promise;
 }
 
 function shouldBypassProxy(url: URL, bypass?: string): boolean {

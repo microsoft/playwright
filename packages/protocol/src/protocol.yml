@@ -366,7 +366,7 @@ APIRequestContext:
   commands:
 
     fetch:
-      title: Fetch "{url}"
+      title: '{method} "{url}"'
       parameters:
         url: string
         encodedParams: string?
@@ -791,8 +791,8 @@ Playwright:
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
-    bidiChromium: BrowserType
-    bidiFirefox: BrowserType
+    _bidiChromium: BrowserType
+    _bidiFirefox: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?
@@ -2659,7 +2659,7 @@ Frame:
     expect:
       title: Expect "{expression}"
       parameters:
-        selector: string
+        selector: string?
         expression: string
         expressionArg: json?
         expectedText:

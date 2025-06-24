@@ -244,7 +244,7 @@ export class ClientCertificatesProxy {
   alpnCache: ALPNCache;
   proxyAgentFromOptions: ReturnType<typeof createProxyAgent>;
 
-  constructor(
+  private constructor(
     contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>
   ) {
     verifyClientCertificates(contextOptions.clientCertificates);
@@ -294,9 +294,14 @@ export class ClientCertificatesProxy {
     }
   }
 
-  public async listen() {
-    const port = await this._socksProxy.listen(0, '127.0.0.1');
-    return { server: `socks5://127.0.0.1:${port}` };
+  public static async create(contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>) {
+    const proxy = new ClientCertificatesProxy(contextOptions);
+    await proxy._socksProxy.listen(0, '127.0.0.1');
+    return proxy;
+  }
+
+  public proxySettings(): types.ProxySettings {
+    return { server: `socks5://127.0.0.1:${this._socksProxy.port()}` };
   }
 
   public async close() {

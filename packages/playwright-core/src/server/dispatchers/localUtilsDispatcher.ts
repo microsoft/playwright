@@ -137,16 +137,14 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
   if (!fetchUrl.pathname.endsWith('/'))
     fetchUrl.pathname += '/';
   fetchUrl.pathname += 'json';
-  const json = await fetchData({
+  const json = await fetchData(progress, {
     url: fetchUrl.toString(),
     method: 'GET',
-    timeout: progress.timeUntilDeadline(),
     headers: { 'User-Agent': getUserAgent() },
   }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
     return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
         `This does not look like a Playwright server, try connecting via ws://.`);
   });
-  progress.throwIfAborted();
 
   const wsUrl = new URL(endpointURL);
   let wsEndpointPath = JSON.parse(json).wsEndpointPath;

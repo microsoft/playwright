@@ -158,6 +158,7 @@ export type LaunchOptions = channels.BrowserTypeLaunchParams & {
   cdpPort?: number,
   proxyOverride?: ProxySettings,
   assistantMode?: boolean,
+  socksProxyPort?: number,
 };
 
 export type BrowserContextOptions = channels.BrowserNewContextOptions & {
