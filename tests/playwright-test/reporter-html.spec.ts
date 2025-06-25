@@ -481,6 +481,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(anchorLocator.nth(1)).toHaveAttribute('href', 'http://microsoft.com');
     });
 
+    test('should allow setting title from env in global teardown', async ({ runInlineTest, page, showReport }, testInfo) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            globalTeardown: './global-teardown.js',
+          };
+        `,
+        'global-teardown.js': `
+          module.exports = () => {
+            process.env.PLAYWRIGHT_HTML_TITLE = 'Omega Star Test Suite (Version: abcde)';
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async () => {
+            expect(2).toEqual(2);
+          });
+        `
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await expect(page.locator('.header-title')).toHaveText('Omega Star Test Suite (Version: abcde)');
+    });
+
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
