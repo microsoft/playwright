@@ -34,7 +34,7 @@ import type { BrowserContext } from '../client/browserContext';
 import type { BrowserType } from '../client/browserType';
 import type { Page } from '../client/page';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
-import type { Executable } from '../server';
+import type { Executable, BrowserInfo } from '../server';
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
 import type { Command } from '../utilsBundle';
 
@@ -127,16 +127,73 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
   return executables;
 }
 
+function printInstalledBrowsers(browsers: BrowserInfo[]) {
+  const browserPaths = new Set<string>();
+  for (const browser of browsers)
+    browserPaths.add(browser.browserPath);
+  console.log(`  Browsers:`);
+  for (const browserPath of [...browserPaths].sort())
+    console.log(`    ${browserPath}`);
+  console.log(`  References:`);
+
+  const references = new Set<string>();
+  for (const browser of browsers)
+    references.add(browser.referenceDir);
+  for (const reference of [...references].sort())
+    console.log(`    ${reference}`);
+}
+
+function printGroupedByPlaywrightVersion(browsers: BrowserInfo[]) {
+  const dirToVersion = new Map<string, string>();
+  for (const browser of browsers) {
+    if (dirToVersion.has(browser.referenceDir))
+      continue;
+    const packageJSON = require(path.join(browser.referenceDir, 'package.json'));
+    const version = packageJSON.version;
+    dirToVersion.set(browser.referenceDir, version);
+  }
+
+  const groupedByPlaywrightMinorVersion = new Map<string, BrowserInfo[]>();
+  for (const browser of browsers) {
+    const version = dirToVersion.get(browser.referenceDir)!;
+    let entries = groupedByPlaywrightMinorVersion.get(version);
+    if (!entries) {
+      entries = [];
+      groupedByPlaywrightMinorVersion.set(version, entries);
+    }
+    entries.push(browser);
+  }
+
+  const sortedVersions = [...groupedByPlaywrightMinorVersion.keys()].sort((a, b) => {
+    const aComponents = a.split('.');
+    const bComponents = b.split('.');
+    const aMajor = parseInt(aComponents[0], 10);
+    const bMajor = parseInt(bComponents[0], 10);
+    if (aMajor !== bMajor)
+      return aMajor - bMajor;
+    const aMinor = parseInt(aComponents[1], 10);
+    const bMinor = parseInt(bComponents[1], 10);
+    if (aMinor !== bMinor)
+      return aMinor - bMinor;
+    return aComponents.slice(2).join('.').localeCompare(bComponents.slice(2).join('.'));
+  });
+
+  for (const version of sortedVersions) {
+    console.log(`\nPlaywright version: ${version}`);
+    printInstalledBrowsers(groupedByPlaywrightMinorVersion.get(version)!);
+  }
+}
 
 program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--dry-run', 'do not execute installation, only print information')
+    .option('--list', 'prints list of browsers from all playwright installations')
     .option('--force', 'force reinstall of stable browser channels')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
       if (options.shell === false)
         options.noShell = true;
@@ -165,6 +222,8 @@ program
         const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
         if (options.withDeps)
           await registry.installDeps(executables, !!options.dryRun);
+        if (options.dryRun && options.list)
+          throw new Error(`Only one of --dry-run and --list can be specified`);
         if (options.dryRun) {
           for (const executable of executables) {
             const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
@@ -178,6 +237,9 @@ program
             }
             console.log(``);
           }
+        } else if (options.list) {
+          const browsers = await registry.listInstalledBrowsers();
+          printGroupedByPlaywrightVersion(browsers);
         } else {
           const forceReinstall = hasNoArguments ? false : !!options.force;
           await registry.install(executables, forceReinstall);

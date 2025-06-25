@@ -31,7 +31,7 @@ import { resolveReporterOutputPath, stripAnsiEscapes, stepTitle } from '../util'
 import type { ReporterV2 } from './reporterV2';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
-import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import type { HTMLReport, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
 import type { TestStepCategory } from '../util';
@@ -57,7 +57,6 @@ class HtmlReporter implements ReporterV2 {
   private _open: string | undefined;
   private _port: number | undefined;
   private _host: string | undefined;
-  private _title: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
 
@@ -79,13 +78,12 @@ class HtmlReporter implements ReporterV2 {
   }
 
   onBegin(suite: api.Suite) {
-    const { outputFolder, open, attachmentsBaseURL, host, port, title } = this._resolveOptions();
+    const { outputFolder, open, attachmentsBaseURL, host, port } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
     this._host = host;
     this._port = port;
     this._attachmentsBaseURL = attachmentsBaseURL;
-    this._title = title;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
       if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
@@ -105,7 +103,7 @@ class HtmlReporter implements ReporterV2 {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined, title: string | undefined } {
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string, host: string | undefined, port: number | undefined } {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
       outputFolder,
@@ -113,7 +111,6 @@ class HtmlReporter implements ReporterV2 {
       attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || this._options.attachmentsBaseURL || 'data/',
       host: process.env.PLAYWRIGHT_HTML_HOST || this._options.host,
       port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : this._options.port,
-      title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
     };
   }
 
@@ -129,7 +126,11 @@ class HtmlReporter implements ReporterV2 {
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
+<<<<<<< HEAD
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title, this._options.snippets);
+=======
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, process.env.PLAYWRIGHT_HTML_TITLE || this._options.title);
+>>>>>>> upstream/main
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -517,7 +518,12 @@ class HtmlBuilder {
       startTime: result.startTime.toISOString(),
       retry: result.retry,
       steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
-      errors: formatResultFailure(internalScreen, test, result, '').map(error => error.message),
+      errors: formatResultFailure(internalScreen, test, result, '').map(error => {
+        return {
+          message: error.message,
+          codeframe: error.location ? createErrorCodeframe(error.message, error.location) : undefined
+        };
+      }),
       status: result.status,
       annotations: this._serializeAnnotations(result.annotations),
       attachments: this._serializeAttachments([
@@ -679,6 +685,31 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
+}
+
+function createErrorCodeframe(message: string, location: Location) {
+  let source: string;
+  try {
+    source = fs.readFileSync(location.file, 'utf-8') + '\n//';
+  } catch (e) {
+    return;
+  }
+
+  return codeFrameColumns(
+      source,
+      {
+        start: {
+          line: location.line,
+          column: location.column,
+        },
+      },
+      {
+        highlightCode: false,
+        linesAbove: 100,
+        linesBelow: 100,
+        message: stripAnsiEscapes(message).split('\n')[0] || undefined,
+      }
+  );
 }
 
 export default HtmlReporter;

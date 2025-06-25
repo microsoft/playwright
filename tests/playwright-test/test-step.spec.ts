@@ -637,7 +637,7 @@ test('should not propagate errors from within toPass', async ({ runInlineTest })
   expect(result.exitCode).toBe(0);
   expect(result.output).toBe(`
 hook      |Before Hooks
-test.step |toPass @ a.test.ts:7
+test.step |Expect "toPass" @ a.test.ts:7
 expect    |  toBe @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  toBe @ a.test.ts:6
@@ -664,7 +664,7 @@ test('should show final toPass error', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
-test.step |toPass @ a.test.ts:6
+test.step |Expect "toPass" @ a.test.ts:6
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
@@ -930,7 +930,7 @@ test('step inside toPass', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |step 1 @ a.test.ts:4
-test.step |  toPass @ a.test.ts:11
+test.step |  Expect "toPass" @ a.test.ts:11
 test.step |    step 2, attempt: 0 @ a.test.ts:7
 test.step |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |      toBe @ a.test.ts:9
@@ -977,7 +977,7 @@ fixture   |  context
 pw:api    |    Create context
 fixture   |  page
 pw:api    |    Create page
-test.step |toPass @ a.test.ts:11
+test.step |Expect "toPass" @ a.test.ts:11
 pw:api    |  Navigate to "about:blank" @ a.test.ts:6
 test.step |  inner step attempt: 0 @ a.test.ts:7
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
@@ -1028,7 +1028,7 @@ fixture   |  context
 pw:api    |    Create context
 fixture   |  page
 pw:api    |    Create page
-test.step |poll toHaveLength @ a.test.ts:14
+test.step |Expect "poll toHaveLength" @ a.test.ts:14
 pw:api    |  Navigate to "about:blank" @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    toBe @ a.test.ts:10
@@ -1080,7 +1080,7 @@ pw:api    |    Create context
 fixture   |  page
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:4
-test.step |poll toBe @ a.test.ts:13
+test.step |Expect "poll toBe" @ a.test.ts:13
 expect    |  toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
 expect    |    toBeVisible @ a.test.ts:10
@@ -1180,6 +1180,8 @@ test('should report api steps', async ({ runInlineTest, server }) => {
         });
         test('pass3', async () => {
           await myPage.getByRole('textbox').fill('foo');
+          await myPage.getByRole('textbox').fill('');
+          await myPage.getByRole('textbox').clear();
         });
 
         test.afterAll(async () => {
@@ -1202,9 +1204,11 @@ pw:api    |Click locator('button') @ a.test.ts:25
 hook      |After Hooks
 hook      |Before Hooks
 pw:api    |Fill "foo" getByRole('textbox') @ a.test.ts:28
+pw:api    |Fill "" getByRole('textbox') @ a.test.ts:29
+pw:api    |Clear getByRole('textbox') @ a.test.ts:30
 hook      |After Hooks
-hook      |  afterAll hook @ a.test.ts:31
-pw:api    |    Close context @ a.test.ts:32
+hook      |  afterAll hook @ a.test.ts:33
+pw:api    |    Close context @ a.test.ts:34
 hook      |Before Hooks
 fixture   |  browser
 pw:api    |    Launch browser
@@ -1218,9 +1222,9 @@ pw:api    |Wait for navigation @ a.test.ts:5
 pw:api    |Navigate to "data:" @ a.test.ts:6
 pw:api    |Click locator('button') @ a.test.ts:8
 pw:api    |Click getByRole('button') @ a.test.ts:9
-pw:api    |Fetch "/empty.html" @ a.test.ts:10
+pw:api    |GET "/empty.html" @ a.test.ts:10
 pw:api    |↪ error: <error message>
-pw:api    |Fetch "/empty.html" @ a.test.ts:11
+pw:api    |GET "/empty.html" @ a.test.ts:11
 pw:api    |↪ error: <error message>
 hook      |After Hooks
 fixture   |  request
@@ -1515,7 +1519,7 @@ fixture   |  page
 pw:api    |    Create page
 test.step |custom step @ a.test.ts:4
 pw:api    |  Navigate to "/empty.html" @ a.test.ts:12
-pw:api    |  Fetch "/empty.html" @ a.test.ts:6
+pw:api    |  GET "/empty.html" @ a.test.ts:6
 expect    |  toBe @ a.test.ts:8
 hook      |After Hooks
 fixture   |  page
@@ -1693,7 +1697,7 @@ fixture   |  page
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:16
 expect    |toBeInvisible @ a.test.ts:17
-test.step |  poll toBe @ a.test.ts:7
+test.step |  Expect "poll toBe" @ a.test.ts:7
 pw:api    |    Is visible locator('div') @ a.test.ts:7
 expect    |    toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality

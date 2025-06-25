@@ -43,7 +43,6 @@ class TraceViewerPage {
   errorMessages: Locator;
   consoleLineMessages: Locator;
   consoleStacks: Locator;
-  stackFrames: Locator;
   networkRequests: Locator;
   metadataTab: Locator;
   snapshotContainer: Locator;
@@ -57,74 +56,79 @@ class TraceViewerPage {
     this.actionTitles = page.locator('.action-title');
     this.actionsTree = page.getByTestId('actions-tree');
     this.callLines = page.locator('.call-tab .call-line');
-    this.logLines = page.getByTestId('log-list').locator('.list-view-entry');
-    this.consoleLines = page.locator('.console-line');
+    this.logLines = page.getByRole('list', { name: 'Log entries' }).getByRole('listitem');
+    this.consoleLines = page.getByRole('tabpanel', { name: 'Console' }).getByRole('listitem');
     this.consoleLineMessages = page.locator('.console-line-message');
     this.errorMessages = page.locator('.error-message');
     this.consoleStacks = page.locator('.console-stack');
-    this.stackFrames = page.getByTestId('stack-trace-list').locator('.list-view-entry');
-    this.networkRequests = page.getByTestId('network-list').locator('.list-view-entry');
+    this.networkRequests = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
-    this.metadataTab = page.getByTestId('metadata-view');
-    this.sourceCodeTab = page.getByTestId('source-code');
+    this.metadataTab = page.getByRole('tabpanel', { name: 'Metadata' });
+    this.sourceCodeTab = page.getByRole('tabpanel', { name: 'Source' });
 
     this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
     this.darkModeSetting = page.locator('.setting').getByText('Dark mode');
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
   }
 
-  async actionIconsText(action: string) {
-    const entry = await this.page.waitForSelector(`.tree-view-entry:has-text("${action}")`);
-    await entry.waitForSelector('.action-icon-value:visible');
-    return await entry.$$eval('.action-icon-value:visible', ee => ee.map(e => e.textContent));
+  stackFrames(options: { selected?: boolean } = {}) {
+    const entry = this.page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
+    if (options.selected)
+      return entry.locator(':scope.selected');
+    return entry;
   }
 
-  async actionIcons(action: string) {
-    return await this.page.waitForSelector(`.tree-view-entry:has-text("${action}") .action-icons`);
+  actionIconsText(action: string) {
+    const entry = this.actionsTree.getByRole('treeitem', { name: action });
+    return entry.locator('.action-icon-value').filter({ visible: true });
+  }
+
+  actionIcons(action: string) {
+    return this.actionsTree.getByRole('treeitem', { name: action }).locator('.action-icons').filter({ visible: true });
   }
 
   @step
-  async expandAction(title: string, ordinal: number = 0) {
-    await this.actionsTree.locator('.tree-view-entry', { hasText: title }).nth(ordinal).locator('.codicon-chevron-right').click();
+  async expandAction(title: string) {
+    await this.actionsTree.getByRole('treeitem', { name: title }).locator('.codicon-chevron-right').click();
   }
 
   @step
   async selectAction(title: string, ordinal: number = 0) {
-    await this.page.locator(`.action-title:has-text("${title}")`).nth(ordinal).click();
+    await this.actionsTree.getByTitle(title).nth(ordinal).click();
   }
 
   @step
   async hoverAction(title: string, ordinal: number = 0) {
-    await this.page.locator(`.action-title:has-text("${title}")`).nth(ordinal).hover();
+    await this.actionsTree.getByRole('treeitem', { name: title }).nth(ordinal).hover();
   }
 
   @step
   async selectSnapshot(name: string) {
-    await this.page.click(`.snapshot-tab .tabbed-pane-tab-label:has-text("${name}")`);
+    await this.page.getByRole('tab', { name }).click();
   }
 
   async showErrorsTab() {
-    await this.page.click('text="Errors"');
+    await this.page.getByRole('tab', { name: 'Errors' }).click();
   }
 
   async showConsoleTab() {
-    await this.page.click('text="Console"');
+    await this.page.getByRole('tab', { name: 'Console' }).click();
   }
 
   async showSourceTab() {
-    await this.page.click('text="Source"');
+    await this.page.getByRole('tab', { name: 'Source' }).click();
   }
 
   async showNetworkTab() {
-    await this.page.click('text="Network"');
+    await this.page.getByRole('tab', { name: 'Network' }).click();
   }
 
   async showMetadataTab() {
-    await this.page.click('text="Metadata"');
+    await this.page.getByRole('tab', { name: 'Metadata' }).click();
   }
 
   async showSettings() {
-    await this.page.locator('.settings-gear').click();
+    await this.page.getByRole('button', { name: 'Settings' }).click();
   }
 
   @step

@@ -18,6 +18,7 @@
 import { assert } from '../utils';
 import { SdkObject } from './instrumentation';
 
+import type { Instrumentation } from './instrumentation';
 import type { Page } from './page';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
@@ -39,8 +40,6 @@ export class Dialog extends SdkObject {
     this._message = message;
     this._onHandle = onHandle;
     this._defaultValue = defaultValue || '';
-    this._page.frameManager.dialogDidOpen(this);
-    this.instrumentation.onDialog(this);
   }
 
   page() {
@@ -62,14 +61,14 @@ export class Dialog extends SdkObject {
   async accept(promptText?: string) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
-    this._page.frameManager.dialogWillClose(this);
+    this._page.browserContext.dialogManager.dialogWillClose(this);
     await this._onHandle(true, promptText);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
-    this._page.frameManager.dialogWillClose(this);
+    this._page.browserContext.dialogManager.dialogWillClose(this);
     await this._onHandle(false);
   }
 
@@ -78,5 +77,58 @@ export class Dialog extends SdkObject {
       await this.accept();
     else
       await this.dismiss();
+  }
+}
+
+export class DialogManager {
+  private _instrumentation: Instrumentation;
+  private _dialogHandlers = new Set<(dialog: Dialog) => boolean>();
+  private _openedDialogs = new Set<Dialog>();
+
+  constructor(instrumentation: Instrumentation) {
+    this._instrumentation = instrumentation;
+  }
+
+  dialogDidOpen(dialog: Dialog) {
+    // Any ongoing evaluations will be stalled until the dialog is closed.
+    for (const frame of dialog.page().frameManager.frames())
+      frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
+    this._openedDialogs.add(dialog);
+    this._instrumentation.onDialog(dialog);
+
+    let hasHandlers = false;
+    for (const handler of this._dialogHandlers) {
+      if (handler(dialog))
+        hasHandlers = true;
+    }
+    if (!hasHandlers)
+      dialog.close().then(() => {});
+  }
+
+  dialogWillClose(dialog: Dialog) {
+    this._openedDialogs.delete(dialog);
+  }
+
+  addDialogHandler(handler: (dialog: Dialog) => boolean) {
+    this._dialogHandlers.add(handler);
+  }
+
+  removeDialogHandler(handler: (dialog: Dialog) => boolean) {
+    this._dialogHandlers.delete(handler);
+    if (!this._dialogHandlers.size) {
+      for (const dialog of this._openedDialogs)
+        dialog.close().catch(() => {});
+    }
+  }
+
+  hasOpenDialogsForPage(page: Page) {
+    return [...this._openedDialogs].some(dialog => dialog.page() === page);
+  }
+
+  async closeBeforeUnloadDialogs() {
+    await Promise.all([...this._openedDialogs].map(async dialog => {
+      if (dialog.type() === 'beforeunload')
+        await dialog.dismiss();
+    }));
   }
 }

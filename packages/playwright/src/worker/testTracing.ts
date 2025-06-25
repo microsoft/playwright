@@ -68,9 +68,6 @@ export class TestTracing {
   }
 
   private _shouldCaptureTrace() {
-    if (process.env.PW_TEST_DISABLE_TRACING)
-      return false;
-
     if (this._options?.mode === 'on')
       return true;
 

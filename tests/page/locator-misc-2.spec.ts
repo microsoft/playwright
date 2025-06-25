@@ -78,12 +78,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   const textarea = page.locator('textarea');
   await textarea.evaluate(textarea => (textarea as HTMLTextAreaElement).value = 'some value');
   await textarea.selectText();
-  if (browserName === 'firefox') {
-    expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionStart)).toBe(0);
-    expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionEnd)).toBe(10);
-  } else {
-    expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
-  }
+  expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
 });
 
 it('should type', async ({ page }) => {
@@ -188,4 +183,21 @@ it('Locator.locator() and FrameLocator.locator() should accept locator', async (
   const divLocator = page.locator('div');
   expect(await divLocator.locator('input').inputValue()).toBe('outer');
   expect(await page.frameLocator('iframe').locator(divLocator).locator('input').inputValue()).toBe('inner');
+});
+
+it('should fill programmatically enabled textarea', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36307' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Enable</button>
+    <form>
+      <textarea id="text" disabled></textarea>
+    </form>
+    <script>
+      document.querySelector('button').addEventListener('click', () => {
+        document.querySelector('#text').disabled = false;
+      });
+    </script>
+  `);
+  await page.locator('button').click();
+  await page.locator('#text').fill('Hello');
+  await expect(page.locator('#text')).toHaveValue('Hello');
 });

@@ -17,10 +17,12 @@
 import os from 'os';
 
 import { wrapInASCIIBox } from '../utils/ascii';
-import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
+import { RecentLogsCollector } from '../utils/debugLogger';
+import { waitForReadyState } from '../chromium/chromium';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -32,16 +34,26 @@ import type * as types from '../types';
 
 export class BidiChromium extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, 'bidi');
+    super(parent, '_bidiChromium');
   }
 
-  override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
+  override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<BidiBrowser> {
     // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
     // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
     // we load bidiOverCdp dynamically.
     const bidiTransport = await require('./bidiOverCdp').connectBidiOverCdp(transport);
     (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
-    return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);
+    try {
+      return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);
+    } catch (e) {
+      if (browserLogsCollector.recentLogs().some(log => log.includes('Failed to create a ProcessSingleton for your profile directory.'))) {
+        throw new Error(
+            'Failed to create a ProcessSingleton for your profile directory. ' +
+            'This usually means that the profile is already in use by another instance of Chromium.'
+        );
+      }
+      throw e;
+    }
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
@@ -91,8 +103,8 @@ export class BidiChromium extends BrowserType {
     return chromeArguments;
   }
 
-  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    return new ChromiumReadyState();
+  override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+    return waitForReadyState({ ...options, cdpPort: 0 }, browserLogsCollector);
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
@@ -132,14 +144,14 @@ export class BidiChromium extends BrowserType {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';
       // https://www.chromium.org/developers/design-documents/network-settings
-      if (isSocks && !this.attribution.playwright.options.socksProxyPort) {
+      if (isSocks && !options.socksProxyPort) {
         // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this.attribution.playwright.options.socksProxyPort)
+      if (options.socksProxyPort)
         proxyBypassRules.push('<-loopback>');
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
@@ -150,14 +162,6 @@ export class BidiChromium extends BrowserType {
     }
     chromeArguments.push(...args);
     return chromeArguments;
-  }
-}
-
-class ChromiumReadyState extends BrowserReadyState {
-  override onBrowserOutput(message: string): void {
-    const match = message.match(/DevTools listening on (.*)/);
-    if (match)
-      this._wsEndpoint.resolve(match[1]);
   }
 }
 

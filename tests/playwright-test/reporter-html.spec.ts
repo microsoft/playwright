@@ -435,7 +435,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
     });
 
-    test('should display title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
+    test('should display report title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = {
@@ -454,6 +454,65 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await expect(page.locator('.header-title')).toHaveText('Custom report title');
+    });
+
+    test('should process URLs as links in report title', async ({ runInlineTest, page, showReport }, testInfo) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['html', { title: 'Custom report title https://playwright.dev separator http://microsoft.com end' }], ['line']]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('fails', async ({ page }) => {
+            expect(1).toBe(2);
+          });
+        `
+      }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(0);
+
+      await showReport();
+      const anchorLocator = page.locator('.header-title a');
+      await expect(page.locator('.header-title')).toHaveText('Custom report title https://playwright.dev separator http://microsoft.com end');
+      await expect(anchorLocator).toHaveCount(2);
+      await expect(anchorLocator.nth(0)).toHaveAttribute('href', 'https://playwright.dev');
+      await expect(anchorLocator.nth(1)).toHaveAttribute('href', 'http://microsoft.com');
+    });
+
+    test('should allow setting title from env in global teardown', async ({ runInlineTest, page, showReport }, testInfo) => {
+      test.skip(useIntermediateMergeReport, 'env vars are not available in merge report');
+
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            globalTeardown: './global-teardown.js',
+          };
+        `,
+        'omega-star.test.js': `
+          import { test, expect } from '@playwright/test';
+          import fs from 'fs/promises';
+          test('version check', async ({}, testInfo) => {
+            const apiVersion = 'abcde';
+            await fs.writeFile(testInfo.outputPath('omega_star_version'), apiVersion);
+            expect(2).toEqual(2);
+          });
+        `,
+        'global-teardown.js': `
+          import fs from 'fs/promises';
+          import path from 'path';
+          export default async (config) => {
+            const apiVersion = await fs.readFile(path.join('test-results', 'omega-star-version-check', 'omega_star_version'), 'utf-8');
+            process.env.PLAYWRIGHT_HTML_TITLE = 'Omega Star Test Suite (Version: ' + apiVersion + ')';
+          };
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await expect(page.locator('.header-title')).toHaveText('Omega Star Test Suite (Version: abcde)');
     });
 
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
@@ -518,7 +577,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
       await page.click('.action-title >> text=EVALUATE');
-      await page.click('text=Source');
+      await page.getByRole('tab', { name: 'Source' }).click();
 
       await expect(page.locator('.CodeMirror-line')).toContainText([
         /import.*test/,
@@ -526,10 +585,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await expect(page.getByTestId('stack-trace-list')).toContainText([
+      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem')).toContainText([
         /a.test.js:[\d]+/,
       ]);
-      await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toContainText('a.test.js');
+      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem').and(page.locator('.selected'))).toContainText('a.test.js');
     });
 
     test('should not show stack trace', async ({ runInlineTest, page, showReport }) => {
@@ -612,7 +671,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await page.click('.action-title >> text=FETCH');
+      await page.click('.action-title >> text=GET');
       await page.click('text=Source');
       await expect(page.locator('.source-line-running')).toContainText('request.get');
     });
@@ -643,10 +702,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
-      await expect(page.getByTestId('actions-tree')).toContainText('Fetch');
-      await page.getByText('Fetch').nth(2).click();
-      await page.getByText('Fetch').nth(1).click();
-      await page.getByText('Fetch').nth(0).click();
+      await expect(page.getByTestId('actions-tree')).toContainText('GET');
+      await page.getByText('GET').nth(2).click();
+      await page.getByText('GET').nth(1).click();
+      await page.getByText('GET').nth(0).click();
     });
 
     test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {
@@ -801,11 +860,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
-      await page.click('text=Step "skipped step title" (skipped)');
+      await page.click('text=skipped step title (skipped)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step.skip('skipped step title', async () => {`);
     });
 
-    test('step title should inlclude skipped step description', async ({ runInlineTest, page, showReport }) => {
+    test('step title should include skipped step description', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
           export default { testDir: './tests' };
@@ -826,7 +885,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'example' }).click();
-      await page.click('text=Step "step title" (skipped: conditional step.skip)');
+      await page.click('text=step title (skipped: conditional step.skip)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step('step title', async (step) => {`);
     });
 
@@ -1875,6 +1934,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
         await smokeLabelButton.click();
         await expect(page).toHaveURL(/@smoke/);
+        await expect(searchInput).toHaveValue('@smoke ');
         await searchInput.clear();
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
@@ -1883,6 +1943,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const regressionLabelButton = page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
         await regressionLabelButton.click();
         await expect(page).toHaveURL(/@regression/);
+        await expect(searchInput).toHaveValue('@regression ');
         await searchInput.clear();
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
@@ -1906,6 +1967,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             const names = ['one foo', 'two foo', 'three bar', 'four bar', 'five baz'];
             for (const name of names) {
               test('b-' + name, async ({}) => {
+                test.info().annotations.push({ type: 'issue', description: 'test issue' });
                 expect(name).not.toContain('one');
                 await new Promise(f => setTimeout(f, 1100));
               });
@@ -1961,6 +2023,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
         await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
         await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('0');
+
+        await searchInput.fill('annot:issue');
+        await expect(page.getByTestId('filtered-tests-count')).toContainText(`Filtered: 5`);
       });
 
       test('labels should be applied together with status filter', async ({ runInlineTest, showReport, page }) => {
@@ -2917,22 +2982,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
       expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
-    });
-
-    test('should not show prompt for empty timeout error', async ({ runInlineTest, showReport, page }) => {
-      const result = await runInlineTest({
-        'example.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample', async ({ page }) => {
-            test.setTimeout(2000);
-            await page.setChecked('input', true);
-          });
-        `,
-      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      await showReport();
-      await page.getByRole('link', { name: 'sample' }).click();
-      await expect(page.getByRole('button', { name: 'Copy prompt' })).toHaveCount(1);
     });
 
     test('should include snapshot when page wasnt closed', async ({ runInlineTest, showReport, page }) => {

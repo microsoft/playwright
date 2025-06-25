@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { DEFAULT_PLAYWRIGHT_TIMEOUT, makeWaitForNextTask } from '../utils';
+import { makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './utils/happyEyeballs';
 import { ws } from '../utilsBundle';
 
@@ -84,12 +84,8 @@ export class WebSocketTransport implements ConnectionTransport {
     const logUrl = stripQueryParams(url);
     progress?.log(`<ws connecting> ${logUrl}`);
     const transport = new WebSocketTransport(progress, url, logUrl, { ...options, followRedirects: !!options.followRedirects && hadRedirects });
-    let success = false;
-    progress?.cleanupWhenAborted(async () => {
-      if (!success)
-        await transport.closeAndWait().catch(e => null);
-    });
-    const result = await new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
+    progress?.cleanupWhenAborted(() => transport.closeAndWait());
+    const resultPromise = new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
       transport._ws.on('open', async () => {
         progress?.log(`<ws connected> ${logUrl}`);
         fulfill({ transport });
@@ -120,6 +116,7 @@ export class WebSocketTransport implements ConnectionTransport {
         });
       });
     });
+    const result = progress ? await progress.race(resultPromise) : await resultPromise;
 
     if (result.redirect) {
       // Strip authorization headers from the redirected request.
@@ -128,8 +125,6 @@ export class WebSocketTransport implements ConnectionTransport {
       }));
       return WebSocketTransport._connect(progress, result.redirect.headers.location!, { ...options, headers: newHeaders }, true /* hadRedirects */);
     }
-
-    success = true;
     return transport;
   }
 
@@ -138,8 +133,6 @@ export class WebSocketTransport implements ConnectionTransport {
     this._logUrl = logUrl;
     this._ws = new ws(url, [], {
       maxPayload: 256 * 1024 * 1024, // 256Mb,
-      // Prevent internal http client error when passing negative timeout.
-      handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? DEFAULT_PLAYWRIGHT_TIMEOUT, 1),
       headers: options.headers,
       followRedirects: options.followRedirects,
       agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,

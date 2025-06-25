@@ -41,6 +41,23 @@ test('should connect to an existing cdp session', async ({ browserType, mode }, 
   }
 });
 
+test('should connect to an existing cdp session with verbose path', async ({ browserType, mode }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/json/version/abcdefg`,
+    });
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('should use logger in default context', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28813' });
   const port = 9339 + testInfo.workerIndex;

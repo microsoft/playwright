@@ -63,9 +63,11 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   private async _init() {
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
-    await this._page.setServerRequestInterceptor(route => {
-      if (!route.request().url().startsWith('https://playwright/'))
-        return false;
+    await this._page.addRequestInterceptor(route => {
+      if (!route.request().url().startsWith('https://playwright/')) {
+        route.continue({ isFallback: true }).catch(() => {});
+        return;
+      }
 
       const uri = route.request().url().substring('https://playwright/'.length);
       const file = require.resolve('../../vite/recorder/' + uri);
@@ -79,7 +81,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
           isBase64: true
         }).catch(() => {});
       });
-      return true;
     });
 
     await this._page.exposeBinding('dispatch', false, (_, data: any) => this.emit('event', data));
@@ -90,7 +91,8 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     });
 
     const mainFrame = this._page.mainFrame();
-    await mainFrame.goto(serverSideCallMetadata(), process.env.PW_HMR ? 'http://localhost:44225' : 'https://playwright/index.html', { timeout: 0 });
+    const controller = new ProgressController(serverSideCallMetadata(), mainFrame);
+    await controller.run(progress => mainFrame.goto(progress, process.env.PW_HMR ? 'http://localhost:44225' : 'https://playwright/index.html'));
   }
 
   static factory(context: BrowserContext): IRecorderAppFactory {
@@ -102,7 +104,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   private static async _open(recorder: IRecorder, inspectedContext: BrowserContext): Promise<IRecorderApp> {
-    const sdkLanguage = inspectedContext.attribution.playwright.options.sdkLanguage;
+    const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
     const { context, page } = await launchApp(recorderPlaywright.chromium, {

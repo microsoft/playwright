@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-export const fixTestInstructions = `
-# Instructions
+import assert from './assert';
+import snapshot from './snapshot';
+import done from './done';
+import navigate from './navigate';
 
-- Following Playwright test failed.
-- Explain why, be concise, respect Playwright best practices.
-- Provide a snippet of code with the fix, if possible.
-`.trimStart();
+import type { Tool } from './tool.js';
+
+export const tools: Tool<any>[] = [
+  ...assert,
+  ...navigate,
+  ...snapshot,
+  ...done,
+];

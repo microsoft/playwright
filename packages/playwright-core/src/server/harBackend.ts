@@ -104,7 +104,7 @@ export class HarBackend {
             const candidataBoundary = multipartBoundary(candidate.request.headers);
             if (!candidataBoundary)
               continue;
-            // Try to match multipart/form-data ignroing boundary as it changes between requests.
+            // Try to match multipart/form-data ignoring boundary as it changes between requests.
             if (postData.toString().replaceAll(boundary, '') !== buffer.toString().replaceAll(candidataBoundary, ''))
               continue;
           }

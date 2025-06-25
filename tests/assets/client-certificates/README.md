@@ -18,7 +18,7 @@ openssl req \
 
 ```bash
 mkdir -p client/trusted
-# generate server-signed (valid) certifcate
+# generate server-signed (valid) certificate
 openssl req \
 	-newkey rsa:4096 \
 	-keyout client/trusted/key.pem \
@@ -45,7 +45,7 @@ openssl pkcs12 -export -out client/trusted/cert.pfx -inkey client/trusted/key.pe
 ```bash
 mkdir -p client/localhost
 
-# generate server-signed (valid) certifcate
+# generate server-signed (valid) certificate
 openssl req \
 	-newkey rsa:4096 \
 	-keyout client/localhost/localhost.key \

@@ -99,19 +99,10 @@ it('init script should run only once in iframe', async ({ page, server, browserN
   ]);
 });
 
-it('init script should run only once in popup', async ({ page, browserName }) => {
-  await page.context().addInitScript(() => {
-    window['callCount'] = (window['callCount'] || 0) + 1;
-  });
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(() => window.open('about:blank')),
-  ]);
-  expect(await popup.evaluate('callCount')).toEqual(1);
-});
-
-it('init script should not observe playwright internals', async ({ server, page }) => {
+it('init script should not observe playwright internals', async ({ server, page, trace, isAndroid }) => {
   it.skip(!!process.env.PW_CLOCK, 'clock installs globalThis.__pwClock');
+  it.skip(trace === 'on', 'tracing installs __playwright_snapshot_streamer');
+  it.fixme(isAndroid, 'There is probably context reuse between this test and some other test that installs a binding');
 
   await page.addInitScript(() => {
     window['check'] = () => {

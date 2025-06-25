@@ -147,7 +147,7 @@ export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
   };
 }
 
-export function mergeObjects<A extends object, B extends object, C extends object>(a: A | undefined | void, b: B | undefined | void, c: B | undefined | void): A & B & C {
+export function mergeObjects<A extends object, B extends object, C extends object>(a: A | undefined | void, b: B | undefined | void, c: C | undefined | void): A & B & C {
   const result = { ...a } as any;
   for (const x of [b, c].filter(Boolean)) {
     for (const [name, value] of Object.entries(x as any)) {
@@ -429,7 +429,7 @@ export function stepTitle(category: TestStepCategory, title: string): string {
     case 'expect':
       return `Expect ${escapeWithQuotes(title, '"')}`;
     case 'test.step':
-      return `Step ${escapeWithQuotes(title, '"')}`;
+      return title;
     case 'test.attach':
       return `Attach ${escapeWithQuotes(title, '"')}`;
     case 'hook':

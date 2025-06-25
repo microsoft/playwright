@@ -87,22 +87,24 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
 
   const href3 = await page.locator('aria-ref=f3e2').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
-});
 
-it('should not generate refs for hidden elements', async ({ page }) => {
-  await page.setContent(`
-    <button>One</button>
-    <button style="width: 0; height: 0; appearance: none; border: 0; padding: 0;">Two</button>
-    <button>Three</button>
-  `);
-
-  const snapshot = await snapshotForAI(page);
-  expect(snapshot).toContainYaml(`
-    - generic [ref=e1]:
-      - button "One" [ref=e2]
-      - button "Two"
-      - button "Three" [ref=e4]
-  `);
+  {
+    const locator = await (page.locator('aria-ref=e1') as any)._generateLocatorString();
+    expect(locator).toBe(`locator('body')`);
+  }
+  {
+    const locator = await (page.locator('aria-ref=f3e2') as any)._generateLocatorString();
+    expect(locator).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
+  }
+  {
+    // Should tolerate .describe().
+    const locator = await (page.locator('aria-ref=f2e2').describe('foo bar') as any)._generateLocatorString();
+    expect(locator).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
+  }
+  {
+    const error = await (page.locator('aria-ref=e1000') as any)._generateLocatorString().catch(e => e);
+    expect(error.message).toContain(`No element matching locator('aria-ref=e1000')`);
+  }
 });
 
 it('should not generate refs for elements with pointer-events:none', async ({ page }) => {
@@ -230,4 +232,27 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
       - paragraph [ref=e2]: Test
       - iframe [ref=e3]
   `);
+});
+
+it('should auto-wait for navigation', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/frame.html');
+  const [, snapshot] = await Promise.all([
+    page.evaluate(() => window.location.reload()),
+    snapshotForAI(page)
+  ]);
+  expect(snapshot).toContainYaml(`
+    - generic [ref=e2]: Hi, I'm frame
+  `);
+});
+
+it('should auto-wait for blocking CSS', async ({ page, server }) => {
+  server.setRoute('/css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    setTimeout(() => res.end(`body { monospace }`), 1000);
+  });
+  await page.setContent(`
+    <script src="${server.PREFIX}/css"></script>
+    <p>Hello World</p>
+  `, { waitUntil: 'commit' });
+  expect(await snapshotForAI(page)).toContainYaml('Hello World');
 });

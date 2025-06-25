@@ -43,12 +43,16 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
         continue;
       if (!parsedURL.pathname.startsWith(c.path))
         continue;
-      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure)
+      if (parsedURL.protocol !== 'https:' && !isLocalHostname(parsedURL.hostname) && c.secure)
         continue;
       return true;
     }
     return false;
   });
+}
+
+export function isLocalHostname(hostname: string): boolean {
+  return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
 // Rollover to 5-digit year:
@@ -137,9 +141,10 @@ export class Request extends SdkObject {
     this._waitForResponsePromise.resolve(null);
   }
 
-  _setOverrides(overrides: types.NormalizedContinueOverrides) {
-    this._overrides = overrides;
+  _applyOverrides(overrides: types.NormalizedContinueOverrides) {
+    this._overrides = { ...this._overrides, ...overrides };
     this._updateHeadersMap();
+    return this._overrides;
   }
 
   private _updateHeadersMap() {
@@ -147,8 +152,8 @@ export class Request extends SdkObject {
       this._headersMap.set(name.toLowerCase(), value);
   }
 
-  _hasOverrides() {
-    return !!this._overrides;
+  overrides() {
+    return this._overrides;
   }
 
   url(): string {
@@ -185,7 +190,7 @@ export class Request extends SdkObject {
     return this._overrides?.headers || this._rawRequestHeadersPromise;
   }
 
-  response(): PromiseLike<Response | null> {
+  response(): Promise<Response | null> {
     return this._waitForResponsePromise;
   }
 
@@ -251,12 +256,27 @@ export class Route extends SdkObject {
   private readonly _request: Request;
   private readonly _delegate: RouteDelegate;
   private _handled = false;
+  private _currentHandler: RouteHandler | undefined;
+  private _futureHandlers: RouteHandler[] = [];
 
   constructor(request: Request, delegate: RouteDelegate) {
     super(request._frame || request._context, 'route');
     this._request = request;
     this._delegate = delegate;
     this._request._context.addRouteInFlight(this);
+  }
+
+  handle(handlers: RouteHandler[]) {
+    this._futureHandlers = [...handlers];
+    this.continue({ isFallback: true }).catch(() => {});
+  }
+
+  async removeHandler(handler: RouteHandler) {
+    this._futureHandlers = this._futureHandlers.filter(h => h !== handler);
+    if (handler === this._currentHandler) {
+      await this.continue({ isFallback: true }).catch(() => {});
+      return;
+    }
   }
 
   request(): Request {
@@ -274,6 +294,7 @@ export class Route extends SdkObject {
     this._startHandling();
     assert(this._request.isNavigationRequest());
     this._request.frame()!.redirectNavigation(url, this._request._documentId!, this._request.headerValue('referer'));
+    this._endHandling();
   }
 
   async fulfill(overrides: channels.RouteFulfillParams) {
@@ -322,7 +343,6 @@ export class Route extends SdkObject {
   }
 
   async continue(overrides: types.NormalizedContinueOverrides) {
-    this._startHandling();
     if (overrides.url) {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
@@ -331,9 +351,18 @@ export class Route extends SdkObject {
     }
     if (overrides.headers)
       overrides.headers = overrides.headers?.filter(header => header.name.toLowerCase() !== 'cookie');
-    this._request._setOverrides(overrides);
+    overrides = this._request._applyOverrides(overrides);
+
+    const nextHandler = this._futureHandlers.shift();
+    if (nextHandler) {
+      this._currentHandler = nextHandler;
+      nextHandler(this, this._request);
+      return;
+    }
+
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
+    this._startHandling();
     await this._delegate.continue(overrides);
     this._endHandling();
   }
@@ -341,14 +370,17 @@ export class Route extends SdkObject {
   private _startHandling() {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
+    this._currentHandler = undefined;
   }
 
   private _endHandling() {
+    this._futureHandlers = [];
+    this._currentHandler = undefined;
     this._request._context.removeRouteInFlight(this);
   }
 }
 
-export type RouteHandler = (route: Route, request: Request) => boolean;
+export type RouteHandler = (route: Route, request: Request) => void;
 
 type GetResponseBodyCallback = () => Promise<Buffer>;
 

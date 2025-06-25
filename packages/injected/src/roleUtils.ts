@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { getGlobalOptions, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -135,7 +135,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
     // File inputs do not have a role by the spec: https://www.w3.org/TR/html-aam-1.0/#el-input-file.
     // However, there are open issues about fixing it: https://github.com/w3c/aria/issues/1926.
     // All browsers report it as a button, and it is rendered as a button, so we do "button".
-    if (type === 'file' && !getGlobalOptions().inputFileRoleTextbox)
+    if (type === 'file')
       return 'button';
     return inputTypeToRole[type] || 'textbox';
   },
@@ -515,13 +515,10 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
-// https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
-const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
-
 function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
-  const role = getAriaRole(element) || '';
-  if (!role || !kAriaInvalidRoles.includes(role))
-    return 'false';
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
+  // This state is being deprecated as a global state in ARIA 1.2.
+  // In future versions it will only be allowed on roles where it is specifically supported.
   const ariaInvalid = element.getAttribute('aria-invalid');
   if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
     return 'false';
@@ -710,7 +707,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // There is no spec for this, but Chromium/WebKit do "Choose File" so we follow that.
     // All browsers respect labels, aria-labelledby and aria-label.
     // No browsers respect the title attribute, although w3c accname tests disagree. We follow browsers.
-    if (!getGlobalOptions().inputFileRoleTextbox && tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
+    if (tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
       options.visitedElements.add(element);
       const labels = (element as HTMLInputElement).labels || [];
       if (labels.length && !options.embeddedInLabelledBy)
@@ -1063,8 +1060,12 @@ export function getAriaDisabled(element: Element): boolean {
 
 function isNativelyDisabled(element: Element) {
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.tagName);
-  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element));
+  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(elementSafeTagName(element));
+  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledOptGroup(element) || belongsToDisabledFieldSet(element));
+}
+
+function belongsToDisabledOptGroup(element: Element): boolean {
+  return elementSafeTagName(element) === 'OPTION' && !!element.closest('OPTGROUP[DISABLED]');
 }
 
 function belongsToDisabledFieldSet(element: Element): boolean {

@@ -223,6 +223,8 @@ SetNetworkCookie:
       - Strict
       - Lax
       - None
+    partitionKey: string?
+    _crHasCrossSiteAncestor: boolean?
 
 
 NetworkCookie:
@@ -241,6 +243,8 @@ NetworkCookie:
       - Strict
       - Lax
       - None
+    partitionKey: string?
+    _crHasCrossSiteAncestor: boolean?
 
 
 NameValue:
@@ -362,7 +366,7 @@ APIRequestContext:
   commands:
 
     fetch:
-      title: Fetch "{url}"
+      title: '{method} "{url}"'
       parameters:
         url: string
         encodedParams: string?
@@ -787,8 +791,8 @@ Playwright:
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
-    bidiChromium: BrowserType
-    bidiFirefox: BrowserType
+    _bidiChromium: BrowserType
+    _bidiFirefox: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?
@@ -2044,6 +2048,7 @@ Page:
 
 Frame:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -2285,6 +2290,13 @@ Frame:
       returns:
         element: ElementHandle
 
+    generateLocatorString:
+      internal: true
+      parameters:
+        selector: string
+      returns:
+        value: string?
+
     highlight:
       internal: true
       parameters:
@@ -2408,6 +2420,7 @@ Frame:
     isHidden:
       title: Is hidden
       parameters:
+        # Note: compared to other isFoo methods, isHidden is a one-shot operation without a timeout.
         selector: string
         strict: boolean?
       returns:
@@ -2418,6 +2431,7 @@ Frame:
     isVisible:
       title: Is visible
       parameters:
+        # Note: compared to other isFoo methods, isVisible is a one-shot operation without a timeout.
         selector: string
         strict: boolean?
       returns:
@@ -2655,7 +2669,7 @@ Frame:
     expect:
       title: Expect "{expression}"
       parameters:
-        selector: string
+        selector: string?
         expression: string
         expressionArg: json?
         expectedText:
@@ -2791,6 +2805,7 @@ JSHandle:
 
 ElementHandle:
   type: interface
+  progress: true
 
   extends: JSHandle
 
@@ -2932,11 +2947,6 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
-
-    generateLocatorString:
-      internal: true
-      returns:
-        value: string?
 
     getAttribute:
       internal: true
@@ -3745,6 +3755,10 @@ Electron:
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
+        selectorEngines:
+          type: array?
+          items: SelectorEngine
+        testIdAttributeName: string?
 
       returns:
         electronApplication: ElectronApplication
@@ -3847,7 +3861,7 @@ AndroidDevice:
     wait:
       hidden: Wait
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         state:
           type: enum?
           literals:
@@ -3857,21 +3871,21 @@ AndroidDevice:
     fill:
       title: Fill "{text}"
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         text: string
         timeout: number
 
     tap:
       title: Tap
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         duration: number?
         timeout: number
 
     drag:
       title: Drag
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         dest: Point
         speed: number?
         timeout: number
@@ -3879,7 +3893,7 @@ AndroidDevice:
     fling:
       title: Fling
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         direction:
           type: enum
           literals:
@@ -3893,13 +3907,13 @@ AndroidDevice:
     longTap:
       title: Long tap
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         timeout: number
 
     pinchClose:
       title: Pinch close
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         percent: number
         speed: number?
         timeout: number
@@ -3907,7 +3921,7 @@ AndroidDevice:
     pinchOpen:
       title: Pinch open
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         percent: number
         speed: number?
         timeout: number
@@ -3915,7 +3929,7 @@ AndroidDevice:
     scroll:
       title: Scroll
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         direction:
           type: enum
           literals:
@@ -3930,7 +3944,7 @@ AndroidDevice:
     swipe:
       title: Swipe
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         direction:
           type: enum
           literals:
@@ -3945,7 +3959,7 @@ AndroidDevice:
     info:
       internal: true
       parameters:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
       returns:
         info: AndroidElementInfo
 
@@ -4077,11 +4091,11 @@ AndroidSelector:
     hasChild:
       type: object?
       properties:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
     hasDescendant:
       type: object?
       properties:
-        selector: AndroidSelector
+        androidSelector: AndroidSelector
         maxDepth: number?
     longClickable: boolean?
     pkg: string?

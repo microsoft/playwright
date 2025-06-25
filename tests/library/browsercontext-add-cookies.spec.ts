@@ -65,6 +65,72 @@ it('should add cookies with empty value', async ({ context, page, server }) => {
   expect(await page.evaluate(() => document.cookie)).toEqual('marker=');
 });
 
+it('should set cookies with SameSite attribute and no secure attribute', async ({ context, browserName, isWindows, isLinux, defaultSameSiteCookieValue }) => {
+  // Use domain instead of URL to ensure that the `secure` attribute is not set.
+  await context.addCookies([{
+    domain: 'foo.com',
+    path: '/',
+    name: 'same-site-unset',
+    value: '1',
+  }, {
+    domain: 'foo.com',
+    path: '/',
+    name: 'same-site-none',
+    value: '1',
+    sameSite: 'None',
+  }, {
+    domain: 'foo.com',
+    path: '/',
+    name: 'same-site-lax',
+    value: '1',
+    sameSite: 'Lax',
+  }, {
+    domain: 'foo.com',
+    path: '/',
+    name: 'same-site-strict',
+    value: '1',
+    sameSite: 'Strict',
+  }]);
+  const cookies = new Set(await context.cookies(['https://foo.com']));
+  expect(cookies).toEqual(new Set([{
+    name: 'same-site-unset',
+    value: '1',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: defaultSameSiteCookieValue,
+  }, ...(browserName === 'chromium' || (browserName === 'webkit' && isLinux) ? [] : [{
+    name: 'same-site-none',
+    value: '1',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'None',
+  }]), {
+    name: 'same-site-lax',
+    value: '1',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+  }, {
+    name: 'same-site-strict',
+    value: '1',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Strict',
+  }]));
+});
+
 it('should roundtrip cookie', async ({ context, page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem

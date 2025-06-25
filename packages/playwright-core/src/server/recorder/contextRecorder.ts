@@ -29,7 +29,6 @@ import { generateCode } from '../codegen/language';
 
 import type { RegisteredListener } from '../../utils';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from '../codegen/types';
-import type { Dialog } from '../dialog';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { Source } from '@recorder/recorderTypes';
@@ -64,7 +63,7 @@ export class ContextRecorder extends EventEmitter {
     this._params = params;
     this._delegate = delegate;
     this._recorderSources = [];
-    const language = params.language || context.attribution.playwright.options.sdkLanguage;
+    const language = params.language || context._browser.sdkLanguage();
     this.setOutput(language, params.outputFile);
 
     // Make a copy of options to modify them later.
@@ -135,7 +134,11 @@ export class ContextRecorder extends EventEmitter {
     this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
     for (const page of this._context.pages())
       this._onPage(page);
-    this._context.on(BrowserContext.Events.Dialog, (dialog: Dialog) => this._onDialog(dialog.page()));
+    this._context.dialogManager.addDialogHandler(dialog => {
+      this._onDialog(dialog.page());
+      // Not handling the dialog, let it automatically close.
+      return false;
+    });
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.

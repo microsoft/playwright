@@ -292,7 +292,7 @@ export class HarTracer {
   }
 
   private _recordRequestOverrides(harEntry: har.Entry, request: network.Request) {
-    if (!request._hasOverrides() || !this._options.recordRequestOverrides)
+    if (!request.overrides() || !this._options.recordRequestOverrides)
       return;
     harEntry.request.method = request.method();
     harEntry.request.url = request.url();
@@ -455,7 +455,7 @@ export class HarTracer {
       status: response.status(),
       statusText: response.statusText(),
       httpVersion: response.httpVersion(),
-      // These are bad values that will be overwritten bellow.
+      // These are bad values that will be overwritten below.
       cookies: [],
       headers: [],
       content: {

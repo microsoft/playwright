@@ -142,7 +142,7 @@ export class TestServerDispatcher implements TestServerInterface {
     process.stdout.columns = params.cols;
     process.stdout.rows = params.rows;
     process.stderr.columns = params.cols;
-    process.stderr.columns = params.rows;
+    process.stderr.rows = params.rows;
   }
 
   async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
@@ -316,7 +316,6 @@ export class TestServerDispatcher implements TestServerInterface {
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
-        _optionErrorContext: params.errorContext,
       },
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),

@@ -438,7 +438,7 @@ Read more about [advanced networking](./network.md).
 
 ## Mock WebSockets
 
-The following code will intercept WebSocket connections and mock entire communcation over the WebSocket, instead of connecting to the server. This example responds to a `"request"` with a `"response"`.
+The following code will intercept WebSocket connections and mock entire communication over the WebSocket, instead of connecting to the server. This example responds to a `"request"` with a `"response"`.
 
 ```js
 await page.routeWebSocket('wss://example.com/ws', ws => {

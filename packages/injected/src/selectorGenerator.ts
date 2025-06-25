@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
+import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
@@ -245,13 +245,13 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
         candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
     }
 
-    candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
+    candidates.push({ engine: 'css', selector: escapeNodeName(element), score: kCSSTagNameScore });
   }
 
   if (element.nodeName === 'IFRAME') {
     for (const attribute of ['name', 'title']) {
       if (element.getAttribute(attribute))
-        candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[${attribute}=${quoteCSSAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
+        candidates.push({ engine: 'css', selector: `${escapeNodeName(element)}[${attribute}=${quoteCSSAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
     }
 
     // Locate by testId via CSS selector.
@@ -288,15 +288,15 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     candidates.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
-    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteCSSAttributeValue(element.getAttribute('name')!)}]`, score: kCSSInputTypeNameScore });
+    candidates.push({ engine: 'css', selector: `${escapeNodeName(element)}[name=${quoteCSSAttributeValue(element.getAttribute('name')!)}]`, score: kCSSInputTypeNameScore });
 
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
     if (element.getAttribute('type'))
-      candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[type=${quoteCSSAttributeValue(element.getAttribute('type')!)}]`, score: kCSSInputTypeNameScore });
+      candidates.push({ engine: 'css', selector: `${escapeNodeName(element)}[type=${quoteCSSAttributeValue(element.getAttribute('type')!)}]`, score: kCSSInputTypeNameScore });
   }
 
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden')
-    candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSInputTypeNameScore + 1 });
+    candidates.push({ engine: 'css', selector: escapeNodeName(element), score: kCSSInputTypeNameScore + 1 });
 
   penalizeScoreForLength([candidates]);
   return candidates;
@@ -330,7 +330,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       for (const alternative of textAlternatives)
         candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
     }
-    const cssToken: SelectorToken = { engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore };
+    const cssToken: SelectorToken = { engine: 'css', selector: escapeNodeName(element), score: kCSSTagNameScore };
     for (const alternative of textAlternatives)
       candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
     if (text.length <= 80) {
@@ -363,7 +363,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
 }
 
 function makeSelectorForId(id: string) {
-  return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id="${cssEscape(id)}"]`;
+  return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id=${quoteCSSAttributeValue(id)}]`;
 }
 
 function hasCSSIdToken(tokens: SelectorToken[]) {
@@ -395,8 +395,6 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
   }
 
   for (let element: Element | undefined = targetElement; element && element !== root; element = parentElementOrShadowHost(element)) {
-    const nodeName = element.nodeName.toLowerCase();
-
     let bestTokenForLevel: string = '';
 
     // Element ID is the strongest signal, use it.
@@ -411,9 +409,9 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     const parent = element.parentNode as (Element | ShadowRoot);
 
     // Combine class names until unique.
-    const classes = [...element.classList];
+    const classes = [...element.classList].map(escapeClassName);
     for (let i = 0; i < classes.length; ++i) {
-      const token = '.' + cssEscape(classes.slice(0, i + 1).join('.'));
+      const token = '.' + classes.slice(0, i + 1).join('.');
       const selector = uniqueCSSSelector(token);
       if (selector)
         return makeStrict(selector);
@@ -428,15 +426,16 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     // Ordinal is the weakest signal.
     if (parent) {
       const siblings = [...parent.children];
-      const sameTagSiblings = siblings.filter(sibling => (sibling).nodeName.toLowerCase() === nodeName);
-      const token = sameTagSiblings.indexOf(element) === 0 ? cssEscape(nodeName) : `${cssEscape(nodeName)}:nth-child(${1 + siblings.indexOf(element)})`;
+      const nodeName = element.nodeName;
+      const sameTagSiblings = siblings.filter(sibling => sibling.nodeName === nodeName);
+      const token = sameTagSiblings.indexOf(element) === 0 ? escapeNodeName(element) : `${escapeNodeName(element)}:nth-child(${1 + siblings.indexOf(element)})`;
       const selector = uniqueCSSSelector(token);
       if (selector)
         return makeStrict(selector);
       if (!bestTokenForLevel)
         bestTokenForLevel = token;
     } else if (!bestTokenForLevel) {
-      bestTokenForLevel = cssEscape(nodeName);
+      bestTokenForLevel = escapeNodeName(element);
     }
     tokens.unshift(bestTokenForLevel);
   }
@@ -571,4 +570,33 @@ function suitableTextAlternatives(text: string) {
     result.push({ text: text.substring(0, 80), scoreBonus: 0 });
 
   return result;
+}
+
+function escapeNodeName(node: Node): string {
+  // We are escaping it for document.querySelectorAll, not for usage in CSS file.
+  return node.nodeName.toLocaleLowerCase().replace(/[:\.]/g, char => '\\' + char);
+}
+
+function escapeClassName(className: string): string {
+  // We are escaping class names for document.querySelectorAll by following CSS.escape() rules.
+  let result = '';
+  for (let i = 0; i < className.length; i++)
+    result += cssEscapeCharacter(className, i);
+  return result;
+}
+
+function cssEscapeCharacter(s: string, i: number): string {
+  // https://drafts.csswg.org/cssom/#serialize-an-identifier
+  const c = s.charCodeAt(i);
+  if (c === 0x0000)
+    return '\uFFFD';
+  if ((c >= 0x0001 && c <= 0x001f) ||
+      (c >= 0x0030 && c <= 0x0039 && (i === 0 || (i === 1 && s.charCodeAt(0) === 0x002d))))
+    return '\\' + c.toString(16) + ' ';
+  if (i === 0 && c === 0x002d && s.length === 1)
+    return '\\' + s.charAt(i);
+  if (c >= 0x0080 || c === 0x002d || c === 0x005f || (c >= 0x0030 && c <= 0x0039) ||
+      (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a))
+    return s.charAt(i);
+  return '\\' + s.charAt(i);
 }

@@ -65,7 +65,7 @@ export async function launchApp(browserType: BrowserType, options: {
     context.on('page', async (newPage: Page) => {
       if (newPage.mainFrame().url() === 'chrome://new-tab-page/') {
         await page.bringToFront();
-        await newPage.close(serverSideCallMetadata());
+        await newPage.close();
       }
     });
   }

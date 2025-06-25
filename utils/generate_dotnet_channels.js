@@ -136,7 +136,7 @@ function properties(properties, indent, onlyOptional, parentName, level) {
       if (name === 'android' || name === 'electron')
         continue;
       if (name.startsWith('$mixin')) {
-        visitProperties(mixins.get(value).properties, parentName + toTitleCase(name));
+        visitProperties(mixins.get(value).properties, parentName);
         continue;
       }
       const inner = inlineType(value, indent, parentName + toTitleCase(name), level + 1);
@@ -144,7 +144,10 @@ function properties(properties, indent, onlyOptional, parentName, level) {
         continue;
       ts.push('');
       ts.push(`${indent}[JsonPropertyName("${name}")]`);
-      ts.push(`${indent}public ${inner.ts}${nullableSuffix(inner)} ${toTitleCase(name)} { get; set; }`);
+      let suffix = ''
+      if (!['bool', 'int', 'System.Text.Json.JsonElement'].includes(inner.ts))
+        suffix = ' = null!;'
+      ts.push(`${indent}public ${inner.ts}${nullableSuffix(inner)} ${toTitleCase(name)} { get; set; }${suffix}`);
       const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
       scheme.push(`${indent}${name}: ${wrapped},`);
     }

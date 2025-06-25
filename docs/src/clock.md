@@ -64,6 +64,47 @@ await page.clock.setFixedTime(new Date('2024-02-02T10:30:00'));
 await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:30:00 AM');
 ```
 
+```python async
+await page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 0, 0))
+await page.goto("http://localhost:3333")
+await expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
+
+await page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 30, 0))
+# We know that the page has a timer that updates the time every second.
+await expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM")
+```
+
+```python sync
+page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 0, 0))
+page.goto("http://localhost:3333")
+expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
+page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 30, 0))
+# We know that the page has a timer that updates the time every second.
+expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM")
+```
+
+```java
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss");
+page.clock().setFixedTime(format.parse("2024-02-02T10:00:00"));
+page.navigate("http://localhost:3333");
+Locator locator = page.getByTestId("current-time");
+assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
+page.clock().setFixedTime(format.parse("2024-02-02T10:30:00"));
+// We know that the page has a timer that updates the time every second.
+assertThat(locator).hasText("2/2/2024, 10:30:00 AM");
+```
+
+```csharp
+// Set the fixed time for the clock.
+await Page.Clock.SetFixedTimeAsync(new DateTime(2024, 2, 2, 10, 0, 0));
+await Page.GotoAsync("http://localhost:3333");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
+// Set the fixed time for the clock.
+await Page.Clock.SetFixedTimeAsync(new DateTime(2024, 2, 2, 10, 30, 0));
+// We know that the page has a timer that updates the time every second.
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:30:00 AM");
+```
+
 ## Consistent time and timers
 
 Sometimes your timers depend on `Date.now` and are confused when the `Date.now` value does not change over time.

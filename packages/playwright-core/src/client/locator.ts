@@ -15,7 +15,6 @@
  */
 
 import { ElementHandle } from './elementHandle';
-import { parseResult, serializeArgument } from './jsHandle';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
@@ -142,7 +141,7 @@ export class Locator implements api.Locator {
   }
 
   async clear(options: channels.ElementHandleFillOptions = {}): Promise<void> {
-    return await this.fill('', options);
+    await this._frame._wrapApiCall(() => this.fill('', options), { title: 'Clear' });
   }
 
   async _highlight() {
@@ -251,7 +250,8 @@ export class Locator implements api.Locator {
   }
 
   async _generateLocatorString(): Promise<string | null> {
-    return await this._withElement(h => h._generateLocatorString(), { title: 'Generate locator string', internal: true });
+    const { value } = await this._frame._channel.generateLocatorString({ selector: this._selector });
+    return value === undefined ? null : value;
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
@@ -374,12 +374,10 @@ export class Locator implements api.Locator {
   }
 
   async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-    params.expectedValue = serializeArgument(options.expectedValue);
-    const result = (await this._frame._channel.expect(params));
-    if (result.received !== undefined)
-      result.received = parseResult(result.received);
-    return result;
+    return this._frame._expect(expression, {
+      ...options,
+      selector: this._selector,
+    });
   }
 
   private _inspect() {

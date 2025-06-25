@@ -72,12 +72,6 @@ await page.GotoAsync("https://www.bing.com");
 await browser.CloseAsync();
 ```
 
-## event: Browser.context
-* since: v1.53
-- argument: <[BrowserContext]>
-
-Emitted when a new [BrowserContext] is created in the browser.
-
 ## event: Browser.disconnected
 * since: v1.8
 - argument: <[Browser]>

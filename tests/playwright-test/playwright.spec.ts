@@ -516,7 +516,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
 
-  const errorPrompt = expect.objectContaining({ name: 'error-context-0' });
+  const errorPrompt = expect.objectContaining({ name: 'error-context' });
   expect(result.report.suites[0].specs[1].tests[0].results[0].attachments).toEqual([errorPrompt]);
   expect(result.report.suites[0].specs[1].tests[0].results[1].attachments).toEqual([{
     name: 'video',
@@ -760,15 +760,15 @@ test('should use actionTimeout for APIRequestContext', async ({ runInlineTest, s
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('default APIRequestContext fixture', async ({ request }) => {
-        await expect(request.get('/stall')).rejects.toThrow('apiRequestContext.get: Request timed out after 1111ms');
+        await expect(request.get('/stall')).rejects.toThrow('apiRequestContext.get: Timeout 1111ms exceeded');
       });
       test('newly created APIRequestContext without options', async ({ playwright }) => {
         const apiRequestContext = await playwright.request.newContext();
-        await expect(apiRequestContext.get('/stall')).rejects.toThrow('apiRequestContext.get: Request timed out after 1111ms');
+        await expect(apiRequestContext.get('/stall')).rejects.toThrow('apiRequestContext.get: Timeout 1111ms exceeded');
       });
       test('newly created APIRequestContext with options', async ({ playwright }) => {
         const apiRequestContextWithOptions = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass' } });
-        await expect(apiRequestContextWithOptions.get('/stall')).rejects.toThrow('apiRequestContext.get: Request timed out after 1111ms');
+        await expect(apiRequestContextWithOptions.get('/stall')).rejects.toThrow('apiRequestContext.get: Timeout 1111ms exceeded');
       });
     `,
   }, { workers: 1 });

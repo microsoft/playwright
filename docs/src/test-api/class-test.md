@@ -469,7 +469,7 @@ Learn more about the execution modes [here](../test-parallel.md).
   test('runs in parallel 2', async ({ page }) => {});
   ```
 
-* Running tests in order, retrying each failed test independetly.
+* Running tests in order, retrying each failed test independently.
 
   This is the default mode. It can be useful to set it explicitly to override project configuration that uses `fullyParallel`.
 
@@ -1425,7 +1425,7 @@ Timeout in milliseconds.
 
 Skip a test. Playwright will not run the test past the `test.skip()` call.
 
-Skipped tests are not supposed to be ever run. If you intent to fix the test, use [`method: Test.fixme`] instead.
+Skipped tests are not supposed to be ever run. If you intend to fix the test, use [`method: Test.fixme`] instead.
 
 To declare a skipped test:
 * `test.skip(title, body)`

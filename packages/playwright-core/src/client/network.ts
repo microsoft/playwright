@@ -346,9 +346,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}) {
     await this._handleRoute(async () => {
-      await this._wrapApiCall(async () => {
-        await this._innerFulfill(options);
-      }, { internal: true });
+      await this._innerFulfill(options);
     });
   }
 

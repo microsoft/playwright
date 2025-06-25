@@ -34,13 +34,14 @@ import type * as channels from '@protocol/channels';
 import type * as http from 'http';
 import type { HTTPRequestParams } from '../utils/network';
 
-export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
+export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
   private _harBackends = new Map<string, HarBackend>();
   private _stackSessions = new Map<string, localUtils.StackSession>();
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
+    localUtils.logName = 'browser';
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, localUtils, 'LocalUtils', {
@@ -82,8 +83,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 
   async connect(params: channels.LocalUtilsConnectParams, metadata: CallMetadata): Promise<channels.LocalUtilsConnectResult> {
-    const controller = new ProgressController(metadata, this._object as SdkObject);
-    controller.setLogName('browser');
+    const controller = new ProgressController(metadata, this._object);
     return await controller.run(async progress => {
       const wsHeaders = {
         'User-Agent': getUserAgent(),
@@ -137,16 +137,14 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
   if (!fetchUrl.pathname.endsWith('/'))
     fetchUrl.pathname += '/';
   fetchUrl.pathname += 'json';
-  const json = await fetchData({
+  const json = await fetchData(progress, {
     url: fetchUrl.toString(),
     method: 'GET',
-    timeout: progress.timeUntilDeadline(),
     headers: { 'User-Agent': getUserAgent() },
   }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
     return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
         `This does not look like a Playwright server, try connecting via ws://.`);
   });
-  progress.throwIfAborted();
 
   const wsUrl = new URL(endpointURL);
   let wsEndpointPath = JSON.parse(json).wsEndpointPath;

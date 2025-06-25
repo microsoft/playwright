@@ -25,22 +25,22 @@ import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs
 
 import type net from 'net';
 import type { ProxySettings } from '../types';
+import type { Progress } from '../progress';
 
 export type HTTPRequestParams = {
   url: string,
   method?: string,
   headers?: http.OutgoingHttpHeaders,
   data?: string | Buffer,
-  timeout?: number,
   rejectUnauthorized?: boolean,
+  socketTimeout?: number,
 };
 
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
-export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
-  const parsedUrl = url.parse(params.url);
-  let options: https.RequestOptions = {
-    ...parsedUrl,
+export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void): { cancel(error: Error | undefined): void } {
+  const parsedUrl = new URL(params.url);
+  const options: https.RequestOptions = {
     agent: parsedUrl.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
     method: params.method || 'GET',
     headers: params.headers,
@@ -48,59 +48,51 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
 
-  const timeout = params.timeout ?? NET_DEFAULT_TIMEOUT;
-
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = url.parse(proxyURL);
+    const parsedProxyURL = new URL(proxyURL);
     if (params.url.startsWith('http:')) {
-      options = {
-        path: parsedUrl.href,
-        host: parsedProxyURL.hostname,
-        port: parsedProxyURL.port,
-        headers: options.headers,
-        method: options.method
-      };
+      parsedUrl.pathname = parsedUrl.href;
+      parsedUrl.host = parsedProxyURL.host;
     } else {
-      (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
-
-      options.agent = new HttpsProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent({
+        ...convertURLtoLegacyUrl(parsedProxyURL),
+        secureProxy: parsedProxyURL.protocol === 'https:',
+      });
       options.rejectUnauthorized = false;
     }
   }
 
+  let cancelRequest: (e: Error | undefined) => void;
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
     if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
       // Close the original socket before following the redirect. Otherwise
       // it may stay idle and cause a timeout error.
       request.destroy();
-      httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError);
+      cancelRequest = httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError).cancel;
     } else {
       onResponse(res);
     }
   };
   const request = options.protocol === 'https:' ?
-    https.request(options, requestCallback) :
-    http.request(options, requestCallback);
+    https.request(parsedUrl, options, requestCallback) :
+    http.request(parsedUrl, options, requestCallback);
   request.on('error', onError);
-  if (timeout !== undefined) {
-    const rejectOnTimeout = () =>  {
-      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
+  if (params.socketTimeout !== undefined) {
+    request.setTimeout(params.socketTimeout, () =>  {
+      onError(new Error(`Request to ${params.url} timed out after ${params.socketTimeout}ms`));
       request.abort();
-    };
-    if (timeout <= 0) {
-      rejectOnTimeout();
-      return;
-    }
-    request.setTimeout(timeout, rejectOnTimeout);
+    });
   }
+  cancelRequest = e => request.destroy(e);
   request.end(params.data);
+  return { cancel: e => cancelRequest(e) };
 }
 
-export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    httpRequest(params, async response => {
+export function fetchData(progress: Progress | undefined, params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
+  const promise = new Promise<string>((resolve, reject) => {
+    const { cancel } = httpRequest(params, async response => {
       if (response.statusCode !== 200) {
         const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
         reject(error);
@@ -111,7 +103,9 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
       response.on('error', (error: any) => reject(error));
       response.on('end', () => resolve(body));
     }, reject);
+    progress?.cleanupWhenAborted(cancel);
   });
+  return progress ? progress.race(promise) : promise;
 }
 
 function shouldBypassProxy(url: URL, bypass?: string): boolean {
@@ -138,23 +132,27 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!/^\w+:\/\//.test(proxyServer))
     proxyServer = 'http://' + proxyServer;
 
-  const proxyOpts = url.parse(proxyServer);
+  const proxyOpts = new URL(proxyServer);
   if (proxyOpts.protocol?.startsWith('socks')) {
     return new SocksProxyAgent({
       host: proxyOpts.hostname,
       port: proxyOpts.port || undefined,
     });
   }
-  if (proxy.username)
-    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  if (proxy.username) {
+    proxyOpts.username = proxy.username;
+    proxyOpts.password = proxy.password || '';
+  }
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
-    return new HttpsProxyAgent(proxyOpts);
+    // TODO: switch to URL instance instead of legacy object once https-proxy-agent supports it.
+    return new HttpsProxyAgent(convertURLtoLegacyUrl(proxyOpts));
   }
 
   // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyOpts);
+  // TODO: switch to URL instance instead of legacy object once https-proxy-agent supports it.
+  return new HttpsProxyAgent(convertURLtoLegacyUrl(proxyOpts));
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
@@ -225,5 +223,22 @@ function decorateServer(server: net.Server) {
       socket.destroy();
     sockets.clear();
     return close.call(server, callback);
+  };
+}
+
+function convertURLtoLegacyUrl(url: URL): url.Url {
+  return {
+    auth: url.username ? url.username + ':' + url.password : null,
+    hash: url.hash || null,
+    host: url.hostname ? url.hostname + ':' + url.port : null,
+    hostname: url.hostname || null,
+    href: url.href,
+    path: url.pathname + url.search,
+    pathname: url.pathname,
+    protocol: url.protocol,
+    search: url.search || null,
+    slashes: true,
+    port: url.port || null,
+    query: url.search.slice(1) || null,
   };
 }

@@ -73,7 +73,7 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
   ]);
 });
 
-test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
+test('should merge screenshot assertions', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -95,6 +95,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
     /Set content/,
     /Expect "toHaveScreenshot"[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /Attach "error-context"/,
     /Worker Cleanup[\d.]+m?s/,
   ]);
 });
@@ -178,9 +179,9 @@ test('should show snapshots for steps', {
   await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks \\d+[hmsp]+/
-      - treeitem /Step "first" \\d+[hmsp]+/
-      - treeitem /Step "middle" \\d+[hmsp]+/
-      - treeitem /Step "last" \\d+[hmsp]+/
+      - treeitem /first \\d+[hmsp]+/
+      - treeitem /middle \\d+[hmsp]+/
+      - treeitem /last \\d+[hmsp]+/
       - treeitem /After Hooks \\d+[hmsp]+/
   `);
 

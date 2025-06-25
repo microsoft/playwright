@@ -44,7 +44,17 @@ function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
   command.description('run tests with Playwright Test');
   const options = testOptions.sort((a, b) => a[0].replace(/-/g, '').localeCompare(b[0].replace(/-/g, '')));
-  options.forEach(([name, description]) => command.option(name, description));
+  options.forEach(([name, { description, choices, preset }]) => {
+    const option = command.createOption(name, description);
+    if (choices)
+      option.choices(choices);
+    if (preset)
+      option.preset(preset);
+    // We don't set the default value here, because we want not specified options to
+    // fall back to the user config, which we haven't parsed yet.
+    command.addOption(option);
+    return command;
+  });
   command.action(async (args, opts) => {
     try {
       await runTests(args, opts);
@@ -269,12 +279,6 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
-  let updateSnapshots: 'all' | 'changed' | 'missing' | 'none' | undefined;
-  if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
-    updateSnapshots = options.updateSnapshots;
-  else
-    updateSnapshots = 'updateSnapshots' in options ? 'changed' : undefined;
-
   const overrides: ConfigCLIOverrides = {
     failOnFlakyTests: options.failOnFlakyTests ? true : undefined,
     forbidOnly: options.forbidOnly ? true : undefined,
@@ -290,7 +294,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
-    updateSnapshots,
+    updateSnapshots: options.updateSnapshots,
     updateSourceMethod: options.updateSourceMethod,
     workers: options.workers,
   };
@@ -315,8 +319,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     process.env.PWDEBUG = '1';
   }
   if (!options.ui && options.trace) {
-    if (!kTraceModes.includes(options.trace))
-      throw new Error(`Unsupported trace mode "${options.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
     overrides.use = overrides.use || {};
     overrides.use.trace = options.trace;
   }
@@ -373,41 +375,41 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 
 // Note: update docs/src/test-cli-js.md when you update this, program is the source of truth.
 
-const testOptions: [string, string][] = [
-  /* deprecated */ ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
-  ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
-  ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
-  ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`],
-  ['--forbid-only', `Fail if test.only is called (default: false)`],
-  ['--fully-parallel', `Run all tests in parallel (default: false)`],
-  ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`],
-  ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`],
-  ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
-  ['--headed', `Run tests in headed browsers (default: headless)`],
-  ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
-  ['--last-failed', `Only re-run the failures`],
-  ['--list', `Collect all the tests and report them, but do not run`],
-  ['--max-failures <N>', `Stop after the first N failures`],
-  ['--no-deps', 'Do not run project dependencies'],
-  ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
-  ['--only-changed [ref]', `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.`],
-  ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
-  ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
-  ['--quiet', `Suppress stdio`],
-  ['--repeat-each <N>', `Run each test N times (default: 1)`],
-  ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
-  ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
-  ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
-  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
-  ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
-  ['--tsconfig <path>', `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)`],
-  ['--ui', `Run tests in interactive UI mode`],
-  ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],
-  ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'],
-  ['-u, --update-snapshots [mode]', `Update snapshots with actual results. Possible values are "all", "changed", "missing", and "none". Running tests without the flag defaults to "missing"; running tests with the flag but without a value defaults to "changed".`],
-  ['--update-source-method <method>', `Chooses the way source is updated. Possible values are 'overwrite', '3way' and 'patch'. Defaults to 'patch'`],
-  ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
-  ['-x', `Stop after the first failure`],
+const testOptions: [string, { description: string, choices?: string[], preset?: string }][] = [
+  /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
+  ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
+  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
+  ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
+  ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
+  ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],
+  ['--global-timeout <timeout>', { description: `Maximum time this test suite can run in milliseconds (default: unlimited)` }],
+  ['-g, --grep <grep>', { description: `Only run tests matching this regular expression (default: ".*")` }],
+  ['--grep-invert <grep>', { description: `Only run tests that do not match this regular expression` }],
+  ['--headed', { description: `Run tests in headed browsers (default: headless)` }],
+  ['--ignore-snapshots', { description: `Ignore screenshot and snapshot expectations` }],
+  ['--last-failed', { description: `Only re-run the failures` }],
+  ['--list', { description: `Collect all the tests and report them, but do not run` }],
+  ['--max-failures <N>', { description: `Stop after the first N failures` }],
+  ['--no-deps', { description: `Do not run project dependencies` }],
+  ['--output <dir>', { description: `Folder for output artifacts (default: "test-results")` }],
+  ['--only-changed [ref]', { description: `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.` }],
+  ['--pass-with-no-tests', { description: `Makes test run succeed even if no tests were found` }],
+  ['--project <project-name...>', { description: `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)` }],
+  ['--quiet', { description: `Suppress stdio` }],
+  ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
+  ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")` }],
+  ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
+  ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
+  ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],
+  ['--trace <mode>', { description: `Force tracing mode`, choices: kTraceModes as string[] }],
+  ['--tsconfig <path>', { description: `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)` }],
+  ['--ui', { description: `Run tests in interactive UI mode` }],
+  ['--ui-host <host>', { description: `Host to serve UI on; specifying this option opens UI in a browser tab` }],
+  ['--ui-port <port>', { description: `Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab` }],
+  ['-u, --update-snapshots [mode]', { description: `Update snapshots with actual results. Running tests without the flag defaults to "missing"`, choices: ['all', 'changed', 'missing', 'none'], preset: 'changed' }],
+  ['--update-source-method <method>', { description: `Chooses the way source is updated (default: "patch")`, choices: ['overwrite', '3way', 'patch'] }],
+  ['-j, --workers <workers>', { description: `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)` }],
+  ['-x', { description: `Stop after the first failure` }],
 ];
 
 addTestCommand(program);

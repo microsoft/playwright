@@ -2,12 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
-const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
-const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
-const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
-const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {Helper} = ChromeUtils.importESModule('chrome://juggler/content/Helper.js');
+const {Preferences} = ChromeUtils.importESModule("resource://gre/modules/Preferences.sys.mjs");
+const {ContextualIdentityService} = ChromeUtils.importESModule("resource://gre/modules/ContextualIdentityService.sys.mjs");
+const {NetUtil} = ChromeUtils.importESModule('resource://gre/modules/NetUtil.sys.mjs');
+const {AppConstants} = ChromeUtils.importESModule("resource://gre/modules/AppConstants.sys.mjs");
 
 const Cr = Components.results;
 
@@ -23,6 +22,7 @@ const ALL_PERMISSIONS = [
 
 let globalTabAndWindowActivationChain = Promise.resolve();
 // This is a workaround for https://github.com/microsoft/playwright/issues/34586
+let didCreateFirstPage = false;
 let globalNewPageChain = Promise.resolve();
 
 class DownloadInterceptor {
@@ -104,7 +104,7 @@ class DownloadInterceptor {
 
 const screencastService = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
 
-class TargetRegistry {
+export class TargetRegistry {
   static instance() {
     return TargetRegistry._instance || null;
   }
@@ -310,59 +310,66 @@ class TargetRegistry {
   }
 
   async newPage({browserContextId}) {
-    const result = globalNewPageChain.then(async () => {
-      const browserContext = this.browserContextForId(browserContextId);
-      const features = "chrome,dialog=no,all";
-      // See _callWithURIToLoad in browser.js for the structure of window.arguments
-      // window.arguments[1]: unused (bug 871161)
-      //                 [2]: referrerInfo (nsIReferrerInfo)
-      //                 [3]: postData (nsIInputStream)
-      //                 [4]: allowThirdPartyFixup (bool)
-      //                 [5]: userContextId (int)
-      //                 [6]: originPrincipal (nsIPrincipal)
-      //                 [7]: originStoragePrincipal (nsIPrincipal)
-      //                 [8]: triggeringPrincipal (nsIPrincipal)
-      //                 [9]: allowInheritPrincipal (bool)
-      //                 [10]: csp (nsIContentSecurityPolicy)
-      //                 [11]: nsOpenWindowInfo
-      const args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
-      const urlSupports = Cc["@mozilla.org/supports-string;1"].createInstance(
-        Ci.nsISupportsString
-      );
-      urlSupports.data = 'about:blank';
-      args.appendElement(urlSupports); // 0
-      args.appendElement(undefined); // 1
-      args.appendElement(undefined); // 2
-      args.appendElement(undefined); // 3
-      args.appendElement(undefined); // 4
-      const userContextIdSupports = Cc[
-        "@mozilla.org/supports-PRUint32;1"
-      ].createInstance(Ci.nsISupportsPRUint32);
-      userContextIdSupports.data = browserContext.userContextId;
-      args.appendElement(userContextIdSupports); // 5
-      args.appendElement(undefined); // 6
-      args.appendElement(undefined); // 7
-      args.appendElement(Services.scriptSecurityManager.getSystemPrincipal()); // 8
-
-      const window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
-      await waitForWindowReady(window);
-      if (window.gBrowser.browsers.length !== 1)
-        throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
-      const browser = window.gBrowser.browsers[0];
-      let target = this._browserToTarget.get(browser);
-      while (!target) {
-        await helper.awaitEvent(this, TargetRegistry.Events.TargetCreated);
-        target = this._browserToTarget.get(browser);
-      }
-      browser.focus();
-      if (browserContext.crossProcessCookie.settings.timezoneId) {
-        if (await target.hasFailedToOverrideTimezone())
-          throw new Error('Failed to override timezone');
-      }
-      return target.id();
-    });
+    // When creating the very first page, we cannot create multiple in parallel.
+    // See https://github.com/microsoft/playwright/issues/34586.
+    if (didCreateFirstPage)
+      return this._newPageInternal({browserContextId});
+    const result = globalNewPageChain.then(() => this._newPageInternal({browserContextId}));
     globalNewPageChain = result.catch(error => { /* swallow errors to keep chain running */ });
     return result;
+  }
+
+  async _newPageInternal({browserContextId}) {
+    const browserContext = this.browserContextForId(browserContextId);
+    const features = "chrome,dialog=no,all";
+    // See _callWithURIToLoad in browser.js for the structure of window.arguments
+    // window.arguments[1]: unused (bug 871161)
+    //                 [2]: referrerInfo (nsIReferrerInfo)
+    //                 [3]: postData (nsIInputStream)
+    //                 [4]: allowThirdPartyFixup (bool)
+    //                 [5]: userContextId (int)
+    //                 [6]: originPrincipal (nsIPrincipal)
+    //                 [7]: originStoragePrincipal (nsIPrincipal)
+    //                 [8]: triggeringPrincipal (nsIPrincipal)
+    //                 [9]: allowInheritPrincipal (bool)
+    //                 [10]: csp (nsIContentSecurityPolicy)
+    //                 [11]: nsOpenWindowInfo
+    const args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
+    const urlSupports = Cc["@mozilla.org/supports-string;1"].createInstance(
+      Ci.nsISupportsString
+    );
+    urlSupports.data = 'about:blank';
+    args.appendElement(urlSupports); // 0
+    args.appendElement(undefined); // 1
+    args.appendElement(undefined); // 2
+    args.appendElement(undefined); // 3
+    args.appendElement(undefined); // 4
+    const userContextIdSupports = Cc[
+      "@mozilla.org/supports-PRUint32;1"
+    ].createInstance(Ci.nsISupportsPRUint32);
+    userContextIdSupports.data = browserContext.userContextId;
+    args.appendElement(userContextIdSupports); // 5
+    args.appendElement(undefined); // 6
+    args.appendElement(undefined); // 7
+    args.appendElement(Services.scriptSecurityManager.getSystemPrincipal()); // 8
+
+    const window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
+    await waitForWindowReady(window);
+    if (window.gBrowser.browsers.length !== 1)
+      throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
+    const browser = window.gBrowser.browsers[0];
+    let target = this._browserToTarget.get(browser);
+    while (!target) {
+      await helper.awaitEvent(this, TargetRegistry.Events.TargetCreated);
+      target = this._browserToTarget.get(browser);
+    }
+    browser.focus();
+    if (browserContext.crossProcessCookie.settings.timezoneId) {
+      if (await target.hasFailedToOverrideTimezone())
+        throw new Error('Failed to override timezone');
+    }
+    didCreateFirstPage = true;
+    return target.id();
   }
 
   targets() {
@@ -378,7 +385,7 @@ class TargetRegistry {
   }
 }
 
-class PageTarget {
+export class PageTarget {
   constructor(registry, win, tab, browserContext, opener) {
     helper.decorateAsEventEmitter(this);
 
@@ -1286,7 +1293,3 @@ TargetRegistry.Events = {
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),
   ScreencastStopped: Symbol('TargetRegistry.ScreencastStopped'),
 };
-
-var EXPORTED_SYMBOLS = ['TargetRegistry', 'PageTarget'];
-this.TargetRegistry = TargetRegistry;
-this.PageTarget = PageTarget;
