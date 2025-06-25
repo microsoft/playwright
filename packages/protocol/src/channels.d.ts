@@ -638,7 +638,7 @@ export interface PlaywrightEventTarget {
 }
 export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
-  newRequest(params: PlaywrightNewRequestParams, metadata?: CallMetadata): Promise<PlaywrightNewRequestResult>;
+  newRequest(params: PlaywrightNewRequestParams, progress?: Progress): Promise<PlaywrightNewRequestResult>;
 }
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
@@ -839,11 +839,11 @@ export interface SocksSupportEventTarget {
 }
 export interface SocksSupportChannel extends SocksSupportEventTarget, Channel {
   _type_SocksSupport: boolean;
-  socksConnected(params: SocksSupportSocksConnectedParams, metadata?: CallMetadata): Promise<SocksSupportSocksConnectedResult>;
-  socksFailed(params: SocksSupportSocksFailedParams, metadata?: CallMetadata): Promise<SocksSupportSocksFailedResult>;
-  socksData(params: SocksSupportSocksDataParams, metadata?: CallMetadata): Promise<SocksSupportSocksDataResult>;
-  socksError(params: SocksSupportSocksErrorParams, metadata?: CallMetadata): Promise<SocksSupportSocksErrorResult>;
-  socksEnd(params: SocksSupportSocksEndParams, metadata?: CallMetadata): Promise<SocksSupportSocksEndResult>;
+  socksConnected(params: SocksSupportSocksConnectedParams, progress?: Progress): Promise<SocksSupportSocksConnectedResult>;
+  socksFailed(params: SocksSupportSocksFailedParams, progress?: Progress): Promise<SocksSupportSocksFailedResult>;
+  socksData(params: SocksSupportSocksDataParams, progress?: Progress): Promise<SocksSupportSocksDataResult>;
+  socksError(params: SocksSupportSocksErrorParams, progress?: Progress): Promise<SocksSupportSocksErrorResult>;
+  socksEnd(params: SocksSupportSocksEndParams, progress?: Progress): Promise<SocksSupportSocksEndResult>;
 }
 export type SocksSupportSocksRequestedEvent = {
   uid: string,
@@ -3328,12 +3328,12 @@ export interface JSHandleEventTarget {
 }
 export interface JSHandleChannel extends JSHandleEventTarget, Channel {
   _type_JSHandle: boolean;
-  dispose(params?: JSHandleDisposeParams, metadata?: CallMetadata): Promise<JSHandleDisposeResult>;
-  evaluateExpression(params: JSHandleEvaluateExpressionParams, metadata?: CallMetadata): Promise<JSHandleEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<JSHandleEvaluateExpressionHandleResult>;
-  getPropertyList(params?: JSHandleGetPropertyListParams, metadata?: CallMetadata): Promise<JSHandleGetPropertyListResult>;
-  getProperty(params: JSHandleGetPropertyParams, metadata?: CallMetadata): Promise<JSHandleGetPropertyResult>;
-  jsonValue(params?: JSHandleJsonValueParams, metadata?: CallMetadata): Promise<JSHandleJsonValueResult>;
+  dispose(params?: JSHandleDisposeParams, progress?: Progress): Promise<JSHandleDisposeResult>;
+  evaluateExpression(params: JSHandleEvaluateExpressionParams, progress?: Progress): Promise<JSHandleEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, progress?: Progress): Promise<JSHandleEvaluateExpressionHandleResult>;
+  getPropertyList(params?: JSHandleGetPropertyListParams, progress?: Progress): Promise<JSHandleGetPropertyListResult>;
+  getProperty(params: JSHandleGetPropertyParams, progress?: Progress): Promise<JSHandleGetPropertyResult>;
+  jsonValue(params?: JSHandleJsonValueParams, progress?: Progress): Promise<JSHandleJsonValueResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -3909,12 +3909,12 @@ export interface WebSocketRouteEventTarget {
 }
 export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channel {
   _type_WebSocketRoute: boolean;
-  connect(params?: WebSocketRouteConnectParams, metadata?: CallMetadata): Promise<WebSocketRouteConnectResult>;
-  ensureOpened(params?: WebSocketRouteEnsureOpenedParams, metadata?: CallMetadata): Promise<WebSocketRouteEnsureOpenedResult>;
-  sendToPage(params: WebSocketRouteSendToPageParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToPageResult>;
-  sendToServer(params: WebSocketRouteSendToServerParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToServerResult>;
-  closePage(params: WebSocketRouteClosePageParams, metadata?: CallMetadata): Promise<WebSocketRouteClosePageResult>;
-  closeServer(params: WebSocketRouteCloseServerParams, metadata?: CallMetadata): Promise<WebSocketRouteCloseServerResult>;
+  connect(params?: WebSocketRouteConnectParams, progress?: Progress): Promise<WebSocketRouteConnectResult>;
+  ensureOpened(params?: WebSocketRouteEnsureOpenedParams, progress?: Progress): Promise<WebSocketRouteEnsureOpenedResult>;
+  sendToPage(params: WebSocketRouteSendToPageParams, progress?: Progress): Promise<WebSocketRouteSendToPageResult>;
+  sendToServer(params: WebSocketRouteSendToServerParams, progress?: Progress): Promise<WebSocketRouteSendToServerResult>;
+  closePage(params: WebSocketRouteClosePageParams, progress?: Progress): Promise<WebSocketRouteClosePageResult>;
+  closeServer(params: WebSocketRouteCloseServerParams, progress?: Progress): Promise<WebSocketRouteCloseServerResult>;
 }
 export type WebSocketRouteMessageFromPageEvent = {
   message: string,
@@ -4143,8 +4143,8 @@ export interface DialogEventTarget {
 }
 export interface DialogChannel extends DialogEventTarget, Channel {
   _type_Dialog: boolean;
-  accept(params: DialogAcceptParams, metadata?: CallMetadata): Promise<DialogAcceptResult>;
-  dismiss(params?: DialogDismissParams, metadata?: CallMetadata): Promise<DialogDismissResult>;
+  accept(params: DialogAcceptParams, progress?: Progress): Promise<DialogAcceptResult>;
+  dismiss(params?: DialogDismissParams, progress?: Progress): Promise<DialogDismissResult>;
 }
 export type DialogAcceptParams = {
   promptText?: string,
@@ -4166,12 +4166,12 @@ export interface TracingEventTarget {
 }
 export interface TracingChannel extends TracingEventTarget, Channel {
   _type_Tracing: boolean;
-  tracingStart(params: TracingTracingStartParams, metadata?: CallMetadata): Promise<TracingTracingStartResult>;
-  tracingStartChunk(params: TracingTracingStartChunkParams, metadata?: CallMetadata): Promise<TracingTracingStartChunkResult>;
-  tracingGroup(params: TracingTracingGroupParams, metadata?: CallMetadata): Promise<TracingTracingGroupResult>;
-  tracingGroupEnd(params?: TracingTracingGroupEndParams, metadata?: CallMetadata): Promise<TracingTracingGroupEndResult>;
-  tracingStopChunk(params: TracingTracingStopChunkParams, metadata?: CallMetadata): Promise<TracingTracingStopChunkResult>;
-  tracingStop(params?: TracingTracingStopParams, metadata?: CallMetadata): Promise<TracingTracingStopResult>;
+  tracingStart(params: TracingTracingStartParams, progress?: Progress): Promise<TracingTracingStartResult>;
+  tracingStartChunk(params: TracingTracingStartChunkParams, progress?: Progress): Promise<TracingTracingStartChunkResult>;
+  tracingGroup(params: TracingTracingGroupParams, progress?: Progress): Promise<TracingTracingGroupResult>;
+  tracingGroupEnd(params?: TracingTracingGroupEndParams, progress?: Progress): Promise<TracingTracingGroupEndResult>;
+  tracingStopChunk(params: TracingTracingStopChunkParams, progress?: Progress): Promise<TracingTracingStopChunkResult>;
+  tracingStop(params?: TracingTracingStopParams, progress?: Progress): Promise<TracingTracingStopResult>;
 }
 export type TracingTracingStartParams = {
   name?: string,
@@ -4292,8 +4292,8 @@ export interface StreamEventTarget {
 }
 export interface StreamChannel extends StreamEventTarget, Channel {
   _type_Stream: boolean;
-  read(params: StreamReadParams, metadata?: CallMetadata): Promise<StreamReadResult>;
-  close(params?: StreamCloseParams, metadata?: CallMetadata): Promise<StreamCloseResult>;
+  read(params: StreamReadParams, progress?: Progress): Promise<StreamReadResult>;
+  close(params?: StreamCloseParams, progress?: Progress): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -4317,8 +4317,8 @@ export interface WritableStreamEventTarget {
 }
 export interface WritableStreamChannel extends WritableStreamEventTarget, Channel {
   _type_WritableStream: boolean;
-  write(params: WritableStreamWriteParams, metadata?: CallMetadata): Promise<WritableStreamWriteResult>;
-  close(params?: WritableStreamCloseParams, metadata?: CallMetadata): Promise<WritableStreamCloseResult>;
+  write(params: WritableStreamWriteParams, progress?: Progress): Promise<WritableStreamWriteResult>;
+  close(params?: WritableStreamCloseParams, progress?: Progress): Promise<WritableStreamCloseResult>;
 }
 export type WritableStreamWriteParams = {
   binary: Binary,
@@ -4341,8 +4341,8 @@ export interface CDPSessionEventTarget {
 }
 export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
   _type_CDPSession: boolean;
-  send(params: CDPSessionSendParams, metadata?: CallMetadata): Promise<CDPSessionSendResult>;
-  detach(params?: CDPSessionDetachParams, metadata?: CallMetadata): Promise<CDPSessionDetachResult>;
+  send(params: CDPSessionSendParams, progress?: Progress): Promise<CDPSessionSendResult>;
+  detach(params?: CDPSessionDetachParams, progress?: Progress): Promise<CDPSessionDetachResult>;
 }
 export type CDPSessionEventEvent = {
   method: string,
@@ -5019,8 +5019,8 @@ export interface JsonPipeEventTarget {
 }
 export interface JsonPipeChannel extends JsonPipeEventTarget, Channel {
   _type_JsonPipe: boolean;
-  send(params: JsonPipeSendParams, metadata?: CallMetadata): Promise<JsonPipeSendResult>;
-  close(params?: JsonPipeCloseParams, metadata?: CallMetadata): Promise<JsonPipeCloseResult>;
+  send(params: JsonPipeSendParams, progress?: Progress): Promise<JsonPipeSendResult>;
+  close(params?: JsonPipeCloseParams, progress?: Progress): Promise<JsonPipeCloseResult>;
 }
 export type JsonPipeMessageEvent = {
   message: any,

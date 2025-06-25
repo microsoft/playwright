@@ -104,32 +104,32 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     }
   }
 
-  async connect(params: channels.WebSocketRouteConnectParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'connect' });
+  async connect(params: channels.WebSocketRouteConnectParams, progress: Progress) {
+    await this._evaluateAPIRequest(progress, { id: this._id, type: 'connect' });
   }
 
-  async ensureOpened(params: channels.WebSocketRouteEnsureOpenedParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'ensureOpened' });
+  async ensureOpened(params: channels.WebSocketRouteEnsureOpenedParams, progress: Progress) {
+    await this._evaluateAPIRequest(progress, { id: this._id, type: 'ensureOpened' });
   }
 
-  async sendToPage(params: channels.WebSocketRouteSendToPageParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'sendToPage', data: { data: params.message, isBase64: params.isBase64 } });
+  async sendToPage(params: channels.WebSocketRouteSendToPageParams, progress: Progress) {
+    await this._evaluateAPIRequest(progress, { id: this._id, type: 'sendToPage', data: { data: params.message, isBase64: params.isBase64 } });
   }
 
-  async sendToServer(params: channels.WebSocketRouteSendToServerParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'sendToServer', data: { data: params.message, isBase64: params.isBase64 } });
+  async sendToServer(params: channels.WebSocketRouteSendToServerParams, progress: Progress) {
+    await this._evaluateAPIRequest(progress, { id: this._id, type: 'sendToServer', data: { data: params.message, isBase64: params.isBase64 } });
   }
 
-  async closePage(params: channels.WebSocketRouteClosePageParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'closePage', code: params.code, reason: params.reason, wasClean: params.wasClean });
+  async closePage(params: channels.WebSocketRouteClosePageParams, progress: Progress) {
+    await this._evaluateAPIRequest(progress, { id: this._id, type: 'closePage', code: params.code, reason: params.reason, wasClean: params.wasClean });
   }
 
-  async closeServer(params: channels.WebSocketRouteCloseServerParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'closeServer', code: params.code, reason: params.reason, wasClean: params.wasClean });
+  async closeServer(params: channels.WebSocketRouteCloseServerParams, progress: Progress) {
+    await this._evaluateAPIRequest(progress, { id: this._id, type: 'closeServer', code: params.code, reason: params.reason, wasClean: params.wasClean });
   }
 
-  private async _evaluateAPIRequest(request: ws.APIRequest) {
-    await this._frame.evaluateExpression(`globalThis.__pwWebSocketDispatch(${JSON.stringify(request)})`).catch(() => {});
+  private async _evaluateAPIRequest(progress: Progress, request: ws.APIRequest) {
+    await progress.race(this._frame.evaluateExpression(`globalThis.__pwWebSocketDispatch(${JSON.stringify(request)})`).catch(() => {}));
   }
 
   override _onDispose() {

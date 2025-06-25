@@ -196,7 +196,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async resetForReuseImpl(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
-    await progress.race(this.tracing.resetForReuse());
+    await this.tracing.resetForReuse(progress);
 
     if (params) {
       for (const key of paramsThatAllowContextReuse)

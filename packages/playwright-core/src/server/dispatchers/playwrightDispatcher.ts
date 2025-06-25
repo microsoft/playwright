@@ -34,6 +34,7 @@ import type { AndroidDevice } from '../android/android';
 import type { Browser } from '../browser';
 import type { Playwright } from '../playwright';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export type PlaywrightDispatcherOptions = {
   socksProxy?: SocksProxy;
@@ -85,7 +86,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     this._browserDispatcher = browserDispatcher;
   }
 
-  async newRequest(params: channels.PlaywrightNewRequestParams): Promise<channels.PlaywrightNewRequestResult> {
+  async newRequest(params: channels.PlaywrightNewRequestParams, progress: Progress): Promise<channels.PlaywrightNewRequestResult> {
     const request = new GlobalAPIRequestContext(this._object, params);
     return { request: APIRequestContextDispatcher.from(this.parentScope(), request) };
   }
@@ -112,23 +113,23 @@ class SocksSupportDispatcher extends Dispatcher<SdkObject, channels.SocksSupport
     ];
   }
 
-  async socksConnected(params: channels.SocksSupportSocksConnectedParams): Promise<void> {
+  async socksConnected(params: channels.SocksSupportSocksConnectedParams, progress: Progress): Promise<void> {
     this._socksProxy?.socketConnected(params);
   }
 
-  async socksFailed(params: channels.SocksSupportSocksFailedParams): Promise<void> {
+  async socksFailed(params: channels.SocksSupportSocksFailedParams, progress: Progress): Promise<void> {
     this._socksProxy?.socketFailed(params);
   }
 
-  async socksData(params: channels.SocksSupportSocksDataParams): Promise<void> {
+  async socksData(params: channels.SocksSupportSocksDataParams, progress: Progress): Promise<void> {
     this._socksProxy?.sendSocketData(params);
   }
 
-  async socksError(params: channels.SocksSupportSocksErrorParams): Promise<void> {
+  async socksError(params: channels.SocksSupportSocksErrorParams, progress: Progress): Promise<void> {
     this._socksProxy?.sendSocketError(params);
   }
 
-  async socksEnd(params: channels.SocksSupportSocksEndParams): Promise<void> {
+  async socksEnd(params: channels.SocksSupportSocksEndParams, progress: Progress): Promise<void> {
     this._socksProxy?.sendSocketEnd(params);
   }
 

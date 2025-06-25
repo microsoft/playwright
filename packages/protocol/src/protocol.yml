@@ -786,6 +786,7 @@ Root:
 
 Playwright:
   type: interface
+  progress: true
 
   initializer:
     chromium: BrowserType
@@ -963,6 +964,7 @@ DebugController:
 
 SocksSupport:
   type: interface
+  progress: true
 
   commands:
     socksConnected:
@@ -2745,6 +2747,7 @@ Worker:
 
 JSHandle:
   type: interface
+  progress: true
 
   initializer:
     preview: string
@@ -3327,6 +3330,7 @@ Route:
 
 WebSocketRoute:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -3528,6 +3532,7 @@ BindingCall:
 
 Dialog:
   type: interface
+  progress: true
 
   initializer:
     page: Page?
@@ -3547,6 +3552,7 @@ Dialog:
 
 Tracing:
   type: interface
+  progress: true
 
   commands:
 
@@ -3646,6 +3652,7 @@ Artifact:
 
 Stream:
   type: interface
+  progress: true
 
   commands:
 
@@ -3662,6 +3669,7 @@ Stream:
 
 WritableStream:
   type: interface
+  progress: true
 
   commands:
 
@@ -3676,6 +3684,7 @@ WritableStream:
 
 CDPSession:
   type: interface
+  progress: true
 
   commands:
 
@@ -4134,6 +4143,7 @@ AndroidElementInfo:
 
 JsonPipe:
   type: interface
+  progress: true
 
   commands:
     send:
