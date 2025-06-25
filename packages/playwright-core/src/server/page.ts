@@ -25,7 +25,6 @@ import { helper } from './helper';
 import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
-import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
@@ -39,7 +38,6 @@ import * as rawBindingsControllerSource from '../generated/bindingsControllerSou
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
-import type { CallMetadata } from './instrumentation';
 import type * as network from './network';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
@@ -320,16 +318,17 @@ export class Page extends SdkObject {
     return this.frameManager.frames();
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
+  async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     if (this.browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
-    await this.browserContext.exposePlaywrightBindingIfNeeded();
+    await progress.race(this.browserContext.exposePlaywrightBindingIfNeeded());
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
-    await this.delegate.addInitScript(binding.initScript);
-    await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
+    progress.cleanupWhenAborted(() => this._pageBindings.delete(name));
+    await progress.race(this.delegate.addInitScript(binding.initScript));
+    await progress.race(this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main'));
     return binding;
   }
 
@@ -342,9 +341,14 @@ export class Page extends SdkObject {
     await this.safeNonStallingEvaluateInAllFrames(cleanup, 'main');
   }
 
-  setExtraHTTPHeaders(headers: types.HeadersArray) {
+  async setExtraHTTPHeaders(progress: Progress, headers: types.HeadersArray) {
+    const oldHeaders = this._extraHTTPHeaders;
     this._extraHTTPHeaders = headers;
-    return this.delegate.updateExtraHTTPHeaders();
+    progress.cleanupWhenAborted(async () => {
+      this._extraHTTPHeaders = oldHeaders;
+      await this.delegate.updateExtraHTTPHeaders();
+    });
+    await progress.race(this.delegate.updateExtraHTTPHeaders());
   }
 
   extraHTTPHeaders(): types.HeadersArray | undefined {
@@ -367,9 +371,8 @@ export class Page extends SdkObject {
     this.emitOnContextOnceInitialized(BrowserContext.Events.Console, message);
   }
 
-  async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
+  async reload(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
@@ -378,12 +381,11 @@ export class Page extends SdkObject {
         progress.race(this.delegate.reload()),
       ]);
       return response;
-    }), options.timeout);
+    });
   }
 
-  async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
+  async goBack(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -400,12 +402,11 @@ export class Page extends SdkObject {
       if (error)
         throw error;
       return response;
-    }), options.timeout);
+    });
   }
 
-  async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, async () => {
+  async goForward(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().raceNavigationAction(progress, async () => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -422,7 +423,7 @@ export class Page extends SdkObject {
       if (error)
         throw error;
       return response;
-    }), options.timeout);
+    });
   }
 
   requestGC(): Promise<void> {
@@ -500,7 +501,13 @@ export class Page extends SdkObject {
     }
   }
 
-  async emulateMedia(options: Partial<EmulatedMedia>) {
+  async emulateMedia(progress: Progress, options: Partial<EmulatedMedia>) {
+    const oldEmulatedMedia = { ...this._emulatedMedia };
+    progress.cleanupWhenAborted(async () => {
+      this._emulatedMedia = oldEmulatedMedia;
+      await this.delegate.updateEmulateMedia();
+    });
+
     if (options.media !== undefined)
       this._emulatedMedia.media = options.media;
     if (options.colorScheme !== undefined)
@@ -512,7 +519,7 @@ export class Page extends SdkObject {
     if (options.contrast !== undefined)
       this._emulatedMedia.contrast = options.contrast;
 
-    await this.delegate.updateEmulateMedia();
+    await progress.race(this.delegate.updateEmulateMedia());
   }
 
   emulatedMedia(): EmulatedMedia {
@@ -526,9 +533,15 @@ export class Page extends SdkObject {
     };
   }
 
-  async setViewportSize(viewportSize: types.Size) {
+  async setViewportSize(progress: Progress, viewportSize: types.Size) {
+    const oldEmulatedSize = this._emulatedSize;
+    progress.cleanupWhenAborted(async () => {
+      this._emulatedSize = oldEmulatedSize;
+      await this.delegate.updateEmulatedViewportSize();
+    });
+
     this._setEmulatedSize({ viewport: { ...viewportSize }, screen: { ...viewportSize } });
-    await this.delegate.updateEmulatedViewportSize();
+    await progress.race(this.delegate.updateEmulatedViewportSize());
   }
 
   setEmulatedSizeFromWindowOpen(emulatedSize: EmulatedSize) {
@@ -551,10 +564,11 @@ export class Page extends SdkObject {
     await this.delegate.bringToFront();
   }
 
-  async addInitScript(source: string, name?: string) {
+  async addInitScript(progress: Progress, source: string, name?: string) {
     const initScript = new InitScript(source, name);
     this.initScripts.push(initScript);
-    await this.delegate.addInitScript(initScript);
+    progress.cleanupWhenAborted(() => this.removeInitScripts([initScript]));
+    await progress.race(this.delegate.addInitScript(initScript));
     return initScript;
   }
 
@@ -568,7 +582,8 @@ export class Page extends SdkObject {
     return this.requestInterceptors.length > 0 || this.browserContext.requestInterceptors.length > 0;
   }
 
-  async addRequestInterceptor(handler: network.RouteHandler, prepend?: 'prepend'): Promise<void> {
+  async addRequestInterceptor(progress: Progress, handler: network.RouteHandler, prepend?: 'prepend'): Promise<void> {
+    // Note: progress is intentionally ignored, because this operation is not cancellable and should not block in the browser anyway.
     if (prepend)
       this.requestInterceptors.unshift(handler);
     else
@@ -585,18 +600,17 @@ export class Page extends SdkObject {
     await this.delegate.updateRequestInterception();
   }
 
-  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
+  async expectScreenshot(progress: Progress, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean }> {
     const locator = options.locator;
-    const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
+    const rafrafScreenshot = locator ? async (timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
-    } : async (progress: Progress, timeout: number) => {
+    } : async (timeout: number) => {
       await this.performActionPreChecks(progress);
       await this.mainFrame().rafrafTimeout(progress, timeout);
       return await this.screenshotter.screenshotPage(progress, options || {});
     };
 
     const comparator = getComparator('image/png');
-    const controller = new ProgressController(metadata, this);
     if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
     try {
@@ -611,7 +625,7 @@ export class Page extends SdkObject {
       previous?: Buffer,
       errorMessage: string,
       diff?: Buffer,
-    } | undefined = undefined;
+    } | undefined;
     const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
       const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
       if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
@@ -620,12 +634,11 @@ export class Page extends SdkObject {
         intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
       return false;
     };
-    const callTimeout = options.timeout;
-    return controller.run(async progress => {
+    try {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
-      progress.log(`${renderTitleForCall(metadata)}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
+      progress.log(`${renderTitleForCall(progress.metadata)}${options.timeout ? ` with timeout ${options.timeout}ms` : ''}`);
       if (options.expected)
         progress.log(`  verifying given screenshot expectation`);
       else
@@ -638,7 +651,7 @@ export class Page extends SdkObject {
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
         previous = actual;
-        actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
+        actual = await rafrafScreenshot(screenshotTimeout).catch(e => {
           if (this.mainFrame().isNonRetriableError(e))
             throw e;
           progress.log(`failed to take screenshot - ` + e.message);
@@ -671,7 +684,7 @@ export class Page extends SdkObject {
         return {};
       }
       throw new Error(intermediateResult!.errorMessage);
-    }, callTimeout).catch(e => {
+    } catch (e) {
       // Q: Why not throw upon isNonRetriableError(e) as in other places?
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
@@ -680,19 +693,16 @@ export class Page extends SdkObject {
       if (e instanceof TimeoutError && intermediateResult?.previous)
         errorMessage = `Failed to take two consecutive stable screenshots.`;
       return {
-        log: compressCallLog(e.message ? [...metadata.log, e.message] : metadata.log),
+        log: compressCallLog(e.message ? [...progress.metadata.log, e.message] : progress.metadata.log),
         ...intermediateResult,
         errorMessage,
         timedOut: (e instanceof TimeoutError),
       };
-    });
+    }
   }
 
-  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & types.TimeoutOptions): Promise<Buffer> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(
-        progress => this.screenshotter.screenshotPage(progress, options),
-        options.timeout);
+  async screenshot(progress: Progress, options: ScreenshotOptions): Promise<Buffer> {
+    return await this.screenshotter.screenshotPage(progress, options);
   }
 
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
@@ -808,13 +818,10 @@ export class Page extends SdkObject {
     this._isServerSideOnly = true;
   }
 
-  snapshotForAI(metadata: CallMetadata): Promise<string> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(async progress => {
-      this.lastSnapshotFrameIds = [];
-      const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
-      return snapshot.join('\n');
-    });
+  async snapshotForAI(progress: Progress): Promise<string> {
+    this.lastSnapshotFrameIds = [];
+    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
+    return snapshot.join('\n');
   }
 }
 

@@ -351,13 +351,13 @@ export class BidiBrowserContext extends BrowserContext {
     });
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
   }
 
-  async setOffline(offline: boolean): Promise<void> {
+  async doUpdateOffline(): Promise<void> {
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {

@@ -217,13 +217,13 @@ export class FFBrowserContext extends BrowserContext {
     if (this._options.timezoneId)
       promises.push(this._browser.session.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
     if (this._options.extraHTTPHeaders || this._options.locale)
-      promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []));
+      promises.push(this.doUpdateExtraHTTPHeaders());
     if (this._options.httpCredentials)
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
-      promises.push(this.setOffline(this._options.offline));
+      promises.push(this.doUpdateOffline());
     if (this._options.colorScheme !== 'no-override') {
       promises.push(this._browser.session.send('Browser.setColorScheme', {
         browserContextId,
@@ -359,9 +359,8 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: geolocation || null });
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
-    let allHeaders = this._options.extraHTTPHeaders;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
+    let allHeaders = this._options.extraHTTPHeaders || [];
     if (this._options.locale)
       allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
     await this._browser.session.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: allHeaders });
@@ -371,9 +370,8 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setUserAgentOverride', { browserContextId: this._browserContextId, userAgent: userAgent || null });
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
-    await this._browser.session.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: offline ? 'offline' : 'online' });
+  async doUpdateOffline(): Promise<void> {
+    await this._browser.session.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: this._options.offline ? 'offline' : 'online' });
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {

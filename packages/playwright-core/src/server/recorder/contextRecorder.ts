@@ -32,6 +32,7 @@ import type { Language, LanguageGenerator, LanguageGeneratorOptions } from '../c
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { Source } from '@recorder/recorderTypes';
+import type { Progress } from '@protocol/progress';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -130,7 +131,7 @@ export class ContextRecorder extends EventEmitter {
     return 'javascript';
   }
 
-  async install() {
+  async install(progress: Progress) {
     this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
     for (const page of this._context.pages())
       this._onPage(page);
@@ -142,11 +143,11 @@ export class ContextRecorder extends EventEmitter {
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
-    await this._context.exposeBinding('__pw_recorderPerformAction', false,
+    await this._context.exposeBinding(progress, '__pw_recorderPerformAction', false,
         (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(source.frame, action));
 
     // Other non-essential actions are simply being recorded.
-    await this._context.exposeBinding('__pw_recorderRecordAction', false,
+    await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
     await this._context.extendInjectedScript(rawRecorderSource.source);

@@ -21,6 +21,7 @@ import { isUnderTest } from '../utils';
 import { serverSideCallMetadata } from './instrumentation';
 import { findChromiumChannel } from './registry';
 import { registryDirectory } from './registry';
+import { ProgressController } from './progress';
 
 import type { BrowserType } from './browserType';
 import type { CRPage } from './chromium/crPage';
@@ -86,23 +87,27 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
   if (isUnderTest())
     return;
   const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
-  await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
-    fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
-    fs.writeFileSync(settingsFile, settings);
-  });
 
-  const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
-  await page.addInitScript(
-      `(${String((settings: any) => {
-        // iframes w/ snapshots, etc.
-        if (location && location.protocol === 'data:')
-          return;
-        if (window.top !== window)
-          return;
-        Object.entries(settings).map(([k, v]) => localStorage[k] = v);
-        (window as any).saveSettings = () => {
-          (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
-        };
-      })})(${settings});
-  `);
+  const controller = new ProgressController(serverSideCallMetadata(), page);
+  await controller.run(async progress => {
+    await page.exposeBinding(progress, '_saveSerializedSettings', false, (_, settings) => {
+      fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+      fs.writeFileSync(settingsFile, settings);
+    });
+
+    const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
+    await page.addInitScript(progress,
+        `(${String((settings: any) => {
+          // iframes w/ snapshots, etc.
+          if (location && location.protocol === 'data:')
+            return;
+          if (window.top !== window)
+            return;
+          Object.entries(settings).map(([k, v]) => localStorage[k] = v);
+          (window as any).saveSettings = () => {
+            (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
+          };
+        })})(${settings});
+    `);
+  });
 }

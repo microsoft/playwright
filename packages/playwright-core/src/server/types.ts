@@ -34,7 +34,7 @@ export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
-export type NavigateOptions = TimeoutOptions & {
+export type NavigateOptions = {
   waitUntil?: LifecycleEvent,
 };
 
@@ -133,7 +133,7 @@ export type MouseMultiClickOptions = PointerActionOptions & {
 
 export type World = 'main' | 'utility';
 
-export type GotoOptions = Omit<NavigateOptions, 'timeout'> & {
+export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
 

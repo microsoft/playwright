@@ -16,9 +16,7 @@
 
 import { assert } from '../utils';
 import * as keyboardLayout from './usKeyboardLayout';
-import { ProgressController } from './progress';
 
-import type { CallMetadata } from '@protocol/callMetadata';
 import type { Progress } from './progress';
 import type { Page } from './page';
 import type * as types from './types';
@@ -54,12 +52,7 @@ export class Keyboard {
     this._page = page;
   }
 
-  async down(metadata: CallMetadata, key: string) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._down(progress, key));
-  }
-
-  async _down(progress: Progress, key: string) {
+  async down(progress: Progress, key: string) {
     const description = this._keyDescriptionForString(key);
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
@@ -81,12 +74,7 @@ export class Keyboard {
     return description;
   }
 
-  async up(metadata: CallMetadata, key: string) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._up(progress, key));
-  }
-
-  async _up(progress: Progress, key: string) {
+  async up(progress: Progress, key: string) {
     const description = this._keyDescriptionForString(key);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
@@ -94,39 +82,24 @@ export class Keyboard {
     await this._raw.keyup(progress, this._pressedModifiers, key, description);
   }
 
-  async insertText(metadata: CallMetadata, text: string) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._insertText(progress, text));
-  }
-
-  async _insertText(progress: Progress, text: string) {
+  async insertText(progress: Progress, text: string) {
     await this._raw.sendText(progress, text);
   }
 
-  async type(metadata: CallMetadata, text: string, options?: { delay?: number }) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._type(progress, text, options));
-  }
-
-  async _type(progress: Progress, text: string, options?: { delay?: number }) {
+  async type(progress: Progress, text: string, options?: { delay?: number }) {
     const delay = (options && options.delay) || undefined;
     for (const char of text) {
       if (usKeyboardLayout.has(char)) {
-        await this._press(progress, char, { delay });
+        await this.press(progress, char, { delay });
       } else {
         if (delay)
           await progress.wait(delay);
-        await this._insertText(progress, char);
+        await this.insertText(progress, char);
       }
     }
   }
 
-  async press(metadata: CallMetadata, key: string, options: { delay?: number }) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._press(progress, key, options));
-  }
-
-  async _press(progress: Progress, key: string, options: { delay?: number } = {}) {
+  async press(progress: Progress, key: string, options: { delay?: number } = {}) {
     function split(keyString: string) {
       const keys = [];
       let building = '';
@@ -145,13 +118,13 @@ export class Keyboard {
     const tokens = split(key);
     key = tokens[tokens.length - 1];
     for (let i = 0; i < tokens.length - 1; ++i)
-      await this._down(progress, tokens[i]);
-    await this._down(progress, key);
+      await this.down(progress, tokens[i]);
+    await this.down(progress, key);
     if (options.delay)
       await progress.wait(options.delay);
-    await this._up(progress, key);
+    await this.up(progress, key);
     for (let i = tokens.length - 2; i >= 0; --i)
-      await this._up(progress, tokens[i]);
+      await this.up(progress, tokens[i]);
   }
 
   async ensureModifiers(progress: Progress, mm: types.SmartKeyboardModifier[]): Promise<types.KeyboardModifier[]> {
@@ -165,9 +138,9 @@ export class Keyboard {
       const needDown = modifiers.includes(key);
       const isDown = this._pressedModifiers.has(key);
       if (needDown && !isDown)
-        await this._down(progress, key);
+        await this.down(progress, key);
       else if (!needDown && isDown)
-        await this._up(progress, key);
+        await this.up(progress, key);
     }
     return restore;
   }
@@ -213,12 +186,7 @@ export class Mouse {
     return { x: this._x, y: this._y };
   }
 
-  async move(metadata: CallMetadata, x: number, y: number, options: { steps?: number, forClick?: boolean }) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._move(progress, x, y, options));
-  }
-
-  async _move(progress: Progress, x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
+  async move(progress: Progress, x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
     const { steps = 1 } = options;
     const fromX = this._x;
     const fromY = this._y;
@@ -231,62 +199,44 @@ export class Mouse {
     }
   }
 
-  async down(metadata: CallMetadata, options: { button?: types.MouseButton, clickCount?: number }) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._down(progress, options));
-  }
-
-  async _down(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
+  async down(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = button;
     this._buttons.add(button);
     await this._raw.down(progress, this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async up(metadata: CallMetadata, options: { button?: types.MouseButton, clickCount?: number }) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._up(progress, options));
-  }
-
-  async _up(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
+  async up(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = 'none';
     this._buttons.delete(button);
     await this._raw.up(progress, this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async click(metadata: CallMetadata, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number }) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._click(progress, x, y, options));
-  }
-
-  async _click(progress: Progress, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
+  async click(progress: Progress, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
     const { delay = null, clickCount = 1 } = options;
     if (delay) {
-      this._move(progress, x, y, { forClick: true });
+      this.move(progress, x, y, { forClick: true });
       for (let cc = 1; cc <= clickCount; ++cc) {
-        await this._down(progress, { ...options, clickCount: cc });
+        await this.down(progress, { ...options, clickCount: cc });
         await progress.wait(delay);
-        await this._up(progress, { ...options, clickCount: cc });
+        await this.up(progress, { ...options, clickCount: cc });
         if (cc < clickCount)
           await progress.wait(delay);
       }
     } else {
       const promises = [];
-      promises.push(this._move(progress, x, y, { forClick: true }));
+      promises.push(this.move(progress, x, y, { forClick: true }));
       for (let cc = 1; cc <= clickCount; ++cc) {
-        promises.push(this._down(progress, { ...options, clickCount: cc }));
-        promises.push(this._up(progress, { ...options, clickCount: cc }));
+        promises.push(this.down(progress, { ...options, clickCount: cc }));
+        promises.push(this.up(progress, { ...options, clickCount: cc }));
       }
       await Promise.all(promises);
     }
   }
 
-  async wheel(metadata: CallMetadata, deltaX: number, deltaY: number) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(async progress => {
-      await this._raw.wheel(progress, this._x, this._y, this._buttons, this._keyboard._modifiers(), deltaX, deltaY);
-    });
+  async wheel(progress: Progress, deltaX: number, deltaY: number) {
+    await this._raw.wheel(progress, this._x, this._y, this._buttons, this._keyboard._modifiers(), deltaX, deltaY);
   }
 }
 
@@ -363,12 +313,7 @@ export class Touchscreen {
     this._page = page;
   }
 
-  async tap(metadata: CallMetadata, x: number, y: number) {
-    const controller = new ProgressController(metadata, this._page);
-    return controller.run(progress => this._tap(progress, x, y));
-  }
-
-  async _tap(progress: Progress, x: number, y: number) {
+  async tap(progress: Progress, x: number, y: number) {
     if (!this._page.browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(progress, x, y, this._page.keyboard._modifiers());

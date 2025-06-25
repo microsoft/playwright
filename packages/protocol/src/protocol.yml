@@ -1196,6 +1196,7 @@ EventTarget:
 
 BrowserContext:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -1538,6 +1539,7 @@ BrowserContext:
 
 Page:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -2711,6 +2713,7 @@ Frame:
 
 Worker:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -3499,6 +3502,7 @@ WebSocket:
 
 BindingCall:
   type: interface
+  progress: true
 
   initializer:
     frame: Frame

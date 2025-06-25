@@ -33,13 +33,13 @@ import type { BrowserContext } from '../browserContext';
 import type { CRCoverage } from '../chromium/crCoverage';
 import type { Download } from '../download';
 import type { FileChooser } from '../fileChooser';
-import type { CallMetadata } from '../instrumentation';
 import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
 import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -124,8 +124,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return this._page;
   }
 
-  async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
-    const binding = await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+  async exposeBinding(params: channels.PageExposeBindingParams, progress: Progress): Promise<void> {
+    const binding = await this._page.exposeBinding(progress, params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
       if (this._disposed)
@@ -137,43 +137,43 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._bindings.push(binding);
   }
 
-  async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams, metadata: CallMetadata): Promise<void> {
-    await this._page.setExtraHTTPHeaders(params.headers);
+  async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams, progress: Progress): Promise<void> {
+    await this._page.setExtraHTTPHeaders(progress, params.headers);
   }
 
-  async reload(params: channels.PageReloadParams, metadata: CallMetadata): Promise<channels.PageReloadResult> {
-    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.reload(metadata, params)) };
+  async reload(params: channels.PageReloadParams, progress: Progress): Promise<channels.PageReloadResult> {
+    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.reload(progress, params)) };
   }
 
-  async goBack(params: channels.PageGoBackParams, metadata: CallMetadata): Promise<channels.PageGoBackResult> {
-    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.goBack(metadata, params)) };
+  async goBack(params: channels.PageGoBackParams, progress: Progress): Promise<channels.PageGoBackResult> {
+    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.goBack(progress, params)) };
   }
 
-  async goForward(params: channels.PageGoForwardParams, metadata: CallMetadata): Promise<channels.PageGoForwardResult> {
-    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.goForward(metadata, params)) };
+  async goForward(params: channels.PageGoForwardParams, progress: Progress): Promise<channels.PageGoForwardResult> {
+    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.goForward(progress, params)) };
   }
 
-  async requestGC(params: channels.PageRequestGCParams, metadata: CallMetadata): Promise<channels.PageRequestGCResult> {
-    await this._page.requestGC();
+  async requestGC(params: channels.PageRequestGCParams, progress: Progress): Promise<channels.PageRequestGCResult> {
+    await progress.race(this._page.requestGC());
   }
 
-  async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, metadata: CallMetadata): Promise<channels.PageRegisterLocatorHandlerResult> {
+  async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, progress: Progress): Promise<channels.PageRegisterLocatorHandlerResult> {
     const uid = this._page.registerLocatorHandler(params.selector, params.noWaitAfter);
     this._locatorHandlers.add(uid);
     return { uid };
   }
 
-  async resolveLocatorHandlerNoReply(params: channels.PageResolveLocatorHandlerNoReplyParams, metadata: CallMetadata): Promise<void> {
+  async resolveLocatorHandlerNoReply(params: channels.PageResolveLocatorHandlerNoReplyParams, progress: Progress): Promise<void> {
     this._page.resolveLocatorHandler(params.uid, params.remove);
   }
 
-  async unregisterLocatorHandler(params: channels.PageUnregisterLocatorHandlerParams, metadata: CallMetadata): Promise<void> {
+  async unregisterLocatorHandler(params: channels.PageUnregisterLocatorHandlerParams, progress: Progress): Promise<void> {
     this._page.unregisterLocatorHandler(params.uid);
     this._locatorHandlers.delete(params.uid);
   }
 
-  async emulateMedia(params: channels.PageEmulateMediaParams, metadata: CallMetadata): Promise<void> {
-    await this._page.emulateMedia({
+  async emulateMedia(params: channels.PageEmulateMediaParams, progress: Progress): Promise<void> {
+    await this._page.emulateMedia(progress, {
       media: params.media,
       colorScheme: params.colorScheme,
       reducedMotion: params.reducedMotion,
@@ -182,15 +182,15 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     });
   }
 
-  async setViewportSize(params: channels.PageSetViewportSizeParams, metadata: CallMetadata): Promise<void> {
-    await this._page.setViewportSize(params.viewportSize);
+  async setViewportSize(params: channels.PageSetViewportSizeParams, progress: Progress): Promise<void> {
+    await this._page.setViewportSize(progress, params.viewportSize);
   }
 
-  async addInitScript(params: channels.PageAddInitScriptParams, metadata: CallMetadata): Promise<void> {
-    this._initScripts.push(await this._page.addInitScript(params.source));
+  async addInitScript(params: channels.PageAddInitScriptParams, progress: Progress): Promise<void> {
+    this._initScripts.push(await this._page.addInitScript(progress, params.source));
   }
 
-  async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+  async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
     const hadMatchers = this._interceptionUrlMatchers.length > 0;
     if (!params.patterns.length) {
       // Note: it is important to remove the interceptor when there are no patterns,
@@ -201,17 +201,17 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     } else {
       this._interceptionUrlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
       if (!hadMatchers)
-        await this._page.addRequestInterceptor(this._requestInterceptor);
+        await this._page.addRequestInterceptor(progress, this._requestInterceptor);
     }
   }
 
-  async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+  async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(this.connection, this._page);
+      await WebSocketRouteDispatcher.installIfNeeded(progress, this.connection, this._page);
   }
 
-  async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
+  async expectScreenshot(params: channels.PageExpectScreenshotParams, progress: Progress): Promise<channels.PageExpectScreenshotResult> {
     const mask: { frame: Frame, selector: string }[] = (params.mask || []).map(({ frame, selector }) => ({
       frame: (frame as FrameDispatcher)._object,
       selector,
@@ -220,28 +220,29 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       frame: (params.locator.frame as FrameDispatcher)._object,
       selector: params.locator.selector,
     } : undefined;
-    return await this._page.expectScreenshot(metadata, {
+    return await this._page.expectScreenshot(progress, {
       ...params,
       locator,
       mask,
     });
   }
 
-  async screenshot(params: channels.PageScreenshotParams, metadata: CallMetadata): Promise<channels.PageScreenshotResult> {
+  async screenshot(params: channels.PageScreenshotParams, progress: Progress): Promise<channels.PageScreenshotResult> {
     const mask: { frame: Frame, selector: string }[] = (params.mask || []).map(({ frame, selector }) => ({
       frame: (frame as FrameDispatcher)._object,
       selector,
     }));
-    return { binary: await this._page.screenshot(metadata, { ...params, mask }) };
+    return { binary: await this._page.screenshot(progress, { ...params, mask }) };
   }
 
-  async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
+  async close(params: channels.PageCloseParams, progress: Progress): Promise<void> {
     if (!params.runBeforeUnload)
-      metadata.potentiallyClosesScope = true;
+      progress.metadata.potentiallyClosesScope = true;
     await this._page.close(params);
   }
 
-  async updateSubscription(params: channels.PageUpdateSubscriptionParams): Promise<void> {
+  async updateSubscription(params: channels.PageUpdateSubscriptionParams, progress: Progress): Promise<void> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     if (params.event === 'fileChooser')
       await this._page.setFileChooserInterceptedBy(params.enabled, this);
     if (params.enabled)
@@ -250,102 +251,100 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._subscriptions.delete(params.event);
   }
 
-  async keyboardDown(params: channels.PageKeyboardDownParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.down(metadata, params.key);
+  async keyboardDown(params: channels.PageKeyboardDownParams, progress: Progress): Promise<void> {
+    await this._page.keyboard.down(progress, params.key);
   }
 
-  async keyboardUp(params: channels.PageKeyboardUpParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.up(metadata, params.key);
+  async keyboardUp(params: channels.PageKeyboardUpParams, progress: Progress): Promise<void> {
+    await this._page.keyboard.up(progress, params.key);
   }
 
-  async keyboardInsertText(params: channels.PageKeyboardInsertTextParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.insertText(metadata, params.text);
+  async keyboardInsertText(params: channels.PageKeyboardInsertTextParams, progress: Progress): Promise<void> {
+    await this._page.keyboard.insertText(progress, params.text);
   }
 
-  async keyboardType(params: channels.PageKeyboardTypeParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.type(metadata, params.text, params);
+  async keyboardType(params: channels.PageKeyboardTypeParams, progress: Progress): Promise<void> {
+    await this._page.keyboard.type(progress, params.text, params);
   }
 
-  async keyboardPress(params: channels.PageKeyboardPressParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.press(metadata, params.key, params);
+  async keyboardPress(params: channels.PageKeyboardPressParams, progress: Progress): Promise<void> {
+    await this._page.keyboard.press(progress, params.key, params);
   }
 
-  async mouseMove(params: channels.PageMouseMoveParams, metadata: CallMetadata): Promise<void> {
-    metadata.point = { x: params.x, y: params.y };
-    await this._page.mouse.move(metadata, params.x, params.y, params);
+  async mouseMove(params: channels.PageMouseMoveParams, progress: Progress): Promise<void> {
+    progress.metadata.point = { x: params.x, y: params.y };
+    await this._page.mouse.move(progress, params.x, params.y, params);
   }
 
-  async mouseDown(params: channels.PageMouseDownParams, metadata: CallMetadata): Promise<void> {
-    metadata.point = this._page.mouse.currentPoint();
-    await this._page.mouse.down(metadata, params);
+  async mouseDown(params: channels.PageMouseDownParams, progress: Progress): Promise<void> {
+    progress.metadata.point = this._page.mouse.currentPoint();
+    await this._page.mouse.down(progress, params);
   }
 
-  async mouseUp(params: channels.PageMouseUpParams, metadata: CallMetadata): Promise<void> {
-    metadata.point = this._page.mouse.currentPoint();
-    await this._page.mouse.up(metadata, params);
+  async mouseUp(params: channels.PageMouseUpParams, progress: Progress): Promise<void> {
+    progress.metadata.point = this._page.mouse.currentPoint();
+    await this._page.mouse.up(progress, params);
   }
 
-  async mouseClick(params: channels.PageMouseClickParams, metadata: CallMetadata): Promise<void> {
-    metadata.point = { x: params.x, y: params.y };
-    await this._page.mouse.click(metadata, params.x, params.y, params);
+  async mouseClick(params: channels.PageMouseClickParams, progress: Progress): Promise<void> {
+    progress.metadata.point = { x: params.x, y: params.y };
+    await this._page.mouse.click(progress, params.x, params.y, params);
   }
 
-  async mouseWheel(params: channels.PageMouseWheelParams, metadata: CallMetadata): Promise<void> {
-    await this._page.mouse.wheel(metadata, params.deltaX, params.deltaY);
+  async mouseWheel(params: channels.PageMouseWheelParams, progress: Progress): Promise<void> {
+    await this._page.mouse.wheel(progress, params.deltaX, params.deltaY);
   }
 
-  async touchscreenTap(params: channels.PageTouchscreenTapParams, metadata: CallMetadata): Promise<void> {
-    metadata.point = { x: params.x, y: params.y };
-    await this._page.touchscreen.tap(metadata, params.x, params.y);
+  async touchscreenTap(params: channels.PageTouchscreenTapParams, progress: Progress): Promise<void> {
+    progress.metadata.point = { x: params.x, y: params.y };
+    await this._page.touchscreen.tap(progress, params.x, params.y);
   }
 
-  async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, metadata: CallMetadata): Promise<channels.PageAccessibilitySnapshotResult> {
-    const rootAXNode = await this._page.accessibility.snapshot({
+  async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, progress: Progress): Promise<channels.PageAccessibilitySnapshotResult> {
+    const rootAXNode = await progress.race(this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
-    });
+    }));
     return { rootAXNode: rootAXNode || undefined };
   }
 
-  async pdf(params: channels.PagePdfParams, metadata: CallMetadata): Promise<channels.PagePdfResult> {
+  async pdf(params: channels.PagePdfParams, progress: Progress): Promise<channels.PagePdfResult> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
-    const buffer = await this._page.pdf(params);
+    const buffer = await progress.race(this._page.pdf(params));
     return { pdf: buffer };
   }
 
-  async snapshotForAI(params: channels.PageSnapshotForAIParams, metadata: CallMetadata): Promise<channels.PageSnapshotForAIResult> {
-    return { snapshot: await this._page.snapshotForAI(metadata) };
+  async snapshotForAI(params: channels.PageSnapshotForAIParams, progress: Progress): Promise<channels.PageSnapshotForAIResult> {
+    return { snapshot: await this._page.snapshotForAI(progress) };
   }
 
-  async bringToFront(params: channels.PageBringToFrontParams, metadata: CallMetadata): Promise<void> {
-    await this._page.bringToFront();
+  async bringToFront(params: channels.PageBringToFrontParams, progress: Progress): Promise<void> {
+    await progress.race(this._page.bringToFront());
   }
 
-  async startJSCoverage(params: channels.PageStartJSCoverageParams, metadata: CallMetadata): Promise<void> {
+  async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {
+    const coverage = this._page.coverage as CRCoverage;
+    await coverage.startJSCoverage(progress, params);
     this._jsCoverageActive = true;
-    const coverage = this._page.coverage as CRCoverage;
-    await coverage.startJSCoverage(params);
   }
 
-  async stopJSCoverage(params: channels.PageStopJSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopJSCoverageResult> {
-    const coverage = this._page.coverage as CRCoverage;
-    const result = await coverage.stopJSCoverage();
+  async stopJSCoverage(params: channels.PageStopJSCoverageParams, progress: Progress): Promise<channels.PageStopJSCoverageResult> {
     this._jsCoverageActive = false;
-    return result;
+    const coverage = this._page.coverage as CRCoverage;
+    return await coverage.stopJSCoverage();
   }
 
-  async startCSSCoverage(params: channels.PageStartCSSCoverageParams, metadata: CallMetadata): Promise<void> {
+  async startCSSCoverage(params: channels.PageStartCSSCoverageParams, progress: Progress): Promise<void> {
+    const coverage = this._page.coverage as CRCoverage;
+    await coverage.startCSSCoverage(progress, params);
     this._cssCoverageActive = true;
-    const coverage = this._page.coverage as CRCoverage;
-    await coverage.startCSSCoverage(params);
   }
 
-  async stopCSSCoverage(params: channels.PageStopCSSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopCSSCoverageResult> {
-    const coverage = this._page.coverage as CRCoverage;
-    const result = await coverage.stopCSSCoverage();
+  async stopCSSCoverage(params: channels.PageStopCSSCoverageParams, progress: Progress): Promise<channels.PageStopCSSCoverageResult> {
     this._cssCoverageActive = false;
-    return result;
+    const coverage = this._page.coverage as CRCoverage;
+    return await coverage.stopCSSCoverage();
   }
 
   _onFrameAttached(frame: Frame) {
@@ -399,12 +398,12 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
     this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
   }
 
-  async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionResult> {
-    return { value: serializeResult(await this._object.evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionResult> {
+    return { value: serializeResult(await progress.race(this._object.evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg)))) };
   }
 
-  async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionHandleResult> {
-    return { handle: JSHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionHandleResult> {
+    return { handle: JSHandleDispatcher.fromJSHandle(this, await progress.race(this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)))) };
   }
 }
 
@@ -432,12 +431,12 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     return this._promise;
   }
 
-  async resolve(params: channels.BindingCallResolveParams, metadata: CallMetadata): Promise<void> {
+  async resolve(params: channels.BindingCallResolveParams, progress: Progress): Promise<void> {
     this._resolve!(parseArgument(params.result));
     this._dispose();
   }
 
-  async reject(params: channels.BindingCallRejectParams, metadata: CallMetadata): Promise<void> {
+  async reject(params: channels.BindingCallRejectParams, progress: Progress): Promise<void> {
     this._reject!(parseError(params.error));
     this._dispose();
   }
