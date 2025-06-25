@@ -58,14 +58,15 @@ const assertURL = defineTool({
   },
 
   handle: async (context, params) => {
+    const flags = params.ignoreCase ? 'i' : '';
     const code = [
-      `await expect(page).toHaveURL(/${params.url}/);`
+      `await expect(page).toHaveURL(/${params.url}/${flags});`
     ];
 
     return {
       code,
       action: async () => {
-        const re = new RegExp(params.url, params.ignoreCase ? 'i' : '');
+        const re = new RegExp(params.url, flags);
         const url = context.page.url();
         if (!re.test(url))
           throw new Error(`Expected URL to match ${params.url}, but got ${url}.`);

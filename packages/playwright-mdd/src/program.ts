@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import dotenv from 'dotenv';
 import { program } from 'commander';
 
-import { Context } from './browser/context';
+import { Context } from './codegen/context';
 
 /* eslint-disable no-console */
 
@@ -27,32 +29,17 @@ const packageJSON = require('../package.json');
 
 program
     .version('Version ' + packageJSON.version)
+    .argument('<spec>', 'The test spec to generate code for')
+    .option('-o, --output <path>', 'The path to save the generated code')
     .name(packageJSON.name)
-    .action(async () => {
-      const context = await Context.create();
-      const code = await context.runScript(script);
-      console.log('Output code:');
-      console.log('```javascript');
-      console.log(code);
-      console.log('```');
-      await context.close();
+    .action(async (spec, options) => {
+      const content = await fs.promises.readFile(spec, 'utf8');
+      const codegenContext = new Context();
+      const code = await codegenContext.generateCode(content);
+      if (options.output)
+        await fs.promises.writeFile(options.output, code);
+      else
+        console.log(code);
     });
-
-// An example of a failing script.
-//
-// const script = [
-//   'Navigate to https://debs-obrien.github.io/playwright-movies-app/search?searchTerm=Twister&page=1',
-//   'Verify that the URL contains the search term "twisters"',
-// ];
-
-const script = [
-  'Navigate to https://debs-obrien.github.io/playwright-movies-app',
-  'Click search icon',
-  'Type "Twister" in the search field and hit Enter',
-  'Verify that the URL contains the search term "twister"',
-  'Verify that the search results contain an image named "Twisters"',
-  'Click on the link for the movie "Twisters"',
-  'Verify that the main heading on the movie page is "Twisters"',
-];
 
 export { program };

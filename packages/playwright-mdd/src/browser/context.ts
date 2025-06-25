@@ -81,21 +81,14 @@ export class Context {
     return result;
   }
 
-  async runScript(tasks: string[]): Promise<string> {
-    this._codeCollector = [
-      `test('generated code', async ({ page }) => {`,
-    ];
+  async runScript(tasks: string[]): Promise<{ code: string[] }> {
     await runTasks(this, tasks);
-    this._codeCollector.push('});');
-    return this._codeCollector.join('\n');
+    return { code: this._codeCollector };
   }
 
   async beforeTask(task: string) {
-    this._codeCollector.push(`// ${task}`);
-  }
-
-  async afterTask() {
     this._codeCollector.push('');
+    this._codeCollector.push(`// ${task}`);
   }
 
   async runTool(tool: Tool, params: Record<string, unknown> | undefined): Promise<{ content: string }> {
@@ -136,7 +129,7 @@ export class Context {
     if (captureSnapshot && !this._javaScriptBlocked())
       result.push(await this._snapshot());
 
-    this._codeCollector.push(...code.map(c => `  ${c}`));
+    this._codeCollector.push(...code);
     return { content: result.join('\n') };
   }
 
