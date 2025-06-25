@@ -14,35 +14,38 @@
  * limitations under the License.
  */
 
+import { z } from 'zod';
 import OpenAI from 'openai';
 import debug from 'debug';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import { Tool } from './tools/tool';
-import { Context } from './context';
-
 /* eslint-disable no-console */
 
-export async function runTasks(context: Context, tasks: string[]): Promise<string> {
-  const openai = new OpenAI();
-  const allCode: string[] = [
-    `test('generated code', async ({ page }) => {`,
-  ];
-  for (const task of tasks) {
-    const { taskCode } = await runTask(openai, context, task);
-    if (taskCode.length)
-      allCode.push('', ...taskCode.map(code => `  ${code}`));
-  }
-  allCode.push('});');
-  return allCode.join('\n');
+export interface Context {
+  readonly tools: Tool<any>[];
+  beforeTask?(task: string): Promise<void>;
+  runTool(tool: Tool<any>, params: Record<string, unknown>): Promise<{ content: string }>;
+  afterTask?(): Promise<void>;
 }
 
-async function runTask(openai: OpenAI, context: Context, task: string): Promise<{ taskCode: string[] }> {
-  console.log('Perform task:', task);
+export type ToolSchema<Input extends z.Schema> = {
+  name: string;
+  description: string;
+  inputSchema: Input;
+};
 
-  const taskCode: string[] = [
-    `// ${task}`,
-  ];
+export type Tool<Input extends z.Schema = z.Schema> = {
+  schema: ToolSchema<Input>;
+};
+
+export async function runTasks(context: Context, tasks: string[]) {
+  const openai = new OpenAI();
+  for (const task of tasks)
+    await runTask(openai, context, task);
+}
+
+async function runTask(openai: OpenAI, context: Context, task: string) {
+  console.log('Perform task:', task);
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     {
@@ -50,6 +53,8 @@ async function runTask(openai: OpenAI, context: Context, task: string): Promise<
       content: `Peform following task: ${task}. Once the task is complete, call the "done" tool.`
     }
   ];
+
+  await context.beforeTask?.(task);
 
   for (let iteration = 0; iteration < 5; ++iteration) {
     debug('history')(messages);
@@ -69,7 +74,6 @@ async function runTask(openai: OpenAI, context: Context, task: string): Promise<
       tool_calls: message.tool_calls
     });
 
-    let hasPreviousError = false;
     for (const toolCall of message.tool_calls) {
       const functionCall = toolCall.function;
       console.log('Call tool:', functionCall.name, functionCall.arguments);
@@ -78,34 +82,33 @@ async function runTask(openai: OpenAI, context: Context, task: string): Promise<
       if (!tool)
         throw new Error('Unknown tool: ' + functionCall.name);
 
-      if (hasPreviousError) {
-        messages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: `This tool call is skipped due to previous error.`,
-        });
-        continue;
+      if (functionCall.name === 'done') {
+        await context.afterTask?.();
+        return;
       }
 
-      if (functionCall.name === 'done')
-        return { taskCode };
-
       try {
-        const { code, content } = await context.run(tool, JSON.parse(functionCall.arguments));
-        taskCode.push(...code);
+        const { content } = await context.runTool(tool, JSON.parse(functionCall.arguments));
         messages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
           content,
         });
       } catch (error) {
-        hasPreviousError = true;
         console.log('Tool error:', error);
         messages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
           content: `Error while executing tool "${functionCall.name}": ${error instanceof Error ? error.message : String(error)}\n\nPlease try to recover and complete the task.`,
         });
+        for (const ignoredToolCall of message.tool_calls.slice(message.tool_calls.indexOf(toolCall) + 1)) {
+          messages.push({
+            role: 'tool',
+            tool_call_id: ignoredToolCall.id,
+            content: `This tool call is skipped due to previous error.`,
+          });
+        }
+        break;
       }
     }
   }
