@@ -482,6 +482,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test('should allow setting title from env in global teardown', async ({ runInlineTest, page, showReport }, testInfo) => {
+      test.skip(useIntermediateMergeReport, 'env vars are not available in merge report');
+
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = {
