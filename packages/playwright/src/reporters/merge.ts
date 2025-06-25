@@ -451,7 +451,7 @@ class AttachmentPathPatcher {
     if (event.method === 'onAttach')
       this._patchAttachments((event.params as JsonTestResultOnAttach).attachments);
     else if (event.method === 'onTestEnd')
-      this._patchAttachments((event.params as JsonTestResultEnd).attachments ?? []);
+      this._patchAttachments((event.params.result as JsonTestResultEnd).attachments ?? []);
   }
 
   private _patchAttachments(attachments: JsonAttachment[]) {
