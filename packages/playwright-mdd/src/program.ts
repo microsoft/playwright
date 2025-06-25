@@ -17,9 +17,7 @@
 import dotenv from 'dotenv';
 import { program } from 'commander';
 
-import { runTasks } from './loop';
-import { Context } from './context';
-import { tools } from './tools';
+import { Context } from './browser/context';
 
 /* eslint-disable no-console */
 
@@ -31,8 +29,8 @@ program
     .version('Version ' + packageJSON.version)
     .name(packageJSON.name)
     .action(async () => {
-      const context = await Context.create(tools);
-      const code = await runTasks(context, script);
+      const context = await Context.create();
+      const code = await context.runScript(script);
       console.log('Output code:');
       console.log('```javascript');
       console.log(code);

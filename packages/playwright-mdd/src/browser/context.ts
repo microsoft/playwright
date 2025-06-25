@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
 import * as playwright from 'playwright';
 
-import { callOnPageNoTrace, waitForCompletion } from './tools/utils';
-import { ManualPromise } from './manualPromise';
+import { callOnPageNoTrace, waitForCompletion } from './utils';
+import { ManualPromise } from '../manualPromise';
+import { tools } from './tools';
+import { runTasks } from '../loop';
 
-import type { ModalState, Tool, ToolActionResult } from './tools/tool';
+import type { ModalState, Tool, ToolActionResult } from './tool';
 
 type PendingAction = {
   dialogShown: ManualPromise<void>;
@@ -30,30 +31,27 @@ type PageEx = playwright.Page & {
   _snapshotForAI: () => Promise<string>;
 };
 
-const testDebug = debug('pw:mcp:test');
-
 export class Context {
   readonly browser: playwright.Browser;
   readonly page: playwright.Page;
-  readonly tools: Tool[];
+  readonly tools = tools;
   private _modalStates: ModalState[] = [];
   private _pendingAction: PendingAction | undefined;
   private _downloads: { download: playwright.Download, finished: boolean, outputFile: string }[] = [];
+  private _codeCollector: string[] = [];
 
-  constructor(browser: playwright.Browser, page: playwright.Page, tools: Tool[]) {
+  constructor(browser: playwright.Browser, page: playwright.Page) {
     this.browser = browser;
     this.page = page;
-    this.tools = tools;
-    testDebug('create context');
   }
 
-  static async create(tools: Tool[]): Promise<Context> {
+  static async create(): Promise<Context> {
     const browser = await playwright.chromium.launch({
       headless: false,
     });
     const context = await browser.newContext();
     const page = await context.newPage();
-    return new Context(browser, page, tools);
+    return new Context(browser, page);
   }
 
   async close() {
@@ -83,7 +81,24 @@ export class Context {
     return result;
   }
 
-  async run(tool: Tool, params: Record<string, unknown> | undefined): Promise<{ content: string, code: string[] }> {
+  async runScript(tasks: string[]): Promise<string> {
+    this._codeCollector = [
+      `test('generated code', async ({ page }) => {`,
+    ];
+    await runTasks(this, tasks);
+    this._codeCollector.push('});');
+    return this._codeCollector.join('\n');
+  }
+
+  async beforeTask(task: string) {
+    this._codeCollector.push(`// ${task}`);
+  }
+
+  async afterTask() {
+    this._codeCollector.push('');
+  }
+
+  async runTool(tool: Tool, params: Record<string, unknown> | undefined): Promise<{ content: string }> {
     const toolResult = await tool.handle(this, tool.schema.inputSchema.parse(params || {}));
     const { code, action, waitForNetwork, captureSnapshot } = toolResult;
     const racingAction = action ? () => this._raceAgainstModalDialogs(action) : undefined;
@@ -98,7 +113,6 @@ export class Context {
     if (this.modalStates().length) {
       result.push(...this.modalStatesMarkdown());
       return {
-        code,
         content: result.join('\n'),
       };
     }
@@ -122,10 +136,8 @@ export class Context {
     if (captureSnapshot && !this._javaScriptBlocked())
       result.push(await this._snapshot());
 
-    return {
-      code,
-      content: result.join('\n'),
-    };
+    this._codeCollector.push(...code.map(c => `  ${c}`));
+    return { content: result.join('\n') };
   }
 
   async title(): Promise<string> {

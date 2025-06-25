@@ -17,7 +17,7 @@
 import { z } from 'zod';
 
 import { defineTool } from './tool';
-import * as format from '../format';
+import * as format from './format';
 import { generateLocator } from './utils';
 
 const snapshot = defineTool({

@@ -16,15 +16,8 @@
 
 import type { z } from 'zod';
 import type * as playwright from 'playwright-core';
-import type { Context } from '../context';
-
-export type ToolSchema<Input extends InputType> = {
-  name: string;
-  description: string;
-  inputSchema: Input;
-};
-
-type InputType = z.Schema;
+import type { Context } from './context';
+import type { ToolSchema } from '../loop';
 
 export type FileUploadModalState = {
   type: 'fileChooser';
@@ -49,12 +42,12 @@ export type ToolResult = {
   waitForNetwork: boolean;
 };
 
-export type Tool<Input extends InputType = InputType> = {
+export type Tool<Input extends z.Schema = z.Schema> = {
   schema: ToolSchema<Input>;
   clearsModalState?: ModalState['type'];
   handle: (context: Context, params: z.output<Input>) => Promise<ToolResult>;
 };
 
-export function defineTool<Input extends InputType>(tool: Tool<Input>): Tool<Input> {
+export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Input> {
   return tool;
 }
