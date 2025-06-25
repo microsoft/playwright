@@ -69,25 +69,44 @@ async function runTask(openai: OpenAI, context: Context, task: string): Promise<
       tool_calls: message.tool_calls
     });
 
+    let hasPreviousError = false;
     for (const toolCall of message.tool_calls) {
       const functionCall = toolCall.function;
       console.log('Call tool:', functionCall.name, functionCall.arguments);
-
-      if (functionCall.name === 'done')
-        return { taskCode };
 
       const tool = context.tools.find(tool => tool.schema.name === functionCall.name);
       if (!tool)
         throw new Error('Unknown tool: ' + functionCall.name);
 
-      const { code, content } = await context.run(tool, JSON.parse(functionCall.arguments));
-      taskCode.push(...code);
+      if (hasPreviousError) {
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: `This tool call is skipped due to previous error.`,
+        });
+        continue;
+      }
 
-      messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content,
-      });
+      if (functionCall.name === 'done')
+        return { taskCode };
+
+      try {
+        const { code, content } = await context.run(tool, JSON.parse(functionCall.arguments));
+        taskCode.push(...code);
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content,
+        });
+      } catch (error) {
+        hasPreviousError = true;
+        console.log('Tool error:', error);
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: `Error while executing tool "${functionCall.name}": ${error instanceof Error ? error.message : String(error)}\n\nPlease try to recover and complete the task.`,
+        });
+      }
     }
   }
   throw new Error('Failed to perform step, max attempts reached');

@@ -36,7 +36,7 @@ const snapshot = defineTool({
   },
 });
 
-const elementSchema = z.object({
+export const elementSchema = z.object({
   element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
