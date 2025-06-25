@@ -39,9 +39,8 @@ export type HTTPRequestParams = {
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
 export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void): { cancel(error: Error | undefined): void } {
-  const parsedUrl = url.parse(params.url);
-  let options: https.RequestOptions = {
-    ...parsedUrl,
+  const parsedUrl = new URL(params.url);
+  const options: https.RequestOptions = {
     agent: parsedUrl.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
     method: params.method || 'GET',
     headers: params.headers,
@@ -51,19 +50,15 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = url.parse(proxyURL);
+    const parsedProxyURL = new URL(proxyURL);
     if (params.url.startsWith('http:')) {
-      options = {
-        path: parsedUrl.href,
-        host: parsedProxyURL.hostname,
-        port: parsedProxyURL.port,
-        headers: options.headers,
-        method: options.method
-      };
+      parsedUrl.pathname = parsedUrl.href;
+      parsedUrl.host = parsedProxyURL.host;
     } else {
-      (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
-
-      options.agent = new HttpsProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent({
+        ...convertURLtoLegacyUrl(parsedProxyURL),
+        secureProxy: parsedProxyURL.protocol === 'https:',
+      });
       options.rejectUnauthorized = false;
     }
   }
@@ -81,8 +76,8 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     }
   };
   const request = options.protocol === 'https:' ?
-    https.request(options, requestCallback) :
-    http.request(options, requestCallback);
+    https.request(parsedUrl, options, requestCallback) :
+    http.request(parsedUrl, options, requestCallback);
   request.on('error', onError);
   if (params.socketTimeout !== undefined) {
     request.setTimeout(params.socketTimeout, () =>  {
@@ -137,23 +132,27 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!/^\w+:\/\//.test(proxyServer))
     proxyServer = 'http://' + proxyServer;
 
-  const proxyOpts = url.parse(proxyServer);
+  const proxyOpts = new URL(proxyServer);
   if (proxyOpts.protocol?.startsWith('socks')) {
     return new SocksProxyAgent({
       host: proxyOpts.hostname,
       port: proxyOpts.port || undefined,
     });
   }
-  if (proxy.username)
-    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  if (proxy.username) {
+    proxyOpts.username = proxy.username;
+    proxyOpts.password = proxy.password || '';
+  }
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
-    return new HttpsProxyAgent(proxyOpts);
+    // TODO: switch to URL instance instead of legacy object once https-proxy-agent supports it.
+    return new HttpsProxyAgent(convertURLtoLegacyUrl(proxyOpts));
   }
 
   // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyOpts);
+  // TODO: switch to URL instance instead of legacy object once https-proxy-agent supports it.
+  return new HttpsProxyAgent(convertURLtoLegacyUrl(proxyOpts));
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
@@ -224,5 +223,22 @@ function decorateServer(server: net.Server) {
       socket.destroy();
     sockets.clear();
     return close.call(server, callback);
+  };
+}
+
+function convertURLtoLegacyUrl(url: URL): url.Url {
+  return {
+    auth: url.username ? url.username + ':' + url.password : null,
+    hash: url.hash || null,
+    host: url.hostname ? url.hostname + ':' + url.port : null,
+    hostname: url.hostname || null,
+    href: url.href,
+    path: url.pathname + url.search,
+    pathname: url.pathname,
+    protocol: url.protocol,
+    search: url.search || null,
+    slashes: true,
+    port: url.port || null,
+    query: url.search.slice(1) || null,
   };
 }
