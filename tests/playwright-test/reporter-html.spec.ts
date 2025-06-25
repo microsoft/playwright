@@ -488,17 +488,23 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             globalTeardown: './global-teardown.js',
           };
         `,
-        'global-teardown.js': `
-          module.exports = () => {
-            process.env.PLAYWRIGHT_HTML_TITLE = 'Omega Star Test Suite (Version: abcde)';
-          };
-        `,
-        'a.test.js': `
+        'omega-star.test.js': `
           import { test, expect } from '@playwright/test';
-          test('passes', async () => {
+          import fs from 'fs/promises';
+          test('version check', async ({}, testInfo) => {
+            const apiVersion = 'abcde';
+            await fs.writeFile(testInfo.outputPath('omega_star_version'), apiVersion);
             expect(2).toEqual(2);
           });
-        `
+        `,
+        'global-teardown.js': `
+          import fs from 'fs/promises';
+          import path from 'path';
+          export default async (config) => {
+            const apiVersion = await fs.readFile(path.join('test-results', 'omega-star-version-check', 'omega_star_version'), 'utf-8');
+            process.env.PLAYWRIGHT_HTML_TITLE = 'Omega Star Test Suite (Version: ' + apiVersion + ')';
+          };
+        `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
