@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import assert from './tools/assert';
 import snapshot from './tools/snapshot';
 import done from './tools/done';
 import navigate from './tools/navigate';
@@ -21,6 +22,7 @@ import navigate from './tools/navigate';
 import type { Tool } from './tools/tool.js';
 
 export const tools: Tool<any>[] = [
+  ...assert,
   ...navigate,
   ...snapshot,
   ...done,
