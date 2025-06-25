@@ -22,6 +22,7 @@ import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, 
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 import type { TestModeName } from '../config/testMode';
+import { truncate } from 'original-fs';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 
@@ -48,7 +49,7 @@ const reporters = () => {
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
-    ['html', { open: 'on-failure', title: 'Playwright Library Tests', snippets: false }]
+    ['html', { open: 'on-failure', title: 'Playwright Library Tests', snippets: true }]
   ];
   return result;
 };

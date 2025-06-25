@@ -61,7 +61,6 @@ class HtmlReporter implements ReporterV2 {
   private _topLevelErrors: api.TestError[] = [];
 
   constructor(options: HtmlReporterConfigOptions & CommonReporterOptions) {
-    console.log('HTML Reporter Options', options);
     this._options = options;
   }
 
@@ -126,11 +125,7 @@ class HtmlReporter implements ReporterV2 {
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
-<<<<<<< HEAD
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title, this._options.snippets);
-=======
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, process.env.PLAYWRIGHT_HTML_TITLE || this._options.title);
->>>>>>> upstream/main
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, process.env.PLAYWRIGHT_HTML_TITLE || this._options.title, this._options.snippets);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
