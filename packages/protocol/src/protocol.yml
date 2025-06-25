@@ -2048,6 +2048,7 @@ Page:
 
 Frame:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -2419,6 +2420,7 @@ Frame:
     isHidden:
       title: Is hidden
       parameters:
+        # Note: compared to other isFoo methods, isHidden is a one-shot operation without a timeout.
         selector: string
         strict: boolean?
       returns:
@@ -2429,6 +2431,7 @@ Frame:
     isVisible:
       title: Is visible
       parameters:
+        # Note: compared to other isFoo methods, isVisible is a one-shot operation without a timeout.
         selector: string
         strict: boolean?
       returns:
@@ -2802,6 +2805,7 @@ JSHandle:
 
 ElementHandle:
   type: interface
+  progress: true
 
   extends: JSHandle
 

@@ -309,3 +309,8 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['JsonPipe.send', { internal: true, }],
   ['JsonPipe.close', { internal: true, }]
 ]);
+
+export const progressTypes = new Set<string>([
+  'Frame',
+  'ElementHandle'
+]);
