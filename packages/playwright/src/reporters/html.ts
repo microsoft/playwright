@@ -62,6 +62,7 @@ class HtmlReporter implements ReporterV2 {
   private _topLevelErrors: api.TestError[] = [];
 
   constructor(options: HtmlReporterConfigOptions & CommonReporterOptions) {
+    console.log('HTML Reporter Options', options);
     this._options = options;
   }
 
@@ -126,9 +127,9 @@ class HtmlReporter implements ReporterV2 {
   }
 
   async onEnd(result: api.FullResult) {
-    const projectSuites = this.suite.suites; 
+    const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title);
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, this._title, this._options.snippets);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -226,8 +227,9 @@ class HtmlBuilder {
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _title: string | undefined;
+  private _snippets: boolean;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined, snippets: boolean = true) {
     this._config = config;
     this._reportFolder = outputDir;
     this._snippets = snippets;
@@ -260,9 +262,9 @@ class HtmlBuilder {
         }
       }
     }
-    if (this._snippets) {
+    if (this._snippets)
       createSnippets(this._stepsInFile);
-    }
+
 
     let ok = true;
     for (const [fileId, { testFile, testFileSummary }] of data) {

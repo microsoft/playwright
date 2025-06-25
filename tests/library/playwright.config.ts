@@ -48,7 +48,7 @@ const reporters = () => {
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
-    ['html', { open: 'on-failure', title: 'Playwright Library Tests' }]
+    ['html', { open: 'on-failure', title: 'Playwright Library Tests', snippets: false }]
   ];
   return result;
 };
