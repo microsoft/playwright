@@ -107,6 +107,8 @@ export const test = _test
         const npmLines = [
           `registry = ${registry.url()}/`,
           `cache = ${testInfo.outputPath('npm_cache')}`,
+          // Required after https://github.com/npm/cli/pull/8185.
+          'replace-registry-host=never',
         ];
         if (!allowGlobalInstall) {
           yarnLines.push(`prefix "${testInfo.outputPath('npm_global')}"`);
