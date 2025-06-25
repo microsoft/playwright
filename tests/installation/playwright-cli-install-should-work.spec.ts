@@ -38,7 +38,6 @@ test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk 
 
   await test.step('playwright install --list', async () => {
     const result = await exec('npx playwright install --list');
-    console.log('result', result);
     expect.soft(result).toMatch(/Playwright version: \d+\.\d+/);
     expect.soft(result).toMatch(/chromium-\d+/);
     expect.soft(result).toMatch(/chromium_headless_shell-\d+/);
