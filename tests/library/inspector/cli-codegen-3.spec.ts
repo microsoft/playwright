@@ -16,11 +16,12 @@
 
 import type { TestServer } from 'tests/config/testserver';
 import type { Recorder } from './inspectorTest';
-import { test, expect } from './inspectorTest';
+import { test, expect, matrixDescribe } from './inspectorTest';
 import type { Page } from '@playwright/test';
 
-test.describe('cli codegen', () => {
+matrixDescribe<('record' | 'perform')>('cli codegen', ['record', 'perform'], recorderMode => {
   test.skip(({ mode }) => mode !== 'default');
+  test.use({ recorderMode });
 
   test('should click locator.first', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
@@ -657,7 +658,8 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     expect(message.text()).toBe('clicked');
     expect(await page.evaluate('log')).toEqual([
       'pointermove', 'mousemove',
-      'pointermove', 'mousemove',
+      // There is no second mouse move in record mode
+      ...(recorderMode === 'record' ? [] : ['pointermove', 'mousemove']),
       'pointerdown', 'mousedown',
       'pointerup', 'mouseup',
       'click',
@@ -665,6 +667,8 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
   });
 
   test('should consume contextmenu events, despite a custom context menu', async ({ openRecorder, browserName, platform }) => {
+    test.skip(recorderMode === 'record', 'It actually works in record mode, perform mode is broken see comments inline');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -722,6 +726,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
         'button: pointermove',
         'button: mousemove',
         // trusted right click
+        // @Max what do you mean pointerup comes before pointerdown?
         'button: pointerup',
         'button: pointermove',
         'button: mousemove',
