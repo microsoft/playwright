@@ -44,7 +44,8 @@
     "roll": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",
     "build-android-driver": "./utils/build_android_driver.sh",
-    "innerloop": "playwright run-server --reuse-browser"
+    "innerloop": "playwright run-server --reuse-browser",
+    "mdd": "playwright-mdd packages/playwright-mdd/specs/integration.spec.md -o packages/playwright-mdd/tests/integration.spec.ts"
   },
   "workspaces": [
     "packages/*"
