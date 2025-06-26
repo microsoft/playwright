@@ -230,7 +230,7 @@ export class WKBrowserContext extends BrowserContext {
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
-      promises.push(this.setOffline(this._options.offline));
+      promises.push(this.doUpdateOffline());
     if (this._options.httpCredentials)
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     await Promise.all(promises);
@@ -308,8 +308,7 @@ export class WKBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('Playwright.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as WKPage).updateExtraHTTPHeaders();
   }
@@ -320,8 +319,7 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage).updateUserAgent();
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
+  async doUpdateOffline(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as WKPage).updateOffline();
   }

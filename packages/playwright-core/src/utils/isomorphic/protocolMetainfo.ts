@@ -311,6 +311,10 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
 ]);
 
 export const progressTypes = new Set<string>([
+  'BrowserContext',
+  'Page',
   'Frame',
-  'ElementHandle'
+  'Worker',
+  'ElementHandle',
+  'BindingCall'
 ]);

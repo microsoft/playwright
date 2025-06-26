@@ -477,8 +477,7 @@ export class CRBrowserContext extends BrowserContext {
       await (page.delegate as CRPage).updateGeolocation();
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as CRPage).updateExtraHTTPHeaders();
     for (const sw of this.serviceWorkers())
@@ -492,8 +491,7 @@ export class CRBrowserContext extends BrowserContext {
     // TODO: service workers don't have Emulation domain?
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
+  async doUpdateOffline(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as CRPage).updateOffline();
     for (const sw of this.serviceWorkers())

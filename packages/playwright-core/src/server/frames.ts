@@ -669,7 +669,7 @@ export class Frame extends SdkObject {
     return response;
   }
 
-  async _waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: Omit<types.NavigateOptions, 'timeout'>): Promise<network.Response | null> {
+  async _waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: types.NavigateOptions): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`waiting for navigation until "${waitUntil}"`);
 
@@ -859,7 +859,7 @@ export class Frame extends SdkObject {
     }
   }
 
-  async setContent(progress: Progress, html: string, options: Omit<types.NavigateOptions, 'timeout'>): Promise<void> {
+  async setContent(progress: Progress, html: string, options: types.NavigateOptions): Promise<void> {
     await this.raceNavigationAction(progress, async () => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
       progress.log(`setting frame content, waiting until "${waitUntil}"`);
@@ -1138,8 +1138,8 @@ export class Frame extends SdkObject {
   async dragAndDrop(progress: Progress, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions) {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, !options.force /* performActionPreChecks */, async handle => {
       return handle._retryPointerAction(progress, 'move and down', false, async point => {
-        await this._page.mouse._move(progress, point.x, point.y);
-        await this._page.mouse._down(progress);
+        await this._page.mouse.move(progress, point.x, point.y);
+        await this._page.mouse.down(progress);
       }, {
         ...options,
         waitAfter: 'disabled',
@@ -1149,8 +1149,8 @@ export class Frame extends SdkObject {
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, false /* performActionPreChecks */, async handle => {
       return handle._retryPointerAction(progress, 'move and up', false, async point => {
-        await this._page.mouse._move(progress, point.x, point.y);
-        await this._page.mouse._up(progress);
+        await this._page.mouse.move(progress, point.x, point.y);
+        await this._page.mouse.up(progress);
       }, {
         ...options,
         waitAfter: 'disabled',

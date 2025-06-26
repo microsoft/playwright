@@ -507,7 +507,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse._move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
   async click(progress: Progress, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -517,7 +517,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _click(progress: Progress, options: { waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse._click(progress, point.x, point.y, options), options);
+    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse.click(progress, point.x, point.y, options), options);
   }
 
   async dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -527,7 +527,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse._click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' });
   }
 
   async tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<void> {
@@ -537,7 +537,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen._tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen.tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
   async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
@@ -595,9 +595,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }, { value, force: options.force }));
       if (result === 'needsinput') {
         if (value)
-          await this._page.keyboard._insertText(progress, value);
+          await this._page.keyboard.insertText(progress, value);
         else
-          await this._page.keyboard._press(progress, 'Delete');
+          await this._page.keyboard.press(progress, 'Delete');
         return 'done';
       } else {
         return result;
@@ -694,7 +694,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
     if (result !== 'done')
       return result;
-    await this._page.keyboard._type(progress, text, options);
+    await this._page.keyboard.type(progress, text, options);
     return 'done';
   }
 
@@ -711,7 +711,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
-      await this._page.keyboard._press(progress, key, options);
+      await this._page.keyboard.press(progress, key, options);
       return 'done';
     });
   }

@@ -28,6 +28,7 @@ import type { DispatcherConnection } from './dispatcher';
 import type { Frame } from '../frames';
 import type * as ws from '@injected/webSocketMock';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
   _type_WebSocketRoute = true;
@@ -57,11 +58,11 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     (scope as any)._dispatchEvent('webSocketRoute', { webSocketRoute: this });
   }
 
-  static async installIfNeeded(connection: DispatcherConnection, target: Page | BrowserContext) {
+  static async installIfNeeded(progress: Progress, connection: DispatcherConnection, target: Page | BrowserContext) {
     const kBindingName = '__pwWebSocketBinding';
     const context = target instanceof Page ? target.browserContext : target;
     if (!context.hasBinding(kBindingName)) {
-      await context.exposeBinding(kBindingName, false, (source, payload: ws.BindingPayload) => {
+      await context.exposeBinding(progress, kBindingName, false, (source, payload: ws.BindingPayload) => {
         if (payload.type === 'onCreate') {
           const contextDispatcher = connection.existingDispatcher<BrowserContextDispatcher>(context);
           const pageDispatcher = contextDispatcher ? PageDispatcher.fromNullable(contextDispatcher, source.page) : undefined;
@@ -93,7 +94,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
 
     const kInitScriptName = 'webSocketMockSource';
     if (!target.initScripts.find(s => s.name === kInitScriptName)) {
-      await target.addInitScript(`
+      await target.addInitScript(progress, `
         (() => {
           const module = {};
           ${rawWebSocketMockSource.source}

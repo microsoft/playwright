@@ -23,6 +23,8 @@ import { ContextRecorder, generateFrameSelector } from './recorder/contextRecord
 import { buildFullSelector, metadataToCallLog } from './recorder/recorderUtils';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
+import { ProgressController } from './progress';
+import { serverSideCallMetadata } from './instrumentation';
 
 import type { Language } from './codegen/types';
 import type { Frame } from './frames';
@@ -158,52 +160,55 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._pushAllSources();
     });
 
-    await this._context.exposeBinding('__pw_recorderState', false, async source => {
-      let actionSelector: string | undefined;
-      let actionPoint: Point | undefined;
-      const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
-      if (!hasActiveScreenshotCommand) {
-        actionSelector = await this._scopeHighlightedSelectorToFrame(source.frame);
-        for (const [metadata, sdkObject] of this._currentCallsMetadata) {
-          if (source.page === sdkObject.attribution.page) {
-            actionPoint = metadata.point || actionPoint;
-            actionSelector = actionSelector || metadata.params.selector;
+    const controller = new ProgressController(serverSideCallMetadata(), this._context);
+    await controller.run(async progress => {
+      await this._context.exposeBinding(progress, '__pw_recorderState', false, async source => {
+        let actionSelector: string | undefined;
+        let actionPoint: Point | undefined;
+        const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
+        if (!hasActiveScreenshotCommand) {
+          actionSelector = await this._scopeHighlightedSelectorToFrame(source.frame);
+          for (const [metadata, sdkObject] of this._currentCallsMetadata) {
+            if (source.page === sdkObject.attribution.page) {
+              actionPoint = metadata.point || actionPoint;
+              actionSelector = actionSelector || metadata.params.selector;
+            }
           }
         }
-      }
-      const uiState: UIState = {
-        mode: this._mode,
-        actionPoint,
-        actionSelector,
-        ariaTemplate: this._highlightedElement.ariaTemplate,
-        language: this._currentLanguage,
-        testIdAttributeName: this._contextRecorder.testIdAttributeName(),
-        overlay: this._overlayState,
-      };
-      return uiState;
-    });
+        const uiState: UIState = {
+          mode: this._mode,
+          actionPoint,
+          actionSelector,
+          ariaTemplate: this._highlightedElement.ariaTemplate,
+          language: this._currentLanguage,
+          testIdAttributeName: this._contextRecorder.testIdAttributeName(),
+          overlay: this._overlayState,
+        };
+        return uiState;
+      });
 
-    await this._context.exposeBinding('__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
-      const selectorChain = await generateFrameSelector(frame);
-      await this._recorderApp?.elementPicked({ selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
-    });
+      await this._context.exposeBinding(progress, '__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
+        const selectorChain = await generateFrameSelector(frame);
+        await this._recorderApp?.elementPicked({ selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
+      });
 
-    await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
-      if (frame.parentFrame())
-        return;
-      this.setMode(mode);
-    });
+      await this._context.exposeBinding(progress, '__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
+        if (frame.parentFrame())
+          return;
+        this.setMode(mode);
+      });
 
-    await this._context.exposeBinding('__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
-      if (frame.parentFrame())
-        return;
-      this._overlayState = state;
-    });
+      await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
+        if (frame.parentFrame())
+          return;
+        this._overlayState = state;
+      });
 
-    await this._context.exposeBinding('__pw_resume', false, () => {
-      this._debugger.resume(false);
+      await this._context.exposeBinding(progress, '__pw_resume', false, () => {
+        this._debugger.resume(false);
+      });
+      await this._contextRecorder.install(progress);
     });
-    await this._contextRecorder.install();
 
     if (this._debugger.isPaused())
       this._pausedStateChanged();
