@@ -456,6 +456,8 @@ export class CRBrowserContext extends BrowserContext {
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
       ['local-fonts', 'localFonts'],
+      ['pointer-lock', 'pointerLock'],
+      ['keyboard-lock', 'keyboardLock'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
