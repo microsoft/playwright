@@ -102,8 +102,8 @@ it('should send secure cookies to subdomain.localhost', async ({ contextFactory,
 
 it('should set cookie for top-level domain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18362' }
-}, async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
-  it.fixme(browserName === 'webkit' && isLinux);
+}, async ({ contextFactory, server, proxyServer, browserName, isLinux, channel }) => {
+  it.fixme(browserName === 'webkit' && isLinux || channel === 'webkit-wsl');
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({

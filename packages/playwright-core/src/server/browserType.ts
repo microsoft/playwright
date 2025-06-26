@@ -231,8 +231,8 @@ export abstract class BrowserType extends SdkObject {
       args: prepared.browserArguments,
       env: {
         ...this.amendEnvironment(env, prepared.userDataDir, prepared.executable, prepared.browserArguments, options.channel),
-        'WSLENV': 'SOCKET_ADDRESS',
-        'SOCKET_ADDRESS': (transportServer?.address() as any)?.port?.toString() ?? '',
+        'WSLENV': 'PW_WKWSL_PORT',
+        'PW_WKWSL_PORT': (transportServer?.address() as net.AddressInfo)?.port?.toString() ?? '',
       },
       handleSIGINT,
       handleSIGTERM,

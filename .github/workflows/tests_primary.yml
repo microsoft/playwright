@@ -31,7 +31,6 @@ jobs:
     runs-on: windows-2025
     steps:
     - uses: actions/checkout@v4
-    - run: netsh advfirewall firewall add rule name="WSL2 Network" dir=in action=allow protocol=any remoteip=172.29.0.0/16
     - uses: ./.github/actions/run-test
       with:
         node-version: 22

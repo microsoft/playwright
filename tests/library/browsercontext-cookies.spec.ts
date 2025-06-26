@@ -83,8 +83,8 @@ it('should properly report httpOnly cookie', async ({ context, page, server }) =
   expect(cookies[0].httpOnly).toBe(true);
 });
 
-it('should properly report "Strict" sameSite cookie', async ({ context, page, server, browserName, platform }) => {
-  it.fail(browserName === 'webkit' && platform === 'win32');
+it('should properly report "Strict" sameSite cookie', async ({ context, page, server, browserName, platform, channel }) => {
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
 
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
@@ -96,8 +96,8 @@ it('should properly report "Strict" sameSite cookie', async ({ context, page, se
   expect(cookies[0].sameSite).toBe('Strict');
 });
 
-it('should properly report "Lax" sameSite cookie', async ({ context, page, server, browserName, platform }) => {
-  it.fail(browserName === 'webkit' && platform === 'win32');
+it('should properly report "Lax" sameSite cookie', async ({ context, page, server, browserName, platform, channel }) => {
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
 
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
@@ -142,7 +142,7 @@ it('should get multiple cookies', async ({ context, page, server, defaultSameSit
   ]));
 });
 
-it('should get cookies from multiple urls', async ({ context, browserName, isWindows }) => {
+it('should get cookies from multiple urls', async ({ context, browserName, isWindows, channel }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -168,7 +168,7 @@ it('should get cookies from multiple urls', async ({ context, browserName, isWin
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -181,7 +181,7 @@ it('should get cookies from multiple urls', async ({ context, browserName, isWin
   }]));
 });
 
-it('should work with subdomain cookie', async ({ context, browserName, isWindows }) => {
+it('should work with subdomain cookie', async ({ context, browserName, isWindows, channel }) => {
   await context.addCookies([{
     domain: '.foo.com',
     path: '/',
@@ -198,7 +198,7 @@ it('should work with subdomain cookie', async ({ context, browserName, isWindows
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }]);
   expect(await context.cookies('https://sub.foo.com')).toEqual([{
     name: 'doggo',
@@ -208,7 +208,7 @@ it('should work with subdomain cookie', async ({ context, browserName, isWindows
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }]);
 });
 
@@ -227,7 +227,7 @@ it('should return cookies with empty value', async ({ context, page, server }) =
   ]);
 });
 
-it('should return secure cookies based on HTTP(S) protocol', async ({ context, browserName, isWindows }) => {
+it('should return secure cookies based on HTTP(S) protocol', async ({ context, browserName, isWindows, channel }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -250,7 +250,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -259,7 +259,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }]));
   expect(await context.cookies('http://foo.com/')).toEqual([{
     name: 'catto',
@@ -269,7 +269,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }]);
 });
 
@@ -346,7 +346,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
       expect(serverRequest.headers.cookie).toBe('name=value');
     }
   } else {
-    if (isLinux && browserName === 'webkit')
+    if (isLinux && browserName === 'webkit' || channel === 'webkit-wsl')
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
     else
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
@@ -355,7 +355,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isWindows && browserName === 'webkit')
+      if (isWindows && browserName === 'webkit' && channel !== 'webkit-wsl')
         expect(serverRequest.headers.cookie).toBe('name=value');
       else
         expect(serverRequest.headers.cookie).toBeFalsy();
@@ -367,7 +367,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isLinux && browserName === 'webkit')
+      if (isLinux && browserName === 'webkit' || channel === 'webkit-wsl')
         expect(serverRequest.headers.cookie).toBe(undefined);
       else
         expect(serverRequest.headers.cookie).toBe('name=value');
