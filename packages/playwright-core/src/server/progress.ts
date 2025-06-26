@@ -71,6 +71,7 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
     this.sdkObject.attribution.context?._activeProgressControllers.add(this);
+    let customErrorHandler: ((error: Error) => any) | undefined;
 
     const deadline = timeout ? Math.min(monotonicTime() + timeout, 2147483647) : 0; // 2^31-1 safe setTimeout in Node.
     const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
@@ -140,6 +141,11 @@ export class ProgressController {
           return;
         startTimer();
       },
+      legacySetErrorHandler: (handler: (error: Error) => any) => {
+        if (this._strictMode)
+          return;
+        customErrorHandler = handler;
+      },
     };
 
     startTimer();
@@ -152,6 +158,8 @@ export class ProgressController {
     } catch (error) {
       this._state = { error };
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(error, cleanup)));
+      if (customErrorHandler)
+        return customErrorHandler(error);
       throw error;
     } finally {
       this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
