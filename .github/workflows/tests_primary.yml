@@ -31,8 +31,6 @@ jobs:
     runs-on: windows-2025
     steps:
     - uses: actions/checkout@v4
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
     - run: netsh advfirewall firewall add rule name="WSL2 Network" dir=in action=allow protocol=any remoteip=172.29.0.0/16
     - uses: ./.github/actions/run-test
       with:
@@ -45,4 +43,3 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: webkit-wsl
-        DEBUG: pw:api,pw:browser
