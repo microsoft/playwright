@@ -133,16 +133,16 @@ export class TestProxy {
 }
 
 export async function setupSocksForwardingServer({
-  port, forwardPort, allowedTargetPort
+  port, forwardPort, allowedTargetPort, additionalAllowedHosts = []
 }: {
-  port: number, forwardPort: number, allowedTargetPort: number
+  port: number, forwardPort: number, allowedTargetPort: number, additionalAllowedHosts?: string[]
 }) {
   const connectHosts = [];
   const connections = new Map<string, net.Socket>();
   const socksProxy = new SocksProxy();
   socksProxy.setPattern('*');
   socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
-    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io', 'localhost'].includes(payload.host) || payload.port !== allowedTargetPort) {
+    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io', 'localhost', ...additionalAllowedHosts].includes(payload.host) || payload.port !== allowedTargetPort) {
       socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
       return;
     }
