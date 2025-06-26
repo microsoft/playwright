@@ -22,6 +22,7 @@ import * as network from '../network';
 import { WKConnection, WKSession, kPageProxyMessageReceived } from './wkConnection';
 import { WKPage } from './wkPage';
 import { TargetClosedError } from '../errors';
+import { translatePathToWSL } from './webkit';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -220,7 +221,7 @@ export class WKBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [super._initialize()];
     promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
       behavior: this._options.acceptDownloads === 'accept' ? 'allow' : 'deny',
-      downloadPath: this._browser.options.downloadsPath,
+      downloadPath: translatePathToWSL(this._browser.options.downloadsPath),
       browserContextId
     }));
     if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)

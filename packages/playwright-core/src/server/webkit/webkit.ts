@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import { spawnSync } from 'child_process';
 
 import { kBrowserCloseMessageId } from './wkConnection';
 import { wrapInASCIIBox } from '../utils/ascii';
@@ -28,7 +28,6 @@ import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import { spawnSync } from 'child_process';
 
 export class WebKit extends BrowserType {
   constructor(parent: SdkObject) {
@@ -80,7 +79,7 @@ export class WebKit extends BrowserType {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
-      } else if (process.platform === 'linux' || process.platform === 'win32' && options.channel == 'webkit-wsl') {
+      } else if (process.platform === 'linux' || process.platform === 'win32' && options.channel === 'webkit-wsl') {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
@@ -100,8 +99,8 @@ export class WebKit extends BrowserType {
 }
 
 export function translatePathToWSL(path: string): string {
-  console.time('translatePathToWSL:' + path);
-  const result = spawnSync('wsl', ['-d', 'playwright', 'wslpath', path.replace(/\\/g, '\\\\'), '--cd', '/home/pwuser']).stdout.toString().trim()
-  console.timeEnd('translatePathToWSL:' + path);
+  console.log('translatePathToWSL:' + path);
+  const result = spawnSync('wsl', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]).stdout.toString().trim();
+  console.log('translatePathToWSL:',  result);
   return result;
 }
