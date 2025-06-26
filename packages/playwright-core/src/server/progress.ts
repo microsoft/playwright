@@ -118,7 +118,10 @@ export class ProgressController {
       },
       raceWithCleanup: <T>(promise: Promise<T>, cleanup: (result: T) => any) => {
         return progress.race(promise.then(result => {
-          progress.cleanupWhenAborted(() => cleanup(result));
+          if (this._state !== 'running')
+            cleanup(result);
+          else
+            this._cleanups.push(() => cleanup(result));
           return result;
         }));
       },

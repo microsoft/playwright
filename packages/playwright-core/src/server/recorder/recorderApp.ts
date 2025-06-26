@@ -120,7 +120,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
         // Use the same channel as the inspected context to guarantee that the browser is installed.
         channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
-        timeout: 0,
       }
     });
     const controller = new ProgressController(serverSideCallMetadata(), context._browser);

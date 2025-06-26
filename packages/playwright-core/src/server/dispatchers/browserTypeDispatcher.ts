@@ -20,8 +20,8 @@ import { Dispatcher } from './dispatcher';
 
 import type { BrowserType } from '../browserType';
 import type { RootDispatcher } from './dispatcher';
-import type { CallMetadata } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
@@ -34,29 +34,29 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     this._denyLaunch = denyLaunch;
   }
 
-  async launch(params: channels.BrowserTypeLaunchParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchResult> {
+  async launch(params: channels.BrowserTypeLaunchParams, progress: Progress): Promise<channels.BrowserTypeLaunchResult> {
     if (this._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
 
-    const browser = await this._object.launch(metadata, params);
+    const browser = await this._object.launch(progress, params);
     return { browser: new BrowserDispatcher(this, browser) };
   }
 
-  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
+  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams, progress: Progress): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
     if (this._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
 
-    const browserContext = await this._object.launchPersistentContext(metadata, params.userDataDir, params);
+    const browserContext = await this._object.launchPersistentContext(progress, params.userDataDir, params);
     const browserDispatcher = new BrowserDispatcher(this, browserContext._browser);
     const contextDispatcher = BrowserContextDispatcher.from(browserDispatcher, browserContext);
     return { browser: browserDispatcher, context: contextDispatcher };
   }
 
-  async connectOverCDP(params: channels.BrowserTypeConnectOverCDPParams, metadata: CallMetadata): Promise<channels.BrowserTypeConnectOverCDPResult> {
+  async connectOverCDP(params: channels.BrowserTypeConnectOverCDPParams, progress: Progress): Promise<channels.BrowserTypeConnectOverCDPResult> {
     if (this._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
 
-    const browser = await this._object.connectOverCDP(metadata, params.endpointURL, params);
+    const browser = await this._object.connectOverCDP(progress, params.endpointURL, params);
     const browserDispatcher = new BrowserDispatcher(this, browser);
     return {
       browser: browserDispatcher,

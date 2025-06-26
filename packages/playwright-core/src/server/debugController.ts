@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { SdkObject, createInstrumentation, serverSideCallMetadata } from './instrumentation';
+import { SdkObject, createInstrumentation } from './instrumentation';
 import { gracefullyProcessExitDoNotHang } from './utils/processLauncher';
 import { Recorder } from './recorder';
-import { asLocator, DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, DEFAULT_PLAYWRIGHT_TIMEOUT  } from '../utils';
+import { asLocator  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { ProgressController } from './progress';
 
 import type { Language } from '../utils';
 import type { Browser } from './browser';
@@ -30,8 +29,7 @@ import type { BrowserContext } from './browserContext';
 import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
 import type { ElementInfo, Mode, Source } from '@recorder/recorderTypes';
-
-const internalMetadata = serverSideCallMetadata();
+import type { Progress } from '@protocol/progress';
 
 export class DebugController extends SdkObject {
   static Events = {
@@ -75,27 +73,25 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async resetForReuse() {
+  async resetForReuse(progress: Progress) {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.browserContext);
     for (const context of contexts)
-      await context.resetForReuse(internalMetadata, null);
+      await context.resetForReuse(progress, null);
   }
 
-  async navigate(url: string) {
-    for (const p of this._playwright.allPages()) {
-      const controller = new ProgressController(internalMetadata, this);
-      await controller.run(progress => p.mainFrame().goto(progress, url), DEFAULT_PLAYWRIGHT_TIMEOUT);
-    }
+  async navigate(progress: Progress, url: string) {
+    for (const p of this._playwright.allPages())
+      await p.mainFrame().goto(progress, url);
   }
 
-  async setRecorderMode(params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
+  async setRecorderMode(progress: Progress, params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
     // TODO: |file| is only used in the legacy mode.
-    await this._closeBrowsersWithoutPages();
+    await progress.race(this._closeBrowsersWithoutPages());
 
     if (params.mode === 'none') {
-      for (const recorder of await this._allRecorders()) {
+      for (const recorder of await progress.race(this._allRecorders())) {
         recorder.hideHighlightedSelector();
         recorder.setMode('none');
       }
@@ -103,14 +99,13 @@ export class DebugController extends SdkObject {
     }
 
     if (!this._playwright.allBrowsers().length)
-      await this._playwright.chromium.launch(internalMetadata, { headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS, timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT });
+      await this._playwright.chromium.launch(progress, { headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS });
     // Create page if none.
     const pages = this._playwright.allPages();
     if (!pages.length) {
       const [browser] = this._playwright.allBrowsers();
-      const { context } = await browser.newContextForReuse({}, internalMetadata);
-      const controller = new ProgressController(internalMetadata, this);
-      await controller.run(progress => context.newPage(progress, false /* isServerSide */));
+      const { context } = await browser.newContextForReuse(progress, {});
+      await context.newPage(progress, false /* isServerSide */);
     }
     // Update test id attribute.
     if (params.testIdAttributeName) {
@@ -118,7 +113,7 @@ export class DebugController extends SdkObject {
         page.browserContext.selectors().setTestIdAttributeName(params.testIdAttributeName);
     }
     // Toggle the mode.
-    for (const recorder of await this._allRecorders()) {
+    for (const recorder of await progress.race(this._allRecorders())) {
       recorder.hideHighlightedSelector();
       if (params.mode !== 'inspecting')
         recorder.setOutput(this._codegenId, params.file);
@@ -126,12 +121,12 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async highlight(params: { selector?: string, ariaTemplate?: string }) {
+  async highlight(progress: Progress, params: { selector?: string, ariaTemplate?: string }) {
     // Assert parameters validity.
     if (params.selector)
       unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
     const ariaTemplate = params.ariaTemplate ? parseAriaSnapshotUnsafe(yaml, params.ariaTemplate) : undefined;
-    for (const recorder of await this._allRecorders()) {
+    for (const recorder of await progress.race(this._allRecorders())) {
       if (ariaTemplate)
         recorder.setHighlightedAriaTemplate(ariaTemplate);
       else if (params.selector)
@@ -139,9 +134,9 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async hideHighlight() {
+  async hideHighlight(progress: Progress) {
     // Hide all active recorder highlights.
-    for (const recorder of await this._allRecorders())
+    for (const recorder of await progress.race(this._allRecorders()))
       recorder.hideHighlightedSelector();
     // Hide all locator.highlight highlights.
     await this._playwright.hideHighlight();
@@ -151,12 +146,12 @@ export class DebugController extends SdkObject {
     return [...this._playwright.allBrowsers()];
   }
 
-  async resume() {
-    for (const recorder of await this._allRecorders())
+  async resume(progress: Progress) {
+    for (const recorder of await progress.race(this._allRecorders()))
       recorder.resume();
   }
 
-  async kill() {
+  kill() {
     gracefullyProcessExitDoNotHang(0);
   }
 

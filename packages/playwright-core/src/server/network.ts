@@ -290,7 +290,7 @@ export class Route extends SdkObject {
     this._endHandling();
   }
 
-  async redirectNavigationRequest(url: string) {
+  redirectNavigationRequest(url: string) {
     this._startHandling();
     assert(this._request.isNavigationRequest());
     this._request.frame()!.redirectNavigation(url, this._request._documentId!, this._request.headerValue('referer'));
