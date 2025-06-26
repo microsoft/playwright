@@ -217,20 +217,21 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const exitPromise = new ManualPromise();
-    const [readPipe, writePipe] = prepared.tcpTransport ? [new PassThrough(), new PassThrough()] : [undefined, undefined]
-    console.error(new Date(), "creating transport server")
-    const transportServer = prepared.tcpTransport ? net.createServer((socket) => {
-        writePipe!.pipe(socket);
-        socket.pipe(readPipe!);
-      }) : undefined;
-    transportServer && await new Promise<void>((resolve) => transportServer.listen(0, resolve));
-    console.error(new Date(), "launching process")
+    const [readPipe, writePipe] = prepared.tcpTransport ? [new PassThrough(), new PassThrough()] : [undefined, undefined];
+    const transportServer = prepared.tcpTransport ? net.createServer({
+      highWaterMark: 128 * 1024, // 128KB
+    }, socket => {
+      socket.setNoDelay(true);
+      writePipe!.pipe(socket);
+      socket.pipe(readPipe!);
+    }) : undefined;
+    transportServer && await new Promise<void>(resolve => transportServer.listen(0, resolve));
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
       env: {
         ...this.amendEnvironment(env, prepared.userDataDir, prepared.executable, prepared.browserArguments, options.channel),
-        "WSLENV": "SOCKET_ADDRESS",
+        'WSLENV': 'SOCKET_ADDRESS',
         'SOCKET_ADDRESS': (transportServer?.address() as any)?.port?.toString() ?? '',
       },
       handleSIGINT,

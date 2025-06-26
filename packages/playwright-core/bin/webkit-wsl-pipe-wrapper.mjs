@@ -18,6 +18,7 @@ const address = (() => {
 })();
 
 const socket = net.createConnection(parseInt(socketPort), address);
+socket.setNoDelay(true);
 socket.on('error', (error) => console.log('socket error from wrapper', error));
 
 await new Promise((resolve, reject) => {

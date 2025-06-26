@@ -99,8 +99,7 @@ export class WebKit extends BrowserType {
 }
 
 export function translatePathToWSL(path: string): string {
-  console.log('translatePathToWSL:' + path);
+  console.log('translatePathToWSL', path);
   const result = spawnSync('wsl', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]).stdout.toString().trim();
-  console.log('translatePathToWSL:',  result);
   return result;
 }
