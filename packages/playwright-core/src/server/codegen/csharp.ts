@@ -58,9 +58,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     const action = actionInContext.action;
     if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
-    let pageAlias = actionInContext.frame.pageAlias;
-    if (this._mode !== 'library')
-      pageAlias = pageAlias.replace('page', 'Page');
+    const  pageAlias = this._formatPageAlias(actionInContext.frame.pageAlias);
     const formatter = new CSharpFormatter(this._mode === 'library' ? 0 : 8);
 
     if (action.name === 'openPage') {
@@ -93,7 +91,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     if (signals.popup) {
-      lines.unshift(`var ${signals.popup.popupAlias} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`);
+      lines.unshift(`var ${this._formatPageAlias(signals.popup.popupAlias)} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`);
       lines.push(`});`);
     }
 
@@ -101,6 +99,13 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       formatter.add(line);
 
     return formatter.format();
+  }
+
+  private _formatPageAlias(pageAlias: string): string {
+    if (this._mode === 'library')
+      return pageAlias;
+
+    return pageAlias.replace('page', 'Page');
   }
 
   private _generateActionCall(subject: string, actionInContext: actions.ActionInContext): string {

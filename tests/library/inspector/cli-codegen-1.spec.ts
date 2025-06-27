@@ -734,11 +734,11 @@ var page1 = await page.RunAndWaitForPopupAsync(async () =>
 await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync();`);
 
     expect.soft(sources.get('C# NUnit')!.text).toContain(`
-        var page1 = await Page.RunAndWaitForPopupAsync(async () =>
+        var Page1 = await Page.RunAndWaitForPopupAsync(async () =>
         {
             await Page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
         });
-        await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync();`);
+        await Page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync();`);
   });
 
   test('should attribute navigation to click', async ({ openRecorder }) => {
