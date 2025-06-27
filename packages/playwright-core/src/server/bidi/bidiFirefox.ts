@@ -76,18 +76,25 @@ export class BidiFirefox extends BrowserType {
     return env;
   }
 
-  override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-    // browser.close does not work without an active session, make sure
-    // to create a new session first. The command will fail if a session
-    // already exists, we'll just ignore the error.
-    transport.send({ method: 'session.new', params: {
-      capabilities: {
-        alwaysMatch: {
-          unhandledPromptBehavior: { default: 'ignore' },
-          webSocketUrl: true
+  override async attemptToGracefullyCloseBrowser(transport: ConnectionTransport): Promise<void> {
+    if (!transport.onmessage) {
+      // browser.close does not work without an active session. If there is no connection
+      // created with the transport, make sure to create a new session first.
+      transport.send({ method: 'session.new', params: {
+        capabilities: {
+          alwaysMatch: {
+            unhandledPromptBehavior: { default: 'ignore' },
+            webSocketUrl: true
+          }
         }
-      }
-    }, id: kShutdownSessionNewMessageId });
+      }, id: kShutdownSessionNewMessageId });
+      await new Promise(resolve => {
+        transport.onmessage = message => {
+          if (message.id === kShutdownSessionNewMessageId)
+            resolve(true);
+        };
+      });
+    }
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
   }
 
