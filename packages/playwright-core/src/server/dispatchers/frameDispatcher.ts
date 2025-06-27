@@ -273,9 +273,6 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     });
     if (result.received !== undefined)
       result.received = serializeResult(result.received);
-    // Library mode special case for the expect errors which are return values, not exceptions.
-    if (result.matches === params.isNot)
-      progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     return result;
   }
 

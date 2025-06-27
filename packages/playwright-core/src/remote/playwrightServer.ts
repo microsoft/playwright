@@ -188,7 +188,7 @@ export class PlaywrightServer {
         return false;
       if (this._dontReuseBrowsers.has(b))
         return false;
-      const existingOptions = launchOptionsHash({ ...b.options.originalLaunchOptions, timeout: 0 });
+      const existingOptions = launchOptionsHash({ ...b.options.originalLaunchOptions, timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT });
       return existingOptions === requestedOptions;
     });
 
