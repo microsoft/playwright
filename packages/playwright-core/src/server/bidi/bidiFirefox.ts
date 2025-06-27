@@ -20,7 +20,7 @@ import path from 'path';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
-import { kBrowserCloseMessageId } from './bidiConnection';
+import { kBrowserCloseMessageId, kShutdownSessionNewMessageId } from './bidiConnection';
 import { createProfile } from './third_party/firefoxPrefs';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
@@ -77,7 +77,17 @@ export class BidiFirefox extends BrowserType {
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-    // Note that it's fine to reuse the transport, since our connection ignores kBrowserCloseMessageId.
+    // browser.close does not work without an active session, make sure
+    // to create a new session first. The command will fail if a session
+    // already exists, we'll just ignore the error.
+    transport.send({ method: 'session.new', params: {
+      capabilities: {
+        alwaysMatch: {
+          unhandledPromptBehavior: { default: 'ignore' },
+          webSocketUrl: true
+        }
+      }
+    }, id: kShutdownSessionNewMessageId });
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
   }
 
