@@ -3024,10 +3024,24 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - treeitem "Click Click me"
       `);
     });
-  });
-  test('should fail and allow visual check of HTML report snippet', async () => {
-    // This will fail and would normally show a snippet when using snippets: true in the playwright config
-    expect(1).toBe(2);
+
+    test('should respect snippets configuration option', async ({ runInlineTest, showReport, page }) => {
+      // With snippets: false
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          export default { reporter: [['html', { snippets: false }]] }
+        `,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fail without snippet', () => { expect(1).toBe(2); });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+      await page.getByRole('link', { name: 'fail without snippet' }).click();
+      // This may fail if the option isn't propagated by the harness
+      await expect(page.locator('[data-testid="test-snippet"]')).not.toBeVisible();
+    });
   });
 }
 
