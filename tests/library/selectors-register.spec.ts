@@ -145,6 +145,11 @@ it('should handle errors', async ({ playwright, browser }) => {
   await page.close();
 });
 
+it('should throw "already registered" error when registering', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36467' } }, async ({ playwright }) => {
+  await playwright.selectors.register('foo', createTagSelector);
+  await expect(playwright.selectors.register('foo', createTagSelector)).rejects.toThrowError('selectors.register: "foo" selector engine has been already registered');
+});
+
 it('should not rely on engines working from the root', async ({ playwright, browser }) => {
   const page = await browser.newPage();
   const createValueEngine = () => ({
