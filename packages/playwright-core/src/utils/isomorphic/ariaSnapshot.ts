@@ -243,6 +243,9 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
   convertSeq(fragment, yamlDoc.contents as yamlTypes.YAMLSeq);
   if (errors.length)
     return { errors, fragment: emptyFragment };
+  // `- button` should target the button, not its parent.
+  if (fragment.children?.length === 1 && (!fragment.containerMode || fragment.containerMode === 'contain'))
+    return { fragment: fragment.children[0], errors: [] };
   return { fragment, errors: [] };
 }
 
