@@ -3025,6 +3025,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
   });
+  test('should fail and allow visual check of HTML report snippet', async () => {
+    // This will fail and would normally show a snippet when using snippets: true in the playwright config 
+    expect(1).toBe(2);
+  });
 }
 
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
