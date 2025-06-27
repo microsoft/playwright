@@ -61,7 +61,6 @@ class HtmlReporter implements ReporterV2 {
   private _topLevelErrors: api.TestError[] = [];
 
   constructor(options: HtmlReporterConfigOptions & CommonReporterOptions) {
-    console.log('HTML Reporter Options', options);
     this._options = options;
   }
 
