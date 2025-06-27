@@ -243,9 +243,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
   convertSeq(fragment, yamlDoc.contents as yamlTypes.YAMLSeq);
   if (errors.length)
     return { errors, fragment: emptyFragment };
-  if (fragment.children?.length === 1)
-    return { fragment: fragment.children[0], errors };
-  return { fragment, errors };
+  return { fragment, errors: [] };
 }
 
 const emptyFragment: AriaTemplateRoleNode = { kind: 'role', role: 'fragment' };
