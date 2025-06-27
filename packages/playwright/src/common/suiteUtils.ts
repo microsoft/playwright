@@ -94,6 +94,7 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
       const [file, ...titles] = test.titlePath();
       const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${repeatEachIndex})`;
       const testId = suite._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
+      test._idWithoutRepeatEach = test.id;
       test.id = testId;
       test.repeatEachIndex = repeatEachIndex;
 

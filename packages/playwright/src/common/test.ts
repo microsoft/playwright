@@ -259,6 +259,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   _testType: TestTypeImpl;
   id = '';
+  _idWithoutRepeatEach: string | undefined;
   _pool: FixturePool | undefined;
   _poolDigest = '';
   _workerHash = '';
