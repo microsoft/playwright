@@ -1436,7 +1436,7 @@ export module Protocol {
     /**
      * Channels for different types of log messages.
      */
-    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"accessibility"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"payment-request"|"other";
+    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"rendering"|"css"|"accessibility"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"payment-request"|"other";
     /**
      * Level of logging.
      */
