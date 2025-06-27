@@ -17,7 +17,7 @@
 import type { Locator } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
-function unshift(snapshot: string): string {
+export function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
   for (const line of lines) {

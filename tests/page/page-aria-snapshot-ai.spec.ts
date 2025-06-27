@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { unshift } from './page-aria-snapshot.spec';
 import { test as it, expect } from './pageTest';
 
 function snapshotForAI(page: any): Promise<string> {
@@ -255,13 +256,25 @@ it('should auto-wait for blocking CSS', async ({ page, server }) => {
 
 it('should show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
   await page.setContent(`
-    <div style="visibility: hidden;">
-      <div style="visibility: visible;">
-        <button>Foo</button>
+    <div style="visibility: hidden">
+      <div style="visibility: visible">
+        <button>Visible</button>
       </div>
-      <button>Bar</button>
+      <div style="visibility: hidden">
+        <button style="visibility: visible">Visible</button>
+      </div>
+      <div>
+        <div style="visibility: visible">
+          <button style="visibility: hidden">Hidden</button>
+        </div>
+        <button>Hidden</button>
+      </div>
     </div>
   `);
 
-  expect(await snapshotForAI(page)).toEqual(`- button "Foo" [ref=e3]`);
+  expect(await snapshotForAI(page)).toEqual(unshift(`
+    - generic [ref=e1]:
+      - button "Visible" [ref=e3]
+      - button "Visible" [ref=e4]
+  `));
 });
