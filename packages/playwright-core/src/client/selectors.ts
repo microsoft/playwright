@@ -34,6 +34,9 @@ export class Selectors implements api.Selectors {
   }
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
+    if (this._selectorEngines.some(engine => engine.name === name))
+      throw new Error(`selectors.register: "${name}" selector engine has been already registered`);
+
     const source = await evaluationScript(this._platform, script, undefined, false);
     const selectorEngine: channels.SelectorEngine = { ...options, name, source };
     for (const context of this._contextsForSelectors)
