@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { BlobReportMetadata } from '../reporters/blob';
-
 import type { Metadata, TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -224,6 +222,14 @@ export type JsonOnEndEvent = {
 export type JsonOnExitEvent = {
   method: 'onExit';
   params: undefined;
+};
+
+export type BlobReportMetadata = {
+  version: number;
+  userAgent: string;
+  name?: string;
+  shard?: { total: number, current: number };
+  pathSeparator?: string;
 };
 
 type TeleReporterReceiverOptions = {
