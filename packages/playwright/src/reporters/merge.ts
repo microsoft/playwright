@@ -26,11 +26,10 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { relativeFilePath } from '../util';
 
-import type { BlobReportMetadata } from './blob';
 import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestResultOnAttach, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { BlobReportMetadata, JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonOnConfigureEvent, JsonOnEndEvent, JsonOnProjectEvent, JsonProject, JsonSuite, JsonTestCase } from '../isomorphic/teleReceiver';
 import type * as blobV1 from './versions/blobV1';
 
 type StatusCallback = (message: string) => void;
@@ -165,18 +164,23 @@ async function extractAndParseReports(dir: string, shardFiles: string[], interna
 function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   if (events[0]?.method !== 'onBlobReportMetadata')
     throw new Error(`No metadata event found in ${file}`);
-  const metadata = (events[0].params as BlobReportMetadata);
+  const metadata = events[0].params;
   if (metadata.version > currentBlobReportVersion)
     throw new Error(`Blob report ${file} was created with a newer version of Playwright.`);
   return metadata;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined) {
+async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined): Promise<{
+  prologue: JsonEvent[];
+  reports: ReportData[];
+  epilogue: JsonEvent[];
+  pathSeparatorFromMetadata?: string;
+}> {
   const internalizer = new JsonStringInternalizer(stringPool);
 
-  const configureEvents: JsonEvent[] = [];
-  const projectEvents: JsonEvent[] = [];
-  const endEvents: JsonEvent[] = [];
+  const configureEvents: JsonOnConfigureEvent[] = [];
+  const projectEvents: JsonOnProjectEvent[] = [];
+  const endEvents: JsonOnEndEvent[] = [];
 
   const blobs = await extractAndParseReports(dir, shardReportFiles, internalizer, printStatus);
   // Sort by (report name; shard; file name), so that salt generation below is deterministic when:
@@ -247,7 +251,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
   };
 }
 
-function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: string | undefined): JsonEvent {
+function mergeConfigureEvents(configureEvents: JsonOnConfigureEvent[], rootDirOverride: string | undefined): JsonEvent {
   if (!configureEvents.length)
     throw new Error('No configure events found');
   let config: JsonConfig = {
@@ -305,13 +309,13 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
   };
 }
 
-function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
+function mergeEndEvents(endEvents: JsonOnEndEvent[]): JsonEvent {
   let startTime = endEvents.length ? 10000000000000 : Date.now();
   let status: JsonFullResult['status'] = 'passed';
   let duration: number = 0;
 
   for (const event of endEvents) {
-    const shardResult: JsonFullResult = event.params.result;
+    const shardResult = event.params.result;
     if (shardResult.status === 'failed')
       status = 'failed';
     else if (shardResult.status === 'timedout' && status !== 'failed')
@@ -395,7 +399,7 @@ class IdsPatcher {
       case 'onStepBegin':
       case 'onStepEnd':
       case 'onStdIO':
-        params.testId = this._mapTestId(params.testId);
+        params.testId = params.testId ? this._mapTestId(params.testId) : undefined;
         return;
       case 'onTestEnd':
         params.test.testId = this._mapTestId(params.test.testId);
@@ -449,9 +453,9 @@ class AttachmentPathPatcher {
 
   patchEvent(event: JsonEvent) {
     if (event.method === 'onAttach')
-      this._patchAttachments((event.params as JsonTestResultOnAttach).attachments);
+      this._patchAttachments(event.params.attachments);
     else if (event.method === 'onTestEnd')
-      this._patchAttachments((event.params.result as JsonTestResultEnd).attachments ?? []);
+      this._patchAttachments(event.params.result.attachments ?? []);
   }
 
   private _patchAttachments(attachments: JsonAttachment[]) {
@@ -476,11 +480,11 @@ class PathSeparatorPatcher {
     if (this._from === this._to)
       return;
     if (jsonEvent.method === 'onProject') {
-      this._updateProject(jsonEvent.params.project as JsonProject);
+      this._updateProject(jsonEvent.params.project);
       return;
     }
     if (jsonEvent.method === 'onTestEnd') {
-      const testResult = jsonEvent.params.result as JsonTestResultEnd;
+      const testResult = jsonEvent.params.result;
       testResult.errors.forEach(error => this._updateErrorLocations(error));
       (testResult.attachments ?? []).forEach(attachment => {
         if (attachment.path)
@@ -489,17 +493,17 @@ class PathSeparatorPatcher {
       return;
     }
     if (jsonEvent.method === 'onStepBegin') {
-      const step = jsonEvent.params.step as JsonTestStepStart;
+      const step = jsonEvent.params.step;
       this._updateLocation(step.location);
       return;
     }
     if (jsonEvent.method === 'onStepEnd') {
-      const step = jsonEvent.params.step as JsonTestStepEnd;
+      const step = jsonEvent.params.step;
       this._updateErrorLocations(step.error);
       return;
     }
     if (jsonEvent.method === 'onAttach') {
-      const attach = jsonEvent.params as JsonTestResultOnAttach;
+      const attach = jsonEvent.params;
       attach.attachments.forEach(attachment => {
         if (attachment.path)
           attachment.path = this._updatePath(attachment.path);
@@ -554,7 +558,7 @@ class GlobalErrorPatcher {
   patchEvent(event: JsonEvent) {
     if (event.method !== 'onError')
       return;
-    const error = event.params.error as TestError;
+    const error = event.params.error;
     if (error.message !== undefined)
       error.message = this._prefix + error.message;
     if (error.stack !== undefined)
@@ -602,7 +606,7 @@ class BlobModernizer {
           return { entries: [...newSuites, ...tests], ...remainder };
         };
         const project = event.params.project;
-        project.suites = project.suites.map(modernizeSuite);
+        project.suites = (project.suites as unknown as blobV1.JsonSuite[]).map(modernizeSuite);
       }
       return event;
     });
