@@ -22,8 +22,8 @@ import { mkdirIfNeeded } from '../utils/fileUtils';
 
 import type { DispatcherScope } from './dispatcher';
 import type { Artifact } from '../artifact';
-import type { CallMetadata } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel, DispatcherScope> implements channels.ArtifactChannel {
   _type_Artifact = true;
@@ -45,13 +45,13 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
     });
   }
 
-  async pathAfterFinished(): Promise<channels.ArtifactPathAfterFinishedResult> {
-    const path = await this._object.localPathAfterFinished();
+  async pathAfterFinished(params: channels.ArtifactPathAfterFinishedParams, progress: Progress): Promise<channels.ArtifactPathAfterFinishedResult> {
+    const path = await progress.race(this._object.localPathAfterFinished());
     return { value: path };
   }
 
-  async saveAs(params: channels.ArtifactSaveAsParams): Promise<channels.ArtifactSaveAsResult> {
-    return await new Promise((resolve, reject) => {
+  async saveAs(params: channels.ArtifactSaveAsParams, progress: Progress): Promise<channels.ArtifactSaveAsResult> {
+    return await progress.race(new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
         if (error) {
           reject(error);
@@ -65,11 +65,11 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           reject(e);
         }
       });
-    });
+    }));
   }
 
-  async saveAsStream(): Promise<channels.ArtifactSaveAsStreamResult> {
-    return await new Promise((resolve, reject) => {
+  async saveAsStream(params: channels.ArtifactSaveAsStreamParams, progress: Progress): Promise<channels.ArtifactSaveAsStreamResult> {
+    return await progress.race(new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
         if (error) {
           reject(error);
@@ -90,27 +90,27 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           reject(e);
         }
       });
-    });
+    }));
   }
 
-  async stream(): Promise<channels.ArtifactStreamResult> {
-    const fileName = await this._object.localPathAfterFinished();
+  async stream(params: channels.ArtifactStreamParams, progress: Progress): Promise<channels.ArtifactStreamResult> {
+    const fileName = await progress.race(this._object.localPathAfterFinished());
     const readable = fs.createReadStream(fileName, { highWaterMark: 1024 * 1024 });
     return { stream: new StreamDispatcher(this, readable) };
   }
 
-  async failure(): Promise<channels.ArtifactFailureResult> {
-    const error = await this._object.failureError();
+  async failure(params: channels.ArtifactFailureParams, progress: Progress): Promise<channels.ArtifactFailureResult> {
+    const error = await progress.race(this._object.failureError());
     return { error: error || undefined };
   }
 
-  async cancel(): Promise<void> {
-    await this._object.cancel();
+  async cancel(params: channels.ArtifactCancelParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.cancel());
   }
 
-  async delete(_: any, metadata: CallMetadata): Promise<void> {
-    metadata.potentiallyClosesScope = true;
-    await this._object.delete();
+  async delete(params: channels.ArtifactDeleteParams, progress: Progress): Promise<void> {
+    progress.metadata.potentiallyClosesScope = true;
+    await progress.race(this._object.delete());
     this._dispose();
   }
 }

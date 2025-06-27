@@ -42,4 +42,5 @@ export interface Progress {
   // Legacy lenient mode api only. To be removed.
   legacyDisableTimeout(): void;
   legacyEnableTimeout(): void;
+  legacySetErrorHandler(handler: (error: Error) => void): void;
 }

@@ -21,12 +21,12 @@ import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 
 import type { APIRequestContext } from '../fetch';
-import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
@@ -64,12 +64,12 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
     this._browserContextDispatcher = scope;
   }
 
-  async rawRequestHeaders(params?: channels.RequestRawRequestHeadersParams): Promise<channels.RequestRawRequestHeadersResult> {
-    return { headers: await this._object.rawRequestHeaders() };
+  async rawRequestHeaders(params: channels.RequestRawRequestHeadersParams, progress: Progress): Promise<channels.RequestRawRequestHeadersResult> {
+    return { headers: await progress.race(this._object.rawRequestHeaders()) };
   }
 
-  async response(): Promise<channels.RequestResponseResult> {
-    return { response: ResponseDispatcher.fromNullable(this._browserContextDispatcher, await this._object.response()) };
+  async response(params: channels.RequestResponseParams, progress: Progress): Promise<channels.RequestResponseResult> {
+    return { response: ResponseDispatcher.fromNullable(this._browserContextDispatcher, await progress.race(this._object.response())) };
   }
 }
 
@@ -99,24 +99,24 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
     });
   }
 
-  async body(): Promise<channels.ResponseBodyResult> {
-    return { binary: await this._object.body() };
+  async body(params: channels.ResponseBodyParams, progress: Progress): Promise<channels.ResponseBodyResult> {
+    return { binary: await progress.race(this._object.body()) };
   }
 
-  async securityDetails(): Promise<channels.ResponseSecurityDetailsResult> {
-    return { value: await this._object.securityDetails() || undefined };
+  async securityDetails(params: channels.ResponseSecurityDetailsParams, progress: Progress): Promise<channels.ResponseSecurityDetailsResult> {
+    return { value: await progress.race(this._object.securityDetails()) || undefined };
   }
 
-  async serverAddr(): Promise<channels.ResponseServerAddrResult> {
-    return { value: await this._object.serverAddr() || undefined };
+  async serverAddr(params: channels.ResponseServerAddrParams, progress: Progress): Promise<channels.ResponseServerAddrResult> {
+    return { value: await progress.race(this._object.serverAddr()) || undefined };
   }
 
-  async rawResponseHeaders(params?: channels.ResponseRawResponseHeadersParams): Promise<channels.ResponseRawResponseHeadersResult> {
-    return { headers: await this._object.rawResponseHeaders() };
+  async rawResponseHeaders(params: channels.ResponseRawResponseHeadersParams, progress: Progress): Promise<channels.ResponseRawResponseHeadersResult> {
+    return { headers: await progress.race(this._object.rawResponseHeaders()) };
   }
 
-  async sizes(params?: channels.ResponseSizesParams): Promise<channels.ResponseSizesResult> {
-    return { sizes: await this._object.sizes() };
+  async sizes(params: channels.ResponseSizesParams, progress: Progress): Promise<channels.ResponseSizesResult> {
+    return { sizes: await progress.race(this._object.sizes()) };
   }
 }
 
@@ -138,7 +138,8 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
     this._handled = true;
   }
 
-  async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
+  async continue(params: channels.RouteContinueParams, progress: Progress): Promise<channels.RouteContinueResult> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     this._checkNotHandled();
     await this._object.continue({
       url: params.url,
@@ -149,19 +150,21 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
     });
   }
 
-  async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
+  async fulfill(params: channels.RouteFulfillParams, progress: Progress): Promise<void> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     this._checkNotHandled();
     await this._object.fulfill(params);
   }
 
-  async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
+  async abort(params: channels.RouteAbortParams, progress: Progress): Promise<void> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     this._checkNotHandled();
     await this._object.abort(params.errorCode || 'failed');
   }
 
-  async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams): Promise<void> {
+  async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams, progress: Progress): Promise<void> {
     this._checkNotHandled();
-    await this._object.redirectNavigationRequest(params.url);
+    this._object.redirectNavigationRequest(params.url);
   }
 }
 
@@ -203,18 +206,18 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     this.adopt(tracing);
   }
 
-  async storageState(params: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._object.storageState(params.indexedDB);
+  async storageState(params: channels.APIRequestContextStorageStateParams, progress: Progress): Promise<channels.APIRequestContextStorageStateResult> {
+    return await this._object.storageState(progress, params.indexedDB);
   }
 
-  async dispose(params: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {
-    metadata.potentiallyClosesScope = true;
+  async dispose(params: channels.APIRequestContextDisposeParams, progress: Progress): Promise<void> {
+    progress.metadata.potentiallyClosesScope = true;
     await this._object.dispose(params);
     this._dispose();
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIRequestContextFetchResult> {
-    const fetchResponse = await this._object.fetch(params, metadata);
+  async fetch(params: channels.APIRequestContextFetchParams, progress: Progress): Promise<channels.APIRequestContextFetchResult> {
+    const fetchResponse = await this._object.fetch(progress, params);
     return {
       response: {
         url: fetchResponse.url,
@@ -226,16 +229,16 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     };
   }
 
-  async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams): Promise<channels.APIRequestContextFetchResponseBodyResult> {
+  async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, progress: Progress): Promise<channels.APIRequestContextFetchResponseBodyResult> {
     return { binary: this._object.fetchResponses.get(params.fetchUid) };
   }
 
-  async fetchLog(params: channels.APIRequestContextFetchLogParams): Promise<channels.APIRequestContextFetchLogResult> {
+  async fetchLog(params: channels.APIRequestContextFetchLogParams, progress: Progress): Promise<channels.APIRequestContextFetchLogResult> {
     const log = this._object.fetchLog.get(params.fetchUid) || [];
     return { log };
   }
 
-  async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams): Promise<void> {
+  async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, progress: Progress): Promise<void> {
     this._object.disposeResponse(params.fetchUid);
   }
 }

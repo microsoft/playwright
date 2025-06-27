@@ -323,7 +323,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
-    return await progress.race(this._context.storageState(params.indexedDB));
+    return await progress.race(this._context.storageState(progress, params.indexedDB));
   }
 
   async close(params: channels.BrowserContextCloseParams, progress: Progress): Promise<void> {

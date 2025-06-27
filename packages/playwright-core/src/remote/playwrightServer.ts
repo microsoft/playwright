@@ -25,11 +25,13 @@ import { debugLogger, isUnderTest } from '../utils';
 import { serverSideCallMetadata } from '../server';
 import { SocksProxy } from '../server/utils/socksProxy';
 import { Browser } from '../server/browser';
+import { ProgressController } from '../server/progress';
 
 import type { AndroidDevice } from '../server/android/android';
 import type { Playwright } from '../server/playwright';
-import type  { LaunchOptions } from '../server/types';
+import type { LaunchOptions as LaunchOptionsWithoutTimeout } from '../server/types';
 
+type LaunchOptionsWithTimeout = LaunchOptionsWithoutTimeout & { timeout: number };
 
 type ServerOptions = {
   path: string;
@@ -93,9 +95,11 @@ export class PlaywrightServer {
         const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
         const launchOptionsHeaderValue = Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader;
         const launchOptionsParam = url.searchParams.get('launch-options');
-        let launchOptions: LaunchOptions = { timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT };
+        let launchOptions: LaunchOptionsWithTimeout = { timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT };
         try {
           launchOptions = JSON.parse(launchOptionsParam || launchOptionsHeaderValue);
+          if (!launchOptions.timeout)
+            launchOptions.timeout = DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT;
         } catch (e) {
         }
 
@@ -172,7 +176,7 @@ export class PlaywrightServer {
     });
   }
 
-  private async _initReuseBrowsersMode(browserName: string | null, launchOptions: LaunchOptions, id: string): Promise<PlaywrightInitializeResult> {
+  private async _initReuseBrowsersMode(browserName: string | null, launchOptions: LaunchOptionsWithTimeout, id: string): Promise<PlaywrightInitializeResult> {
     // Note: reuse browser mode does not support socks proxy, because
     // clients come and go, while the browser stays the same.
 
@@ -184,7 +188,7 @@ export class PlaywrightServer {
         return false;
       if (this._dontReuseBrowsers.has(b))
         return false;
-      const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
+      const existingOptions = launchOptionsHash({ ...b.options.originalLaunchOptions, timeout: DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT });
       return existingOptions === requestedOptions;
     });
 
@@ -199,10 +203,12 @@ export class PlaywrightServer {
     }
 
     if (!browser) {
-      browser = await this._playwright[(browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+      const browserType = this._playwright[(browserName || 'chromium') as 'chromium'];
+      const controller = new ProgressController(serverSideCallMetadata(), browserType);
+      browser = await controller.run(progress => browserType.launch(progress, {
         ...launchOptions,
         headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
-      });
+      }), launchOptions.timeout);
     }
 
     return {
@@ -222,14 +228,16 @@ export class PlaywrightServer {
     };
   }
 
-  private async _initConnectMode(id: string, filter: 'first', browserName: string | null, launchOptions: LaunchOptions): Promise<PlaywrightInitializeResult> {
+  private async _initConnectMode(id: string, filter: 'first', browserName: string | null, launchOptions: LaunchOptionsWithTimeout): Promise<PlaywrightInitializeResult> {
     browserName ??= 'chromium';
 
     debugLogger.log('server', `[${id}] engaged connect mode`);
 
     let browser = this._playwright.allBrowsers().find(b => b.options.name === browserName);
     if (!browser) {
-      browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), launchOptions);
+      const browserType = this._playwright[browserName as 'chromium'];
+      const controller = new ProgressController(serverSideCallMetadata(), browserType);
+      browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
       this._dontReuse(browser);
     }
 
@@ -268,7 +276,7 @@ export class PlaywrightServer {
     };
   }
 
-  private async _initLaunchBrowserMode(browserName: string | null, proxyValue: string | undefined, launchOptions: LaunchOptions, id: string): Promise<PlaywrightInitializeResult> {
+  private async _initLaunchBrowserMode(browserName: string | null, proxyValue: string | undefined, launchOptions: LaunchOptionsWithTimeout, id: string): Promise<PlaywrightInitializeResult> {
     debugLogger.log('server', `[${id}] engaged launch mode for "${browserName}"`);
     let socksProxy: SocksProxy | undefined;
     if (proxyValue) {
@@ -279,7 +287,9 @@ export class PlaywrightServer {
     } else {
       launchOptions.socksProxyPort = undefined;
     }
-    const browser = await this._playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), launchOptions);
+    const browserType = this._playwright[browserName as 'chromium'];
+    const controller = new ProgressController(serverSideCallMetadata(), browserType);
+    const browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
     this._dontReuseBrowsers.add(browser);
     return {
       preLaunchedBrowser: browser,
@@ -334,10 +344,10 @@ function userAgentVersionMatchesErrorMessage(userAgent: string) {
   }
 }
 
-function launchOptionsHash(options: LaunchOptions) {
+function launchOptionsHash(options: LaunchOptionsWithTimeout) {
   const copy = { ...options };
   for (const k of Object.keys(copy)) {
-    const key = k as keyof LaunchOptions;
+    const key = k as keyof LaunchOptionsWithTimeout;
     if (copy[key] === defaultLaunchOptions[key])
       delete copy[key];
   }
@@ -346,7 +356,7 @@ function launchOptionsHash(options: LaunchOptions) {
   return JSON.stringify(copy);
 }
 
-function filterLaunchOptions(options: LaunchOptions, allowFSPaths: boolean): LaunchOptions {
+function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowFSPaths: boolean): LaunchOptionsWithTimeout {
   return {
     channel: options.channel,
     args: options.args,
@@ -363,7 +373,7 @@ function filterLaunchOptions(options: LaunchOptions, allowFSPaths: boolean): Lau
   };
 }
 
-const defaultLaunchOptions: Partial<LaunchOptions> = {
+const defaultLaunchOptions: Partial<LaunchOptionsWithTimeout> = {
   ignoreAllDefaultArgs: false,
   handleSIGINT: false,
   handleSIGTERM: false,
@@ -372,7 +382,7 @@ const defaultLaunchOptions: Partial<LaunchOptions> = {
   devtools: false,
 };
 
-const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
+const optionsThatAllowBrowserReuse: (keyof LaunchOptionsWithTimeout)[] = [
   'headless',
   'timeout',
   'tracesDir',

@@ -176,7 +176,6 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       cdpPort: isUnderTest() ? 0 : undefined,
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
-      timeout: 0,
     },
   });
 

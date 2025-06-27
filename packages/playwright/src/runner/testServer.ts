@@ -457,7 +457,6 @@ export async function runUIMode(configFile: string | undefined, configCLIOverrid
         persistentContextOptions: {
           handleSIGINT: false,
           channel,
-          timeout: 0,
         },
       });
       page.on('close', () => cancelPromise.resolve());

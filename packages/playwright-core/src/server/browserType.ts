@@ -28,7 +28,6 @@ import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
 import { envArrayToObject, launchProcess } from './utils/processLauncher';
-import { ProgressController } from './progress';
 import {  isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
@@ -37,7 +36,6 @@ import { RecentLogsCollector } from './utils/debugLogger';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
-import type { CallMetadata } from './instrumentation';
 import type { Env } from './utils/processLauncher';
 import type { Progress } from './progress';
 import type { ProtocolError } from './protocolError';
@@ -67,34 +65,26 @@ export abstract class BrowserType extends SdkObject {
     return this._name;
   }
 
-  async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+  async launch(progress: Progress, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
     options = this._validateLaunchOptions(options);
-    const controller = new ProgressController(metadata, this);
-    const browser = await controller.run(progress => {
-      const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
-      if (seleniumHubUrl)
-        return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
-      return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
-    }, options.timeout);
-    return browser;
+    const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
+    if (seleniumHubUrl)
+      return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
+    return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { timeout: number, cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+  async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
     const launchOptions = this._validateLaunchOptions(options);
-    const controller = new ProgressController(metadata, this);
-    const browser = await controller.run(async progress => {
-      // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
-      let clientCertificatesProxy: ClientCertificatesProxy | undefined;
-      if (options.clientCertificates?.length) {
-        clientCertificatesProxy = await progress.raceWithCleanup(ClientCertificatesProxy.create(options), proxy => proxy.close());
-        launchOptions.proxyOverride = clientCertificatesProxy.proxySettings();
-        options = { ...options };
-        options.internalIgnoreHTTPSErrors = true;
-      }
-      const browser = await this._innerLaunchWithRetries(progress, launchOptions, options, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
-      browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
-      return browser;
-    }, launchOptions.timeout);
+    // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
+    let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+    if (options.clientCertificates?.length) {
+      clientCertificatesProxy = await progress.raceWithCleanup(ClientCertificatesProxy.create(options), proxy => proxy.close());
+      launchOptions.proxyOverride = clientCertificatesProxy.proxySettings();
+      options = { ...options };
+      options.internalIgnoreHTTPSErrors = true;
+    }
+    const browser = await this._innerLaunchWithRetries(progress, launchOptions, options, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+    browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
     return browser._defaultContext!;
   }
 
@@ -281,7 +271,7 @@ export abstract class BrowserType extends SdkObject {
       await fs.promises.mkdir(options.tracesDir, { recursive: true });
   }
 
-  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, timeout?: number, headers?: types.HeadersArray }): Promise<Browser> {
+  async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, timeout?: number, headers?: types.HeadersArray }): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 

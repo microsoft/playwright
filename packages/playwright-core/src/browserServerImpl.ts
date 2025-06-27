@@ -24,6 +24,7 @@ import { rewriteErrorMessage } from './utils/isomorphic/stackTrace';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from './utils/isomorphic/time';
 import { ws } from './utilsBundle';
 import * as validatorPrimitives from './protocol/validatorPrimitives';
+import { ProgressController } from './server/progress';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
 import type { LaunchServerOptions, Logger, Env } from './client/types';
@@ -59,16 +60,19 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
     let browser: Browser;
     try {
-      if (options._userDataDir !== undefined) {
-        const validator = validatorPrimitives.scheme['BrowserTypeLaunchPersistentContextParams'];
-        launchOptions = validator({ ...launchOptions, userDataDir: options._userDataDir }, '', validatorContext);
-        const context = await playwright[this._browserName].launchPersistentContext(metadata, options._userDataDir, launchOptions);
-        browser = context._browser;
-      } else {
-        const validator = validatorPrimitives.scheme['BrowserTypeLaunchParams'];
-        launchOptions = validator(launchOptions, '', validatorContext);
-        browser = await playwright[this._browserName].launch(metadata, launchOptions, toProtocolLogger(options.logger));
-      }
+      const controller = new ProgressController(metadata, playwright[this._browserName]);
+      browser = await controller.run(async progress => {
+        if (options._userDataDir !== undefined) {
+          const validator = validatorPrimitives.scheme['BrowserTypeLaunchPersistentContextParams'];
+          launchOptions = validator({ ...launchOptions, userDataDir: options._userDataDir }, '', validatorContext);
+          const context = await playwright[this._browserName].launchPersistentContext(progress, options._userDataDir, launchOptions);
+          return context._browser;
+        } else {
+          const validator = validatorPrimitives.scheme['BrowserTypeLaunchParams'];
+          launchOptions = validator(launchOptions, '', validatorContext);
+          return await playwright[this._browserName].launch(progress, launchOptions, toProtocolLogger(options.logger));
+        }
+      });
     } catch (e) {
       const log = helper.formatBrowserLogs(metadata.log);
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);

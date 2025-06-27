@@ -49,7 +49,8 @@ export async function launchApp(browserType: BrowserType, options: {
       channel = findChromiumChannel(options.sdkLanguage);
   }
 
-  const context = await browserType.launchPersistentContext(serverSideCallMetadata(), '', {
+  const controller = new ProgressController(serverSideCallMetadata(), browserType);
+  const context = await controller.run(progress => browserType.launchPersistentContext(progress, '', {
     ignoreDefaultArgs: ['--enable-automation'],
     ...options?.persistentContextOptions,
     channel,
@@ -57,8 +58,7 @@ export async function launchApp(browserType: BrowserType, options: {
     acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
     colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
     args,
-    timeout: 0, // Deliberately no timeout for our apps.
-  });
+  }), 0); // Deliberately no timeout for our apps.
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.
   // See https://github.com/microsoft/playwright/issues/9434

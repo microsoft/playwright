@@ -37,11 +37,10 @@ import { CRDevTools } from './crDevTools';
 import { Browser } from '../browser';
 import { removeFolders } from '../utils/fileUtils';
 import { gracefullyCloseSet } from '../utils/processLauncher';
-import { ProgressController } from '../progress';
 
 import type { HTTPRequestParams } from '../utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
-import type { CallMetadata, SdkObject } from '../instrumentation';
+import type { SdkObject } from '../instrumentation';
 import type { Env } from '../utils/processLauncher';
 import type { Progress } from '../progress';
 import type { ProtocolError } from '../protocolError';
@@ -62,11 +61,8 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, timeout: number }) {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(async progress => {
-      return await this._connectOverCDPInternal(progress, endpointURL, options);
-    }, options.timeout);
+  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }) {
+    return await this._connectOverCDPInternal(progress, endpointURL, options);
   }
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
@@ -107,7 +103,7 @@ export class Chromium extends BrowserType {
       artifactsDir,
       downloadsPath: options.downloadsPath || artifactsDir,
       tracesDir: options.tracesDir || artifactsDir,
-      originalLaunchOptions: { timeout: options.timeout },
+      originalLaunchOptions: {},
     };
     validateBrowserContextOptions(persistent, browserOptions);
     const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));
