@@ -105,7 +105,11 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (this._mode === 'library')
       return pageAlias;
 
-    return pageAlias.replace('page', 'Page');
+    if (pageAlias === 'page')
+      return 'Page'; // first page is class member
+
+    // other pages are local variables
+    return pageAlias;
   }
 
   private _generateActionCall(subject: string, actionInContext: actions.ActionInContext): string {
