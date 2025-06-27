@@ -791,3 +791,31 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
           - listitem: 1.1
   `);
 });
+
+test('top-level deep-equal', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36456' } }, async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>
+        <ul>
+          <li>1.1</li>
+          <li>1.2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - /children: deep-equal
+    - list
+  `, { timeout: 1000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`
+- - /children: deep-equal
+- - list
++ - list:
++   - listitem:
++     - list:
++       - listitem: "1.1"
++       - listitem: "1.2"
+  `.trim());
+});
