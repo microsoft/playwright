@@ -93,6 +93,55 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     ]);
   });
 
+  test('should click twice', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
+
+    const locator = await recorder.hoverOverElement('button');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', `click();\n  await`),
+      recorder.trustedClick(),
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('button', { name: 'Submit' }).click();`);
+  });
+
+  test('should type after clicking twice', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<input type="text" value="foo"/>`);
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByRole('textbox')`);
+
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', `click();\n  await`),
+      recorder.trustedClick(),
+    ]);
+
+    await page.keyboard.type('bar');
+    const sources = await recorder.waitForOutput('JavaScript', 'bar');
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('textbox').click();
+  await page.getByRole('textbox').click();
+  await page.getByRole('textbox').fill('foobar');`);
+  });
+
   test('should ignore programmatic events', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 

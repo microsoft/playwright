@@ -42,7 +42,8 @@ export interface RecorderDelegate {
 
 interface RecorderTool {
   cursor(): string;
-  cleanup?(): void;
+  install?(): void;
+  uninstall?(): void;
   onClick?(event: MouseEvent): void;
   onDblClick?(event: MouseEvent): void;
   onContextMenu?(event: MouseEvent): void;
@@ -82,7 +83,7 @@ class InspectTool implements RecorderTool {
     return 'pointer';
   }
 
-  cleanup() {
+  uninstall() {
     this._hoveredModel = null;
     this._hoveredElement = null;
   }
@@ -194,6 +195,7 @@ class RecordActionTool implements RecorderTool {
   private _activeModel: HighlightModelWithSelector | null = null;
   private _expectProgrammaticKeyUp = false;
   private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
+  private _observer: MutationObserver | null = null;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -204,7 +206,23 @@ class RecordActionTool implements RecorderTool {
     return 'pointer';
   }
 
-  cleanup() {
+  install() {
+    this._observer = new MutationObserver(mutations => {
+      if (!this._hoveredElement)
+        return;
+      for (const mutation of mutations) {
+        for (const node of mutation.removedNodes) {
+          if (node === this._hoveredElement || node.contains(this._hoveredElement))
+            this._resetHoveredModel();
+        }
+      }
+    });
+    this._observer.observe(this._recorder.injectedScript.document.body, { childList: true, subtree: true });
+  }
+
+  uninstall() {
+    this._observer?.disconnect();
+    this._observer = null;
     this._hoveredModel = null;
     this._hoveredElement = null;
     this._activeModel = null;
@@ -462,6 +480,10 @@ class RecordActionTool implements RecorderTool {
   }
 
   onScroll(event: Event) {
+    this._resetHoveredModel();
+  }
+
+  private _resetHoveredModel() {
     this._hoveredModel = null;
     this._hoveredElement = null;
     this._recorder.updateHighlight(null, false);
@@ -522,9 +544,6 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _performAction(action: actions.PerformOnRecordAction) {
-    this._hoveredElement = null;
-    this._hoveredModel = null;
-    this._activeModel = null;
     this._recorder.updateHighlight(null, false);
     this._performingActions.add(action);
     void this._recorder.performAction(action).then(() => {
@@ -612,7 +631,7 @@ class TextAssertionTool implements RecorderTool {
     return 'pointer';
   }
 
-  cleanup() {
+  uninstall() {
     this._dialog.close();
     this._hoverHighlight = null;
   }
@@ -1045,6 +1064,7 @@ export class Recorder {
       'assertingSnapshot': new TextAssertionTool(this, 'snapshot'),
     };
     this._currentTool = this._tools.none;
+    this._currentTool.install?.();
     if (injectedScript.window.top === injectedScript.window) {
       this.overlay = new Overlay(this);
       this.overlay.setUIState(this.state);
@@ -1095,6 +1115,7 @@ export class Recorder {
 
     this.highlight.appendChild(createSvgElement(this.document, clipPaths));
     this.overlay?.install();
+    this._currentTool?.install?.();
     this.document.adoptedStyleSheets.push(this._stylesheet);
   }
 
@@ -1102,9 +1123,10 @@ export class Recorder {
     const newTool = this._tools[this.state.mode];
     if (newTool === this._currentTool)
       return;
-    this._currentTool.cleanup?.();
+    this._currentTool.uninstall?.();
     this.clearHighlight();
     this._currentTool = newTool;
+    this._currentTool.install?.();
     this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
   }
 
