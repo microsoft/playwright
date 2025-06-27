@@ -1366,6 +1366,11 @@ BrowserContext:
           literals:
           - inspecting
           - recording
+        recorderMode:
+          type: enum?
+          literals:
+          - record
+          - perform
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?
