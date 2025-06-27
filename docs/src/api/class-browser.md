@@ -212,7 +212,7 @@ browser.close();
 ```python async
 browser = await playwright.firefox.launch() # or "chromium" or "webkit".
 # create a new incognito browser context.
-context = await browser.new_context()
+context = await new_context()
 # create a new page in a pristine context.
 page = await context.new_page()
 await page.goto("https://example.com")
@@ -225,7 +225,7 @@ await browser.close()
 ```python sync
 browser = playwright.firefox.launch() # or "chromium" or "webkit".
 # create a new incognito browser context.
-context = browser.new_context()
+context = new_context()
 # create a new page in a pristine context.
 page = context.new_page()
 page.goto("https://example.com")
