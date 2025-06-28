@@ -17,7 +17,7 @@
 import { parseAttributeSelector } from '@isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaBusy, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { matchesAttributePart } from './selectorUtils';
 
 import type { AttributeSelectorOperator, AttributeSelectorPart } from '@isomorphic/selectorParser';
@@ -28,6 +28,7 @@ type RoleEngineOptions = {
   name?: string | RegExp;
   nameOp?: '='|'*='|'|='|'^='|'$='|'~=';
   exact?: boolean;
+  busy?: boolean;
   checked?: boolean | 'mixed';
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -37,7 +38,7 @@ type RoleEngineOptions = {
   includeHidden?: boolean;
 };
 
-const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
+const kSupportedAttributes = ['busy', 'selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
 kSupportedAttributes.sort();
 
 function validateSupportedRole(attr: string, roles: string[], role: string) {
@@ -59,6 +60,12 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
   const options: RoleEngineOptions = { role };
   for (const attr of attrs) {
     switch (attr.name) {
+      case 'busy': {
+        validateSupportedValues(attr, [true, false]);
+        validateSupportedOp(attr, ['<truthy>', '=']);
+        options.busy = attr.op === '<truthy>' ? true : attr.value;
+        break;
+      }
       case 'checked': {
         validateSupportedRole(attr.name, kAriaCheckedRoles, role);
         validateSupportedValues(attr, [true, false, 'mixed']);
@@ -131,6 +138,8 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
   const result: Element[] = [];
   const match = (element: Element) => {
     if (getAriaRole(element) !== options.role)
+      return;
+    if (options.busy !== undefined && getAriaBusy(element) !== options.busy)
       return;
     if (options.selected !== undefined && getAriaSelected(element) !== options.selected)
       return;
