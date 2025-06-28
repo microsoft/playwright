@@ -17,7 +17,7 @@
 import type { Locator } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
-function unshift(snapshot: string): string {
+export function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
   for (const line of lines) {
@@ -657,4 +657,28 @@ it('should not report textarea textContent', async ({ page }) => {
   await checkAndMatchSnapshot(page.locator('body'), `
     - textbox: After
   `);
+});
+
+it('should not show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+  await page.setContent(`
+    <div style="visibility: hidden;">
+      <div style="visibility: visible;">
+        <button>Button</button>
+      </div>
+    </div>
+  `);
+
+  expect(await page.locator('body').ariaSnapshot()).toBe('');
+});
+
+it('should not show unhidden children of aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+  await page.setContent(`
+    <div aria-hidden="true">
+      <div aria-hidden="false">
+        <button>Button</button>
+      </div>
+    </div>
+  `);
+
+  expect(await page.locator('body').ariaSnapshot()).toBe('');
 });
