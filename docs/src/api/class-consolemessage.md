@@ -139,6 +139,16 @@ The text of the console message.
 
 ## method: ConsoleMessage.type
 * since: v1.8
+* langs: js
+- returns: <[ConsoleMessageType]>
+
+One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
+`'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,
+`'count'`, `'timeEnd'`.
+
+## method: ConsoleMessage.type
+* since: v1.8
+* langs: csharp, java, python
 - returns: <[string]>
 
 One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
