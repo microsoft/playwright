@@ -163,9 +163,22 @@ export class ContextRecorder extends EventEmitter {
   }
 
   private async _onPage(page: Page) {
-    console.log('there')
     const frame: Frame = page.mainFrame();
-    page.on('load', async () => {
+    // First page is called page, others are called popup1, popup2, etc.
+    page.on('close', () => {
+      this._collection.addRecordedAction({
+        frame: this._describeMainFrame(page),
+        action: {
+          name: 'closePage',
+          signals: [],
+        },
+        startTime: monotonicTime()
+      });
+      this._pageAliases.delete(page);
+    });
+    frame.on(Frame.Events.InternalNavigation, async event => {
+      if (event.isPublic)
+        this._onFrameNavigated(frame, page);
       try {
         const html = await page.mainFrame().content();
         const url = page.mainFrame().url();
@@ -179,22 +192,6 @@ export class ContextRecorder extends EventEmitter {
       } catch (err) {
         console.warn(`[codegen] Failed to save HTML: ${err}`);
       }
-    })
-    // First page is called page, others are called popup1, popup2, etc.
-    page.on('close', () => {
-      this._collection.addRecordedAction({
-        frame: this._describeMainFrame(page),
-        action: {
-          name: 'closePage',
-          signals: [],
-        },
-        startTime: monotonicTime()
-      });
-      this._pageAliases.delete(page);
-    });
-    frame.on(Frame.Events.InternalNavigation, event => {
-      if (event.isPublic)
-        this._onFrameNavigated(frame, page);
     });
     page.on(Page.Events.Download, () => this._onDownload(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';
