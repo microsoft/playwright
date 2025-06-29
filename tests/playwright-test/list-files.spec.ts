@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should list files', async ({ runCLICommand }) => {
@@ -96,6 +97,28 @@ test('should report error', async ({ runCLICommand }) => {
       },
       message: 'TypeError: Assignment to constant variable.',
       stack: expect.stringContaining('TypeError: Assignment to constant variable.'),
+    }
+  });
+});
+
+test('should report SyntaxErrors', async ({ runCLICommand }) => {
+  const result = await runCLICommand({
+    'playwright.config.ts': `
+      !?NotAValidConfig
+    `,
+  }, 'list-files');
+  expect(result.exitCode).toBe(0);
+
+  const data = JSON.parse(result.stdout);
+  expect(data).toEqual({
+    error: {
+      location: {
+        file: expect.stringContaining('playwright.config.ts'),
+        line: 2,
+        column: 7,
+      },
+      message: expect.stringContaining(`SyntaxError: ${path.join(test.info().outputDir, 'playwright.config.ts')}: Unexpected token (2:7)`),
+      stack: expect.stringContaining(`SyntaxError: ${path.join(test.info().outputDir, 'playwright.config.ts')}: Unexpected token (2:7)`),
     }
   });
 });
