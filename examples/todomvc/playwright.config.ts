@@ -12,7 +12,7 @@ export default defineConfig({
   /* Maximum time one test can run for. */
   timeout: 15_000,
 
-  captureGitInfo: { commit: true, diff: true },
+  captureGitInfo: { commit: false, diff: false },
 
   expect: {
 
@@ -50,26 +50,27 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    {
-      name: 'chromium',
+    // {
+    //   name: 'chromium',
 
-      /* Project-specific settings. */
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-    },
+    //   /* Project-specific settings. */
+    //   use: {
+    //     ...devices['Desktop Chrome'],
+    //   },
+    // },
 
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-      },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: {
+    //     ...devices['Desktop Firefox'],
+    //   },
+    // },
 
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
+        channel: 'webkit-wsl',
       },
     },
 

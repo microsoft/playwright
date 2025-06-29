@@ -17,6 +17,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import net from 'net';
+import { PassThrough } from 'stream';
 
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import { debugMode } from './utils/debug';
@@ -171,7 +173,7 @@ export abstract class BrowserType extends SdkObject {
     }
     await this.prepareUserDataDir(options, userDataDir);
 
-    const browserArguments: string[] = [];
+    let browserArguments: string[] = [];
     if (ignoreAllDefaultArgs)
       browserArguments.push(...args);
     else if (ignoreDefaultArgs)
@@ -179,6 +181,7 @@ export abstract class BrowserType extends SdkObject {
     else
       browserArguments.push(...this.defaultArgs(options, isPersistent, userDataDir));
 
+    let tcpTransport = false;
     let executable: string;
     if (executablePath) {
       if (!(await existsAsync(executablePath)))
@@ -189,10 +192,13 @@ export abstract class BrowserType extends SdkObject {
       if (!registryExecutable || registryExecutable.browserName !== this._name)
         throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
       executable = registryExecutable.executablePathOrDie(this.attribution.playwright.options.sdkLanguage);
+      if (registryExecutable.wrapArgs)
+        browserArguments = registryExecutable.wrapArgs(browserArguments);
+      tcpTransport = registryExecutable.tcpTransport ?? false;
       await registry.validateHostRequirementsForExecutablesIfNeeded([registryExecutable], this.attribution.playwright.options.sdkLanguage);
     }
 
-    return { executable, browserArguments, userDataDir, artifactsDir, tempDirectories };
+    return { executable, browserArguments, userDataDir, artifactsDir, tempDirectories, tcpTransport };
   }
 
   private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, browserLogsCollector: RecentLogsCollector, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, artifactsDir: string, userDataDir: string, transport: ConnectionTransport }> {
@@ -211,10 +217,23 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const exitPromise = new ManualPromise();
+    const [readPipe, writePipe] = prepared.tcpTransport ? [new PassThrough(), new PassThrough()] : [undefined, undefined];
+    const transportServer = prepared.tcpTransport ? net.createServer({
+      highWaterMark: 128 * 1024, // 128KB
+    }, socket => {
+      socket.setNoDelay(true);
+      writePipe!.pipe(socket);
+      socket.pipe(readPipe!);
+    }) : undefined;
+    transportServer && await new Promise<void>(resolve => transportServer.listen(0, resolve));
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
-      env: this.amendEnvironment(env, prepared.userDataDir, prepared.executable, prepared.browserArguments),
+      env: {
+        ...this.amendEnvironment(env, prepared.userDataDir, prepared.executable, prepared.browserArguments, options.channel),
+        'WSLENV': 'PW_WKWSL_PORT',
+        'PW_WKWSL_PORT': (transportServer?.address() as net.AddressInfo)?.port?.toString() ?? '',
+      },
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -233,6 +252,7 @@ export abstract class BrowserType extends SdkObject {
         this.attemptToGracefullyCloseBrowser(transport!);
       },
       onExit: (exitCode, signal) => {
+        transportServer?.close();
         // Unblock launch when browser prematurely exits.
         exitPromise.resolve();
         if (browserProcess && browserProcess.onclose)
@@ -268,7 +288,7 @@ export abstract class BrowserType extends SdkObject {
       transport = await WebSocketTransport.connect(progress, wsEndpoint!);
     } else {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-      transport = new PipeTransport(stdio[3], stdio[4]);
+      transport = new PipeTransport(writePipe ?? stdio[3], readPipe ?? stdio[4]);
     }
     progress.cleanupWhenAborted(() => transport.close());
     return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
@@ -337,7 +357,7 @@ export abstract class BrowserType extends SdkObject {
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
+  abstract amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[], channel?: string): Env;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }

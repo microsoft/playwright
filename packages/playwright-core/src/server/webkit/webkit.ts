@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import { spawnSync } from 'child_process';
 
 import { kBrowserCloseMessageId } from './wkConnection';
 import { wrapInASCIIBox } from '../utils/ascii';
@@ -38,8 +38,11 @@ export class WebKit extends BrowserType {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
+  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[], channel?: string): Env {
+    return {
+      ...env,
+      // CURL_COOKIE_JAR_PATH: path.join(channel === 'webkit-wsl' ? translatePathToWSL(userDataDir) : userDataDir, 'cookiejar.db'),
+    };
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
@@ -62,12 +65,12 @@ export class WebKit extends BrowserType {
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
-    if (process.platform === 'win32')
+    if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
       webkitArguments.push('--disable-accelerated-compositing');
     if (headless)
       webkitArguments.push('--headless');
     if (isPersistent)
-      webkitArguments.push(`--user-data-dir=${userDataDir}`);
+      webkitArguments.push(`--user-data-dir=${options.channel === 'webkit-wsl' ? translatePathToWSL(userDataDir) : userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
     const proxy = options.proxyOverride || options.proxy;
@@ -76,7 +79,7 @@ export class WebKit extends BrowserType {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
-      } else if (process.platform === 'linux') {
+      } else if (process.platform === 'linux' || process.platform === 'win32' && options.channel === 'webkit-wsl') {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
@@ -93,4 +96,10 @@ export class WebKit extends BrowserType {
       webkitArguments.push('about:blank');
     return webkitArguments;
   }
+}
+
+export function translatePathToWSL(path: string): string {
+  console.log('translatePathToWSL', path);
+  const result = spawnSync('wsl', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]).stdout.toString().trim();
+  return result;
 }
