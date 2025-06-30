@@ -523,6 +523,14 @@ export class CRBrowserContext extends BrowserContext {
       await (sw as CRServiceWorker).updateRequestInterception();
   }
 
+  override async doUpdateDefaultViewport() {
+    // No-op, because each page resets its own viewport.
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
+    // No-op, because each page resets its own color scheme.
+  }
+
   override async doExposePlaywrightBinding() {
     for (const page of this._crPages())
       await page.exposePlaywrightBinding();

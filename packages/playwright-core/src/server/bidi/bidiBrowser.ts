@@ -224,16 +224,7 @@ export class BidiBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [
       super._initialize(),
     ];
-    if (this._options.viewport) {
-      promises.push(this._browser._browserSession.send('browsingContext.setViewport', {
-        viewport: {
-          width: this._options.viewport.width,
-          height: this._options.viewport.height
-        },
-        devicePixelRatio: this._options.deviceScaleFactor || 1,
-        userContexts: [this._userContextId()],
-      }));
-    }
+    promises.push(this.doUpdateDefaultViewport());
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     await Promise.all(promises);
@@ -387,6 +378,22 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
+  }
+
+  override async doUpdateDefaultViewport() {
+    if (!this._options.viewport)
+      return;
+    await this._browser._browserSession.send('browsingContext.setViewport', {
+      viewport: {
+        width: this._options.viewport.width,
+        height: this._options.viewport.height
+      },
+      devicePixelRatio: this._options.deviceScaleFactor || 1,
+      userContexts: [this._userContextId()],
+    });
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
   }
 
   override async doExposePlaywrightBinding() {

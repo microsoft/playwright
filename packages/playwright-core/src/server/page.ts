@@ -253,18 +253,16 @@ export class Page extends SdkObject {
   }
 
   async resetForReuse(progress: Progress) {
-    this._locatorHandlers.clear();
-
     // Re-navigate once init scripts are gone.
-    // TODO: we should have a timeout for `resetForReuse`.
     await this.mainFrame().gotoImpl(progress, 'about:blank', {});
+
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
     this._extraHTTPHeaders = undefined;
-
     await Promise.all([
       this.delegate.updateEmulatedViewportSize(),
       this.delegate.updateEmulateMedia(),
+      this.delegate.updateExtraHTTPHeaders(),
     ]);
 
     await this.delegate.resetForReuse(progress);
