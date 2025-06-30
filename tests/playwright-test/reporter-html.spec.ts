@@ -3026,7 +3026,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test('should respect snippets configuration option', async ({ runInlineTest, showReport, page }) => {
-      // With snippets: false
       const result = await runInlineTest({
         'playwright.config.ts': `
           export default { reporter: [['html', { snippets: false }]] }
@@ -3039,8 +3038,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(1);
       await showReport();
       await page.getByRole('link', { name: 'fail without snippet' }).click();
-      // This may fail if the option isn't propagated by the harness
-      await expect(page.locator('[data-testid="test-snippet"]')).not.toBeVisible();
+      await expect(page.getByTestId('test-snippet')).not.toBeVisible();
     });
   });
 }
