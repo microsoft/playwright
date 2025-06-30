@@ -57,9 +57,9 @@ export class ProgressController {
     this._logName = logName;
   }
 
-  async abort(message: string) {
+  async abort(error: Error) {
     if (this._state === 'running') {
-      const error = new AbortedError(message);
+      (error as any)[kAbortErrorSymbol] = true;
       this._state = { error };
       this._forceAbortPromise.reject(error);
     }
@@ -81,6 +81,7 @@ export class ProgressController {
         return;
       const onTimeout = () => {
         if (this._state === 'running') {
+          (timeoutError as any)[kAbortErrorSymbol] = true;
           this._state = { error: timeoutError };
           this._forceAbortPromise.reject(timeoutError);
         }
@@ -174,8 +175,8 @@ async function runCleanup(error: Error | undefined, cleanup: (error: Error | und
   }
 }
 
-class AbortedError extends Error {}
+const kAbortErrorSymbol = Symbol('kAbortError');
 
 export function isAbortError(error: Error): boolean {
-  return error instanceof AbortedError || error instanceof TimeoutError;
+  return !!(error as any)[kAbortErrorSymbol];
 }

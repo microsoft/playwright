@@ -335,7 +335,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async stopPendingOperations(params: channels.BrowserContextStopPendingOperationsParams, progress: Progress): Promise<channels.BrowserContextStopPendingOperationsResult> {
-    await this._stopPendingOperations(params.reason);
+    await this._stopPendingOperations(new Error(params.reason));
   }
 
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {

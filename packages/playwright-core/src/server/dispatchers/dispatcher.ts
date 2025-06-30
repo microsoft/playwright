@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 
 import { eventsHelper } from '../utils/eventsHelper';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
-import { LongStandingScope, assert, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { assert, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
@@ -48,9 +48,7 @@ function maxDispatchersForBucket(gcBucket: string) {
 
 export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   readonly connection: DispatcherConnection;
-  // Parent is always "isScope".
   private _parent: ParentScopeType | undefined;
-  // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, DispatcherScope>();
   protected _disposed = false;
   protected _eventListeners: RegisteredListener[] = [];
@@ -60,7 +58,6 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   readonly _type: string;
   readonly _gcBucket: string;
   _object: Type;
-  private _openScope = new LongStandingScope();
 
   constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<ChannelType>, gcBucket?: string) {
     super();
@@ -103,7 +100,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendAdopt(this, child);
   }
 
-  private async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
+  async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
     const controller = new ProgressController(callMetadata, this._object);
     this._activeProgressControllers.add(controller);
     try {
@@ -111,18 +108,6 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     } finally {
       this._activeProgressControllers.delete(controller);
     }
-  }
-
-  async _handleCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const commandPromise = this._runCommand(callMetadata, method, validParams);
-    return await commandPromise;
-    // try {
-    //   return await this._openScope.race(commandPromise);
-    // } catch (e) {
-    //   if (callMetadata.potentiallyClosesScope && isTargetClosedError(e))
-    //     return await commandPromise;
-    //   throw e;
-    // }
   }
 
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
@@ -136,23 +121,23 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   }
 
   _dispose(reason?: 'gc' | 'disconnect') {
-    this._disposeRecursively(new TargetClosedError(), reason);
+    const error = reason === 'disconnect' ? new Error('Disconnected') : new TargetClosedError();
+    this._disposeRecursively(error, reason);
     this.connection.sendDispose(this, reason);
   }
 
   protected _onDispose() {
   }
 
-  protected async _stopPendingOperations(message: string, reason?: 'disconnect') {
+  protected async _stopPendingOperations(error: Error, reason?: 'gc' | 'disconnect') {
     // Upon disconnect, we stop all operations, including those that potentially close the scope.
     const controllers = Array.from(this._activeProgressControllers).filter(c => reason === 'disconnect' ? c : !c.metadata.potentiallyClosesScope);
-    await Promise.all(controllers.map(controller => controller.abort(message)));
+    await Promise.all(controllers.map(controller => controller.abort(error)));
   }
 
   private _disposeRecursively(error: Error, reason: 'gc' | 'disconnect' | undefined) {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
-    const errorMessage = reason === 'disconnect' ? 'Disconnected' : 'Target page, context or browser has been closed';
-    this._stopPendingOperations(errorMessage, reason === 'disconnect' ? 'disconnect' : undefined).catch(() => {});
+    this._stopPendingOperations(error, reason).catch(() => {});
     this._onDispose();
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -168,7 +153,6 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     for (const dispatcher of [...this._dispatchers.values()])
       dispatcher._disposeRecursively(error, reason);
     this._dispatchers.clear();
-    this._openScope.close(error);
   }
 
   _debugScopeState(): any {
@@ -381,7 +365,7 @@ export class DispatcherConnection {
     await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
     const response: any = { id };
     try {
-      const result = await dispatcher._handleCommand(callMetadata, method, validParams);
+      const result = await dispatcher._runCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;

@@ -35,7 +35,6 @@ import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
-import { ProgressController } from './progress';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';

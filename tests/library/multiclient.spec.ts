@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { Browser, BrowserServer, ConnectOptions, Page } from 'playwright-core';
 
@@ -322,4 +323,25 @@ test('should launch persistent', async ({ browserType }) => {
   expect(browser.contexts().length).toBe(1);
   await browser.close();
   await browserServer.close();
+});
+
+test('should avoid side effects upon disconnect', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  let counter = 0;
+  pageB.on('console', () => ++counter);
+
+  const promise = pageA.waitForFunction(() => {
+    window['counter'] = (window['counter'] || 0) + 1;
+    console.log(window['counter']);
+  }, {}, { polling: 1, timeout: 10000 }).catch(e => e);
+
+  await disconnect(pageA);
+  const error = await promise;
+  const savedCounter = counter;
+
+  await pageB.waitForTimeout(2000); // Give it some time to produce more logs.
+
+  expect(error.message).toContain(kTargetClosedErrorMessage);
+  expect(counter).toBe(savedCounter);
 });
