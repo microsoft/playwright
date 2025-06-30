@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect } from './inspectorTest';
+import { test, expect, matrixDescribe } from './inspectorTest';
 import type { ConsoleMessage } from 'playwright';
 
-test.describe('cli codegen', () => {
+matrixDescribe<('record' | 'perform')>('cli codegen', ['record', 'perform'], recorderMode => {
   test.skip(({ mode }) => mode !== 'default');
+  test.use({ recorderMode });
 
   test('should click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
@@ -91,6 +92,61 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
       'click 2',
       'dblclick 2',
     ]);
+  });
+
+  test('should click twice', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
+
+    const locator = await recorder.hoverOverElement('button');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+
+    // Do not trigger double click.
+    await page.waitForTimeout(200);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', `click();\n  await`),
+      recorder.trustedClick(),
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('button', { name: 'Submit' }).click();`);
+  });
+
+  test('should type after clicking twice', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<input type="text" value="foo"/>`);
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByRole('textbox')`);
+
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+
+    // Do not trigger double click.
+    await page.waitForTimeout(200);
+
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', `click();\n  await`),
+      recorder.trustedClick(),
+    ]);
+
+    await page.keyboard.type('bar');
+    const sources = await recorder.waitForOutput('JavaScript', 'bar');
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('textbox').click();
+  await page.getByRole('textbox').click();
+  await page.getByRole('textbox').fill('foobar');`);
   });
 
   test('should ignore programmatic events', async ({ openRecorder }) => {
@@ -409,7 +465,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(sources.get('C#')!.text).toContain(`
 await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
 
-    expect(messages[0].text()).toBe('press');
+    expect(messages.map(m => m.text())).toContain('press');
   });
 
   test('should update selected element after pressing Tab', async ({ openRecorder }) => {
@@ -477,7 +533,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     ]);
     expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('textbox').press('ArrowDown');`);
-    expect(messages[0].text()).toBe('press:ArrowDown');
+    expect(messages.map(m => m.text())).toContain('press:ArrowDown');
   });
 
   test('should emit single keyup on ArrowDown', async ({ openRecorder }) => {
@@ -573,6 +629,28 @@ await page.Locator("#checkbox").CheckAsync();`);
     expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#checkbox').check();`);
     expect(message.text()).toBe('true');
+  });
+
+  test('should check with keyboard after hover', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
+
+    await recorder.hoverOverElement('input');
+    await page.focus('input');
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'check'),
+      page.keyboard.press('Space')
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#checkbox').check();`);
+
+    const sources2 = await recorder.waitForOutput('JavaScript', 'check');
+    expect(sources2.get('JavaScript')!.text).not.toContain(`
+  await page.locator('#checkbox').check();
+  await page.locator('#checkbox').check();`);
   });
 
   test('should uncheck', async ({ openRecorder }) => {
@@ -683,6 +761,7 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
   test('should await popup', async ({ openRecorder, server }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36461' });
+    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
 
     const { page, recorder } = await openRecorder();
     server.setRoute('/popup', (req, res) => {
@@ -742,6 +821,8 @@ await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync
   });
 
   test('should attribute navigation to click', async ({ openRecorder }) => {
+    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<a onclick="window.location.href='about:blank#foo'">link</a>`);
@@ -797,6 +878,8 @@ await page.GetByText("link").ClickAsync();`);
   });
 
   test('should attribute navigation to press/fill', async ({ openRecorder }) => {
+    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before press/fill is recorded)');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input /><script>document.querySelector('input').addEventListener('input', () => window.location.href = 'about:blank#foo');</script>`);

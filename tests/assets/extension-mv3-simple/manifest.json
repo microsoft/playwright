@@ -1,0 +1,14 @@
+{
+  "name": "Simple extension",
+  "version": "0.1",
+  "background": {
+    "service_worker": "index.js"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "css": [],
+    "js": ["content-script.js"]
+  }],
+  "permissions": ["background", "activeTab"],
+  "manifest_version": 3
+}
