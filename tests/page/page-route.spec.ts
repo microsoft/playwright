@@ -737,7 +737,7 @@ it('should respect cors overrides', async ({ page, server, browserName, isAndroi
   }
 });
 
-it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isAndroid, browserName }) => {
+it('should not auto-intercept non-preflight OPTIONS without network interception', async ({ page, server, isAndroid, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20469' });
   it.fixme(isAndroid);
 
@@ -775,6 +775,31 @@ it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isA
     // Preflight for OPTIONS, then OPTIONS, then GET without preflight.
     expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);
   }
+});
+
+// Make sure this runs in a new context as preflight results could be cached.
+it('should not auto-intercept non-preflight OPTIONS with network interception', async ({ page, server, isAndroid, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20469' });
+  it.fixme(isAndroid);
+
+  await page.goto(server.EMPTY_PAGE);
+
+  let requests = [];
+  server.setRoute('/something', (request, response) => {
+    requests.push(request.method + ':' + request.url);
+    if (request.method === 'OPTIONS') {
+      response.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache'
+      });
+      response.end(`Hello`);
+      return;
+    }
+    response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+    response.end('World');
+  });
 
   // With interception.
   {
@@ -791,10 +816,10 @@ it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isA
     expect.soft(text1).toBe('Hello');
     expect.soft(text2).toBe('World');
     // Preflight for OPTIONS is auto-fulfilled, then OPTIONS, then GET without preflight.
-    if (browserName === 'firefox')
-      expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);
-    else
+    if (browserName === 'chromium')
       expect.soft(requests).toEqual(['OPTIONS:/something', 'GET:/something']);
+    else
+      expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);
   }
 });
 
