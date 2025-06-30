@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { unshift } from './page-aria-snapshot.spec';
-import { test as it, expect } from './pageTest';
+import { test as it, expect, unshift } from './pageTest';
 
 function snapshotForAI(page: any): Promise<string> {
   return page._snapshotForAI();
