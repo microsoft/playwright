@@ -71,10 +71,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     }, { internal: true });
   }
 
-  async _stopPendingOperations(reason: string) {
-    await this._channel.stopPendingOperations({ reason });
-  }
-
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
     options = this._browserType._playwright.selectors._withSelectorOptions({
       ...this._browserType._playwright._defaultContextOptions,

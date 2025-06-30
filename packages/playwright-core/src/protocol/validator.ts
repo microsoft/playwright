@@ -817,10 +817,6 @@ scheme.BrowserNewContextForReuseParams = tObject({
 scheme.BrowserNewContextForReuseResult = tObject({
   context: tChannel(['BrowserContext']),
 });
-scheme.BrowserStopPendingOperationsParams = tObject({
-  reason: tString,
-});
-scheme.BrowserStopPendingOperationsResult = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionParams = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),
@@ -1073,6 +1069,10 @@ scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
+scheme.BrowserContextStopPendingOperationsParams = tObject({
+  reason: tString,
+});
+scheme.BrowserContextStopPendingOperationsResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
 });

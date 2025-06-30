@@ -417,7 +417,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     (context as any)[kIsReusedContext] = true;
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
-    await (browser as any)._stopPendingOperations(closeReason);
+    await (context as any)._stopPendingOperations(closeReason);
   },
 
   page: async ({ context, _reuseContext }, use) => {

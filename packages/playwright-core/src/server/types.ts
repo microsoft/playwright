@@ -19,8 +19,6 @@ import type { HeadersArray, Point, Size } from '../utils/isomorphic/types';
 export type { HeadersArray, Point, Quad, Rect, Size } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
 
-export type TimeoutOptions = { timeout: number };
-
 export type StrictOptions = {
   strict?: boolean,
 };
@@ -28,8 +26,6 @@ export type StrictOptions = {
 export type QueryOnSelectorOptions = StrictOptions;
 
 export type WaitForElementOptions = StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' } & { omitReturnValue?: boolean };
-
-export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);

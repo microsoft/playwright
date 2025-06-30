@@ -52,7 +52,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _bindings: PageBinding[] = [];
-  private _initScritps: InitScript[] = [];
+  private _initScripts: InitScript[] = [];
   private _dialogHandler: (dialog: Dialog) => boolean;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
@@ -297,7 +297,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams, progress: Progress): Promise<void> {
-    this._initScritps.push(await this._context.addInitScript(progress, params.source));
+    this._initScripts.push(await this._context.addInitScript(progress, params.source));
   }
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
@@ -332,6 +332,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
     await RecorderApp.show(this._context, params);
+  }
+
+  async stopPendingOperations(params: channels.BrowserContextStopPendingOperationsParams, progress: Progress): Promise<channels.BrowserContextStopPendingOperationsResult> {
+    await this._stopPendingOperations(params.reason);
   }
 
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {
@@ -415,8 +419,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
     this._context.removeExposedBindings(this._bindings).catch(() => {});
     this._bindings = [];
-    this._context.removeInitScripts(this._initScritps).catch(() => {});
-    this._initScritps = [];
+    this._context.removeInitScripts(this._initScripts).catch(() => {});
+    this._initScripts = [];
     if (this._clockPaused)
       this._context.clock.resumeNoReply();
     this._clockPaused = false;

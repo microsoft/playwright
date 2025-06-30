@@ -24,7 +24,7 @@ import { TargetClosedError, isTargetClosedError, serializeError } from '../error
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
-import { methodMetainfo, progressTypes } from '../../utils/isomorphic/protocolMetainfo';
+import { methodMetainfo } from '../../utils/isomorphic/protocolMetainfo';
 import { Progress, ProgressController } from '../progress';
 
 import type { CallMetadata } from '../instrumentation';
@@ -54,6 +54,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   private _dispatchers = new Map<string, DispatcherScope>();
   protected _disposed = false;
   protected _eventListeners: RegisteredListener[] = [];
+  private _activeProgressControllers = new Set<ProgressController>();
 
   readonly _guid: string;
   readonly _type: string;
@@ -102,23 +103,26 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendAdopt(this, child);
   }
 
-  private _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    if (progressTypes.has(this._type)) {
-      const controller = new ProgressController(callMetadata, this._object);
-      return controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
+  private async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
+    const controller = new ProgressController(callMetadata, this._object);
+    this._activeProgressControllers.add(controller);
+    try {
+      return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
+    } finally {
+      this._activeProgressControllers.delete(controller);
     }
-    return (this as any)[method](validParams, callMetadata);
   }
 
   async _handleCommand(callMetadata: CallMetadata, method: string, validParams: any) {
     const commandPromise = this._runCommand(callMetadata, method, validParams);
-    try {
-      return await this._openScope.race(commandPromise);
-    } catch (e) {
-      if (callMetadata.potentiallyClosesScope && isTargetClosedError(e))
-        return await commandPromise;
-      throw e;
-    }
+    return await commandPromise;
+    // try {
+    //   return await this._openScope.race(commandPromise);
+    // } catch (e) {
+    //   if (callMetadata.potentiallyClosesScope && isTargetClosedError(e))
+    //     return await commandPromise;
+    //   throw e;
+    // }
   }
 
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
@@ -131,16 +135,24 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendEvent(this, method as string, params);
   }
 
-  _dispose(reason?: 'gc') {
-    this._disposeRecursively(new TargetClosedError());
+  _dispose(reason?: 'gc' | 'disconnect') {
+    this._disposeRecursively(new TargetClosedError(), reason);
     this.connection.sendDispose(this, reason);
   }
 
   protected _onDispose() {
   }
 
-  private _disposeRecursively(error: Error) {
+  protected async _stopPendingOperations(message: string, reason?: 'disconnect') {
+    // Upon disconnect, we stop all operations, including those that potentially close the scope.
+    const controllers = Array.from(this._activeProgressControllers).filter(c => reason === 'disconnect' ? c : !c.metadata.potentiallyClosesScope);
+    await Promise.all(controllers.map(controller => controller.abort(message)));
+  }
+
+  private _disposeRecursively(error: Error, reason: 'gc' | 'disconnect' | undefined) {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
+    const errorMessage = reason === 'disconnect' ? 'Disconnected' : 'Target page, context or browser has been closed';
+    this._stopPendingOperations(errorMessage, reason === 'disconnect' ? 'disconnect' : undefined).catch(() => {});
     this._onDispose();
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -154,7 +166,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
 
     // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
-      dispatcher._disposeRecursively(error);
+      dispatcher._disposeRecursively(error, reason);
     this._dispatchers.clear();
     this._openScope.close(error);
   }
@@ -219,8 +231,8 @@ export class DispatcherConnection {
     this.onmessage({ guid: parent._guid, method: '__adopt__', params: { guid: dispatcher._guid } });
   }
 
-  sendDispose(dispatcher: DispatcherScope, reason?: 'gc') {
-    this.onmessage({ guid: dispatcher._guid, method: '__dispose__', params: { reason } });
+  sendDispose(dispatcher: DispatcherScope, reason?: 'gc' | 'disconnect') {
+    this.onmessage({ guid: dispatcher._guid, method: '__dispose__', params: { reason: reason === 'gc' ? 'gc' : undefined } });
   }
 
   private _validatorToWireContext(): ValidatorContext {

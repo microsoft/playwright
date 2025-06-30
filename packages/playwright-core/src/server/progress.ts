@@ -70,7 +70,6 @@ export class ProgressController {
   async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
     assert(this._state === 'before');
     this._state = 'running';
-    this.sdkObject.attribution.context?._activeProgressControllers.add(this);
     let customErrorHandler: ((error: Error) => any) | undefined;
 
     const deadline = timeout ? Math.min(monotonicTime() + timeout, 2147483647) : 0; // 2^31-1 safe setTimeout in Node.
@@ -162,7 +161,6 @@ export class ProgressController {
         return customErrorHandler(error);
       throw error;
     } finally {
-      this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
       clearTimeout(timer);
       this._donePromise.resolve();
     }

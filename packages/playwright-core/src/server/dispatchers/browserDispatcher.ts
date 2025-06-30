@@ -88,10 +88,6 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     return { context: contextDispatcher };
   }
 
-  async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, progress: Progress): Promise<channels.BrowserStopPendingOperationsResult> {
-    await this._object.stopPendingOperations(params.reason);
-  }
-
   async close(params: channels.BrowserCloseParams, progress: Progress): Promise<void> {
     if (this._options.ignoreStopAndKill)
       return;

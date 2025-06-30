@@ -100,7 +100,6 @@ export abstract class APIRequestContext extends SdkObject {
   readonly fetchResponses: Map<string, Buffer> = new Map();
   readonly fetchLog: Map<string, string[]> = new Map();
   protected static allInstances: Set<APIRequestContext> = new Set();
-  readonly _activeProgressControllers = new Set<ProgressController>();
   _closeReason: string | undefined;
 
   static findResponseBody(guid: string): Buffer | undefined {

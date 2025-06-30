@@ -501,6 +501,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams) {
     await this._channel.enableRecorder(params);
   }
+
+  async _stopPendingOperations(reason: string) {
+    await this._channel.stopPendingOperations({ reason });
+  }
 }
 
 async function prepareStorageState(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {

@@ -1177,7 +1177,6 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, progress?: Progress): Promise<BrowserDefaultUserAgentForTestResult>;
   newContext(params: BrowserNewContextParams, progress?: Progress): Promise<BrowserNewContextResult>;
   newContextForReuse(params: BrowserNewContextForReuseParams, progress?: Progress): Promise<BrowserNewContextForReuseResult>;
-  stopPendingOperations(params: BrowserStopPendingOperationsParams, progress?: Progress): Promise<BrowserStopPendingOperationsResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, progress?: Progress): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, progress?: Progress): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, progress?: Progress): Promise<BrowserStopTracingResult>;
@@ -1479,13 +1478,6 @@ export type BrowserNewContextForReuseOptions = {
 export type BrowserNewContextForReuseResult = {
   context: BrowserContextChannel,
 };
-export type BrowserStopPendingOperationsParams = {
-  reason: string,
-};
-export type BrowserStopPendingOperationsOptions = {
-
-};
-export type BrowserStopPendingOperationsResult = void;
 export type BrowserNewBrowserCDPSessionParams = {};
 export type BrowserNewBrowserCDPSessionOptions = {};
 export type BrowserNewBrowserCDPSessionResult = {
@@ -1519,7 +1511,7 @@ export interface EventTargetEventTarget {
 }
 export interface EventTargetChannel extends EventTargetEventTarget, Channel {
   _type_EventTarget: boolean;
-  waitForEventInfo(params: EventTargetWaitForEventInfoParams, metadata?: CallMetadata): Promise<EventTargetWaitForEventInfoResult>;
+  waitForEventInfo(params: EventTargetWaitForEventInfoParams, progress?: Progress): Promise<EventTargetWaitForEventInfoResult>;
 }
 export type EventTargetWaitForEventInfoParams = {
   info: {
@@ -1638,6 +1630,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, progress?: Progress): Promise<BrowserContextSetOfflineResult>;
+  stopPendingOperations(params: BrowserContextStopPendingOperationsParams, progress?: Progress): Promise<BrowserContextStopPendingOperationsResult>;
   storageState(params: BrowserContextStorageStateParams, progress?: Progress): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, progress?: Progress): Promise<BrowserContextPauseResult>;
   enableRecorder(params: BrowserContextEnableRecorderParams, progress?: Progress): Promise<BrowserContextEnableRecorderResult>;
@@ -1871,6 +1864,13 @@ export type BrowserContextSetOfflineOptions = {
 
 };
 export type BrowserContextSetOfflineResult = void;
+export type BrowserContextStopPendingOperationsParams = {
+  reason: string,
+};
+export type BrowserContextStopPendingOperationsOptions = {
+
+};
+export type BrowserContextStopPendingOperationsResult = void;
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
 };
