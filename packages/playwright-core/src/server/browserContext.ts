@@ -27,7 +27,7 @@ import { BrowserContextAPIRequestContext } from './fetch';
 import { mkdirIfNeeded } from './utils/fileUtils';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
-import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
@@ -42,7 +42,6 @@ import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
 import type * as frames from './frames';
-import type { CallMetadata } from './instrumentation';
 import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
@@ -190,12 +189,7 @@ export abstract class BrowserContext extends SdkObject {
     return JSON.stringify(paramsCopy);
   }
 
-  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.resetForReuseImpl(progress, params));
-  }
-
-  async resetForReuseImpl(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
+  async resetForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
     await this.tracing.resetForReuse(progress);
 
     if (params) {
@@ -207,7 +201,7 @@ export abstract class BrowserContext extends SdkObject {
 
     // Close extra pages early.
     let page: Page | undefined = this.pages()[0];
-    const [, ...otherPages] = this.pages();
+    const otherPages = this.possiblyUninitializedPages().filter(p => p !== page);
     for (const p of otherPages)
       await p.close();
     if (page && page.hasCrashed()) {
@@ -539,11 +533,6 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  newPageFromMetadata(metadata: CallMetadata): Promise<Page> {
-    const contoller = new ProgressController(metadata, this);
-    return contoller.run(progress => this.newPage(progress, false));
-  }
-
   async newPage(progress: Progress, isServerSide: boolean): Promise<Page> {
     const page = await progress.raceWithCleanup(this.doCreateNewPage(isServerSide), page => page.close());
     const pageOrError = await progress.race(page.waitForInitializedOrError());
@@ -559,12 +548,7 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  storageState(indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
-    const controller = new ProgressController(serverSideCallMetadata(), this);
-    return controller.run(progress => this.storageStateImpl(progress, indexedDB));
-  }
-
-  async storageStateImpl(progress: Progress, indexedDB: boolean): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(progress: Progress, indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(),
       origins: []

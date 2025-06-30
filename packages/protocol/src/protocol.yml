@@ -359,6 +359,7 @@ FormField:
 
 APIRequestContext:
   type: interface
+  progress: true
 
   initializer:
     tracing: Tracing
@@ -629,6 +630,7 @@ ContextOptions:
 
 LocalUtils:
   type: interface
+  progress: true
 
   initializer:
     deviceDescriptors:
@@ -768,6 +770,7 @@ LocalUtils:
 
 Root:
   type: interface
+  progress: true
 
   commands:
 
@@ -878,6 +881,7 @@ RecorderSource:
 
 DebugController:
   type: interface
+  progress: true
 
   commands:
     initialize:
@@ -1016,6 +1020,7 @@ SocksSupport:
 
 BrowserType:
   type: interface
+  progress: true
 
   initializer:
     executablePath: string
@@ -1057,6 +1062,7 @@ BrowserType:
 
 Browser:
   type: interface
+  progress: true
 
   initializer:
     version: string
@@ -3263,6 +3269,7 @@ ElementHandle:
 
 Request:
   type: interface
+  progress: true
 
   initializer:
     frame: Frame?
@@ -3294,6 +3301,7 @@ Request:
 
 Route:
   type: interface
+  progress: true
 
   initializer:
     request: Request
@@ -3413,6 +3421,7 @@ ResourceTiming:
 
 Response:
   type: interface
+  progress: true
 
   initializer:
     request: Request
@@ -3483,6 +3492,7 @@ RemoteAddr:
 
 WebSocket:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -3615,6 +3625,7 @@ Tracing:
 
 Artifact:
   type: interface
+  progress: true
 
   initializer:
     absolutePath: string
@@ -3714,6 +3725,7 @@ CDPSession:
 
 Electron:
   type: interface
+  progress: true
 
   commands:
 
@@ -3784,6 +3796,7 @@ Electron:
 
 ElectronApplication:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -3834,6 +3847,7 @@ ElectronApplication:
 
 Android:
   type: interface
+  progress: true
 
   commands:
 
@@ -3850,6 +3864,7 @@ Android:
 
 AndroidSocket:
   type: interface
+  progress: true
 
   commands:
     write:
@@ -3868,6 +3883,7 @@ AndroidSocket:
 
 AndroidDevice:
   type: interface
+  progress: true
 
   extends: EventTarget
 

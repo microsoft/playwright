@@ -355,12 +355,12 @@ export interface APIRequestContextEventTarget {
 }
 export interface APIRequestContextChannel extends APIRequestContextEventTarget, Channel {
   _type_APIRequestContext: boolean;
-  fetch(params: APIRequestContextFetchParams, metadata?: CallMetadata): Promise<APIRequestContextFetchResult>;
-  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, metadata?: CallMetadata): Promise<APIRequestContextFetchResponseBodyResult>;
-  fetchLog(params: APIRequestContextFetchLogParams, metadata?: CallMetadata): Promise<APIRequestContextFetchLogResult>;
-  storageState(params: APIRequestContextStorageStateParams, metadata?: CallMetadata): Promise<APIRequestContextStorageStateResult>;
-  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeAPIResponseResult>;
-  dispose(params: APIRequestContextDisposeParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeResult>;
+  fetch(params: APIRequestContextFetchParams, progress?: Progress): Promise<APIRequestContextFetchResult>;
+  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, progress?: Progress): Promise<APIRequestContextFetchResponseBodyResult>;
+  fetchLog(params: APIRequestContextFetchLogParams, progress?: Progress): Promise<APIRequestContextFetchLogResult>;
+  storageState(params: APIRequestContextStorageStateParams, progress?: Progress): Promise<APIRequestContextStorageStateResult>;
+  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, progress?: Progress): Promise<APIRequestContextDisposeAPIResponseResult>;
+  dispose(params: APIRequestContextDisposeParams, progress?: Progress): Promise<APIRequestContextDisposeResult>;
 }
 export type APIRequestContextFetchParams = {
   url: string,
@@ -475,16 +475,16 @@ export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
-  zip(params: LocalUtilsZipParams, metadata?: CallMetadata): Promise<LocalUtilsZipResult>;
-  harOpen(params: LocalUtilsHarOpenParams, metadata?: CallMetadata): Promise<LocalUtilsHarOpenResult>;
-  harLookup(params: LocalUtilsHarLookupParams, metadata?: CallMetadata): Promise<LocalUtilsHarLookupResult>;
-  harClose(params: LocalUtilsHarCloseParams, metadata?: CallMetadata): Promise<LocalUtilsHarCloseResult>;
-  harUnzip(params: LocalUtilsHarUnzipParams, metadata?: CallMetadata): Promise<LocalUtilsHarUnzipResult>;
-  connect(params: LocalUtilsConnectParams, metadata?: CallMetadata): Promise<LocalUtilsConnectResult>;
-  tracingStarted(params: LocalUtilsTracingStartedParams, metadata?: CallMetadata): Promise<LocalUtilsTracingStartedResult>;
-  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, metadata?: CallMetadata): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
-  traceDiscarded(params: LocalUtilsTraceDiscardedParams, metadata?: CallMetadata): Promise<LocalUtilsTraceDiscardedResult>;
-  globToRegex(params: LocalUtilsGlobToRegexParams, metadata?: CallMetadata): Promise<LocalUtilsGlobToRegexResult>;
+  zip(params: LocalUtilsZipParams, progress?: Progress): Promise<LocalUtilsZipResult>;
+  harOpen(params: LocalUtilsHarOpenParams, progress?: Progress): Promise<LocalUtilsHarOpenResult>;
+  harLookup(params: LocalUtilsHarLookupParams, progress?: Progress): Promise<LocalUtilsHarLookupResult>;
+  harClose(params: LocalUtilsHarCloseParams, progress?: Progress): Promise<LocalUtilsHarCloseResult>;
+  harUnzip(params: LocalUtilsHarUnzipParams, progress?: Progress): Promise<LocalUtilsHarUnzipResult>;
+  connect(params: LocalUtilsConnectParams, progress?: Progress): Promise<LocalUtilsConnectResult>;
+  tracingStarted(params: LocalUtilsTracingStartedParams, progress?: Progress): Promise<LocalUtilsTracingStartedResult>;
+  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress?: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
+  traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress?: Progress): Promise<LocalUtilsTraceDiscardedResult>;
+  globToRegex(params: LocalUtilsGlobToRegexParams, progress?: Progress): Promise<LocalUtilsGlobToRegexResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -605,7 +605,7 @@ export interface RootEventTarget {
 }
 export interface RootChannel extends RootEventTarget, Channel {
   _type_Root: boolean;
-  initialize(params: RootInitializeParams, metadata?: CallMetadata): Promise<RootInitializeResult>;
+  initialize(params: RootInitializeParams, progress?: Progress): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
   sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
@@ -736,16 +736,16 @@ export interface DebugControllerEventTarget {
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
-  initialize(params: DebugControllerInitializeParams, metadata?: CallMetadata): Promise<DebugControllerInitializeResult>;
-  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, metadata?: CallMetadata): Promise<DebugControllerSetReportStateChangedResult>;
-  resetForReuse(params?: DebugControllerResetForReuseParams, metadata?: CallMetadata): Promise<DebugControllerResetForReuseResult>;
-  navigate(params: DebugControllerNavigateParams, metadata?: CallMetadata): Promise<DebugControllerNavigateResult>;
-  setRecorderMode(params: DebugControllerSetRecorderModeParams, metadata?: CallMetadata): Promise<DebugControllerSetRecorderModeResult>;
-  highlight(params: DebugControllerHighlightParams, metadata?: CallMetadata): Promise<DebugControllerHighlightResult>;
-  hideHighlight(params?: DebugControllerHideHighlightParams, metadata?: CallMetadata): Promise<DebugControllerHideHighlightResult>;
-  resume(params?: DebugControllerResumeParams, metadata?: CallMetadata): Promise<DebugControllerResumeResult>;
-  kill(params?: DebugControllerKillParams, metadata?: CallMetadata): Promise<DebugControllerKillResult>;
-  closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, metadata?: CallMetadata): Promise<DebugControllerCloseAllBrowsersResult>;
+  initialize(params: DebugControllerInitializeParams, progress?: Progress): Promise<DebugControllerInitializeResult>;
+  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, progress?: Progress): Promise<DebugControllerSetReportStateChangedResult>;
+  resetForReuse(params?: DebugControllerResetForReuseParams, progress?: Progress): Promise<DebugControllerResetForReuseResult>;
+  navigate(params: DebugControllerNavigateParams, progress?: Progress): Promise<DebugControllerNavigateResult>;
+  setRecorderMode(params: DebugControllerSetRecorderModeParams, progress?: Progress): Promise<DebugControllerSetRecorderModeResult>;
+  highlight(params: DebugControllerHighlightParams, progress?: Progress): Promise<DebugControllerHighlightResult>;
+  hideHighlight(params?: DebugControllerHideHighlightParams, progress?: Progress): Promise<DebugControllerHideHighlightResult>;
+  resume(params?: DebugControllerResumeParams, progress?: Progress): Promise<DebugControllerResumeResult>;
+  kill(params?: DebugControllerKillParams, progress?: Progress): Promise<DebugControllerKillResult>;
+  closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, progress?: Progress): Promise<DebugControllerCloseAllBrowsersResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
@@ -913,9 +913,9 @@ export interface BrowserTypeEventTarget {
 }
 export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   _type_BrowserType: boolean;
-  launch(params: BrowserTypeLaunchParams, metadata?: CallMetadata): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: CallMetadata): Promise<BrowserTypeLaunchPersistentContextResult>;
-  connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: CallMetadata): Promise<BrowserTypeConnectOverCDPResult>;
+  launch(params: BrowserTypeLaunchParams, progress?: Progress): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
   channel?: string,
@@ -1172,15 +1172,15 @@ export interface BrowserEventTarget {
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
-  close(params: BrowserCloseParams, metadata?: CallMetadata): Promise<BrowserCloseResult>;
-  killForTests(params?: BrowserKillForTestsParams, metadata?: CallMetadata): Promise<BrowserKillForTestsResult>;
-  defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, metadata?: CallMetadata): Promise<BrowserDefaultUserAgentForTestResult>;
-  newContext(params: BrowserNewContextParams, metadata?: CallMetadata): Promise<BrowserNewContextResult>;
-  newContextForReuse(params: BrowserNewContextForReuseParams, metadata?: CallMetadata): Promise<BrowserNewContextForReuseResult>;
-  stopPendingOperations(params: BrowserStopPendingOperationsParams, metadata?: CallMetadata): Promise<BrowserStopPendingOperationsResult>;
-  newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: CallMetadata): Promise<BrowserNewBrowserCDPSessionResult>;
-  startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
-  stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
+  close(params: BrowserCloseParams, progress?: Progress): Promise<BrowserCloseResult>;
+  killForTests(params?: BrowserKillForTestsParams, progress?: Progress): Promise<BrowserKillForTestsResult>;
+  defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, progress?: Progress): Promise<BrowserDefaultUserAgentForTestResult>;
+  newContext(params: BrowserNewContextParams, progress?: Progress): Promise<BrowserNewContextResult>;
+  newContextForReuse(params: BrowserNewContextForReuseParams, progress?: Progress): Promise<BrowserNewContextForReuseResult>;
+  stopPendingOperations(params: BrowserStopPendingOperationsParams, progress?: Progress): Promise<BrowserStopPendingOperationsResult>;
+  newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, progress?: Progress): Promise<BrowserNewBrowserCDPSessionResult>;
+  startTracing(params: BrowserStartTracingParams, progress?: Progress): Promise<BrowserStartTracingResult>;
+  stopTracing(params?: BrowserStopTracingParams, progress?: Progress): Promise<BrowserStopTracingResult>;
 }
 export type BrowserContextEvent = {
   context: BrowserContextChannel,
@@ -3822,8 +3822,8 @@ export interface RequestEventTarget {
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
-  response(params?: RequestResponseParams, metadata?: CallMetadata): Promise<RequestResponseResult>;
-  rawRequestHeaders(params?: RequestRawRequestHeadersParams, metadata?: CallMetadata): Promise<RequestRawRequestHeadersResult>;
+  response(params?: RequestResponseParams, progress?: Progress): Promise<RequestResponseResult>;
+  rawRequestHeaders(params?: RequestRawRequestHeadersParams, progress?: Progress): Promise<RequestRawRequestHeadersResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
@@ -3847,10 +3847,10 @@ export interface RouteEventTarget {
 }
 export interface RouteChannel extends RouteEventTarget, Channel {
   _type_Route: boolean;
-  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams, metadata?: CallMetadata): Promise<RouteRedirectNavigationRequestResult>;
-  abort(params: RouteAbortParams, metadata?: CallMetadata): Promise<RouteAbortResult>;
-  continue(params: RouteContinueParams, metadata?: CallMetadata): Promise<RouteContinueResult>;
-  fulfill(params: RouteFulfillParams, metadata?: CallMetadata): Promise<RouteFulfillResult>;
+  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams, progress?: Progress): Promise<RouteRedirectNavigationRequestResult>;
+  abort(params: RouteAbortParams, progress?: Progress): Promise<RouteAbortResult>;
+  continue(params: RouteContinueParams, progress?: Progress): Promise<RouteContinueResult>;
+  fulfill(params: RouteFulfillParams, progress?: Progress): Promise<RouteFulfillResult>;
 }
 export type RouteRedirectNavigationRequestParams = {
   url: string,
@@ -4011,11 +4011,11 @@ export interface ResponseEventTarget {
 }
 export interface ResponseChannel extends ResponseEventTarget, Channel {
   _type_Response: boolean;
-  body(params?: ResponseBodyParams, metadata?: CallMetadata): Promise<ResponseBodyResult>;
-  securityDetails(params?: ResponseSecurityDetailsParams, metadata?: CallMetadata): Promise<ResponseSecurityDetailsResult>;
-  serverAddr(params?: ResponseServerAddrParams, metadata?: CallMetadata): Promise<ResponseServerAddrResult>;
-  rawResponseHeaders(params?: ResponseRawResponseHeadersParams, metadata?: CallMetadata): Promise<ResponseRawResponseHeadersResult>;
-  sizes(params?: ResponseSizesParams, metadata?: CallMetadata): Promise<ResponseSizesResult>;
+  body(params?: ResponseBodyParams, progress?: Progress): Promise<ResponseBodyResult>;
+  securityDetails(params?: ResponseSecurityDetailsParams, progress?: Progress): Promise<ResponseSecurityDetailsResult>;
+  serverAddr(params?: ResponseServerAddrParams, progress?: Progress): Promise<ResponseServerAddrResult>;
+  rawResponseHeaders(params?: ResponseRawResponseHeadersParams, progress?: Progress): Promise<ResponseRawResponseHeadersResult>;
+  sizes(params?: ResponseSizesParams, progress?: Progress): Promise<ResponseSizesResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -4243,13 +4243,13 @@ export interface ArtifactEventTarget {
 }
 export interface ArtifactChannel extends ArtifactEventTarget, Channel {
   _type_Artifact: boolean;
-  pathAfterFinished(params?: ArtifactPathAfterFinishedParams, metadata?: CallMetadata): Promise<ArtifactPathAfterFinishedResult>;
-  saveAs(params: ArtifactSaveAsParams, metadata?: CallMetadata): Promise<ArtifactSaveAsResult>;
-  saveAsStream(params?: ArtifactSaveAsStreamParams, metadata?: CallMetadata): Promise<ArtifactSaveAsStreamResult>;
-  failure(params?: ArtifactFailureParams, metadata?: CallMetadata): Promise<ArtifactFailureResult>;
-  stream(params?: ArtifactStreamParams, metadata?: CallMetadata): Promise<ArtifactStreamResult>;
-  cancel(params?: ArtifactCancelParams, metadata?: CallMetadata): Promise<ArtifactCancelResult>;
-  delete(params?: ArtifactDeleteParams, metadata?: CallMetadata): Promise<ArtifactDeleteResult>;
+  pathAfterFinished(params?: ArtifactPathAfterFinishedParams, progress?: Progress): Promise<ArtifactPathAfterFinishedResult>;
+  saveAs(params: ArtifactSaveAsParams, progress?: Progress): Promise<ArtifactSaveAsResult>;
+  saveAsStream(params?: ArtifactSaveAsStreamParams, progress?: Progress): Promise<ArtifactSaveAsStreamResult>;
+  failure(params?: ArtifactFailureParams, progress?: Progress): Promise<ArtifactFailureResult>;
+  stream(params?: ArtifactStreamParams, progress?: Progress): Promise<ArtifactStreamResult>;
+  cancel(params?: ArtifactCancelParams, progress?: Progress): Promise<ArtifactCancelResult>;
+  delete(params?: ArtifactDeleteParams, progress?: Progress): Promise<ArtifactDeleteResult>;
 }
 export type ArtifactPathAfterFinishedParams = {};
 export type ArtifactPathAfterFinishedOptions = {};
@@ -4374,7 +4374,7 @@ export interface ElectronEventTarget {
 }
 export interface ElectronChannel extends ElectronEventTarget, Channel {
   _type_Electron: boolean;
-  launch(params: ElectronLaunchParams, metadata?: CallMetadata): Promise<ElectronLaunchResult>;
+  launch(params: ElectronLaunchParams, progress?: Progress): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
   executablePath?: string,
@@ -4464,10 +4464,10 @@ export interface ElectronApplicationEventTarget {
 }
 export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, EventTargetChannel {
   _type_ElectronApplication: boolean;
-  browserWindow(params: ElectronApplicationBrowserWindowParams, metadata?: CallMetadata): Promise<ElectronApplicationBrowserWindowResult>;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, metadata?: CallMetadata): Promise<ElectronApplicationUpdateSubscriptionResult>;
+  browserWindow(params: ElectronApplicationBrowserWindowParams, progress?: Progress): Promise<ElectronApplicationBrowserWindowResult>;
+  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, progress?: Progress): Promise<ElectronApplicationUpdateSubscriptionResult>;
 }
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationConsoleEvent = {
@@ -4531,7 +4531,7 @@ export interface AndroidEventTarget {
 }
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
-  devices(params: AndroidDevicesParams, metadata?: CallMetadata): Promise<AndroidDevicesResult>;
+  devices(params: AndroidDevicesParams, progress?: Progress): Promise<AndroidDevicesResult>;
 }
 export type AndroidDevicesParams = {
   host?: string,
@@ -4558,8 +4558,8 @@ export interface AndroidSocketEventTarget {
 }
 export interface AndroidSocketChannel extends AndroidSocketEventTarget, Channel {
   _type_AndroidSocket: boolean;
-  write(params: AndroidSocketWriteParams, metadata?: CallMetadata): Promise<AndroidSocketWriteResult>;
-  close(params?: AndroidSocketCloseParams, metadata?: CallMetadata): Promise<AndroidSocketCloseResult>;
+  write(params: AndroidSocketWriteParams, progress?: Progress): Promise<AndroidSocketWriteResult>;
+  close(params?: AndroidSocketCloseParams, progress?: Progress): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: Binary,
@@ -4593,30 +4593,30 @@ export interface AndroidDeviceEventTarget {
 }
 export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTargetChannel {
   _type_AndroidDevice: boolean;
-  wait(params: AndroidDeviceWaitParams, metadata?: CallMetadata): Promise<AndroidDeviceWaitResult>;
-  fill(params: AndroidDeviceFillParams, metadata?: CallMetadata): Promise<AndroidDeviceFillResult>;
-  tap(params: AndroidDeviceTapParams, metadata?: CallMetadata): Promise<AndroidDeviceTapResult>;
-  drag(params: AndroidDeviceDragParams, metadata?: CallMetadata): Promise<AndroidDeviceDragResult>;
-  fling(params: AndroidDeviceFlingParams, metadata?: CallMetadata): Promise<AndroidDeviceFlingResult>;
-  longTap(params: AndroidDeviceLongTapParams, metadata?: CallMetadata): Promise<AndroidDeviceLongTapResult>;
-  pinchClose(params: AndroidDevicePinchCloseParams, metadata?: CallMetadata): Promise<AndroidDevicePinchCloseResult>;
-  pinchOpen(params: AndroidDevicePinchOpenParams, metadata?: CallMetadata): Promise<AndroidDevicePinchOpenResult>;
-  scroll(params: AndroidDeviceScrollParams, metadata?: CallMetadata): Promise<AndroidDeviceScrollResult>;
-  swipe(params: AndroidDeviceSwipeParams, metadata?: CallMetadata): Promise<AndroidDeviceSwipeResult>;
-  info(params: AndroidDeviceInfoParams, metadata?: CallMetadata): Promise<AndroidDeviceInfoResult>;
-  screenshot(params?: AndroidDeviceScreenshotParams, metadata?: CallMetadata): Promise<AndroidDeviceScreenshotResult>;
-  inputType(params: AndroidDeviceInputTypeParams, metadata?: CallMetadata): Promise<AndroidDeviceInputTypeResult>;
-  inputPress(params: AndroidDeviceInputPressParams, metadata?: CallMetadata): Promise<AndroidDeviceInputPressResult>;
-  inputTap(params: AndroidDeviceInputTapParams, metadata?: CallMetadata): Promise<AndroidDeviceInputTapResult>;
-  inputSwipe(params: AndroidDeviceInputSwipeParams, metadata?: CallMetadata): Promise<AndroidDeviceInputSwipeResult>;
-  inputDrag(params: AndroidDeviceInputDragParams, metadata?: CallMetadata): Promise<AndroidDeviceInputDragResult>;
-  launchBrowser(params: AndroidDeviceLaunchBrowserParams, metadata?: CallMetadata): Promise<AndroidDeviceLaunchBrowserResult>;
-  open(params: AndroidDeviceOpenParams, metadata?: CallMetadata): Promise<AndroidDeviceOpenResult>;
-  shell(params: AndroidDeviceShellParams, metadata?: CallMetadata): Promise<AndroidDeviceShellResult>;
-  installApk(params: AndroidDeviceInstallApkParams, metadata?: CallMetadata): Promise<AndroidDeviceInstallApkResult>;
-  push(params: AndroidDevicePushParams, metadata?: CallMetadata): Promise<AndroidDevicePushResult>;
-  connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: CallMetadata): Promise<AndroidDeviceConnectToWebViewResult>;
-  close(params?: AndroidDeviceCloseParams, metadata?: CallMetadata): Promise<AndroidDeviceCloseResult>;
+  wait(params: AndroidDeviceWaitParams, progress?: Progress): Promise<AndroidDeviceWaitResult>;
+  fill(params: AndroidDeviceFillParams, progress?: Progress): Promise<AndroidDeviceFillResult>;
+  tap(params: AndroidDeviceTapParams, progress?: Progress): Promise<AndroidDeviceTapResult>;
+  drag(params: AndroidDeviceDragParams, progress?: Progress): Promise<AndroidDeviceDragResult>;
+  fling(params: AndroidDeviceFlingParams, progress?: Progress): Promise<AndroidDeviceFlingResult>;
+  longTap(params: AndroidDeviceLongTapParams, progress?: Progress): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(params: AndroidDevicePinchCloseParams, progress?: Progress): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(params: AndroidDevicePinchOpenParams, progress?: Progress): Promise<AndroidDevicePinchOpenResult>;
+  scroll(params: AndroidDeviceScrollParams, progress?: Progress): Promise<AndroidDeviceScrollResult>;
+  swipe(params: AndroidDeviceSwipeParams, progress?: Progress): Promise<AndroidDeviceSwipeResult>;
+  info(params: AndroidDeviceInfoParams, progress?: Progress): Promise<AndroidDeviceInfoResult>;
+  screenshot(params?: AndroidDeviceScreenshotParams, progress?: Progress): Promise<AndroidDeviceScreenshotResult>;
+  inputType(params: AndroidDeviceInputTypeParams, progress?: Progress): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(params: AndroidDeviceInputPressParams, progress?: Progress): Promise<AndroidDeviceInputPressResult>;
+  inputTap(params: AndroidDeviceInputTapParams, progress?: Progress): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(params: AndroidDeviceInputSwipeParams, progress?: Progress): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(params: AndroidDeviceInputDragParams, progress?: Progress): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(params: AndroidDeviceLaunchBrowserParams, progress?: Progress): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(params: AndroidDeviceOpenParams, progress?: Progress): Promise<AndroidDeviceOpenResult>;
+  shell(params: AndroidDeviceShellParams, progress?: Progress): Promise<AndroidDeviceShellResult>;
+  installApk(params: AndroidDeviceInstallApkParams, progress?: Progress): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, progress?: Progress): Promise<AndroidDevicePushResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, progress?: Progress): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(params?: AndroidDeviceCloseParams, progress?: Progress): Promise<AndroidDeviceCloseResult>;
 }
 export type AndroidDeviceCloseEvent = {};
 export type AndroidDeviceWebViewAddedEvent = {

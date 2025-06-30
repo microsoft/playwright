@@ -24,8 +24,8 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
-import type { CallMetadata } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 type BrowserDispatcherOptions = {
   // Do not allow to close this browser.
@@ -58,16 +58,16 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     this._dispose();
   }
 
-  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
+  async newContext(params: channels.BrowserNewContextParams, progress: Progress): Promise<channels.BrowserNewContextResult> {
     if (!this._options.isolateContexts) {
-      const context = await this._object.newContextFromMetadata(metadata, params);
+      const context = await this._object.newContext(progress, params);
       const contextDispatcher = BrowserContextDispatcher.from(this, context);
       return { context: contextDispatcher };
     }
 
     if (params.recordVideo)
       params.recordVideo.dir = this._object.options.artifactsDir;
-    const context = await this._object.newContextFromMetadata(metadata, params);
+    const context = await this._object.newContext(progress, params);
     this._isolatedContexts.add(context);
     context.on(BrowserContext.Events.Close, () => this._isolatedContexts.delete(context));
     const contextDispatcher = BrowserContextDispatcher.from(this, context);
@@ -75,34 +75,34 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     return { context: contextDispatcher };
   }
 
-  async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    const { context, needsReset } = await this._object.newContextForReuse(params, metadata);
+  async newContextForReuse(params: channels.BrowserNewContextForReuseParams, progress: Progress): Promise<channels.BrowserNewContextForReuseResult> {
+    const { context, needsReset } = await this._object.newContextForReuse(progress, params);
     if (needsReset) {
       const oldContextDispatcher = this.connection.existingDispatcher<BrowserContextDispatcher>(context);
       if (oldContextDispatcher)
         oldContextDispatcher._dispose();
-      await context.resetForReuse(metadata, params);
+      await context.resetForReuse(progress, params);
     }
     const contextDispatcher = BrowserContextDispatcher.from(this, context);
     this._dispatchEvent('context', { context: contextDispatcher });
     return { context: contextDispatcher };
   }
 
-  async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
+  async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, progress: Progress): Promise<channels.BrowserStopPendingOperationsResult> {
     await this._object.stopPendingOperations(params.reason);
   }
 
-  async close(params: channels.BrowserCloseParams, metadata: CallMetadata): Promise<void> {
+  async close(params: channels.BrowserCloseParams, progress: Progress): Promise<void> {
     if (this._options.ignoreStopAndKill)
       return;
-    metadata.potentiallyClosesScope = true;
+    progress.metadata.potentiallyClosesScope = true;
     await this._object.close(params);
   }
 
-  async killForTests(_: any, metadata: CallMetadata): Promise<void> {
+  async killForTests(params: channels.BrowserKillForTestsParams, progress: Progress): Promise<void> {
     if (this._options.ignoreStopAndKill)
       return;
-    metadata.potentiallyClosesScope = true;
+    progress.metadata.potentiallyClosesScope = true;
     await this._object.killForTests();
   }
 
@@ -110,21 +110,24 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     return { userAgent: this._object.userAgent() };
   }
 
-  async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
+  async newBrowserCDPSession(params: channels.BrowserNewBrowserCDPSessionParams, progress: Progress): Promise<channels.BrowserNewBrowserCDPSessionResult> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this, await crBrowser.newBrowserCDPSession()) };
   }
 
-  async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
+  async startTracing(params: channels.BrowserStartTracingParams, progress: Progress): Promise<void> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
-  async stopTracing(): Promise<channels.BrowserStopTracingResult> {
+  async stopTracing(params: channels.BrowserStopTracingParams, progress: Progress): Promise<channels.BrowserStopTracingResult> {
+    // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;

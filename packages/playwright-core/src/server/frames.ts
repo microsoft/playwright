@@ -90,6 +90,8 @@ export class NavigationAbortedError extends Error {
   }
 }
 
+type ExpectResult = { matches: boolean, received?: any, log?: string[], timedOut?: boolean };
+
 const kDummyFrameId = '<dummy>';
 
 export class FrameManager {
@@ -1336,6 +1338,7 @@ export class Frame extends SdkObject {
 
   async waitForTimeout(progress: Progress, timeout: number) {
     // Silent catch to avoid the self-inflicted timeout error.
+    progress.legacyDisableTimeout();
     return progress.wait(timeout).catch(() => {});
   }
 
@@ -1343,17 +1346,35 @@ export class Frame extends SdkObject {
     return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot(options)));
   }
 
-  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams, timeout?: number): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  // TODO: remove errorResultHandler once legacy progress is removed.
+  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams, timeout?: number, errorResultHandler?: (result: ExpectResult) => ExpectResult): Promise<ExpectResult> {
     progress.log(`${renderTitleForCall(progress.metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
-    const result = await this._expectImpl(progress, selector, options);
-    // Library mode special case for the expect errors which are return values, not exceptions.
-    if (result.matches === options.isNot)
-      progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
+    const result = await this._expectImpl(progress, selector, options, errorResultHandler);
     return result;
   }
 
-  private async _expectImpl(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  private async _expectImpl(progress: Progress, selector: string | undefined, options: FrameExpectParams, errorResultHandler?: (result: ExpectResult) => ExpectResult): Promise<ExpectResult> {
     const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
+    const fixupMetadataError = (result: ExpectResult) => {
+      // Library mode special case for the expect errors which are return values, not exceptions.
+      if (result.matches === options.isNot)
+        progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
+    };
+    const handleError = (e: any, isProgressError: boolean) => {
+      // Q: Why not throw upon isNonRetriableError(e) as in other places?
+      // A: We want user to receive a friendly message containing the last intermediate result.
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        throw e;
+      const result: ExpectResult = { matches: options.isNot, log: compressCallLog(progress.metadata.log) };
+      if (lastIntermediateResult.isSet)
+        result.received = lastIntermediateResult.received;
+      if (e instanceof TimeoutError)
+        result.timedOut = true;
+      fixupMetadataError(result);
+      return (isProgressError && errorResultHandler) ? errorResultHandler(result) : result;
+    };
+    progress.legacySetErrorHandler(e => handleError(e, true));
+
     try {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       if (selector)
@@ -1376,7 +1397,7 @@ export class Frame extends SdkObject {
       progress.legacyEnableTimeout();
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
+      const result = await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
         await this._page.performActionPreChecks(progress);
         const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
         if (matches === options.isNot) {
@@ -1387,17 +1408,10 @@ export class Frame extends SdkObject {
         }
         return { matches, received };
       });
-    } catch (e) {
-      // Q: Why not throw upon isNonRetriableError(e) as in other places?
-      // A: We want user to receive a friendly message containing the last intermediate result.
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
-        throw e;
-      const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: compressCallLog(progress.metadata.log) };
-      if (lastIntermediateResult.isSet)
-        result.received = lastIntermediateResult.received;
-      if (e instanceof TimeoutError)
-        result.timedOut = true;
+      fixupMetadataError(result);
       return result;
+    } catch (e) {
+      return handleError(e, false);
     }
   }
 

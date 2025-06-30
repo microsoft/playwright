@@ -32,7 +32,6 @@ import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './s
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from './utils/happyEyeballs';
 import { Tracing } from './trace/recorder/tracing';
 
-import type { CallMetadata } from './instrumentation';
 import type { Playwright } from './playwright';
 import type { Progress } from './progress';
 import type * as types from './types';
@@ -137,7 +136,7 @@ export abstract class APIRequestContext extends SdkObject {
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
   abstract _cookies(url: URL): Promise<channels.NetworkCookie[]>;
-  abstract storageState(indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -145,7 +144,7 @@ export abstract class APIRequestContext extends SdkObject {
     return uid;
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIResponse> {
+  async fetch(progress: Progress, params: channels.APIRequestContextFetchParams): Promise<channels.APIResponse> {
     const defaults = this._defaultOptions();
     const headers: HeadersObject = {
       'user-agent': defaults.userAgent,
@@ -201,12 +200,9 @@ export abstract class APIRequestContext extends SdkObject {
     const postData = serializePostData(params, headers);
     if (postData)
       setHeader(headers, 'content-length', String(postData.byteLength));
-    const controller = new ProgressController(metadata, this);
-    const fetchResponse = await controller.run(progress => {
-      return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
-    }, params.timeout);
+    const fetchResponse = await this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
     const fetchUid = this._storeResponseBody(fetchResponse.body);
-    this.fetchLog.set(fetchUid, controller.metadata.log);
+    this.fetchLog.set(fetchUid, progress.metadata.log);
     const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.failOnStatusCode;
     if (failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
       let responseText = '';
@@ -613,8 +609,8 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return await this._context.cookies(url.toString());
   }
 
-  override async storageState(indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._context.storageState(indexedDB);
+  override async storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
+    return this._context.storageState(progress, indexedDB);
   }
 }
 
@@ -670,7 +666,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._cookieStore.cookies(url);
   }
 
-  override async storageState(indexedDB = false): Promise<channels.APIRequestContextStorageStateResult> {
+  override async storageState(progress: Progress, indexedDB = false): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
       origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [] })),
