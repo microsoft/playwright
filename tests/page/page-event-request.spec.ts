@@ -329,7 +329,6 @@ it('should not expose preflight OPTIONS request', {
     'POST /cors',
   ]);
   expect(clientRequests).toEqual([
-    // `OPTIONS ${server.CROSS_PROCESS_PREFIX}/cors`,
     `POST ${server.CROSS_PROCESS_PREFIX}/cors`,
   ]);
 });
