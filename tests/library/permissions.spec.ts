@@ -237,6 +237,37 @@ it('storage access', {
   expect(await frame.evaluate(() => document.hasStorageAccess())).toBe(true);
 });
 
+it('should grant pointer-lock permission', async ({ page, context, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'chromium-only permission');
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(await getPermission(page, 'pointer-lock')).toBe('prompt');
+  await context.grantPermissions(['pointer-lock']);
+  expect(await getPermission(page, 'pointer-lock')).toBe('granted');
+});
+
+it('should grant keyboard-lock permission', async ({ page, context, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'chromium-only permission');
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(await getPermission(page, 'keyboard-lock')).toBe('prompt');
+  await context.grantPermissions(['keyboard-lock']);
+  expect(await getPermission(page, 'keyboard-lock')).toBe('granted');
+});
+
+it('should grant both pointer-lock and keyboard-lock permissions together', async ({ page, context, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'chromium-only permissions');
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(await getPermission(page, 'pointer-lock')).toBe('prompt');
+  expect(await getPermission(page, 'keyboard-lock')).toBe('prompt');
+
+  await context.grantPermissions(['pointer-lock', 'keyboard-lock']);
+
+  expect(await getPermission(page, 'pointer-lock')).toBe('granted');
+  expect(await getPermission(page, 'keyboard-lock')).toBe('granted');
+});
+
 it.describe(() => {
   // Secure context
   it.use({ ignoreHTTPSErrors: true, });
