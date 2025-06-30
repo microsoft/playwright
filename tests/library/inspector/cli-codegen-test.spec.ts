@@ -15,13 +15,10 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { test, expect } from './inspectorTest';
 
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
-
-test('should print the correct imports and context options', async ({ runCLI }) => {
-  const cli = runCLI([emptyHTML]);
+test('should print the correct imports and context options', async ({ runCLI, server }) => {
+  const cli = runCLI([server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -29,8 +26,8 @@ test('test', async ({ page }) => {
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', emptyHTML]);
+test('should print the correct context options for custom settings', async ({ runCLI, server }) => {
+  const cli = runCLI(['--color-scheme=light', server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect } from '@playwright/test';
 
 test.use({
@@ -42,10 +39,10 @@ test('test', async ({ page }) => {`;
 });
 
 
-test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
+test('should print the correct context options when using a device', async ({ browserName, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
-  const cli = runCLI(['--device=Pixel 2', emptyHTML]);
+  const cli = runCLI(['--device=Pixel 2', server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect, devices } from '@playwright/test';
 
 test.use({
@@ -56,10 +53,10 @@ test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, server, runCLI }) => {
   test.skip(browserName !== 'webkit');
 
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect, devices } from '@playwright/test';
 
 test.use({
@@ -71,10 +68,10 @@ test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print load storageState', async ({ browserName, channel, runCLI }, testInfo) => {
+test('should print load storageState', async ({ runCLI, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, emptyHTML]);
+  const cli = runCLI([`--load-storage=${loadFileName}`, server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect } from '@playwright/test';
 
 test.use({
