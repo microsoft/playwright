@@ -759,25 +759,36 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
     expect(message.text()).toBe('2');
   });
 
-  test('should await popup', async ({ openRecorder }) => {
+  test('should await popup', async ({ openRecorder, server }) => {
+    test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36461' });
     test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
 
     const { page, recorder } = await openRecorder();
-    await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
+    server.setRoute('/popup', (req, res) => {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.end(`<button>Click me</button>`);
+    });
+    await recorder.setContentAndWait(`<a target=_blank rel=noopener href="${server.PREFIX}/popup">link</a>`);
 
     const locator = await recorder.hoverOverElement('a');
     expect(locator).toBe(`getByRole('link', { name: 'link' })`);
 
-    const [popup, sources] = await Promise.all([
+    const [popup] = await Promise.all([
       page.context().waitForEvent('page'),
-      recorder.waitForOutput('JavaScript', 'waitForEvent'),
       recorder.trustedClick(),
     ]);
+
+    recorder.page = popup;
+    await recorder.hoverOverElement('button');
+    await recorder.trustedClick();
+
+    const sources = await recorder.waitForOutput('JavaScript', 'page1.');
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
   const page1Promise = page.waitForEvent('popup');
   await page.getByRole('link', { name: 'link' }).click();
-  const page1 = await page1Promise;`);
+  const page1 = await page1Promise;
+  await page1.getByRole('button', { name: 'Click me' }).click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
       Page page1 = page.waitForPopup(() -> {
@@ -798,9 +809,15 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 var page1 = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
-});`);
+});
+await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync();`);
 
-    expect(popup.url()).toBe('about:blank');
+    expect.soft(sources.get('C# NUnit')!.text).toContain(`
+        var page1 = await Page.RunAndWaitForPopupAsync(async () =>
+        {
+            await Page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
+        });
+        await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync();`);
   });
 
   test('should attribute navigation to click', async ({ openRecorder }) => {
