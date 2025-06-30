@@ -246,7 +246,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async waitForTimeout(params: channels.FrameWaitForTimeoutParams, progress: Progress): Promise<void> {
-    return await this._frame.waitForTimeout(progress, params.timeout);
+    return await this._frame.waitForTimeout(progress, params.waitTimeout);
   }
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams, progress: Progress): Promise<channels.FrameWaitForFunctionResult> {

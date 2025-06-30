@@ -440,7 +440,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForTimeout(timeout: number) {
-    await this._channel.waitForTimeout({ timeout });
+    await this._channel.waitForTimeout({ waitTimeout: timeout });
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {

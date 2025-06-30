@@ -3215,7 +3215,7 @@ export type FrameUncheckOptions = {
 };
 export type FrameUncheckResult = void;
 export type FrameWaitForTimeoutParams = {
-  timeout: number,
+  waitTimeout: number,
 };
 export type FrameWaitForTimeoutOptions = {
 

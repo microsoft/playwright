@@ -2644,7 +2644,7 @@ Frame:
     waitForTimeout:
       title: Wait for timeout
       parameters:
-        timeout: number
+        waitTimeout: number
       flags:
         snapshot: true
 
