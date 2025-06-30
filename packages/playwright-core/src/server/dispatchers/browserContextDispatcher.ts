@@ -334,10 +334,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await RecorderApp.show(this._context, params);
   }
 
-  async stopPendingOperations(params: channels.BrowserContextStopPendingOperationsParams, progress: Progress): Promise<channels.BrowserContextStopPendingOperationsResult> {
-    await this._stopPendingOperations(new Error(params.reason));
-  }
-
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {
     // Debugger will take care of this.
   }

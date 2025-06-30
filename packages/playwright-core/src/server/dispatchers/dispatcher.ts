@@ -120,24 +120,31 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendEvent(this, method as string, params);
   }
 
-  _dispose(reason?: 'gc' | 'disconnect') {
-    const error = reason === 'disconnect' ? new Error('Disconnected') : new TargetClosedError();
-    this._disposeRecursively(error, reason);
+  _dispose(reason?: 'gc') {
+    this._disposeRecursively(new TargetClosedError());
     this.connection.sendDispose(this, reason);
   }
 
   protected _onDispose() {
   }
 
-  protected async _stopPendingOperations(error: Error, reason?: 'gc' | 'disconnect') {
-    // Upon disconnect, we stop all operations, including those that potentially close the scope.
-    const controllers = Array.from(this._activeProgressControllers).filter(c => reason === 'disconnect' ? c : !c.metadata.potentiallyClosesScope);
+  async stopPendingOperations(error: Error) {
+    const controllers: ProgressController[] = [];
+    const collect = (dispatcher: DispatcherScope) => {
+      controllers.push(...dispatcher._activeProgressControllers);
+      for (const child of [...dispatcher._dispatchers.values()])
+        collect(child);
+    };
+    collect(this);
     await Promise.all(controllers.map(controller => controller.abort(error)));
   }
 
-  private _disposeRecursively(error: Error, reason: 'gc' | 'disconnect' | undefined) {
+  private _disposeRecursively(error: Error) {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
-    this._stopPendingOperations(error, reason).catch(() => {});
+    for (const controller of this._activeProgressControllers) {
+      if (!controller.metadata.potentiallyClosesScope)
+        controller.abort(error).catch(() => {});
+    }
     this._onDispose();
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -151,7 +158,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
 
     // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
-      dispatcher._disposeRecursively(error, reason);
+      dispatcher._disposeRecursively(error);
     this._dispatchers.clear();
   }
 
@@ -215,8 +222,8 @@ export class DispatcherConnection {
     this.onmessage({ guid: parent._guid, method: '__adopt__', params: { guid: dispatcher._guid } });
   }
 
-  sendDispose(dispatcher: DispatcherScope, reason?: 'gc' | 'disconnect') {
-    this.onmessage({ guid: dispatcher._guid, method: '__dispose__', params: { reason: reason === 'gc' ? 'gc' : undefined } });
+  sendDispose(dispatcher: DispatcherScope, reason?: 'gc') {
+    this.onmessage({ guid: dispatcher._guid, method: '__dispose__', params: { reason } });
   }
 
   private _validatorToWireContext(): ValidatorContext {

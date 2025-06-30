@@ -1121,6 +1121,11 @@ Browser:
       returns:
         context: BrowserContext
 
+    disconnectFromReusedContext:
+      internal: true
+      parameters:
+        reason: string
+
     newBrowserCDPSession:
       title: Create CDP session
       internal: true
@@ -1332,12 +1337,6 @@ BrowserContext:
       title: Set offline mode
       parameters:
         offline: boolean
-
-    stopPendingOperations:
-      internal: true
-      title: Stop pending operations
-      parameters:
-        reason: string
 
     storageState:
       title: Get storage state

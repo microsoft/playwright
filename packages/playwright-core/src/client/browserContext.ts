@@ -57,6 +57,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings: TimeoutSettings;
   _ownerPage: Page | undefined;
+  _forReuse = false;
   private _closedPromise: Promise<void>;
   readonly _options: channels.BrowserNewContextParams;
 
@@ -500,10 +501,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams) {
     await this._channel.enableRecorder(params);
-  }
-
-  async _stopPendingOperations(reason: string) {
-    await this._channel.stopPendingOperations({ reason });
   }
 }
 

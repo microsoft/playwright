@@ -112,7 +112,8 @@ export class PlaywrightConnection {
   private async _onDisconnect(error?: Error) {
     this._disconnected = true;
     debugLogger.log('server', `[${this._id}] disconnected. error: ${error}`);
-    this._root._dispose('disconnect');
+    await this._root.stopPendingOperations(new Error('Disconnected')).catch(() => {});
+    this._root._dispose();
     debugLogger.log('server', `[${this._id}] starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
