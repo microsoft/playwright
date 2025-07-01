@@ -49,6 +49,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
+  private _routeWebSocketInitScripts: InitScript[] = [];
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: (string | RegExp)[] = [];
   private _locatorHandlers = new Set<number>();
@@ -208,7 +209,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(progress, this.connection, this._page);
+      this._routeWebSocketInitScripts.push(await WebSocketRouteDispatcher.install(progress, this.connection, this._page));
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, progress: Progress): Promise<channels.PageExpectScreenshotResult> {
@@ -367,6 +368,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._bindings = [];
     this._page.removeInitScripts(this._initScripts).catch(() => {});
     this._initScripts = [];
+    this._routeWebSocketInitScripts.map(script => WebSocketRouteDispatcher.uninstall(this.connection, this._page, script).catch(() => {}));
+    this._routeWebSocketInitScripts = [];
     for (const uid of this._locatorHandlers)
       this._page.unregisterLocatorHandler(uid);
     this._locatorHandlers.clear();

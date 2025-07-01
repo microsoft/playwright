@@ -308,8 +308,8 @@ export abstract class BrowserContext extends SdkObject {
     return this.doSetHTTPCredentials(httpCredentials);
   }
 
-  hasBinding(name: string) {
-    return this._pageBindings.has(name);
+  getBindingClient(name: string): unknown | undefined {
+    return this._pageBindings.get(name)?.forClient;
   }
 
   async exposePlaywrightBindingIfNeeded() {
@@ -328,7 +328,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._playwrightBindingExposed;
   }
 
-  async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
+  async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, forClient?: unknown): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
@@ -337,6 +337,7 @@ export abstract class BrowserContext extends SdkObject {
     }
     await progress.race(this.exposePlaywrightBindingIfNeeded());
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
+    binding.forClient = forClient;
     this._pageBindings.set(name, binding);
     progress.cleanupWhenAborted(() => this._pageBindings.delete(name));
     await progress.race(this.doAddInitScript(binding.initScript));
@@ -443,8 +444,8 @@ export abstract class BrowserContext extends SdkObject {
       this._options.httpCredentials = { username, password: password || '' };
   }
 
-  async addInitScript(progress: Progress | undefined, source: string, name?: string) {
-    const initScript = new InitScript(source, name);
+  async addInitScript(progress: Progress | undefined, source: string) {
+    const initScript = new InitScript(source);
     this.initScripts.push(initScript);
     progress?.cleanupWhenAborted(() => this.removeInitScripts([initScript]));
     const promise = this.doAddInitScript(initScript);
