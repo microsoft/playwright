@@ -153,6 +153,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'OUTPUT': () => 'status',
   'P': () => 'paragraph',
   'PROGRESS': () => 'progressbar',
+  'SEARCH': () => 'search',
   'SECTION': (e: Element) => hasExplicitAccessibleName(e) ? 'region' : null,
   'SELECT': (e: Element) => e.hasAttribute('multiple') || (e as HTMLSelectElement).size > 1 ? 'listbox' : 'combobox',
   'STRONG': () => 'strong',
