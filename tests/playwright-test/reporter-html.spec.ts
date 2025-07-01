@@ -431,7 +431,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('video').locator('source')).toHaveAttribute('src', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
       await expect(page.getByRole('link', { name: 'video' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
 
-      await expect(page.getByRole('link', { name: 'trace' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+      await expect(page.getByRole('link', { name: 'trace', exact: true })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
       await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
     });
 
@@ -513,6 +513,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await expect(page.locator('.header-title')).toHaveText('Omega Star Test Suite (Version: abcde)');
+    });
+
+    test('should include view trace button in header', async ({ runInlineTest, server, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { use: { trace: 'on' } };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ playwright, page }) => {
+            await page.evaluate('2 + 2');
+            const request = await playwright.request.newContext();
+            await request.get('${server.EMPTY_PAGE}');
+            await request.dispose();
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      await showReport();
+      await expect(page.getByRole('link', { name: 'View Trace' })).toBeVisible();
     });
 
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
@@ -664,7 +685,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passes' }).click();
       // Expect one image-link to trace viewer and 2 separate download links
       await expect(page.locator('img')).toHaveCount(1);
-      await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace']);
+      await expect(page.getByRole('link', { name: 'trace', exact: true })).toBeVisible();
 
       await page.click('img');
       await page.click('.action-title >> text=EVALUATE');
