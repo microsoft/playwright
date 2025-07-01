@@ -15,11 +15,33 @@
  * limitations under the License.
  */
 
-import { playwrightTest as it, expect } from '../../config/browserTest';
+import type { BrowserType, BrowserContext } from 'playwright-core';
+import { playwrightTest as base, expect } from '../../config/browserTest';
+
+const it = base.extend<{
+  launchPersistentContext: (extensionPath: string, options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<BrowserContext>;
+      }>({
+        launchPersistentContext: async ({ browserType }, use) => {
+          const browsers: BrowserContext[] = [];
+          await use(async (extensionPath, options = {}) => {
+            const extensionOptions = {
+              ...options,
+              args: [
+                `--disable-extensions-except=${extensionPath}`,
+                `--load-extension=${extensionPath}`,
+              ],
+            };
+            return await browserType.launchPersistentContext('', extensionOptions);
+          });
+          await Promise.all(browsers.map(browser => browser.close()));
+        }
+      });
 
 it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support for extensions');
 
 it.describe('MV2', () => {
+  it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
+
   it('should return background pages', async ({ browserType, asset }) => {
     const extensionPath = asset('extension-mv2-simple');
     const extensionOptions = {
@@ -110,58 +132,43 @@ it.describe('MV2', () => {
 });
 
 it.describe('MV3', () => {
-  it('should return background pages', async ({ browserType, asset }) => {
+  it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
+
+  it('should return background pages', async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-simple');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
+    const context = await launchPersistentContext(extensionPath);
     const serviceWorkers = context.serviceWorkers();
     const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
     expect(serviceWorker).toBeTruthy();
     expect(context.serviceWorkers()).toContain(serviceWorker);
-    expect(await serviceWorker.evaluate(() => (globalThis as any).MAGIC)).toBe(42);
+    await expect.poll(() => serviceWorker.evaluate(() => (globalThis as any).MAGIC)).toBe(42);
     await context.close();
     expect(context.backgroundPages().length).toBe(0);
   });
 
-  it('should return background pages when recording video', async ({ browserType, asset }, testInfo) => {
+  it('should return background pages when recording video', async ({ launchPersistentContext, asset }, testInfo) => {
     const extensionPath = asset('extension-mv3-simple');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
+    const context = await launchPersistentContext(extensionPath, {
       recordVideo: {
         dir: testInfo.outputPath(''),
-      },
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
+      }
+    });
     const serviceWorkers = context.serviceWorkers();
     const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
     expect(serviceWorker).toBeTruthy();
     expect(context.serviceWorkers()).toContain(serviceWorker);
-    expect(await serviceWorker.evaluate(() => (globalThis as any).MAGIC)).toBe(42);
+    await expect.poll(() => serviceWorker.evaluate(() => (globalThis as any).MAGIC)).toBe(42);
     await context.close();
   });
 
-  it('should support request/response events when using backgroundPage()', async ({ browserType, asset, server }) => {
+  it('should support request/response events when using backgroundPage()', async ({ launchPersistentContext, asset, server }) => {
     process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
     server.setRoute('/empty.html', (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
       res.end(`<span>hello world!</span>`);
     });
     const extensionPath = asset('extension-mv3-simple');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
+    const context = await launchPersistentContext(extensionPath);
     const serviceWorkers = context.serviceWorkers();
     const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
     expect(serviceWorker.url()).toMatch(/chrome-extension\:\/\/.*/);
@@ -189,36 +196,11 @@ it.describe('MV3', () => {
     delete process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS;
   });
 
-  it('should report console messages from content script via CLI', {
+  it('should report console messages from content script', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32762' }
-  }, async ({ browserType, asset, server }) => {
+  }, async ({ launchPersistentContext, asset, server }) => {
     const extensionPath = asset('extension-mv3-with-logging');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
-    const page = await context.newPage();
-    const consolePromise = page.waitForEvent('console', e => e.text().includes('Test console log from a third-party execution context'));
-    await page.goto(server.EMPTY_PAGE);
-    const message = await consolePromise;
-    expect(message.text()).toContain('Test console log from a third-party execution context');
-    await context.close();
-  });
-
-  it('should report console messages from content script via CDP', {
-    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32762' }
-  }, async ({ browserType, asset, server }) => {
-    const extensionPath = asset('extension-mv3-with-logging');
-    const extensionOptions = {
-      args: ['--enable-unsafe-extension-debugging'],
-      ignoreDefaultArgs: ['--disable-extensions']
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
-    const browserSession = await context.browser().newBrowserCDPSession();
-    await browserSession.send('Extensions.loadUnpacked', { path: extensionPath });
+    const context = await launchPersistentContext(extensionPath);
     const page = await context.newPage();
     const consolePromise = page.waitForEvent('console', e => e.text().includes('Test console log from a third-party execution context'));
     await page.goto(server.EMPTY_PAGE);
