@@ -32,6 +32,7 @@ import { SerializedFS, removeFolders  } from '../../utils/fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
+import { isAbortError } from '../../progress';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import type { NameValue } from '../../../utils/isomorphic/types';
@@ -46,6 +47,7 @@ import type { StackFrame, TracingTracingStopChunkParams } from '@protocol/channe
 import type * as har from '@trace/har';
 import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
+import type { Progress } from '@protocol/progress';
 
 const version: trace.VERSION = 8;
 
@@ -109,7 +111,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       platform: process.platform,
       wallTime: 0,
       monotonicTime: 0,
-      sdkLanguage: context.attribution.playwright.options.sdkLanguage,
+      sdkLanguage: this._sdkLanguage(),
       testIdAttributeName,
       contextId: context.guid,
     };
@@ -122,21 +124,26 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     }
   }
 
-  async resetForReuse() {
-    // Discard previous chunk if any and ignore any errors there.
-    await this.stopChunk({ mode: 'discard' }).catch(() => {});
-    await this.stop();
-    await this._snapshotter?.resetForReuse();
+  private _sdkLanguage() {
+    return this._context instanceof BrowserContext ? this._context._browser.sdkLanguage() : this._context.attribution.playwright.options.sdkLanguage;
   }
 
-  async start(options: TracerOptions) {
+  async resetForReuse(progress: Progress) {
+    // Discard previous chunk if any and ignore any errors there.
+    await this.stopChunk(progress, { mode: 'discard' }).catch(() => {});
+    await this.stop(progress);
+    if (this._snapshotter)
+      await progress.race(this._snapshotter.resetForReuse());
+  }
+
+  start(options: TracerOptions) {
     if (this._isStopping)
       throw new Error('Cannot start tracing while stopping');
     if (this._state)
       throw new Error('Tracing has been already started');
 
     // Re-write for testing.
-    this._contextCreatedEvent.sdkLanguage = this._context.attribution.playwright.options.sdkLanguage;
+    this._contextCreatedEvent.sdkLanguage = this._sdkLanguage();
 
     // TODO: passing the same name for two contexts makes them write into a single file
     // and conflict.
@@ -166,9 +173,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._harTracer.start({ omitScripts: !options.live });
   }
 
-  async startChunk(options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {
+  async startChunk(progress: Progress, options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {
     if (this._state && this._state.recording)
-      await this.stopChunk({ mode: 'discard' });
+      await this.stopChunk(progress, { mode: 'discard' });
 
     if (!this._state)
       throw new Error('Must start tracing before starting a new chunk');
@@ -214,7 +221,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._state?.groupStack.length ? this._state.groupStack[this._state.groupStack.length - 1] : undefined;
   }
 
-  async group(name: string, location: { file: string, line?: number, column?: number } | undefined, metadata: CallMetadata): Promise<void> {
+  group(name: string, location: { file: string, line?: number, column?: number } | undefined, metadata: CallMetadata) {
     if (!this._state)
       return;
     const stackFrames: StackFrame[] = [];
@@ -292,7 +299,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.networkFile = newNetworkFile;
   }
 
-  async stop() {
+  async stop(progress: Progress) {
     if (!this._state)
       return;
     if (this._isStopping)
@@ -302,8 +309,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
-    await this._fs.syncAndGetError();
-    this._state = undefined;
+    await progress.race(this._fs.syncAndGetError()).finally(() => {
+      this._state = undefined;
+    });
   }
 
   async deleteTmpTracesDir() {
@@ -333,7 +341,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this.groupEnd();
   }
 
-  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
+  async stopChunk(progress: Progress, params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -353,7 +361,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._stopScreencast();
 
     if (this._state.options.snapshots)
-      await this._snapshotter?.stop();
+      this._snapshotter?.stop();
 
     this.flushHarEntries();
 
@@ -387,7 +395,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._fs.zip(entries, zipFileName);
 
     // Make sure all file operations complete.
-    const error = await this._fs.syncAndGetError();
+    const error = await progress.race(this._fs.syncAndGetError()).catch(e => e);
 
     this._isStopping = false;
     if (this._state)
@@ -398,7 +406,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (error) {
       // This check is here because closing the browser removes the tracesDir and tracing
       // cannot access removed files. Clients are ready for the missing artifact.
-      if (this._context instanceof BrowserContext && !this._context._browser.isConnected())
+      if (!isAbortError(error) && this._context instanceof BrowserContext && !this._context._browser.isConnected())
         return {};
       throw error;
     }

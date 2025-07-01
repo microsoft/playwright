@@ -578,6 +578,25 @@ function escapeNodeName(node: Node): string {
 }
 
 function escapeClassName(className: string): string {
-  // We are escaping it for document.querySelectorAll, not for usage in CSS file.
-  return className.replace(/[:\.]/g, char => '\\' + char);
+  // We are escaping class names for document.querySelectorAll by following CSS.escape() rules.
+  let result = '';
+  for (let i = 0; i < className.length; i++)
+    result += cssEscapeCharacter(className, i);
+  return result;
+}
+
+function cssEscapeCharacter(s: string, i: number): string {
+  // https://drafts.csswg.org/cssom/#serialize-an-identifier
+  const c = s.charCodeAt(i);
+  if (c === 0x0000)
+    return '\uFFFD';
+  if ((c >= 0x0001 && c <= 0x001f) ||
+      (c >= 0x0030 && c <= 0x0039 && (i === 0 || (i === 1 && s.charCodeAt(0) === 0x002d))))
+    return '\\' + c.toString(16) + ' ';
+  if (i === 0 && c === 0x002d && s.length === 1)
+    return '\\' + s.charAt(i);
+  if (c >= 0x0080 || c === 0x002d || c === 0x005f || (c >= 0x0030 && c <= 0x0039) ||
+      (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a))
+    return s.charAt(i);
+  return '\\' + s.charAt(i);
 }

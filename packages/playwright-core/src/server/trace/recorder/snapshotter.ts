@@ -70,13 +70,14 @@ export class Snapshotter {
       await this._context.safeNonStallingEvaluateInAllFrames(`window["${this._snapshotStreamer}"].reset()`, 'main');
   }
 
-  async stop() {
+  stop() {
     this._started = false;
   }
 
   async resetForReuse() {
     // Next time we start recording, we will call addInitScript again.
     if (this._initScript) {
+      eventsHelper.removeEventListeners(this._eventListeners);
       await this._context.removeInitScripts([this._initScript]);
       this._initScript = undefined;
     }
@@ -91,7 +92,7 @@ export class Snapshotter {
 
     const { javaScriptEnabled } = this._context._options;
     const initScriptSource = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", ${javaScriptEnabled || javaScriptEnabled === undefined})`;
-    this._initScript = await this._context.addInitScript(initScriptSource);
+    this._initScript = await this._context.addInitScript(undefined, initScriptSource);
     await this._context.safeNonStallingEvaluateInAllFrames(initScriptSource, 'main');
   }
 

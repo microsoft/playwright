@@ -62,3 +62,11 @@ test('should dispatch page.on(close) upon browser.close and reject evaluate', as
   const error = await promise;
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
+
+test('newContext should not leave a context upon failure', async ({ browser, toImpl }) => {
+  const error = await browser.newContext({
+    __testHookBeforeSetStorageState: () => Promise.reject(new Error('Oh my')),
+  } as any).catch(e => e);
+  expect(error.message).toContain('Oh my');
+  await expect.poll(() => toImpl(browser).contexts().length).toBe(0);
+});

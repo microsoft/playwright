@@ -58,7 +58,7 @@ export class CRBrowser extends Browser {
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     // Make a copy in case we need to update `headful` property below.
     options = { ...options };
-    const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
+    const connection = new CRConnection(parent, transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(parent, connection, options);
     browser._devtools = devtools;
     if (browser.isClank())
@@ -455,6 +455,7 @@ export class CRBrowserContext extends BrowserContext {
       // chrome-specific permissions we have.
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
+      ['local-fonts', 'localFonts'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
@@ -476,8 +477,7 @@ export class CRBrowserContext extends BrowserContext {
       await (page.delegate as CRPage).updateGeolocation();
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as CRPage).updateExtraHTTPHeaders();
     for (const sw of this.serviceWorkers())
@@ -491,8 +491,7 @@ export class CRBrowserContext extends BrowserContext {
     // TODO: service workers don't have Emulation domain?
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
+  async doUpdateOffline(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as CRPage).updateOffline();
     for (const sw of this.serviceWorkers())
@@ -522,6 +521,14 @@ export class CRBrowserContext extends BrowserContext {
       await (page.delegate as CRPage).updateRequestInterception();
     for (const sw of this.serviceWorkers())
       await (sw as CRServiceWorker).updateRequestInterception();
+  }
+
+  override async doUpdateDefaultViewport() {
+    // No-op, because each page resets its own viewport.
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
+    // No-op, because each page resets its own color scheme.
   }
 
   override async doExposePlaywrightBinding() {

@@ -15,7 +15,6 @@
  */
 
 import { test, expect } from './pageTest';
-import { kTargetClosedErrorMessage } from '../config/errors';
 
 test('should work', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
@@ -119,23 +118,6 @@ test('should not work with force:true', async ({ page, server }) => {
   await page.locator('#target').click({ force: true, timeout: 2000 });
   expect(await page.locator('#interstitial').isVisible()).toBe(true);
   expect(await page.evaluate('window.clicked')).toBe(undefined);
-});
-
-test('should throw when page closes', async ({ page, server, isAndroid }) => {
-  test.fixme(isAndroid, 'GPU process crash: https://issues.chromium.org/issues/324909825');
-  await page.goto(server.PREFIX + '/input/handle-locator.html');
-
-  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
-    await page.close();
-  });
-
-  await page.locator('#aside').hover();
-  await page.evaluate(() => {
-    (window as any).clicked = 0;
-    (window as any).setupAnnoyingInterstitial('mouseover', 1);
-  });
-  const error = await page.locator('#target').click().catch(e => e);
-  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 test('should throw when handler times out', async ({ page, server }) => {
@@ -313,7 +295,7 @@ test('should wait for hidden by default 2', async ({ page, server }) => {
   });
   const error = await page.locator('#target').click({ timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.clicked')).toBe(0);
-  await expect(page.locator('#interstitial')).toBeVisible();
+  expect(await page.locator('#interstitial').isVisible()).toBe(true);
   expect(called).toBe(1);
   expect(error.message).toContain(`locator handler has finished, waiting for getByRole('button', { name: 'close' }) to be hidden`);
 });

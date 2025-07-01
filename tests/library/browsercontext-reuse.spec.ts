@@ -15,13 +15,14 @@
  */
 
 import { browserTest, expect } from '../config/browserTest';
-import type { BrowserContext, Page } from '@playwright/test';
+import { verifyViewport } from '../config/utils';
+import type { BrowserContext, Page, BrowserContextOptions } from '@playwright/test';
 
-const test = browserTest.extend<{ reusedContext: () => Promise<BrowserContext> }>({
+const test = browserTest.extend<{ reusedContext: (options?: BrowserContextOptions) => Promise<BrowserContext> }>({
   reusedContext: async ({ browserType, browser }, use) => {
-    await use(async () => {
+    await use(async options => {
       const defaultContextOptions = (browserType as any)._playwright._defaultContextOptions;
-      const context = await (browser as any)._newContextForReuse(defaultContextOptions);
+      const context = await (browser as any)._newContextForReuse({ ...defaultContextOptions, ...options });
       return context;
     });
   },
@@ -325,4 +326,17 @@ test('should work with routeWebSocket', async ({ reusedContext, server, browser 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-after`]);
   await page.evaluate(() => (window as any).ws2.send('request'));
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-after`, `ws2:context-mock-after`]);
+});
+
+test('should update viewport and media', async ({ reusedContext }) => {
+  let context = await reusedContext({ viewport: { width: 800, height: 600 }, colorScheme: 'dark' });
+  let page = await context.newPage();
+  expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+  await verifyViewport(page, 800, 600);
+  await page.close();
+
+  context = await reusedContext({ viewport: { width: 600, height: 800 }, colorScheme: 'light' });
+  page = await context.newPage();
+  expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+  await verifyViewport(page, 600, 800);
 });

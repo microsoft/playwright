@@ -24,17 +24,22 @@ import type { PageDispatcher } from './pageDispatcher';
 import type { ConsoleMessage } from '../console';
 import type { Electron } from '../electron/electron';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 
 export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronChannel, RootDispatcher> implements channels.ElectronChannel {
   _type_Electron = true;
+  _denyLaunch: boolean;
 
-  constructor(scope: RootDispatcher, electron: Electron) {
+  constructor(scope: RootDispatcher, electron: Electron, denyLaunch: boolean) {
     super(scope, electron, 'Electron', {});
+    this._denyLaunch = denyLaunch;
   }
 
-  async launch(params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
-    const electronApplication = await this._object.launch(params);
+  async launch(params: channels.ElectronLaunchParams, progress: Progress): Promise<channels.ElectronLaunchResult> {
+    if (this._denyLaunch)
+      throw new Error(`Launching more browsers is not allowed.`);
+    const electronApplication = await this._object.launch(progress, params);
     return { electronApplication: new ElectronApplicationDispatcher(this, electronApplication) };
   }
 }
@@ -64,30 +69,26 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     });
   }
 
-  async browserWindow(params: channels.ElectronApplicationBrowserWindowParams): Promise<channels.ElectronApplicationBrowserWindowResult> {
-    const handle = await this._object.browserWindow((params.page as PageDispatcher).page());
+  async browserWindow(params: channels.ElectronApplicationBrowserWindowParams, progress: Progress): Promise<channels.ElectronApplicationBrowserWindowResult> {
+    const handle = await progress.race(this._object.browserWindow((params.page as PageDispatcher).page()));
     return { handle: JSHandleDispatcher.fromJSHandle(this, handle) };
   }
 
-  async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
-    const handle = await this._object._nodeElectronHandlePromise;
-    return { value: serializeResult(await handle.evaluateExpression(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+  async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams, progress: Progress): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
+    const handle = await progress.race(this._object._nodeElectronHandlePromise);
+    return { value: serializeResult(await progress.race(handle.evaluateExpression(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)))) };
   }
 
-  async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
-    const handle = await this._object._nodeElectronHandlePromise;
-    const result = await handle.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
+  async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams, progress: Progress): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
+    const handle = await progress.race(this._object._nodeElectronHandlePromise);
+    const result = await progress.race(handle.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)));
     return { handle: JSHandleDispatcher.fromJSHandle(this, result) };
   }
 
-  async updateSubscription(params: channels.ElectronApplicationUpdateSubscriptionParams): Promise<void> {
+  async updateSubscription(params: channels.ElectronApplicationUpdateSubscriptionParams, progress: Progress): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);
     else
       this._subscriptions.delete(params.event);
-  }
-
-  async close(): Promise<void> {
-    await this._object.close();
   }
 }

@@ -548,7 +548,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
       test('timeout', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
         const error = await expect(page).toHaveURL('data:text/html,<div>B</div>').catch(e => e);
-        expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(locator).toHaveURL(expected)');
+        expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
         expect(error.message).toContain('data:text/html,<div>');
       });
       `,

@@ -42,6 +42,9 @@ jobs:
           - os: ubuntu-22.04
             node-version: 22
             browser: chromium
+          - os: ubuntu-22.04
+            node-version: 24
+            browser: chromium
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -107,6 +110,14 @@ jobs:
             shardTotal: 2
           - os: ubuntu-latest
             node-version: 22
+            shardIndex: 2
+            shardTotal: 2
+          - os: ubuntu-latest
+            node-version: 24
+            shardIndex: 1
+            shardTotal: 2
+          - os: ubuntu-latest
+            node-version: 24
             shardIndex: 2
             shardTotal: 2
     runs-on: ${{ matrix.os }}

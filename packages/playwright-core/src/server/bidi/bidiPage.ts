@@ -368,7 +368,7 @@ export class BidiPage implements PageDelegate {
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
-    const { data } = await this._session.send('browsingContext.captureScreenshot', {
+    const { data } = await progress.race(this._session.send('browsingContext.captureScreenshot', {
       context: this._session.sessionId,
       format: {
         type: `image/${format === 'png' ? 'png' : 'jpeg'}`,
@@ -379,7 +379,7 @@ export class BidiPage implements PageDelegate {
         type: 'box',
         ...rect,
       }
-    });
+    }));
     return Buffer.from(data, 'base64');
   }
 
@@ -510,7 +510,7 @@ export class BidiPage implements PageDelegate {
   async inputActionEpilogue(): Promise<void> {
   }
 
-  async resetForReuse(): Promise<void> {
+  async resetForReuse(progress: Progress): Promise<void> {
   }
 
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {

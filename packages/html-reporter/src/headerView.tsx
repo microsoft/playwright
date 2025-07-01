@@ -23,6 +23,7 @@ import * as icons from './icons';
 import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
+import { linkifyText } from '@web/renderUtils';
 
 export const HeaderView: React.FC<{
   title: string | undefined,
@@ -35,7 +36,7 @@ export const HeaderView: React.FC<{
       <div style={{ flex: 'auto' }}></div>
       {rightSuperHeader}
     </div>
-    {title && <div className='header-title'>{title}</div>}
+    {title && <div className='header-title'>{linkifyText(title)}</div>}
   </div>;
 };
 
@@ -60,13 +61,16 @@ export const GlobalFilterView: React.FC<{
         event => {
           event.preventDefault();
           const url = new URL(window.location.href);
-          url.hash = filterText ? '?' + new URLSearchParams({ q: filterText }) : '';
+          // If <form/> onSubmit happens immediately after <input/> onChange, the filterText state is not updated yet.
+          // Using FormData here is a workaround to get the latest value.
+          const q = new FormData(event.target as HTMLFormElement).get('q') as string;
+          url.hash = q ? '?' + new URLSearchParams({ q }) : '';
           navigate(url);
         }
       }>
         {icons.search()}
         {/* Use navigationId to reset defaultValue */}
-        <input spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
+        <input name='q' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
           setFilterText(e.target.value);
         }}></input>
       </form>

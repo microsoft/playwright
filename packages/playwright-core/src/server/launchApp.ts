@@ -21,6 +21,7 @@ import { isUnderTest } from '../utils';
 import { serverSideCallMetadata } from './instrumentation';
 import { findChromiumChannel } from './registry';
 import { registryDirectory } from './registry';
+import { ProgressController } from './progress';
 
 import type { BrowserType } from './browserType';
 import type { CRPage } from './chromium/crPage';
@@ -48,7 +49,8 @@ export async function launchApp(browserType: BrowserType, options: {
       channel = findChromiumChannel(options.sdkLanguage);
   }
 
-  const context = await browserType.launchPersistentContext(serverSideCallMetadata(), '', {
+  const controller = new ProgressController(serverSideCallMetadata(), browserType);
+  const context = await controller.run(progress => browserType.launchPersistentContext(progress, '', {
     ignoreDefaultArgs: ['--enable-automation'],
     ...options?.persistentContextOptions,
     channel,
@@ -56,8 +58,7 @@ export async function launchApp(browserType: BrowserType, options: {
     acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
     colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
     args,
-    timeout: 0, // Deliberately no timeout for our apps.
-  });
+  }), 0); // Deliberately no timeout for our apps.
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.
   // See https://github.com/microsoft/playwright/issues/9434
@@ -65,7 +66,7 @@ export async function launchApp(browserType: BrowserType, options: {
     context.on('page', async (newPage: Page) => {
       if (newPage.mainFrame().url() === 'chrome://new-tab-page/') {
         await page.bringToFront();
-        await newPage.close(serverSideCallMetadata());
+        await newPage.close();
       }
     });
   }
@@ -86,23 +87,27 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
   if (isUnderTest())
     return;
   const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
-  await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
-    fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
-    fs.writeFileSync(settingsFile, settings);
-  });
 
-  const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
-  await page.addInitScript(
-      `(${String((settings: any) => {
-        // iframes w/ snapshots, etc.
-        if (location && location.protocol === 'data:')
-          return;
-        if (window.top !== window)
-          return;
-        Object.entries(settings).map(([k, v]) => localStorage[k] = v);
-        (window as any).saveSettings = () => {
-          (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
-        };
-      })})(${settings});
-  `);
+  const controller = new ProgressController(serverSideCallMetadata(), page);
+  await controller.run(async progress => {
+    await page.exposeBinding(progress, '_saveSerializedSettings', false, (_, settings) => {
+      fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+      fs.writeFileSync(settingsFile, settings);
+    });
+
+    const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
+    await page.addInitScript(progress,
+        `(${String((settings: any) => {
+          // iframes w/ snapshots, etc.
+          if (location && location.protocol === 'data:')
+            return;
+          if (window.top !== window)
+            return;
+          Object.entries(settings).map(([k, v]) => localStorage[k] = v);
+          (window as any).saveSettings = () => {
+            (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
+          };
+        })})(${settings});
+    `);
+  });
 }

@@ -286,3 +286,93 @@ it('<picture> resource should have type image', async ({ page }) => {
   ]);
   expect(request.resourceType()).toBe('image');
 });
+
+// Chromium: requestWillBeSentEvent.frameId is undefined for OPTIONS.
+// WebKit: no requestWillBeSent event in the protocol for OPTIONS (at least on Mac).
+// Firefox: OPTIONS request can be dispatched.
+it('should not expose preflight OPTIONS request', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36311' }
+}, async ({ page, server, browserName }) => {
+  const serverRequests = [];
+  server.setRoute('/cors', (req, res) => {
+    serverRequests.push(`${req.method} ${req.url}`);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      });
+      res.end();
+      return;
+    }
+    res.writeHead(200, { 'Content-type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+    res.end('Hello there!');
+  });
+  const clientRequests = [];
+  page.on('request', request => {
+    clientRequests.push(`${request.method()} ${request.url()}`);
+  });
+  const response = await page.evaluate(async url => {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: '',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Custom-Header': 'test-value'
+      }
+    });
+    return await response.text();
+  }, server.CROSS_PROCESS_PREFIX + '/cors').catch(() => {});
+  expect(response).toBe('Hello there!');
+  expect(serverRequests).toEqual([
+    'OPTIONS /cors',
+    'POST /cors',
+  ]);
+  expect(clientRequests).toEqual([
+    `POST ${server.CROSS_PROCESS_PREFIX}/cors`,
+  ]);
+});
+
+it('should not expose preflight OPTIONS request with network interception', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36311' }
+}, async ({ page, server, browserName }) => {
+  const serverRequests = [];
+  server.setRoute('/cors', (req, res) => {
+    serverRequests.push(`${req.method} ${req.url}`);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      });
+      res.end();
+      return;
+    }
+    res.writeHead(200, { 'Content-type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+    res.end('Hello there!');
+  });
+  await page.route('**/*', route => route.continue());
+  const clientRequests = [];
+  page.on('request', request => {
+    clientRequests.push(`${request.method()} ${request.url()}`);
+  });
+  const response = await page.evaluate(async url => {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: '',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Custom-Header': 'test-value'
+      }
+    });
+    return await response.text();
+  }, server.CROSS_PROCESS_PREFIX + '/cors').catch(() => {});
+  expect(response).toBe('Hello there!');
+  expect.soft(serverRequests).toEqual([
+    ...(browserName !== 'chromium' ? ['OPTIONS /cors'] : []),
+    'POST /cors',
+  ]);
+  expect.soft(clientRequests).toEqual([
+    `POST ${server.CROSS_PROCESS_PREFIX}/cors`,
+  ]);
+});

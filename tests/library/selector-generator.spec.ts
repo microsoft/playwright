@@ -311,13 +311,14 @@ it.describe('selector generator', () => {
           <c>
           </c>
         </b>
-        <b class="foo bar.baz">
+        <b>
           <c mark=1></c>
         </b>
       </div>
       <div><b class="foo"></b></div>
     `);
-    expect(await generate(page, 'c[mark="1"]')).toBe('.foo.bar\\.baz > c');
+    await page.$eval('[mark="1"]', c => c.parentElement.className = 'foo 12.bar.baz[&x]-_?"\'');
+    expect(await generate(page, 'c[mark="1"]')).toBe(`.foo.\\31 2\\.bar\\.baz\\[\\&x\\]-_\\?\\"\\' > c`);
   });
 
   it('should properly join child selectors under nested ordinals', async ({ page }) => {

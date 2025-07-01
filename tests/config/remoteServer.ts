@@ -103,12 +103,6 @@ export class RemoteServer implements PlaywrightServer {
       launchOptions,
       ...remoteServerOptions,
     };
-    if ('bidi' === browserType.name()) {
-      if (channel.toLocaleLowerCase().includes('firefox'))
-        options.browserTypeName = '_bidiFirefox';
-      else
-        options.browserTypeName = '_bidiChromium';
-    }
     this._process = childProcess({
       command: ['node', path.join(__dirname, 'remote-server-impl.js'), JSON.stringify(options)],
     });

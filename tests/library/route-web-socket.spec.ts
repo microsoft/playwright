@@ -36,7 +36,7 @@ function withResolvers<T = void>() {
 
 async function setupWS(target: Page | Frame, server: TestServer, binaryType: 'blob' | 'arraybuffer', protocols?: string | string[], relativeURL?: boolean) {
   await target.goto(server.EMPTY_PAGE);
-  const wsUrl = relativeURL ? '/ws' : 'ws://localhost:' + server.PORT + '/ws';
+  const wsUrl = relativeURL ? '/ws' : 'ws://' + server.HOST + '/ws';
   await target.evaluate(({ wsUrl, binaryType, protocols }) => {
     window.log = [];
     window.ws = new WebSocket(wsUrl, protocols);
@@ -87,7 +87,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ws.send('hello');
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([
         'open',
-        `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
+        `message: data=hello origin=ws://${server.HOST} lastEventId=`,
       ]);
       expect(await page.evaluate(() => window.ws.readyState)).toBe(1);
       const messagePromise = new Promise(f => ws.once('message', data => f(data.toString())));
@@ -97,7 +97,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       await expect.poll(() => page.evaluate(() => window.ws.readyState)).toBe(3);
       expect(await page.evaluate(() => window.log)).toEqual([
         'open',
-        `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
+        `message: data=hello origin=ws://${server.HOST} lastEventId=`,
         'close code=1008 reason=oops wasClean=true',
       ]);
     });
@@ -109,7 +109,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ws.send(Buffer.from('hi'));
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([
         'open',
-        `message: data=blob:hi origin=ws://localhost:${server.PORT} lastEventId=`,
+        `message: data=blob:hi origin=ws://${server.HOST} lastEventId=`,
       ]);
       const messagePromise = new Promise(f => ws.once('message', data => f(data.toString())));
       await page.evaluate(() => window.ws.send(new Blob([new Uint8Array(['h'.charCodeAt(0), 'i'.charCodeAt(0)])])));
@@ -123,7 +123,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ws.send(Buffer.from('hi'));
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([
         'open',
-        `message: data=arraybuffer:hi origin=ws://localhost:${server.PORT} lastEventId=`,
+        `message: data=arraybuffer:hi origin=ws://${server.HOST} lastEventId=`,
       ]);
       const messagePromise = new Promise(f => ws.once('message', data => f(data.toString())));
       await page.evaluate(() => window.ws.send(new Uint8Array(['h'.charCodeAt(0), 'i'.charCodeAt(0)]).buffer));
@@ -208,7 +208,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ws.send(Buffer.from('hi'));
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([
         'open',
-        `message: data=blob:hi origin=ws://localhost:${server.PORT} lastEventId=`,
+        `message: data=blob:hi origin=ws://${server.HOST} lastEventId=`,
       ]);
       const messagePromise = new Promise(f => ws.once('message', data => f(data.toString())));
       await page.evaluate(() => window.ws.send(new Blob([new Uint8Array(['h'.charCodeAt(0), 'i'.charCodeAt(0)])])));
@@ -232,14 +232,14 @@ test('should work with ws.close', async ({ page, server }) => {
   route.send('hello');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=hello origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   const closedPromise = new Promise(f => ws.once('close', (code, reason) => f({ code, reason: reason.toString() })));
   await route.close({ code: 3009, reason: 'oops' });
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=hello origin=ws://${server.HOST} lastEventId=`,
     'close code=3009 reason=oops wasClean=true',
   ]);
   expect(await closedPromise).toEqual({ code: 3009, reason: 'oops' });
@@ -259,17 +259,17 @@ test('should pattern match', async ({ page, server }) => {
   const wsPromise = server.waitForWebSocket();
 
   await page.goto('about:blank');
-  await page.evaluate(async ({ port }) => {
+  await page.evaluate(async ({ host }) => {
     window.log = [];
-    (window as any).ws1 = new WebSocket('ws://localhost:' + port + '/ws');
+    (window as any).ws1 = new WebSocket('ws://' + host + '/ws');
     (window as any).ws1.addEventListener('message', event => window.log.push(`ws1:${event.data}`));
-    (window as any).ws2 = new WebSocket('ws://localhost:' + port + '/something/something/mock-ws');
+    (window as any).ws2 = new WebSocket('ws://' + host + '/something/something/mock-ws');
     (window as any).ws2.addEventListener('message', event => window.log.push(`ws2:${event.data}`));
     await Promise.all([
       new Promise(f => (window as any).ws1.addEventListener('open', f)),
       new Promise(f => (window as any).ws2.addEventListener('open', f)),
     ]);
-  }, { port: server.PORT });
+  }, { host: server.HOST });
 
   const ws = await wsPromise;
   ws.on('message', () => ws.send('response'));
@@ -328,8 +328,8 @@ test('should work with server', async ({ page, server }) => {
   ws.send('pass-server');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=modified origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=pass-server origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=modified origin=ws://${server.HOST} lastEventId=`,
+    `message: data=pass-server origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   await page.evaluate(() => {
@@ -341,19 +341,19 @@ test('should work with server', async ({ page, server }) => {
   await expect.poll(() => log).toEqual(['message: fake', 'message: modified', 'message: pass-client']);
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=modified origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=pass-server origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=response origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=modified origin=ws://${server.HOST} lastEventId=`,
+    `message: data=pass-server origin=ws://${server.HOST} lastEventId=`,
+    `message: data=response origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   const route = await promise;
   route.send('another');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=modified origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=pass-server origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=response origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=another origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=modified origin=ws://${server.HOST} lastEventId=`,
+    `message: data=pass-server origin=ws://${server.HOST} lastEventId=`,
+    `message: data=response origin=ws://${server.HOST} lastEventId=`,
+    `message: data=another origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   await page.evaluate(() => {
@@ -391,8 +391,8 @@ test('should work without server', async ({ page, server }) => {
 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=response origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=response origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=response origin=ws://${server.HOST} lastEventId=`,
+    `message: data=response origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   const route = await promise;
@@ -401,9 +401,9 @@ test('should work without server', async ({ page, server }) => {
 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=response origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=response origin=ws://localhost:${server.PORT} lastEventId=`,
-    `message: data=another origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=response origin=ws://${server.HOST} lastEventId=`,
+    `message: data=response origin=ws://${server.HOST} lastEventId=`,
+    `message: data=another origin=ws://${server.HOST} lastEventId=`,
     'close code=3008 reason=oops wasClean=true',
   ]);
 });
@@ -422,7 +422,7 @@ test('should emit close upon frame navigation', async ({ page, server }) => {
 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=hello origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   const closedPromise = new Promise<void>(f => route.onClose(() => f()));
@@ -445,7 +445,7 @@ test('should emit close upon frame detach', async ({ page, server }) => {
 
   await expect.poll(() => frame.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=hello origin=ws://${server.HOST} lastEventId=`,
   ]);
 
   const closedPromise = new Promise<void>(f => route.onClose(() => f()));
@@ -476,13 +476,13 @@ test('should route on context', async ({ page, server }) => {
   });
 
   await page.goto('about:blank');
-  await page.evaluate(({ port }) => {
+  await page.evaluate(({ host }) => {
     window.log = [];
-    (window as any).ws1 = new WebSocket('ws://localhost:' + port + '/ws1');
+    (window as any).ws1 = new WebSocket('ws://' + host + '/ws1');
     (window as any).ws1.addEventListener('message', event => window.log.push(`ws1:${event.data}`));
-    (window as any).ws2 = new WebSocket('ws://localhost:' + port + '/ws2');
+    (window as any).ws2 = new WebSocket('ws://' + host + '/ws2');
     (window as any).ws2.addEventListener('message', event => window.log.push(`ws2:${event.data}`));
-  }, { port: server.PORT });
+  }, { host: server.HOST });
 
   await page.evaluate(() => (window as any).ws1.send('request'));
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-2`]);
@@ -535,7 +535,7 @@ test('should throw when connecting twice', async ({ page, server }) => {
 test('should work with no trailing slash', async ({ page, server }) => {
   const log: string[] = [];
   // No trailing slash!
-  await page.routeWebSocket('ws://localhost:' + server.PORT, ws => {
+  await page.routeWebSocket('ws://' + server.HOST, ws => {
     ws.onMessage(message => {
       log.push(message as string);
       ws.send('response');
@@ -543,12 +543,12 @@ test('should work with no trailing slash', async ({ page, server }) => {
   });
 
   await page.goto('about:blank');
-  await page.evaluate(({ port }) => {
+  await page.evaluate(({ host }) => {
     window.log = [];
     // No trailing slash!
-    window.ws = new WebSocket('ws://localhost:' + port);
+    window.ws = new WebSocket('ws://' + host);
     window.ws.addEventListener('message', event => window.log.push(event.data));
-  }, { port: server.PORT });
+  }, { host: server.HOST });
 
   await expect.poll(() => page.evaluate(() => window.ws.readyState)).toBe(1);
   await page.evaluate(() => window.ws.send('query'));
@@ -557,7 +557,7 @@ test('should work with no trailing slash', async ({ page, server }) => {
 });
 
 test('should work with baseURL', async ({ contextFactory, server }) => {
-  const context = await contextFactory({ baseURL: 'http://localhost:' + server.PORT });
+  const context = await contextFactory({ baseURL: 'http://' + server.HOST });
   const page = await context.newPage();
 
   await page.routeWebSocket('/ws', ws => {
@@ -575,6 +575,6 @@ test('should work with baseURL', async ({ contextFactory, server }) => {
 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
-    `message: data=echo origin=ws://localhost:${server.PORT} lastEventId=`,
+    `message: data=echo origin=ws://${server.HOST} lastEventId=`,
   ]);
 });

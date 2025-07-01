@@ -145,11 +145,15 @@ test('should not transform external', async ({ runInlineTest }) => {
     'a.spec.ts': `
       const { test, expect, Page } = require('@playwright/test');
       let page: Page;
-      test('succeeds', () => {});
+      enum MyEnum { Value = 'value' }
+
+      test('succeeds', () => {
+        expect(MyEnum.Value).toBe('value');
+      });
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`SyntaxError: Unexpected token ':'`);
+  expect(result.output).toMatch(/(SyntaxError: Unexpected token ':')|(SyntaxError: TypeScript enum is not supported)/);
 });
 
 for (const type of ['module', undefined]) {

@@ -27,12 +27,11 @@ import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
-import { ProgressController } from './progress';
+import { isAbortError, ProgressController } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from './utils/happyEyeballs';
 import { Tracing } from './trace/recorder/tracing';
 
-import type { CallMetadata } from './instrumentation';
 import type { Playwright } from './playwright';
 import type { Progress } from './progress';
 import type * as types from './types';
@@ -84,10 +83,11 @@ export type APIRequestFinishedEvent = {
 
 type SendRequestOptions = https.RequestOptions & {
   maxRedirects: number,
-  deadline: number,
   headers: HeadersObject,
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
+
+type SendRequestResult = Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer };
 
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
@@ -136,7 +136,7 @@ export abstract class APIRequestContext extends SdkObject {
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
   abstract _cookies(url: URL): Promise<channels.NetworkCookie[]>;
-  abstract storageState(indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -144,7 +144,7 @@ export abstract class APIRequestContext extends SdkObject {
     return uid;
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIResponse> {
+  async fetch(progress: Progress, params: channels.APIRequestContextFetchParams): Promise<channels.APIResponse> {
     const defaults = this._defaultOptions();
     const headers: HeadersObject = {
       'user-agent': defaults.userAgent,
@@ -185,16 +185,11 @@ export abstract class APIRequestContext extends SdkObject {
     let maxRedirects = params.maxRedirects ?? (defaults.maxRedirects ?? 20);
     maxRedirects = maxRedirects === 0 ? -1 : maxRedirects;
 
-    const timeout = params.timeout;
-    const deadline = timeout && (monotonicTime() + timeout);
-
     const options: SendRequestOptions = {
       method,
       headers,
       agent,
       maxRedirects,
-      timeout,
-      deadline,
       ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
     };
@@ -205,12 +200,9 @@ export abstract class APIRequestContext extends SdkObject {
     const postData = serializePostData(params, headers);
     if (postData)
       setHeader(headers, 'content-length', String(postData.byteLength));
-    const controller = new ProgressController(metadata, this);
-    const fetchResponse = await controller.run(progress => {
-      return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
-    }, timeout);
+    const fetchResponse = await this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
     const fetchUid = this._storeResponseBody(fetchResponse.body);
-    this.fetchLog.set(fetchUid, controller.metadata.log);
+    this.fetchLog.set(fetchUid, progress.metadata.log);
     const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.failOnStatusCode;
     if (failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
       let responseText = '';
@@ -252,10 +244,10 @@ export abstract class APIRequestContext extends SdkObject {
     return cookies;
   }
 
-  private async _updateRequestCookieHeader(url: URL, headers: HeadersObject) {
+  private async _updateRequestCookieHeader(progress: Progress, url: URL, headers: HeadersObject) {
     if (getHeader(headers, 'cookie') !== undefined)
       return;
-    const contextCookies = await this._cookies(url);
+    const contextCookies = await progress.race(this._cookies(url));
     // Browser context returns cookies with domain matching both .example.com and
     // example.com. Those without leading dot are only sent when domain is strictly
     // matching example.com, but not for sub.example.com.
@@ -266,31 +258,33 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
+  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<SendRequestResult>{
     maxRetries ??= 0;
     let backoff = 250;
     for (let i = 0; i <= maxRetries; i++) {
       try {
         return await this._sendRequest(progress, url, options, postData);
       } catch (e) {
+        if (isAbortError(e))
+          throw e;
         e = rewriteOpenSSLErrorIfNeeded(e);
         if (maxRetries === 0)
           throw e;
-        if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
+        if (i === maxRetries)
           throw new Error(`Failed after ${i + 1} attempt(s): ${e}`);
         // Retry on connection reset only.
         if (e.code !== 'ECONNRESET')
           throw e;
         progress.log(`  Received ECONNRESET, will retry after ${backoff}ms.`);
-        await new Promise(f => setTimeout(f, backoff));
+        await progress.wait(backoff);
         backoff *= 2;
       }
     }
     throw new Error('Unreachable');
   }
 
-  private async _sendRequest(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
-    await this._updateRequestCookieHeader(url, options.headers);
+  private async _sendRequest(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<SendRequestResult>{
+    await this._updateRequestCookieHeader(progress, url, options.headers);
 
     const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
       const [name, value] = p.split('=').map(v => v.trim());
@@ -305,7 +299,7 @@ export abstract class APIRequestContext extends SdkObject {
     };
     this.emit(APIRequestContext.Events.Request, requestEvent);
 
-    return new Promise((fulfill, reject) => {
+    const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       // If we have a proxy agent already, do not override it.
@@ -402,8 +396,6 @@ export abstract class APIRequestContext extends SdkObject {
             headers,
             agent: options.agent,
             maxRedirects: options.maxRedirects - 1,
-            timeout: options.timeout,
-            deadline: options.deadline,
             ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
             __testHookLookup: options.__testHookLookup,
           };
@@ -492,6 +484,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('end', notifyBodyFinished);
       });
       request.on('error', reject);
+      progress.cleanupWhenAborted(() => request.destroy());
 
       listeners.push(
           eventsHelper.addEventListener(this, APIRequestContext.Events.Dispose, () => {
@@ -543,23 +536,11 @@ export abstract class APIRequestContext extends SdkObject {
           progress.log(`  ${name}: ${value}`);
       }
 
-      if (options.deadline) {
-        const rejectOnTimeout = () =>  {
-          reject(new Error(`Request timed out after ${options.timeout}ms`));
-          request.destroy();
-        };
-        const remaining = options.deadline - monotonicTime();
-        if (remaining <= 0) {
-          rejectOnTimeout();
-          return;
-        }
-        request.setTimeout(remaining, rejectOnTimeout);
-      }
-
       if (postData)
         request.write(postData);
       request.end();
     });
+    return progress.race(resultPromise);
   }
 
   private _getHttpCredentials(url: URL) {
@@ -628,8 +609,8 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return await this._context.cookies(url.toString());
   }
 
-  override async storageState(indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._context.storageState(indexedDB);
+  override async storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
+    return this._context.storageState(progress, indexedDB);
   }
 }
 
@@ -685,7 +666,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._cookieStore.cookies(url);
   }
 
-  override async storageState(indexedDB = false): Promise<channels.APIRequestContextStorageStateResult> {
+  override async storageState(progress: Progress, indexedDB = false): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
       origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [] })),

@@ -42,7 +42,8 @@ export interface RecorderDelegate {
 
 interface RecorderTool {
   cursor(): string;
-  cleanup?(): void;
+  install?(): void;
+  uninstall?(): void;
   onClick?(event: MouseEvent): void;
   onDblClick?(event: MouseEvent): void;
   onContextMenu?(event: MouseEvent): void;
@@ -82,7 +83,7 @@ class InspectTool implements RecorderTool {
     return 'pointer';
   }
 
-  cleanup() {
+  uninstall() {
     this._hoveredModel = null;
     this._hoveredElement = null;
   }
@@ -194,6 +195,7 @@ class RecordActionTool implements RecorderTool {
   private _activeModel: HighlightModelWithSelector | null = null;
   private _expectProgrammaticKeyUp = false;
   private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
+  private _observer: MutationObserver | null = null;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -204,7 +206,23 @@ class RecordActionTool implements RecorderTool {
     return 'pointer';
   }
 
-  cleanup() {
+  install() {
+    this._observer = new MutationObserver(mutations => {
+      if (!this._hoveredElement)
+        return;
+      for (const mutation of mutations) {
+        for (const node of mutation.removedNodes) {
+          if (node === this._hoveredElement || node.contains(this._hoveredElement))
+            this._resetHoveredModel();
+        }
+      }
+    });
+    this._observer.observe(this._recorder.injectedScript.document.body, { childList: true, subtree: true });
+  }
+
+  uninstall() {
+    this._observer?.disconnect();
+    this._observer = null;
     this._hoveredModel = null;
     this._hoveredElement = null;
     this._activeModel = null;
@@ -227,7 +245,7 @@ class RecordActionTool implements RecorderTool {
       return;
 
     const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
-    if (checkbox) {
+    if (checkbox && event.detail === 1) {
       // Interestingly, inputElement.checked is reversed inside this event handler.
       this._performAction({
         name: checkbox.checked ? 'check' : 'uncheck',
@@ -317,30 +335,26 @@ class RecordActionTool implements RecorderTool {
   onPointerDown(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingActions.size)
-      consumeEvent(event);
+    this._consumeWhenAboutToPerform(event);
   }
 
   onPointerUp(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingActions.size)
-      consumeEvent(event);
+    this._consumeWhenAboutToPerform(event);
   }
 
   onMouseDown(event: MouseEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingActions.size)
-      consumeEvent(event);
+    this._consumeWhenAboutToPerform(event);
     this._activeModel = this._hoveredModel;
   }
 
   onMouseUp(event: MouseEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingActions.size)
-      consumeEvent(event);
+    this._consumeWhenAboutToPerform(event);
   }
 
   onMouseMove(event: MouseEvent) {
@@ -430,7 +444,7 @@ class RecordActionTool implements RecorderTool {
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
       const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
-      if (checkbox) {
+      if (checkbox && event.detail === 0) {
         this._performAction({
           name: checkbox.checked ? 'uncheck' : 'check',
           selector: this._activeModel!.selector,
@@ -454,7 +468,7 @@ class RecordActionTool implements RecorderTool {
       return;
 
     // Only allow programmatic keyups, ignore user input.
-    if (!this._expectProgrammaticKeyUp) {
+    if (this._recorder.state.recorderMode === 'perform' && !this._expectProgrammaticKeyUp) {
       consumeEvent(event);
       return;
     }
@@ -462,9 +476,13 @@ class RecordActionTool implements RecorderTool {
   }
 
   onScroll(event: Event) {
+    this._resetHoveredModel();
+  }
+
+  private _resetHoveredModel() {
     this._hoveredModel = null;
     this._hoveredElement = null;
-    this._recorder.updateHighlight(null, false);
+    this._updateHighlight(false);
   }
 
   private _onFocus(userGesture: boolean) {
@@ -503,7 +521,8 @@ class RecordActionTool implements RecorderTool {
     }
 
     // Consume event if action is not being executed.
-    consumeEvent(event);
+    if (this._recorder.state.recorderMode === 'perform')
+      consumeEvent(event);
     return false;
   }
 
@@ -521,26 +540,40 @@ class RecordActionTool implements RecorderTool {
     return true;
   }
 
-  private _performAction(action: actions.PerformOnRecordAction) {
-    this._hoveredElement = null;
-    this._hoveredModel = null;
-    this._activeModel = null;
-    this._recorder.updateHighlight(null, false);
-    this._performingActions.add(action);
-    void this._recorder.performAction(action).then(() => {
-      this._performingActions.delete(action);
+  private _consumeWhenAboutToPerform(event: Event) {
+    if (!this._performingActions.size && this._recorder.state.recorderMode === 'perform')
+      consumeEvent(event);
+  }
 
+  private _performAction(action: actions.PerformOnRecordAction) {
+    this._recorder.updateHighlight(null, false);
+
+    let promise = Promise.resolve();
+    if (this._recorder.state.recorderMode === 'perform')
+      promise = this._innerPerformAction(action);
+    else
+      this._recorder.recordAction(action);
+
+    if (!this._recorder.injectedScript.isUnderTest)
+      return;
+
+    void promise.then(() => {
+      // Serialize all to string as we cannot attribute console message to isolated world
+      // in Firefox.
+      console.error('Action performed for test: ' + JSON.stringify({ // eslint-disable-line no-console
+        hovered: this._hoveredModel ? (this._hoveredModel as any).selector : null,
+        active: this._activeModel ? (this._activeModel as any).selector : null,
+      }));
+    });
+  }
+
+  private async _innerPerformAction(action: actions.PerformOnRecordAction) {
+    this._performingActions.add(action);
+
+    return this._recorder.performAction(action).then(() => {
+      this._performingActions.delete(action);
       // If that was a keyboard action, it similarly requires new selectors for active model.
       this._onFocus(false);
-
-      if (this._recorder.injectedScript.isUnderTest) {
-        // Serialize all to string as we cannot attribute console message to isolated world
-        // in Firefox.
-        console.error('Action performed for test: ' + JSON.stringify({ // eslint-disable-line no-console
-          hovered: this._hoveredModel ? (this._hoveredModel as any).selector : null,
-          active: this._activeModel ? (this._activeModel as any).selector : null,
-        }));
-      }
     });
   }
 
@@ -582,14 +615,19 @@ class RecordActionTool implements RecorderTool {
     if (!this._hoveredElement || !this._hoveredElement.isConnected) {
       this._hoveredModel = null;
       this._hoveredElement = null;
-      this._recorder.updateHighlight(null, true);
+      this._updateHighlight(true);
       return;
     }
     const { selector, elements } = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName });
     if (this._hoveredModel && this._hoveredModel.selector === selector)
       return;
     this._hoveredModel = selector ? { selector, elements, color: HighlightColors.action } : null;
-    this._recorder.updateHighlight(this._hoveredModel, true);
+    this._updateHighlight(true);
+  }
+
+  private _updateHighlight(userGesture: boolean) {
+    if (this._recorder.state.recorderMode === 'perform' || this._recorder.injectedScript.isUnderTest)
+      this._recorder.updateHighlight(this._hoveredModel, userGesture);
   }
 }
 
@@ -612,7 +650,7 @@ class TextAssertionTool implements RecorderTool {
     return 'pointer';
   }
 
-  cleanup() {
+  uninstall() {
     this._dialog.close();
     this._hoverHighlight = null;
   }
@@ -1022,6 +1060,7 @@ export class Recorder {
   private _stylesheet: CSSStyleSheet;
   state: UIState = {
     mode: 'none',
+    recorderMode: 'perform',
     testIdAttributeName: 'data-testid',
     language: 'javascript',
     overlay: { offsetX: 0 },
@@ -1045,6 +1084,7 @@ export class Recorder {
       'assertingSnapshot': new TextAssertionTool(this, 'snapshot'),
     };
     this._currentTool = this._tools.none;
+    this._currentTool.install?.();
     if (injectedScript.window.top === injectedScript.window) {
       this.overlay = new Overlay(this);
       this.overlay.setUIState(this.state);
@@ -1095,6 +1135,7 @@ export class Recorder {
 
     this.highlight.appendChild(createSvgElement(this.document, clipPaths));
     this.overlay?.install();
+    this._currentTool?.install?.();
     this.document.adoptedStyleSheets.push(this._stylesheet);
   }
 
@@ -1102,9 +1143,10 @@ export class Recorder {
     const newTool = this._tools[this.state.mode];
     if (newTool === this._currentTool)
       return;
-    this._currentTool.cleanup?.();
+    this._currentTool.uninstall?.();
     this.clearHighlight();
     this._currentTool = newTool;
+    this._currentTool.install?.();
     this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
   }
 

@@ -62,6 +62,9 @@ export class FFNetworkManager {
     const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page.frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
+    // Align with Chromium and WebKit and not expose preflight OPTIONS requests to the client.
+    if (event.method === 'OPTIONS' && !event.isIntercepted)
+      return;
     if (redirectedFrom)
       this._requests.delete(redirectedFrom._id);
     const request = new InterceptableRequest(frame, redirectedFrom, event);

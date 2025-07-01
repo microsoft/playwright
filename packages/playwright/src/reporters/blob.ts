@@ -28,18 +28,10 @@ import { TeleReporterEmitter } from './teleEmitter';
 
 import type { BlobReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
-import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
+import type { BlobReportMetadata, JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import type { EventEmitter } from 'events';
 
 export const currentBlobReportVersion = 2;
-
-export type BlobReportMetadata = {
-  version: number;
-  userAgent: string;
-  name?: string;
-  shard?: { total: number, current: number };
-  pathSeparator?: string;
-};
 
 export class BlobReporter extends TeleReporterEmitter {
   private readonly _messages: JsonEvent[] = [];

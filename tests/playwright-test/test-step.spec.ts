@@ -1222,9 +1222,9 @@ pw:api    |Wait for navigation @ a.test.ts:5
 pw:api    |Navigate to "data:" @ a.test.ts:6
 pw:api    |Click locator('button') @ a.test.ts:8
 pw:api    |Click getByRole('button') @ a.test.ts:9
-pw:api    |Fetch "/empty.html" @ a.test.ts:10
+pw:api    |GET "/empty.html" @ a.test.ts:10
 pw:api    |↪ error: <error message>
-pw:api    |Fetch "/empty.html" @ a.test.ts:11
+pw:api    |GET "/empty.html" @ a.test.ts:11
 pw:api    |↪ error: <error message>
 hook      |After Hooks
 fixture   |  request
@@ -1519,7 +1519,7 @@ fixture   |  page
 pw:api    |    Create page
 test.step |custom step @ a.test.ts:4
 pw:api    |  Navigate to "/empty.html" @ a.test.ts:12
-pw:api    |  Fetch "/empty.html" @ a.test.ts:6
+pw:api    |  GET "/empty.html" @ a.test.ts:6
 expect    |  toBe @ a.test.ts:8
 hook      |After Hooks
 fixture   |  page

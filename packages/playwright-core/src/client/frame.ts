@@ -440,7 +440,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForTimeout(timeout: number) {
-    await this._channel.waitForTimeout({ timeout });
+    await this._channel.waitForTimeout({ waitTimeout: timeout });
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {
@@ -459,6 +459,15 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async title(): Promise<string> {
     return (await this._channel.title()).value;
+  }
+
+  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
+    params.expectedValue = serializeArgument(options.expectedValue);
+    const result = (await this._channel.expect(params));
+    if (result.received !== undefined)
+      result.received = parseResult(result.received);
+    return result;
   }
 }
 

@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "colors": "1.4.0",
-    "commander": "8.3.0",
+    "commander": "^13.0.0",
     "debug": "^4.3.4",
     "diff": "^7.0.0",
     "dotenv": "^16.4.5",

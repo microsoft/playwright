@@ -43,12 +43,16 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
         continue;
       if (!parsedURL.pathname.startsWith(c.path))
         continue;
-      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure)
+      if (parsedURL.protocol !== 'https:' && !isLocalHostname(parsedURL.hostname) && c.secure)
         continue;
       return true;
     }
     return false;
   });
+}
+
+export function isLocalHostname(hostname: string): boolean {
+  return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
 // Rollover to 5-digit year:
@@ -186,7 +190,7 @@ export class Request extends SdkObject {
     return this._overrides?.headers || this._rawRequestHeadersPromise;
   }
 
-  response(): PromiseLike<Response | null> {
+  response(): Promise<Response | null> {
     return this._waitForResponsePromise;
   }
 
@@ -286,7 +290,7 @@ export class Route extends SdkObject {
     this._endHandling();
   }
 
-  async redirectNavigationRequest(url: string) {
+  redirectNavigationRequest(url: string) {
     this._startHandling();
     assert(this._request.isNavigationRequest());
     this._request.frame()!.redirectNavigation(url, this._request._documentId!, this._request.headerValue('referer'));

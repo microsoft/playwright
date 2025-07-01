@@ -15,8 +15,10 @@
  */
 
 import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
+import { monotonicTime, quoteCSSAttributeValue  } from '../../utils';
+import { raceAgainstDeadline } from '../../utils/isomorphic/timeoutRunner';
+import { Frame } from '../frames';
 
-import type { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
@@ -87,4 +89,40 @@ export function collapseActions(actions: actions.ActionInContext[]): actions.Act
     result[result.length - 1].startTime = startTime;
   }
   return result;
+}
+
+export async function generateFrameSelector(frame: Frame): Promise<string[]> {
+  const selectorPromises: Promise<string>[] = [];
+  while (frame) {
+    const parent = frame.parentFrame();
+    if (!parent)
+      break;
+    selectorPromises.push(generateFrameSelectorInParent(parent, frame));
+    frame = parent;
+  }
+  const result = await Promise.all(selectorPromises);
+  return result.reverse();
+}
+
+async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promise<string> {
+  const result = await raceAgainstDeadline(async () => {
+    try {
+      const frameElement = await frame.frameElement();
+      if (!frameElement || !parent)
+        return;
+      const utility = await parent._utilityContext();
+      const injected = await utility.injectedScript();
+      const selector = await injected.evaluate((injected, element) => {
+        return injected.generateSelectorSimple(element as Element);
+      }, frameElement);
+      return selector;
+    } catch (e) {
+    }
+  }, monotonicTime() + 2000);
+  if (!result.timedOut && result.result)
+    return result.result;
+
+  if (frame.name())
+    return `iframe[name=${quoteCSSAttributeValue(frame.name())}]`;
+  return `iframe[src=${quoteCSSAttributeValue(frame.url())}]`;
 }

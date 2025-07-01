@@ -22,8 +22,8 @@ import type * as js from '../javascript';
 import type { ElectronApplicationDispatcher } from './electronDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
-import type { CallMetadata } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
 
@@ -42,24 +42,25 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
     jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', { preview }));
   }
 
-  async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams): Promise<channels.JSHandleEvaluateExpressionResult> {
-    return { value: serializeResult(await this._object.evaluateExpression(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+  async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionResult> {
+    const jsHandle = await progress.race(this._object.evaluateExpression(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)));
+    return { value: serializeResult(jsHandle) };
   }
 
-  async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
-    const jsHandle = await this._object.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
+  async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
+    const jsHandle = await progress.race(this._object.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)));
     // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
     return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
 
-  async getProperty(params: channels.JSHandleGetPropertyParams): Promise<channels.JSHandleGetPropertyResult> {
-    const jsHandle = await this._object.getProperty(params.name);
+  async getProperty(params: channels.JSHandleGetPropertyParams, progress: Progress): Promise<channels.JSHandleGetPropertyResult> {
+    const jsHandle = await progress.race(this._object.getProperty(params.name));
     // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
     return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
 
-  async getPropertyList(): Promise<channels.JSHandleGetPropertyListResult> {
-    const map = await this._object.getProperties();
+  async getPropertyList(params: channels.JSHandleGetPropertyListParams, progress: Progress): Promise<channels.JSHandleGetPropertyListResult> {
+    const map = await progress.race(this._object.getProperties());
     const properties = [];
     for (const [name, value] of map) {
       // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
@@ -68,12 +69,12 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
     return { properties };
   }
 
-  async jsonValue(): Promise<channels.JSHandleJsonValueResult> {
-    return { value: serializeResult(await this._object.jsonValue()) };
+  async jsonValue(params: channels.JSHandleJsonValueParams, progress: Progress): Promise<channels.JSHandleJsonValueResult> {
+    return { value: serializeResult(await progress.race(this._object.jsonValue())) };
   }
 
-  async dispose(_: any, metadata: CallMetadata) {
-    metadata.potentiallyClosesScope = true;
+  async dispose(_: any, progress: Progress) {
+    progress.metadata.potentiallyClosesScope = true;
     this._object.dispose();
     this._dispose();
   }

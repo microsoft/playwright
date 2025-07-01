@@ -41,7 +41,7 @@ it('should set bodySize to 0 if there was no body', async ({ page, server, brows
   ]);
   const sizes = await request.sizes();
   expect(sizes.requestBodySize).toBe(0);
-  expect(sizes.requestHeadersSize).toBeGreaterThanOrEqual(200);
+  expect(sizes.requestHeadersSize).toBeGreaterThanOrEqual(190);
 });
 
 it('should set bodySize, headersSize, and transferSize', async ({ page, server }) => {

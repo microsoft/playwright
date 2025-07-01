@@ -19,7 +19,7 @@ import path from 'path';
 import { declare, traverse, types } from 'playwright/lib/transform/babelBundle';
 import { setTransformData } from 'playwright/lib/transform/transform';
 
-import type { BabelAPI, PluginObj, T } from 'playwright/src/transform/babelBundle';
+import type { BabelAPI, PluginObj, T } from 'playwright/lib/transform/babelBundle';
 const t: typeof T = types;
 
 let jsxComponentNames: Set<string>;
