@@ -6,8 +6,7 @@
 ../utilsBundle.ts
 ../zipBundle.ts
 ./
-./codegen/language.ts
-./codegen/languages.ts
+./codegen/
 ./isomorphic/
 ./har/
 ./recorder/

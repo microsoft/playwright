@@ -70,15 +70,11 @@ test('should update primary page URL when original primary closes', async ({
   );
 
   await recorder.page.close();
-  // URL will not update without performing some action
-  await page3.getByRole('checkbox').click();
   await expect(recorder.recorderPage).toHaveTitle(
       `Playwright Inspector - ${server.PREFIX}/dom.html`,
   );
 
   await page3.close();
-  // URL will not update without performing some action
-  await page4.locator('div').first().click();
   await expect(recorder.recorderPage).toHaveTitle(
       `Playwright Inspector - ${server.PREFIX}/grid.html`,
   );
