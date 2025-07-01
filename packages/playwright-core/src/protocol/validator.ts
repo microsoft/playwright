@@ -1865,7 +1865,7 @@ scheme.FrameUncheckParams = tObject({
 });
 scheme.FrameUncheckResult = tOptional(tObject({}));
 scheme.FrameWaitForTimeoutParams = tObject({
-  timeout: tNumber,
+  waitTimeout: tNumber,
 });
 scheme.FrameWaitForTimeoutResult = tOptional(tObject({}));
 scheme.FrameWaitForFunctionParams = tObject({
