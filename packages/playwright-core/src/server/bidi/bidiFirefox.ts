@@ -80,14 +80,7 @@ export class BidiFirefox extends BrowserType {
     if (!transport.onmessage) {
       // browser.close does not work without an active session. If there is no connection
       // created with the transport, make sure to create a new session first.
-      transport.send({ method: 'session.new', params: {
-        capabilities: {
-          alwaysMatch: {
-            unhandledPromptBehavior: { default: 'ignore' },
-            webSocketUrl: true
-          }
-        }
-      }, id: kShutdownSessionNewMessageId });
+      transport.send({ method: 'session.new', params: { capabilities: {} }, id: kShutdownSessionNewMessageId });
       await new Promise(resolve => {
         transport.onmessage = message => {
           if (message.id === kShutdownSessionNewMessageId)
