@@ -204,7 +204,7 @@ export abstract class BrowserType extends SdkObject {
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
-      env: this.amendEnvironment(env, prepared.userDataDir, prepared.executable, prepared.browserArguments),
+      env: this.amendEnvironment(env, prepared.userDataDir, isPersistent),
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -327,7 +327,7 @@ export abstract class BrowserType extends SdkObject {
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
+  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
