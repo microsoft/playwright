@@ -434,8 +434,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [disabled]`;
     if (ariaNode.expanded)
       key += ` [expanded]`;
-    // Do not include active in the generated code.
-    if (ariaNode.active && options?.mode !== 'regex')
+    if (ariaNode.active && options?.forAI)
       key += ` [active]`;
     if (ariaNode.level)
       key += ` [level=${ariaNode.level}]`;
