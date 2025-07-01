@@ -77,7 +77,7 @@ export class BidiChromium extends BrowserType {
     return error;
   }
 
-  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  override amendEnvironment(env: Env): Env {
     return env;
   }
 
