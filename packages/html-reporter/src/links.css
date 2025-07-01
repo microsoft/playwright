@@ -110,3 +110,39 @@
   right: 5px;
   top: 5px;
 }
+
+.link-badge {
+  flex: none;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.link-badge-dim span {
+  color: var(--color-fg-muted);
+}
+
+.link-badge:hover {
+  cursor: pointer;
+}
+
+.link-badge svg {
+  fill: var(--color-fg-default);
+}
+
+.link-badge-dim svg {
+  fill: var(--color-fg-muted);
+}
+
+.link-badge-dim:hover svg {
+  fill: var(--color-fg-muted);
+}
+
+.trace-link {
+  /* Trace link button has 1px border and 4px padding, so we need 3px right margin to match content on the other side of divider */
+  margin-right: 3px;
+}
+
+.trace-link-separator {
+  color: var(--color-fg-muted);
+  user-select: none;
+}

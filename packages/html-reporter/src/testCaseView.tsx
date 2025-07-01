@@ -20,7 +20,7 @@ import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { Link, ProjectLink, SearchParamsContext, testResultHref } from './links';
+import { Link, ProjectLink, SearchParamsContext, testResultHref, TraceLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
@@ -56,13 +56,14 @@ export const TestCaseView: React.FC<{
         <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
       </>}
     />
-    <div className='hbox'>
+    <div className='hbox' style={{ lineHeight: '24px' }}>
       <div className='test-case-location'>
         <CopyToClipboardContainer value={`${test.location.file}:${test.location.line}`}>
           {test.location.file}:{test.location.line}
         </CopyToClipboardContainer>
       </div>
       <div style={{ flex: 'auto' }}></div>
+      <TraceLink test={test} trailingSeparator={true} />
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>
     {(!!test.projectName || labels) && <div className='test-case-project-labels-row'>
