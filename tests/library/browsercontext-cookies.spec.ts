@@ -31,7 +31,7 @@ it('should get a cookie @smoke', async ({ context, page, server, defaultSameSite
   expect(await context.cookies()).toEqual([{
     name: 'username',
     value: 'John Doe',
-    domain: 'localhost',
+    domain: server.HOSTNAME,
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -55,7 +55,7 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
   expect(cookies[0]).toEqual({
     name: 'username',
     value: 'John Doe',
-    domain: 'localhost',
+    domain: server.HOSTNAME,
     path: '/',
     // We will check this separately.
     expires: expect.anything(),
@@ -122,7 +122,7 @@ it('should get multiple cookies', async ({ context, page, server, defaultSameSit
     {
       name: 'password',
       value: '1234',
-      domain: 'localhost',
+      domain: server.HOSTNAME,
       path: '/',
       expires: -1,
       httpOnly: false,
@@ -132,7 +132,7 @@ it('should get multiple cookies', async ({ context, page, server, defaultSameSit
     {
       name: 'username',
       value: 'John Doe',
-      domain: 'localhost',
+      domain: server.HOSTNAME,
       path: '/',
       expires: -1,
       httpOnly: false,
@@ -391,7 +391,7 @@ it('should parse cookie with large Max-Age correctly', async ({ server, page, de
     {
       name: 'cookie1',
       value: 'value1',
-      domain: 'localhost',
+      domain: server.HOSTNAME,
       path: '/',
       expires: expect.any(Number),
       httpOnly: false,

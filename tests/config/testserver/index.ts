@@ -55,6 +55,7 @@ export class TestServer {
   readonly CROSS_PROCESS_PREFIX: string;
   readonly EMPTY_PAGE: string;
   readonly HOST: string;
+  readonly HOSTNAME: string;
 
   static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback);
@@ -120,6 +121,7 @@ export class TestServer {
     this.CROSS_PROCESS_PREFIX = `${protocol}://${cross_origin}:${port}`;
     this.EMPTY_PAGE = `${protocol}://${same_origin}:${port}/empty.html`;
     this.HOST = new URL(this.EMPTY_PAGE).host;
+    this.HOSTNAME = new URL(this.EMPTY_PAGE).hostname;
   }
 
   async waitUntilReady() {
