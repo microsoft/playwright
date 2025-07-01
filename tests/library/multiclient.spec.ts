@@ -258,6 +258,27 @@ test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
   expect(await pageB.evaluate(() => (window as any).pageBindingB())).toBe('pageBindingBResult');
 });
 
+test('should unroute websockets', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  await pageA.goto(server.EMPTY_PAGE);
+  await pageA.routeWebSocket(/.*/, () => {});
+  await pageA.routeWebSocket(/.*/, () => {});
+  await pageA.routeWebSocket(/.*/, () => {});
+
+  const error = await pageB.routeWebSocket(/.*/, () => {}).catch(e => e);
+  expect(error.message).toContain('Another client is already routing WebSockets');
+
+  await disconnect(pageA);
+
+  let resolve;
+  const promise = new Promise(f => resolve = f);
+  await pageB.routeWebSocket(/.*/, resolve);
+  await pageB.goto(server.EMPTY_PAGE);
+  await pageB.evaluate(host => (window as any).ws = new WebSocket('ws://' + host + '/ws'), server.HOST);
+  await promise;
+});
+
 test('should remove init scripts upon disconnect', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
