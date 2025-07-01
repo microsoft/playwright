@@ -50,7 +50,6 @@ export const TabbedPane: React.FunctionComponent<{
   const [visibleTabs, setVisibleTabs] = React.useState<TabbedPaneTabModel[]>(mode !== 'select' ? tabs : []);
   const [overflowTabs, setOverflowTabs] = React.useState<TabbedPaneTabModel[]>(mode === 'select' ? tabs : []);
   const [tabWidths, setTabWidths] = React.useState<Record<string, number>>({});
-  const [, setContainerWidth] = React.useState<number>(0);
   const [tabbedPaneWidth, setTabbedPaneWidth] = React.useState<number>(0);
 
   // Initial measurements
@@ -58,9 +57,6 @@ export const TabbedPane: React.FunctionComponent<{
     const container = containerRef.current;
     if (!container)
       return;
-
-    const containerWidth = container.getBoundingClientRect().width;
-    setContainerWidth(containerWidth);
 
     const tabWidths: Record<string, number> = {};
     const tabbedPaneTabs = container.querySelectorAll('.tabbed-pane-tab');
@@ -111,8 +107,6 @@ export const TabbedPane: React.FunctionComponent<{
       return;
 
     const containerWidth = container.getBoundingClientRect().width;
-    setContainerWidth(containerWidth);
-
     const initialAvailableWidth = containerWidth - (overflowTabs.length > 0 ? tabbedPaneWidth : 0);
     const finalAvailableWidth = containerWidth - tabbedPaneWidth;
 
