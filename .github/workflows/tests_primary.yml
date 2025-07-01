@@ -60,7 +60,8 @@ jobs:
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-
+      env:
+        NODE_OPTIONS: "--trace-deprecation"
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
@@ -136,7 +137,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
-
+        NODE_OPTIONS: "--trace-deprecation"
   test_web_components:
     name: Web Components
     runs-on: ubuntu-latest
