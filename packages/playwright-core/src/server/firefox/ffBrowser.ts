@@ -195,13 +195,7 @@ export class FFBrowserContext extends BrowserContext {
         },
       }));
     }
-    if (this._options.viewport) {
-      const viewport = {
-        viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
-        deviceScaleFactor: this._options.deviceScaleFactor || 1,
-      };
-      promises.push(this._browser.session.send('Browser.setDefaultViewport', { browserContextId, viewport }));
-    }
+    promises.push(this.doUpdateDefaultViewport());
     if (this._options.hasTouch)
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
     if (this._options.userAgent)
@@ -224,30 +218,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
       promises.push(this.doUpdateOffline());
-    if (this._options.colorScheme !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setColorScheme', {
-        browserContextId,
-        colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
-      }));
-    }
-    if (this._options.reducedMotion !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setReducedMotion', {
-        browserContextId,
-        reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
-      }));
-    }
-    if (this._options.forcedColors !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setForcedColors', {
-        browserContextId,
-        forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
-      }));
-    }
-    if (this._options.contrast !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setContrast', {
-        browserContextId,
-        contrast: this._options.contrast !== undefined  ? this._options.contrast : 'no-preference',
-      }));
-    }
+    promises.push(this.doUpdateDefaultEmulatedMedia());
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser.session.send('Browser.setVideoRecordingOptions', {
@@ -405,6 +376,43 @@ export class FFBrowserContext extends BrowserContext {
       this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: this.requestInterceptors.length > 0 }),
       this._browser.session.send('Browser.setCacheDisabled', { browserContextId: this._browserContextId, cacheDisabled: this.requestInterceptors.length > 0 }),
     ]);
+  }
+
+  override async doUpdateDefaultViewport() {
+    if (!this._options.viewport)
+      return;
+    const viewport = {
+      viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
+      deviceScaleFactor: this._options.deviceScaleFactor || 1,
+    };
+    await this._browser.session.send('Browser.setDefaultViewport', { browserContextId: this._browserContextId, viewport });
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
+    if (this._options.colorScheme !== 'no-override') {
+      await this._browser.session.send('Browser.setColorScheme', {
+        browserContextId: this._browserContextId,
+        colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
+      });
+    }
+    if (this._options.reducedMotion !== 'no-override') {
+      await this._browser.session.send('Browser.setReducedMotion', {
+        browserContextId: this._browserContextId,
+        reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
+      });
+    }
+    if (this._options.forcedColors !== 'no-override') {
+      await this._browser.session.send('Browser.setForcedColors', {
+        browserContextId: this._browserContextId,
+        forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
+      });
+    }
+    if (this._options.contrast !== 'no-override') {
+      await this._browser.session.send('Browser.setContrast', {
+        browserContextId: this._browserContextId,
+        contrast: this._options.contrast !== undefined  ? this._options.contrast : 'no-preference',
+      });
+    }
   }
 
   override async doExposePlaywrightBinding() {

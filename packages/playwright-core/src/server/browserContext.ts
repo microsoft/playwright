@@ -212,21 +212,17 @@ export abstract class BrowserContext extends SdkObject {
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().gotoImpl(progress, 'about:blank', {});
 
+    // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
+    // All other properties force a new context.
     await this._resetStorage(progress);
-
-    const resetOptions = async () => {
-      await this.clock.resetForReuse();
-      // TODO: following can be optimized to not perform noops.
-      if (this._options.permissions)
-        await this.grantPermissions(this._options.permissions);
-      else
-        await this.clearPermissions();
-      await this.setGeolocation(this._options.geolocation);
-      await this.setUserAgent(this._options.userAgent);
-      await this.clearCache();
-      await this._resetCookies();
-    };
-    await progress.race(resetOptions());
+    await progress.race(this.clock.resetForReuse());
+    await progress.race(this.setUserAgent(this._options.userAgent));
+    await progress.race(this.clearCache());
+    await progress.race(this.doClearCookies());
+    await progress.race(this.doUpdateDefaultEmulatedMedia());
+    await progress.race(this.doUpdateDefaultViewport());
+    if (this._options.storageState?.cookies)
+      await progress.race(this.addCookies(this._options.storageState?.cookies));
 
     await page?.resetForReuse(progress);
   }
@@ -273,6 +269,8 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doUpdateExtraHTTPHeaders(): Promise<void>;
   protected abstract doUpdateOffline(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
+  protected abstract doUpdateDefaultViewport(): Promise<void>;
+  protected abstract doUpdateDefaultEmulatedMedia(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
   protected abstract doClose(reason: string | undefined): Promise<void>;
   protected abstract onClosePersistent(): void;
@@ -622,12 +620,6 @@ export abstract class BrowserContext extends SdkObject {
 
     this._origins = new Set([...newOrigins.keys()]);
     // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
-  }
-
-  async _resetCookies() {
-    await this.doClearCookies();
-    if (this._options.storageState?.cookies)
-      await this.addCookies(this._options.storageState?.cookies);
   }
 
   isSettingStorageState(): boolean {
