@@ -337,7 +337,7 @@ it('should work when service worker is intefering', async ({ page, context, serv
   expect(storageState.origins[0].localStorage[0]).toEqual({ name: 'foo', value: 'bar' });
 });
 
-it('should set local storage in third-party context', async ({ contextFactory, server }) => {
+it('should set local storage in third-party context', async ({ contextFactory, server, browserName }) => {
   const context = await contextFactory({
     storageState: {
       cookies: [],
@@ -353,11 +353,16 @@ it('should set local storage in third-party context', async ({ contextFactory, s
     }
   });
   const page = await context.newPage();
+
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
 
   const localStorage = await frame.evaluate('window.localStorage');
-  expect(localStorage).toEqual({ name1: 'value1' });
+  // Storage partitioning is enabled.
+  if (browserName === 'chromium')
+    expect(localStorage).toEqual({ });
+  else
+    expect(localStorage).toEqual({ name1: 'value1' });
   await context.close();
 });
 
@@ -499,4 +504,112 @@ it('should support empty indexedDB', { annotation: { type: 'issue', description:
 
   const context = await contextFactory({ storageState });
   expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
+});
+
+it('should set indexedDB in third-party context', async ({ page, contextFactory, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/to-do-notifications/index.html');
+
+  await expect(frame.locator('#notifications')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: Database initialised.
+  `);
+  await frame.getByLabel('Task title').fill('Pet the cat');
+  await frame.getByLabel('Hours').fill('1');
+  await frame.getByLabel('Mins').fill('1');
+  await frame.getByText('Add Task').click();
+  await expect(frame.locator('#notifications')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: "Transaction completed: database modification finished."
+  `);
+
+  const storageState = await page.context().storageState({ indexedDB: true });
+  const expectedOrigins = [
+    {
+      origin: server.CROSS_PROCESS_PREFIX,
+      partitionKey: server.PREFIX,
+      _crHasCrossSiteAncestor: true,
+      localStorage: [],
+      indexedDB: [
+        {
+          name: 'toDoList',
+          version: 4,
+          stores: [
+            {
+              name: 'toDoList',
+              autoIncrement: false,
+              keyPath: 'taskTitle',
+              records: [
+                {
+                  value: {
+                    day: '01',
+                    hours: '1',
+                    minutes: '1',
+                    month: 'January',
+                    notified: 'no',
+                    taskTitle: 'Pet the cat',
+                    year: '2025',
+                  },
+                },
+              ],
+              indexes: [
+                {
+                  name: 'day',
+                  keyPath: 'day',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'hours',
+                  keyPath: 'hours',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'minutes',
+                  keyPath: 'minutes',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'month',
+                  keyPath: 'month',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'notified',
+                  keyPath: 'notified',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'year',
+                  keyPath: 'year',
+                  multiEntry: false,
+                  unique: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  expect(storageState.origins).toEqual(expectedOrigins);
+
+  {
+    const context = await contextFactory({ storageState });
+    expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
+    const recreatedPage = await context.newPage();
+    await recreatedPage.goto(server.EMPTY_PAGE);
+    const recreatedFrame = await attachFrame(recreatedPage, 'frame1', server.CROSS_PROCESS_PREFIX + '/to-do-notifications/index.html');
+    await expect(recreatedFrame.locator('#task-list')).toMatchAriaSnapshot(`
+      - list:
+        - listitem:
+          - text: /Pet the cat/
+    `);
+    const newState = await context.storageState({ indexedDB: true });
+    expect(newState.origins).toEqual(expectedOrigins);
+  }
 });

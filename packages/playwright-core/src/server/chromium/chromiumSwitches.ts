@@ -34,8 +34,6 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'MediaRouter',
   // See https://github.com/microsoft/playwright/issues/28023
   'PaintHolding',
-  // See https://github.com/microsoft/playwright/issues/32230
-  'ThirdPartyStoragePartitioning',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
   // See https://issues.chromium.org/u/1/issues/435410220

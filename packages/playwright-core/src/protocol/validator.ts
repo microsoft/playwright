@@ -180,11 +180,15 @@ scheme.IndexedDBDatabase = tObject({
 });
 scheme.SetOriginStorage = tObject({
   origin: tString,
+  partitionKey: tOptional(tString),
+  _crHasCrossSiteAncestor: tOptional(tBoolean),
   localStorage: tArray(tType('NameValue')),
   indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });
 scheme.OriginStorage = tObject({
   origin: tString,
+  partitionKey: tOptional(tString),
+  _crHasCrossSiteAncestor: tOptional(tBoolean),
   localStorage: tArray(tType('NameValue')),
   indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });

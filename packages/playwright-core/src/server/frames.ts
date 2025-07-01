@@ -1646,6 +1646,14 @@ export class Frame extends SdkObject {
     }, { source, arg });
   }
 
+  hasCrossOriginAncestor(): boolean {
+    for (let ancestor = this.parentFrame(); ancestor; ancestor = ancestor.parentFrame()) {
+      if (ancestor.origin() !== this.origin())
+        return true;
+    }
+    return false;
+  }
+
   private _asLocator(selector: string) {
     return asLocator(this._page.browserContext._browser.sdkLanguage(), selector);
   }
