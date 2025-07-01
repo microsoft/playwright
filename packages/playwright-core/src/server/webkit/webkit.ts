@@ -41,7 +41,7 @@ export class WebKit extends BrowserType {
   override amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env {
     return {
       ...env,
-      CURL_COOKIE_JAR_PATH: isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
+      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
     };
   }
 
