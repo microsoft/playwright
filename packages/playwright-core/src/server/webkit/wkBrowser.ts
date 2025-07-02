@@ -175,8 +175,8 @@ export class WKBrowser extends Browser {
     const wkPage = this._wkPages.get(pageProxyId);
     if (!wkPage)
       return;
-    wkPage.didClose();
     this._wkPages.delete(pageProxyId);
+    wkPage.didClose();
   }
 
   _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {

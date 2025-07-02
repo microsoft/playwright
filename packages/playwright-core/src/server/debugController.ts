@@ -16,11 +16,10 @@
 
 import { SdkObject, createInstrumentation } from './instrumentation';
 import { gracefullyProcessExitDoNotHang } from './utils/processLauncher';
-import { Recorder } from './recorder';
+import { Recorder, RecorderEvent } from './recorder';
 import { asLocator  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
-import { EmptyRecorderApp } from './recorder/recorderApp';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { generateCode } from './codegen/language';
 import { collapseActions } from './recorder/recorderUtils';
@@ -129,7 +128,7 @@ export class DebugController extends SdkObject {
       if (ariaTemplate)
         recorder.setHighlightedAriaTemplate(ariaTemplate);
       else if (params.selector)
-        recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
+        recorder.setHighlightedSelector(params.selector);
     }
   }
 
@@ -169,8 +168,11 @@ export class DebugController extends SdkObject {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.browserContext);
-    const result = await Promise.all([...contexts].map(c => Recorder.showInspector(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp(this)))));
-    return result.filter(Boolean) as Recorder[];
+    const recorders = await Promise.all([...contexts].map(c => Recorder.forContext(c, { omitCallTracking: true })));
+    const nonNullRecorders = recorders.filter(Boolean) as Recorder[];
+    for (const recorder of recorders)
+      wireListeners(recorder, this);
+    return nonNullRecorders;
   }
 
   private async _closeBrowsersWithoutPages() {
@@ -185,49 +187,44 @@ export class DebugController extends SdkObject {
   }
 }
 
-class InspectingRecorderApp extends EmptyRecorderApp {
-  private _debugController: DebugController;
-  private _actions: actions.ActionInContext[] = [];
-  private _languageGenerator: JavaScriptLanguageGenerator;
+const wiredSymbol = Symbol('wired');
 
-  constructor(debugController: DebugController) {
-    super();
-    this._debugController = debugController;
-    this._languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
-  }
+function wireListeners(recorder: Recorder, debugController: DebugController) {
+  if ((recorder as any)[wiredSymbol])
+    return;
+  (recorder as any)[wiredSymbol] = true;
 
-  override async elementPicked(elementInfo: ElementInfo): Promise<void> {
-    const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
-  }
+  const actions: actions.ActionInContext[] = [];
+  const languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
 
-  override async setPaused(paused: boolean) {
-    this._debugController.emit(DebugController.Events.Paused, { paused });
-  }
-
-  override async setMode(mode: Mode) {
-    this._debugController.emit(DebugController.Events.SetModeRequested, { mode });
-  }
-
-  override async actionAdded(action: actions.ActionInContext): Promise<void> {
-    this._actions.push(action);
-    this._actionsChanged();
-  }
-
-  override async signalAdded(signal: actions.Signal): Promise<void> {
-    const lastAction = this._actions[this._actions.length - 1];
-    if (lastAction)
-      lastAction.action.signals.push(signal);
-    this._actionsChanged();
-  }
-
-  private _actionsChanged() {
-    const actions = collapseActions(this._actions);
-    const { header, footer, text, actionTexts } = generateCode(actions, this._languageGenerator, {
+  const actionsChanged = () => {
+    const aa = collapseActions(actions);
+    const { header, footer, text, actionTexts } = generateCode(aa, languageGenerator, {
       browserName: 'chromium',
       launchOptions: {},
       contextOptions: {},
     });
-    this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions: actionTexts });
-  }
+    debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions: actionTexts });
+  };
+
+  recorder.on(RecorderEvent.ElementPicked, (elementInfo: ElementInfo) => {
+    const locator: string = asLocator(debugController._sdkLanguage, elementInfo.selector);
+    debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
+  });
+  recorder.on(RecorderEvent.PausedStateChanged, (paused: boolean) => {
+    debugController.emit(DebugController.Events.Paused, { paused });
+  });
+  recorder.on(RecorderEvent.ModeChanged, (mode: Mode) => {
+    debugController.emit(DebugController.Events.SetModeRequested, { mode });
+  });
+  recorder.on(RecorderEvent.ActionAdded, (action: actions.ActionInContext) => {
+    actions.push(action);
+    actionsChanged();
+  });
+  recorder.on(RecorderEvent.SignalAdded, (signal: actions.Signal) => {
+    const lastAction = actions[actions.length - 1];
+    if (lastAction)
+      lastAction.action.signals.push(signal);
+    actionsChanged();
+  });
 }

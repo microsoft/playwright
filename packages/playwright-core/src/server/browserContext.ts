@@ -132,7 +132,7 @@ export abstract class BrowserContext extends SdkObject {
 
     // When paused, show inspector.
     if (this._debugger.isPaused())
-      await RecorderApp.showInspectorNoReply(this);
+      RecorderApp.showInspectorNoReply(this);
 
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
       if (this._debugger.isPaused())
