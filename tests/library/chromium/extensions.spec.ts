@@ -171,6 +171,8 @@ it.describe('MV3', () => {
     const context = await launchPersistentContext(extensionPath);
     const serviceWorkers = context.serviceWorkers();
     const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
+    // TODO: Workaround until https://issues.chromium.org/u/1/issues/407795731 is fixed
+    await context.pages()[0].waitForTimeout(500);
     expect(serviceWorker.url()).toMatch(/chrome-extension\:\/\/.*/);
     const [request, response] = await Promise.all([
       context.waitForEvent('request'),
