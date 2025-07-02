@@ -70,7 +70,6 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
-      ['--user-data-dir <directory>', 'use the specified user data directory instead of a new context'],
     ]).action(function(url, options) {
   codegen(options, url).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -543,9 +542,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 
   if (options.userDataDir) {
     context = await browserType.launchPersistentContext(options.userDataDir, { ...launchOptions, ...contextOptions });
-    const persistentBrowser = context.browser();
-    assert(persistentBrowser, 'Could not launch persistent browser context');
-    browser = persistentBrowser;
+    browser = context.browser()!;
   } else {
     browser = await browserType.launch(launchOptions);
     context = await browser.newContext(contextOptions);
@@ -774,6 +771,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
       .option('--user-agent <ua string>', 'specify user agent string')
+      .option('--user-data-dir <directory>', 'use the specified user data directory instead of a new context')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
 
