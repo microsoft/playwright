@@ -162,6 +162,7 @@ it.describe('MV3', () => {
   });
 
   it('should support request/response events when using backgroundPage()', async ({ launchPersistentContext, asset, server }) => {
+    it.fixme(true, 'Waiting for https://issues.chromium.org/u/1/issues/407795731 getting fixed.');
     process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
     server.setRoute('/empty.html', (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
@@ -171,8 +172,6 @@ it.describe('MV3', () => {
     const context = await launchPersistentContext(extensionPath);
     const serviceWorkers = context.serviceWorkers();
     const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
-    // TODO: Workaround until https://issues.chromium.org/u/1/issues/407795731 is fixed
-    await context.pages()[0].waitForTimeout(500);
     expect(serviceWorker.url()).toMatch(/chrome-extension\:\/\/.*/);
     const [request, response] = await Promise.all([
       context.waitForEvent('request'),
