@@ -272,6 +272,8 @@ test.describe('fetch', () => {
 
 
 test.describe('browser', () => {
+  test.skip(({ channel }) => channel === 'webkit-wsl', 'webkit-wsl does not support client certificates (Browser cant connect to Socks proxy)');
+
   test('validate input', async ({ browser }) => {
     for (const [contextOptions, expected] of kValidationSubTests)
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);

@@ -15,6 +15,8 @@
  */
 import { browserTest as it, expect } from '../config/browserTest';
 
+it.fixme(({ channel }) => channel === 'webkit-wsl');
+
 it('should allow service workers by default', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
   await expect(page.evaluate(() => window['registrationPromise'])).resolves.toBeTruthy();

@@ -17,6 +17,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 
 it.skip(({ mode }) => mode.startsWith('service'));
+it.fixme(({ channel }) => channel === 'webkit-wsl');
 
 it.beforeEach(({ server }) => {
   server.setRoute('/target.html', async (req, res) => {

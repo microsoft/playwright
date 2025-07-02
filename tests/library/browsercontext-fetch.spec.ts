@@ -1201,7 +1201,8 @@ it('context request should export same storage state as context', async ({ conte
   expect(pageState).toEqual(contextState);
 });
 
-it('should send secure cookie over http for localhost', async ({ page, server }) => {
+it('should send secure cookie over http for localhost', async ({ page, server, channel }) => {
+  it.skip(channel === 'webkit-wsl');
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; secure']);
     res.end();
@@ -1301,7 +1302,7 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
 
 it('should set domain=localhost cookie', async ({ context, server, browserName, isWindows }) => {
   server.setRoute('/empty.html', (req, res) => {
-    res.setHeader('Set-Cookie', `name=val; Domain=localhost; Path=/;`);
+    res.setHeader('Set-Cookie', `name=val; Domain=${server.HOSTNAME}; Path=/;`);
     res.end();
   });
   await context.request.get(server.EMPTY_PAGE);

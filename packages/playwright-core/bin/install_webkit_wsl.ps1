@@ -27,3 +27,4 @@ sudo -u $Username PLAYWRIGHT_SKIP_BROWSER_GC=1 /home/$Username/node/bin/node cli
 "@ -replace "\r\n", "`n"
 
 wsl -d $Distribution --cd $playwrightCoreRoot -u root -- bash -c "$initScript"
+Write-Host "Done!"

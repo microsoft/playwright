@@ -43,21 +43,24 @@ it.beforeEach(({ server }) => {
   });
 });
 
-it('get should work', async ({ context, server }) => {
+it('get should work', async ({ context, server, channel }) => {
+  it.skip(channel === 'webkit-wsl', 'server.PREFIX is the WSL->Windows address');
   const response = await context.request.get(server.PREFIX + '/simple.json', { __testHookLookup } as any);
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   await expect(response).toBeOK();
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
-it('get should work on request fixture', async ({ request, server }) => {
+it('get should work on request fixture', async ({ request, server, channel }) => {
+  it.skip(channel === 'webkit-wsl', 'server.PREFIX is the WSL->Windows address');
   const response = await request.get(server.PREFIX + '/simple.json', { __testHookLookup } as any);
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   await expect(response).toBeOK();
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
-it('https post should work with ignoreHTTPSErrors option', async ({ context, httpsServer }) => {
+it('https post should work with ignoreHTTPSErrors option', async ({ context, httpsServer, channel }) => {
+  it.skip(channel === 'webkit-wsl', 'server.PREFIX is the WSL->Windows address');
   const response = await context.request.post(httpsServer.EMPTY_PAGE,
     { ignoreHTTPSErrors: true, __testHookLookup } as any);
   expect(response.status()).toBe(200);

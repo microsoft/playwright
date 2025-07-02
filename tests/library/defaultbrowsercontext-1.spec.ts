@@ -63,7 +63,7 @@ it('context.addCookies() should work', async ({ server, launchPersistent, browse
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   }]);
 });
 

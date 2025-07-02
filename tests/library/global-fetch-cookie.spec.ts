@@ -44,6 +44,7 @@ const __testHookLookup = (hostname: string): LookupAddress[] => {
 };
 
 it('should store cookie from Set-Cookie header', async ({ request, server }) => {
+  it.fixme(({ channel }) => channel === 'webkit-wsl');
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d; max-age=3600; domain=b.one.com; path=/input', 'e=f; domain=b.one.com; path=/input/subfolder']);
     res.end();
