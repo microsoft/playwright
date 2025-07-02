@@ -15,16 +15,14 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { test, expect } from './inspectorTest';
 
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
   return channel ? `channel="${channel}", headless=False` : 'headless=False';
 };
 
-test('should print the correct imports and context options', async ({ runCLI, channel, browserName }) => {
-  const cli = runCLI(['--target=python', emptyHTML]);
+test('should print the correct imports and context options', async ({ runCLI, channel, browserName, server }) => {
+  const cli = runCLI(['--target=python', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
 
@@ -35,8 +33,8 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ runCLI, channel, browserName }) => {
-  const cli = runCLI(['--color-scheme=light', '--target=python', emptyHTML]);
+test('should print the correct context options for custom settings', async ({ runCLI, channel, browserName, server }) => {
+  const cli = runCLI(['--color-scheme=light', '--target=python', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
 
@@ -47,10 +45,10 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
+test('should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
-  const cli = runCLI(['--device=Pixel 2', '--target=python', emptyHTML]);
+  const cli = runCLI(['--device=Pixel 2', '--target=python', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
 
@@ -61,10 +59,10 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'webkit');
 
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=python', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=python', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
 
@@ -75,9 +73,9 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should save the codegen output to a file if specified', async ({ runCLI, channel, browserName }, testInfo) => {
+test('should save the codegen output to a file if specified', async ({ runCLI, channel, browserName, server }, testInfo) => {
   const tmpFile = testInfo.outputPath('example.py');
-  const cli = runCLI(['--target=python', '--output', tmpFile, emptyHTML], {
+  const cli = runCLI(['--target=python', '--output', tmpFile, server.EMPTY_PAGE], {
     autoExitWhen: 'page.goto',
   });
   await cli.waitForCleanExit();
@@ -90,7 +88,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.${browserName}.launch(${launchOptions(channel)})
     context = browser.new_context()
     page = context.new_page()
-    page.goto("${emptyHTML}")
+    page.goto("${server.EMPTY_PAGE}")
     page.close()
 
     # ---------------------
@@ -103,11 +101,11 @@ with sync_playwright() as playwright:
 `);
 });
 
-test('should print load/save storage_state', async ({ runCLI, channel, browserName }, testInfo) => {
+test('should print load/save storage_state', async ({ runCLI, channel, browserName, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=python', emptyHTML]);
+  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=python', server.EMPTY_PAGE]);
   const expectedResult1 = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
 

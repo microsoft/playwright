@@ -119,8 +119,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
   }
 
-  connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<api.Browser>;
-  connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<api.Browser>;
+  connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<Browser>;
+  connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<Browser>;
   async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint: string }), options?: api.ConnectOptions): Promise<Browser>{
     if (typeof optionsOrWsEndpoint === 'string')
       return await this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });

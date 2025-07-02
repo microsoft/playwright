@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { getGlobalOptions, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -135,7 +135,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
     // File inputs do not have a role by the spec: https://www.w3.org/TR/html-aam-1.0/#el-input-file.
     // However, there are open issues about fixing it: https://github.com/w3c/aria/issues/1926.
     // All browsers report it as a button, and it is rendered as a button, so we do "button".
-    if (type === 'file' && !getGlobalOptions().inputFileRoleTextbox)
+    if (type === 'file')
       return 'button';
     return inputTypeToRole[type] || 'textbox';
   },
@@ -153,6 +153,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'OUTPUT': () => 'status',
   'P': () => 'paragraph',
   'PROGRESS': () => 'progressbar',
+  'SEARCH': () => 'search',
   'SECTION': (e: Element) => hasExplicitAccessibleName(e) ? 'region' : null,
   'SELECT': (e: Element) => e.hasAttribute('multiple') || (e as HTMLSelectElement).size > 1 ? 'listbox' : 'combobox',
   'STRONG': () => 'strong',
@@ -707,7 +708,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // There is no spec for this, but Chromium/WebKit do "Choose File" so we follow that.
     // All browsers respect labels, aria-labelledby and aria-label.
     // No browsers respect the title attribute, although w3c accname tests disagree. We follow browsers.
-    if (!getGlobalOptions().inputFileRoleTextbox && tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
+    if (tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
       options.visitedElements.add(element);
       const labels = (element as HTMLInputElement).labels || [];
       if (labels.length && !options.embeddedInLabelledBy)
@@ -1060,8 +1061,12 @@ export function getAriaDisabled(element: Element): boolean {
 
 function isNativelyDisabled(element: Element) {
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.tagName);
-  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element));
+  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(elementSafeTagName(element));
+  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledOptGroup(element) || belongsToDisabledFieldSet(element));
+}
+
+function belongsToDisabledOptGroup(element: Element): boolean {
+  return elementSafeTagName(element) === 'OPTION' && !!element.closest('OPTGROUP[DISABLED]');
 }
 
 function belongsToDisabledFieldSet(element: Element): boolean {

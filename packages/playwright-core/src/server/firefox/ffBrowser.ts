@@ -195,13 +195,7 @@ export class FFBrowserContext extends BrowserContext {
         },
       }));
     }
-    if (this._options.viewport) {
-      const viewport = {
-        viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
-        deviceScaleFactor: this._options.deviceScaleFactor || 1,
-      };
-      promises.push(this._browser.session.send('Browser.setDefaultViewport', { browserContextId, viewport }));
-    }
+    promises.push(this.doUpdateDefaultViewport());
     if (this._options.hasTouch)
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
     if (this._options.userAgent)
@@ -217,37 +211,14 @@ export class FFBrowserContext extends BrowserContext {
     if (this._options.timezoneId)
       promises.push(this._browser.session.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
     if (this._options.extraHTTPHeaders || this._options.locale)
-      promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []));
+      promises.push(this.doUpdateExtraHTTPHeaders());
     if (this._options.httpCredentials)
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
-      promises.push(this.setOffline(this._options.offline));
-    if (this._options.colorScheme !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setColorScheme', {
-        browserContextId,
-        colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
-      }));
-    }
-    if (this._options.reducedMotion !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setReducedMotion', {
-        browserContextId,
-        reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
-      }));
-    }
-    if (this._options.forcedColors !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setForcedColors', {
-        browserContextId,
-        forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
-      }));
-    }
-    if (this._options.contrast !== 'no-override') {
-      promises.push(this._browser.session.send('Browser.setContrast', {
-        browserContextId,
-        contrast: this._options.contrast !== undefined  ? this._options.contrast : 'no-preference',
-      }));
-    }
+      promises.push(this.doUpdateOffline());
+    promises.push(this.doUpdateDefaultEmulatedMedia());
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser.session.send('Browser.setVideoRecordingOptions', {
@@ -297,18 +268,35 @@ export class FFBrowserContext extends BrowserContext {
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser.session.send('Browser.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
-      const copy: any = { ... c };
-      delete copy.size;
-      delete copy.session;
-      return copy as channels.NetworkCookie;
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      return {
+        name,
+        value,
+        domain,
+        path,
+        expires,
+        httpOnly,
+        secure,
+        sameSite,
+      };
     }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    const cc = network.rewriteCookies(cookies).map(c => ({
-      ...c,
-      expires: c.expires === -1 ? undefined : c.expires,
-    }));
+    const cc = network.rewriteCookies(cookies).map(c => {
+      const { name, value, url, domain, path, expires, httpOnly, secure, sameSite } = c;
+      return {
+        name,
+        value,
+        url,
+        domain,
+        path,
+        expires: expires === -1 ? undefined : expires,
+        httpOnly,
+        secure,
+        sameSite
+      };
+    });
     await this._browser.session.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: cc });
   }
 
@@ -342,9 +330,8 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: geolocation || null });
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
-    let allHeaders = this._options.extraHTTPHeaders;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
+    let allHeaders = this._options.extraHTTPHeaders || [];
     if (this._options.locale)
       allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
     await this._browser.session.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: allHeaders });
@@ -354,9 +341,8 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setUserAgentOverride', { browserContextId: this._browserContextId, userAgent: userAgent || null });
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
-    await this._browser.session.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: offline ? 'offline' : 'online' });
+  async doUpdateOffline(): Promise<void> {
+    await this._browser.session.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: this._options.offline ? 'offline' : 'online' });
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
@@ -390,6 +376,43 @@ export class FFBrowserContext extends BrowserContext {
       this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: this.requestInterceptors.length > 0 }),
       this._browser.session.send('Browser.setCacheDisabled', { browserContextId: this._browserContextId, cacheDisabled: this.requestInterceptors.length > 0 }),
     ]);
+  }
+
+  override async doUpdateDefaultViewport() {
+    if (!this._options.viewport)
+      return;
+    const viewport = {
+      viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
+      deviceScaleFactor: this._options.deviceScaleFactor || 1,
+    };
+    await this._browser.session.send('Browser.setDefaultViewport', { browserContextId: this._browserContextId, viewport });
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
+    if (this._options.colorScheme !== 'no-override') {
+      await this._browser.session.send('Browser.setColorScheme', {
+        browserContextId: this._browserContextId,
+        colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
+      });
+    }
+    if (this._options.reducedMotion !== 'no-override') {
+      await this._browser.session.send('Browser.setReducedMotion', {
+        browserContextId: this._browserContextId,
+        reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
+      });
+    }
+    if (this._options.forcedColors !== 'no-override') {
+      await this._browser.session.send('Browser.setForcedColors', {
+        browserContextId: this._browserContextId,
+        forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
+      });
+    }
+    if (this._options.contrast !== 'no-override') {
+      await this._browser.session.send('Browser.setContrast', {
+        browserContextId: this._browserContextId,
+        contrast: this._options.contrast !== undefined  ? this._options.contrast : 'no-preference',
+      });
+    }
   }
 
   override async doExposePlaywrightBinding() {

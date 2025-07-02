@@ -102,6 +102,8 @@ jobs:
           node_version: 20
         - os: ubuntu-latest
           node_version: 22
+        - os: ubuntu-latest
+          node_version: 24
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -176,11 +178,16 @@ jobs:
       matrix:
         include:
           - browser: chromium
+            runs-on: ubuntu-22.04
           - browser: firefox
+            runs-on: ubuntu-22.04
+          # See https://github.com/microsoft/playwright/issues/35586
           - browser: webkit
+            runs-on: ubuntu-24.04
           - browser: chromium
+            runs-on: ubuntu-22.04
             channel: chromium-tip-of-tree
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test

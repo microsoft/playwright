@@ -38,8 +38,11 @@ export class WebKit extends BrowserType {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
+  override amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env {
+    return {
+      ...env,
+      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
+    };
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {

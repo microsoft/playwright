@@ -34,7 +34,7 @@ import type * as types from '../types';
 
 export class BidiChromium extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, 'bidi');
+    super(parent, '_bidiChromium');
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<BidiBrowser> {
@@ -77,7 +77,7 @@ export class BidiChromium extends BrowserType {
     return error;
   }
 
-  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  override amendEnvironment(env: Env): Env {
     return env;
   }
 
@@ -144,14 +144,14 @@ export class BidiChromium extends BrowserType {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';
       // https://www.chromium.org/developers/design-documents/network-settings
-      if (isSocks && !this.attribution.playwright.options.socksProxyPort) {
+      if (isSocks && !options.socksProxyPort) {
         // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this.attribution.playwright.options.socksProxyPort)
+      if (options.socksProxyPort)
         proxyBypassRules.push('<-loopback>');
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));

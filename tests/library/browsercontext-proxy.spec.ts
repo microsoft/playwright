@@ -32,7 +32,7 @@ it('should work when passing the proxy only on the context level', async ({ brow
       proxy: undefined,
     });
     const context = await browser.newContext({
-      proxy: { server: `localhost:${proxyServer.PORT}` }
+      proxy: { server: proxyServer.HOST }
     });
 
     const page = await context.newPage();
@@ -55,7 +55,7 @@ it('should throw for bad server value', async ({ contextFactory }) => {
 it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: proxyServer.HOST }
   });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
@@ -64,6 +64,41 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
+it('should send secure cookies to subdomain.localhost', async ({ contextFactory, browserName, server, isWindows, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
+  const context = await contextFactory({
+    proxy: { server: proxyServer.HOST },
+  });
+  server.setRoute('/set-cookie.html', async (req, res) => {
+    res.setHeader('Set-Cookie', [`non-secure=1; HttpOnly`, `secure=1; HttpOnly; Secure`]);
+    res.end();
+  });
+  server.setRoute('/read-cookie.html', async (req, res) => {
+    res.setHeader('Content-Type', `text/html`);
+    res.end(`<div>Cookie: ${req.headers.cookie.split(';').map(c => c.trim()).sort().join('; ')}</div>`);
+  });
+
+  const page = await context.newPage();
+
+  await page.goto(`http://subdomain.localhost/set-cookie.html`);
+
+  const cookies = await context.cookies('http://subdomain.localhost');
+  expect(cookies.map(({ name, domain }) => ({ name, domain }))).toEqual([
+    {
+      name: 'non-secure',
+      domain: 'subdomain.localhost',
+    },
+    ...((browserName === 'webkit') && !isWindows ? [] : [{
+      name: 'secure',
+      domain: 'subdomain.localhost',
+    }]),
+  ]);
+
+  await page.goto(`http://subdomain.localhost/read-cookie.html`);
+  await expect(page.locator('div')).toHaveText(browserName === 'webkit' ? 'Cookie: non-secure=1' : 'Cookie: non-secure=1; secure=1');
+
+  await context.close();
+});
 
 it('should set cookie for top-level domain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18362' }
@@ -72,7 +107,7 @@ it('should set cookie for top-level domain', {
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: proxyServer.HOST }
   });
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', `name=val; Domain=codes; Path=/;`);
@@ -115,7 +150,7 @@ it.describe('should proxy local network requests', () => {
           const url = `http://${params.target}:55555${path}`;
           proxyServer.forwardTo(server.PORT);
           const context = await contextFactory({
-            proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
+            proxy: { server: proxyServer.HOST, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
           });
 
           const page = await context.newPage();
@@ -153,7 +188,7 @@ it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browse
 it('should use proxy twice', async ({ contextFactory, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: proxyServer.HOST }
   });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
@@ -167,7 +202,7 @@ it('should use proxy twice', async ({ contextFactory, server, proxyServer }) => 
 it('should use proxy for second page', async ({ contextFactory, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: proxyServer.HOST }
   });
 
   const page = await context.newPage();
@@ -191,7 +226,7 @@ it('should use proxy for https urls', async ({ contextFactory, httpsServer, prox
   proxyServer.forwardTo(httpsServer.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     ignoreHTTPSErrors: true,
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: proxyServer.HOST }
   });
   const page = await context.newPage();
   await page.goto('https://non-existent.com/target.html');
@@ -234,7 +269,7 @@ it('should authenticate', async ({ contextFactory, server, proxyServer }) => {
     return !!auth;
   });
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
+    proxy: { server: proxyServer.HOST, username: 'user', password: 'secret' }
   });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
@@ -252,7 +287,7 @@ it('should authenticate with empty password', async ({ contextFactory, server, p
     return !!auth;
   });
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: '' }
+    proxy: { server: proxyServer.HOST, username: 'user', password: '' }
   });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
@@ -270,7 +305,7 @@ it('should isolate proxy credentials between contexts', async ({ contextFactory,
   });
   {
     const context = await contextFactory({
-      proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user1', password: 'secret1' }
+      proxy: { server: proxyServer.HOST, username: 'user1', password: 'secret1' }
     });
     const page = await context.newPage();
     await page.goto('http://non-existent.com/target.html');
@@ -281,7 +316,7 @@ it('should isolate proxy credentials between contexts', async ({ contextFactory,
   auth = undefined;
   {
     const context = await contextFactory({
-      proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user2', password: 'secret2' }
+      proxy: { server: proxyServer.HOST, username: 'user2', password: 'secret2' }
     });
     const page = await context.newPage();
     await page.goto('http://non-existent.com/target.html');
@@ -298,7 +333,7 @@ it('should exclude patterns', async ({ contextFactory, server, proxyServer }) =>
   //
   // @see https://gist.github.com/CollinChaffin/24f6c9652efb3d6d5ef2f5502720ef00
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
+    proxy: { server: proxyServer.HOST, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
   });
 
   const nonFaviconUrls = () => {

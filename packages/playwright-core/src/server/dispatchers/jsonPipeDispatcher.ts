@@ -15,22 +15,23 @@
  */
 
 import { Dispatcher } from './dispatcher';
-import { createGuid } from '../utils/crypto';
+import { SdkObject } from '../instrumentation';
 
 import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
-export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {
+export class JsonPipeDispatcher extends Dispatcher<SdkObject, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;
   constructor(scope: LocalUtilsDispatcher) {
-    super(scope, { guid: 'jsonPipe@' + createGuid() }, 'JsonPipe', {});
+    super(scope, new SdkObject(scope._object, 'jsonPipe'), 'JsonPipe', {});
   }
 
-  async send(params: channels.JsonPipeSendParams): Promise<channels.JsonPipeSendResult> {
+  async send(params: channels.JsonPipeSendParams, progress: Progress): Promise<channels.JsonPipeSendResult> {
     this.emit('message', params.message);
   }
 
-  async close(): Promise<void> {
+  async close(params: channels.JsonPipeCloseParams, progress: Progress): Promise<void> {
     this.emit('close');
     if (!this._disposed) {
       this._dispatchEvent('closed', {});

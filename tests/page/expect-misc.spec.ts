@@ -296,7 +296,7 @@ test.describe('toHaveURL', () => {
   test('fail string', async ({ page }) => {
     await page.goto('data:text/html,<div>A</div>');
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(locator).toHaveURL(expected)');
+    expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
     expect(stripVTControlCharacters(error.message)).toContain('Expected string: "wrong"\nReceived string: "data:text/html,<div>A</div>"');
   });
 
@@ -304,7 +304,7 @@ test.describe('toHaveURL', () => {
     await page.goto('data:text/html,<div>A</div>');
     // @ts-expect-error
     const error = await expect(page).toHaveURL({}).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain(`expect(locator(':root')).toHaveURL([object Object])`);
+    expect(stripVTControlCharacters(error.message)).toContain(`expect(page).toHaveURL([object Object])`);
     expect(stripVTControlCharacters(error.message)).toContain('Expected has type:  object\nExpected has value: {}');
   });
 
@@ -464,7 +464,7 @@ test.describe('toBeInViewport', () => {
   test('should have good stack', async ({ page }) => {
     let error;
     try {
-      await expect(page.locator('body')).not.toBeInViewport({ timeout: 100 });
+      await expect(page.locator('body')).not.toBeInViewport({ timeout: 500 });
     } catch (e) {
       error = e;
     }

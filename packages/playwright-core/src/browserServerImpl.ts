@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { SocksProxy } from './server/utils/socksProxy';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
 import { createGuid } from './server/utils/crypto';
+import { isUnderTest } from './server/utils/debug';
 import { rewriteErrorMessage } from './utils/isomorphic/stackTrace';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from './utils/isomorphic/time';
 import { ws } from './utilsBundle';
+import * as validatorPrimitives from './protocol/validatorPrimitives';
+import { ProgressController } from './server/progress';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
 import type { LaunchServerOptions, Logger, Env } from './client/types';
@@ -31,35 +33,46 @@ import type { WebSocketEventEmitter } from './utilsBundle';
 import type { Browser } from './server/browser';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
-  private _browserName: 'chromium' | 'firefox' | 'webkit' | 'bidiFirefox' | 'bidiChromium';
+  private _browserName: 'chromium' | 'firefox' | 'webkit' | '_bidiFirefox' | '_bidiChromium';
 
-  constructor(browserName: 'chromium' | 'firefox' | 'webkit' | 'bidiFirefox' | 'bidiChromium') {
+  constructor(browserName: 'chromium' | 'firefox' | 'webkit' | '_bidiFirefox' | '_bidiChromium') {
     this._browserName = browserName;
   }
 
   async launchServer(options: LaunchServerOptions & { _sharedBrowser?: boolean, _userDataDir?: string } = {}): Promise<BrowserServer> {
     const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
-    // TODO: enable socks proxy once ipv6 is supported.
-    const socksProxy = false ? new SocksProxy() : undefined;
-    playwright.options.socksProxyPort = await socksProxy?.listen(0);
-
     // 1. Pre-launch the browser
     const metadata = serverSideCallMetadata();
-    const launchOptions = {
+    const validatorContext = {
+      tChannelImpl: (names: '*' | string[], arg: any, path: string) => {
+        throw new validatorPrimitives.ValidationError(`${path}: channels are not expected in launchServer`);
+      },
+      binary: 'buffer',
+      isUnderTest,
+    } satisfies validatorPrimitives.ValidatorContext;
+    let launchOptions = {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
       timeout: options.timeout ?? DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT,
     };
+
     let browser: Browser;
     try {
-      if (options._userDataDir !== undefined) {
-        const context = await playwright[this._browserName].launchPersistentContext(metadata, options._userDataDir, launchOptions);
-        browser = context._browser;
-      } else {
-        browser = await playwright[this._browserName].launch(metadata, launchOptions, toProtocolLogger(options.logger));
-      }
+      const controller = new ProgressController(metadata, playwright[this._browserName]);
+      browser = await controller.run(async progress => {
+        if (options._userDataDir !== undefined) {
+          const validator = validatorPrimitives.scheme['BrowserTypeLaunchPersistentContextParams'];
+          launchOptions = validator({ ...launchOptions, userDataDir: options._userDataDir }, '', validatorContext);
+          const context = await playwright[this._browserName].launchPersistentContext(progress, options._userDataDir, launchOptions);
+          return context._browser;
+        } else {
+          const validator = validatorPrimitives.scheme['BrowserTypeLaunchParams'];
+          launchOptions = validator(launchOptions, '', validatorContext);
+          return await playwright[this._browserName].launch(progress, launchOptions, toProtocolLogger(options.logger));
+        }
+      });
     } catch (e) {
       const log = helper.formatBrowserLogs(metadata.log);
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
@@ -69,7 +82,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser, preLaunchedSocksProxy: socksProxy });
+    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser });
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
@@ -82,7 +95,6 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
     browser.options.browserProcess.onclose = (exitCode, signal) => {
-      socksProxy?.close().catch(() => {});
       server.close();
       browserServer.emit('close', exitCode, signal);
     };

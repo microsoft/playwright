@@ -94,6 +94,7 @@ export const NetworkTab: React.FunctionComponent<{
 
   const grid = <NetworkGridView
     name='network'
+    ariaLabel='Network requests'
     items={renderedEntries}
     selectedItem={selectedEntry}
     onSelected={item => setSelectedEntry(item)}

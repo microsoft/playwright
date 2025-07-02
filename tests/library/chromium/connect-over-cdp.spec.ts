@@ -272,6 +272,30 @@ test('should send extra headers with connect request', async ({ browserType, ser
   }
 });
 
+test('should keep URL parameters when adding json/version', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/36097'
+  }
+}, async ({ browserType, server }) => {
+  await Promise.all([
+    server.waitForRequest('/browser/json/version/?foo=bar'),
+    browserType.connectOverCDP(`http://localhost:${server.PORT}/browser/?foo=bar`).catch(() => {})
+  ]);
+});
+
+test('should append /json/version with a slash if there isnt one', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/36378'
+  }
+}, async ({ browserType, server }) => {
+  await Promise.all([
+    server.waitForRequest('/browser/json/version/?foo=bar'),
+    browserType.connectOverCDP(`http://localhost:${server.PORT}/browser?foo=bar`).catch(() => {})
+  ]);
+});
+
 test('should send default User-Agent header with connect request', async ({ browserType, server }, testInfo) => {
   {
     const [request] = await Promise.all([

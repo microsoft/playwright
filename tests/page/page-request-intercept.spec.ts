@@ -218,7 +218,7 @@ it('should support timeout option in route.fetch', async ({ page, server, isElec
   });
   await page.route('**/*', async route => {
     const error = await route.fetch({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`Request timed out after 1000ms`);
+    expect(error.message).toContain(`route.fetch: Timeout 1000ms exceeded`);
   });
   const error = await page.goto(server.PREFIX + '/slow', { timeout: 2000 }).catch(e => e);
   expect(error.message).toContain(`Timeout 2000ms exceeded`);

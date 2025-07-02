@@ -221,23 +221,6 @@ it('exposeBindingHandle should throw for multiple arguments', async ({ page }) =
   expect(error.message).toContain('exposeBindingHandle supports a single argument, 2 received');
 });
 
-it('should not result in unhandled rejection', async ({ page, isAndroid, isWebView2 }) => {
-  it.fixme(isAndroid);
-  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
-
-  const closedPromise = page.waitForEvent('close');
-  await page.exposeFunction('foo', async () => {
-    await page.close();
-  });
-  await page.evaluate(() => {
-    window.builtins.setTimeout(() => (window as any).foo(), 0);
-    return undefined;
-  });
-  await closedPromise;
-  // Make a round-trip to be sure we did not throw immediately after closing.
-  expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
-});
-
 it('exposeBinding(handle) should work with element handles', async ({ page }) => {
   let cb;
   const promise = new Promise(f => cb = f);

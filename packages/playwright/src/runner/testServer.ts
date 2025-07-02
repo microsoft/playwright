@@ -142,7 +142,7 @@ export class TestServerDispatcher implements TestServerInterface {
     process.stdout.columns = params.cols;
     process.stdout.rows = params.rows;
     process.stderr.columns = params.cols;
-    process.stderr.columns = params.rows;
+    process.stderr.rows = params.rows;
   }
 
   async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
@@ -457,7 +457,6 @@ export async function runUIMode(configFile: string | undefined, configCLIOverrid
         persistentContextOptions: {
           handleSIGINT: false,
           channel,
-          timeout: 0,
         },
       });
       page.on('close', () => cancelPromise.resolve());

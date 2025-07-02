@@ -169,7 +169,6 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
 
   const { context, page } = await launchApp(traceViewerPlaywright[traceViewerBrowser as 'chromium'], {
-    // TODO: store language in the trace.
     sdkLanguage: traceViewerPlaywright.options.sdkLanguage,
     windowSize: { width: 1280, height: 800 },
     persistentContextOptions: {
@@ -177,25 +176,24 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       cdpPort: isUnderTest() ? 0 : undefined,
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
-      timeout: 0,
     },
   });
 
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+
+    if (process.env.PWTEST_PRINT_WS_ENDPOINT)
+      process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
+
+    if (!isUnderTest())
+      await syncLocalStorageWithSettings(page, 'traceviewer');
+
+    if (isUnderTest())
+      page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
+
+    await page.mainFrame().goto(progress, url);
   });
-
-  if (process.env.PWTEST_PRINT_WS_ENDPOINT)
-    process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
-
-  if (!isUnderTest())
-    await syncLocalStorageWithSettings(page, 'traceviewer');
-
-  if (isUnderTest())
-    page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
-
-  await page.mainFrame().goto(serverSideCallMetadata(), url, { timeout: 0 });
   return page;
 }
 

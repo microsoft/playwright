@@ -46,6 +46,7 @@ export class VideoRecorder {
     controller.setLogName('browser');
     return await controller.run(async progress => {
       const recorder = new VideoRecorder(page, ffmpegPath, progress);
+      progress.cleanupWhenAborted(() => recorder.stop());
       await recorder._launch(options);
       return recorder;
     });

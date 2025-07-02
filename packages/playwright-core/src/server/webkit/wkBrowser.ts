@@ -230,7 +230,7 @@ export class WKBrowserContext extends BrowserContext {
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
-      promises.push(this.setOffline(this._options.offline));
+      promises.push(this.doUpdateOffline());
     if (this._options.httpCredentials)
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     await Promise.all(promises);
@@ -255,19 +255,37 @@ export class WKBrowserContext extends BrowserContext {
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: channels.NetworkCookie) => {
-      const copy: any = { ... c };
-      copy.expires = c.expires === -1 ? -1 : c.expires / 1000;
-      delete copy.session;
-      return copy as channels.NetworkCookie;
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const copy: channels.NetworkCookie = {
+        name,
+        value,
+        domain,
+        path,
+        expires: expires === -1 ? -1 : expires / 1000,
+        httpOnly,
+        secure,
+        sameSite,
+      };
+      return copy;
     }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    const cc = network.rewriteCookies(cookies).map(c => ({
-      ...c,
-      session: c.expires === -1 || c.expires === undefined,
-      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires,
-    })) as Protocol.Playwright.SetCookieParam[];
+    const cc = network.rewriteCookies(cookies).map(c => {
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const copy: Protocol.Playwright.SetCookieParam = {
+        name,
+        value,
+        domain: domain!,
+        path: path!,
+        expires: expires && expires !== -1 ? expires * 1000 : expires,
+        httpOnly,
+        secure,
+        sameSite,
+        session: expires === -1 || expires === undefined,
+      };
+      return copy;
+    });
     await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }
 
@@ -290,8 +308,7 @@ export class WKBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('Playwright.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as WKPage).updateExtraHTTPHeaders();
   }
@@ -302,8 +319,7 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage).updateUserAgent();
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
+  async doUpdateOffline(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as WKPage).updateOffline();
   }
@@ -327,6 +343,14 @@ export class WKBrowserContext extends BrowserContext {
   async doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as WKPage).updateRequestInterception();
+  }
+
+  override async doUpdateDefaultViewport() {
+    // No-op, because each page resets its own viewport.
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
+    // No-op, because each page resets its own color scheme.
   }
 
   override async doExposePlaywrightBinding() {

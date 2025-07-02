@@ -6,11 +6,11 @@ This project incorporates components from the projects listed below. The origina
 
 -	agent-base@6.0.2 (https://github.com/TooTallNate/node-agent-base)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
--	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
+-	brace-expansion@1.1.12 (https://github.com/juliangruber/brace-expansion)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
 -	codemirror@5.65.18 (https://github.com/codemirror/CodeMirror)
 -	colors@1.4.0 (https://github.com/Marak/colors.js)
--	commander@8.3.0 (https://github.com/tj/commander.js)
+-	commander@13.1.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
 -	debug@4.3.4 (https://github.com/debug-js/debug)
 -	debug@4.4.0 (https://github.com/debug-js/debug)
@@ -225,7 +225,7 @@ SOFTWARE.
 =========================================
 END OF balanced-match@1.0.2 AND INFORMATION
 
-%% brace-expansion@1.1.11 NOTICES AND INFORMATION BEGIN HERE
+%% brace-expansion@1.1.12 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -249,7 +249,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF brace-expansion@1.1.11 AND INFORMATION
+END OF brace-expansion@1.1.12 AND INFORMATION
 
 %% buffer-crc32@0.2.13 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -331,7 +331,7 @@ THE SOFTWARE.
 =========================================
 END OF colors@1.4.0 AND INFORMATION
 
-%% commander@8.3.0 NOTICES AND INFORMATION BEGIN HERE
+%% commander@13.1.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -356,7 +356,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF commander@8.3.0 AND INFORMATION
+END OF commander@13.1.0 AND INFORMATION
 
 %% concat-map@0.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================

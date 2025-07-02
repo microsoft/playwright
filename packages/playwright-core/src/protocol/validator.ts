@@ -136,6 +136,8 @@ scheme.SetNetworkCookie = tObject({
   httpOnly: tOptional(tBoolean),
   secure: tOptional(tBoolean),
   sameSite: tOptional(tEnum(['Strict', 'Lax', 'None'])),
+  partitionKey: tOptional(tString),
+  _crHasCrossSiteAncestor: tOptional(tBoolean),
 });
 scheme.NetworkCookie = tObject({
   name: tString,
@@ -146,6 +148,8 @@ scheme.NetworkCookie = tObject({
   httpOnly: tBoolean,
   secure: tBoolean,
   sameSite: tEnum(['Strict', 'Lax', 'None']),
+  partitionKey: tOptional(tString),
+  _crHasCrossSiteAncestor: tOptional(tBoolean),
 });
 scheme.NameValue = tObject({
   name: tString,
@@ -372,8 +376,8 @@ scheme.PlaywrightInitializer = tObject({
   chromium: tChannel(['BrowserType']),
   firefox: tChannel(['BrowserType']),
   webkit: tChannel(['BrowserType']),
-  bidiChromium: tChannel(['BrowserType']),
-  bidiFirefox: tChannel(['BrowserType']),
+  _bidiChromium: tChannel(['BrowserType']),
+  _bidiFirefox: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
   utils: tOptional(tChannel(['LocalUtils'])),
@@ -1081,6 +1085,7 @@ scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextEnableRecorderParams = tObject({
   language: tOptional(tString),
   mode: tOptional(tEnum(['inspecting', 'recording'])),
+  recorderMode: tOptional(tEnum(['record', 'perform'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
   launchOptions: tOptional(tAny),
@@ -1647,6 +1652,12 @@ scheme.FrameFrameElementParams = tOptional(tObject({}));
 scheme.FrameFrameElementResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameGenerateLocatorStringParams = tObject({
+  selector: tString,
+});
+scheme.FrameGenerateLocatorStringResult = tObject({
+  value: tOptional(tString),
+});
 scheme.FrameHighlightParams = tObject({
   selector: tString,
 });
@@ -1854,7 +1865,7 @@ scheme.FrameUncheckParams = tObject({
 });
 scheme.FrameUncheckResult = tOptional(tObject({}));
 scheme.FrameWaitForTimeoutParams = tObject({
-  timeout: tNumber,
+  waitTimeout: tNumber,
 });
 scheme.FrameWaitForTimeoutResult = tOptional(tObject({}));
 scheme.FrameWaitForFunctionParams = tObject({
@@ -1878,7 +1889,7 @@ scheme.FrameWaitForSelectorResult = tObject({
   element: tOptional(tChannel(['ElementHandle'])),
 });
 scheme.FrameExpectParams = tObject({
-  selector: tString,
+  selector: tOptional(tString),
   expression: tString,
   expressionArg: tOptional(tAny),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
@@ -2040,10 +2051,6 @@ scheme.ElementHandleFillParams = tObject({
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
 scheme.ElementHandleFocusResult = tOptional(tObject({}));
-scheme.ElementHandleGenerateLocatorStringParams = tOptional(tObject({}));
-scheme.ElementHandleGenerateLocatorStringResult = tObject({
-  value: tOptional(tString),
-});
 scheme.ElementHandleGetAttributeParams = tObject({
   name: tString,
 });

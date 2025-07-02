@@ -15,13 +15,10 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { test, expect } from './inspectorTest';
 
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
-
-test('should print the correct imports and context options', async ({ runCLI }) => {
-  const cli = runCLI(['--target=python-pytest', emptyHTML]);
+test('should print the correct imports and context options', async ({ runCLI, server }) => {
+  const cli = runCLI(['--target=python-pytest', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Page, expect
 
@@ -30,11 +27,11 @@ def test_example(page: Page) -> None:`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and lang', async ({ browserName, runCLI }, testInfo) => {
+test('should print the correct context options when using a device and lang', async ({ browserName, runCLI, server }, testInfo) => {
   test.skip(browserName !== 'webkit');
 
   const tmpFile = testInfo.outputPath('script.js');
-  const cli = runCLI(['--target=python-pytest', '--device=iPhone 11', '--lang=en-US', '--output', tmpFile, emptyHTML], {
+  const cli = runCLI(['--target=python-pytest', '--device=iPhone 11', '--lang=en-US', '--output', tmpFile, server.EMPTY_PAGE], {
     autoExitWhen: 'page.goto',
   });
   await cli.waitForCleanExit();
@@ -50,13 +47,13 @@ def browser_context_args(browser_context_args, playwright):
 
 
 def test_example(page: Page) -> None:
-    page.goto("${emptyHTML}")
+    page.goto("${server.EMPTY_PAGE}")
 `);
 });
 
-test('should save the codegen output to a file if specified', async ({ runCLI }, testInfo) => {
+test('should save the codegen output to a file if specified', async ({ runCLI, server }, testInfo) => {
   const tmpFile = testInfo.outputPath('test_example.py');
-  const cli = runCLI(['--target=python-pytest', '--output', tmpFile, emptyHTML], {
+  const cli = runCLI(['--target=python-pytest', '--output', tmpFile, server.EMPTY_PAGE], {
     autoExitWhen: 'page.goto',
   });
   await cli.waitForCleanExit();
@@ -66,7 +63,7 @@ from playwright.sync_api import Page, expect
 
 
 def test_example(page: Page) -> None:
-    page.goto("${emptyHTML}")
+    page.goto("${server.EMPTY_PAGE}")
 `);
 });
 

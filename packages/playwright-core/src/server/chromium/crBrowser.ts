@@ -58,7 +58,7 @@ export class CRBrowser extends Browser {
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     // Make a copy in case we need to update `headful` property below.
     options = { ...options };
-    const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
+    const connection = new CRConnection(parent, transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(parent, connection, options);
     browser._devtools = devtools;
     if (browser.isClank())
@@ -381,19 +381,56 @@ export class CRBrowserContext extends BrowserContext {
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
-      const copy: any = { sameSite: 'Lax', ...c };
-      delete copy.size;
-      delete copy.priority;
-      delete copy.session;
-      delete copy.sameParty;
-      delete copy.sourceScheme;
-      delete copy.sourcePort;
-      return copy as channels.NetworkCookie;
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const copy: channels.NetworkCookie = {
+        name,
+        value,
+        domain,
+        path,
+        expires,
+        httpOnly,
+        secure,
+        sameSite: sameSite ?? 'Lax',
+      };
+      // If hasCrossSiteAncestor is false, the cookie is a partitioned first party cookie,
+      // this is Chromium specific, see https://chromestatus.com/feature/5144832583663616
+      // and https://github.com/explainers-by-googlers/CHIPS-spec.
+      if (c.partitionKey) {
+        copy._crHasCrossSiteAncestor = c.partitionKey.hasCrossSiteAncestor;
+        copy.partitionKey = c.partitionKey.topLevelSite;
+      }
+      return copy;
     }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId });
+    function toChromiumCookie(cookie: channels.SetNetworkCookie) {
+      const { name, value, url, domain, path, expires, httpOnly, secure, sameSite, partitionKey, _crHasCrossSiteAncestor } = cookie;
+      const copy: Protocol.Network.CookieParam = {
+        name,
+        value,
+        url,
+        domain,
+        path,
+        expires,
+        httpOnly,
+        secure,
+        sameSite
+      };
+      if (partitionKey) {
+        copy.partitionKey = {
+          topLevelSite: partitionKey,
+          // _crHasCrossSiteAncestor is non-standard, set it true by default if the cookie is partitioned.
+          hasCrossSiteAncestor: _crHasCrossSiteAncestor ?? true,
+        };
+      }
+      return copy;
+    }
+
+    await this._browser._session.send('Storage.setCookies', {
+      cookies: network.rewriteCookies(cookies).map(toChromiumCookie),
+      browserContextId: this._browserContextId
+    });
   }
 
   async doClearCookies() {
@@ -418,6 +455,7 @@ export class CRBrowserContext extends BrowserContext {
       // chrome-specific permissions we have.
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
+      ['local-fonts', 'localFonts'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
@@ -439,8 +477,7 @@ export class CRBrowserContext extends BrowserContext {
       await (page.delegate as CRPage).updateGeolocation();
   }
 
-  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
-    this._options.extraHTTPHeaders = headers;
+  async doUpdateExtraHTTPHeaders(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as CRPage).updateExtraHTTPHeaders();
     for (const sw of this.serviceWorkers())
@@ -454,8 +491,7 @@ export class CRBrowserContext extends BrowserContext {
     // TODO: service workers don't have Emulation domain?
   }
 
-  async setOffline(offline: boolean): Promise<void> {
-    this._options.offline = offline;
+  async doUpdateOffline(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as CRPage).updateOffline();
     for (const sw of this.serviceWorkers())
@@ -485,6 +521,14 @@ export class CRBrowserContext extends BrowserContext {
       await (page.delegate as CRPage).updateRequestInterception();
     for (const sw of this.serviceWorkers())
       await (sw as CRServiceWorker).updateRequestInterception();
+  }
+
+  override async doUpdateDefaultViewport() {
+    // No-op, because each page resets its own viewport.
+  }
+
+  override async doUpdateDefaultEmulatedMedia() {
+    // No-op, because each page resets its own color scheme.
   }
 
   override async doExposePlaywrightBinding() {

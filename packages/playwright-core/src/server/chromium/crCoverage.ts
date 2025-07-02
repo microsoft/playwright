@@ -22,6 +22,7 @@ import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 
 export class CRCoverage {
@@ -33,16 +34,18 @@ export class CRCoverage {
     this._cssCoverage = new CSSCoverage(client);
   }
 
-  async startJSCoverage(options: channels.PageStartJSCoverageParams) {
-    return await this._jsCoverage.start(options);
+  async startJSCoverage(progress: Progress, options: channels.PageStartJSCoverageParams) {
+    progress.cleanupWhenAborted(() => this._jsCoverage.stop());
+    await progress.race(this._jsCoverage.start(options));
   }
 
   async stopJSCoverage(): Promise<channels.PageStopJSCoverageResult> {
     return await this._jsCoverage.stop();
   }
 
-  async startCSSCoverage(options: channels.PageStartCSSCoverageParams) {
-    return await this._cssCoverage.start(options);
+  async startCSSCoverage(progress: Progress, options: channels.PageStartCSSCoverageParams) {
+    progress.cleanupWhenAborted(() => this._cssCoverage.stop());
+    await progress.race(this._cssCoverage.start(options));
   }
 
   async stopCSSCoverage(): Promise<channels.PageStopCSSCoverageResult> {

@@ -47,15 +47,14 @@ import type { ElementText, TextMatcher } from './selectorUtils';
 import type { Builtins } from './utilityScript';
 
 
-export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
+export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue' | 'timeout'> & { expectedValue?: any };
 
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
 export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected' };
 
-export type HitTargetError = { hitTargetDescription: string, hasPositionStickyOrFixed: boolean };
 export type HitTargetInterceptionResult = {
-  stop: () => 'done' | HitTargetError;
+  stop: () => 'done' | { hitTargetDescription: string };
 };
 
 interface WebKitLegacyDeviceOrientationEvent extends DeviceOrientationEvent {
@@ -73,7 +72,6 @@ export type InjectedScriptOptions = {
   testIdAttributeName: string;
   stableRafCount: number;
   browserName: string;
-  inputFileRoleTextbox: boolean;
   customEngines: { name: string, source: string }[];
 };
 
@@ -236,7 +234,7 @@ export class InjectedScript {
 
     this._stableRafCount = options.stableRafCount;
     this._browserName = options.browserName;
-    setGlobalOptions({ browserNameForWorkarounds: options.browserName, inputFileRoleTextbox: options.inputFileRoleTextbox });
+    setGlobalOptions({ browserNameForWorkarounds: options.browserName });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
@@ -750,7 +748,7 @@ export class InjectedScript {
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | 'error:optionsnotfound' {
+  selectOptions(node: Node, optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | 'error:optionsnotfound' | 'error:optionnotenabled' {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
@@ -778,6 +776,8 @@ export class InjectedScript {
       };
       if (!remainingOptionsToSelect.some(filter))
         continue;
+      if (!this.elementState(option, 'enabled').matches)
+        return 'error:optionnotenabled';
       selectedOptions.push(option);
       if (select.multiple) {
         remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));
@@ -924,7 +924,7 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element): 'done' | HitTargetError {
+  expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {
     const roots: (Document | ShadowRoot)[] = [];
 
     // Get all component roots leading to the target element.
@@ -977,21 +977,14 @@ export class InjectedScript {
 
     // Check whether hit target is the target or its descendant.
     const hitParents: Element[] = [];
-    const isHitParentPositionStickyOrFixed: boolean[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
-      isHitParentPositionStickyOrFixed.push(['sticky', 'fixed'].includes(this.window.getComputedStyle(hitElement).position));
       hitElement = parentElementOrShadowHost(hitElement);
     }
     if (hitElement === targetElement)
       return 'done';
 
-    // The description of the element that was hit instead of the target element.
     const hitTargetDescription = this.previewNode(hitParents[0] || this.document.documentElement);
-    // Whether any ancestor of the hit target has position: static. In this case, it could be
-    // beneficial to scroll the target element into different positions to reveal it.
-    let hasPositionStickyOrFixed = isHitParentPositionStickyOrFixed.some(x => x);
-
     // Root is the topmost element in the hitTarget's chain that is not in the
     // element's chain. For example, it might be a dialog element that overlays
     // the target.
@@ -1002,14 +995,13 @@ export class InjectedScript {
       if (index !== -1) {
         if (index > 1)
           rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
-        hasPositionStickyOrFixed = isHitParentPositionStickyOrFixed.slice(0, index).some(x => x);
         break;
       }
       element = parentElementOrShadowHost(element);
     }
     if (rootHitTargetDescription)
-      return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree`, hasPositionStickyOrFixed };
-    return { hitTargetDescription, hasPositionStickyOrFixed };
+      return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
+    return { hitTargetDescription };
   }
 
   // Life of a pointer action, for example click.
@@ -1042,7 +1034,7 @@ export class InjectedScript {
   //     2k. (injected) Event interceptor is removed.
   //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
   //     2m. If failed, wait for increasing amount of time before the next retry.
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number } | undefined, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* JSON.stringify(hitTargetDescription) */ {
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number } | undefined, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
     const element = this.retarget(node, 'button-link');
     if (!element || !element.isConnected)
       return 'error:notconnected';
@@ -1052,7 +1044,7 @@ export class InjectedScript {
       // intercepting the action.
       const preliminaryResult = this.expectHitTarget(hitPoint, element);
       if (preliminaryResult !== 'done')
-        return JSON.stringify(preliminaryResult);
+        return preliminaryResult.hitTargetDescription;
     }
 
     // When dropping, the "element that is being dragged" often stays under the cursor,
@@ -1067,7 +1059,7 @@ export class InjectedScript {
       'tap': this._tapHitTargetInterceptorEvents,
       'mouse': this._mouseHitTargetInterceptorEvents,
     }[action];
-    let result: 'done' | HitTargetError | undefined;
+    let result: 'done' | { hitTargetDescription: string } | undefined;
 
     const listener = (event: PointerEvent | MouseEvent | TouchEvent) => {
       // Ignore events that we do not expect to intercept.
@@ -1349,6 +1341,16 @@ export class InjectedScript {
       // expect(locator).not.toBeInViewport() passes when there is no element.
       if (options.isNot && options.expression === 'to.be.in.viewport')
         return { matches: false };
+      if (options.expression === 'to.have.title' && options?.expectedText?.[0]) {
+        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
+        const received = this.document.title;
+        return { received, matches: matcher.matches(received) };
+      }
+      if (options.expression === 'to.have.url' && options?.expectedText?.[0]) {
+        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
+        const received = this.document.location.href;
+        return { received, matches: matcher.matches(received) };
+      }
       // When none of the above applies, expect does not match.
       return { matches: options.isNot, missingReceived: true };
     }
@@ -1498,10 +1500,6 @@ export class InjectedScript {
         received = getElementAccessibleErrorMessage(element);
       } else if (expression === 'to.have.role') {
         received = getAriaRole(element) || '';
-      } else if (expression === 'to.have.title') {
-        received = this.document.title;
-      } else if (expression === 'to.have.url') {
-        received = this.document.location.href;
       } else if (expression === 'to.have.value') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')

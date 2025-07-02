@@ -869,7 +869,7 @@ export class WKPage implements PageDelegate {
     const omitDeviceScaleFactor = scale === 'css';
     this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
-    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor });
+    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor }));
     const prefix = 'data:image/png;base64,';
     let buffer: Buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
@@ -994,7 +994,7 @@ export class WKPage implements PageDelegate {
   async inputActionEpilogue(): Promise<void> {
   }
 
-  async resetForReuse(): Promise<void> {
+  async resetForReuse(progress: Progress): Promise<void> {
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {

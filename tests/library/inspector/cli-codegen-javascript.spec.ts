@@ -15,17 +15,14 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { test, expect } from './inspectorTest';
-
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 
 const launchOptions = (channel: string) => {
   return channel ? `channel: '${channel}',\n    headless: false` : 'headless: false';
 };
 
-test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
-  const cli = runCLI(['--target=javascript', emptyHTML]);
+test('should print the correct imports and context options', async ({ browserName, channel, runCLI, server }) => {
+  const cli = runCLI(['--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
@@ -36,8 +33,8 @@ test('should print the correct imports and context options', async ({ browserNam
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', '--target=javascript', emptyHTML]);
+test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server }) => {
+  const cli = runCLI(['--color-scheme=light', '--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
@@ -51,10 +48,10 @@ test('should print the correct context options for custom settings', async ({ br
 });
 
 
-test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
+test('should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
-  const cli = runCLI(['--device=Pixel 2', '--target=javascript', emptyHTML]);
+  const cli = runCLI(['--device=Pixel 2', '--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { chromium, devices } = require('playwright');
 
 (async () => {
@@ -67,10 +64,10 @@ test('should print the correct context options when using a device', async ({ br
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'webkit');
 
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=javascript', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { webkit, devices } = require('playwright');
 
 (async () => {
@@ -84,9 +81,9 @@ test('should print the correct context options when using a device and additiona
   await cli.waitFor(expectedResult);
 });
 
-test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI }, testInfo) => {
+test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI, server }, testInfo) => {
   const tmpFile = testInfo.outputPath('script.js');
-  const cli = runCLI(['--output', tmpFile, '--target=javascript', emptyHTML], {
+  const cli = runCLI(['--output', tmpFile, '--target=javascript', server.EMPTY_PAGE], {
     autoExitWhen: 'await page.goto', // We have to wait for the initial navigation to be recorded.
   });
   await cli.waitForCleanExit();
@@ -99,7 +96,7 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   });
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto('${emptyHTML}');
+  await page.goto('${server.EMPTY_PAGE}');
   await page.close();
 
   // ---------------------
@@ -108,11 +105,11 @@ test('should save the codegen output to a file if specified', async ({ browserNa
 })();`);
 });
 
-test('should print load/save storageState', async ({ browserName, channel, runCLI }, testInfo) => {
+test('should print load/save storageState', async ({ browserName, channel, runCLI, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=javascript', emptyHTML]);
+  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=javascript', server.EMPTY_PAGE]);
   const expectedResult1 = `const { ${browserName} } = require('playwright');
 
 (async () => {

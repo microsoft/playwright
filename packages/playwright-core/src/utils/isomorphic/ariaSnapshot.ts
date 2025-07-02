@@ -28,6 +28,7 @@ export type AriaProps = {
   checked?: boolean | 'mixed';
   disabled?: boolean;
   expanded?: boolean;
+  active?: boolean;
   level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -243,9 +244,10 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
   convertSeq(fragment, yamlDoc.contents as yamlTypes.YAMLSeq);
   if (errors.length)
     return { errors, fragment: emptyFragment };
-  if (fragment.children?.length === 1)
-    return { fragment: fragment.children[0], errors };
-  return { fragment, errors };
+  // `- button` should target the button, not its parent.
+  if (fragment.children?.length === 1 && (!fragment.containerMode || fragment.containerMode === 'contain'))
+    return { fragment: fragment.children[0], errors: [] };
+  return { fragment, errors: [] };
 }
 
 const emptyFragment: AriaTemplateRoleNode = { kind: 'role', role: 'fragment' };
@@ -441,6 +443,11 @@ export class KeyParser {
     if (key === 'expanded') {
       this._assert(value === 'true' || value === 'false', 'Value of "expanded" attribute must be a boolean', errorPos);
       node.expanded = value === 'true';
+      return;
+    }
+    if (key === 'active') {
+      this._assert(value === 'true' || value === 'false', 'Value of "active" attribute must be a boolean', errorPos);
+      node.active = value === 'true';
       return;
     }
     if (key === 'level') {
