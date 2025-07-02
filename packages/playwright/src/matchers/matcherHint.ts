@@ -15,7 +15,6 @@
  */
 
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
@@ -24,11 +23,11 @@ import type { Locator } from 'playwright-core';
 export const kNoElementsFoundError = '<element(s) not found>';
 
 export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout?: number) {
-  let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + '\n\n';
-  if (timeout)
-    header = colors.red(`Timed out ${timeout}ms waiting for `) + header;
+  let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + ' failed\n\n';
   if (locator)
     header += `Locator: ${String(locator)}\n`;
+  if (timeout)
+    header += `Timeout: ${timeout}ms\n`;
   return header;
 }
 
