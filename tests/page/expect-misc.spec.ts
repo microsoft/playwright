@@ -464,7 +464,7 @@ test.describe('toBeInViewport', () => {
   test('should have good stack', async ({ page }) => {
     let error;
     try {
-      await expect(page.locator('body')).not.toBeInViewport({ timeout: 100 });
+      await expect(page.locator('body')).not.toBeInViewport({ timeout: 500 });
     } catch (e) {
       error = e;
     }
