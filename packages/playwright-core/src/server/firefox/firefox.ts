@@ -52,7 +52,7 @@ export class Firefox extends BrowserType {
     return error;
   }
 
-  override amendEnvironment(env: Env): Env {
+  override async amendEnvironment(env: Env) {
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
     if (os.platform() === 'linux') {
@@ -70,7 +70,7 @@ export class Firefox extends BrowserType {
     transport.send(message);
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)

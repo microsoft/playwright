@@ -30,6 +30,7 @@ export class TestProxy {
   readonly HOST: string;
   readonly PORT: number;
   readonly URL: string;
+  readonly HOSTNAME: string;
 
   connectHosts: string[] = [];
   requestUrls: string[] = [];
@@ -39,13 +40,13 @@ export class TestProxy {
   private readonly _sockets = new Set<net.Socket>();
   private _handlers: { event: string, handler: (...args: any[]) => void }[] = [];
 
-  static async create(port: number): Promise<TestProxy> {
-    const proxy = new TestProxy(port);
+  static async create(port: number, loopback: string): Promise<TestProxy> {
+    const proxy = new TestProxy(port, loopback);
     await new Promise<void>(f => proxy._server.listen(port, f));
     return proxy;
   }
 
-  private constructor(port: number) {
+  private constructor(port: number, loopback: string) {
     this.PORT = port;
     this.URL = `http://localhost:${port}`;
     this.HOST = new URL(this.URL).host;

@@ -175,9 +175,9 @@ export abstract class BrowserType extends SdkObject {
     if (ignoreAllDefaultArgs)
       browserArguments.push(...args);
     else if (ignoreDefaultArgs)
-      browserArguments.push(...this.defaultArgs(options, isPersistent, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      browserArguments.push(...(await this.defaultArgs(options, isPersistent, userDataDir)).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
-      browserArguments.push(...this.defaultArgs(options, isPersistent, userDataDir));
+      browserArguments.push(...(await this.defaultArgs(options, isPersistent, userDataDir)));
 
     let executable: string;
     if (executablePath) {
@@ -210,10 +210,19 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const exitPromise = new ManualPromise();
+    const processLifecycleHooks = this.processLifecycleHooks(options);
+    if (processLifecycleHooks) {
+      await processLifecycleHooks.preLaunch();
+      prepared.browserArguments = processLifecycleHooks.rewriteArgs(prepared.browserArguments);
+      prepared.executable = processLifecycleHooks.rewriteExecutable();
+    }
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
-      env: this.amendEnvironment(env, prepared.userDataDir, isPersistent),
+      env: {
+        ...await this.amendEnvironment(env, prepared.userDataDir, isPersistent),
+        ...await processLifecycleHooks?.envProvider(),
+      },
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -234,6 +243,7 @@ export abstract class BrowserType extends SdkObject {
         }
       },
       onExit: (exitCode, signal) => {
+        processLifecycleHooks?.onExit();
         // Unblock launch when browser prematurely exits.
         exitPromise.resolve();
         if (browserProcess && browserProcess.onclose)
@@ -265,12 +275,10 @@ export abstract class BrowserType extends SdkObject {
         this.waitForReadyState(options, browserLogsCollector),
         exitPromise.then(() => ({ wsEndpoint: undefined })),
       ]);
-      if (options.cdpPort !== undefined || !this.supportsPipeTransport()) {
+      if (options.cdpPort !== undefined || !this.supportsPipeTransport())
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
-      } else {
-        const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-        transport = new PipeTransport(stdio[3], stdio[4]);
-      }
+      else
+        transport = new PipeTransport(processLifecycleHooks?.writePipe() ?? stdio[3], processLifecycleHooks?.readPipe() ?? stdio[4]);
       return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
     } catch (error) {
       await closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {});
@@ -339,12 +347,25 @@ export abstract class BrowserType extends SdkObject {
     return options.channel || this._name;
   }
 
-  abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
+  abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env;
+  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Promise<Env>;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
+  protected processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks | undefined {
+    return undefined;
+  }
 }
+
+export type LaunchLifecycleHooks = {
+  preLaunch(): Promise<void>;
+  onExit(): Promise<void>;
+  envProvider(): Promise<Env>;
+  readPipe(): NodeJS.ReadableStream;
+  writePipe(): NodeJS.WritableStream;
+  rewriteArgs(args: string[]): string[];
+  rewriteExecutable(): string;
+};
 
 function copyTestHooks(from: object, to: object) {
   for (const [key, value] of Object.entries(from)) {

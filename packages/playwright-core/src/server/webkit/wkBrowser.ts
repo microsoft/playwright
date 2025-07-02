@@ -22,6 +22,7 @@ import * as network from '../network';
 import { WKConnection, WKSession, kPageProxyMessageReceived } from './wkConnection';
 import { WKPage } from './wkPage';
 import { TargetClosedError } from '../errors';
+import { translatePathToWSL } from './webkit';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -87,7 +88,7 @@ export class WKBrowser extends Browser {
     const createOptions = proxy ? {
       // Enable socks5 hostname resolution on Windows.
       // See https://github.com/microsoft/playwright/issues/20451
-      proxyServer: process.platform === 'win32' ? proxy.server.replace(/^socks5:\/\//, 'socks5h://') : proxy.server,
+      proxyServer: process.platform === 'win32' && this.attribution.browser?.options.channel !== 'webkit-wsl' ? proxy.server.replace(/^socks5:\/\//, 'socks5h://') : proxy.server,
       proxyBypassList: proxy.bypass
     } : undefined;
     const { browserContextId } = await this._browserSession.send('Playwright.createContext', createOptions);
@@ -220,7 +221,7 @@ export class WKBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [super._initialize()];
     promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
       behavior: this._options.acceptDownloads === 'accept' ? 'allow' : 'deny',
-      downloadPath: this._browser.options.downloadsPath,
+      downloadPath: await translatePathToWSL(this._browser.options.downloadsPath),
       browserContextId
     }));
     if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)

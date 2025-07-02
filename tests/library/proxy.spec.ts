@@ -41,12 +41,12 @@ it('should use proxy @smoke', async ({ browserType, server, mode }) => {
   await browser.close();
 });
 
-it('should use proxy for second page', async ({ browserType, server }) => {
+it('should use proxy for second page', async ({ browserType, loopback, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${server.PORT}` }
+    proxy: { server: `${loopback}:${server.PORT}` }
   });
 
   const page = await browser.newPage();
@@ -323,12 +323,12 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
   await closeProxyServer();
 });
 
-it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion }) => {
+it('should use http proxy for websocket requests', async ({ browserName, browserType, loopback, server, proxyServer, isWindows, isMac, macVersion, channel }) => {
   it.skip(isMac && macVersion === 13, 'Times out on Mac 13');
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: `${loopback}:${proxyServer.PORT}` }
   });
 
   server.sendOnWebSocketConnection('incoming');
@@ -352,7 +352,7 @@ it('should use http proxy for websocket requests', async ({ browserName, browser
 
   // WebKit does not use CONNECT for websockets, but other browsers do.
   if (browserName === 'webkit')
-    expect(proxyServer.wsUrls).toContain(isWindows ? '/ws' : 'ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
+    expect(proxyServer.wsUrls).toContain((isWindows && channel !== 'webkit-wsl') ? '/ws' : 'ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
   else
     expect(proxyServer.connectHosts).toContain('fake-localhost-127-0-0-1.nip.io:1337');
 

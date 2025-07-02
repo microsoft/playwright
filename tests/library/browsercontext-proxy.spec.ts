@@ -102,8 +102,8 @@ it('should send secure cookies to subdomain.localhost', async ({ contextFactory,
 
 it('should set cookie for top-level domain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18362' }
-}, async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
-  it.fixme(browserName === 'webkit' && isLinux);
+}, async ({ contextFactory, server, proxyServer, browserName, isLinux, channel }) => {
+  it.fixme(browserName === 'webkit' && isLinux || channel === 'webkit-wsl');
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
@@ -388,9 +388,9 @@ it('should exclude patterns', async ({ contextFactory, server, proxyServer }) =>
   await context.close();
 });
 
-it('should use socks proxy', async ({ contextFactory, socksPort }) => {
+it('should use socks proxy', async ({ contextFactory, loopback, socksPort }) => {
   const context = await contextFactory({
-    proxy: { server: `socks5://localhost:${socksPort}` }
+    proxy: { server: `socks5://${loopback}:${socksPort}` }
   });
   const page = await context.newPage();
   await page.goto('http://non-existent.com');
@@ -398,9 +398,9 @@ it('should use socks proxy', async ({ contextFactory, socksPort }) => {
   await context.close();
 });
 
-it('should use socks proxy in second page', async ({ contextFactory, socksPort }) => {
+it('should use socks proxy in second page', async ({ contextFactory, loopback, socksPort }) => {
   const context = await contextFactory({
-    proxy: { server: `socks5://localhost:${socksPort}` }
+    proxy: { server: `socks5://${loopback}:${socksPort}` }
   });
 
   const page = await context.newPage();
