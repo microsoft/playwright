@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
-import { type AnchorID, useAnchor } from './links';
+import { AnchorID, useAnchor } from './anchor';
 
 export const Chip: React.FC<{
   header: JSX.Element | string,
