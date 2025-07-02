@@ -60,7 +60,8 @@ it('should use proxy for second page', async ({ browserType, loopback, server })
   await browser.close();
 });
 
-it('should work with IP:PORT notion', async ({ browserType, server }) => {
+it('should work with IP:PORT notion', async ({ browserType, server, channel }) => {
+  it.skip(channel === 'webkit-wsl');
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -90,7 +91,8 @@ it.describe('should proxy local network requests', () => {
           description: 'link-local'
         }
       ]) {
-        it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer }) => {
+        it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer, channel }) => {
+          it.skip(channel === 'webkit-wsl');
           it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target) && additionalBypass, 'Mac webkit does not proxy localhost when bypass rules are set.');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
@@ -225,9 +227,9 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
   await browser.close();
 });
 
-it('should use socks proxy', async ({ browserType, socksPort }) => {
+it('should use socks proxy', async ({ browserType, socksPort, loopback }) => {
   const browser = await browserType.launch({
-    proxy: { server: `socks5://localhost:${socksPort}` }
+    proxy: { server: `socks5://${loopback}:${socksPort}` }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.com');
@@ -235,9 +237,9 @@ it('should use socks proxy', async ({ browserType, socksPort }) => {
   await browser.close();
 });
 
-it('should use socks proxy in second page', async ({ browserType, socksPort }) => {
+it('should use socks proxy in second page', async ({ browserType, socksPort, loopback }) => {
   const browser = await browserType.launch({
-    proxy: { server: `socks5://localhost:${socksPort}` }
+    proxy: { server: `socks5://${loopback}:${socksPort}` }
   });
 
   const page = await browser.newPage();
@@ -288,11 +290,12 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
 });
 
 
-it('should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
+it('should use SOCKS proxy for websocket requests', async ({ browserType, server, loopback }) => {
   const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer({
     port: it.info().workerIndex + 2048 + 2,
     forwardPort: server.PORT,
     allowedTargetPort: 1337,
+    loopback,
   });
   const browser = await browserType.launch({
     proxy: {

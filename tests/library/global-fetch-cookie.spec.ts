@@ -43,8 +43,8 @@ const __testHookLookup = (hostname: string): LookupAddress[] => {
     throw new Error(`Failed to resolve hostname: ${hostname}`);
 };
 
-it('should store cookie from Set-Cookie header', async ({ request, server }) => {
-  it.fixme(({ channel }) => channel === 'webkit-wsl');
+it('should store cookie from Set-Cookie header', async ({ request, server, channel }) => {
+  it.fixme(channel === 'webkit-wsl');
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d; max-age=3600; domain=b.one.com; path=/input', 'e=f; domain=b.one.com; path=/input/subfolder']);
     res.end();
@@ -128,7 +128,8 @@ it('should send secure cookie over https', async ({ request, server, httpsServer
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
 
-it('should send secure cookie over http for localhost', async ({ request, server }) => {
+it('should send secure cookie over http for localhost', async ({ request, server, channel }) => {
+  it.skip(channel === 'webkit-wsl', 'loopback is no localhost');
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; secure', 'b=v']);
     res.end();

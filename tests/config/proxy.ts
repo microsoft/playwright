@@ -136,9 +136,9 @@ export class TestProxy {
 }
 
 export async function setupSocksForwardingServer({
-  port, forwardPort, allowedTargetPort
+  port, forwardPort, allowedTargetPort, loopback
 }: {
-  port: number, forwardPort: number, allowedTargetPort: number
+  port: number, forwardPort: number, allowedTargetPort: number, loopback: string
 }) {
   const connectHosts = [];
   const connections = new Map<string, net.Socket>();
@@ -154,7 +154,7 @@ export async function setupSocksForwardingServer({
     target.on('end', () => socksProxy.sendSocketEnd({ uid: payload.uid }));
     target.on('data', data => socksProxy.sendSocketData({ uid: payload.uid, data }));
     target.setKeepAlive(false);
-    target.connect(forwardPort, '127.0.0.1');
+    target.connect(forwardPort, loopback);
     target.on('connect', () => {
       connections.set(payload.uid, target);
       if (!connectHosts.includes(`${payload.host}:${payload.port}`))
@@ -169,10 +169,10 @@ export async function setupSocksForwardingServer({
     connections.get(payload.uid)?.destroy();
     connections.delete(payload.uid);
   });
-  await socksProxy.listen(port, '127.0.0.1');
+  await socksProxy.listen(port, loopback);
   return {
     closeProxyServer: () => socksProxy.close(),
-    proxyServerAddr: `socks5://127.0.0.1:${port}`,
+    proxyServerAddr: `socks5://${loopback}:${port}`,
     connectHosts,
   };
 }

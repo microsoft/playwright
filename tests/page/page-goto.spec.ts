@@ -24,8 +24,9 @@ it('should work @smoke', async ({ page, server }) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({ page, asset, isAndroid, mode }) => {
+it('should work with file URL', async ({ page, asset, isAndroid, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
+  it.skip(channel === 'webkit-wsl');
   it.skip(mode.startsWith('service'));
 
   const fileurl = url.pathToFileURL(asset('empty.html')).href;
@@ -34,8 +35,9 @@ it('should work with file URL', async ({ page, asset, isAndroid, mode }) => {
   expect(page.frames().length).toBe(1);
 });
 
-it('should work with file URL with subframes', async ({ page, asset, isAndroid, mode }) => {
+it('should work with file URL with subframes', async ({ page, asset, isAndroid, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
+  it.skip(channel === 'webkit-wsl');
   it.skip(mode.startsWith('service'));
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
@@ -299,7 +301,7 @@ it('should fail when navigating to bad url', async ({ mode, page, browserName })
     expect(error.message).toContain('Invalid url');
 });
 
-it('should fail when navigating to bad SSL', async ({ page, browserName, httpsServer, platform }) => {
+it('should fail when navigating to bad SSL', async ({ page, browserName, httpsServer, platform, channel }) => {
   // Make sure that network events do not emit 'undefined'.
   // @see https://crbug.com/750469
   page.on('request', request => expect(request).toBeTruthy());
@@ -307,15 +309,15 @@ it('should fail when navigating to bad SSL', async ({ page, browserName, httpsSe
   page.on('requestfailed', request => expect(request).toBeTruthy());
   let error = null;
   await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-  expect(error.message).toMatch(expectedSSLError(browserName, platform));
+  expect(error.message).toMatch(expectedSSLError(browserName, platform, channel));
 });
 
-it('should fail when navigating to bad SSL after redirects', async ({ page, browserName, server, httpsServer, platform }) => {
+it('should fail when navigating to bad SSL after redirects', async ({ page, browserName, server, httpsServer, platform, channel }) => {
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   let error = null;
   await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
-  expect(error.message).toMatch(expectedSSLError(browserName, platform));
+  expect(error.message).toMatch(expectedSSLError(browserName, platform, channel));
 });
 
 it('should not crash when navigating to bad SSL after a cross origin navigation', async ({ page, server, httpsServer }) => {
@@ -335,7 +337,7 @@ it('should throw if networkidle2 is passed as an option', async ({ page, server 
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle|commit)`);
 });
 
-it('should fail when main resources failed to load', async ({ page, browserName, isWindows, mode }) => {
+it('should fail when main resources failed to load', async ({ page, browserName, isWindows, mode, channel }) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
   if (browserName === 'chromium') {
@@ -345,7 +347,7 @@ it('should fail when main resources failed to load', async ({ page, browserName,
       expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
   } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
     expect(error.message).toContain(`proxy handshake error`);
-  } else if (browserName === 'webkit' && isWindows) {
+  } else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') {
     expect(error.message).toContain(`Could not connect to server`);
   } else if (browserName === 'webkit') {
     if (mode === 'service2')
@@ -728,9 +730,9 @@ it('should work with lazy loading iframes', async ({ page, server, isAndroid }) 
   expect(page.frames().length).toBe(2);
 });
 
-it('should report raw buffer for main resource', async ({ page, server, browserName, platform }) => {
+it('should report raw buffer for main resource', async ({ page, server, browserName, platform, channel }) => {
   it.fail(browserName === 'chromium', 'Chromium sends main resource as text');
-  it.fail(browserName === 'webkit' && platform === 'win32', 'Same here');
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl', 'Same here');
 
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 200;
