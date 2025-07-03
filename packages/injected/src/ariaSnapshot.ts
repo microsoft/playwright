@@ -47,14 +47,6 @@ type AriaRef = {
 
 let lastRef = 0;
 
-function isVisible(element: Element, options?: { forAI?: boolean }): boolean {
-  if (!roleUtils.isElementHiddenForAria(element))
-    return true;
-  if (options?.forAI && isElementVisible(element))
-    return true;
-  return false;
-}
-
 export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
   const visited = new Set<Node>();
 
@@ -63,13 +55,13 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     elements: new Map<string, Element>(),
   };
 
-  const visit = (ariaNode: AriaNode, node: Node) => {
+  const visit = (ariaNode: AriaNode, node: Node, parentVisible: boolean) => {
     if (visited.has(node))
       return;
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
-      if (node.parentElement && !isVisible(node.parentElement, options))
+      if (!parentVisible)
         return;
 
       const text = node.nodeValue;
@@ -113,23 +105,24 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       ariaNode.children.push(treatAsBlock);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::before') || '');
+    const parentVisible = isElementVisible(element);
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
-        visit(ariaNode, child);
+        visit(ariaNode, child, parentVisible);
     } else {
       for (let child = element.firstChild; child; child = child.nextSibling) {
         if (!(child as Element | Text).assignedSlot)
-          visit(ariaNode, child);
+          visit(ariaNode, child, parentVisible);
       }
       if (element.shadowRoot) {
         for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
-          visit(ariaNode, child);
+          visit(ariaNode, child, parentVisible);
       }
     }
 
     for (const child of ariaChildren)
-      visit(ariaNode, child);
+      visit(ariaNode, child, parentVisible);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::after') || '');
 
@@ -147,7 +140,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
   roleUtils.beginAriaCaches();
   try {
-    visit(snapshot.root, rootElement);
+    visit(snapshot.root, rootElement, true);
   } finally {
     roleUtils.endAriaCaches();
   }
