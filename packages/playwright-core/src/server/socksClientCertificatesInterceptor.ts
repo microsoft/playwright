@@ -31,12 +31,12 @@ import type * as types from './types';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from './utils/socksProxy';
 import type https from 'https';
 
-let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
-function loadDummyServerCertsIfNeeded() {
-  if (dummyServerTlsOptions)
+let proxyServerTlsOptions: tls.TlsOptions | undefined = undefined;
+function loadProxyServerCertsIfNeeded() {
+  if (proxyServerTlsOptions)
     return;
   const { cert, key } = generateSelfSignedCertificate();
-  dummyServerTlsOptions = { key, cert };
+  proxyServerTlsOptions = { key, cert };
 }
 
 class ALPNCache {
@@ -82,7 +82,6 @@ class SocksProxyConnection {
   internal: stream.Duplex | undefined;
   internalTLS: tls.TLSSocket | undefined;
   private _targetCloseEventListener: () => void;
-  private _dummyServer: tls.Server | undefined;
   private _closed = false;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
@@ -94,7 +93,6 @@ class SocksProxyConnection {
       // Close the other end and cleanup TLS resources.
       this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid });
       this.internalTLS?.destroy();
-      this._dummyServer?.close();
     };
   }
 
@@ -121,7 +119,6 @@ class SocksProxyConnection {
     // Close the other end and cleanup TLS resources.
     this.target.destroy();
     this.internalTLS?.destroy();
-    this._dummyServer?.close();
     this._closed = true;
   }
 
@@ -154,12 +151,15 @@ class SocksProxyConnection {
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
       if (this._closed)
         return;
-      this._dummyServer = tls.createServer({
-        ...dummyServerTlsOptions,
+
+      const internalTLS = new tls.TLSSocket(this.internal!, {
+        ...proxyServerTlsOptions,
+        isServer: true,
+        secureContext: tls.createSecureContext(proxyServerTlsOptions),
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
       });
-      this._dummyServer.emit('connection', this.internal);
-      this._dummyServer.once('secureConnection', internalTLS => {
+
+      internalTLS.once('secure', () => {
         this.internalTLS = internalTLS;
         debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
 
@@ -270,7 +270,7 @@ export class ClientCertificatesProxy {
       this._connections.get(payload.uid)?.onClose();
       this._connections.delete(payload.uid);
     });
-    loadDummyServerCertsIfNeeded();
+    loadProxyServerCertsIfNeeded();
   }
 
   _initSecureContexts(clientCertificates: types.BrowserContextOptions['clientCertificates']) {
