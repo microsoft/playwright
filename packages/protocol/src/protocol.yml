@@ -359,6 +359,7 @@ FormField:
 
 APIRequestContext:
   type: interface
+  progress: true
 
   initializer:
     tracing: Tracing
@@ -629,6 +630,7 @@ ContextOptions:
 
 LocalUtils:
   type: interface
+  progress: true
 
   initializer:
     deviceDescriptors:
@@ -768,6 +770,7 @@ LocalUtils:
 
 Root:
   type: interface
+  progress: true
 
   commands:
 
@@ -786,6 +789,7 @@ Root:
 
 Playwright:
   type: interface
+  progress: true
 
   initializer:
     chromium: BrowserType
@@ -877,6 +881,7 @@ RecorderSource:
 
 DebugController:
   type: interface
+  progress: true
 
   commands:
     initialize:
@@ -963,6 +968,7 @@ DebugController:
 
 SocksSupport:
   type: interface
+  progress: true
 
   commands:
     socksConnected:
@@ -1014,6 +1020,7 @@ SocksSupport:
 
 BrowserType:
   type: interface
+  progress: true
 
   initializer:
     executablePath: string
@@ -1055,6 +1062,7 @@ BrowserType:
 
 Browser:
   type: interface
+  progress: true
 
   initializer:
     version: string
@@ -1196,6 +1204,7 @@ EventTarget:
 
 BrowserContext:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -1363,6 +1372,11 @@ BrowserContext:
           literals:
           - inspecting
           - recording
+        recorderMode:
+          type: enum?
+          literals:
+          - record
+          - perform
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?
@@ -1538,6 +1552,7 @@ BrowserContext:
 
 Page:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -2048,6 +2063,7 @@ Page:
 
 Frame:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -2289,6 +2305,13 @@ Frame:
       returns:
         element: ElementHandle
 
+    generateLocatorString:
+      internal: true
+      parameters:
+        selector: string
+      returns:
+        value: string?
+
     highlight:
       internal: true
       parameters:
@@ -2412,6 +2435,7 @@ Frame:
     isHidden:
       title: Is hidden
       parameters:
+        # Note: compared to other isFoo methods, isHidden is a one-shot operation without a timeout.
         selector: string
         strict: boolean?
       returns:
@@ -2422,6 +2446,7 @@ Frame:
     isVisible:
       title: Is visible
       parameters:
+        # Note: compared to other isFoo methods, isVisible is a one-shot operation without a timeout.
         selector: string
         strict: boolean?
       returns:
@@ -2619,7 +2644,7 @@ Frame:
     waitForTimeout:
       title: Wait for timeout
       parameters:
-        timeout: number
+        waitTimeout: number
       flags:
         snapshot: true
 
@@ -2701,6 +2726,7 @@ Frame:
 
 Worker:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -2732,6 +2758,7 @@ Worker:
 
 JSHandle:
   type: interface
+  progress: true
 
   initializer:
     preview: string
@@ -2795,6 +2822,7 @@ JSHandle:
 
 ElementHandle:
   type: interface
+  progress: true
 
   extends: JSHandle
 
@@ -2936,11 +2964,6 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
-
-    generateLocatorString:
-      internal: true
-      returns:
-        value: string?
 
     getAttribute:
       internal: true
@@ -3246,6 +3269,7 @@ ElementHandle:
 
 Request:
   type: interface
+  progress: true
 
   initializer:
     frame: Frame?
@@ -3277,6 +3301,7 @@ Request:
 
 Route:
   type: interface
+  progress: true
 
   initializer:
     request: Request
@@ -3318,6 +3343,7 @@ Route:
 
 WebSocketRoute:
   type: interface
+  progress: true
 
   initializer:
     url: string
@@ -3395,6 +3421,7 @@ ResourceTiming:
 
 Response:
   type: interface
+  progress: true
 
   initializer:
     request: Request
@@ -3465,6 +3492,7 @@ RemoteAddr:
 
 WebSocket:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -3493,6 +3521,7 @@ WebSocket:
 
 BindingCall:
   type: interface
+  progress: true
 
   initializer:
     frame: Frame
@@ -3518,6 +3547,7 @@ BindingCall:
 
 Dialog:
   type: interface
+  progress: true
 
   initializer:
     page: Page?
@@ -3537,6 +3567,7 @@ Dialog:
 
 Tracing:
   type: interface
+  progress: true
 
   commands:
 
@@ -3594,6 +3625,7 @@ Tracing:
 
 Artifact:
   type: interface
+  progress: true
 
   initializer:
     absolutePath: string
@@ -3636,6 +3668,7 @@ Artifact:
 
 Stream:
   type: interface
+  progress: true
 
   commands:
 
@@ -3652,6 +3685,7 @@ Stream:
 
 WritableStream:
   type: interface
+  progress: true
 
   commands:
 
@@ -3666,6 +3700,7 @@ WritableStream:
 
 CDPSession:
   type: interface
+  progress: true
 
   commands:
 
@@ -3690,6 +3725,7 @@ CDPSession:
 
 Electron:
   type: interface
+  progress: true
 
   commands:
 
@@ -3760,6 +3796,7 @@ Electron:
 
 ElectronApplication:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -3810,6 +3847,7 @@ ElectronApplication:
 
 Android:
   type: interface
+  progress: true
 
   commands:
 
@@ -3826,6 +3864,7 @@ Android:
 
 AndroidSocket:
   type: interface
+  progress: true
 
   commands:
     write:
@@ -3844,6 +3883,7 @@ AndroidSocket:
 
 AndroidDevice:
   type: interface
+  progress: true
 
   extends: EventTarget
 
@@ -4124,6 +4164,7 @@ AndroidElementInfo:
 
 JsonPipe:
   type: interface
+  progress: true
 
   commands:
     send:

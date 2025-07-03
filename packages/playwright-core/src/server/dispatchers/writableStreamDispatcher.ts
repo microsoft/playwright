@@ -21,6 +21,7 @@ import { SdkObject } from '../instrumentation';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 class WritableStreamSdkObject extends SdkObject {
   readonly streamOrDirectory: fs.WriteStream | string;
@@ -40,27 +41,27 @@ export class WritableStreamDispatcher extends Dispatcher<WritableStreamSdkObject
     super(scope, new WritableStreamSdkObject(scope._object, streamOrDirectory, lastModifiedMs), 'WritableStream', {});
   }
 
-  async write(params: channels.WritableStreamWriteParams): Promise<channels.WritableStreamWriteResult> {
+  async write(params: channels.WritableStreamWriteParams, progress: Progress): Promise<channels.WritableStreamWriteResult> {
     if (typeof this._object.streamOrDirectory === 'string')
       throw new Error('Cannot write to a directory');
     const stream = this._object.streamOrDirectory;
-    await new Promise<void>((fulfill, reject) => {
+    await progress.race(new Promise<void>((fulfill, reject) => {
       stream.write(params.binary, error => {
         if (error)
           reject(error);
         else
           fulfill();
       });
-    });
+    }));
   }
 
-  async close() {
+  async close(params: channels.WritableStreamCloseParams, progress: Progress): Promise<void> {
     if (typeof this._object.streamOrDirectory === 'string')
       throw new Error('Cannot close a directory');
     const stream = this._object.streamOrDirectory;
-    await new Promise<void>(fulfill => stream.end(fulfill));
+    await progress.race(new Promise<void>(fulfill => stream.end(fulfill)));
     if (this._object.lastModifiedMs)
-      await fs.promises.utimes(this.path(), new Date(this._object.lastModifiedMs), new Date(this._object.lastModifiedMs));
+      await progress.race(fs.promises.utimes(this.path(), new Date(this._object.lastModifiedMs), new Date(this._object.lastModifiedMs)));
   }
 
   path(): string {

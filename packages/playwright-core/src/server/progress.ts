@@ -15,35 +15,14 @@
  */
 
 import { TimeoutError } from './errors';
-import { assert } from '../utils';
+import { assert, monotonicTime } from '../utils';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
+import type { Progress } from '@protocol/progress';
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import type { LogName } from './utils/debugLogger';
 
-// Most server operations are run inside a Progress instance.
-// Each method that takes a Progress must result in one of the three outcomes:
-//   - It finishes successfully, returning a value, before the Progress is aborted.
-//   - It throws some error, before the Progress is aborted.
-//   - It throws the Progress's aborted error, because the Progress was aborted before
-//     the method could finish.
-// As a rule of thumb, the above is achieved by:
-//   - Passing the Progress instance when awaiting other methods.
-//   - Using `progress.race()` when awaiting other methods that do not take a Progress argument.
-//     In this case, it is important that awaited method has no side effects, for example
-//     it is a read-only browser protocol call.
-//   - In rare cases, when the awaited method does not take a Progress argument,
-//     but it does have side effects such as creating a page -  a proper cleanup
-//     must be taken in case Progress is aborted before the awaited method finishes.
-//     That's usually done by `progress.raceWithCleanup()` or `progress.cleanupWhenAborted()`.
-export interface Progress {
-  log(message: string): void;
-  cleanupWhenAborted(cleanup: (error: Error | undefined) => any): void;
-  race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
-  raceWithCleanup<T>(promise: Promise<T>, cleanup: (result: T) => any): Promise<T>;
-  wait(timeout: number): Promise<void>;
-  metadata: CallMetadata;
-}
+export type { Progress } from '@protocol/progress';
 
 export class ProgressController {
   private _forceAbortPromise = new ManualPromise<any>();
@@ -92,6 +71,27 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
     this.sdkObject.attribution.context?._activeProgressControllers.add(this);
+    let customErrorHandler: ((error: Error) => any) | undefined;
+
+    const deadline = timeout ? Math.min(monotonicTime() + timeout, 2147483647) : 0; // 2^31-1 safe setTimeout in Node.
+    const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
+
+    let timer: NodeJS.Timeout | undefined;
+    const startTimer = () => {
+      if (!deadline)
+        return;
+      const onTimeout = () => {
+        if (this._state === 'running') {
+          this._state = { error: timeoutError };
+          this._forceAbortPromise.reject(timeoutError);
+        }
+      };
+      const remaining = deadline - monotonicTime();
+      if (remaining <= 0)
+        onTimeout();
+      else
+        timer = setTimeout(onTimeout, remaining);
+    };
 
     const progress: Progress = {
       log: message => {
@@ -119,7 +119,10 @@ export class ProgressController {
       },
       raceWithCleanup: <T>(promise: Promise<T>, cleanup: (result: T) => any) => {
         return progress.race(promise.then(result => {
-          progress.cleanupWhenAborted(() => cleanup(result));
+          if (this._state !== 'running')
+            cleanup(result);
+          else
+            this._cleanups.push(() => cleanup(result));
           return result;
         }));
       },
@@ -128,18 +131,24 @@ export class ProgressController {
         const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
         return progress.race(promise).finally(() => clearTimeout(timer));
       },
+      legacyDisableTimeout: () => {
+        if (this._strictMode)
+          return;
+        clearTimeout(timer);
+      },
+      legacyEnableTimeout: () => {
+        if (this._strictMode)
+          return;
+        startTimer();
+      },
+      legacySetErrorHandler: (handler: (error: Error) => any) => {
+        if (this._strictMode)
+          return;
+        customErrorHandler = handler;
+      },
     };
 
-    let timer: NodeJS.Timeout | undefined;
-    if (timeout) {
-      const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
-      timer = setTimeout(() => {
-        if (this._state === 'running') {
-          this._state = { error: timeoutError };
-          this._forceAbortPromise.reject(timeoutError);
-        }
-      }, Math.min(timeout, 2147483647)); // 2^31-1 safe setTimeout in Node.
-    }
+    startTimer();
 
     try {
       const promise = task(progress);
@@ -149,6 +158,8 @@ export class ProgressController {
     } catch (error) {
       this._state = { error };
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(error, cleanup)));
+      if (customErrorHandler)
+        return customErrorHandler(error);
       throw error;
     } finally {
       this.sdkObject.attribution.context?._activeProgressControllers.delete(this);

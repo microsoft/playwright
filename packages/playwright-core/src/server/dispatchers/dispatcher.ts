@@ -24,7 +24,8 @@ import { TargetClosedError, isTargetClosedError, serializeError } from '../error
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
-import { methodMetainfo } from '../../utils/isomorphic/protocolMetainfo';
+import { methodMetainfo, progressTypes } from '../../utils/isomorphic/protocolMetainfo';
+import { Progress, ProgressController } from '../progress';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
@@ -101,8 +102,16 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendAdopt(this, child);
   }
 
+  private _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
+    if (progressTypes.has(this._type)) {
+      const controller = new ProgressController(callMetadata, this._object);
+      return controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
+    }
+    return (this as any)[method](validParams, callMetadata);
+  }
+
   async _handleCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const commandPromise = (this as any)[method](validParams, callMetadata);
+    const commandPromise = this._runCommand(callMetadata, method, validParams);
     try {
       return await this._openScope.race(commandPromise);
     } catch (e) {
@@ -171,7 +180,8 @@ export class RootDispatcher extends Dispatcher<SdkObject, any, any> {
     super(connection, createRootSdkObject(), 'Root', {});
   }
 
-  async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
+  async initialize(params: channels.RootInitializeParams, progress: Progress): Promise<channels.RootInitializeResult> {
+    // Note: progress is deliberately ignored here.
     assert(this.createPlaywright);
     assert(!this._initialized);
     this._initialized = true;

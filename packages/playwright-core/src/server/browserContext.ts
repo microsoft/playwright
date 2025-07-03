@@ -27,7 +27,7 @@ import { BrowserContextAPIRequestContext } from './fetch';
 import { mkdirIfNeeded } from './utils/fileUtils';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
-import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
@@ -42,7 +42,6 @@ import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
 import type * as frames from './frames';
-import type { CallMetadata } from './instrumentation';
 import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
@@ -144,7 +143,7 @@ export abstract class BrowserContext extends SdkObject {
     if (debugMode() === 'console')
       await this.extendInjectedScript('function Console(injectedScript) { injectedScript.consoleApi.install(); }');
     if (this._options.serviceWorkers === 'block')
-      await this.addInitScript(`\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
+      await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
@@ -190,13 +189,8 @@ export abstract class BrowserContext extends SdkObject {
     return JSON.stringify(paramsCopy);
   }
 
-  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.resetForReuseImpl(progress, params));
-  }
-
-  async resetForReuseImpl(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
-    await progress.race(this.tracing.resetForReuse());
+  async resetForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
+    await this.tracing.resetForReuse(progress);
 
     if (params) {
       for (const key of paramsThatAllowContextReuse)
@@ -207,7 +201,7 @@ export abstract class BrowserContext extends SdkObject {
 
     // Close extra pages early.
     let page: Page | undefined = this.pages()[0];
-    const [, ...otherPages] = this.pages();
+    const otherPages = this.possiblyUninitializedPages().filter(p => p !== page);
     for (const p of otherPages)
       await p.close();
     if (page && page.hasCrashed()) {
@@ -218,23 +212,17 @@ export abstract class BrowserContext extends SdkObject {
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().gotoImpl(progress, 'about:blank', {});
 
+    // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
+    // All other properties force a new context.
     await this._resetStorage(progress);
-
-    const resetOptions = async () => {
-      await this.clock.resetForReuse();
-      // TODO: following can be optimized to not perform noops.
-      if (this._options.permissions)
-        await this.grantPermissions(this._options.permissions);
-      else
-        await this.clearPermissions();
-      await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
-      await this.setGeolocation(this._options.geolocation);
-      await this.setOffline(!!this._options.offline);
-      await this.setUserAgent(this._options.userAgent);
-      await this.clearCache();
-      await this._resetCookies();
-    };
-    await progress.race(resetOptions());
+    await progress.race(this.clock.resetForReuse());
+    await progress.race(this.setUserAgent(this._options.userAgent));
+    await progress.race(this.clearCache());
+    await progress.race(this.doClearCookies());
+    await progress.race(this.doUpdateDefaultEmulatedMedia());
+    await progress.race(this.doUpdateDefaultViewport());
+    if (this._options.storageState?.cookies)
+      await progress.race(this.addCookies(this._options.storageState?.cookies));
 
     await page?.resetForReuse(progress);
   }
@@ -268,9 +256,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
-  abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
   abstract setUserAgent(userAgent: string | undefined): Promise<void>;
-  abstract setOffline(offline: boolean): Promise<void>;
   abstract cancelDownload(uuid: string): Promise<void>;
   abstract clearCache(): Promise<void>;
   protected abstract doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]>;
@@ -280,7 +266,11 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
   protected abstract doRemoveInitScripts(initScripts: InitScript[]): Promise<void>;
+  protected abstract doUpdateExtraHTTPHeaders(): Promise<void>;
+  protected abstract doUpdateOffline(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
+  protected abstract doUpdateDefaultViewport(): Promise<void>;
+  protected abstract doUpdateDefaultEmulatedMedia(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
   protected abstract doClose(reason: string | undefined): Promise<void>;
   protected abstract onClosePersistent(): void;
@@ -338,18 +328,19 @@ export abstract class BrowserContext extends SdkObject {
     return this._playwrightBindingExposed;
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
+  async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
       if (page.getBinding(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
-    await this.exposePlaywrightBindingIfNeeded();
+    await progress.race(this.exposePlaywrightBindingIfNeeded());
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
-    await this.doAddInitScript(binding.initScript);
-    await this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main');
+    progress.cleanupWhenAborted(() => this._pageBindings.delete(name));
+    await progress.race(this.doAddInitScript(binding.initScript));
+    await progress.race(this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main'));
     return binding;
   }
 
@@ -378,6 +369,26 @@ export abstract class BrowserContext extends SdkObject {
   async clearPermissions() {
     this._permissions.clear();
     await this.doClearPermissions();
+  }
+
+  async setExtraHTTPHeaders(progress: Progress, headers: types.HeadersArray) {
+    const oldHeaders = this._options.extraHTTPHeaders;
+    this._options.extraHTTPHeaders = headers;
+    progress.cleanupWhenAborted(async () => {
+      this._options.extraHTTPHeaders = oldHeaders;
+      await this.doUpdateExtraHTTPHeaders();
+    });
+    await progress.race(this.doUpdateExtraHTTPHeaders());
+  }
+
+  async setOffline(progress: Progress, offline: boolean) {
+    const oldOffline = this._options.offline;
+    this._options.offline = offline;
+    progress.cleanupWhenAborted(async () => {
+      this._options.offline = oldOffline;
+      await this.doUpdateOffline();
+    });
+    await progress.race(this.doUpdateOffline());
   }
 
   async _loadDefaultContextAsIs(progress: Progress): Promise<Page | undefined> {
@@ -432,10 +443,15 @@ export abstract class BrowserContext extends SdkObject {
       this._options.httpCredentials = { username, password: password || '' };
   }
 
-  async addInitScript(source: string, name?: string) {
+  async addInitScript(progress: Progress | undefined, source: string, name?: string) {
     const initScript = new InitScript(source, name);
     this.initScripts.push(initScript);
-    await this.doAddInitScript(initScript);
+    progress?.cleanupWhenAborted(() => this.removeInitScripts([initScript]));
+    const promise = this.doAddInitScript(initScript);
+    if (progress)
+      await progress.race(promise);
+    else
+      await promise;
     return initScript;
   }
 
@@ -445,7 +461,8 @@ export abstract class BrowserContext extends SdkObject {
     await this.doRemoveInitScripts(initScripts);
   }
 
-  async addRequestInterceptor(handler: network.RouteHandler): Promise<void> {
+  async addRequestInterceptor(progress: Progress, handler: network.RouteHandler): Promise<void> {
+    // Note: progress is intentionally ignored, because this operation is not cancellable and should not block in the browser anyway.
     this.requestInterceptors.push(handler);
     await this.doUpdateRequestInterception();
   }
@@ -514,11 +531,6 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  newPageFromMetadata(metadata: CallMetadata): Promise<Page> {
-    const contoller = new ProgressController(metadata, this);
-    return contoller.run(progress => this.newPage(progress, false));
-  }
-
   async newPage(progress: Progress, isServerSide: boolean): Promise<Page> {
     const page = await progress.raceWithCleanup(this.doCreateNewPage(isServerSide), page => page.close());
     const pageOrError = await progress.race(page.waitForInitializedOrError());
@@ -534,12 +546,7 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  storageState(indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
-    const controller = new ProgressController(serverSideCallMetadata(), this);
-    return controller.run(progress => this.storageStateImpl(progress, indexedDB));
-  }
-
-  async storageStateImpl(progress: Progress, indexedDB: boolean): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(progress: Progress, indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(),
       origins: []
@@ -571,9 +578,9 @@ export abstract class BrowserContext extends SdkObject {
     // If there are still origins to save, create a blank page to iterate over origins.
     if (originsToSave.size)  {
       const page = await this.newPage(progress, true);
-      await progress.race(page.addRequestInterceptor(route => {
+      await page.addRequestInterceptor(progress, route => {
         route.fulfill({ body: '<html></html>' }).catch(() => {});
-      }, 'prepend'));
+      }, 'prepend');
       for (const origin of originsToSave) {
         const frame = page.mainFrame();
         await frame.gotoImpl(progress, origin, {});
@@ -601,7 +608,7 @@ export abstract class BrowserContext extends SdkObject {
     };
 
     progress.cleanupWhenAborted(() => page.removeRequestInterceptor(interceptor));
-    await progress.race(page.addRequestInterceptor(interceptor, 'prepend'));
+    await page.addRequestInterceptor(progress, interceptor, 'prepend');
 
     for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
       const frame = page.mainFrame();
@@ -615,12 +622,6 @@ export abstract class BrowserContext extends SdkObject {
     // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
   }
 
-  async _resetCookies() {
-    await this.doClearCookies();
-    if (this._options.storageState?.cookies)
-      await this.addCookies(this._options.storageState?.cookies);
-  }
-
   isSettingStorageState(): boolean {
     return this._settingStorageState;
   }
@@ -632,9 +633,9 @@ export abstract class BrowserContext extends SdkObject {
         await progress.race(this.addCookies(state.cookies));
       if (state.origins && state.origins.length)  {
         const page = await this.newPage(progress, true);
-        await progress.race(page.addRequestInterceptor(route => {
+        await page.addRequestInterceptor(progress, route => {
           route.fulfill({ body: '<html></html>' }).catch(() => {});
-        }, 'prepend'));
+        }, 'prepend');
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.gotoImpl(progress, originState.origin, {});
@@ -667,13 +668,13 @@ export abstract class BrowserContext extends SdkObject {
     await Promise.all(this.pages().map(page => page.safeNonStallingEvaluateInAllFrames(expression, world, options)));
   }
 
-  async _harStart(page: Page | null, options: channels.RecordHarOptions): Promise<string> {
+  harStart(page: Page | null, options: channels.RecordHarOptions): string {
     const harId = createGuid();
     this._harRecorders.set(harId, new HarRecorder(this, page, options));
     return harId;
   }
 
-  async _harExport(harId: string | undefined): Promise<Artifact> {
+  async harExport(harId: string | undefined): Promise<Artifact> {
     const recorder = this._harRecorders.get(harId || '')!;
     return recorder.export();
   }

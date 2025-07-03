@@ -127,9 +127,109 @@ export type JsonFullResult = {
   duration: number;
 };
 
-export type JsonEvent = {
-  method: string;
-  params: any
+export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
+  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
+
+export type JsonOnConfigureEvent = {
+  method: 'onConfigure';
+  params: {
+    config: JsonConfig;
+  };
+};
+
+export type JsonOnBlobReportMetadataEvent = {
+  method: 'onBlobReportMetadata';
+  params: BlobReportMetadata;
+};
+
+export type JsonOnProjectEvent = {
+  method: 'onProject';
+  params: {
+    project: JsonProject;
+  };
+};
+
+export type JsonOnBeginEvent = {
+  method: 'onBegin';
+  params: undefined;
+};
+
+export type JsonOnTestBeginEvent = {
+  method: 'onTestBegin';
+  params: {
+    testId: string;
+    result: JsonTestResultStart;
+  };
+};
+
+export type JsonOnTestEndEvent = {
+  method: 'onTestEnd';
+  params: {
+    test: JsonTestEnd;
+    testId?: string;
+    result: JsonTestResultEnd;
+  };
+};
+
+export type JsonOnStepBeginEvent = {
+  method: 'onStepBegin';
+  params: {
+    testId: string;
+    resultId: string;
+    step: JsonTestStepStart;
+  };
+};
+
+export type JsonOnStepEndEvent = {
+  method: 'onStepEnd';
+  params: {
+    testId: string;
+    resultId: string;
+    step: JsonTestStepEnd;
+  };
+};
+
+export type JsonOnAttachEvent = {
+  method: 'onAttach';
+  params: JsonTestResultOnAttach;
+};
+
+export type JsonOnErrorEvent = {
+  method: 'onError';
+  params: {
+    error: reporterTypes.TestError;
+  };
+};
+
+export type JsonOnStdIOEvent = {
+  method: 'onStdIO';
+  params: {
+    type: JsonStdIOType;
+    testId?: string;
+    resultId?: string;
+    data: string;
+    isBase64: boolean;
+  };
+};
+
+export type JsonOnEndEvent = {
+  method: 'onEnd';
+  params: {
+    result: JsonFullResult;
+  };
+};
+
+export type JsonOnExitEvent = {
+  method: 'onExit';
+  params: undefined;
+};
+
+export type BlobReportMetadata = {
+  version: number;
+  userAgent: string;
+  name?: string;
+  shard?: { total: number, current: number };
+  pathSeparator?: string;
 };
 
 type TeleReporterReceiverOptions = {

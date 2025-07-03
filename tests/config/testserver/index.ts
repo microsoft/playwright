@@ -20,7 +20,6 @@ import type http from 'http';
 import mime from 'mime';
 import type net from 'net';
 import path from 'path';
-import url from 'url';
 import util from 'util';
 import type stream from 'stream';
 import ws from 'ws';
@@ -55,6 +54,8 @@ export class TestServer {
   readonly PREFIX: string;
   readonly CROSS_PROCESS_PREFIX: string;
   readonly EMPTY_PAGE: string;
+  readonly HOST: string;
+  readonly HOSTNAME: string;
 
   static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback);
@@ -90,7 +91,7 @@ export class TestServer {
         this._upgradeCallback({ doUpgrade, socket });
         return;
       }
-      const pathname = url.parse(request.url!).path;
+      const pathname = new URL(request.url, 'http://localhost').pathname;
       if (pathname === '/ws-401') {
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized body');
         socket.destroy();
@@ -119,6 +120,8 @@ export class TestServer {
     this.PREFIX = `${protocol}://${same_origin}:${port}`;
     this.CROSS_PROCESS_PREFIX = `${protocol}://${cross_origin}:${port}`;
     this.EMPTY_PAGE = `${protocol}://${same_origin}:${port}/empty.html`;
+    this.HOST = new URL(this.EMPTY_PAGE).host;
+    this.HOSTNAME = new URL(this.EMPTY_PAGE).hostname;
   }
 
   async waitUntilReady() {
@@ -218,10 +221,11 @@ export class TestServer {
       });
       request.on('end', () => resolve(Buffer.concat(chunks)));
     });
-    const path = url.parse(request.url!).path;
-    this.debugServer(`request ${request.method} ${path}`);
-    if (this._auths.has(path)) {
-      const auth = this._auths.get(path)!;
+    const url = new URL(request.url, 'http://localhost');
+    const pathWithSearch = url.pathname + url.search;
+    this.debugServer(`request ${request.method} ${pathWithSearch}`);
+    if (this._auths.has(pathWithSearch)) {
+      const auth = this._auths.get(pathWithSearch)!;
       const credentials = Buffer.from((request.headers.authorization || '').split(' ')[1] || '', 'base64').toString();
       this.debugServer(`request credentials ${credentials}`);
       this.debugServer(`actual credentials ${auth.username}:${auth.password}`);
@@ -233,11 +237,11 @@ export class TestServer {
       }
     }
     // Notify request subscriber.
-    if (this._requestSubscribers.has(path)) {
-      this._requestSubscribers.get(path)![fulfillSymbol].call(null, request);
-      this._requestSubscribers.delete(path);
+    if (this._requestSubscribers.has(pathWithSearch)) {
+      this._requestSubscribers.get(pathWithSearch)![fulfillSymbol].call(null, request);
+      this._requestSubscribers.delete(pathWithSearch);
     }
-    const handler = this._routes.get(path);
+    const handler = this._routes.get(pathWithSearch);
     if (handler)
       handler.call(null, request, response);
     else
@@ -251,7 +255,7 @@ export class TestServer {
   }
 
   private async _serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string): Promise<void> {
-    let pathName = url.parse(request.url!).path;
+    let pathName = new URL(request.url, 'http://localhost').pathname;
     if (!filePath) {
       if (pathName === '/')
         pathName = '/index.html';

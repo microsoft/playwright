@@ -20,6 +20,7 @@ import { PageDispatcher } from './pageDispatcher';
 import type { Dialog } from '../dialog';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel, BrowserContextDispatcher | PageDispatcher> implements channels.DialogChannel {
   _type_Dialog = true;
@@ -35,11 +36,11 @@ export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel,
     });
   }
 
-  async accept(params: { promptText?: string }): Promise<void> {
-    await this._object.accept(params.promptText);
+  async accept(params: channels.DialogAcceptParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.accept(params.promptText));
   }
 
-  async dismiss(): Promise<void> {
-    await this._object.dismiss();
+  async dismiss(params: channels.DialogDismissParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.dismiss());
   }
 }

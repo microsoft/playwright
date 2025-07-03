@@ -1085,6 +1085,7 @@ scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextEnableRecorderParams = tObject({
   language: tOptional(tString),
   mode: tOptional(tEnum(['inspecting', 'recording'])),
+  recorderMode: tOptional(tEnum(['record', 'perform'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
   launchOptions: tOptional(tAny),
@@ -1651,6 +1652,12 @@ scheme.FrameFrameElementParams = tOptional(tObject({}));
 scheme.FrameFrameElementResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameGenerateLocatorStringParams = tObject({
+  selector: tString,
+});
+scheme.FrameGenerateLocatorStringResult = tObject({
+  value: tOptional(tString),
+});
 scheme.FrameHighlightParams = tObject({
   selector: tString,
 });
@@ -1858,7 +1865,7 @@ scheme.FrameUncheckParams = tObject({
 });
 scheme.FrameUncheckResult = tOptional(tObject({}));
 scheme.FrameWaitForTimeoutParams = tObject({
-  timeout: tNumber,
+  waitTimeout: tNumber,
 });
 scheme.FrameWaitForTimeoutResult = tOptional(tObject({}));
 scheme.FrameWaitForFunctionParams = tObject({
@@ -2044,10 +2051,6 @@ scheme.ElementHandleFillParams = tObject({
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
 scheme.ElementHandleFocusResult = tOptional(tObject({}));
-scheme.ElementHandleGenerateLocatorStringParams = tOptional(tObject({}));
-scheme.ElementHandleGenerateLocatorStringResult = tObject({
-  value: tOptional(tString),
-});
 scheme.ElementHandleGetAttributeParams = tObject({
   name: tString,
 });

@@ -323,7 +323,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
     {
       name: 'top-level-partitioned',
       value: 'value',
-      domain: 'localhost',
+      domain: httpsServer.HOSTNAME,
       path: '/',
       expires: -1,
       httpOnly: false,
@@ -335,7 +335,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
     {
       name: 'top-level-non-partitioned',
       value: 'value',
-      domain: 'localhost',
+      domain: httpsServer.HOSTNAME,
       path: '/',
       expires: -1,
       httpOnly: false,
@@ -345,7 +345,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
     {
       name: 'frame-partitioned',
       value: 'value',
-      domain: 'localhost',
+      domain: httpsServer.HOSTNAME,
       path: '/',
       expires: -1,
       httpOnly: false,
@@ -357,7 +357,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
     {
       name: 'frame-non-partitioned',
       value: 'value',
-      domain: 'localhost',
+      domain: httpsServer.HOSTNAME,
       path: '/',
       expires: -1,
       httpOnly: false,

@@ -481,6 +481,40 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(anchorLocator.nth(1)).toHaveAttribute('href', 'http://microsoft.com');
     });
 
+    test('should allow setting title from env in global teardown', async ({ runInlineTest, page, showReport }, testInfo) => {
+      test.skip(useIntermediateMergeReport, 'env vars are not available in merge report');
+
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            globalTeardown: './global-teardown.js',
+          };
+        `,
+        'omega-star.test.js': `
+          import { test, expect } from '@playwright/test';
+          import fs from 'fs/promises';
+          test('version check', async ({}, testInfo) => {
+            const apiVersion = 'abcde';
+            await fs.writeFile(testInfo.outputPath('omega_star_version'), apiVersion);
+            expect(2).toEqual(2);
+          });
+        `,
+        'global-teardown.js': `
+          import fs from 'fs/promises';
+          import path from 'path';
+          export default async (config) => {
+            const apiVersion = await fs.readFile(path.join('test-results', 'omega-star-version-check', 'omega_star_version'), 'utf-8');
+            process.env.PLAYWRIGHT_HTML_TITLE = 'Omega Star Test Suite (Version: ' + apiVersion + ')';
+          };
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await expect(page.locator('.header-title')).toHaveText('Omega Star Test Suite (Version: abcde)');
+    });
+
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `

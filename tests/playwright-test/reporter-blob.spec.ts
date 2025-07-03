@@ -1505,6 +1505,39 @@ test('merge-reports should throw if report version is from the future', async ({
 
 });
 
+test('merge-reports should merge old attachments (pre-1.53)', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'tests/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => {});
+    `,
+    'merge.config.ts': `module.exports = {
+      testDir: 'mergeRoot',
+     };`,
+  };
+
+  await runInlineTest(files);
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles).toEqual(['report.zip']);
+
+  await fs.promises.copyFile(path.join(__dirname, '../assets/blob-1.52.zip'), path.join(reportDir, 'blob-1.42.zip'));
+
+  const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--config', 'merge.config.ts'] });
+  expect(exitCode).toBe(0);
+
+  const assets = await fs.promises.readdir(path.join(test.info().outputPath('playwright-report'), 'data'));
+  expect(new Set(assets)).toEqual(new Set([
+    '4b6deb4234e5c2dc92efc6e604624e9481e8ae57.png', // screenshot
+  ]));
+});
+
 test('should merge blob reports with same name', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const files = {
     'playwright.config.ts': `

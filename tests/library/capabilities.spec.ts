@@ -39,14 +39,14 @@ it('Web Assembly should work @smoke', async ({ page, server, browserName, platfo
 
 it('WebSocket should work @smoke', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
-  const value = await page.evaluate(port => {
+  const value = await page.evaluate(host => {
     let cb;
     const result = new Promise(f => cb = f);
-    const ws = new WebSocket('ws://localhost:' + port + '/ws');
+    const ws = new WebSocket('ws://' + host + '/ws');
     ws.addEventListener('message', data => { ws.close(); cb(data.data); });
     ws.addEventListener('error', error => cb('Error'));
     return result;
-  }, server.PORT);
+  }, server.HOST);
   expect(value).toBe('incoming');
 });
 

@@ -1060,8 +1060,12 @@ export function getAriaDisabled(element: Element): boolean {
 
 function isNativelyDisabled(element: Element) {
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.tagName);
-  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element));
+  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(elementSafeTagName(element));
+  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledOptGroup(element) || belongsToDisabledFieldSet(element));
+}
+
+function belongsToDisabledOptGroup(element: Element): boolean {
+  return elementSafeTagName(element) === 'OPTION' && !!element.closest('OPTGROUP[DISABLED]');
 }
 
 function belongsToDisabledFieldSet(element: Element): boolean {

@@ -27,6 +27,7 @@ const kConnectHostsToIgnore = new Set([
 ]);
 
 export class TestProxy {
+  readonly HOST: string;
   readonly PORT: number;
   readonly URL: string;
 
@@ -47,6 +48,7 @@ export class TestProxy {
   private constructor(port: number) {
     this.PORT = port;
     this.URL = `http://localhost:${port}`;
+    this.HOST = new URL(this.URL).host;
     this._server = createProxy();
     this._server.on('connection', socket => this._onSocket(socket));
   }
