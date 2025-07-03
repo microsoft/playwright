@@ -621,8 +621,8 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
 }
 
-async function openPage(context: BrowserContext, url: string | undefined, allowPageReuse: boolean = false): Promise<Page> {
-  let page = allowPageReuse ? context.pages()[0] : undefined;
+async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
+  let page = context.pages()[0];
   if (!page)
     page = await context.newPage();
   if (url) {
@@ -660,7 +660,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
   });
-  await openPage(context, url, true);
+  await openPage(context, url);
 }
 
 async function waitForPage(page: Page, captureOptions: CaptureOptions) {
