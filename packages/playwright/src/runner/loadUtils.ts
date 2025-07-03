@@ -225,7 +225,7 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
   filterTestsRemoveEmptySuites(projectSuite, (test: TestCase) => {
-    const grepTitle = test._grepTitle();
+    const grepTitle = test._grepTitleWithTags();
     if (grepInvertMatcher?.(grepTitle))
       return false;
     return grepMatcher(grepTitle);
@@ -244,7 +244,7 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
   if (options.testIdMatcher)
     filterByTestIds(result, options.testIdMatcher);
   filterTestsRemoveEmptySuites(result, (test: TestCase) => {
-    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitle()))
+    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitleWithTags()))
       return false;
     if (options.additionalFileMatcher && !options.additionalFileMatcher(test.location.file))
       return false;
