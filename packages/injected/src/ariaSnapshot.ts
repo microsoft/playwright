@@ -83,12 +83,8 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       return;
 
     const element = node as Element;
-    if (!isVisible(element, options)) {
-      if (options?.forAI)
-        // skip this element, but still process its children https://github.com/microsoft/playwright/issues/36296
-        processElement(ariaNode, element, []);
+    if (!options?.forAI && roleUtils.isElementHiddenForAria(element))
       return;
-    }
 
     const ariaChildren: Element[] = [];
     if (element.hasAttribute('aria-owns')) {
@@ -187,6 +183,9 @@ function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: s
       receivesPointerEvents: true
     };
   }
+
+  if (options?.forAI && !(!roleUtils.isElementHiddenForAria(element) || isElementVisible(element)))
+    return null;
 
   const defaultRole = options?.forAI ? 'generic' : null;
   const role = roleUtils.getAriaRole(element) ?? defaultRole;
