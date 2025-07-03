@@ -36,7 +36,7 @@ it('context.cookies() should work @smoke', async ({ server, launchPersistent, de
   expect(maybeFilterCookies(channel, await page.context().cookies())).toEqual([{
     name: 'username',
     value: 'John Doe',
-    domain: 'localhost',
+    domain: server.HOSTNAME,
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -58,7 +58,7 @@ it('context.addCookies() should work', async ({ server, launchPersistent, browse
   expect(maybeFilterCookies(channel, await page.context().cookies())).toEqual([{
     name: 'username',
     value: 'John Doe',
-    domain: 'localhost',
+    domain: server.HOSTNAME,
     path: '/',
     expires: -1,
     httpOnly: false,

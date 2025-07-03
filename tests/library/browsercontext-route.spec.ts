@@ -170,7 +170,7 @@ it('should use Set-Cookie header in future requests', async ({ contextFactory, s
     sameSite: defaultSameSiteCookieValue,
     name: 'name',
     value: 'value',
-    domain: 'localhost',
+    domain: server.HOSTNAME,
     path: '/',
     expires: -1,
     httpOnly: false,

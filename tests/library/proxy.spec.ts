@@ -33,7 +33,7 @@ it('should use proxy @smoke', async ({ browserType, server, mode }) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${server.PORT}` }
+    proxy: { server: server.HOST }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.com/target.html');
@@ -135,7 +135,7 @@ it('should authenticate', async ({ browserType, server }) => {
     }
   });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${server.PORT}`, username: 'user', password: 'secret' }
+    proxy: { server: server.HOST, username: 'user', password: 'secret' }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.com/target.html');
@@ -167,7 +167,7 @@ it('should work with authenticate followed by redirect', async ({ browserName, b
     res.end('<html><title>Served by the proxy</title></html>');
   });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${server.PORT}`, username: 'user', password: 'secret' }
+    proxy: { server: server.HOST, username: 'user', password: 'secret' }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.com/page1.html');
@@ -184,7 +184,7 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
   //
   // @see https://gist.github.com/CollinChaffin/24f6c9652efb3d6d5ef2f5502720ef00
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${server.PORT}`, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
+    proxy: { server: server.HOST, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
   });
 
   {

@@ -20,7 +20,7 @@ import { attachFrame, detachFrame } from '../config/utils';
 import type { Frame } from 'playwright-core';
 
 function dumpFrames(frame: Frame, indentation: string = ''): string[] {
-  let description = frame.url().replace(/:\d+\//, ':<PORT>/');
+  let description = frame.url();
   if (frame.name())
     description += ' (' + frame.name() + ')';
   const result = [indentation + description];
@@ -40,11 +40,11 @@ it('should handle nested frames @smoke', async ({ page, server, isAndroid }) => 
 
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   expect(dumpFrames(page.mainFrame())).toEqual([
-    'http://localhost:<PORT>/frames/nested-frames.html',
-    '    http://localhost:<PORT>/frames/frame.html (aframe)',
-    '    http://localhost:<PORT>/frames/two-frames.html (2frames)',
-    '        http://localhost:<PORT>/frames/frame.html (dos)',
-    '        http://localhost:<PORT>/frames/frame.html (uno)',
+    `${server.PREFIX}/frames/nested-frames.html`,
+    `    ${server.PREFIX}/frames/frame.html (aframe)`,
+    `    ${server.PREFIX}/frames/two-frames.html (2frames)`,
+    `        ${server.PREFIX}/frames/frame.html (dos)`,
+    `        ${server.PREFIX}/frames/frame.html (uno)`,
   ]);
 });
 
