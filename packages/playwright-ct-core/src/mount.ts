@@ -22,6 +22,7 @@ import type { RouterFixture } from '../index';
 import type { ImportRef } from './injected/importRegistry';
 import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
 import type { BrowserContext, BrowserContextOptions, Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from 'playwright/test';
+import type { Page as PageImpl } from 'playwright-core/lib/client/page';
 
 let boundCallbacksForMount: Function[] = [];
 
@@ -49,20 +50,20 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
   page: async ({ page }, use, info) => {
     if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
       throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
-    await (page as any)._wrapApiCall(async () => {
+    await (page as PageImpl)._wrapApiCall(async () => {
       await page.exposeFunction('__ctDispatchFunction', (ordinal: number, args: any[]) => {
         boundCallbacksForMount[ordinal](...args);
       });
       await page.goto(process.env.PLAYWRIGHT_TEST_BASE_URL!);
-    }, true);
+    }, { internal: true });
     await use(page);
   },
 
   mount: async ({ page }, use) => {
     await use(async (componentRef: JsxComponent | ImportRef, options?: ObjectComponentOptions & MountOptions) => {
-      const selector = await (page as any)._wrapApiCall(async () => {
+      const selector = await (page as PageImpl)._wrapApiCall(async () => {
         return await innerMount(page, componentRef, options);
-      }, true);
+      }, { internal: true });
       const locator = page.locator(selector);
       return Object.assign(locator, {
         unmount: async () => {
