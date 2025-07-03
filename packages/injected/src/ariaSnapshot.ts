@@ -184,11 +184,14 @@ function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: s
     };
   }
 
-  if (options?.forAI && !(!roleUtils.isElementHiddenForAria(element) || isElementVisible(element)))
-    return null;
-
-  const defaultRole = options?.forAI ? 'generic' : null;
-  const role = roleUtils.getAriaRole(element) ?? defaultRole;
+  let role: AriaRole | null = null;
+  if (options?.forAI) {
+    const isVisible = !roleUtils.isElementHiddenForAria(element) || isElementVisible(element);
+    if (isVisible)
+      role = roleUtils.getAriaRole(element) ?? 'generic';
+  } else {
+    role = roleUtils.getAriaRole(element);
+  }
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
