@@ -8,7 +8,8 @@ if ($distributions -contains $Distribution) {
     Write-Host "WSL distribution '$Distribution' already exists. Skipping installation."
 } else {
     Write-Host "Installing new WSL distribution '$Distribution'..."
-    wsl --install -d Ubuntu-24.04 --name $Distribution --no-launch
+    $VhdSize = "10GB"
+    wsl --install -d Ubuntu-24.04 --name $Distribution --no-launch --vhd-size $VhdSize
     wsl -d $Distribution -u root adduser --gecos GECOS --disabled-password $Username
 }
 
