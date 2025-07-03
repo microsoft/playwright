@@ -248,9 +248,9 @@ it('should work with the domain module', async ({ browserType, server, browserNa
   let callback;
   const result = new Promise(f => callback = f);
   page.on('websocket', ws => ws.on('socketerror', callback));
-  void page.evaluate(port => {
-    new WebSocket('ws://localhost:' + port + '/bogus-ws');
-  }, server.PORT);
+  void page.evaluate(host => {
+    new WebSocket('ws://' + host + '/bogus-ws');
+  }, server.HOST);
   const message = await result;
   if (browserName === 'firefox')
     expect(message).toBe('CLOSE_ABNORMAL');
