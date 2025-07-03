@@ -57,7 +57,7 @@ program
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
-      open(options, url, codegenId()).catch(logErrorAndExit);
+      open(options, url).catch(logErrorAndExit);
     })
     .addHelpText('afterAll', `
 Examples:
@@ -313,7 +313,7 @@ const browsers = [
 for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
       .action(function(url, options) {
-        open({ ...options, browser: type }, url, options.target).catch(logErrorAndExit);
+        open({ ...options, browser: type }, url).catch(logErrorAndExit);
       }).addHelpText('afterAll', `
 Examples:
 
@@ -631,16 +631,8 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
   return page;
 }
 
-async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
-  await context._enableRecorder({
-    language,
-    launchOptions,
-    contextOptions,
-    device: options.device,
-    saveStorage: options.saveStorage,
-    handleSIGINT: false,
-  });
+async function open(options: Options, url: string | undefined) {
+  const { context } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
   await openPage(context, url);
 }
 
