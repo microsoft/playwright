@@ -121,8 +121,10 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
+    // aria-owns children are never text nodes, so this param is unused
+    const ariaChildrenParentVisible = false;
     for (const child of ariaChildren)
-      visit(ariaNode, child, parentVisible);
+      visit(ariaNode, child, ariaChildrenParentVisible);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::after') || '');
 
