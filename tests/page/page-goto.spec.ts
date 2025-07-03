@@ -46,8 +46,9 @@ it('should work with file URL with subframes', async ({ page, asset, isAndroid, 
   expect(page.frames().length).toBe(3);
 });
 
-it('should use http for no protocol', async ({ page, server, isAndroid }) => {
+it('should use http for no protocol', async ({ page, server, isAndroid, channel }) => {
   it.skip(isAndroid);
+  it.skip(channel === 'webkit-wsl');
 
   await page.goto(server.EMPTY_PAGE.substring('http://'.length));
   expect(page.url()).toBe(server.EMPTY_PAGE);

@@ -220,7 +220,7 @@ export abstract class BrowserType extends SdkObject {
       command: prepared.executable,
       args: prepared.browserArguments,
       env: {
-        ...await this.amendEnvironment(env, prepared.userDataDir, isPersistent),
+        ...await this.amendEnvironment(env, options, prepared.userDataDir, isPersistent),
         ...await processLifecycleHooks?.envProvider(),
       },
       handleSIGINT,
@@ -349,7 +349,7 @@ export abstract class BrowserType extends SdkObject {
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Promise<Env>;
+  abstract amendEnvironment(env: Env, options: types.LaunchOptions, userDataDir: string, isPersistent: boolean): Promise<Env>;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
   protected processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks | undefined {

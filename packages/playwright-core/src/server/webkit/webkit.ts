@@ -42,10 +42,10 @@ export class WebKit extends BrowserType {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  override async amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Promise<Env> {
+  override async amendEnvironment(env: Env, options: types.LaunchOptions, userDataDir: string, isPersistent: boolean): Promise<Env> {
     return {
       ...env,
-      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? await translatePathToWSL(path.join(userDataDir, 'cookiejar.db')) : undefined,
+      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent && options.channel !== 'webkit-wsl' ? path.join(userDataDir, 'cookiejar.db') : undefined,
     };
   }
 
