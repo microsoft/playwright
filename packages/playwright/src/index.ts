@@ -27,8 +27,12 @@ import { stepTitle } from './util';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
-import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
+import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
+import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
+import type { ConnectOptions as ConnectOptionsInternal } from '../../playwright-core/src/client/types';
+import type { APIRequest as APIRequestImpl } from '../../playwright-core/src/client/fetch';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -102,7 +106,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (connectOptions) {
       const browser = await playwright[browserName].connect({
         ...connectOptions,
-        exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as any)._exposeNetwork,
+        exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as ConnectOptionsInternal)._exposeNetwork,
         headers: {
           // HTTP headers are ASCII only (not UTF-8).
           'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
@@ -110,7 +114,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         },
       });
       await use(browser);
-      await (browser as any)._wrapApiCall(async () => {
+      await (browser as BrowserImpl)._wrapApiCall(async () => {
         await browser.close({ reason: 'Test ended.' });
       }, { internal: true });
       return;
@@ -118,7 +122,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const browser = await playwright[browserName].launch();
     await use(browser);
-    await (browser as any)._wrapApiCall(async () => {
+    await (browser as BrowserImpl)._wrapApiCall(async () => {
       await browser.close({ reason: 'Test ended.' });
     }, { internal: true });
   }, { scope: 'worker', timeout: 0 }],
@@ -318,7 +322,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
     };
 
-    const clientInstrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
+    const clientInstrumentation = (playwright as PlaywrightImpl)._instrumentation;
     clientInstrumentation.addListener(csiListener);
 
     await use();
@@ -355,12 +359,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         context.on('page', page => contextData.pagesWithVideo.push(page));
 
       if (process.env.PW_CLOCK === 'frozen') {
-        await (context as any)._wrapApiCall(async () => {
+        await (context as BrowserContextImpl)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
           await context.clock.pauseAt(1000);
         }, { internal: true });
       } else if (process.env.PW_CLOCK === 'realtime') {
-        await (context as any)._wrapApiCall(async () => {
+        await (context as BrowserContextImpl)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
         }, { internal: true });
       }
@@ -371,7 +375,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let counter = 0;
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await Promise.all([...contexts.keys()].map(async context => {
-      await (context as any)._wrapApiCall(async () => {
+      await (context as BrowserContextImpl)._wrapApiCall(async () => {
         await context.close({ reason: closeReason });
       }, { internal: true });
       const testFailed = testInfo.status !== testInfo.expectedStatus;
@@ -413,11 +417,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
 
     const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
-    const context = await (browser as any)._newContextForReuse(defaultContextOptions);
+    const context = await (browser as BrowserImpl)._newContextForReuse(defaultContextOptions);
     (context as any)[kIsReusedContext] = true;
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
-    await (browser as any)._stopPendingOperations(closeReason);
+    await (browser as BrowserImpl)._stopPendingOperations(closeReason);
   },
 
   page: async ({ context, _reuseContext }, use) => {
@@ -472,7 +476,7 @@ function normalizeScreenshotMode(screenshot: ScreenshotOption): ScreenshotMode {
 }
 
 function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
-  const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connection.headers;
+  const connectHeaders: { name: string, value: string }[] | undefined = (browser as BrowserImpl | null)?._connection.headers;
   if (!connectHeaders)
     return;
   for (const header of connectHeaders) {
@@ -650,7 +654,7 @@ class ArtifactsRecorder {
         await this.didCreateBrowserContext(context);
     }));
     {
-      const existingApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
+      const existingApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as APIRequestImpl)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
     }
   }
