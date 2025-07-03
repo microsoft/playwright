@@ -23,7 +23,7 @@ import { removeDirAndLogToConsole } from 'playwright/lib/util';
 import { stoppable } from 'playwright/lib/utilsBundle';
 import { isURLAvailable } from 'playwright-core/lib/utils';
 import { assert, calculateSha1, getPlaywrightVersion } from 'playwright-core/lib/utils';
-import { debug } from 'playwright-core/lib/utilsBundle';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
 
 import { runDevServer } from './devServer';
 import { source as injectedSource } from './generated/indexSource';
@@ -127,7 +127,7 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
   const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console
-    console.log(`Template file playwright/index.html is missing.`);
+    console.log(colors.red(`Component testing template file playwright/index.html is missing and there is no existing Vite server. Component tests will fail.\n`));
     return null;
   }
 

@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { Watcher } from 'playwright/lib/fsWatcher';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 import { source as injectedSource } from './generated/indexSource';
 import { createConfig, frameworkConfig, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
@@ -35,7 +36,7 @@ export async function runDevServer(config: FullConfig): Promise<() => Promise<vo
   const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console
-    console.log(`Template file playwright/index.html is missing.`);
+    console.log(colors.red(`Component testing template file playwright/index.html is missing and there is no existing Vite server. Component tests will fail.\n`));
     return async () => {};
   }
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
