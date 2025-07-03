@@ -22,14 +22,18 @@ import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { generateCode } from './codegen/language';
+import { collapseActions } from './recorder/recorderUtils';
+import { JavaScriptLanguageGenerator } from './codegen/javascript';
 
 import type { Language } from '../utils';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
-import type { ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode } from '@recorder/recorderTypes';
 import type { Progress } from '@protocol/progress';
+import type * as actions from '@recorder/actions';
 
 export class DebugController extends SdkObject {
   static Events = {
@@ -43,7 +47,6 @@ export class DebugController extends SdkObject {
   private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
-  _codegenId: string = 'playwright-test';
 
   constructor(playwright: Playwright) {
     super({ attribution: { isInternalPlaywright: true }, instrumentation: createInstrumentation() } as any, undefined, 'DebugController');
@@ -51,7 +54,6 @@ export class DebugController extends SdkObject {
   }
 
   initialize(codegenId: string, sdkLanguage: Language) {
-    this._codegenId = codegenId;
     this._sdkLanguage = sdkLanguage;
   }
 
@@ -86,8 +88,7 @@ export class DebugController extends SdkObject {
       await p.mainFrame().goto(progress, url);
   }
 
-  async setRecorderMode(progress: Progress, params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
-    // TODO: |file| is only used in the legacy mode.
+  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string }) {
     await progress.race(this._closeBrowsersWithoutPages());
 
     if (params.mode === 'none') {
@@ -115,8 +116,6 @@ export class DebugController extends SdkObject {
     // Toggle the mode.
     for (const recorder of await progress.race(this._allRecorders())) {
       recorder.hideHighlightedSelector();
-      if (params.mode !== 'inspecting')
-        recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }
   }
@@ -188,21 +187,18 @@ export class DebugController extends SdkObject {
 
 class InspectingRecorderApp extends EmptyRecorderApp {
   private _debugController: DebugController;
+  private _actions: actions.ActionInContext[] = [];
+  private _languageGenerator: JavaScriptLanguageGenerator;
 
   constructor(debugController: DebugController) {
     super();
     this._debugController = debugController;
+    this._languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
   }
 
   override async elementPicked(elementInfo: ElementInfo): Promise<void> {
     const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
     this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
-  }
-
-  override async setSources(sources: Source[]): Promise<void> {
-    const source = sources.find(s => s.id === this._debugController._codegenId);
-    const { text, header, footer, actions } = source || { text: '' };
-    this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions });
   }
 
   override async setPaused(paused: boolean) {
@@ -211,5 +207,27 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async setMode(mode: Mode) {
     this._debugController.emit(DebugController.Events.SetModeRequested, { mode });
+  }
+
+  override async actionAdded(action: actions.ActionInContext): Promise<void> {
+    this._actions.push(action);
+    this._actionsChanged();
+  }
+
+  override async signalAdded(signal: actions.Signal): Promise<void> {
+    const lastAction = this._actions[this._actions.length - 1];
+    if (lastAction)
+      lastAction.action.signals.push(signal);
+    this._actionsChanged();
+  }
+
+  private _actionsChanged() {
+    const actions = collapseActions(this._actions);
+    const { header, footer, text, actionTexts } = generateCode(actions, this._languageGenerator, {
+      browserName: 'chromium',
+      launchOptions: {},
+      contextOptions: {},
+    });
+    this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions: actionTexts });
   }
 }

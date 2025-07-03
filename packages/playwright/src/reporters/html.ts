@@ -125,7 +125,7 @@ class HtmlReporter implements ReporterV2 {
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, process.env.PLAYWRIGHT_HTML_TITLE || this._options.title);
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, process.env.PLAYWRIGHT_HTML_TITLE || this._options.title, this._options.snippets);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -223,10 +223,12 @@ class HtmlBuilder {
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _title: string | undefined;
+  private _snippets: boolean;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined, snippets: boolean = true) {
     this._config = config;
     this._reportFolder = outputDir;
+    this._snippets = snippets;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
@@ -256,7 +258,8 @@ class HtmlBuilder {
         }
       }
     }
-    createSnippets(this._stepsInFile);
+    if (this._snippets)
+      createSnippets(this._stepsInFile);
 
     let ok = true;
     for (const [fileId, { testFile, testFileSummary }] of data) {

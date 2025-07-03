@@ -3045,6 +3045,22 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - treeitem "Click Click me"
       `);
     });
+
+    test('should respect snippets configuration option', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          export default { reporter: [['html', { snippets: false }]] }
+        `,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fail without snippet', () => { expect(1).toBe(2); });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+      await page.getByRole('link', { name: 'fail without snippet' }).click();
+      await expect(page.getByTestId('test-snippet')).not.toBeVisible();
+    });
   });
 }
 

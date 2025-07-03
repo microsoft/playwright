@@ -57,7 +57,7 @@ program
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
-      open(options, url, codegenId()).catch(logErrorAndExit);
+      open(options, url).catch(logErrorAndExit);
     })
     .addHelpText('afterAll', `
 Examples:
@@ -71,7 +71,14 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(function(url, options) {
-  codegen(options, url).catch(logErrorAndExit);
+  codegen(options, url).catch(error => {
+    if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
+      // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
+      // in a stray navigation aborted error. We should ignore it.
+    } else {
+      throw error;
+    }
+  });
 }).addHelpText('afterAll', `
 Examples:
 
@@ -306,7 +313,7 @@ const browsers = [
 for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
       .action(function(url, options) {
-        open({ ...options, browser: type }, url, options.target).catch(logErrorAndExit);
+        open({ ...options, browser: type }, url).catch(logErrorAndExit);
       }).addHelpText('afterAll', `
 Examples:
 
@@ -623,28 +630,13 @@ async function openPage(context: BrowserContext, url: string | undefined, allowP
       url = 'file://' + path.resolve(url);
     else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
       url = 'http://' + url;
-    await page.goto(url).catch(error => {
-      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
-        // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
-        // in a stray navigation aborted error. We should ignore it.
-      } else {
-        throw error;
-      }
-    });
+    await page.goto(url);
   }
   return page;
 }
 
-async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
-  await context._enableRecorder({
-    language,
-    launchOptions,
-    contextOptions,
-    device: options.device,
-    saveStorage: options.saveStorage,
-    handleSIGINT: false,
-  });
+async function open(options: Options, url: string | undefined) {
+  const { context } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
   await openPage(context, url);
 }
 

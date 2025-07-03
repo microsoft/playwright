@@ -29,7 +29,6 @@ import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, Rou
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { CRBrowserContext } from '../chromium/crBrowser';
 import { serializeError } from '../errors';
-import { Recorder } from '../recorder';
 import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
@@ -332,7 +331,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
-    await Recorder.show(this._context, RecorderApp.factory(this._context), params);
+    await RecorderApp.show(this._context, params);
   }
 
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {
