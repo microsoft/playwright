@@ -70,6 +70,8 @@ runs:
                 netsh advfirewall firewall add rule name="WSL2-Auto" dir=in action=allow protocol=TCP remoteip=$networkRange
             }
         }
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
