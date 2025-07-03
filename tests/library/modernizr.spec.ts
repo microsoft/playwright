@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from 'playwright-core';
-import { TestServer } from '../config/testserver';
+import type { BrowserContext } from 'playwright-core';
+import type { TestServer } from '../config/testserver';
 import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
