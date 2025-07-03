@@ -447,6 +447,7 @@ it.describe('pause', () => {
       })();
       const recorderPage = await recorderPageGetter();
 
+      await recorderPage.getByRole('combobox', { name: 'Source chooser' }).selectOption('csharp');
       const box1Promise = waitForTestLog<BoundingBox>(page, 'Highlight box for test: ');
       await recorderPage.getByText('Locator', { exact: true }).click();
       await recorderPage.locator('.tabbed-pane .CodeMirror').click();
@@ -541,7 +542,7 @@ it.describe('pause', () => {
     await recorder.hoverOverElement('body', { omitTooltip: true });
     await recorder.trustedClick();
 
-    await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue('javascript');
+    await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue('playwright-test');
     await expect(recorderPage.locator('.cm-wrapper')).toContainText(`await page.locator('body').click();`);
     await recorderPage.getByRole('button', { name: 'Resume' }).click();
     await scriptPromise;

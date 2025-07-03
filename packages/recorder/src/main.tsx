@@ -27,11 +27,13 @@ export const Main: React.FC = ({}) => {
 
   React.useLayoutEffect(() => {
     window.playwrightSetMode = setMode;
-    window.playwrightSetSources = (sources, primaryPageURL) => {
+    window.playwrightSetSources = sources => {
       setSources(sources);
       window.playwrightSourcesEchoForTest = sources;
-      document.title = primaryPageURL
-        ? `Playwright Inspector - ${primaryPageURL}`
+    };
+    window.playwrightSetPageURL = url => {
+      document.title = url
+        ? `Playwright Inspector - ${url}`
         : `Playwright Inspector`;
     };
     window.playwrightSetPaused = setPaused;

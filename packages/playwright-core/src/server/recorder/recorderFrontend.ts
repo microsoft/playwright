@@ -17,11 +17,12 @@
 import type * as actions from '@recorder/actions';
 import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
 import type { EventEmitter } from 'events';
+import type * as channels from '@protocol/channels';
+import type { Language } from '../codegen/types';
 
 export interface IRecorder {
   setMode(mode: Mode): void;
   mode(): Mode;
-  readonly handleSIGINT: boolean | undefined;
 }
 
 export interface IRecorderApp extends EventEmitter {
@@ -29,11 +30,19 @@ export interface IRecorderApp extends EventEmitter {
   close(): Promise<void>;
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: Mode): Promise<void>;
-  setRunningFile(file: string | undefined): Promise<void>;
   elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
-  setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void>;
-  setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void>;
+  userSourcesChanged(sources: Source[]): Promise<void>;
+  start(): void;
+  actionAdded(action: actions.ActionInContext): Promise<void>;
+  signalAdded(signal: actions.Signal): Promise<void>;
+  pageNavigated(url: string): Promise<void>;
+  flushOutput(): Promise<void>;
 }
+
+export type RecorderAppParams = channels.BrowserContextEnableRecorderParams & {
+  browserName: string;
+  sdkLanguage: Language;
+};
 
 export type IRecorderAppFactory = (recorder: IRecorder) => Promise<IRecorderApp>;

@@ -31,7 +31,6 @@ import { SdkObject } from './instrumentation';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
-import { Recorder } from './recorder';
 import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
@@ -129,15 +128,15 @@ export abstract class BrowserContext extends SdkObject {
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
-      await Recorder.show(this, RecorderApp.factory(this), { pauseOnNextStatement: true });
+      await RecorderApp.show(this, { pauseOnNextStatement: true });
 
     // When paused, show inspector.
     if (this._debugger.isPaused())
-      Recorder.showInspectorNoReply(this, RecorderApp.factory(this));
+      await RecorderApp.showInspectorNoReply(this);
 
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
       if (this._debugger.isPaused())
-        Recorder.showInspectorNoReply(this, RecorderApp.factory(this));
+        RecorderApp.showInspectorNoReply(this);
     });
 
     if (debugMode() === 'console')

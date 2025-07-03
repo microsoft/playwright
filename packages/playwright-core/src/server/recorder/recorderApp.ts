@@ -24,40 +24,63 @@ import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
+import { ThrottledFile } from './throttledFile';
+import { languageSet } from '../codegen/languages';
+import { collapseActions } from './recorderUtils';
+import { generateCode } from '../codegen/language';
+import { Recorder } from '../recorder';
+import { monotonicTime } from '../../utils/isomorphic/time';
 
 import type { BrowserContext } from '../browserContext';
 import type { Page } from '../page';
-import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
+import type { IRecorder, IRecorderApp, IRecorderAppFactory, RecorderAppParams } from './recorderFrontend';
 import type * as actions from '@recorder/actions';
 import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { LanguageGeneratorOptions } from '../codegen/types';
+import type * as channels from '@protocol/channels';
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   wsEndpointForTest: undefined;
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
-  async setRunningFile(file: string | undefined): Promise<void> {}
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
-  async setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void> {}
-  async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {}
+  async userSourcesChanged(sources: Source[]): Promise<void> {}
+  async start() {}
+  async actionAdded(action: actions.ActionInContext): Promise<void> {}
+  async signalAdded(signal: actions.Signal): Promise<void> {}
+  async pageNavigated(url: string): Promise<void> {}
+  async flushOutput(): Promise<void> {}
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
   private _page: Page;
   readonly wsEndpointForTest: string | undefined;
-  private _recorder: IRecorder;
+  private _languageGeneratorOptions: LanguageGeneratorOptions;
+  private _throttledOutputFile: ThrottledFile | null = null;
+  private _actions: actions.ActionInContext[] = [];
+  private _userSources: Source[] = [];
+  private _recorderSources: Source[] = [];
+  private _primaryLanguage: string;
 
-  constructor(recorder: IRecorder, page: Page, wsEndpoint: string | undefined) {
+  constructor(params: RecorderAppParams, page: Page, wsEndpointForTest: string | undefined) {
     super();
     this.setMaxListeners(0);
-    this._recorder = recorder;
     this._page = page;
-    this.wsEndpointForTest = wsEndpoint;
-  }
+    this.wsEndpointForTest = wsEndpointForTest;
 
-  async close() {
-    await this._page.browserContext.close({ reason: 'Recorder window closed' });
+    // Make a copy of options to modify them later.
+    this._languageGeneratorOptions = {
+      browserName: params.browserName,
+      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
+      contextOptions: { ...params.contextOptions },
+      deviceName: params.device,
+      saveStorage: params.saveStorage,
+    };
+
+    this._throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
+    this._primaryLanguage = process.env.TEST_INSPECTOR_LANGUAGE || params.language || params.sdkLanguage;
   }
 
   private async _init() {
@@ -85,7 +108,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         });
       });
 
-      await this._page.exposeBinding(progress, 'dispatch', false, (_, data: any) => this.emit('event', data));
+      await this._page.exposeBinding(progress, 'dispatch', false, (_, data: any) => this._handleUIEvent(data));
 
       this._page.once('close', () => {
         this.emit('close');
@@ -96,15 +119,78 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     });
   }
 
-  static factory(context: BrowserContext): IRecorderAppFactory {
+  start() {
+    this._updateActions(true);
+  }
+
+  async actionAdded(action: actions.ActionInContext): Promise<void> {
+    this._actions.push(action);
+    this._updateActions();
+  }
+
+  async signalAdded(signal: actions.Signal): Promise<void> {
+    const lastAction = this._actions[this._actions.length - 1];
+    if (lastAction)
+      lastAction.action.signals.push(signal);
+    this._updateActions();
+  }
+
+  async pageNavigated(url: string): Promise<void> {
+    await this._page.mainFrame().evaluateExpression((({ url }: { url: string }) => {
+      window.playwrightSetPageURL(url);
+    }).toString(), { isFunction: true }, { url }).catch(() => {});
+  }
+
+  private _selectedFileChanged(fileId: string) {
+    const source = [...this._recorderSources, ...this._userSources].find(s => s.id === fileId);
+    if (source)
+      this.emit('event', { event: 'languageChanged', params: { language: source.language } });
+  }
+
+  async close() {
+    await this._page.browserContext.close({ reason: 'Recorder window closed' });
+  }
+
+  private _handleUIEvent(data: any) {
+    if (data.event === 'clear') {
+      this._actions = [];
+      this._updateActions();
+      this.emit('clear');
+      return;
+    }
+    if (data.event === 'fileChanged') {
+      this._selectedFileChanged(data.params.fileId);
+      return;
+    }
+
+    // Pass through events.
+    this.emit('event', data);
+  }
+
+  static async show(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
+    const factory = RecorderApp._factory(context, params);
+    await Recorder.show(context, factory, params);
+  }
+
+  static showInspectorNoReply(context: BrowserContext) {
+    Recorder.showInspector(context, {}, RecorderApp._factory(context, {})).catch(() => {});
+  }
+
+  private static _factory(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams): IRecorderAppFactory {
+    const appParams = {
+      browserName: context._browser.options.name,
+      sdkLanguage: context._browser.sdkLanguage(),
+      wsEndpointForTest: context._browser.options.wsEndpoint,
+      ...params,
+    };
     return async recorder => {
       if (process.env.PW_CODEGEN_NO_INSPECTOR)
         return new EmptyRecorderApp();
-      return await RecorderApp._open(recorder, context);
+      return await RecorderApp._open(appParams, recorder, context);
     };
   }
 
-  private static async _open(recorder: IRecorder, inspectedContext: BrowserContext): Promise<IRecorderApp> {
+  private static async _open(params: RecorderAppParams, recorder: IRecorder, inspectedContext: BrowserContext): Promise<IRecorderApp> {
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
@@ -116,7 +202,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
         cdpPort: isUnderTest() ? 0 : undefined,
-        handleSIGINT: recorder.handleSIGINT,
+        handleSIGINT: params.handleSIGINT,
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
         // Use the same channel as the inspected context to guarantee that the browser is installed.
         channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
@@ -127,7 +213,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
 
-    const result = new RecorderApp(recorder, page, context._browser.options.wsEndpoint);
+    const result = new RecorderApp(params, page, context._browser.options.wsEndpoint);
     await result._init();
     return result;
   }
@@ -138,31 +224,31 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, mode).catch(() => {});
   }
 
-  async setRunningFile(file: string | undefined): Promise<void> {
-    await this._page.mainFrame().evaluateExpression(((file: string) => {
-      window.playwrightSetRunningFile(file);
-    }).toString(), { isFunction: true }, file).catch(() => {});
-  }
-
   async setPaused(paused: boolean): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((paused: boolean) => {
       window.playwrightSetPaused(paused);
     }).toString(), { isFunction: true }, paused).catch(() => {});
   }
 
-  async setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void> {
-    await this._page.mainFrame().evaluateExpression((({ sources, primaryPageURL }: { sources: Source[], primaryPageURL: string | undefined }) => {
-      window.playwrightSetSources(sources, primaryPageURL);
-    }).toString(), { isFunction: true }, { sources, primaryPageURL }).catch(() => {});
+  async userSourcesChanged(sources: Source[]): Promise<void> {
+    if (!sources.length && !this._userSources.length)
+      return;
+    this._userSources = sources;
+    this._pushAllSources();
+  }
+
+  private async _pushAllSources() {
+    const sources = [...this._userSources, ...this._recorderSources];
+    this._page.mainFrame().evaluateExpression((({ sources }: { sources: Source[] }) => {
+      window.playwrightSetSources(sources);
+    }).toString(), { isFunction: true }, { sources }).catch(() => {});
 
     // Testing harness for runCLI mode.
     if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
-      if ((process as any)._didSetSourcesForTest(sources[0].text))
+      const primarySource = sources.find(s => s.isPrimary);
+      if ((process as any)._didSetSourcesForTest(primarySource?.text ?? ''))
         this.close();
     }
-  }
-
-  async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {
   }
 
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {
@@ -177,5 +263,40 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await this._page.mainFrame().evaluateExpression(((callLogs: CallLog[]) => {
       window.playwrightUpdateLogs(callLogs);
     }).toString(), { isFunction: true }, callLogs).catch(() => {});
+  }
+
+  async flushOutput(): Promise<void> {
+    this._throttledOutputFile?.flush();
+  }
+
+  private _updateActions(initial: boolean = false) {
+    const timestamp = initial ? 0 : monotonicTime();
+    const recorderSources = [];
+    const actions = collapseActions(this._actions);
+
+    for (const languageGenerator of languageSet()) {
+      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
+      const source: Source = {
+        isPrimary: languageGenerator.id === this._primaryLanguage,
+        timestamp,
+        isRecorded: true,
+        label: languageGenerator.name,
+        group: languageGenerator.groupName,
+        id: languageGenerator.id,
+        text,
+        header,
+        footer,
+        actions: actionTexts,
+        language: languageGenerator.highlighter,
+        highlight: []
+      };
+      source.revealLine = text.split('\n').length - 1;
+      recorderSources.push(source);
+      if (languageGenerator.id === this._primaryLanguage)
+        this._throttledOutputFile?.setContent(source.text);
+    }
+
+    this._recorderSources = recorderSources;
+    this._pushAllSources();
   }
 }

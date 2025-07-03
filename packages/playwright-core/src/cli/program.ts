@@ -71,7 +71,14 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(function(url, options) {
-  codegen(options, url).catch(logErrorAndExit);
+  codegen(options, url).catch(error => {
+    if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
+      // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
+      // in a stray navigation aborted error. We should ignore it.
+    } else {
+      throw error;
+    }
+  });
 }).addHelpText('afterAll', `
 Examples:
 
@@ -480,8 +487,12 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stdout.write(text);
       process.stdout.write('\n-------------8<-------------\n');
       const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
-        closeBrowser();
+      if (autoExitCondition && text.includes(autoExitCondition)) {
+        // Firefox needs a break here
+        setTimeout(() => {
+          closeBrowser();
+        }, 1000);
+      }
     };
     // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
@@ -615,14 +626,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
       url = 'file://' + path.resolve(url);
     else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
       url = 'http://' + url;
-    await page.goto(url).catch(error => {
-      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
-        // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
-        // in a stray navigation aborted error. We should ignore it.
-      } else {
-        throw error;
-      }
-    });
+    await page.goto(url);
   }
   return page;
 }

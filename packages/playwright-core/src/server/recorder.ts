@@ -27,16 +27,12 @@ import { serverSideCallMetadata } from './instrumentation';
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
 import * as rawRecorderSource from './../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime } from './../utils';
-import { languageSet } from './codegen/languages';
 import { Frame } from './frames';
 import { Page } from './page';
-import { ThrottledFile } from './recorder/throttledFile';
-import { generateCode } from './codegen/language';
 import { performAction } from './recorder/recorderRunner';
-import { collapseActions } from './recorder/recorderUtils';
 
 
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './codegen/types';
+import type { Language } from './codegen/types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorder/recorderFrontend';
 import type { Point } from '../utils/isomorphic/types';
@@ -60,11 +56,10 @@ export class Recorder implements InstrumentationListener, IRecorder {
   private _overlayState: OverlayState = { offsetX: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
-  private _recorderSources: Source[] = [];
   private _userSources = new Map<string, Source>();
   private _debugger: Debugger;
   private _omitCallTracking = false;
-  private _currentLanguage: Language;
+  private _currentLanguage: Language = 'javascript';
   private _recorderMode: 'record' | 'perform';
 
   private _signalProcessor: RecorderSignalProcessor;
@@ -72,21 +67,11 @@ export class Recorder implements InstrumentationListener, IRecorder {
   private _lastPopupOrdinal = 0;
   private _lastDialogOrdinal = -1;
   private _lastDownloadOrdinal = -1;
-  private _throttledOutputFile: ThrottledFile | null = null;
-  private _orderedLanguages: LanguageGenerator[] = [];
   private _listeners: RegisteredListener[] = [];
-  private _actions: actions.ActionInContext[] = [];
-  private _languageGeneratorOptions: LanguageGeneratorOptions;
   private _enabled: boolean = false;
 
   static async showInspector(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, recorderAppFactory: IRecorderAppFactory) {
-    if (isUnderTest())
-      params.language = process.env.TEST_INSPECTOR_LANGUAGE;
     return await Recorder.show(context, recorderAppFactory, params);
-  }
-
-  static showInspectorNoReply(context: BrowserContext, recorderAppFactory: IRecorderAppFactory) {
-    Recorder.showInspector(context, {}, recorderAppFactory).catch(() => {});
   }
 
   static show(context: BrowserContext, recorderAppFactory: IRecorderAppFactory, params: channels.BrowserContextEnableRecorderParams): Promise<Recorder> {
@@ -102,6 +87,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     const recorder = new Recorder(context, params);
     const recorderApp = await recorderAppFactory(recorder);
     await recorder._install(recorderApp);
+    recorderApp.start();
     return recorder;
   }
 
@@ -112,46 +98,28 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._recorderMode = params.recorderMode ?? 'perform';
     this.handleSIGINT = params.handleSIGINT;
 
-    // Make a copy of options to modify them later.
-    this._languageGeneratorOptions = {
-      browserName: context._browser.options.name,
-      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
-      contextOptions: { ...params.contextOptions },
-      deviceName: params.device,
-      saveStorage: params.saveStorage,
-    };
-
     this._signalProcessor = new RecorderSignalProcessor();
     this._signalProcessor.on('action', (actionInContext: actions.ActionInContext) => {
-      if (!this._enabled)
-        return;
-      this._actions.push(actionInContext);
-      this._updateActions();
+      if (this._enabled)
+        this._recorderApp?.actionAdded(actionInContext);
     });
     this._signalProcessor.on('signal', (signal: Signal) => {
-      if (!this._enabled)
-        return;
-      const lastAction = this._actions[this._actions.length - 1];
-      if (lastAction)
-        lastAction.action.signals.push(signal);
-      this._updateActions();
+      if (this._enabled)
+        this._recorderApp?.signalAdded(signal);
     });
 
     context.on(BrowserContext.Events.BeforeClose, () => {
-      this._throttledOutputFile?.flush();
+      this._recorderApp?.flushOutput().catch(() => {});
     });
     this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
-      this._throttledOutputFile?.flush();
+      this._recorderApp?.flushOutput().catch(() => {});
     }));
 
-    const language = params.language || context._browser.sdkLanguage();
-    this._innerSetOutput(language, params.outputFile);
     this._setEnabled(params.mode === 'recording');
 
     this._omitCallTracking = !!params.omitCallTracking;
     this._debugger = context.debugger();
     context.instrumentation.addListener(this, context);
-    this._currentLanguage = this._languageName();
 
     if (isUnderTest()) {
       // Most of our tests put elements at the top left, so get out of the way.
@@ -181,8 +149,8 @@ export class Recorder implements InstrumentationListener, IRecorder {
         this._debugger.resume(true);
         return;
       }
-      if (data.event === 'fileChanged') {
-        this._currentLanguage = this._languageName(data.params.file);
+      if (data.event === 'languageChanged') {
+        this._currentLanguage = data.params.language;
         this._refreshOverlay();
         return;
       }
@@ -203,7 +171,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     await Promise.all([
       recorderApp.setMode(this._mode),
       recorderApp.setPaused(this._debugger.isPaused()),
-      this._pushAllSources()
+      this._pushUserSources()
     ]);
 
     this._context.once(BrowserContext.Events.Close, () => {
@@ -361,21 +329,6 @@ export class Recorder implements InstrumentationListener, IRecorder {
     }
   }
 
-  setOutput(codegenId: string, outputFile: string | undefined) {
-    this._innerSetOutput(codegenId, outputFile);
-    this._resetActions();
-  }
-
-  private _innerSetOutput(codegenId: string, outputFile: string | undefined) {
-    const languages = languageSet();
-    const primaryLanguage = [...languages].find(l => l.id === codegenId);
-    if (!primaryLanguage)
-      throw new Error(`\n===============================\nUnsupported language: '${codegenId}'\n===============================\n`);
-    languages.delete(primaryLanguage);
-    this._orderedLanguages = [primaryLanguage, ...languages];
-    this._throttledOutputFile = outputFile ? new ThrottledFile(outputFile) : null;
-  }
-
   private _refreshOverlay() {
     for (const page of this._context.pages()) {
       for (const frame of page.frames())
@@ -406,37 +359,33 @@ export class Recorder implements InstrumentationListener, IRecorder {
 
   private _updateUserSources() {
     // Remove old decorations.
+    const timestamp = monotonicTime();
     for (const source of this._userSources.values()) {
       source.highlight = [];
       source.revealLine = undefined;
     }
 
     // Apply new decorations.
-    let fileToSelect = undefined;
     for (const metadata of this._currentCallsMetadata.keys()) {
       if (!metadata.location)
         continue;
       const { file, line } = metadata.location;
       let source = this._userSources.get(file);
       if (!source) {
-        source = { isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file) };
+        source = { isPrimary: false, isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file), timestamp };
         this._userSources.set(file, source);
       }
       if (line) {
         const paused = this._debugger.isPaused(metadata);
         source.highlight.push({ line, type: metadata.error ? 'error' : (paused ? 'paused' : 'running') });
         source.revealLine = line;
-        fileToSelect = source.id;
       }
     }
-    this._pushAllSources();
-    if (fileToSelect)
-      this._recorderApp?.setRunningFile(fileToSelect);
+    this._pushUserSources();
   }
 
-  private _pushAllSources() {
-    const primaryPage: Page | undefined = this._context.pages()[0];
-    this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()], primaryPage?.mainFrame().url());
+  private _pushUserSources() {
+    this._recorderApp?.userSourcesChanged([...this._userSources.values()]);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -475,48 +424,6 @@ export class Recorder implements InstrumentationListener, IRecorder {
     }
   }
 
-  private _resetActions() {
-    this._actions = [];
-    this._updateActions();
-  }
-
-  private _updateActions() {
-    const actions = collapseActions(this._actions);
-    const recorderSources = [];
-    for (const languageGenerator of this._orderedLanguages) {
-      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
-      const source: Source = {
-        isRecorded: true,
-        label: languageGenerator.name,
-        group: languageGenerator.groupName,
-        id: languageGenerator.id,
-        text,
-        header,
-        footer,
-        actions: actionTexts,
-        language: languageGenerator.highlighter,
-        highlight: []
-      };
-      source.revealLine = text.split('\n').length - 1;
-      recorderSources.push(source);
-      if (languageGenerator === this._orderedLanguages[0])
-        this._throttledOutputFile?.setContent(source.text);
-    }
-
-    this._recorderSources = recorderSources;
-    this._recorderApp?.setActions(actions, recorderSources);
-    this._recorderApp?.setRunningFile(undefined);
-    this._pushAllSources();
-  }
-
-  private _languageName(id?: string): Language {
-    for (const lang of this._orderedLanguages) {
-      if (!id || lang.id === id)
-        return lang.highlighter;
-    }
-    return 'javascript';
-  }
-
   private _setEnabled(enabled: boolean) {
     this._enabled = enabled;
   }
@@ -534,10 +441,13 @@ export class Recorder implements InstrumentationListener, IRecorder {
         startTime: monotonicTime()
       });
       this._pageAliases.delete(page);
+      this._filePrimaryURLChanged();
     });
     frame.on(Frame.Events.InternalNavigation, event => {
-      if (event.isPublic)
+      if (event.isPublic) {
         this._onFrameNavigated(frame, page);
+        this._filePrimaryURLChanged();
+      }
     });
     page.on(Page.Events.Download, () => this._onDownload(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';
@@ -557,10 +467,15 @@ export class Recorder implements InstrumentationListener, IRecorder {
         startTime: monotonicTime()
       });
     }
+    this._filePrimaryURLChanged();
+  }
+
+  private _filePrimaryURLChanged() {
+    const page = this._context.pages()[0];
+    this._recorderApp?.pageNavigated(page?.mainFrame().url());
   }
 
   private _clearScript(): void {
-    this._resetActions();
     if (this._params.mode === 'recording') {
       for (const page of this._context.pages())
         this._onFrameNavigated(page.mainFrame(), page);
