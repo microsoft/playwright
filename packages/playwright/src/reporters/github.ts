@@ -109,6 +109,7 @@ export class GitHubReporter extends TerminalReporter {
   }
 
   private _printFailureAnnotations(failures: TestCase[]) {
+    process.stdout.write('\n');
     failures.forEach((test, index) => {
       const title = this.formatTestTitle(test);
       const header = this.formatTestHeader(test, { indent: '  ', index: index + 1, mode: 'error' });
