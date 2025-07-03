@@ -70,15 +70,6 @@ runs:
                 netsh advfirewall firewall add rule name="WSL2-Auto" dir=in action=allow protocol=TCP remoteip=$networkRange
             }
         }
-    - name: Disable WSL2 crash dumps (consumes a lot of disk space)
-      shell: bash
-      run: |
-        if [ -f ~/.wslconfig ]; then
-          echo "~/.wslconfig already exists"
-          exit 1
-        fi
-        echo "[wsl2]" > ~/.wslconfig
-        echo "maxCrashDumpCount=-1" >> ~/.wslconfig
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |

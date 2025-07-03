@@ -31,6 +31,15 @@ jobs:
     runs-on: windows-2025
     steps:
     - uses: actions/checkout@v4
+    - name: Disable WSL2 crash dumps (consumes a lot of disk space)
+      shell: bash
+      run: |
+        if [ -f ~/.wslconfig ]; then
+          echo "~/.wslconfig already exists"
+          exit 1
+        fi
+        echo "[wsl2]" > ~/.wslconfig
+        echo "MaxCrashDumpCount = -1" >> ~/.wslconfig
     - uses: ./.github/actions/run-test
       with:
         node-version: 22
