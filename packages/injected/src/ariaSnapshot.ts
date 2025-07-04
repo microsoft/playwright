@@ -49,16 +49,7 @@ let lastRef = 0;
 
 export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
   const visited = new Set<Node>();
-  const visibility = new Map<Element, boolean>();
-
-  const isElementVisibleCached = (element: Element): boolean => {
-    let isVisible = visibility.get(element);
-    if (isVisible === undefined) {
-      isVisible = isElementVisible(element);
-      visibility.set(element, isVisible);
-    }
-    return isVisible;
-  };
+  const invisible = new Set<Element>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
@@ -71,7 +62,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
-      if (options?.forAI && node.parentElement && !isElementVisibleCached(node.parentElement))
+      if (options?.forAI && node.parentElement && invisible.has(node.parentElement))
         return;
 
       const text = node.nodeValue;
@@ -85,7 +76,8 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       return;
 
     const element = node as Element;
-    if (!options?.forAI && roleUtils.isElementHiddenForAria(element))
+    const isElementHiddenForAria = roleUtils.isElementHiddenForAria(element);
+    if (!options?.forAI && isElementHiddenForAria)
       return;
 
     const ariaChildren: Element[] = [];
@@ -98,7 +90,8 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
-    if (options?.forAI && roleUtils.isElementHiddenForAria(element) && !isElementVisibleCached(element)) {
+    if (options?.forAI && isElementHiddenForAria && !isElementVisible(element)) {
+      invisible.add(element);
       processElement(ariaNode, element, ariaChildren);
       return;
     }
