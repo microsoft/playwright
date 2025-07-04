@@ -141,7 +141,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
   roleUtils.beginAriaCaches();
   try {
-    visit(snapshot.root, rootElement, false);
+    visit(snapshot.root, rootElement, true);
   } finally {
     roleUtils.endAriaCaches();
   }
