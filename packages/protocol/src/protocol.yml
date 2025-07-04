@@ -359,7 +359,6 @@ FormField:
 
 APIRequestContext:
   type: interface
-  progress: true
 
   initializer:
     tracing: Tracing
@@ -630,7 +629,6 @@ ContextOptions:
 
 LocalUtils:
   type: interface
-  progress: true
 
   initializer:
     deviceDescriptors:
@@ -770,7 +768,6 @@ LocalUtils:
 
 Root:
   type: interface
-  progress: true
 
   commands:
 
@@ -789,7 +786,6 @@ Root:
 
 Playwright:
   type: interface
-  progress: true
 
   initializer:
     chromium: BrowserType
@@ -881,7 +877,6 @@ RecorderSource:
 
 DebugController:
   type: interface
-  progress: true
 
   commands:
     initialize:
@@ -968,7 +963,6 @@ DebugController:
 
 SocksSupport:
   type: interface
-  progress: true
 
   commands:
     socksConnected:
@@ -1020,7 +1014,6 @@ SocksSupport:
 
 BrowserType:
   type: interface
-  progress: true
 
   initializer:
     executablePath: string
@@ -1062,7 +1055,6 @@ BrowserType:
 
 Browser:
   type: interface
-  progress: true
 
   initializer:
     version: string
@@ -1129,9 +1121,8 @@ Browser:
       returns:
         context: BrowserContext
 
-    stopPendingOperations:
+    disconnectFromReusedContext:
       internal: true
-      title: Stop pending operations
       parameters:
         reason: string
 
@@ -1204,7 +1195,6 @@ EventTarget:
 
 BrowserContext:
   type: interface
-  progress: true
 
   extends: EventTarget
 
@@ -1552,7 +1542,6 @@ BrowserContext:
 
 Page:
   type: interface
-  progress: true
 
   extends: EventTarget
 
@@ -2063,7 +2052,6 @@ Page:
 
 Frame:
   type: interface
-  progress: true
 
   initializer:
     url: string
@@ -2726,7 +2714,6 @@ Frame:
 
 Worker:
   type: interface
-  progress: true
 
   initializer:
     url: string
@@ -2758,7 +2745,6 @@ Worker:
 
 JSHandle:
   type: interface
-  progress: true
 
   initializer:
     preview: string
@@ -2822,7 +2808,6 @@ JSHandle:
 
 ElementHandle:
   type: interface
-  progress: true
 
   extends: JSHandle
 
@@ -3269,7 +3254,6 @@ ElementHandle:
 
 Request:
   type: interface
-  progress: true
 
   initializer:
     frame: Frame?
@@ -3301,7 +3285,6 @@ Request:
 
 Route:
   type: interface
-  progress: true
 
   initializer:
     request: Request
@@ -3343,7 +3326,6 @@ Route:
 
 WebSocketRoute:
   type: interface
-  progress: true
 
   initializer:
     url: string
@@ -3421,7 +3403,6 @@ ResourceTiming:
 
 Response:
   type: interface
-  progress: true
 
   initializer:
     request: Request
@@ -3492,7 +3473,6 @@ RemoteAddr:
 
 WebSocket:
   type: interface
-  progress: true
 
   extends: EventTarget
 
@@ -3521,7 +3501,6 @@ WebSocket:
 
 BindingCall:
   type: interface
-  progress: true
 
   initializer:
     frame: Frame
@@ -3547,7 +3526,6 @@ BindingCall:
 
 Dialog:
   type: interface
-  progress: true
 
   initializer:
     page: Page?
@@ -3567,7 +3545,6 @@ Dialog:
 
 Tracing:
   type: interface
-  progress: true
 
   commands:
 
@@ -3625,7 +3602,6 @@ Tracing:
 
 Artifact:
   type: interface
-  progress: true
 
   initializer:
     absolutePath: string
@@ -3668,7 +3644,6 @@ Artifact:
 
 Stream:
   type: interface
-  progress: true
 
   commands:
 
@@ -3685,7 +3660,6 @@ Stream:
 
 WritableStream:
   type: interface
-  progress: true
 
   commands:
 
@@ -3700,7 +3674,6 @@ WritableStream:
 
 CDPSession:
   type: interface
-  progress: true
 
   commands:
 
@@ -3725,7 +3698,6 @@ CDPSession:
 
 Electron:
   type: interface
-  progress: true
 
   commands:
 
@@ -3796,7 +3768,6 @@ Electron:
 
 ElectronApplication:
   type: interface
-  progress: true
 
   extends: EventTarget
 
@@ -3847,7 +3818,6 @@ ElectronApplication:
 
 Android:
   type: interface
-  progress: true
 
   commands:
 
@@ -3864,7 +3834,6 @@ Android:
 
 AndroidSocket:
   type: interface
-  progress: true
 
   commands:
     write:
@@ -3883,7 +3852,6 @@ AndroidSocket:
 
 AndroidDevice:
   type: interface
-  progress: true
 
   extends: EventTarget
 
@@ -4164,7 +4132,6 @@ AndroidElementInfo:
 
 JsonPipe:
   type: interface
-  progress: true
 
   commands:
     send:

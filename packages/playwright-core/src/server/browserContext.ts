@@ -35,7 +35,6 @@ import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
-import { ProgressController } from './progress';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
@@ -67,7 +66,6 @@ export abstract class BrowserContext extends SdkObject {
   };
 
   readonly _pageBindings = new Map<string, PageBinding>();
-  readonly _activeProgressControllers = new Set<ProgressController>();
   readonly _options: types.BrowserContextOptions;
   readonly requestInterceptors: network.RouteHandler[] = [];
   private _isPersistentContext: boolean;
@@ -161,14 +159,6 @@ export abstract class BrowserContext extends SdkObject {
     if (this._closedStatus !== 'open')
       return false;
     return true;
-  }
-
-  async stopPendingOperations(reason: string) {
-    // When using context reuse, stop pending operations to gracefully terminate all the actions
-    // with a user-friendly error message containing operation log.
-    await Promise.all(Array.from(this._activeProgressControllers).map(controller => controller.abort(reason)));
-    // Let rejections in microtask generate events before returning.
-    await new Promise(f => setTimeout(f, 0));
   }
 
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {

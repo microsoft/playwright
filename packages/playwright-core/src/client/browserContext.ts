@@ -57,6 +57,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings: TimeoutSettings;
   _ownerPage: Page | undefined;
+  _forReuse = false;
   private _closedPromise: Promise<void>;
   readonly _options: channels.BrowserNewContextParams;
 

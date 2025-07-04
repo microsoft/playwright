@@ -57,9 +57,9 @@ export class ProgressController {
     this._logName = logName;
   }
 
-  async abort(message: string) {
+  async abort(error: Error) {
     if (this._state === 'running') {
-      const error = new AbortedError(message);
+      (error as any)[kAbortErrorSymbol] = true;
       this._state = { error };
       this._forceAbortPromise.reject(error);
     }
@@ -70,7 +70,6 @@ export class ProgressController {
   async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
     assert(this._state === 'before');
     this._state = 'running';
-    this.sdkObject.attribution.context?._activeProgressControllers.add(this);
     let customErrorHandler: ((error: Error) => any) | undefined;
 
     const deadline = timeout ? Math.min(monotonicTime() + timeout, 2147483647) : 0; // 2^31-1 safe setTimeout in Node.
@@ -82,6 +81,7 @@ export class ProgressController {
         return;
       const onTimeout = () => {
         if (this._state === 'running') {
+          (timeoutError as any)[kAbortErrorSymbol] = true;
           this._state = { error: timeoutError };
           this._forceAbortPromise.reject(timeoutError);
         }
@@ -162,7 +162,6 @@ export class ProgressController {
         return customErrorHandler(error);
       throw error;
     } finally {
-      this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
       clearTimeout(timer);
       this._donePromise.resolve();
     }
@@ -176,8 +175,8 @@ async function runCleanup(error: Error | undefined, cleanup: (error: Error | und
   }
 }
 
-class AbortedError extends Error {}
+const kAbortErrorSymbol = Symbol('kAbortError');
 
 export function isAbortError(error: Error): boolean {
-  return error instanceof AbortedError || error instanceof TimeoutError;
+  return !!(error as any)[kAbortErrorSymbol];
 }
