@@ -49,20 +49,19 @@ let lastRef = 0;
 
 export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
   const visited = new Set<Node>();
-  const invisible = new Set<Element>();
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
   };
 
-  const visit = (ariaNode: AriaNode, node: Node) => {
+  const visit = (ariaNode: AriaNode, node: Node, parentElementVisible: boolean) => {
     if (visited.has(node))
       return;
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
-      if (options?.forAI && node.parentElement && invisible.has(node.parentElement))
+      if (!parentElementVisible)
         return;
 
       const text = node.nodeValue;
@@ -91,8 +90,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     }
 
     if (options?.forAI && isElementHiddenForAria && !isElementVisible(element)) {
-      invisible.add(element);
-      processElement(ariaNode, element, ariaChildren);
+      processElement(ariaNode, element, ariaChildren, false);
       return;
     }
 
@@ -102,10 +100,10 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
         snapshot.elements.set(childAriaNode.ref, element);
       ariaNode.children.push(childAriaNode);
     }
-    processElement(childAriaNode || ariaNode, element, ariaChildren);
+    processElement(childAriaNode || ariaNode, element, ariaChildren, true);
   };
 
-  function processElement(ariaNode: AriaNode, element: Element, ariaChildren: Element[] = []) {
+  function processElement(ariaNode: AriaNode, element: Element, ariaChildren: Element[], parentElementVisible: boolean) {
     // Surround every element with spaces for the sake of concatenated text nodes.
     const display = getElementComputedStyle(element)?.display || 'inline';
     const treatAsBlock = (display !== 'inline' || element.nodeName === 'BR') ? ' ' : '';
@@ -116,20 +114,20 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
-        visit(ariaNode, child);
+        visit(ariaNode, child, parentElementVisible);
     } else {
       for (let child = element.firstChild; child; child = child.nextSibling) {
         if (!(child as Element | Text).assignedSlot)
-          visit(ariaNode, child);
+          visit(ariaNode, child, parentElementVisible);
       }
       if (element.shadowRoot) {
         for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
-          visit(ariaNode, child);
+          visit(ariaNode, child, parentElementVisible);
       }
     }
 
     for (const child of ariaChildren)
-      visit(ariaNode, child);
+      visit(ariaNode, child, parentElementVisible);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::after') || '');
 
@@ -147,7 +145,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
   roleUtils.beginAriaCaches();
   try {
-    visit(snapshot.root, rootElement);
+    visit(snapshot.root, rootElement, false);
   } finally {
     roleUtils.endAriaCaches();
   }
