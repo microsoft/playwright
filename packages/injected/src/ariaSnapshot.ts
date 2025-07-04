@@ -98,8 +98,12 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
-    const isVisible = options?.forAI ? !roleUtils.isElementHiddenForAria(element) || isElementVisible(element) : true;
-    const childAriaNode = isVisible ? toAriaNode(element, options) : null;
+    if (options?.forAI && roleUtils.isElementHiddenForAria(element) && !isElementVisibleCached(element)) {
+      processElement(ariaNode, element, ariaChildren);
+      return;
+    }
+
+    const childAriaNode = toAriaNode(element, options);
     if (childAriaNode) {
       if (childAriaNode.ref)
         snapshot.elements.set(childAriaNode.ref, element);
