@@ -128,8 +128,7 @@ class SocksProxyConnection {
       ALPNProtocols: browserALPNProtocols,
       servername: !net.isIP(this.host) ? this.host : undefined,
       secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
-    });
-    targetTLS.once('secureConnect', async () => {
+    }, async () => {
       const internalTLS = this.internalTLS ?? await this._upgradeToTLS(targetTLS, [targetTLS.alpnProtocol || 'http/1.1']);
       this.internalTLS = internalTLS;
       debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
@@ -152,7 +151,7 @@ class SocksProxyConnection {
         return;
       }
     });
-    const handleError = async (error: Error) => {
+    targetTLS.once('error', async (error: Error) => {
       // Once we receive an error, we manually close the target connection.
       // In case of an 'error' event on the target connection, we still need to perform the http2 handshake on the browser side.
       // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
@@ -197,8 +196,7 @@ class SocksProxyConnection {
         ].join('\r\n'));
         this.target.destroy();
       }
-    };
-    targetTLS.once('error', handleError);
+    });
 
     return internal;
   }
