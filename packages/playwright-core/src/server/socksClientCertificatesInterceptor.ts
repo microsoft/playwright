@@ -95,6 +95,9 @@ class SocksProxyConnection {
       this.internal = firstPacket[0] === 0x16 // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
         ? this._getTLSStream(data)
         : this._getRawStream();
+
+      this.target.once('close', () => this.internal?.end());
+      this.target.once('error', error => this.internal?.destroy(error));
     }
 
     this.internal.push(data);
