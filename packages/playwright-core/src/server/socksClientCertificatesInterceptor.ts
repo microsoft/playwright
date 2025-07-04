@@ -91,10 +91,19 @@ class SocksProxyConnection {
     // HTTP / TLS are client-hello based protocols. This allows us to detect
     // the protocol on the first package and attach appropriate listeners.
     if (!this.internal) {
+      this.internal = new stream.Duplex({
+        read: () => {},
+        write: (data, encoding, callback) => {
+          this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
+          callback();
+        }
+      });
+
       const firstPacket = data;
-      this.internal = firstPacket[0] === 0x16 // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-        ? this._getTLSStream(data)
-        : this._getRawStream();
+      if (firstPacket[0] === 0x16) // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
+        this._pipeTLS(this.internal, firstPacket);
+      else
+        this._pipeRaw(this.internal);
 
       this.target.once('close', () => this.internal?.end());
       this.target.once('error', error => this.internal?.destroy(error));
@@ -103,24 +112,14 @@ class SocksProxyConnection {
     this.internal.push(data);
   }
 
-  private _getRawStream(): stream.Duplex {
-    return this.target;
+  private _pipeRaw(internal: stream.Duplex) {
+    internal.pipe(this.target);
+    this.target.pipe(internal);
   }
 
-  private _getTLSStream(data: Buffer): stream.Duplex {
-    const browserALPNProtocols = parseALPNFromClientHello(data) || ['http/1.1'];
-    debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${browserALPNProtocols}`);
-
-    const internal = new stream.Duplex({
-      read: () => {},
-      write: (data, encoding, callback) => {
-        this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
-        callback();
-      }
-    });
-    if (this._closed)
-      return new stream.Duplex();
-
+  private _pipeTLS(internal: stream.Duplex, clientHello: Buffer) {
+    const browserALPNProtocols = parseALPNFromClientHello(clientHello) || ['http/1.1'];
+    debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} offers ALPN ${browserALPNProtocols}`);
     const targetTLS = tls.connect({
       socket: this.target,
       host: this.host,
@@ -146,10 +145,8 @@ class SocksProxyConnection {
       internalTLS.once('close', cleanup);
       targetTLS.once('close', cleanup);
 
-      if (this._closed) {
+      if (this._closed)
         internalTLS.destroy();
-        return;
-      }
     });
     targetTLS.once('error', async (error: Error) => {
       // Once we receive an error, we manually close the target connection.
@@ -197,18 +194,23 @@ class SocksProxyConnection {
         this.target.destroy();
       }
     });
-
-    return internal;
   }
 
   private async _upgradeToTLS(socket: stream.Duplex, alpnProtocols: string[]): Promise<tls.TLSSocket> {
     return new Promise((resolve, reject) => {
-      const tlsSocket = new tls.TLSSocket(socket, {
+      const server = tls.createServer({
         ...proxyServerTlsOptions,
         ALPNProtocols: alpnProtocols,
       });
-      tlsSocket.once('secureConnect', () => resolve(tlsSocket));
-      tlsSocket.once('error', reject);
+      server.emit('connection', socket);
+      server.once('secureConnection', tlsSocket => {
+        server.close();
+        resolve(tlsSocket);
+      });
+      server.once('error', error => {
+        server.close();
+        reject(error);
+      });
     });
 
   }
