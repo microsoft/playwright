@@ -31,6 +31,7 @@ jobs:
     runs-on: windows-2025
     steps:
     - uses: actions/checkout@v4
+    # See https://github.com/microsoft/WSL/issues/12147
     - name: Disable WSL2 crash dumps (consumes a lot of disk space)
       shell: bash
       run: |
@@ -44,7 +45,7 @@ jobs:
       with:
         node-version: 22
         browsers-to-install: webkit-wsl chromium
-        command: npm run test -- --project=webkit-* --reporter=list
+        command: npm run wtest -- --headed
         bot-name: "webkit-wsl-headed"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
