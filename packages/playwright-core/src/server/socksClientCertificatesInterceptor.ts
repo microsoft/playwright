@@ -104,9 +104,6 @@ class SocksProxyConnection {
         this._pipeTLS(this.internal, firstPacket);
       else
         this._pipeRaw(this.internal);
-
-      // TODO: Needed?
-      this.target.once('error', error => this.internal?.destroy(error));
     }
 
     this.internal.push(data);
