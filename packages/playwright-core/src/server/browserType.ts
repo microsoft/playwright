@@ -43,6 +43,7 @@ import type { BrowserName } from './registry';
 import type { ConnectionTransport } from './transport';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
+import type { ChildProcess } from 'child_process';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -211,18 +212,11 @@ export abstract class BrowserType extends SdkObject {
     let browserProcess: BrowserProcess | undefined = undefined;
     const exitPromise = new ManualPromise();
     const processLifecycleHooks = this.processLifecycleHooks(options);
-    if (processLifecycleHooks) {
-      await processLifecycleHooks.preLaunch();
-      prepared.browserArguments = processLifecycleHooks.rewriteArgs(prepared.browserArguments);
-      prepared.executable = processLifecycleHooks.rewriteExecutable();
-    }
+    await processLifecycleHooks.preLaunch();
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
-      env: {
-        ...await this.amendEnvironment(env, options, prepared.userDataDir, isPersistent),
-        ...await processLifecycleHooks?.envProvider(),
-      },
+      env: await processLifecycleHooks.amendEnvironment(env, options, prepared.userDataDir, isPersistent),
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -243,7 +237,7 @@ export abstract class BrowserType extends SdkObject {
         }
       },
       onExit: (exitCode, signal) => {
-        processLifecycleHooks?.onExit();
+        processLifecycleHooks.onExit();
         // Unblock launch when browser prematurely exits.
         exitPromise.resolve();
         if (browserProcess && browserProcess.onclose)
@@ -270,20 +264,17 @@ export abstract class BrowserType extends SdkObject {
       close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_PLAYWRIGHT_TIMEOUT),
       kill
     };
-    try {
-      const { wsEndpoint } = await progress.race([
-        this.waitForReadyState(options, browserLogsCollector),
-        exitPromise.then(() => ({ wsEndpoint: undefined })),
-      ]);
-      if (options.cdpPort !== undefined || !this.supportsPipeTransport())
-        transport = await WebSocketTransport.connect(progress, wsEndpoint!);
-      else
-        transport = new PipeTransport(processLifecycleHooks?.writePipe() ?? stdio[3], processLifecycleHooks?.readPipe() ?? stdio[4]);
-      return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
-    } catch (error) {
-      await closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {});
-      throw error;
-    }
+    progress.cleanupWhenAborted(() => closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT));
+    const { wsEndpoint } = await progress.race([
+      this.waitForReadyState(options, browserLogsCollector),
+      exitPromise.then(() => ({ wsEndpoint: undefined })),
+    ]);
+    if (options.cdpPort !== undefined || !this.supportsPipeTransport())
+      transport = await WebSocketTransport.connect(progress, wsEndpoint!);
+    else
+      transport = new PipeTransport(processLifecycleHooks.writePipe(launchedProcess), processLifecycleHooks.readPipe(launchedProcess));
+    progress.cleanupWhenAborted(() => transport.close());
+    return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
   }
 
   async _createArtifactDirs(options: types.LaunchOptions): Promise<void> {
@@ -349,22 +340,27 @@ export abstract class BrowserType extends SdkObject {
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, options: types.LaunchOptions, userDataDir: string, isPersistent: boolean): Promise<Env>;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
-  protected processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks | undefined {
-    return undefined;
+
+  // Bound to a single process launch
+  protected processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks {
+    return {
+      preLaunch: async () => {},
+      onExit: async () => {},
+      amendEnvironment: async env => env,
+      readPipe: p => p.stdio[4] as NodeJS.ReadableStream,
+      writePipe: p => p.stdio[3] as NodeJS.WritableStream,
+    };
   }
 }
 
 export type LaunchLifecycleHooks = {
   preLaunch(): Promise<void>;
   onExit(): Promise<void>;
-  envProvider(): Promise<Env>;
-  readPipe(): NodeJS.ReadableStream;
-  writePipe(): NodeJS.WritableStream;
-  rewriteArgs(args: string[]): string[];
-  rewriteExecutable(): string;
+  amendEnvironment(env: Env, options: types.LaunchOptions, userDataDir: string, isPersistent: boolean): Promise<Env>;
+  readPipe(p: ChildProcess): NodeJS.ReadableStream;
+  writePipe(p: ChildProcess): NodeJS.WritableStream;
 };
 
 function copyTestHooks(from: object, to: object) {

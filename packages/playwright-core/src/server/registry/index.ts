@@ -519,6 +519,7 @@ export interface Executable {
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
+  _wslExecutablePath?: string
 }
 
 interface ExecutableImpl extends Executable {
@@ -821,8 +822,9 @@ export class Registry {
       name: 'webkit-wsl',
       browserName: 'webkit',
       directory: webkit.dir,
-      executablePath: () => `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
-      executablePathOrDie: (sdkLanguage: string) => `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
+      executablePath: () => 'wsl.exe',
+      executablePathOrDie: (sdkLanguage: string) => 'wsl.exe',
+      _wslExecutablePath: `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
       installType: 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       _isHermeticInstallation: true,

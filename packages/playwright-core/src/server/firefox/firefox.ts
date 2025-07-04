@@ -52,16 +52,21 @@ export class Firefox extends BrowserType {
     return error;
   }
 
-  override async amendEnvironment(env: Env) {
-    if (!path.isAbsolute(os.homedir()))
-      throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
-    if (os.platform() === 'linux') {
-      // Always remove SNAP_NAME and SNAP_INSTANCE_NAME env variables since they
-      // confuse Firefox: in our case, builds never come from SNAP.
-      // See https://github.com/microsoft/playwright/issues/20555
-      return { ...env, SNAP_NAME: undefined, SNAP_INSTANCE_NAME: undefined };
-    }
-    return env;
+  override processLifecycleHooks(options: types.LaunchOptions) {
+    return {
+      ...super.processLifecycleHooks(options),
+      async amendEnvironment(env: Env) {
+        if (!path.isAbsolute(os.homedir()))
+          throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+        if (os.platform() === 'linux') {
+          // Always remove SNAP_NAME and SNAP_INSTANCE_NAME env variables since they
+          // confuse Firefox: in our case, builds never come from SNAP.
+          // See https://github.com/microsoft/playwright/issues/20555
+          return { ...env, SNAP_NAME: undefined, SNAP_INSTANCE_NAME: undefined };
+        }
+        return env;
+      }
+    };
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {

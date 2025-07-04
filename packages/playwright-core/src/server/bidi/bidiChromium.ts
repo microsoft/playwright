@@ -26,7 +26,6 @@ import { waitForReadyState } from '../chromium/chromium';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
@@ -75,10 +74,6 @@ export class BidiChromium extends BrowserType {
       ``,
     ].join('\n');
     return error;
-  }
-
-  override async amendEnvironment(env: Env) {
-    return env;
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {

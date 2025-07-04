@@ -41,7 +41,6 @@ import { gracefullyCloseSet } from '../utils/processLauncher';
 import type { HTTPRequestParams } from '../utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { Progress } from '../progress';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
@@ -163,10 +162,6 @@ export class Chromium extends BrowserType {
       ``,
     ].join('\n');
     return error;
-  }
-
-  override async amendEnvironment(env: Env) {
-    return env;
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {

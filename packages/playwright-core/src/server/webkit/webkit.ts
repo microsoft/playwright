@@ -28,7 +28,6 @@ import { registry } from '../registry';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
@@ -40,13 +39,6 @@ export class WebKit extends BrowserType {
 
   override connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
-  }
-
-  override async amendEnvironment(env: Env, options: types.LaunchOptions, userDataDir: string, isPersistent: boolean): Promise<Env> {
-    return {
-      ...env,
-      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent && options.channel !== 'webkit-wsl' ? path.join(userDataDir, 'cookiejar.db') : undefined,
-    };
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
@@ -69,7 +61,22 @@ export class WebKit extends BrowserType {
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
+
     const webkitArguments = ['--inspector-pipe'];
+
+    if (options.channel === 'webkit-wsl') {
+      const executablePath = registry.findExecutable('webkit-wsl')!._wslExecutablePath!;
+      webkitArguments.unshift(
+          '-d',
+          'playwright',
+          '--cd',
+          '/home/pwuser',
+          '/home/pwuser/node/bin/node',
+          '/home/pwuser/webkit-wsl-pipe-wrapper.mjs',
+          executablePath,
+      );
+    }
+
     if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
       webkitArguments.push('--disable-accelerated-compositing');
     if (headless)
@@ -102,9 +109,18 @@ export class WebKit extends BrowserType {
     return webkitArguments;
   }
 
-  override processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks | undefined {
-    if (options.channel !== 'webkit-wsl')
-      return undefined;
+  override processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks {
+    if (options.channel !== 'webkit-wsl') {
+      return {
+        ...super.processLifecycleHooks(options),
+        async amendEnvironment(env, options, userDataDir, isPersistent) {
+          return {
+            ...env,
+            'CURL_COOKIE_JAR_PATH': process.platform === 'win32' && isPersistent && options.channel !== 'webkit-wsl' ? path.join(userDataDir, 'cookiejar.db') : undefined,
+          };
+        }
+      };
+    }
     let transportServer: net.Server = undefined!;
     const [readPipe, writePipe] = [new PassThrough(), new PassThrough()];
     return {
@@ -123,33 +139,20 @@ export class WebKit extends BrowserType {
         readPipe.destroy();
         writePipe.destroy();
       },
-      envProvider: async () => {
+      amendEnvironment: async (env, options, userDataDir, isPersistent) => {
         return {
+          ...env,
           'WSLENV': 'PW_WKWSL_PORT',
           'PW_WKWSL_PORT': (transportServer.address() as net.AddressInfo)?.port?.toString() ?? '',
         };
       },
       readPipe: () => readPipe,
       writePipe: () => writePipe,
-      rewriteExecutable: () => 'wsl',
-      rewriteArgs: (args: string[]) => {
-        const executablePath = registry.findExecutable('webkit-wsl')!.executablePathOrDie('node');
-        return [
-          '-d',
-          'playwright',
-          '--cd',
-          '/home/pwuser',
-          '/home/pwuser/node/bin/node',
-          '/home/pwuser/webkit-wsl-pipe-wrapper.mjs',
-          executablePath,
-          ...args,
-        ];
-      },
     };
   }
 }
 
 export async function translatePathToWSL(path: string): Promise<string> {
-  const { stdout } = await spawnAsync('wsl', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]);
+  const { stdout } = await spawnAsync('wsl.exe', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]);
   return stdout.toString().trim();
 }
