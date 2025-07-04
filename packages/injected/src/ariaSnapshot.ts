@@ -49,19 +49,29 @@ let lastRef = 0;
 
 export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
   const visited = new Set<Node>();
+  const visibility = new Map<Element, boolean>();
+
+  const isElementVisibleCached = (element: Element): boolean => {
+    let isVisible = visibility.get(element);
+    if (isVisible === undefined) {
+      isVisible = isElementVisible(element);
+      visibility.set(element, isVisible);
+    }
+    return isVisible;
+  };
 
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
   };
 
-  const visit = (ariaNode: AriaNode, node: Node, parentVisible: boolean) => {
+  const visit = (ariaNode: AriaNode, node: Node) => {
     if (visited.has(node))
       return;
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
-      if (!parentVisible)
+      if (options?.forAI && node.parentElement && !isElementVisibleCached(node.parentElement))
         return;
 
       const text = node.nodeValue;
@@ -88,7 +98,8 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
-    const childAriaNode = toAriaNode(element, options);
+    const isVisible = options?.forAI ? !roleUtils.isElementHiddenForAria(element) || isElementVisible(element) : true;
+    const childAriaNode = isVisible ? toAriaNode(element, options) : null;
     if (childAriaNode) {
       if (childAriaNode.ref)
         snapshot.elements.set(childAriaNode.ref, element);
@@ -105,26 +116,23 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       ariaNode.children.push(treatAsBlock);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::before') || '');
-    const parentVisible = isElementVisible(element);
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
-        visit(ariaNode, child, parentVisible);
+        visit(ariaNode, child);
     } else {
       for (let child = element.firstChild; child; child = child.nextSibling) {
         if (!(child as Element | Text).assignedSlot)
-          visit(ariaNode, child, parentVisible);
+          visit(ariaNode, child);
       }
       if (element.shadowRoot) {
         for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
-          visit(ariaNode, child, parentVisible);
+          visit(ariaNode, child);
       }
     }
 
-    // aria-owns children are never text nodes, so this param is unused
-    const ariaChildrenParentVisible = false;
     for (const child of ariaChildren)
-      visit(ariaNode, child, ariaChildrenParentVisible);
+      visit(ariaNode, child);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::after') || '');
 
@@ -142,7 +150,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
   roleUtils.beginAriaCaches();
   try {
-    visit(snapshot.root, rootElement, true);
+    visit(snapshot.root, rootElement);
   } finally {
     roleUtils.endAriaCaches();
   }
@@ -179,14 +187,8 @@ function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: s
     };
   }
 
-  let role: AriaRole | null = null;
-  if (options?.forAI) {
-    const isVisible = !roleUtils.isElementHiddenForAria(element) || isElementVisible(element);
-    if (isVisible)
-      role = roleUtils.getAriaRole(element) ?? 'generic';
-  } else {
-    role = roleUtils.getAriaRole(element);
-  }
+  const defaultRole = options?.forAI ? 'generic' : null;
+  const role = roleUtils.getAriaRole(element) ?? defaultRole;
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
