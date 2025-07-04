@@ -289,7 +289,12 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   get tags(): string[] {
-    return this._grepTitle().match(/@[\S]+/g) || [];
+    const titleTags = this._grepBaseTitlePath().join(' ').match(/@[\S]+/g) || [];
+
+    return [
+      ...titleTags,
+      ...this._tags,
+    ];
   }
 
   _serialize(): any {
@@ -354,10 +359,15 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     return result;
   }
 
-  _grepTitle() {
+  _grepBaseTitlePath(): string[] {
     const path: string[] = [];
     this.parent._collectGrepTitlePath(path);
     path.push(this.title);
+    return path;
+  }
+
+  _grepTitleWithTags(): string {
+    const path = this._grepBaseTitlePath();
     path.push(...this._tags);
     return path.join(' ');
   }

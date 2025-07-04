@@ -47,6 +47,8 @@ test('should have correct tags', async ({ runInlineTest }) => {
       });
       test('foo-bar-tags', { tag: ['@foo', '@bar'] }, () => {
       });
+      test('foo-bar-tags with @inline', { tag: ['@foo', '@bar', '@this is a long tag', '@another', '@long one    again'] }, () => {
+      });
       test.skip('skip-foo-tag', { tag: '@foo' }, () => {
       });
       test.fixme('fixme-bar-tag', { tag: '@bar' }, () => {
@@ -77,6 +79,7 @@ test('should have correct tags', async ({ runInlineTest }) => {
     `title=no-tags, tags=`,
     `title=foo-tag @inline, tags=@inline,@foo`,
     `title=foo-bar-tags, tags=@foo,@bar`,
+    `title=foo-bar-tags with @inline, tags=@inline,@foo,@bar,@this is a long tag,@another,@long one    again`,
     `title=skip-foo-tag, tags=@foo`,
     `title=fixme-bar-tag, tags=@bar`,
     `title=fail-foo-bar-tags, tags=@foo,@bar`,
