@@ -15,7 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import { asLocator, asLocators } from '../../packages/playwright-core/lib/utils/isomorphic/locatorGenerators';
+import { asLocator, asLocators, asLocatorDescription } from '../../packages/playwright-core/lib/utils/isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector as parseLocator } from '../../packages/playwright-core/lib/utils/isomorphic/locatorParser';
 import type { Page, Frame, Locator, FrameLocator } from 'playwright-core';
 
@@ -653,4 +653,11 @@ it('should not oom in locator parser', async ({ page }) => {
       .contentFrame().locator('text=L28').or(l('text=L29')))));
   const error = await locator.count().catch(e => e);
   expect(error.message).toContain('Frame locators are not allowed inside composite locators');
+});
+
+it('asLocatorDescription invalid input', async () => {
+  expect.soft(asLocatorDescription('javascript', `body >> internal:describe="desc"`)).toBe(`desc`);
+  expect.soft(asLocatorDescription('javascript', `body >> internal:describe=12`)).toBe(`locator('body')`);
+  expect.soft(asLocatorDescription('javascript', `following-sibling::*[1]`)).toBe(`following-sibling::*[1]`);
+  expect.soft(asLocatorDescription('javascript', `body >> internal:describe="desc" >> div`)).toBe(`locator('body').locator('div')`);
 });
