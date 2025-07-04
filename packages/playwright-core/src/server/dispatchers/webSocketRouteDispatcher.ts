@@ -29,6 +29,7 @@ import type { Frame } from '../frames';
 import type * as ws from '@injected/webSocketMock';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type { InitScript, PageBinding } from '../page';
 
 export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
   _type_WebSocketRoute = true;
@@ -58,11 +59,14 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     (scope as any)._dispatchEvent('webSocketRoute', { webSocketRoute: this });
   }
 
-  static async installIfNeeded(progress: Progress, connection: DispatcherConnection, target: Page | BrowserContext) {
-    const kBindingName = '__pwWebSocketBinding';
+  static async install(progress: Progress, connection: DispatcherConnection, target: Page | BrowserContext): Promise<InitScript> {
     const context = target instanceof Page ? target.browserContext : target;
-    if (!context.hasBinding(kBindingName)) {
-      await context.exposeBinding(progress, kBindingName, false, (source, payload: ws.BindingPayload) => {
+    let data = context.getBindingClient(kBindingName) as BindingData | undefined;
+    if (data && data.connection !== connection)
+      throw new Error('Another client is already routing WebSockets');
+    if (!data) {
+      data = { counter: 0, connection, binding: null as any };
+      data.binding = await context.exposeBinding(progress, kBindingName, false, (source, payload: ws.BindingPayload) => {
         if (payload.type === 'onCreate') {
           const contextDispatcher = connection.existingDispatcher<BrowserContextDispatcher>(context);
           const pageDispatcher = contextDispatcher ? PageDispatcher.fromNullable(contextDispatcher, source.page) : undefined;
@@ -89,19 +93,27 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
           dispatcher?._dispatchEvent('closePage', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
         if (payload.type === 'onCloseServer')
           dispatcher?._dispatchEvent('closeServer', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
-      });
+      }, data);
     }
+    ++data.counter;
 
-    const kInitScriptName = 'webSocketMockSource';
-    if (!target.initScripts.find(s => s.name === kInitScriptName)) {
-      await target.addInitScript(progress, `
-        (() => {
-          const module = {};
-          ${rawWebSocketMockSource.source}
-          (module.exports.inject())(globalThis);
-        })();
-      `, kInitScriptName);
-    }
+    return await target.addInitScript(progress, `
+      (() => {
+        const module = {};
+        ${rawWebSocketMockSource.source}
+        (module.exports.inject())(globalThis);
+      })();
+    `);
+  }
+
+  static async uninstall(connection: DispatcherConnection, target: Page | BrowserContext, initScript: InitScript) {
+    const context = target instanceof Page ? target.browserContext : target;
+    const data = context.getBindingClient(kBindingName) as BindingData | undefined;
+    if (!data || data.connection !== connection)
+      return;
+    if (--data.counter <= 0)
+      await context.removeExposedBindings([data.binding]);
+    await target.removeInitScripts([initScript]);
   }
 
   async connect(params: channels.WebSocketRouteConnectParams, progress: Progress) {
@@ -155,3 +167,6 @@ function matchesPattern(dispatcher: PageDispatcher | BrowserContextDispatcher, b
   }
   return false;
 }
+
+const kBindingName = '__pwWebSocketBinding';
+type BindingData = { counter: number, connection: DispatcherConnection, binding: PageBinding };

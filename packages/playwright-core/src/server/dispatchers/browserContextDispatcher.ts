@@ -57,6 +57,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: (string | RegExp)[] = [];
+  private _routeWebSocketInitScripts: InitScript[] = [];
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -318,7 +319,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(progress, this.connection, this._context);
+      this._routeWebSocketInitScripts.push(await WebSocketRouteDispatcher.install(progress, this.connection, this._context));
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
@@ -417,6 +418,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._bindings = [];
     this._context.removeInitScripts(this._initScritps).catch(() => {});
     this._initScritps = [];
+    this._routeWebSocketInitScripts.map(script => WebSocketRouteDispatcher.uninstall(this.connection, this._context, script).catch(() => {}));
+    this._routeWebSocketInitScripts = [];
     if (this._clockPaused)
       this._context.clock.resumeNoReply();
     this._clockPaused = false;

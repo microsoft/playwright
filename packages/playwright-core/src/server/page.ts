@@ -562,8 +562,8 @@ export class Page extends SdkObject {
     await this.delegate.bringToFront();
   }
 
-  async addInitScript(progress: Progress, source: string, name?: string) {
-    const initScript = new InitScript(source, name);
+  async addInitScript(progress: Progress, source: string) {
+    const initScript = new InitScript(source);
     this.initScripts.push(initScript);
     progress.cleanupWhenAborted(() => this.removeInitScripts([initScript]));
     await progress.race(this.delegate.addInitScript(initScript));
@@ -889,6 +889,7 @@ export class PageBinding {
   readonly initScript: InitScript;
   readonly needsHandle: boolean;
   readonly cleanupScript: string;
+  forClient?: unknown;
 
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
@@ -924,13 +925,11 @@ export class PageBinding {
 
 export class InitScript {
   readonly source: string;
-  readonly name?: string;
 
-  constructor(source: string, name?: string) {
+  constructor(source: string) {
     this.source = `(() => {
       ${source}
     })();`;
-    this.name = name;
   }
 }
 

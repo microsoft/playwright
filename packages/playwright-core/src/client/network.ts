@@ -564,7 +564,8 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
     if (this._connected)
       return;
     // Ensure that websocket is "open" and can send messages without an actual server connection.
-    await this._channel.ensureOpened();
+    // If this happens after the page has been closed, ignore the error.
+    await this._channel.ensureOpened().catch(() => {});
   }
 }
 
