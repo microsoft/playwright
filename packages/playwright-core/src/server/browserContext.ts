@@ -213,14 +213,28 @@ export abstract class BrowserContext extends SdkObject {
 
     // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
     // All other properties force a new context.
-    await this._resetStorage(progress);
+
+    // Clear storage first, then apply new storage state if provided
+    if (params?.storageState) {
+      // Clear origins tracking for new storage state
+      this._origins.clear();
+      await this._resetStorage(progress);
+    } else {
+      // Normal reset using existing storage state
+      await this._resetStorage(progress);
+    }
+
     await progress.race(this.clock.resetForReuse());
     await progress.race(this.setUserAgent(this._options.userAgent));
     await progress.race(this.clearCache());
     await progress.race(this.doClearCookies());
     await progress.race(this.doUpdateDefaultEmulatedMedia());
     await progress.race(this.doUpdateDefaultViewport());
-    if (this._options.storageState?.cookies)
+
+    // Apply new storageState if provided
+    if (params?.storageState)
+      await progress.race(this.setStorageState(progress, params.storageState));
+    else if (this._options.storageState?.cookies)
       await progress.race(this.addCookies(this._options.storageState?.cookies));
 
     await page?.resetForReuse(progress);
@@ -789,6 +803,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'userAgent',
   'viewport',
   'testIdAttributeName',
+  'storageState',
 ];
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {

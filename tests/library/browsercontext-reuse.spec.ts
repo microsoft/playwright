@@ -340,3 +340,154 @@ test('should update viewport and media', async ({ reusedContext }) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   await verifyViewport(page, 600, 800);
 });
+
+test('should switch storageState on context reuse', async ({ reusedContext, server }) => {
+  server.setRoute('/setcookie.html', (_req, res) => {
+    res.setHeader('Set-Cookie', 'serverCookie=serverValue');
+    res.end();
+  });
+
+  // First context with no storage state
+  let context = await reusedContext();
+  let page = await context.newPage();
+  await page.goto(server.PREFIX + '/empty.html');
+  expect(await page.evaluate(() => document.cookie)).toBe('');
+  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+
+  // Set some storage in the first context
+  await page.evaluate(() => localStorage.setItem('key1', 'value1'));
+  await page.goto(server.PREFIX + '/setcookie.html');
+  expect(await page.evaluate(() => document.cookie)).toBe('serverCookie=serverValue');
+
+  // Switch to context with different storage state
+  const storageState1: any = {
+    cookies: [{ 
+      name: 'foo', 
+      value: 'bar', 
+      domain: 'localhost', 
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax' as const
+    }],
+    origins: [{
+      origin: server.PREFIX,
+      localStorage: [{ name: 'key2', value: 'value2' }]
+    }]
+  };
+  context = await reusedContext({ storageState: storageState1 });
+  page = context.pages()[0];
+  await page.goto(server.PREFIX + '/empty.html');
+  
+  // Verify new storage state is applied
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+  expect(await page.evaluate(() => localStorage.getItem('key2'))).toBe('value2');
+  expect(await page.evaluate(() => localStorage.getItem('key1'))).toBe(null);
+
+  // Switch to another storage state
+  const storageState2: any = {
+    cookies: [{ 
+      name: 'baz', 
+      value: 'qux', 
+      domain: 'localhost', 
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax' as const
+    }],
+    origins: [{
+      origin: server.PREFIX,
+      localStorage: [{ name: 'key3', value: 'value3' }]
+    }]
+  };
+  context = await reusedContext({ storageState: storageState2 });
+  page = context.pages()[0];
+  await page.goto(server.PREFIX + '/empty.html');
+  
+  // Verify storage state is switched correctly
+  expect(await page.evaluate(() => document.cookie)).toBe('baz=qux');
+  expect(await page.evaluate(() => localStorage.getItem('key3'))).toBe('value3');
+  expect(await page.evaluate(() => localStorage.getItem('key2'))).toBe(null);
+  
+  // Switch back to no storage state
+  context = await reusedContext();
+  page = context.pages()[0];
+  await page.goto(server.PREFIX + '/empty.html');
+  expect(await page.evaluate(() => document.cookie)).toBe('');
+  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+});
+
+
+test('should handle authentication state switch with storageState', async ({ reusedContext, server }) => {
+  // Simulate authenticated state
+  const authenticatedState: any = {
+    cookies: [{
+      name: 'auth-token',
+      value: 'user1-token',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax' as const
+    }],
+    origins: [{
+      origin: server.PREFIX,
+      localStorage: [
+        { name: 'userId', value: 'user1' },
+        { name: 'userName', value: 'Test User 1' }
+      ]
+    }]
+  };
+
+  // Start with authenticated context
+  let context = await reusedContext({ storageState: authenticatedState });
+  let page = await context.newPage();
+  await page.goto(server.PREFIX + '/empty.html');
+  
+  expect(await page.evaluate(() => document.cookie)).toBe('auth-token=user1-token');
+  expect(await page.evaluate(() => localStorage.getItem('userId'))).toBe('user1');
+  expect(await page.evaluate(() => localStorage.getItem('userName'))).toBe('Test User 1');
+
+  // Switch to different authenticated user
+  const authenticatedState2: any = {
+    cookies: [{
+      name: 'auth-token',
+      value: 'user2-token',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax' as const
+    }],
+    origins: [{
+      origin: server.PREFIX,
+      localStorage: [
+        { name: 'userId', value: 'user2' },
+        { name: 'userName', value: 'Test User 2' }
+      ]
+    }]
+  };
+
+  context = await reusedContext({ storageState: authenticatedState2 });
+  page = context.pages()[0];
+  await page.goto(server.PREFIX + '/empty.html');
+  
+  // Verify user switched correctly
+  expect(await page.evaluate(() => document.cookie)).toBe('auth-token=user2-token');
+  expect(await page.evaluate(() => localStorage.getItem('userId'))).toBe('user2');
+  expect(await page.evaluate(() => localStorage.getItem('userName'))).toBe('Test User 2');
+
+  // Switch to unauthenticated state
+  context = await reusedContext();
+  page = context.pages()[0];
+  await page.goto(server.PREFIX + '/empty.html');
+  
+  // Verify logged out state
+  expect(await page.evaluate(() => document.cookie)).toBe('');
+  expect(await page.evaluate(() => localStorage.getItem('userId'))).toBe(null);
+  expect(await page.evaluate(() => localStorage.getItem('userName'))).toBe(null);
+});
