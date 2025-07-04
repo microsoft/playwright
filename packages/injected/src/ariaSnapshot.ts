@@ -76,7 +76,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
     const element = node as Element;
     const isElementHiddenForAria = roleUtils.isElementHiddenForAria(element);
-    if (!options?.forAI && isElementHiddenForAria)
+    if (isElementHiddenForAria && !options?.forAI)
       return;
 
     const ariaChildren: Element[] = [];
@@ -89,18 +89,14 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
-    if (options?.forAI && isElementHiddenForAria && !isElementVisible(element)) {
-      processElement(ariaNode, element, ariaChildren, false);
-      return;
-    }
-
-    const childAriaNode = toAriaNode(element, options);
+    const visible = !isElementHiddenForAria || isElementVisible(element);
+    const childAriaNode = visible ? toAriaNode(element, options) : null;
     if (childAriaNode) {
       if (childAriaNode.ref)
         snapshot.elements.set(childAriaNode.ref, element);
       ariaNode.children.push(childAriaNode);
     }
-    processElement(childAriaNode || ariaNode, element, ariaChildren, true);
+    processElement(childAriaNode || ariaNode, element, ariaChildren, visible);
   };
 
   function processElement(ariaNode: AriaNode, element: Element, ariaChildren: Element[], parentElementVisible: boolean) {
