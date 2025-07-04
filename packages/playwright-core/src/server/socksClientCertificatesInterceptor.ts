@@ -96,6 +96,7 @@ class SocksProxyConnection {
   private readonly port: number;
   target!: net.Socket;
   internal: stream.Duplex | undefined;
+  private _internalTLS: tls.TLSSocket | undefined;
   private _targetCloseEventListener: () => void;
   private _closed = false;
 
@@ -177,7 +178,7 @@ class SocksProxyConnection {
       servername: !net.isIP(this.host) ? this.host : undefined,
       secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
     }, async () => {
-      const internalTLS = await this._upgradeToTLS(internal, [targetTLS.alpnProtocol || 'http/1.1']);
+      const internalTLS = await this._upgradeToTLS(internal, targetTLS.alpnProtocol);
       debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
       internalTLS.pipe(targetTLS);
       targetTLS.pipe(internalTLS);
@@ -202,7 +203,7 @@ class SocksProxyConnection {
       // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
       // This means we call this._targetCloseEventListener manually.
       this.target.removeListener('close', this._targetCloseEventListener);
-      const internalTLS = await this._upgradeToTLS(this.internal!, [targetTLS.alpnProtocol || 'http/1.1']);
+      const internalTLS = await this._upgradeToTLS(this.internal!, targetTLS.alpnProtocol);
       debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
       const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
           .replaceAll('\n', ' <br>');
@@ -244,15 +245,19 @@ class SocksProxyConnection {
     });
   }
 
-  private async _upgradeToTLS(socket: stream.Duplex, alpnProtocols: string[]): Promise<tls.TLSSocket> {
+  private async _upgradeToTLS(socket: stream.Duplex, alpnProtocol: string | false | null): Promise<tls.TLSSocket> {
+    // TLS errors can happen after secureConnect event from the target. In this case the socket is already upgraded to TLS.
+    if (this._internalTLS)
+      return this._internalTLS;
     return new Promise((resolve, reject) => {
       const server = tls.createServer({
         ...proxyServerTlsOptions,
-        ALPNProtocols: alpnProtocols,
+        ALPNProtocols: [alpnProtocol || 'http/1.1'],
       });
       server.emit('connection', socket);
       server.once('secureConnection', tlsSocket => {
         server.close();
+        this._internalTLS = tlsSocket;
         resolve(tlsSocket);
       });
       server.once('error', error => {
