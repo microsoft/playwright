@@ -105,7 +105,7 @@ class SocksProxyConnection {
       else
         this._pipeRaw(this.internal);
 
-      this.target.once('close', () => this.internal?.end());
+      // TODO: Needed?
       this.target.once('error', error => this.internal?.destroy(error));
     }
 
@@ -162,7 +162,7 @@ class SocksProxyConnection {
         // This method is available only in Node.js 20+
         if ('performServerHandshake' in http2) {
           // @ts-expect-error
-          const session: http2.ServerHttp2Session = http2.performServerHandshake(this.internalTLS);
+          const session: http2.ServerHttp2Session = http2.performServerHandshake(internalTLS);
           session.on('error', () => {
             this.target.destroy();
             this._targetCloseEventListener();
