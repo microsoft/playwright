@@ -44,7 +44,6 @@ class SocksProxyConnection {
   private readonly uid: string;
   private readonly host: string;
   private readonly port: number;
-  firstPackageReceived: boolean = false;
   target!: net.Socket;
   // In case of http, we just pipe data to the target socket and they are |undefined|.
   internal: stream.Duplex | undefined;
@@ -93,26 +92,22 @@ class SocksProxyConnection {
   public onData(data: Buffer) {
     // HTTP / TLS are client-hello based protocols. This allows us to detect
     // the protocol on the first package and attach appropriate listeners.
-    if (!this.firstPackageReceived) {
-      this.firstPackageReceived = true;
-      // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-      if (data[0] === 0x16)
-        this._attachTLSListeners(data);
-      else
-        this.target.on('data', data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
+    if (!this.internal) {
+      const firstPacket = data;
+      this.internal = firstPacket[0] === 0x16 // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
+        ? this._getTLSStream(data)
+        : this._getRawStream(data);
     }
 
-    if (this.internal) {
-      this.internal.push(data);
-      // Forward TLS data
-    } else {
-      // Forward HTTP data
-      this.target.write(data);
-    }
+    this.internal.push(data);
   }
 
-  private _attachTLSListeners(data: Buffer) {
-    this.internal = new stream.Duplex({
+  private _getRawStream(data: Buffer): stream.Duplex {
+    return this.target;
+  }
+
+  private _getTLSStream(data: Buffer): stream.Duplex {
+    const internal = new stream.Duplex({
       read: () => {},
       write: (data, encoding, callback) => {
         this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
@@ -120,7 +115,7 @@ class SocksProxyConnection {
       }
     });
     if (this._closed)
-      return;
+      return internal;
     const browserALPNProtocols = parseALPNFromClientHello(data) || ['http/1.1'];
     debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${browserALPNProtocols}`);
 
@@ -210,6 +205,8 @@ class SocksProxyConnection {
       }
     };
     targetTLS.once('error', handleError);
+
+    return internal;
   }
 
   private _upgradeInternalToTLS(alpnProtocols: string[], callback: (internalTLS: tls.TLSSocket) => void) {
