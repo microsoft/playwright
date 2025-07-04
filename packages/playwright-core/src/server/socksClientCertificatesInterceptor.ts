@@ -107,6 +107,9 @@ class SocksProxyConnection {
   }
 
   private _getTLSStream(data: Buffer): stream.Duplex {
+    const browserALPNProtocols = parseALPNFromClientHello(data) || ['http/1.1'];
+    debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${browserALPNProtocols}`);
+
     const internal = new stream.Duplex({
       read: () => {},
       write: (data, encoding, callback) => {
@@ -116,8 +119,6 @@ class SocksProxyConnection {
     });
     if (this._closed)
       return internal;
-    const browserALPNProtocols = parseALPNFromClientHello(data) || ['http/1.1'];
-    debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${browserALPNProtocols}`);
 
     const targetTLS = tls.connect({
       socket: this.target,
@@ -128,43 +129,36 @@ class SocksProxyConnection {
       servername: !net.isIP(this.host) ? this.host : undefined,
       secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
     });
-    targetTLS.once('secureConnect', () => {
-      this._upgradeInternalToTLS([targetTLS.alpnProtocol || 'http/1.1'], internalTLS => {
-        this.internalTLS = internalTLS;
-        debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
-        internalTLS.pipe(targetTLS);
-        targetTLS.pipe(internalTLS);
+    targetTLS.once('secureConnect', async () => {
+      const internalTLS = this.internalTLS ?? await this._upgradeToTLS(targetTLS, [targetTLS.alpnProtocol || 'http/1.1']);
+      this.internalTLS = internalTLS;
+      debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
+      internalTLS.pipe(targetTLS);
+      targetTLS.pipe(internalTLS);
 
-        const cleanup = () => {
-          internalTLS.unpipe(targetTLS);
-          targetTLS.unpipe(internalTLS);
-          this.target.destroy();
-        };
+      const cleanup = () => {
+        internalTLS.unpipe(targetTLS);
+        targetTLS.unpipe(internalTLS);
+        this.target.destroy();
+      };
 
-        internalTLS.once('error', cleanup);
-        targetTLS.once('error', cleanup);
-        internalTLS.once('close', cleanup);
-        targetTLS.once('close', cleanup);
+      internalTLS.once('error', cleanup);
+      targetTLS.once('error', cleanup);
+      internalTLS.once('close', cleanup);
+      targetTLS.once('close', cleanup);
 
-        if (this._closed) {
-          internalTLS.destroy();
-          return;
-        }
-      });
+      if (this._closed) {
+        internalTLS.destroy();
+        return;
+      }
     });
-    const handleError = (error: Error) => {
+    const handleError = async (error: Error) => {
       // Once we receive an error, we manually close the target connection.
       // In case of an 'error' event on the target connection, we still need to perform the http2 handshake on the browser side.
       // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
       // This means we call this._targetCloseEventListener manually.
       this.target.removeListener('close', this._targetCloseEventListener);
-      if (!this.internalTLS) {
-        this._upgradeInternalToTLS([targetTLS.alpnProtocol || 'http/1.1'], internalTLS => {
-          this.internalTLS = internalTLS;
-          handleError(error);
-        });
-        return;
-      }
+      this.internalTLS = this.internalTLS ?? await this._upgradeToTLS(this.internal!, [targetTLS.alpnProtocol || 'http/1.1']);
       debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
       const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
           .replaceAll('\n', ' <br>');
@@ -209,21 +203,16 @@ class SocksProxyConnection {
     return internal;
   }
 
-  private _upgradeInternalToTLS(alpnProtocols: string[], callback: (internalTLS: tls.TLSSocket) => void) {
-    if (this.internalTLS) {
-      callback(this.internalTLS);
-      return;
-    }
-    const server = tls.createServer({
-      ...proxyServerTlsOptions,
-      ALPNProtocols: alpnProtocols,
+  private async _upgradeToTLS(socket: stream.Duplex, alpnProtocols: string[]): Promise<tls.TLSSocket> {
+    return new Promise((resolve, reject) => {
+      const tlsSocket = new tls.TLSSocket(socket, {
+        ...proxyServerTlsOptions,
+        ALPNProtocols: alpnProtocols,
+      });
+      tlsSocket.once('secureConnect', () => resolve(tlsSocket));
+      tlsSocket.once('error', reject);
     });
-    server.emit('connection', this.internal);
-    server.once('secureConnection', internalTLS => {
-      server.close();
-      callback(internalTLS);
-    });
-    server.once('error', () => server?.close());
+
   }
 }
 
@@ -252,7 +241,7 @@ export class ClientCertificatesProxy {
         this._socksProxy.socketFailed({ uid: payload.uid, errorCode: error.code });
       }
     });
-    this._socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
+    this._socksProxy.addListener(SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => {
       this._connections.get(payload.uid)?.onData(payload.data);
     });
     this._socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
