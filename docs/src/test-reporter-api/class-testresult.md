@@ -19,6 +19,7 @@ The list of files or buffers attached during the test execution through [`proper
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
+  - `location` ?<[Location]> Optional location in the source where the annotation is added.
 
 The list of annotations applicable to the current test. Includes:
 * annotations defined on the test or suite via [`method: Test.(call)`] and [`method: Test.describe`];

@@ -113,19 +113,19 @@ test('test modifiers should work', async ({ runInlineTest }) => {
   expectTest('passed3', 'passed', 'passed', []);
   expectTest('passed4', 'passed', 'passed', []);
   expectTest('passed5', 'passed', 'passed', []);
-  expectTest('skipped1', 'skipped', 'skipped', [{ type: 'skip' }]);
-  expectTest('skipped2', 'skipped', 'skipped', [{ type: 'skip' }]);
-  expectTest('skipped3', 'skipped', 'skipped', [{ type: 'skip' }]);
-  expectTest('skipped4', 'skipped', 'skipped', [{ type: 'skip', description: 'reason' }]);
-  expectTest('skipped5', 'skipped', 'skipped', [{ type: 'fixme' }]);
-  expectTest('skipped6', 'skipped', 'skipped', [{ type: 'fixme', description: 'reason' }]);
-  expectTest('failed1', 'failed', 'failed', [{ type: 'fail' }]);
-  expectTest('failed2', 'failed', 'failed', [{ type: 'fail' }]);
-  expectTest('failed3', 'failed', 'failed', [{ type: 'fail' }]);
-  expectTest('failed4', 'failed', 'failed', [{ type: 'fail', description: 'reason' }]);
-  expectTest('suite1', 'skipped', 'skipped', [{ type: 'skip' }]);
-  expectTest('suite2', 'skipped', 'skipped', [{ type: 'skip' }]);
-  expectTest('suite3', 'skipped', 'skipped', [{ type: 'skip', description: 'reason' }]);
+  expectTest('skipped1', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 20, column: 14 } }]);
+  expectTest('skipped2', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 23, column: 14 } }]);
+  expectTest('skipped3', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 26, column: 14 } }]);
+  expectTest('skipped4', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 29, column: 14 } }]);
+  expectTest('skipped5', 'skipped', 'skipped', [{ type: 'fixme', location: { file: expect.any(String), line: 32, column: 14 } }]);
+  expectTest('skipped6', 'skipped', 'skipped', [{ type: 'fixme', description: 'reason', location: { file: expect.any(String), line: 35, column: 14 } }]);
+  expectTest('failed1', 'failed', 'failed', [{ type: 'fail', location: { file: expect.any(String), line: 39, column: 14 } }]);
+  expectTest('failed2', 'failed', 'failed', [{ type: 'fail', location: { file: expect.any(String), line: 43, column: 14 } }]);
+  expectTest('failed3', 'failed', 'failed', [{ type: 'fail', location: { file: expect.any(String), line: 47, column: 14 } }]);
+  expectTest('failed4', 'failed', 'failed', [{ type: 'fail', description: 'reason', location: { file: expect.any(String), line: 51, column: 14 } }]);
+  expectTest('suite1', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 56, column: 14 } }]);
+  expectTest('suite2', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 61, column: 14 } }]);
+  expectTest('suite3', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 66, column: 14 } }]);
   expectTest('suite4', 'passed', 'passed', []);
   expect(result.passed).toBe(10);
   expect(result.skipped).toBe(9);
@@ -407,7 +407,7 @@ test('should skip inside fixture', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 20 } }]);
 });
 
 test('modifier with a function should throw in the test', async ({ runInlineTest }) => {
@@ -460,8 +460,8 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
-  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
+  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 14, column: 14 } }]);
   expect(result.outputLines).toEqual([
     'beforeEach',
     'passed',
@@ -493,8 +493,8 @@ test('test.skip without a callback in describe block should skip hooks', async (
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(2);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 10, column: 12 } }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 10, column: 12 } }]);
   expect(result.output).not.toContain('%%');
 });
 
@@ -598,8 +598,8 @@ test('should skip all tests from beforeAll', async ({ runInlineTest }) => {
     'beforeAll',
     'afterAll',
   ]);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 14 } }]);
+  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 5, column: 14 } }]);
 });
 
 test('should report skipped tests in-order with correct properties', async ({ runInlineTest }) => {
@@ -695,9 +695,9 @@ test('static modifiers should be added in serial mode', async ({ runInlineTest }
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(2);
   expect(result.didNotRun).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow' }]);
-  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme' }]);
-  expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip' }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow', location: { file: expect.any(String), line: 6, column: 14 } }]);
+  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme', location: { file: expect.any(String), line: 9, column: 12 } }]);
+  expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip', location: { file: expect.any(String), line: 11, column: 12 } }]);
   expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([]);
 });
 
@@ -721,9 +721,18 @@ test('should contain only one slow modifier', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'fixme' }, { type: 'issue', description: 'my-value' }]);
-  expect(result.report.suites[1].specs[0].tests[0].annotations).toEqual([{ type: 'skip' }, { type: 'issue', description: 'my-value' }]);
-  expect(result.report.suites[2].specs[0].tests[0].annotations).toEqual([{ type: 'slow' }, { type: 'issue', description: 'my-value' }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([
+    { type: 'fixme', location: { file: expect.any(String), line: 3, column: 12 } },
+    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 11 } }
+  ]);
+  expect(result.report.suites[1].specs[0].tests[0].annotations).toEqual([
+    { type: 'skip', location: { file: expect.any(String), line: 3, column: 12 } },
+    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 11 } }
+  ]);
+  expect(result.report.suites[2].specs[0].tests[0].annotations).toEqual([
+    { type: 'slow', location: { file: expect.any(String), line: 3, column: 12 } },
+    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 11 } }
+  ]);
 });
 
 test('should skip beforeEach hooks upon modifiers', async ({ runInlineTest }) => {

@@ -355,7 +355,7 @@ export class TeleReporterReceiver {
     if (!!payload.attachments)
       result.attachments = this._parseAttachments(payload.attachments);
     if (payload.annotations) {
-      result.annotations = payload.annotations;
+      result.annotations = this._absoluteAnnotationLocations(payload.annotations);
       test.annotations = result.annotations;
     }
     this._reporter.onTestEnd?.(test, result);
@@ -498,8 +498,16 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
-    test.annotations = payload.annotations ?? [];
+    test.annotations = this._absoluteAnnotationLocations(payload.annotations ?? []);
     return test;
+  }
+
+  private _absoluteAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
+    return annotations.map(annotation => {
+      if (annotation.location)
+        annotation.location = this._absoluteLocation(annotation.location);
+      return annotation;
+    });
   }
 
   private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;

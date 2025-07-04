@@ -260,5 +260,5 @@ test('failed and skipped on retry should be marked as flaky', async ({ runInline
   expect(result.failed).toBe(0);
   expect(result.flaky).toBe(1);
   expect(result.output).toContain('Failed on first run');
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'Skipped on first retry' }]);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'Skipped on first retry', location: expect.anything() }]);
 });

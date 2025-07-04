@@ -19,6 +19,7 @@ test('basic test', async ({ page }, testInfo) => {
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
+  - `location` ?<[Location]> Optional location in the source where the annotation is added.
 
 The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 

@@ -58,6 +58,7 @@ List of steps inside this step.
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'`.
   - `description` ?<[string]> Optional description.
+  - `location` ?<[Location]> Optional location in the source where the annotation is added.
 
 The list of annotations applicable to the current test step.
 
