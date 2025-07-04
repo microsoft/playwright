@@ -39,16 +39,56 @@ function loadProxyServerCertsIfNeeded() {
   proxyServerTlsOptions = { key, cert };
 }
 
-/**
- * Connection flow:
- *
- * 1. Browser -> Proxy : SOCKS CONNECT to Target
- * 2.            Proxy -- Target : Establish TCP
- * 3. Browser <- Proxy : SOCKS Connect established.
- * 4. Browser -> Proxy : TLS ClientHello
- * 5.            Proxy -- Target : Establish TLS, with injected client certificates
- * 6. Browser <- Proxy : TLS ServerHello
- */
+// Client Certificates in Playwright are implemented as a SOCKS5 proxy that injects client certificates into the TLS handshake.
+// We do that to avoid patching the browsers TLS stack and expose the certificates there.
+// The following shows two flow diagrams, one for http:// and one for https://.
+// Key Decision Point: First byte check (0x16 = TLS handshake)
+
+// HTTP FLOW (Plain text):
+//     BROWSER                    PROXY                     TARGET
+//        │                        │                         │
+//        │   SOCKS5 Connect       │                         │
+//        │───────────────────────►│                         │
+//        │                        │    TCP Connect          │
+//        │                        │────────────────────────►│
+//        │                        │                         │
+//        │   HTTP Request         │                         │
+//        │───────────────────────►│                         │
+//        │                        │ Check: not 0x16         │
+//        │                        │ → Direct pipe           │
+//        │                        │                         │
+//        │                        │   HTTP Request          │
+//        │                        │────────────────────────►│
+//        │                        │                         │
+//        │◄═══════════════════════│════════════════════════►│
+//        │      Plain HTTP        │      Plain HTTP         │
+
+// HTTPS FLOW (TLS with client certificates):
+//     BROWSER                    PROXY                     TARGET
+//        │                        │                         │
+//        │   SOCKS5 Connect       │                         │
+//        │───────────────────────►│                         │
+//        │                        │    TCP Connect          │
+//        │                        │────────────────────────►│
+//        │                        │                         │
+//        │   TLS ClientHello      │                         │
+//        │   (with ALPN)          │                         │
+//        │───────────────────────►│                         │
+//        │                        │ Check: 0x16 = TLS       │
+//        │                        │ Parse ALPN protocols    │
+//        │                        │ Create dual TLS conns   │
+//        │                        │                         │
+//        │                        │   TLS ClientHello       │
+//        │                        │   (with client cert)    │
+//        │                        │────────────────────────►│
+//        │                        │                         │
+//        │                        │◄───── TLS Handshake ────│
+//        │◄──── TLS Handshake ────│                         │
+//        │                        │                         │
+//        │◄═══════════════════════│════════════════════════►│
+//        │      Encrypted Data    │    Encrypted Data       │
+//        │      (HTTP/1.1 or H2)  │    (with client auth)   │
+
 class SocksProxyConnection {
   private readonly socksProxy: ClientCertificatesProxy;
   private readonly uid: string;
@@ -72,7 +112,6 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    // 2.
     if (this.socksProxy.proxyAgentFromOptions)
       this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
@@ -84,7 +123,6 @@ class SocksProxyConnection {
       this.target.destroy();
       return;
     }
-    // 3.
     this.socksProxy._socksProxy.socketConnected({
       uid: this.uid,
       host: this.target.localAddress!,
@@ -113,7 +151,7 @@ class SocksProxyConnection {
 
       const firstPacket = data;
       if (firstPacket[0] === 0x16) // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-        this._pipeTLS(this.internal, firstPacket); // 4.
+        this._pipeTLS(this.internal, firstPacket);
       else
         this._pipeRaw(this.internal);
     }
@@ -130,7 +168,6 @@ class SocksProxyConnection {
     const browserALPNProtocols = parseALPNFromClientHello(clientHello) || ['http/1.1'];
     debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} offers ALPN ${browserALPNProtocols}`);
 
-    // 5.
     const targetTLS = tls.connect({
       socket: this.target,
       host: this.host,
@@ -140,7 +177,6 @@ class SocksProxyConnection {
       servername: !net.isIP(this.host) ? this.host : undefined,
       secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
     }, async () => {
-      // 6.
       const internalTLS = await this._upgradeToTLS(internal, [targetTLS.alpnProtocol || 'http/1.1']);
       debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
       internalTLS.pipe(targetTLS);
