@@ -33,8 +33,9 @@ it('should work with navigation @smoke', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({ page, server, browserName, isAndroid }) => {
+it('should intercept after a service worker', async ({ page, server, browserName, isAndroid, channel }) => {
   it.skip(isAndroid);
+  it.fixme(channel === 'webkit-wsl');
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
@@ -136,8 +137,9 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'notabout:blank', 'about:*')).toBeFalsy();
 });
 
-it('should intercept by glob', async function({ page, server, isAndroid }) {
+it('should intercept by glob', async function({ page, server, isAndroid, channel }) {
   it.skip(isAndroid);
+  it.skip(channel === 'webkit-wsl');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('http://localhos**?*oo', async route => {

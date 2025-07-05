@@ -164,8 +164,9 @@ it('should not crash on storage.getDirectory()', async ({ page, server, browserN
   }
 });
 
-it('navigator.clipboard should be present', async ({ page, server }) => {
+it('navigator.clipboard should be present', async ({ page, server, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18901' });
+  it.fixme(channel === 'webkit-wsl');
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => navigator.clipboard)).toBeTruthy();
 });
@@ -182,7 +183,8 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
   expect(wasClean).toBe(false);
 });
 
-it('serviceWorker should intercept document request', async ({ page, server }) => {
+it('serviceWorker should intercept document request', async ({ page, server, channel }) => {
+  it.fixme(channel === 'webkit-wsl');
   server.setRoute('/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.end(`
@@ -294,8 +296,9 @@ it('Intl.ListFormat should work', async ({ page, server, browserName }) => {
   expect(formatted).toBe('first, second, or third');
 });
 
-it('service worker should cover the iframe', async ({ page, server }) => {
+it('service worker should cover the iframe', async ({ page, server, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29267' });
+  it.fixme(channel === 'webkit-wsl');
 
   server.setRoute('/sw.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' }).end(`
@@ -342,8 +345,9 @@ it('service worker should cover the iframe', async ({ page, server }) => {
   await expect(page.frameLocator('iframe').locator('div')).toHaveText('from the service worker');
 });
 
-it('service worker should register in an iframe', async ({ page, server }) => {
+it('service worker should register in an iframe', async ({ page, server, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29267' });
+  it.fixme(channel === 'webkit-wsl');
 
   server.setRoute('/main.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' }).end(`

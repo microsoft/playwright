@@ -111,7 +111,7 @@ function expectPartitionKey(cookies: Cookie[], name: string, partitionKey: strin
     throw new Error(`Cookie ${name} has partitionKey ${cookie.partitionKey} but expected ${partitionKey}.`);
 }
 
-async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean, isLinux: boolean, urls: TestUrls) {
+async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean, isLinux: boolean, channel: string, urls: TestUrls) {
   addCommonCookieHandlers(httpsServer, urls);
   httpsServer.setRoute('/set-cookie.html', (req, res) => {
     res.setHeader('Set-Cookie', `${req.headers.referer ? 'frame' : 'top-level'}=value; SameSite=None; Path=/; Secure;`);
@@ -136,14 +136,14 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
   await page.goto(urls.set_origin2_origin1);
   await page.goto(urls.read_origin2_origin1);
   const expectedThirdParty = browserName === 'webkit' && isMac ?
-    'Received cookie: undefined' : browserName === 'webkit' && isLinux ?
+    'Received cookie: undefined' : browserName === 'webkit' && isLinux || channel === 'webkit-wsl' ?
       'Received cookie: top-level=value' :
       'Received cookie: frame=value; top-level=value';
   await expect(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
 
   // Check again the top-level cookie.
   await page.goto(urls.read_origin1);
-  const expectedTopLevel = browserName === 'webkit' && (isMac || isLinux) ?
+  const expectedTopLevel = browserName === 'webkit' && (isMac || isLinux || channel === 'webkit-wsl') ?
     'Received cookie: top-level=value' :
     'Received cookie: frame=value; top-level=value';
   expect(await page.locator('body').textContent()).toBe(expectedTopLevel);
@@ -154,13 +154,13 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
   };
 }
 
-test(`third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, urls }) => {
-  await runNonPartitionedTest(page, httpsServer, browserName, isMac, isLinux, urls);
+test(`third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, urls, channel }) => {
+  await runNonPartitionedTest(page, httpsServer, browserName, isMac, isLinux, channel, urls);
 });
 
-test(`save/load third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, browser, urls }) => {
+test(`save/load third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, browser, urls, channel }) => {
   // Run the test to populate the cookies.
-  const { expectedTopLevel, expectedThirdParty } = await runNonPartitionedTest(page, httpsServer, browserName, isMac, isLinux, urls);
+  const { expectedTopLevel, expectedThirdParty } = await runNonPartitionedTest(page, httpsServer, browserName, isMac, isLinux, channel, urls);
 
   async function checkCookies(page: Page) {
     // Check top-level cookie first.

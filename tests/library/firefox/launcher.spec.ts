@@ -46,7 +46,7 @@ it('should pass firefox user preferences in persistent', async ({ mode, launchPe
   expect(error.message).toContain('NS_ERROR_PROXY_CONNECTION_REFUSED');
 });
 
-it('should support custom firefox policies', async ({ browserType, mode, asset, loopback }, testInfo) => {
+it('should support custom firefox policies', async ({ browserType, mode, asset, loopback, loopback2 }, testInfo) => {
   it.skip(mode.startsWith('service'));
 
   const policies = {
@@ -60,7 +60,7 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   await fs.promises.writeFile(policiesPath, JSON.stringify(policies));
 
   const port = 48112;
-  const server = new TestServer(asset(''), port, loopback, {
+  const server = new TestServer(asset(''), port, loopback, loopback2, {
     key: await fs.promises.readFile(asset('client-certificates/client/localhost/localhost.key')),
     cert: await fs.promises.readFile(asset('client-certificates/client/localhost/localhost.pem')),
   });
