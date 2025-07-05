@@ -553,9 +553,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'fails' }).click();
-      await page.locator('text=stdout').click();
-      await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
-      await page.locator('text=stderr').click();
+      await page.getByText('stdout').click();
+      await expect(page.locator('.attachment-body').nth(0)).toHaveText('First line\nSecond line');
+      await page.getByText('stderr').click();
       await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
     });
 
@@ -2957,7 +2957,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByText('my test').click();
-      await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
+      await expect(page.getByTestId('attachments').getByText('stdout')).toHaveCount(1);
     });
 
     test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
