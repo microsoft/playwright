@@ -20,7 +20,7 @@ import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { Link, ProjectLink, SearchParamsContext, testResultHref, TraceLink } from './links';
+import { Link, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
@@ -30,6 +30,8 @@ import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { HeaderView } from './headerView';
 import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
+import { testResultHref } from './url';
+import { ProjectLink, TraceLink } from './linkVariants';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],

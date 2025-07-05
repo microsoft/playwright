@@ -137,12 +137,12 @@
   fill: var(--color-fg-muted);
 }
 
-.trace-link {
+.link-trace {
   /* Trace link button has 1px border and 4px padding, so we need 3px right margin to match content on the other side of divider */
   margin-right: 3px;
 }
 
-.trace-link-separator {
+.link-trace-separator {
   color: var(--color-fg-muted);
   user-select: none;
 }

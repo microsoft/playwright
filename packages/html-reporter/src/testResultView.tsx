@@ -20,7 +20,6 @@ import { TreeItem } from './treeItem';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
-import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
@@ -30,6 +29,9 @@ import './testResultView.css';
 import { useAsyncMemo } from '@web/uiUtils';
 import { copyPrompt } from '@web/shared/prompts';
 import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
+import { Anchor } from './anchor';
+import { AttachmentLink } from './linkVariants';
+import { generateTraceUrl, testResultHref } from './url';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
