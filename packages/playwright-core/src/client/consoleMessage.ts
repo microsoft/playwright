@@ -39,8 +39,8 @@ export class ConsoleMessage implements api.ConsoleMessage {
     return this._page;
   }
 
-  type(): string {
-    return this._event.type;
+  type(): ReturnType<api.ConsoleMessage['type']> {
+    return this._event.type as ReturnType<api.ConsoleMessage['type']>;
   }
 
   text(): string {

@@ -18857,7 +18857,7 @@ export interface ConsoleMessage {
    * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`,
    * `'profileEnd'`, `'count'`, `'timeEnd'`.
    */
-  type(): string;
+  type(): "log"|"debug"|"info"|"error"|"warning"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"profile"|"profileEnd"|"count"|"timeEnd";
 }
 
 /**
