@@ -107,7 +107,10 @@ export class TestChildProcess {
 
   constructor(params: TestChildParams) {
     this.params = params;
-    this.process = spawn(params.command[0], params.command.slice(1), {
+    // See https://nodejs.org/api/deprecations.html#DEP0190
+    const command = params.shell ? params.command.join(' ') : params.command[0];
+    const args = params.shell ? [] : params.command.slice(1);
+    this.process = spawn(command, args, {
       env: {
         ...process.env,
         ...params.env,
