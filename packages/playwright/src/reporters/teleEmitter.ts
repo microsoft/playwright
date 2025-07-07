@@ -300,11 +300,10 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   private _relativeAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
-    return annotations.map(annotation => {
-      if (annotation.location)
-        annotation.location = this._relativeLocation(annotation.location);
-      return annotation;
-    });
+    return annotations.map(annotation => ({
+      ...annotation,
+      location: annotation.location ? this._relativeLocation(annotation.location) : undefined,
+    }));
   }
 
   private _relativeLocation(location: reporterTypes.Location): reporterTypes.Location;
