@@ -26,7 +26,6 @@ import { getEastAsianWidth } from '../utilsBundle';
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { Colors } from '@isomorphic/colors';
-import type { TestAnnotation } from '../../types/test';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -395,27 +394,6 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
   }
   lines.push('');
   return lines.join('\n');
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function formatTestWarning(screen: Screen, config: FullConfig, warnings: TestAnnotation[]): string[] {
-  warnings.sort((a, b) => {
-    const aLocationKey = a.location ? `${a.location.file}:${a.location.line}:${a.location.column}` : undefined;
-    const bLocationKey = b.location ? `${b.location.file}:${b.location.line}:${b.location.column}` : undefined;
-
-    if (!aLocationKey && !bLocationKey)
-      return 0;
-    if (!aLocationKey)
-      return 1;
-    if (!bLocationKey)
-      return -1;
-    return aLocationKey.localeCompare(bLocationKey);
-  });
-
-  return warnings.filter(w => !!w.description).map(w => {
-    const location = !!w.location ? `${relativeFilePath(screen, config, w.location.file)}:${w.location.line}:${w.location.column}: ` : '';
-    return `${screen.colors.yellow(`    Warning: ${location}${w.description}`)}`;
-  });
 }
 
 export function formatRetry(screen: Screen, result: TestResult) {
