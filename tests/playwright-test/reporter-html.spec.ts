@@ -3049,7 +3049,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should respect snippets configuration option', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          export default { reporter: [['html', { snippets: false }]] }
+          export default { reporter: [['html', { noSnippets: true }]] }
         `,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
