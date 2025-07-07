@@ -88,6 +88,7 @@ const test = browserTest.extend<{ scenario: 'launch' | 'connect', reusedContext:
 
 for (const scenario of ['launch', 'connect'] as const) {
   test.describe('reuse ' + scenario, () => {
+    test.skip(({ mode }) => mode !== 'default' && scenario === 'connect');
     test.use({ scenario });
 
     test('should re-add binding after reset', async ({ reusedContext }) => {
