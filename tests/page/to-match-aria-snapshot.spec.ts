@@ -424,7 +424,6 @@ test('expected formatter', async ({ page }) => {
 
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
-Timeout: 1ms
 - Expected  - 2
 + Received  + 3
 
@@ -432,7 +431,8 @@ Timeout: 1ms
 - - textbox "Wrong text"
 + - banner:
 +   - heading "todos" [level=1]
-+   - textbox "What needs to be done?"`);
++   - textbox "What needs to be done?"
+Timeout: 1ms`);
 });
 
 test('should unpack escaped names', async ({ page }) => {

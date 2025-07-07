@@ -37,9 +37,10 @@ test('toMatchText-based assertions should have matcher result', async ({ page })
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toHaveText(expected) failed
 
 Locator: locator('#node')
-Timeout: 1ms
 Expected pattern: /Text2/
 Received string:  \"Text content\"
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -59,9 +60,10 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toHaveText(expected) failed
 
 Locator: locator('#node')
-Timeout: 1ms
 Expected pattern: not /Text/
 Received string: \"Text content\"
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -87,9 +89,10 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeVisible() failed
 
 Locator: locator('#node2')
-Timeout: 1ms
 Expected: visible
 Received: <element(s) not found>
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -110,11 +113,11 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeVisible() failed
 
 Locator: locator('#node')
-Timeout: 1ms
 Expected: not visible
 Received: visible
-Call log`);
+Timeout: 1ms
 
+Call log`);
   }
 });
 
@@ -137,9 +140,10 @@ test('toEqual-based assertions should have matcher result', async ({ page }) => 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toHaveCount(expected) failed
 
 Locator: locator('#node2')
-Timeout: 1ms
 Expected: 1
 Received: 0
+Timeout: 1ms
+
 Call log`);
   }
 
@@ -159,9 +163,10 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toHaveCount(expected) failed
 
 Locator: locator('#node')
-Timeout: 1ms
 Expected: not 1
 Received: 1
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -189,9 +194,10 @@ test('toBeChecked({ checked }) should have expected', async ({ page }) => {
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked() failed
 
 Locator: locator('#unchecked')
-Timeout: 1ms
 Expected: checked
 Received: unchecked
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -212,9 +218,10 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeChecked() failed
 
 Locator: locator('#checked')
-Timeout: 1ms
 Expected: not checked
 Received: checked
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -235,9 +242,10 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked({ checked: false }) failed
 
 Locator: locator('#checked')
-Timeout: 1ms
 Expected: unchecked
 Received: checked
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -258,9 +266,10 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeChecked({ checked: false }) failed
 
 Locator: locator('#unchecked')
-Timeout: 1ms
 Expected: not unchecked
 Received: unchecked
+Timeout: 1ms
+
 Call log`);
 
   }
@@ -281,9 +290,10 @@ Call log`);
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked({ indeterminate: true }) failed
 
 Locator: locator('#unchecked')
-Timeout: 1ms
 Expected: indeterminate
 Received: unchecked
+Timeout: 1ms
+
 Call log`);
 
   }

@@ -22,13 +22,20 @@ import type { Locator } from 'playwright-core';
 
 export const kNoElementsFoundError = '<element(s) not found>';
 
-export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout?: number) {
+export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout: number | undefined, expectedReceivedString?: string) {
   let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + ' failed\n\n';
   if (locator)
     header += `Locator: ${String(locator)}\n`;
-  if (timeout)
-    header += `Timeout: ${timeout}ms\n`;
-  return header;
+  if (expectedReceivedString)
+    header += expectedReceivedString;
+  if (timeout) {
+    const lastCharIsNewline = header.length > 0 && header[header.length - 1] === '\n';
+    if (!lastCharIsNewline)
+      header += '\n';
+    // Make sure to terminate header with the same newline (or lack thereof) used in the `expectedReceivedString`
+    header += `Timeout: ${timeout}ms${lastCharIsNewline ? '\n' : ''}`;
+  }
+  return `${header}\n`;
 }
 
 export type MatcherResult<E, A> = {

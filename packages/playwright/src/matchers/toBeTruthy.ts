@@ -60,9 +60,9 @@ export async function toBeTruthy(
     printedReceived = `Received: ${notFound ? kNoElementsFoundError : received}`;
   }
   const message = () => {
-    const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
+    const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined, `${printedExpected}\n${printedReceived}`);
     const logText = callLogText(log);
-    return `${header}${printedExpected}\n${printedReceived}${logText}`;
+    return `${header}${logText}`;
   };
   return {
     message,
