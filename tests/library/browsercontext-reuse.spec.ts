@@ -20,11 +20,16 @@ import type { BrowserContext, Page, BrowserContextOptions } from '@playwright/te
 
 const test = browserTest.extend<{ reusedContext: (options?: BrowserContextOptions) => Promise<BrowserContext> }>({
   reusedContext: async ({ browserType, browser }, use) => {
+    let context: BrowserContext | undefined;
     await use(async options => {
+      if (context)
+        await (browser as any)._disconnectFromReusedContext('Disconnected');
       const defaultContextOptions = (browserType as any)._playwright._defaultContextOptions;
-      const context = await (browser as any)._newContextForReuse({ ...defaultContextOptions, ...options });
+      context = await (browser as any)._newContextForReuse({ ...defaultContextOptions, ...options });
       return context;
     });
+    if (context)
+      await (browser as any)._disconnectFromReusedContext('Disconnected');
   },
 });
 

@@ -502,7 +502,15 @@ class HtmlBuilder {
 
   private _serializeAnnotations(annotations: api.TestCase['annotations']): TestAnnotation[] {
     // Annotations can be pushed directly, with a wrong type.
-    return annotations.map(a => ({ type: a.type, description: a.description === undefined ? undefined : String(a.description) }));
+    return annotations.map(a => ({
+      type: a.type,
+      description: a.description === undefined ? undefined : String(a.description),
+      location: a.location ? {
+        file: a.location.file,
+        line: a.location.line,
+        column: a.location.column,
+      } : undefined,
+    }));
   }
 
   private _createTestResult(test: api.TestCase, result: api.TestResult): TestResult {

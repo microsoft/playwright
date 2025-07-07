@@ -355,8 +355,9 @@ export class TeleReporterReceiver {
     if (!!payload.attachments)
       result.attachments = this._parseAttachments(payload.attachments);
     if (payload.annotations) {
+      this._absoluteAnnotationLocationsInplace(payload.annotations);
       result.annotations = payload.annotations;
-      test.annotations = result.annotations;
+      test.annotations = payload.annotations;
     }
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
@@ -499,7 +500,15 @@ export class TeleReporterReceiver {
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
     test.annotations = payload.annotations ?? [];
+    this._absoluteAnnotationLocationsInplace(test.annotations);
     return test;
+  }
+
+  private _absoluteAnnotationLocationsInplace(annotations: TestAnnotation[]) {
+    for (const annotation of annotations) {
+      if (annotation.location)
+        annotation.location = this._absoluteLocation(annotation.location);
+    }
   }
 
   private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;

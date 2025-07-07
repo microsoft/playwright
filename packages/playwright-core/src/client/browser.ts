@@ -60,19 +60,20 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _newContextForReuse(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    return await this._wrapApiCall(async () => {
-      for (const context of this._contexts) {
-        await this._instrumentation.runBeforeCloseBrowserContext(context);
-        for (const page of context.pages())
-          page._onClose();
-        context._onClose();
-      }
-      return await this._innerNewContext(options, true);
-    }, { internal: true });
+    return await this._wrapApiCall(() => this._innerNewContext(options, true), { internal: true });
   }
 
-  async _stopPendingOperations(reason: string) {
-    await this._channel.stopPendingOperations({ reason });
+  async _disconnectFromReusedContext(reason: string) {
+    return await this._wrapApiCall(async () => {
+      const context = [...this._contexts].find(context => context._forReuse);
+      if (!context)
+        return;
+      await this._instrumentation.runBeforeCloseBrowserContext(context);
+      for (const page of context.pages())
+        page._onClose();
+      context._onClose();
+      await this._channel.disconnectFromReusedContext({ reason });
+    }, { internal: true });
   }
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
@@ -83,6 +84,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = BrowserContext.from(response.context);
+    if (forReuse)
+      context._forReuse = true;
     if (options.logger)
       context._logger = options.logger;
     await context._initializeHarFromOptions(options.recordHar);

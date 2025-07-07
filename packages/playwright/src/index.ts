@@ -31,7 +31,6 @@ import type { ClientInstrumentationListener } from '../../playwright-core/src/cl
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
 import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
-import type { APIRequest as APIRequestImpl } from '../../playwright-core/src/client/fetch';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -417,10 +416,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
     const context = await (browser as BrowserImpl)._newContextForReuse(defaultContextOptions);
-    (context as any)[kIsReusedContext] = true;
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
-    await (browser as BrowserImpl)._stopPendingOperations(closeReason);
+    await (browser as BrowserImpl)._disconnectFromReusedContext(closeReason);
   },
 
   page: async ({ context, _reuseContext }, use) => {
@@ -511,7 +509,6 @@ function resolveClientCerticates(clientCertificates: ClientCertificates): Client
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
-const kIsReusedContext = Symbol('kReusedContext');
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
@@ -621,12 +618,10 @@ class ArtifactsRecorder {
   _testInfo!: TestInfoImpl;
   _playwright: PlaywrightImpl;
   _artifactsDir: string;
-  private _reusedContexts = new Set<BrowserContext>();
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
-  private _sourceCache: Map<string, string> = new Map();
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -646,16 +641,9 @@ class ArtifactsRecorder {
     this._screenshotRecorder.fixOrdinal();
 
     // Process existing contexts.
-    await Promise.all(this._playwright._allContexts().map(async context => {
-      if ((context as any)[kIsReusedContext])
-        this._reusedContexts.add(context);
-      else
-        await this.didCreateBrowserContext(context);
-    }));
-    {
-      const existingApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as APIRequestImpl)._contexts as Set<APIRequestContext>);
-      await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
-    }
+    await Promise.all(this._playwright._allContexts().map(context => this.didCreateBrowserContext(context)));
+    const existingApiRequests = Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
+    await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
   }
 
   async didCreateBrowserContext(context: BrowserContext) {
@@ -663,12 +651,7 @@ class ArtifactsRecorder {
   }
 
   async willCloseBrowserContext(context: BrowserContext) {
-    // When reusing context, we get all previous contexts closed at the start of next test.
-    // Do not record empty traces and useless screenshots for them.
-    if (this._reusedContexts.has(context))
-      return;
     await this._stopTracing(context.tracing);
-
     await this._screenshotRecorder.captureTemporary(context);
     await this._takePageSnapshot(context);
   }
@@ -705,8 +688,8 @@ class ArtifactsRecorder {
   async didFinishTest() {
     await this.didFinishTestFunction();
 
-    const leftoverContexts = this._playwright._allContexts().filter(context => !this._reusedContexts.has(context));
-    const leftoverApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
+    const leftoverContexts = this._playwright._allContexts();
+    const leftoverApiRequests = Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
 
     // Collect traces/screenshots for remaining contexts.
     await Promise.all(leftoverContexts.map(async context => {
