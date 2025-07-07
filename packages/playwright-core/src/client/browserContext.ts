@@ -395,11 +395,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
     this._routes = remaining;
+    if (behavior && behavior !== 'default') {
+      const promises = removed.map(routeHandler => routeHandler.stop(behavior));
+      await Promise.all(promises);
+    }
     await this._updateInterceptionPatterns();
-    if (!behavior || behavior === 'default')
-      return;
-    const promises = removed.map(routeHandler => routeHandler.stop(behavior));
-    await Promise.all(promises);
   }
 
   private async _updateInterceptionPatterns() {

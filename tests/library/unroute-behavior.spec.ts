@@ -16,6 +16,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 import type { Route } from '@playwright/test';
+import { ManualPromise } from '../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
 
 it('context.unroute should not wait for pending handlers to complete', async ({ page, context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
@@ -299,4 +300,32 @@ it('route.fulfill should not throw if page has been closed', async ({ page, serv
   await page.close();
   // Should not throw.
   await route.fulfill();
+});
+
+it('should not continue requests in flight (page)', async ({ page, server }) => {
+  const routePromise = new ManualPromise();
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/*', async route => {
+    routePromise.resolve();
+    await new Promise(f => setTimeout(f, 3000));
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+  void page.evaluate(() => fetch('/')).catch(() => {});
+  await routePromise;
+  await page.unrouteAll({ behavior: 'wait' });
+});
+
+it('should not continue requests in flight (context)', async ({ page, context, server }) => {
+  const routePromise = new ManualPromise();
+  await page.goto(server.EMPTY_PAGE);
+  await context.route('**/*', async route => {
+    routePromise.resolve();
+    await new Promise(f => setTimeout(f, 3000));
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+  void page.evaluate(() => fetch('/')).catch(() => {});
+  await routePromise;
+  await context.unrouteAll({ behavior: 'wait' });
 });
