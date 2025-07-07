@@ -19,7 +19,7 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 
 Get started by installing Playwright using one of the following methods.
 
-### Using npm, yarn or pnpm.
+### Using npm, yarn or pnpm
 
 The command below either initializes a new project with Playwright, or adds Playwright setup to your current project.
 
