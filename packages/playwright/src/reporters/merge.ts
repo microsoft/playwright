@@ -485,9 +485,9 @@ class PathSeparatorPatcher {
     }
     if (jsonEvent.method === 'onTestEnd') {
       const test = jsonEvent.params.test;
-      test.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
+      test.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       const testResult = jsonEvent.params.result;
-      testResult.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
+      testResult.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       testResult.errors.forEach(error => this._updateErrorLocations(error));
       (testResult.attachments ?? []).forEach(attachment => {
         if (attachment.path)
@@ -503,7 +503,7 @@ class PathSeparatorPatcher {
     if (jsonEvent.method === 'onStepEnd') {
       const step = jsonEvent.params.step;
       this._updateErrorLocations(step.error);
-      step.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
+      step.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       return;
     }
     if (jsonEvent.method === 'onAttach') {
@@ -530,7 +530,7 @@ class PathSeparatorPatcher {
     for (const entry of suite.entries) {
       if ('testId' in entry) {
         this._updateLocation(entry.location);
-        entry.annotations?.forEach(annotation => this._updateAnnotationLocations(annotation));
+        entry.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       } else {
         this._updateSuite(entry);
       }
@@ -544,7 +544,7 @@ class PathSeparatorPatcher {
     }
   }
 
-  private _updateAnnotationLocations(annotation: TestAnnotation) {
+  private _updateAnnotationLocation(annotation: TestAnnotation) {
     this._updateLocation(annotation.location);
   }
 
