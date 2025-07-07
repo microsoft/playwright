@@ -96,7 +96,7 @@ class SocksProxyConnection {
   private readonly port: number;
   target!: net.Socket;
   internal: stream.Duplex | undefined;
-  private _internalTLS: tls.TLSSocket | undefined;
+  private _internalTLS: Promise<tls.TLSSocket> | undefined;
   private _targetCloseEventListener: () => void;
   private _closed = false;
 
@@ -249,7 +249,7 @@ class SocksProxyConnection {
     // TLS errors can happen after secureConnect event from the target. In this case the socket is already upgraded to TLS.
     if (this._internalTLS)
       return this._internalTLS;
-    return new Promise((resolve, reject) => {
+    this._internalTLS = new Promise<tls.TLSSocket>((resolve, reject) => {
       const server = tls.createServer({
         ...proxyServerTlsOptions,
         ALPNProtocols: [alpnProtocol || 'http/1.1'],
@@ -257,7 +257,6 @@ class SocksProxyConnection {
       server.emit('connection', socket);
       server.once('secureConnection', tlsSocket => {
         server.close();
-        this._internalTLS = tlsSocket;
         resolve(tlsSocket);
       });
       server.once('error', error => {
@@ -265,7 +264,7 @@ class SocksProxyConnection {
         reject(error);
       });
     });
-
+    return this._internalTLS;
   }
 }
 
@@ -447,7 +446,7 @@ function parseALPNFromClientHello(buffer: Buffer) {
     offset += 4;
 
     if (extensionType === 0x0010) { // ALPN extension
-      return parseALPNExtension(buffer.slice(offset, offset + extensionLength));
+      return parseALPNExtension(buffer.subarray(offset, offset + extensionLength));
     }
 
     offset += extensionLength;
@@ -474,7 +473,7 @@ function parseALPNExtension(data: Buffer) {
     if (offset + protocolLength > data.length)
       break;
 
-    const protocol = data.slice(offset, offset + protocolLength).toString('utf8');
+    const protocol = data.subarray(offset, offset + protocolLength).toString('utf8');
     protocols.push(protocol);
     offset += protocolLength;
   }
