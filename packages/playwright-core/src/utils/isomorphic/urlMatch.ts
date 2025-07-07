@@ -128,7 +128,9 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
     // Escaped `\\?` behaves the same as `?` in our glob patterns.
     match = match.replaceAll(/\\\\\?/g, '?');
     // Special case about: URLs as they are not relative to baseURL
-    if (match.startsWith('about:'))
+    if (match.startsWith('about:') || match.startsWith('data:')
+      || match.startsWith('chrome:') || match.startsWith('edge:')
+      || match.startsWith('file:'))
       return match;
     // Glob symbols may be escaped in the URL and some of them such as ? affect resolution,
     // so we replace them with safe components first.
