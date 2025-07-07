@@ -303,6 +303,12 @@ export class Chromium extends BrowserType {
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://issues.chromium.org/issues/40277080
       chromeArguments.push('--enable-unsafe-swiftshader');
+      // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
+      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell' || options.channel === 'chromium-tip-of-tree-headless-shell')) {
+        // See also https://github.com/microsoft/playwright/issues/30585
+        // and chromium fix at https://issues.chromium.org/issues/338414704.
+        chromeArguments.push('--enable-gpu');
+      }
     }
 
     if (options.devtools)
