@@ -19,11 +19,13 @@ import * as React from 'react';
 import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
 import { filterWithToken } from './filter';
-import { Link, LinkBadge, navigate, ProjectLink, SearchParamsContext, testResultHref, TraceLink } from './links';
+import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image } from './icons';
 import { clsx } from '@web/uiUtils';
+import { testResultHref } from './url';
+import { LinkBadge, ProjectLink, TraceLink } from './linkVariants';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   file: TestFileSummary;
