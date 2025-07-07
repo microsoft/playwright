@@ -590,9 +590,20 @@ export class TestStepInfoImpl implements TestStepInfo {
   private _testInfo: TestInfoImpl;
   private _stepId: string;
 
+  skip: (arg?: any, description?: string) => void;
+
   constructor(testInfo: TestInfoImpl, stepId: string) {
     this._testInfo = testInfo;
     this._stepId = stepId;
+    this.skip = wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
+      // skip();
+      // skip(condition: boolean, description: string);
+      if (args.length > 0 && !args[0])
+        return;
+      const description = args[1] as (string|undefined);
+      this.annotations.push({ type: 'skip', description, location });
+      throw new StepSkipError(description);
+    });
   }
 
   async _runStepBody<T>(skip: boolean, body: (step: TestStepInfo) => T | Promise<T>, location?: Location) {
@@ -616,16 +627,6 @@ export class TestStepInfoImpl implements TestStepInfo {
   async attach(name: string, options?: { body?: string | Buffer; contentType?: string; path?: string; }): Promise<void> {
     this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
   }
-
-  skip = wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
-    // skip();
-    // skip(condition: boolean, description: string);
-    if (args.length > 0 && !args[0])
-      return;
-    const description = args[1] as (string|undefined);
-    this.annotations.push({ type: 'skip', description, location });
-    throw new StepSkipError(description);
-  });
 }
 
 export class TestSkipError extends Error {
