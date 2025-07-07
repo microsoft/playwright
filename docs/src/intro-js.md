@@ -21,6 +21,8 @@ Get started by installing Playwright using one of the following methods.
 
 ### Using npm, yarn or pnpm.
 
+The command below either initializes a new project with Playwright, or adds Playwright setup to your current project.
+
 <Tabs
   groupId="js-package-manager"
   defaultValue="npm"
@@ -55,8 +57,6 @@ pnpm create playwright
 </TabItem>
 
 </Tabs>
-
-(This command either initializes a new project with Playwright, or adds Playwright setup to your current project.)
 
 Run the install command and select the following to get started:
  - Choose between TypeScript or JavaScript (default is TypeScript)
