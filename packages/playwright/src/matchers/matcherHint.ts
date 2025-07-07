@@ -27,15 +27,10 @@ export function matcherHint(state: ExpectMatcherState, locator: Locator | undefi
   if (locator)
     header += `Locator: ${String(locator)}\n`;
   if (expectedReceivedString)
-    header += expectedReceivedString;
-  if (timeout) {
-    const lastCharIsNewline = header.length > 0 && header[header.length - 1] === '\n';
-    if (!lastCharIsNewline)
-      header += '\n';
-    // Make sure to terminate header with the same newline (or lack thereof) used in the `expectedReceivedString`
-    header += `Timeout: ${timeout}ms${lastCharIsNewline ? '\n' : ''}`;
-  }
-  return `${header}\n`;
+    header += `${expectedReceivedString}\n`;
+  if (timeout)
+    header += `Timeout: ${timeout}ms\n`;
+  return header;
 }
 
 export type MatcherResult<E, A> = {
