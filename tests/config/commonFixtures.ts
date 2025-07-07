@@ -107,18 +107,25 @@ export class TestChildProcess {
 
   constructor(params: TestChildParams) {
     this.params = params;
-    this.process = spawn(params.command[0], params.command.slice(1), {
-      env: {
-        ...process.env,
-        ...params.env,
-      },
-      cwd: params.cwd,
-      shell: params.shell,
-      // On non-windows platforms, `detached: true` makes child process a leader of a new
-      // process group, making it possible to kill child process tree with `.kill(-pid)` command.
-      // @see https://nodejs.org/api/child_process.html#child_process_options_detached
-      detached: process.platform !== 'win32',
-    });
+    // See https://nodejs.org/api/deprecations.html#DEP0190
+    const command = params.shell ? params.command.join(' ') : params.command[0];
+    const args = params.shell ? [] : params.command.slice(1);
+    this.process = spawn(
+        command,
+        args,
+        {
+          env: {
+            ...process.env,
+            ...params.env,
+          },
+          cwd: params.cwd,
+          shell: params.shell,
+          // On non-windows platforms, `detached: true` makes child process a leader of a new
+          // process group, making it possible to kill child process tree with `.kill(-pid)` command.
+          // @see https://nodejs.org/api/child_process.html#child_process_options_detached
+          detached: process.platform !== 'win32',
+        }
+    );
     if (process.env.PWTEST_DEBUG)
       process.stdout.write(`\n\nLaunching ${params.command.join(' ')}\n`);
     this.onOutput = params.onOutput;
