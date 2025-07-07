@@ -31,7 +31,6 @@ import type { ClientInstrumentationListener } from '../../playwright-core/src/cl
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
 import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
-import type { ConnectOptions as ConnectOptionsInternal } from '../../playwright-core/src/client/types';
 import type { APIRequest as APIRequestImpl } from '../../playwright-core/src/client/fetch';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
@@ -106,7 +105,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (connectOptions) {
       const browser = await playwright[browserName].connect({
         ...connectOptions,
-        exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as ConnectOptionsInternal)._exposeNetwork,
+        exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as any)._exposeNetwork,
         headers: {
           // HTTP headers are ASCII only (not UTF-8).
           'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
