@@ -1928,6 +1928,49 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         }
       });
 
+      test('tags with whitespace', async ({ runInlineTest, showReport, page }) => {
+        const result = await runInlineTest({
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            const tags = ['@smoke-p1 with other text', '@issue[123] issue[456]', '@issue#123 issue#456', '@$$$ ???', '@tl/dr didn\\'t read'];
+
+            test.describe('Error Pages', () => {
+              tags.forEach(tag => {
+                test(tag.replace('@', '') + ' passes', { tag: [tag] }, async ({}) => {
+                  expect(1).toBe(1);
+                });
+              });
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(5);
+
+        await showReport();
+        const tags = ['smoke-p1 with other text', 'issue[123] issue[456]', 'issue#123 issue#456', '$$$ ???', 'tl/dr didn\'t read'];
+        const searchInput = page.locator('.subnav-search-input');
+
+        for (const tag of tags) {
+          const tagButton = page.locator('.label').getByText(tag, { exact: true });
+          await expect(tagButton).toBeVisible();
+
+          await tagButton.click();
+          await expect(page.locator('.test-file-test')).toHaveCount(1);
+          await expect(page.locator('.chip')).toHaveCount(1);
+          await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+          await expect(page.locator('.test-file-test .test-file-title')).toHaveText(`Error Pages › ${tag} passes`);
+
+          const testTitle = page.locator('.test-file-test .test-file-title', { hasText: `${tag} passes` });
+          await testTitle.click();
+          await expect(page.locator('.header-title', { hasText: `${tag} passes` })).toBeVisible();
+          await expect(page.locator('.label', { hasText: tag })).toBeVisible();
+
+          await page.goBack();
+          await searchInput.clear();
+        }
+      });
+
       test('click label should change URL', async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'a.test.js': `

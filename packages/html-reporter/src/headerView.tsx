@@ -22,7 +22,7 @@ import './headerView.css';
 import * as icons from './icons';
 import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
-import { filterWithToken } from './filter';
+import { filterWithQuery } from './filter';
 import { linkifyText } from '@web/renderUtils';
 
 export const HeaderView: React.FC<{
@@ -83,21 +83,20 @@ const StatsNavView: React.FC<{
 }> = ({ stats }) => {
   const searchParams = React.useContext(SearchParamsContext);
   const q = searchParams.get('q')?.toString() || '';
-  const tokens = q.split(' ');
   return <nav>
     <Link className='subnav-item' href='#?'>
       All <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
-    <Link className='subnav-item' click={filterWithToken(tokens, 's:passed', false)} ctrlClick={filterWithToken(tokens, 's:passed', true)}>
+    <Link className='subnav-item' click={filterWithQuery(q, 's:passed', false)} ctrlClick={filterWithQuery(q, 's:passed', true)}>
       Passed <span className='d-inline counter'>{stats.expected}</span>
     </Link>
-    <Link className='subnav-item' click={filterWithToken(tokens, 's:failed', false)} ctrlClick={filterWithToken(tokens, 's:failed', true)}>
+    <Link className='subnav-item' click={filterWithQuery(q, 's:failed', false)} ctrlClick={filterWithQuery(q, 's:failed', true)}>
       {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
     </Link>
-    <Link className='subnav-item' click={filterWithToken(tokens, 's:flaky', false)} ctrlClick={filterWithToken(tokens, 's:flaky', true)}>
+    <Link className='subnav-item' click={filterWithQuery(q, 's:flaky', false)} ctrlClick={filterWithQuery(q, 's:flaky', true)}>
       {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
     </Link>
-    <Link className='subnav-item' click={filterWithToken(tokens, 's:skipped', false)} ctrlClick={filterWithToken(tokens, 's:skipped', true)}>
+    <Link className='subnav-item' click={filterWithQuery(q, 's:skipped', false)} ctrlClick={filterWithQuery(q, 's:skipped', true)}>
       Skipped <span className='d-inline counter'>{stats.skipped}</span>
     </Link>
   </nav>;
