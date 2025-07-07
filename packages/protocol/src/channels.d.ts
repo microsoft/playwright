@@ -1658,7 +1658,7 @@ export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
 };
 export type BrowserContextConsoleEvent = {
-  type: 'log' | 'debug' | 'info' | 'error' | 'warning' | 'dir' | 'dirxml' | 'table' | 'trace' | 'clear' | 'startGroup' | 'startGroupCollapsed' | 'endGroup' | 'assert' | 'profile' | 'profileEnd' | 'count' | 'timeEnd',
+  type: string,
   text: string,
   args: JSHandleChannel[],
   location: {
@@ -4471,7 +4471,7 @@ export interface ElectronApplicationChannel extends ElectronApplicationEventTarg
 }
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationConsoleEvent = {
-  type: 'log' | 'debug' | 'info' | 'error' | 'warning' | 'dir' | 'dirxml' | 'table' | 'trace' | 'clear' | 'startGroup' | 'startGroupCollapsed' | 'endGroup' | 'assert' | 'profile' | 'profileEnd' | 'count' | 'timeEnd',
+  type: string,
   text: string,
   args: JSHandleChannel[],
   location: {

@@ -923,7 +923,7 @@ scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
 scheme.BrowserContextConsoleEvent = tObject({
-  type: tEnum(['log', 'debug', 'info', 'error', 'warning', 'dir', 'dirxml', 'table', 'trace', 'clear', 'startGroup', 'startGroupCollapsed', 'endGroup', 'assert', 'profile', 'profileEnd', 'count', 'timeEnd']),
+  type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
   location: tObject({
@@ -2546,7 +2546,7 @@ scheme.ElectronApplicationInitializer = tObject({
 });
 scheme.ElectronApplicationCloseEvent = tOptional(tObject({}));
 scheme.ElectronApplicationConsoleEvent = tObject({
-  type: tEnum(['log', 'debug', 'info', 'error', 'warning', 'dir', 'dirxml', 'table', 'trace', 'clear', 'startGroup', 'startGroupCollapsed', 'endGroup', 'assert', 'profile', 'profileEnd', 'count', 'timeEnd']),
+  type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
   location: tObject({

@@ -17,7 +17,6 @@
 import type * as js from './javascript';
 import type { Page } from './page';
 import type { ConsoleMessageLocation } from './types';
-import type * as api from '../../types/types';
 
 export class ConsoleMessage {
   private _type: string;
@@ -38,8 +37,8 @@ export class ConsoleMessage {
     return this._page;
   }
 
-  type(): ReturnType<api.ConsoleMessage['type']> {
-    return this._type as ReturnType<api.ConsoleMessage['type']>;
+  type(): string {
+    return this._type;
   }
 
   text(): string {

@@ -1157,27 +1157,7 @@ Browser:
 ConsoleMessage:
   type: mixin
   properties:
-    type: 
-      type: enum
-      literals:
-      - log
-      - debug
-      - info
-      - error
-      - warning
-      - dir
-      - dirxml
-      - table
-      - trace
-      - clear
-      - startGroup
-      - startGroupCollapsed
-      - endGroup
-      - assert
-      - profile
-      - profileEnd
-      - count
-      - timeEnd
+    type: string
     text: string
     args:
       type: array
