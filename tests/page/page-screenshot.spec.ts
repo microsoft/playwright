@@ -286,7 +286,7 @@ it.describe('page screenshot', () => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    if ((!isHeadlessShell && browserName === 'chromium' && isMac && os.arch() === 'arm64' && macVersion >= 14) ||
+    if ((browserName === 'chromium' && isMac && macVersion >= 14) ||
         (browserName === 'webkit' && isLinux && os.arch() === 'x64'))
       expect(screenshot).toMatchSnapshot('screenshot-canvas-with-accurate-corners.png');
     else
@@ -894,14 +894,15 @@ it.describe('page screenshot animations', () => {
 });
 
 it('should throw if screenshot size is too large', async ({ page, browserName, isMac }) => {
+  const maxHeight = browserName === 'chromium' && isMac ? Math.pow(2, 14) : Math.pow(2, 15);
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16727' });
   {
-    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 32767px; background: red;'></div>`);
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: ${maxHeight}px; background: red;'></div>`);
     const result = await page.screenshot({ fullPage: true });
     expect(result).toBeTruthy();
   }
   {
-    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 32768px; background: red;'></div>`);
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: ${maxHeight + 1}px; background: red;'></div>`);
     const exception = await page.screenshot({ fullPage: true }).catch(e => e);
     if (browserName === 'firefox' || (browserName === 'webkit' && !isMac))
       expect(exception.message).toContain('Cannot take screenshot larger than 32767');

@@ -112,15 +112,16 @@ browserTest.describe('page screenshot', () => {
 
   browserTest('should throw if screenshot size is too large with device scale factor', async ({ browser, browserName, isMac }) => {
     browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16727' });
+    const maxHeight = browserName === 'chromium' && isMac ? Math.pow(2, 13) : Math.pow(2, 15);
     const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     {
-      await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16383px; background: red;'></div>`);
+      await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: ${maxHeight}px; background: red;'></div>`);
       const result = await page.screenshot({ fullPage: true });
       expect(result).toBeTruthy();
     }
     {
-      await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16384px; background: red;'></div>`);
+      await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: ${maxHeight + 1}px; background: red;'></div>`);
       const exception = await page.screenshot({ fullPage: true }).catch(e => e);
       if (browserName === 'firefox' || (browserName === 'webkit' && !isMac))
         expect(exception.message).toContain('Cannot take screenshot larger than 32767');

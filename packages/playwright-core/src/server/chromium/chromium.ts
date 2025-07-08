@@ -304,8 +304,8 @@ export class Chromium extends BrowserType {
       // See https://issues.chromium.org/issues/40277080
       chromeArguments.push('--enable-unsafe-swiftshader');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell'))
-        chromeArguments.push('--use-angle');
+      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell' || options.channel === 'chromium-tip-of-tree-headless-shell'))
+        chromeArguments.push('--enable-gpu');
     }
 
     if (options.devtools)
