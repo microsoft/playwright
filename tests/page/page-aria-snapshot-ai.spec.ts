@@ -276,7 +276,7 @@ it('should show visible children of hidden elements', { annotation: { type: 'iss
   `);
 
   expect(await snapshotForAI(page)).toEqual(unshift(`
-    - generic [ref=e1]:
+    - generic [active] [ref=e1]:
       - button "Visible" [ref=e3]
       - button "Visible" [ref=e4]
   `));
