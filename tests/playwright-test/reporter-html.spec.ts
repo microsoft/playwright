@@ -1227,8 +1227,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'is a test' }).click();
 
-      await expect(page.locator('.test-error-view').getByText('-old')).toHaveCSS('color', 'rgb(205, 49, 49)');
-      await expect(page.locator('.test-error-view').getByText('+new', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
+      await expect(page.locator('.test-error-view').getByText('-old')).toHaveCSS('color', 'rgb(0, 188, 0)');
+      await expect(page.locator('.test-error-view').getByText('+new', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
     });
 
     test('should highlight inline textual diff in toHaveText', async ({ runInlineTest, showReport, page }) => {
