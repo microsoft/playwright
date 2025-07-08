@@ -1365,8 +1365,8 @@ BrowserContext:
         recorderMode:
           type: enum?
           literals:
-          - record
-          - perform
+          - default
+          - api
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?
@@ -1376,6 +1376,9 @@ BrowserContext:
         outputFile: string?
         handleSIGINT: boolean?
         omitCallTracking: boolean?
+
+    disableRecorder:
+      internal: true
 
     newCDPSession:
       internal: true
@@ -1539,6 +1542,11 @@ BrowserContext:
       parameters:
         response: Response
         page: Page?
+
+    recorderEvent:
+      parameters:
+        event: string
+        data: json
 
 Page:
   type: interface

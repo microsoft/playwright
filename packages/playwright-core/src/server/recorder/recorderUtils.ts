@@ -73,13 +73,25 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
   return result.frame;
 }
 
+function isSameAction(a: actions.ActionInContext, b: actions.ActionInContext): boolean {
+  return a.action.name === b.action.name && a.frame.pageAlias === b.frame.pageAlias && a.frame.framePath.join('|') === b.frame.framePath.join('|');
+}
+
+function isSameSelector(action: actions.ActionInContext, lastAction: actions.ActionInContext): boolean {
+  return 'selector' in action.action && 'selector' in lastAction.action && action.action.selector === lastAction.action.selector;
+}
+
+export function shouldMergeAction(action: actions.ActionInContext, lastAction: actions.ActionInContext | undefined): boolean {
+  if (!lastAction)
+    return false;
+  return isSameAction(action, lastAction) && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector(action, lastAction)));
+}
+
 export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
   const result: actions.ActionInContext[] = [];
   for (const action of actions) {
     const lastAction = result[result.length - 1];
-    const isSameAction = lastAction && lastAction.action.name === action.action.name && lastAction.frame.pageAlias === action.frame.pageAlias && lastAction.frame.framePath.join('|') === action.frame.framePath.join('|');
-    const isSameSelector = lastAction && 'selector' in lastAction.action && 'selector' in action.action && action.action.selector === lastAction.action.selector;
-    const shouldMerge = isSameAction && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector));
+    const shouldMerge = shouldMergeAction(action, lastAction);
     if (!shouldMerge) {
       result.push(action);
       continue;

@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import { test, expect, matrixDescribe } from './inspectorTest';
+import { test, expect } from './inspectorTest';
 import type { ConsoleMessage } from 'playwright';
 
-matrixDescribe<('record' | 'perform')>('cli codegen', ['record', 'perform'], recorderMode => {
-  test.skip(({ mode }) => mode !== 'default');
-  test.use({ recorderMode });
-
+test.describe('cli codegen', () => {
   test('should click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
@@ -761,7 +758,6 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
   test('should await popup', async ({ openRecorder, server }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36461' });
-    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
 
     const { page, recorder } = await openRecorder();
     server.setRoute('/popup', (req, res) => {
@@ -821,8 +817,6 @@ await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync
   });
 
   test('should attribute navigation to click', async ({ openRecorder }) => {
-    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
-
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<a onclick="window.location.href='about:blank#foo'">link</a>`);
@@ -878,8 +872,6 @@ await page.GetByText("link").ClickAsync();`);
   });
 
   test('should attribute navigation to press/fill', async ({ openRecorder }) => {
-    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before press/fill is recorded)');
-
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input /><script>document.querySelector('input').addEventListener('input', () => window.location.href = 'about:blank#foo');</script>`);

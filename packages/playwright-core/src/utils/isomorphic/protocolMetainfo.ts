@@ -88,6 +88,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.storageState', { title: 'Get storage state', }],
   ['BrowserContext.pause', { title: 'Pause', }],
   ['BrowserContext.enableRecorder', { internal: true, }],
+  ['BrowserContext.disableRecorder', { internal: true, }],
   ['BrowserContext.newCDPSession', { internal: true, }],
   ['BrowserContext.harStart', { internal: true, }],
   ['BrowserContext.harExport', { internal: true, }],

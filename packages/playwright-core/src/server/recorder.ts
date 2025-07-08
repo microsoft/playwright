@@ -82,7 +82,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _debugger: Debugger;
   private _omitCallTracking = false;
   private _currentLanguage: Language = 'javascript';
-  private _recorderMode: 'record' | 'perform';
+  private _recorderMode: 'default' | 'api';
 
   private _signalProcessor: RecorderSignalProcessor;
   private _pageAliases = new Map<Page, string>();
@@ -102,6 +102,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return recorderPromise;
   }
 
+  static existingForContext(context: BrowserContext): Recorder | undefined {
+    return (context as any)[recorderSymbol] as Recorder;
+  }
+
   private static async _create(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams = {}): Promise<Recorder> {
     const recorder = new Recorder(context, params);
     await recorder._install();
@@ -113,7 +117,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._context = context;
     this._params = params;
     this._mode = params.mode || 'none';
-    this._recorderMode = params.recorderMode ?? 'perform';
+    this._recorderMode = params.recorderMode ?? 'default';
     this.handleSIGINT = params.handleSIGINT;
 
     this._signalProcessor = new RecorderSignalProcessor();
@@ -172,7 +176,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         }
         const uiState: UIState = {
           mode: this._mode,
-          recorderMode: this._recorderMode,
           actionPoint,
           actionSelector,
           ariaTemplate: this._highlightedElement.ariaTemplate,
@@ -222,7 +225,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
           (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-      await this._context.extendInjectedScript(rawRecorderSource.source);
+      await this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode });
     });
 
     if (this._debugger.isPaused())
@@ -510,7 +513,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       frame: frameDescription,
       action,
       description: undefined,
-      startTime: monotonicTime()
+      startTime: monotonicTime(),
     };
     return actionInContext;
   }

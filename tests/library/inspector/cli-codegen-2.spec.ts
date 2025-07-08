@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, matrixDescribe } from './inspectorTest';
+import { test, expect } from './inspectorTest';
 import * as url from 'url';
 import fs from 'fs';
 
-matrixDescribe<('record' | 'perform')>('cli codegen', ['record', 'perform'], recorderMode => {
+test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.use({ recorderMode });
 
   test('should contain open page', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
@@ -196,7 +195,6 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFi
   });
 
   test('should download files', async ({ openRecorder, server }) => {
-    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
     const { page, recorder } = await openRecorder();
 
     server.setRoute('/download', (req, res) => {
@@ -248,7 +246,6 @@ var download = await page.RunAndWaitForDownloadAsync(async () =>
   });
 
   test('should handle dialogs', async ({ openRecorder }) => {
-    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -313,7 +310,6 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
   });
 
   test('should record open in a new tab with url', async ({ openRecorder, browserName }) => {
-    test.skip(recorderMode === 'record', 'Navigation is dispatched concurrently (before click is recorded)');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 

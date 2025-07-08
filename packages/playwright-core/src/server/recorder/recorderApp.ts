@@ -25,12 +25,12 @@ import { launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
 import { languageSet } from '../codegen/languages';
-import { collapseActions } from './recorderUtils';
+import { collapseActions, shouldMergeAction } from './recorderUtils';
 import { generateCode } from '../codegen/language';
 import { Recorder, RecorderEvent } from '../recorder';
 import { monotonicTime } from '../../utils/isomorphic/time';
+import { BrowserContext } from '../browserContext';
 
-import type { BrowserContext } from '../browserContext';
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
@@ -165,6 +165,10 @@ export class RecorderApp {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
     const recorder = await Recorder.forContext(context, params);
+    if (params.recorderMode === 'api') {
+      await ProgrammaticRecorderApp.run(context, recorder);
+      return;
+    }
     await RecorderApp._show(recorder, context, params);
   }
 
@@ -356,6 +360,22 @@ export class RecorderApp {
 
     this._recorderSources = recorderSources;
     this._pushAllSources();
+  }
+}
+
+export class ProgrammaticRecorderApp {
+  static async run(inspectedContext: BrowserContext, recorder: Recorder) {
+    let lastAction: actions.ActionInContext | null = null;
+    recorder.on(RecorderEvent.ActionAdded, action => {
+      if (!lastAction || !shouldMergeAction(action, lastAction))
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action });
+      else
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action });
+      lastAction = action;
+    });
+    recorder.on(RecorderEvent.SignalAdded, signal => {
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal });
+    });
   }
 }
 

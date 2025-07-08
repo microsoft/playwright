@@ -53,7 +53,6 @@ export type OverlayState = {
 
 export type UIState = {
   mode: Mode;
-  recorderMode: 'record' | 'perform';
   actionPoint?: Point;
   actionSelector?: string;
   ariaTemplate?: AriaTemplateNode;

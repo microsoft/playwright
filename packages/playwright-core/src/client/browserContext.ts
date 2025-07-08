@@ -71,6 +71,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
+  private _onRecorderEventSink: ((event: string, data: any) => void) | undefined;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -140,6 +141,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
+    this._channel.on('recorderEvent', ({ event, data }) => this._onRecorderEventSink?.(event, data));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
@@ -499,8 +501,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._closedPromise;
   }
 
-  async _enableRecorder(params: channels.BrowserContextEnableRecorderParams) {
+  async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, callback?: (event: string, data: any) => void) {
+    if (callback)
+      this._onRecorderEventSink = callback;
     await this._channel.enableRecorder(params);
+  }
+
+  async _disableRecorder() {
+    this._onRecorderEventSink = undefined;
+    await this._channel.disableRecorder();
   }
 }
 
