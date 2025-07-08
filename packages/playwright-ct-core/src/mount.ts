@@ -50,6 +50,8 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
   page: async ({ page }, use, info) => {
     if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
       throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
+    if (!process.env.PLAYWRIGHT_TEST_BASE_URL)
+      throw new Error('Component testing could not determine the base URL of your component under test. Ensure you have supplied a template playwright/index.html or have set the PLAYWRIGHT_TEST_BASE_URL environment variable.');
     await (page as PageImpl)._wrapApiCall(async () => {
       await page.exposeFunction('__ctDispatchFunction', (ordinal: number, args: any[]) => {
         boundCallbacksForMount[ordinal](...args);
