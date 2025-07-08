@@ -121,9 +121,9 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): Comparato
   const lines = diff.createPatch('file', expected, actual, undefined, undefined, { context: 5 }).split('\n');
   const coloredLines = lines.slice(4).map(line => {
     if (line.startsWith('-'))
-      return colors.red(line);
-    if (line.startsWith('+'))
       return colors.green(line);
+    if (line.startsWith('+'))
+      return colors.red(line);
     if (line.startsWith('@@'))
       return colors.dim(line);
     return line;
