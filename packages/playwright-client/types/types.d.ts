@@ -9313,8 +9313,6 @@ export interface BrowserContext {
       secure: boolean;
 
       sameSite: "Strict"|"Lax"|"None";
-
-      partitionKey?: string;
     }>;
 
     origins: Array<{
