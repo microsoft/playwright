@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { test as it, expect, unshift } from './pageTest';
 
 function snapshotForAI(page: any): Promise<string> {
   return page._snapshotForAI();
@@ -255,6 +255,31 @@ it('should auto-wait for blocking CSS', async ({ page, server }) => {
     <p>Hello World</p>
   `, { waitUntil: 'commit' });
   expect(await snapshotForAI(page)).toContainYaml('Hello World');
+});
+
+it('should show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+  await page.setContent(`
+    <div style="visibility: hidden">
+      <div style="visibility: visible">
+        <button>Visible</button>
+      </div>
+      <div style="visibility: hidden">
+        <button style="visibility: visible">Visible</button>
+      </div>
+      <div>
+        <div style="visibility: visible">
+          <button style="visibility: hidden">Hidden</button>
+        </div>
+        <button>Hidden</button>
+      </div>
+    </div>
+  `);
+
+  expect(await snapshotForAI(page)).toEqual(unshift(`
+    - generic [active] [ref=e1]:
+      - button "Visible" [ref=e3]
+      - button "Visible" [ref=e4]
+  `));
 });
 
 it('should include active element information', async ({ page }) => {

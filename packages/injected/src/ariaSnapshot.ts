@@ -55,12 +55,15 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     elements: new Map<string, Element>(),
   };
 
-  const visit = (ariaNode: AriaNode, node: Node) => {
+  const visit = (ariaNode: AriaNode, node: Node, parentElementVisible: boolean) => {
     if (visited.has(node))
       return;
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
+      if (!parentElementVisible)
+        return;
+
       const text = node.nodeValue;
       // <textarea>AAA</textarea> should not report AAA as a child of the textarea.
       if (ariaNode.role !== 'textbox' && text)
@@ -72,10 +75,8 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       return;
 
     const element = node as Element;
-    let isVisible = !roleUtils.isElementHiddenForAria(element);
-    if (options?.forAI)
-      isVisible = isVisible || isElementVisible(element);
-    if (!isVisible)
+    const isElementHiddenForAria = roleUtils.isElementHiddenForAria(element);
+    if (isElementHiddenForAria && !options?.forAI)
       return;
 
     const ariaChildren: Element[] = [];
@@ -88,16 +89,17 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
-    const childAriaNode = toAriaNode(element, options);
+    const visible = !isElementHiddenForAria || isElementVisible(element);
+    const childAriaNode = visible ? toAriaNode(element, options) : null;
     if (childAriaNode) {
       if (childAriaNode.ref)
         snapshot.elements.set(childAriaNode.ref, element);
       ariaNode.children.push(childAriaNode);
     }
-    processElement(childAriaNode || ariaNode, element, ariaChildren);
+    processElement(childAriaNode || ariaNode, element, ariaChildren, visible);
   };
 
-  function processElement(ariaNode: AriaNode, element: Element, ariaChildren: Element[] = []) {
+  function processElement(ariaNode: AriaNode, element: Element, ariaChildren: Element[], parentElementVisible: boolean) {
     // Surround every element with spaces for the sake of concatenated text nodes.
     const display = getElementComputedStyle(element)?.display || 'inline';
     const treatAsBlock = (display !== 'inline' || element.nodeName === 'BR') ? ' ' : '';
@@ -108,20 +110,20 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
-        visit(ariaNode, child);
+        visit(ariaNode, child, parentElementVisible);
     } else {
       for (let child = element.firstChild; child; child = child.nextSibling) {
         if (!(child as Element | Text).assignedSlot)
-          visit(ariaNode, child);
+          visit(ariaNode, child, parentElementVisible);
       }
       if (element.shadowRoot) {
         for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
-          visit(ariaNode, child);
+          visit(ariaNode, child, parentElementVisible);
       }
     }
 
     for (const child of ariaChildren)
-      visit(ariaNode, child);
+      visit(ariaNode, child, parentElementVisible);
 
     ariaNode.children.push(roleUtils.getCSSContent(element, '::after') || '');
 
@@ -139,7 +141,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
   roleUtils.beginAriaCaches();
   try {
-    visit(snapshot.root, rootElement);
+    visit(snapshot.root, rootElement, true);
   } finally {
     roleUtils.endAriaCaches();
   }
