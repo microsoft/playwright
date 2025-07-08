@@ -732,9 +732,9 @@ export module Protocol {
      */
     export interface Grouping {
       /**
-       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule, "style-rule" if specified by a CSSStyleRule containing the rule inside this grouping.
+       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule, "scope-rule" if specified by a @scope rule, "starting-style-rule" if specified by a @starting-style rule, "style-rule" if specified by a CSSStyleRule containing the rule inside this grouping.
        */
-      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule"|"style-rule";
+      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule"|"scope-rule"|"starting-style-rule"|"style-rule";
       /**
        * The CSS rule identifier for the `@rule` (absent for non-editable grouping rules) or the nesting parent style rule's selector. In CSSOM terms, this is the parent rule of either the previous Grouping for a CSSRule, or of a CSSRule itself.
        */
