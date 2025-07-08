@@ -228,7 +228,7 @@ test('should write detailed failure result to an output folder', async ({ runInl
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
   expect(outputText).toMatch(/Expected:.*a\.spec\.js-snapshots.snapshot\.txt/);
-  expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
+  expect(outputText).toContain(`Received: test-results${path.sep}a-is-a-test${path.sep}snapshot-actual.txt`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
 });
@@ -672,8 +672,8 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
   const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');
   expect(outputText).toMatch(/Expected:.*a\.spec\.js-snapshots.snapshot\.png/);
-  expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
-  expect(outputText).toContain(`Diff: ${diffSnapshotArtifactPath}`);
+  expect(outputText).toContain(`Received: test-results${path.sep}a-is-a-test${path.sep}snapshot-actual.png`);
+  expect(outputText).toContain(`Diff:     test-results${path.sep}a-is-a-test${path.sep}snapshot-diff.png`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);

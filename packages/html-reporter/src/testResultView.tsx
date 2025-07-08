@@ -86,7 +86,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors.map(e => e.message), diffs);
+    const errors = result.errors.map(e => e.message);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
 
@@ -111,9 +111,11 @@ export const TestResultView: React.FC<{
         </div>
       )}
       {errors.map((error, index) => {
-        if (error.type === 'screenshot')
-          return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <CodeSnippet key={'test-result-error-message-' + index} code={error.error!}/>;
+        const diff = pickDiffForError(error, diffs);
+        return <>
+          <CodeSnippet key={'test-result-error-message-' + index} code={error}/>
+          {diff && <TestScreenshotErrorView diff={diff}></TestScreenshotErrorView>}
+        </>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
@@ -167,29 +169,11 @@ export const TestResultView: React.FC<{
   </div>;
 };
 
-function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
-  return testErrors.map(error => {
-    const firstLine = error.split('\n')[0];
-    if (firstLine.includes('toHaveScreenshot') || firstLine.includes('toMatchSnapshot')) {
-      const matchingDiff = diffs.find(diff => {
-        const attachmentName = diff.actual?.attachment.name;
-        return attachmentName && error.includes(attachmentName);
-      });
-
-      if (matchingDiff) {
-        const lines = error.split('\n');
-        const index = lines.findIndex(line => /Expected:|Previous:|Received:/.test(line));
-        const errorPrefix = index !== -1 ? lines.slice(0, index).join('\n') : lines[0];
-
-        const diffIndex = lines.findIndex(line => / +Diff:/.test(line));
-        const errorSuffix = diffIndex !== -1 ? lines.slice(diffIndex + 2).join('\n') : lines.slice(1).join('\n');
-
-        return { type: 'screenshot', diff: matchingDiff, errorPrefix, errorSuffix };
-      }
-    }
-
-    return { type: 'regular', error };
-  });
+function pickDiffForError(error: string, diffs: ImageDiff[]): ImageDiff | undefined {
+  const firstLine = error.split('\n')[0];
+  if (!firstLine.includes('toHaveScreenshot') && !firstLine.includes('toMatchSnapshot'))
+    return undefined;
+  return diffs.find(diff => error.includes(diff.name));
 }
 
 const StepTreeItem: React.FC<{

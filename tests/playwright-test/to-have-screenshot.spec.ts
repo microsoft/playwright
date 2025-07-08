@@ -157,6 +157,8 @@ test.describe('expect config animations option', () => {
       `
     }, { 'update-snapshots': true });
     expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('is-a-test-1-actual.png');
+    expect(result.output).toContain('is-a-test-1-previous.png');
     expect(result.output).toContain('is-a-test-1-diff.png');
   });
 });

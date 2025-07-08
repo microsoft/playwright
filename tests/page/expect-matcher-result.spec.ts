@@ -298,6 +298,5 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server, is
   expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(page).toHaveScreenshot(expected)
 
   23362 pixels (ratio 0.10 of all image pixels) are different.
-
-Expected:`);
+`);
 });
