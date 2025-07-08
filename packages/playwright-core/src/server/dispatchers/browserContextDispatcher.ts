@@ -52,11 +52,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _bindings: PageBinding[] = [];
-  private _initScritps: InitScript[] = [];
+  private _initScripts: InitScript[] = [];
   private _dialogHandler: (dialog: Dialog) => boolean;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: (string | RegExp)[] = [];
+  private _routeWebSocketInitScript: InitScript | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -297,7 +298,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams, progress: Progress): Promise<void> {
-    this._initScritps.push(await this._context.addInitScript(progress, params.source));
+    this._initScripts.push(await this._context.addInitScript(progress, params.source));
   }
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
@@ -317,8 +318,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
-    if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(progress, this.connection, this._context);
+    if (params.patterns.length && !this._routeWebSocketInitScript)
+      this._routeWebSocketInitScript = await WebSocketRouteDispatcher.install(progress, this.connection, this._context);
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
@@ -415,8 +416,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
     this._context.removeExposedBindings(this._bindings).catch(() => {});
     this._bindings = [];
-    this._context.removeInitScripts(this._initScritps).catch(() => {});
-    this._initScritps = [];
+    this._context.removeInitScripts(this._initScripts).catch(() => {});
+    this._initScripts = [];
+    if (this._routeWebSocketInitScript)
+      WebSocketRouteDispatcher.uninstall(this.connection, this._context, this._routeWebSocketInitScript).catch(() => {});
+    this._routeWebSocketInitScript = undefined;
     if (this._clockPaused)
       this._context.clock.resumeNoReply();
     this._clockPaused = false;

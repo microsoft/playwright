@@ -76,20 +76,19 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, progress: Progress): Promise<channels.BrowserNewContextForReuseResult> {
-    const { context, needsReset } = await this._object.newContextForReuse(progress, params);
-    if (needsReset) {
-      const oldContextDispatcher = this.connection.existingDispatcher<BrowserContextDispatcher>(context);
-      if (oldContextDispatcher)
-        oldContextDispatcher._dispose();
-      await context.resetForReuse(progress, params);
-    }
+    const context = await this._object.newContextForReuse(progress, params);
     const contextDispatcher = BrowserContextDispatcher.from(this, context);
     this._dispatchEvent('context', { context: contextDispatcher });
     return { context: contextDispatcher };
   }
 
-  async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, progress: Progress): Promise<channels.BrowserStopPendingOperationsResult> {
-    await this._object.stopPendingOperations(params.reason);
+  async disconnectFromReusedContext(params: channels.BrowserDisconnectFromReusedContextParams, progress: Progress): Promise<void> {
+    const context = this._object.contextForReuse();
+    const contextDispatcher = context ? this.connection.existingDispatcher<BrowserContextDispatcher>(context) : undefined;
+    if (contextDispatcher) {
+      await contextDispatcher.stopPendingOperations(new Error(params.reason));
+      contextDispatcher._dispose();
+    }
   }
 
   async close(params: channels.BrowserCloseParams, progress: Progress): Promise<void> {

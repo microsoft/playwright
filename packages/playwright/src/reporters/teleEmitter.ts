@@ -22,6 +22,7 @@ import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 import type { ReporterV2 } from './reporterV2';
 import type * as reporterTypes from '../../types/testReporter';
+import type { TestAnnotation } from '../../types/test';
 import type * as teleReceiver from '../isomorphic/teleReceiver';
 
 export type TeleReporterEmitterOptions = {
@@ -224,7 +225,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retries: test.retries,
       tags: test.tags,
       repeatEachIndex: test.repeatEachIndex,
-      annotations: test.annotations,
+      annotations: this._relativeAnnotationLocations(test.annotations),
     };
   }
 
@@ -244,7 +245,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      annotations: result.annotations?.length ? result.annotations : undefined,
+      annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
   }
 
@@ -294,8 +295,15 @@ export class TeleReporterEmitter implements ReporterV2 {
       duration: step.duration,
       error: step.error,
       attachments: step.attachments.length ? step.attachments.map(a => result.attachments.indexOf(a)) : undefined,
-      annotations: step.annotations.length ? step.annotations : undefined,
+      annotations: step.annotations.length ? this._relativeAnnotationLocations(step.annotations) : undefined,
     };
+  }
+
+  private _relativeAnnotationLocations(annotations: TestAnnotation[]): TestAnnotation[] {
+    return annotations.map(annotation => ({
+      ...annotation,
+      location: annotation.location ? this._relativeLocation(annotation.location) : undefined,
+    }));
   }
 
   private _relativeLocation(location: reporterTypes.Location): reporterTypes.Location;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { Browser, BrowserServer, ConnectOptions, Page } from 'playwright-core';
 
@@ -257,6 +258,27 @@ test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
   expect(await pageB.evaluate(() => (window as any).pageBindingB())).toBe('pageBindingBResult');
 });
 
+test('should unroute websockets', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  await pageA.goto(server.EMPTY_PAGE);
+  await pageA.routeWebSocket(/.*/, () => {});
+  await pageA.routeWebSocket(/.*/, () => {});
+  await pageA.routeWebSocket(/.*/, () => {});
+
+  const error = await pageB.routeWebSocket(/.*/, () => {}).catch(e => e);
+  expect(error.message).toContain('Another client is already routing WebSockets');
+
+  await disconnect(pageA);
+
+  let resolve;
+  const promise = new Promise(f => resolve = f);
+  await pageB.routeWebSocket(/.*/, resolve);
+  await pageB.goto(server.EMPTY_PAGE);
+  await pageB.evaluate(host => (window as any).ws = new WebSocket('ws://' + host + '/ws'), server.HOST);
+  await promise;
+});
+
 test('should remove init scripts upon disconnect', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
@@ -322,4 +344,25 @@ test('should launch persistent', async ({ browserType }) => {
   expect(browser.contexts().length).toBe(1);
   await browser.close();
   await browserServer.close();
+});
+
+test('should avoid side effects upon disconnect', async ({ twoPages, server }) => {
+  const { pageA, pageB } = twoPages;
+
+  let counter = 0;
+  pageB.on('console', () => ++counter);
+
+  const promise = pageA.waitForFunction(() => {
+    window['counter'] = (window['counter'] || 0) + 1;
+    console.log(window['counter']);
+  }, {}, { polling: 1, timeout: 10000 }).catch(e => e);
+
+  await disconnect(pageA);
+  const error = await promise;
+  const savedCounter = counter;
+
+  await pageB.waitForTimeout(2000); // Give it some time to produce more logs.
+
+  expect(error.message).toContain(kTargetClosedErrorMessage);
+  expect(counter).toBe(savedCounter);
 });

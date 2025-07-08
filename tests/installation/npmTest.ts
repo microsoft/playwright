@@ -158,12 +158,11 @@ export const test = _test
       },
       exec: async ({ tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
-          let args: string[] = [];
           let options: ExecOptions = {};
           if (typeof argsAndOrOptions[argsAndOrOptions.length - 1] === 'object')
             options = argsAndOrOptions.pop() as ExecOptions;
 
-          args = argsAndOrOptions as string[];
+          const command = [cmd, ...argsAndOrOptions].join(' ');
 
           let result!: {stdout: string, stderr: string, code: number | null, error?: Error};
           const cwd = options.cwd ?? tmpWorkspace;
@@ -176,11 +175,10 @@ export const test = _test
             ...(isolateBrowsers ? { PLAYWRIGHT_BROWSERS_PATH: _browsersPath } : {}),
             ...options.env,
           };
-          await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
-            result = await spawnAsync(cmd, args, { shell: true, cwd, env });
+          await test.step(`exec: ${command}`, async () => {
+            result = await spawnAsync(command, { shell: true, cwd, env });
           });
 
-          const command = [cmd, ...args].join(' ');
           const stdio = result.stdout + result.stderr;
           const commandEnv = Object.entries(env).map(e => `${e[0]}=${e[1]}`).join(' ');
           const fullCommand = `cd ${cwd} && ${commandEnv} ${command}`;

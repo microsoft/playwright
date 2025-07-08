@@ -22,7 +22,7 @@ export type BlobReporterOptions = { outputDir?: string, fileName?: string };
 export type ListReporterOptions = { printSteps?: boolean };
 export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean };
 export type JsonReporterOptions = { outputFile?: string };
-export type HtmlReporterOptions = { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string, title?: string, snippets?: boolean };
+export type HtmlReporterOptions = { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string, title?: string, noSnippets?: boolean };
 
 export type ReporterDescription = Readonly<
   ['blob'] | ['blob', BlobReporterOptions] |
@@ -2325,6 +2325,11 @@ export interface TestInfo {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added.
+     */
+    location?: Location;
   }>;
 
   /**
@@ -2575,7 +2580,9 @@ export type TestDetailsAnnotation = {
   description?: string;
 };
 
-export type TestAnnotation = TestDetailsAnnotation;
+export type TestAnnotation = TestDetailsAnnotation & {
+  location?: Location;
+};
 
 export type TestDetails = {
   tag?: string | string[];

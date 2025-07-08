@@ -45,7 +45,7 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
       expect(result).toContain(`{ page }`);
     } finally {
-      fs.rmdirSync(userDataDir, { recursive: true });
+      fs.rmSync(userDataDir, { recursive: true });
     }
   });
 

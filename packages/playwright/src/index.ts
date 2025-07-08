@@ -27,8 +27,10 @@ import { stepTitle } from './util';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
-import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
+import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
+import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -110,7 +112,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         },
       });
       await use(browser);
-      await (browser as any)._wrapApiCall(async () => {
+      await (browser as BrowserImpl)._wrapApiCall(async () => {
         await browser.close({ reason: 'Test ended.' });
       }, { internal: true });
       return;
@@ -118,7 +120,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const browser = await playwright[browserName].launch();
     await use(browser);
-    await (browser as any)._wrapApiCall(async () => {
+    await (browser as BrowserImpl)._wrapApiCall(async () => {
       await browser.close({ reason: 'Test ended.' });
     }, { internal: true });
   }, { scope: 'worker', timeout: 0 }],
@@ -318,7 +320,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
     };
 
-    const clientInstrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
+    const clientInstrumentation = (playwright as PlaywrightImpl)._instrumentation;
     clientInstrumentation.addListener(csiListener);
 
     await use();
@@ -355,12 +357,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         context.on('page', page => contextData.pagesWithVideo.push(page));
 
       if (process.env.PW_CLOCK === 'frozen') {
-        await (context as any)._wrapApiCall(async () => {
+        await (context as BrowserContextImpl)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
           await context.clock.pauseAt(1000);
         }, { internal: true });
       } else if (process.env.PW_CLOCK === 'realtime') {
-        await (context as any)._wrapApiCall(async () => {
+        await (context as BrowserContextImpl)._wrapApiCall(async () => {
           await context.clock.install({ time: 0 });
         }, { internal: true });
       }
@@ -371,7 +373,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let counter = 0;
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await Promise.all([...contexts.keys()].map(async context => {
-      await (context as any)._wrapApiCall(async () => {
+      await (context as BrowserContextImpl)._wrapApiCall(async () => {
         await context.close({ reason: closeReason });
       }, { internal: true });
       const testFailed = testInfo.status !== testInfo.expectedStatus;
@@ -413,11 +415,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
 
     const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
-    const context = await (browser as any)._newContextForReuse(defaultContextOptions);
-    (context as any)[kIsReusedContext] = true;
+    const context = await (browser as BrowserImpl)._newContextForReuse(defaultContextOptions);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
-    await (browser as any)._stopPendingOperations(closeReason);
+    await (browser as BrowserImpl)._disconnectFromReusedContext(closeReason);
   },
 
   page: async ({ context, _reuseContext }, use) => {
@@ -472,7 +473,7 @@ function normalizeScreenshotMode(screenshot: ScreenshotOption): ScreenshotMode {
 }
 
 function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
-  const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connection.headers;
+  const connectHeaders: { name: string, value: string }[] | undefined = (browser as BrowserImpl | null)?._connection.headers;
   if (!connectHeaders)
     return;
   for (const header of connectHeaders) {
@@ -508,7 +509,6 @@ function resolveClientCerticates(clientCertificates: ClientCertificates): Client
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
-const kIsReusedContext = Symbol('kReusedContext');
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
@@ -618,12 +618,10 @@ class ArtifactsRecorder {
   _testInfo!: TestInfoImpl;
   _playwright: PlaywrightImpl;
   _artifactsDir: string;
-  private _reusedContexts = new Set<BrowserContext>();
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
-  private _sourceCache: Map<string, string> = new Map();
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -643,16 +641,9 @@ class ArtifactsRecorder {
     this._screenshotRecorder.fixOrdinal();
 
     // Process existing contexts.
-    await Promise.all(this._playwright._allContexts().map(async context => {
-      if ((context as any)[kIsReusedContext])
-        this._reusedContexts.add(context);
-      else
-        await this.didCreateBrowserContext(context);
-    }));
-    {
-      const existingApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
-      await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
-    }
+    await Promise.all(this._playwright._allContexts().map(context => this.didCreateBrowserContext(context)));
+    const existingApiRequests = Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
+    await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
   }
 
   async didCreateBrowserContext(context: BrowserContext) {
@@ -660,12 +651,7 @@ class ArtifactsRecorder {
   }
 
   async willCloseBrowserContext(context: BrowserContext) {
-    // When reusing context, we get all previous contexts closed at the start of next test.
-    // Do not record empty traces and useless screenshots for them.
-    if (this._reusedContexts.has(context))
-      return;
     await this._stopTracing(context.tracing);
-
     await this._screenshotRecorder.captureTemporary(context);
     await this._takePageSnapshot(context);
   }
@@ -702,8 +688,8 @@ class ArtifactsRecorder {
   async didFinishTest() {
     await this.didFinishTestFunction();
 
-    const leftoverContexts = this._playwright._allContexts().filter(context => !this._reusedContexts.has(context));
-    const leftoverApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
+    const leftoverContexts = this._playwright._allContexts();
+    const leftoverApiRequests = Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
 
     // Collect traces/screenshots for remaining contexts.
     await Promise.all(leftoverContexts.map(async context => {

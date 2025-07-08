@@ -129,11 +129,14 @@ it('should work with glob', async () => {
   expect(urlMatches('http://first.host/', 'http://second.host/foo', '**/foo')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/', 'http://localhost/', '*//localhost/')).toBeTruthy();
 
-  expect(urlMatches('http://playwright.dev/', 'about:blank', 'about:blank')).toBeTruthy();
-  expect(urlMatches('http://playwright.dev/', 'about:blank', 'http://playwright.dev/')).toBeFalsy();
-  expect(urlMatches(undefined, 'about:blank', 'about:blank')).toBeTruthy();
-  expect(urlMatches(undefined, 'about:blank', 'about:*')).toBeTruthy();
-  expect(urlMatches(undefined, 'notabout:blank', 'about:*')).toBeFalsy();
+  const customPrefixes = ['about', 'data', 'chrome', 'edge', 'file'];
+  for (const prefix of customPrefixes) {
+    expect(urlMatches('http://playwright.dev/', `${prefix}:blank`, `${prefix}:blank`)).toBeTruthy();
+    expect(urlMatches('http://playwright.dev/', `${prefix}:blank`, `http://playwright.dev/`)).toBeFalsy();
+    expect(urlMatches(undefined, `${prefix}:blank`, `${prefix}:blank`)).toBeTruthy();
+    expect(urlMatches(undefined, `${prefix}:blank`, `${prefix}:*`)).toBeTruthy();
+    expect(urlMatches(undefined, `not${prefix}:blank`, `${prefix}:*`)).toBeFalsy();
+  }
 });
 
 it('should intercept by glob', async function({ page, server, isAndroid }) {
