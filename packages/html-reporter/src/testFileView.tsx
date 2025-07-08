@@ -18,7 +18,7 @@ import type { TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
 import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
-import { filterWithToken } from './filter';
+import { filterWithQuery } from './filter';
 import { Link, LinkBadge, navigate, ProjectLink, SearchParamsContext, testResultHref, TraceLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
@@ -93,8 +93,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
   const onClickHandle = (e: React.MouseEvent, label: string) => {
     e.preventDefault();
     const q = searchParams.get('q')?.toString() || '';
-    const tokens = q.split(' ');
-    navigate(filterWithToken(tokens, label, e.metaKey || e.ctrlKey));
+    navigate(filterWithQuery(q, label, e.metaKey || e.ctrlKey));
   };
 
   return labels.length > 0 ? (
