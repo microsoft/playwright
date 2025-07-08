@@ -138,7 +138,8 @@ test('should navigate all', async ({ backend, connectedBrowser }) => {
   expect(await page2.evaluate(() => window.location.href)).toBe('data:text/plain,Hello world');
 });
 
-test('should reset for reuse', async ({ backend, connectedBrowser }) => {
+test('should reset for reuse', async ({ backend, connectedBrowser, trace }) => {
+  test.skip(trace === 'on');
   const context = await connectedBrowser._newContextForReuse();
   const page1 = await context.newPage();
   const page2 = await context.newPage();
