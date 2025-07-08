@@ -45,21 +45,30 @@ export const Recorder: React.FC<RecorderProps> = ({
   mode,
 }) => {
   const [selectedFileId, setSelectedFileId] = React.useState<string | undefined>();
-  const [runningFileId, setRunningFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = useSetting<string>('recorderPropertiesTab', 'log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
 
-  const fileId = selectedFileId || runningFileId || sources[0]?.id;
+  React.useEffect(() => {
+    if (!sources.length)
+      return;
+    const selectedSource = sources.find(s => s.id === selectedFileId);
+    const newestSource = sources.sort((a, b) => b.timestamp - a.timestamp)[0];
+    if (!selectedSource || newestSource.isRecorded !== selectedSource.isRecorded) {
+      // Debugger kicked in, or recording resumed. Switch selection to the newest source.
+      setSelectedFileId(newestSource.id);
+    }
+  }, [sources, selectedFileId]);
 
   const source = React.useMemo(() => {
-    if (fileId) {
-      const source = sources.find(s => s.id === fileId);
-      if (source)
-        return source;
-    }
+    const source = sources.find(s => s.id === selectedFileId);
+    if (source)
+      return source;
+    const primarySource = sources.find(s => s.isPrimary);
+    if (primarySource)
+      return primarySource;
     return emptySource();
-  }, [sources, fileId]);
+  }, [sources, selectedFileId]);
 
   const [locator, setLocator] = React.useState('');
   window.playwrightElementPicked = (elementInfo: ElementInfo, userGesture?: boolean) => {
@@ -76,8 +85,6 @@ export const Recorder: React.FC<RecorderProps> = ({
       window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'standby' : 'recording' } }).catch(() => { });
     }
   };
-
-  window.playwrightSetRunningFile = setRunningFileId;
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   React.useLayoutEffect(() => {
@@ -179,9 +186,9 @@ export const Recorder: React.FC<RecorderProps> = ({
       }}></ToolbarButton>
       <div style={{ flex: 'auto' }}></div>
       <div>Target:</div>
-      <SourceChooser fileId={fileId} sources={sources} setFileId={fileId => {
+      <SourceChooser fileId={source.id} sources={sources} setFileId={fileId => {
         setSelectedFileId(fileId);
-        window.dispatch({ event: 'fileChanged', params: { file: fileId } });
+        window.dispatch({ event: 'fileChanged', params: { fileId } });
       }} />
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
         window.dispatch({ event: 'clear' });

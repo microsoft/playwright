@@ -179,7 +179,6 @@ const metainfo_ts = [
 `];
 
 const methodMetainfo = [];
-const progressTypes = new Set();
 
 const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'protocol.yml'), 'utf-8');
 const protocol = yaml.parse(yml);
@@ -244,10 +243,6 @@ for (const [name, item] of Object.entries(protocol)) {
     const initializerName = channelName + 'Initializer';
     channels_ts.push(`export type ${initializerName} = ${init.ts};`);
 
-    const useProgress = !!item.progress;
-    if (useProgress)
-      progressTypes.add(name);
-
     let ancestorInit = init;
     let ancestor = item;
     while (!ancestor.initializer) {
@@ -309,8 +304,7 @@ for (const [name, item] of Object.entries(protocol)) {
       for (const derived of derivedClasses.get(channelName) || [])
         addScheme(`${derived}${titleCase(methodName)}Result`, `tType('${resultName}')`);
 
-      const secondArg = useProgress ? `progress?: Progress` : 'metadata?: CallMetadata';
-      channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, ${secondArg}): Promise<${resultName}>;`);
+      channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, progress?: Progress): Promise<${resultName}>;`);
     }
 
     channels_ts.push(`}`);
@@ -337,9 +331,6 @@ for (const [name, item] of Object.entries(protocol)) {
 
 metainfo_ts.push(`export const methodMetainfo = new Map<string, { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean }>([
   ${methodMetainfo.join(`,\n  `)}
-]);`);
-metainfo_ts.push(`\nexport const progressTypes = new Set<string>([
-  ${[...progressTypes].map(s => `'${s}'`).join(`,\n  `)}
 ]);`);
 
 let hasChanges = false;

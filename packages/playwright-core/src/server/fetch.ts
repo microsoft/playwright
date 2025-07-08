@@ -27,7 +27,7 @@ import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
-import { isAbortError, ProgressController } from './progress';
+import { isAbortError } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from './utils/happyEyeballs';
 import { Tracing } from './trace/recorder/tracing';
@@ -100,7 +100,6 @@ export abstract class APIRequestContext extends SdkObject {
   readonly fetchResponses: Map<string, Buffer> = new Map();
   readonly fetchLog: Map<string, string[]> = new Map();
   protected static allInstances: Set<APIRequestContext> = new Set();
-  readonly _activeProgressControllers = new Set<ProgressController>();
   _closeReason: string | undefined;
 
   static findResponseBody(guid: string): Buffer | undefined {

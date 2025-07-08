@@ -283,7 +283,7 @@ it('should abort requests when context is disposed', async ({ playwright, server
   ]);
   for (const result of results.slice(0, -1)) {
     expect(result instanceof Error).toBeTruthy();
-    expect(result.message).toContain(kTargetClosedErrorMessage);
+    expect(result.message).toContain('Request context disposed.');
   }
   await connectionClosed;
   await request.dispose();

@@ -16,20 +16,23 @@
 
 import { SdkObject, createInstrumentation } from './instrumentation';
 import { gracefullyProcessExitDoNotHang } from './utils/processLauncher';
-import { Recorder } from './recorder';
+import { Recorder, RecorderEvent } from './recorder';
 import { asLocator  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
-import { EmptyRecorderApp } from './recorder/recorderApp';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { generateCode } from './codegen/language';
+import { collapseActions } from './recorder/recorderUtils';
+import { JavaScriptLanguageGenerator } from './codegen/javascript';
 
 import type { Language } from '../utils';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
-import type { ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode } from '@recorder/recorderTypes';
 import type { Progress } from '@protocol/progress';
+import type * as actions from '@recorder/actions';
 
 export class DebugController extends SdkObject {
   static Events = {
@@ -43,7 +46,6 @@ export class DebugController extends SdkObject {
   private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
-  _codegenId: string = 'playwright-test';
 
   constructor(playwright: Playwright) {
     super({ attribution: { isInternalPlaywright: true }, instrumentation: createInstrumentation() } as any, undefined, 'DebugController');
@@ -51,7 +53,6 @@ export class DebugController extends SdkObject {
   }
 
   initialize(codegenId: string, sdkLanguage: Language) {
-    this._codegenId = codegenId;
     this._sdkLanguage = sdkLanguage;
   }
 
@@ -86,8 +87,7 @@ export class DebugController extends SdkObject {
       await p.mainFrame().goto(progress, url);
   }
 
-  async setRecorderMode(progress: Progress, params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
-    // TODO: |file| is only used in the legacy mode.
+  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string }) {
     await progress.race(this._closeBrowsersWithoutPages());
 
     if (params.mode === 'none') {
@@ -104,7 +104,7 @@ export class DebugController extends SdkObject {
     const pages = this._playwright.allPages();
     if (!pages.length) {
       const [browser] = this._playwright.allBrowsers();
-      const { context } = await browser.newContextForReuse(progress, {});
+      const context = await browser.newContextForReuse(progress, {});
       await context.newPage(progress, false /* isServerSide */);
     }
     // Update test id attribute.
@@ -115,8 +115,6 @@ export class DebugController extends SdkObject {
     // Toggle the mode.
     for (const recorder of await progress.race(this._allRecorders())) {
       recorder.hideHighlightedSelector();
-      if (params.mode !== 'inspecting')
-        recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }
   }
@@ -130,7 +128,7 @@ export class DebugController extends SdkObject {
       if (ariaTemplate)
         recorder.setHighlightedAriaTemplate(ariaTemplate);
       else if (params.selector)
-        recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
+        recorder.setHighlightedSelector(params.selector);
     }
   }
 
@@ -170,8 +168,11 @@ export class DebugController extends SdkObject {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.browserContext);
-    const result = await Promise.all([...contexts].map(c => Recorder.showInspector(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp(this)))));
-    return result.filter(Boolean) as Recorder[];
+    const recorders = await Promise.all([...contexts].map(c => Recorder.forContext(c, { omitCallTracking: true })));
+    const nonNullRecorders = recorders.filter(Boolean) as Recorder[];
+    for (const recorder of recorders)
+      wireListeners(recorder, this);
+    return nonNullRecorders;
   }
 
   private async _closeBrowsersWithoutPages() {
@@ -186,30 +187,44 @@ export class DebugController extends SdkObject {
   }
 }
 
-class InspectingRecorderApp extends EmptyRecorderApp {
-  private _debugController: DebugController;
+const wiredSymbol = Symbol('wired');
 
-  constructor(debugController: DebugController) {
-    super();
-    this._debugController = debugController;
-  }
+function wireListeners(recorder: Recorder, debugController: DebugController) {
+  if ((recorder as any)[wiredSymbol])
+    return;
+  (recorder as any)[wiredSymbol] = true;
 
-  override async elementPicked(elementInfo: ElementInfo): Promise<void> {
-    const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
-  }
+  const actions: actions.ActionInContext[] = [];
+  const languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
 
-  override async setSources(sources: Source[]): Promise<void> {
-    const source = sources.find(s => s.id === this._debugController._codegenId);
-    const { text, header, footer, actions } = source || { text: '' };
-    this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions });
-  }
+  const actionsChanged = () => {
+    const aa = collapseActions(actions);
+    const { header, footer, text, actionTexts } = generateCode(aa, languageGenerator, {
+      browserName: 'chromium',
+      launchOptions: {},
+      contextOptions: {},
+    });
+    debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions: actionTexts });
+  };
 
-  override async setPaused(paused: boolean) {
-    this._debugController.emit(DebugController.Events.Paused, { paused });
-  }
-
-  override async setMode(mode: Mode) {
-    this._debugController.emit(DebugController.Events.SetModeRequested, { mode });
-  }
+  recorder.on(RecorderEvent.ElementPicked, (elementInfo: ElementInfo) => {
+    const locator: string = asLocator(debugController._sdkLanguage, elementInfo.selector);
+    debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
+  });
+  recorder.on(RecorderEvent.PausedStateChanged, (paused: boolean) => {
+    debugController.emit(DebugController.Events.Paused, { paused });
+  });
+  recorder.on(RecorderEvent.ModeChanged, (mode: Mode) => {
+    debugController.emit(DebugController.Events.SetModeRequested, { mode });
+  });
+  recorder.on(RecorderEvent.ActionAdded, (action: actions.ActionInContext) => {
+    actions.push(action);
+    actionsChanged();
+  });
+  recorder.on(RecorderEvent.SignalAdded, (signal: actions.Signal) => {
+    const lastAction = actions[actions.length - 1];
+    if (lastAction)
+      lastAction.action.signals.push(signal);
+    actionsChanged();
+  });
 }

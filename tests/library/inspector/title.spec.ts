@@ -47,39 +47,13 @@ test('should update primary page URL when original primary closes', async ({
   );
 
   const page2 = await context.newPage();
-  await page2.goto(`${server.PREFIX}/empty.html`);
+  await page2.goto(`${server.PREFIX}/dom.html`);
   await expect(recorder.recorderPage).toHaveTitle(
       `Playwright Inspector - ${server.PREFIX}/background-color.html`,
   );
 
-  const page3 = await context.newPage();
-  await page3.goto(`${server.PREFIX}/dom.html`);
-  await expect(recorder.recorderPage).toHaveTitle(
-      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
-  );
-
-  const page4 = await context.newPage();
-  await page4.goto(`${server.PREFIX}/grid.html`);
-  await expect(recorder.recorderPage).toHaveTitle(
-      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
-  );
-
-  await page2.close();
-  await expect(recorder.recorderPage).toHaveTitle(
-      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
-  );
-
-  await recorder.page.close();
-  // URL will not update without performing some action
-  await page3.getByRole('checkbox').click();
+  await context.pages()[0].close();
   await expect(recorder.recorderPage).toHaveTitle(
       `Playwright Inspector - ${server.PREFIX}/dom.html`,
-  );
-
-  await page3.close();
-  // URL will not update without performing some action
-  await page4.locator('div').first().click();
-  await expect(recorder.recorderPage).toHaveTitle(
-      `Playwright Inspector - ${server.PREFIX}/grid.html`,
   );
 });

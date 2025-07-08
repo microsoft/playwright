@@ -116,20 +116,20 @@ export abstract class Browser extends SdkObject {
     return context;
   }
 
-  async newContextForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams): Promise<{ context: BrowserContext, needsReset: boolean }> {
+  async newContextForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams): Promise<BrowserContext> {
     const hash = BrowserContext.reusableContextHash(params);
     if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
       if (this._contextForReuse)
         await this._contextForReuse.context.close({ reason: 'Context reused' });
       this._contextForReuse = { context: await this.newContext(progress, params), hash };
-      return { context: this._contextForReuse.context, needsReset: false };
+      return this._contextForReuse.context;
     }
-    await this._contextForReuse.context.stopPendingOperations('Context recreated');
-    return { context: this._contextForReuse.context, needsReset: true };
+    await this._contextForReuse.context.resetForReuse(progress, params);
+    return this._contextForReuse.context;
   }
 
-  async stopPendingOperations(reason: string) {
-    await this._contextForReuse?.context?.stopPendingOperations(reason);
+  contextForReuse() {
+    return this._contextForReuse?.context;
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {

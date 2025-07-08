@@ -26,7 +26,7 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { relativeFilePath } from '../util';
 
-import type { ReporterDescription } from '../../types/test';
+import type { ReporterDescription, TestAnnotation } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { BlobReportMetadata, JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonOnConfigureEvent, JsonOnEndEvent, JsonOnProjectEvent, JsonProject, JsonSuite, JsonTestCase } from '../isomorphic/teleReceiver';
@@ -484,7 +484,10 @@ class PathSeparatorPatcher {
       return;
     }
     if (jsonEvent.method === 'onTestEnd') {
+      const test = jsonEvent.params.test;
+      test.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       const testResult = jsonEvent.params.result;
+      testResult.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       testResult.errors.forEach(error => this._updateErrorLocations(error));
       (testResult.attachments ?? []).forEach(attachment => {
         if (attachment.path)
@@ -500,6 +503,7 @@ class PathSeparatorPatcher {
     if (jsonEvent.method === 'onStepEnd') {
       const step = jsonEvent.params.step;
       this._updateErrorLocations(step.error);
+      step.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       return;
     }
     if (jsonEvent.method === 'onAttach') {
@@ -524,10 +528,12 @@ class PathSeparatorPatcher {
     if (isFileSuite)
       suite.title = this._updatePath(suite.title);
     for (const entry of suite.entries) {
-      if ('testId' in entry)
+      if ('testId' in entry) {
         this._updateLocation(entry.location);
-      else
+        entry.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
+      } else {
         this._updateSuite(entry);
+      }
     }
   }
 
@@ -536,6 +542,10 @@ class PathSeparatorPatcher {
       this._updateLocation(error.location);
       error = error.cause;
     }
+  }
+
+  private _updateAnnotationLocation(annotation: TestAnnotation) {
+    this._updateLocation(annotation.location);
   }
 
   private _updateLocation(location?: JsonLocation) {

@@ -817,10 +817,10 @@ scheme.BrowserNewContextForReuseParams = tObject({
 scheme.BrowserNewContextForReuseResult = tObject({
   context: tChannel(['BrowserContext']),
 });
-scheme.BrowserStopPendingOperationsParams = tObject({
+scheme.BrowserDisconnectFromReusedContextParams = tObject({
   reason: tString,
 });
-scheme.BrowserStopPendingOperationsResult = tOptional(tObject({}));
+scheme.BrowserDisconnectFromReusedContextResult = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionParams = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),

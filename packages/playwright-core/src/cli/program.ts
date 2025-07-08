@@ -57,7 +57,7 @@ program
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
-      open(options, url, codegenId()).catch(logErrorAndExit);
+      open(options, url).catch(logErrorAndExit);
     })
     .addHelpText('afterAll', `
 Examples:
@@ -71,7 +71,14 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(function(url, options) {
-  codegen(options, url).catch(logErrorAndExit);
+  codegen(options, url).catch(error => {
+    if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
+      // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
+      // in a stray navigation aborted error. We should ignore it.
+    } else {
+      throw error;
+    }
+  });
 }).addHelpText('afterAll', `
 Examples:
 
@@ -306,7 +313,7 @@ const browsers = [
 for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
       .action(function(url, options) {
-        open({ ...options, browser: type }, url, options.target).catch(logErrorAndExit);
+        open({ ...options, browser: type }, url).catch(logErrorAndExit);
       }).addHelpText('afterAll', `
 Examples:
 
@@ -423,6 +430,7 @@ type Options = {
   timezone?: string;
   viewportSize?: string;
   userAgent?: string;
+  userDataDir?: string;
 };
 
 type CaptureOptions = {
@@ -470,33 +478,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     };
     if (options.proxyBypass)
       launchOptions.proxy.bypass = options.proxyBypass;
-  }
-
-  const browser = await browserType.launch(launchOptions);
-
-  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
-    (process as any)._didSetSourcesForTest = (text: string) => {
-      process.stdout.write('\n-------------8<-------------\n');
-      process.stdout.write(text);
-      process.stdout.write('\n-------------8<-------------\n');
-      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
-        closeBrowser();
-    };
-    // Make sure we exit abnormally when browser crashes.
-    const logs: string[] = [];
-    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
-      const line = require('util').format(...args) + '\n';
-      logs.push(line);
-      process.stderr.write(line);
-    };
-    browser.on('disconnected', () => {
-      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
-      if (hasCrashLine) {
-        process.stderr.write('Detected browser crash.\n');
-        gracefullyProcessExitDoNotHang(1);
-      }
-    });
   }
 
   // Viewport size
@@ -563,9 +544,41 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     contextOptions.serviceWorkers = 'block';
   }
 
-  // Close app when the last window closes.
+  let browser: Browser;
+  let context: BrowserContext;
 
-  const context = await browser.newContext(contextOptions);
+  if (options.userDataDir) {
+    context = await browserType.launchPersistentContext(options.userDataDir, { ...launchOptions, ...contextOptions });
+    browser = context.browser()!;
+  } else {
+    browser = await browserType.launch(launchOptions);
+    context = await browser.newContext(contextOptions);
+  }
+
+  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
+    (process as any)._didSetSourcesForTest = (text: string) => {
+      process.stdout.write('\n-------------8<-------------\n');
+      process.stdout.write(text);
+      process.stdout.write('\n-------------8<-------------\n');
+      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
+      if (autoExitCondition && text.includes(autoExitCondition))
+        closeBrowser();
+    };
+    // Make sure we exit abnormally when browser crashes.
+    const logs: string[] = [];
+    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+      const line = require('util').format(...args) + '\n';
+      logs.push(line);
+      process.stderr.write(line);
+    };
+    browser.on('disconnected', () => {
+      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
+      if (hasCrashLine) {
+        process.stderr.write('Detected browser crash.\n');
+        gracefullyProcessExitDoNotHang(1);
+      }
+    });
+  }
 
   let closingBrowser = false;
   async function closeBrowser() {
@@ -609,34 +622,21 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 }
 
 async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
-  const page = await context.newPage();
+  let page = context.pages()[0];
+  if (!page)
+    page = await context.newPage();
   if (url) {
     if (fs.existsSync(url))
       url = 'file://' + path.resolve(url);
     else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
       url = 'http://' + url;
-    await page.goto(url).catch(error => {
-      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
-        // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
-        // in a stray navigation aborted error. We should ignore it.
-      } else {
-        throw error;
-      }
-    });
+    await page.goto(url);
   }
   return page;
 }
 
-async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
-  await context._enableRecorder({
-    language,
-    launchOptions,
-    contextOptions,
-    device: options.device,
-    saveStorage: options.saveStorage,
-    handleSIGINT: false,
-  });
+async function open(options: Options, url: string | undefined) {
+  const { context } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
   await openPage(context, url);
 }
 
@@ -763,6 +763,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
       .option('--user-agent <ua string>', 'specify user agent string')
+      .option('--user-data-dir <directory>', 'use the specified user data directory instead of a new context')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
 

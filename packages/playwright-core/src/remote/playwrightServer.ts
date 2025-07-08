@@ -221,8 +221,6 @@ export class PlaywrightServer {
         for (const context of browser.contexts()) {
           if (!context.pages().length)
             await context.close({ reason: 'Connection terminated' });
-          else
-            await context.stopPendingOperations('Connection closed');
         }
       }
     };

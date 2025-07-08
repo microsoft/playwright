@@ -431,7 +431,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('video').locator('source')).toHaveAttribute('src', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
       await expect(page.getByRole('link', { name: 'video' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
 
-      await expect(page.getByRole('link', { name: 'trace' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+      await expect(page.getByRole('link', { name: 'trace', exact: true })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
       await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
     });
 
@@ -513,6 +513,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await expect(page.locator('.header-title')).toHaveText('Omega Star Test Suite (Version: abcde)');
+    });
+
+    test('should include view trace button in header', async ({ runInlineTest, server, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { use: { trace: 'on' } };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ playwright, page }) => {
+            await page.evaluate('2 + 2');
+            const request = await playwright.request.newContext();
+            await request.get('${server.EMPTY_PAGE}');
+            await request.dispose();
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      await showReport();
+      await expect(page.getByRole('link', { name: 'View Trace' })).toBeVisible();
     });
 
     test('should include stdio', async ({ runInlineTest, page, showReport }) => {
@@ -664,7 +685,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passes' }).click();
       // Expect one image-link to trace viewer and 2 separate download links
       await expect(page.locator('img')).toHaveCount(1);
-      await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace']);
+      await expect(page.getByRole('link', { name: 'trace', exact: true })).toBeVisible();
 
       await page.click('img');
       await page.click('.action-title >> text=EVALUATE');
@@ -1082,7 +1103,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passing' }).click();
 
       const expectedAttachments = [
-        ['screenshot', 'screenshot.png', 'd606c7545cd71c2b0c27d9f99edbad4fa39f1174.png'],
+        ['screenshot', 'screenshot.png', '7a33d5db6370b6de345e990751aa1f1da65ad675.png'],
         ['some-pdf', 'some-pdf.pdf', '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf'],
         ['madeup-contentType', 'madeup-contentType.dat', '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat'],
         ['screenshot-that-already-has-an-extension-with-madeup.png', 'screenshot-that-already-has-an-extension-with-madeup.png', '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png'],
@@ -1101,7 +1122,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const files = await fs.promises.readdir(path.join(testInfo.outputPath('playwright-report'), 'data'));
       expect(new Set(files)).toEqual(new Set([
-        'd606c7545cd71c2b0c27d9f99edbad4fa39f1174.png', // screenshot
+        '7a33d5db6370b6de345e990751aa1f1da65ad675.png', // screenshot
         '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf', // some-pdf
         '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat', // madeup-contentType
         '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png', // screenshot-that-already-has-an-extension-with-madeup.png
@@ -3023,6 +3044,22 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('body')).toMatchAriaSnapshot(`
         - treeitem "Click Click me"
       `);
+    });
+
+    test('should respect snippets configuration option', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          export default { reporter: [['html', { snippets: false }]] }
+        `,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fail without snippet', () => { expect(1).toBe(2); });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+      await page.getByRole('link', { name: 'fail without snippet' }).click();
+      await expect(page.getByTestId('test-snippet')).not.toBeVisible();
     });
   });
 }

@@ -549,6 +549,20 @@ test('should ignore invalid aria-labelledby', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'input')).toEqual({ role: 'textbox', name: 'Text here' });
 });
 
+test('should support search element', async ({ page }) => {
+  await page.setContent(`
+    <search id=search1 aria-label="example">
+      Hello
+    </search>
+    <search id=search2>
+      World
+    </search>
+  `);
+  expect.soft(await getNameAndRole(page, '#search1')).toEqual({ role: 'search', name: 'example' });
+  expect.soft(await getNameAndRole(page, '#search2')).toEqual({ role: 'search', name: '' });
+  await expect.soft(page.getByRole('search', { name: 'example' })).toBeVisible();
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }

@@ -22,6 +22,7 @@ import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
+import { trace } from './icons';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -37,14 +38,15 @@ export const Route: React.FunctionComponent<{
   return predicate(searchParams) ? children : null;
 };
 
-export const Link: React.FunctionComponent<{
+type LinkProps = React.PropsWithChildren<{
   href?: string,
   click?: string,
   ctrlClick?: string,
   className?: string,
   title?: string,
-  children: any,
-}> = ({ click, ctrlClick, children, ...rest }) => {
+}>;
+
+export const Link: React.FunctionComponent<LinkProps> = ({ click, ctrlClick, children, ...rest }) => {
   return <a {...rest} style={{ textDecoration: 'none', color: 'var(--color-fg-default)', cursor: 'pointer' }} onClick={e => {
     if (click) {
       e.preventDefault();
@@ -52,6 +54,8 @@ export const Link: React.FunctionComponent<{
     }
   }}>{children}</a>;
 };
+
+export const LinkBadge: React.FunctionComponent<LinkProps & { dim?: boolean }> = ({ className, ...props }) => <Link {...props} className={clsx('link-badge', props.dim && 'link-badge-dim', className)} />;
 
 export const ProjectLink: React.FunctionComponent<{
   projectNames: string[],
@@ -98,6 +102,26 @@ export const AttachmentLink: React.FunctionComponent<{
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
   } : undefined} depth={0} style={{ lineHeight: '32px' }} flash={flash}></TreeItem>;
+};
+
+export const TraceLink: React.FC<{ test: TestCaseSummary, trailingSeparator?: boolean, dim?: boolean }> = ({ test, trailingSeparator, dim }) => {
+  const firstTraces = test.results.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
+  if (!firstTraces)
+    return undefined;
+
+  return (
+    <>
+      <LinkBadge
+        href={generateTraceUrl(firstTraces)}
+        title='View Trace'
+        className='button trace-link'
+        dim={dim}>
+        {trace()}
+        <span>View Trace</span>
+      </LinkBadge>
+      {trailingSeparator && <div className='trace-link-separator'>|</div>}
+    </>
+  );
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
