@@ -68,6 +68,7 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
 
 class SnapshotHelper {
   readonly testInfo: TestInfoImpl;
+  readonly name: string;
   readonly attachmentBaseName: string;
   readonly legacyExpectedPath: string;
   readonly previousPath: string;
@@ -101,6 +102,7 @@ class SnapshotHelper {
       name = nameFromOptions;
     }
 
+    this.name = Array.isArray(name) ? name.join(path.sep) : name || '';
     const resolvedPaths = testInfo._resolveSnapshotPaths(matcherName === 'toHaveScreenshot' ? 'screenshot' : 'snapshot', name, 'updateSnapshotIndex', anonymousSnapshotExtension);
     this.expectedPath = resolvedPaths.absoluteSnapshotPath;
     this.attachmentBaseName = resolvedPaths.relativeOutputPath;
@@ -208,27 +210,27 @@ class SnapshotHelper {
     log: string[] | undefined,
     step: TestStepInfoImpl | undefined): ImageMatcherResult {
     const output = [`${header}${indent(diffError, '  ')}`];
+    if (this.name) {
+      output.push('');
+      output.push(`  Snapshot: ${this.name}`);
+    }
     if (expected !== undefined) {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
       // so that one can upload `test-results/` directory and have all the data inside.
       writeFileSync(this.legacyExpectedPath, expected);
       step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
-      output.push(`\nExpected: ${colors.yellow(this.expectedPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
       step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
-      output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
       step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
-      output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
       step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
-      output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
 
     if (log?.length)

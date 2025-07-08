@@ -47,16 +47,10 @@ export const PromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
 };
 
 export const TestScreenshotErrorView: React.FC<{
-  errorPrefix?: string,
   diff: ImageDiff,
-  errorSuffix?: string,
-}> = ({ errorPrefix, diff, errorSuffix }) => {
-  const prefixHtml = React.useMemo(() => ansiErrorToHtml(errorPrefix), [errorPrefix]);
-  const suffixHtml = React.useMemo(() => ansiErrorToHtml(errorSuffix), [errorSuffix]);
+}> = ({ diff }) => {
   return <div data-testid='test-screenshot-error-view' className='test-error-view'>
-    <div dangerouslySetInnerHTML={{ __html: prefixHtml || '' }} className='test-error-text' style={{ marginBottom: 20 }}></div>
     <ImageDiffView key='image-diff' diff={diff} hideDetails={true}></ImageDiffView>
-    <div data-testid='error-suffix' dangerouslySetInnerHTML={{ __html: suffixHtml || '' }} className='test-error-text'></div>
   </div>;
 };
 

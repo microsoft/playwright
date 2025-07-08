@@ -289,55 +289,15 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'fails' }).click();
-      await expect(page.getByTestId('test-screenshot-error-view').getByTestId('error-suffix')).toContainText([
-        `> 6 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
-        `>  7 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
-        `>  8 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
-      ]);
+      await expect(page.locator('.test-error-view').first()).toContainText(
+          `> 6 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
+      );
       const imageDiffs = page.getByTestId('test-results-image-diff');
       await expect(imageDiffs.getByTestId('test-result-image-mismatch')).toHaveCount(3);
       await expect(imageDiffs.getByText('Image mismatch:')).toHaveText([
         'Image mismatch: expected.png',
         'Image mismatch: expected-1.png',
         'Image mismatch: expected-2.png',
-      ]);
-    });
-
-    test('should include image diff when screenshot failed to generate due to animation', async ({ runInlineTest, page, showReport }) => {
-      test.skip(process.env.PW_CLOCK === 'frozen', 'Assumes Date.now() changes');
-      const result = await runInlineTest({
-        'playwright.config.ts': `
-          module.exports = { use: { viewport: { width: 200, height: 200 }} };
-        `,
-        'a.test.js': `
-          import { test, expect } from '@playwright/test';
-          test('fails', async ({ page }, testInfo) => {
-            testInfo.snapshotSuffix = '';
-            await page.evaluate(() => {
-              setInterval(() => {
-                document.body.textContent = Date.now();
-              }, 50);
-            });
-            await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
-          });
-        `,
-      }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.failed).toBe(1);
-
-      await showReport();
-      await page.getByRole('link', { name: 'fails' }).click();
-      await expect(page.locator('text=Image mismatch')).toHaveCount(1);
-      await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
-      await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
-      const errorChip = page.getByTestId('test-screenshot-error-view');
-      await expect(errorChip).toContainText('Failed to take two consecutive stable screenshots.');
-      await expect(errorChip.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
-        'Diff',
-        'Actual',
-        'Previous',
-        'Side by side',
-        'Slider',
       ]);
     });
 
