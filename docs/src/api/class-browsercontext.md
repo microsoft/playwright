@@ -1507,7 +1507,6 @@ Whether to emulate network being offline for the browser context.
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
     - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
-    - `partitionKey` ?<[string]>
   - `origins` <[Array]<[Object]>>
     - `origin` <[string]>
     - `localStorage` <[Array]<[Object]>>
