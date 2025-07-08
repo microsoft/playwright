@@ -1618,6 +1618,7 @@ export interface BrowserContextEventTarget {
   on(event: 'requestFailed', callback: (params: BrowserContextRequestFailedEvent) => void): this;
   on(event: 'requestFinished', callback: (params: BrowserContextRequestFinishedEvent) => void): this;
   on(event: 'response', callback: (params: BrowserContextResponseEvent) => void): this;
+  on(event: 'recorderEvent', callback: (params: BrowserContextRecorderEventEvent) => void): this;
 }
 export interface BrowserContextChannel extends BrowserContextEventTarget, EventTargetChannel {
   _type_BrowserContext: boolean;
@@ -1641,6 +1642,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   storageState(params: BrowserContextStorageStateParams, progress?: Progress): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, progress?: Progress): Promise<BrowserContextPauseResult>;
   enableRecorder(params: BrowserContextEnableRecorderParams, progress?: Progress): Promise<BrowserContextEnableRecorderResult>;
+  disableRecorder(params?: BrowserContextDisableRecorderParams, progress?: Progress): Promise<BrowserContextDisableRecorderResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, progress?: Progress): Promise<BrowserContextNewCDPSessionResult>;
   harStart(params: BrowserContextHarStartParams, progress?: Progress): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, progress?: Progress): Promise<BrowserContextHarExportResult>;
@@ -1713,6 +1715,10 @@ export type BrowserContextRequestFinishedEvent = {
 export type BrowserContextResponseEvent = {
   response: ResponseChannel,
   page?: PageChannel,
+};
+export type BrowserContextRecorderEventEvent = {
+  event: string,
+  data: any,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],
@@ -1887,7 +1893,7 @@ export type BrowserContextPauseResult = void;
 export type BrowserContextEnableRecorderParams = {
   language?: string,
   mode?: 'inspecting' | 'recording',
-  recorderMode?: 'record' | 'perform',
+  recorderMode?: 'default' | 'api',
   pauseOnNextStatement?: boolean,
   testIdAttributeName?: string,
   launchOptions?: any,
@@ -1901,7 +1907,7 @@ export type BrowserContextEnableRecorderParams = {
 export type BrowserContextEnableRecorderOptions = {
   language?: string,
   mode?: 'inspecting' | 'recording',
-  recorderMode?: 'record' | 'perform',
+  recorderMode?: 'default' | 'api',
   pauseOnNextStatement?: boolean,
   testIdAttributeName?: string,
   launchOptions?: any,
@@ -1913,6 +1919,9 @@ export type BrowserContextEnableRecorderOptions = {
   omitCallTracking?: boolean,
 };
 export type BrowserContextEnableRecorderResult = void;
+export type BrowserContextDisableRecorderParams = {};
+export type BrowserContextDisableRecorderOptions = {};
+export type BrowserContextDisableRecorderResult = void;
 export type BrowserContextNewCDPSessionParams = {
   page?: PageChannel,
   frame?: FrameChannel,
@@ -2039,6 +2048,7 @@ export interface BrowserContextEvents {
   'requestFailed': BrowserContextRequestFailedEvent;
   'requestFinished': BrowserContextRequestFinishedEvent;
   'response': BrowserContextResponseEvent;
+  'recorderEvent': BrowserContextRecorderEventEvent;
 }
 
 // ----------- Page -----------

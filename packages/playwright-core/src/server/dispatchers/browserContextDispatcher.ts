@@ -34,7 +34,8 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
-import { RecorderApp } from '../recorder/recorderApp';
+import { Recorder } from '../recorder';
+import { ProgrammaticRecorderApp, RecorderApp } from '../recorder/recorderApp';
 
 import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
@@ -199,6 +200,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
     });
+    this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data }: { event: string, data: any }) => {
+      this._dispatchEvent('recorderEvent', { event, data });
+    });
   }
 
   private _shouldDispatchNetworkEvent(request: Request, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
@@ -332,7 +336,18 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
+    const recorder = await Recorder.forContext(this._context, params);
+    if (params.recorderMode === 'api') {
+      await ProgrammaticRecorderApp.run(this._context, recorder);
+      return;
+    }
     await RecorderApp.show(this._context, params);
+  }
+
+  async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
+    const recorder = Recorder.existingForContext(this._context);
+    if (recorder)
+      recorder.setMode('none');
   }
 
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {

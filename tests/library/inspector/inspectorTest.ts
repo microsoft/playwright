@@ -28,9 +28,8 @@ export { expect } from '@playwright/test';
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
-  openRecorder: (options?: { testIdAttributeName: string, recorderMode?: 'record' | 'perform' }) => Promise<{ recorder: Recorder, page: Page }>;
+  openRecorder: (options?: { testIdAttributeName: string }) => Promise<{ recorder: Recorder, page: Page }>;
   runCLI: (args: string[], options?: { autoExitWhen?: string }) => CLIMock;
-  recorderMode: 'record' | 'perform';
 };
 
 const codegenLang2Id: Map<string, string> = new Map([
@@ -85,20 +84,17 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  openRecorder: async ({ context, recorderPageGetter, recorderMode }, use) => {
+  openRecorder: async ({ context, recorderPageGetter }, use) => {
     await use(async options => {
       await (context as any)._enableRecorder({
         language: 'javascript',
         mode: 'recording',
-        recorderMode,
         ...options
       });
       const page = await context.newPage();
       return { page, recorder: new Recorder(page, await recorderPageGetter()) };
     });
   },
-
-  recorderMode: 'perform',
 });
 
 export class Recorder {
@@ -283,13 +279,5 @@ class CLIMock {
 
   text() {
     return stripAnsi(this.process.output);
-  }
-}
-
-export function matrixDescribe<T = string>(name: string, matrix: T[], fn: (mode: T) => void) {
-  for (const mode of matrix) {
-    test.describe(`${name} ${mode}`, () => {
-      fn(mode as T);
-    });
   }
 }

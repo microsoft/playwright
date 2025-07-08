@@ -36,6 +36,7 @@ export type ActionName =
 export type ActionBase = {
   name: ActionName,
   signals: Signal[],
+  ariaSnapshot?: string,
 };
 
 export type ActionWithSelector = ActionBase & {
@@ -116,7 +117,7 @@ export type AssertVisibleAction = ActionWithSelector & {
 
 export type AssertSnapshotAction = ActionWithSelector & {
   name: 'assertSnapshot',
-  snapshot: string,
+  ariaSnapshot: string,
 };
 
 export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;

@@ -979,6 +979,10 @@ scheme.BrowserContextResponseEvent = tObject({
   response: tChannel(['Response']),
   page: tOptional(tChannel(['Page'])),
 });
+scheme.BrowserContextRecorderEventEvent = tObject({
+  event: tString,
+  data: tAny,
+});
 scheme.BrowserContextAddCookiesParams = tObject({
   cookies: tArray(tType('SetNetworkCookie')),
 });
@@ -1085,7 +1089,7 @@ scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextEnableRecorderParams = tObject({
   language: tOptional(tString),
   mode: tOptional(tEnum(['inspecting', 'recording'])),
-  recorderMode: tOptional(tEnum(['record', 'perform'])),
+  recorderMode: tOptional(tEnum(['default', 'api'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
   launchOptions: tOptional(tAny),
@@ -1097,6 +1101,8 @@ scheme.BrowserContextEnableRecorderParams = tObject({
   omitCallTracking: tOptional(tBoolean),
 });
 scheme.BrowserContextEnableRecorderResult = tOptional(tObject({}));
+scheme.BrowserContextDisableRecorderParams = tOptional(tObject({}));
+scheme.BrowserContextDisableRecorderResult = tOptional(tObject({}));
 scheme.BrowserContextNewCDPSessionParams = tObject({
   page: tOptional(tChannel(['Page'])),
   frame: tOptional(tChannel(['Frame'])),

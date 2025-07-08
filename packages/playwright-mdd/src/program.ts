@@ -20,6 +20,7 @@ import dotenv from 'dotenv';
 import { program } from 'commander';
 
 import { Context } from './codegen/context';
+import { runRecorderLoop } from './recorderLoop';
 
 /* eslint-disable no-console */
 
@@ -28,10 +29,9 @@ dotenv.config();
 const packageJSON = require('../package.json');
 
 program
+    .command('run <spec>').description('Run a test')
     .version('Version ' + packageJSON.version)
-    .argument('<spec>', 'The test spec to generate code for')
     .option('-o, --output <path>', 'The path to save the generated code')
-    .name(packageJSON.name)
     .action(async (spec, options) => {
       const content = await fs.promises.readFile(spec, 'utf8');
       const codegenContext = new Context();
@@ -40,6 +40,13 @@ program
         await fs.promises.writeFile(options.output, code);
       else
         console.log(code);
+    });
+
+program
+    .command('record').description('Record a test')
+    .version('Version ' + packageJSON.version)
+    .action(async () => {
+      await runRecorderLoop();
     });
 
 export { program };

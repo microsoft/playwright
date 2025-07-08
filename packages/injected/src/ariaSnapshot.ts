@@ -37,6 +37,7 @@ export type AriaNode = AriaProps & {
 export type AriaSnapshot = {
   root: AriaNode;
   elements: Map<string, Element>;
+  refs: Map<Element, string>;
 };
 
 type AriaRef = {
@@ -53,6 +54,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
   const snapshot: AriaSnapshot = {
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
+    refs: new Map<Element, string>(),
   };
 
   const visit = (ariaNode: AriaNode, node: Node) => {
@@ -90,8 +92,10 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
 
     const childAriaNode = toAriaNode(element, options);
     if (childAriaNode) {
-      if (childAriaNode.ref)
+      if (childAriaNode.ref) {
         snapshot.elements.set(childAriaNode.ref, element);
+        snapshot.refs.set(element, childAriaNode.ref);
+      }
       ariaNode.children.push(childAriaNode);
     }
     processElement(childAriaNode || ariaNode, element, ariaChildren);

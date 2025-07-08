@@ -19,6 +19,7 @@ import OpenAI from 'openai';
 import debug from 'debug';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
+const model = 'gpt-4.1';
 /* eslint-disable no-console */
 
 export interface Context {
@@ -59,7 +60,7 @@ async function runTask(openai: OpenAI, context: Context, task: string) {
   for (let iteration = 0; iteration < 5; ++iteration) {
     debug('history')(messages);
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model,
       messages,
       tools: context.tools.map(asOpenAIDeclaration),
       tool_choice: 'auto'
@@ -127,4 +128,22 @@ function asOpenAIDeclaration(tool: Tool<any>): OpenAI.Chat.Completions.ChatCompl
       parameters,
     },
   };
+}
+
+export async function runOneShot(prompt: string): Promise<string> {
+  const openai = new OpenAI();
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    {
+      role: 'user',
+      content: prompt
+    }
+  ];
+  const response = await openai.chat.completions.create({
+    model,
+    messages,
+  });
+  const message = response.choices[0].message;
+  if (!message.content)
+    throw new Error('Unexpected response from LLM: ' + message.content);
+  return message.content;
 }

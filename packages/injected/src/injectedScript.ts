@@ -304,6 +304,12 @@ export class InjectedScript {
     return renderAriaTree(this._lastAriaSnapshot, options);
   }
 
+  ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
+    const tree = generateAriaTree(this.document.body, { forAI: true });
+    const ariaSnapshot = renderAriaTree(tree, { forAI: true });
+    return { ariaSnapshot, refs: tree.refs };
+  }
+
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
     return getAllByAria(document.documentElement, template);
   }
