@@ -17,6 +17,7 @@
 import { browserTest as it, expect } from '../../config/browserTest';
 import fs from 'fs';
 import path from 'path';
+import { rafraf } from '../../page/pageTest';
 
 it('should output a trace', async ({ browser, server }, testInfo) => {
   let warning = null;
@@ -50,7 +51,7 @@ it('should run with custom categories if provided', async ({ browser }, testInfo
   const page = await browser.newPage();
   const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
   await browser.startTracing(page, { path: outputTraceFile, categories: ['disabled-by-default-cc.debug'] });
-  await page.evaluate(() => 1 + 1);
+  await rafraf(page);
   await browser.stopTracing();
 
   const traceJson = JSON.parse(fs.readFileSync(outputTraceFile).toString());
