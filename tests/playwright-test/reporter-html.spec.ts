@@ -3064,6 +3064,68 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'fail without snippet' }).click();
       await expect(page.getByTestId('test-snippet')).not.toBeVisible();
     });
+
+    test('should support keyboard shortcuts', async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { name: 'project-name' };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+          test('fails', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('skipped', async ({}) => {
+            test.skip('Does not work')
+          });
+          test('flaky', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html', retries: 1 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      await showReport();
+
+      // Focus the page
+      await page.getByRole('link', { name: 'All' }).click();
+
+      await test.step('next', async () => {
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.header-title')).toHaveText('fails');
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.header-title')).toHaveText('flaky');
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.header-title')).toHaveText('passes');
+        // Bounce
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.header-title')).toHaveText('passes');
+      });
+
+      await test.step('prev', async () => {
+        await page.keyboard.press('ArrowLeft');
+        await expect(page.locator('.header-title')).toHaveText('flaky');
+        await page.keyboard.press('ArrowLeft');
+        await expect(page.locator('.header-title')).toHaveText('fails');
+        await page.keyboard.press('ArrowLeft');
+        await expect(page.locator('.header-title')).toHaveText('fails');
+      });
+
+      await test.step('p', async () => {
+        await page.keyboard.press('p');
+        await expect(page.locator('.test-file-test')).toHaveCount(1);
+      });
+
+      await test.step('a', async () => {
+        await page.keyboard.press('a');
+        await expect(page.locator('.test-file-test')).toHaveCount(3);
+      });
+
+      await test.step('f', async () => {
+        await page.keyboard.press('f');
+        await expect(page.locator('.test-file-test')).toHaveCount(1);
+      });
+    });
   });
 }
 
