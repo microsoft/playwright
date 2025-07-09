@@ -21,7 +21,7 @@
     "dotenv": "^16.5.0",
     "mime": "^4.0.7",
     "openai": "^5.7.0",
-    "playwright-core": "1.54.0-next",
+    "playwright-core": "1.55.0-next",
     "zod-to-json-schema": "^3.24.4"
   },
   "devDependencies": {
