@@ -152,6 +152,7 @@ export type DialogSignal = BaseSignal & {
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
 
 export type FrameDescription = {
+  pageGuid: string;
   pageAlias: string;
   framePath: string[];
 };
@@ -162,4 +163,10 @@ export type ActionInContext = {
   action: Action;
   startTime: number;
   endTime?: number;
+};
+
+export type SignalInContext = {
+  frame: FrameDescription;
+  signal: Signal;
+  timestamp: number;
 };

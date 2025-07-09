@@ -1545,8 +1545,14 @@ BrowserContext:
 
     recorderEvent:
       parameters:
-        event: string
+        event:
+          type: enum
+          literals:
+          - actionAdded
+          - actionUpdated
+          - signalAdded
         data: json
+        page: Page
 
 Page:
   type: interface

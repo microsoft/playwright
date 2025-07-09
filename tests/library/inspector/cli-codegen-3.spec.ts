@@ -65,6 +65,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsyn
       signals: [],
       framePath: [],
       pageAlias: 'page',
+      pageGuid: expect.any(String),
     });
 
     expect(message.text()).toBe('click1');
@@ -140,6 +141,7 @@ await page.Locator("#frame1").ContentFrame.GetByText("Hello1").ClickAsync();`);
       signals: [],
       framePath: ['#frame1'],
       pageAlias: 'page',
+      pageGuid: expect.any(String),
     });
   });
 
@@ -178,6 +180,7 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.GetByT
       signals: [],
       framePath: ['#frame1', 'iframe'],
       pageAlias: 'page',
+      pageGuid: expect.any(String),
     });
   });
 
@@ -216,6 +219,7 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locato
       signals: [],
       framePath: ['#frame1', 'iframe', 'iframe >> nth=2'],
       pageAlias: 'page',
+      pageGuid: expect.any(String),
     });
   });
 

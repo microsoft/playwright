@@ -22,6 +22,7 @@ import { runOneShot } from './loop';
 
 import type { BrowserContext } from '../../playwright-core/src/client/browserContext';
 import type * as actions from '@recorder/actions';
+import type * as playwright from 'playwright-core';
 
 export async function runRecorderLoop() {
   const browser = await chromium.launch({ headless: false });
@@ -29,18 +30,23 @@ export async function runRecorderLoop() {
   await context._enableRecorder({
     mode: 'recording',
     recorderMode: 'api',
-  }, async (event, data) => {
-    if (event !== 'actionAdded')
-      return;
-    const action = data.action as actions.Action;
-    if (action.name !== 'click' && action.name !== 'press') {
-      console.log('============= action', action.name);
-      return;
-    }
-    const response = await runOneShot(prompt(action)).catch(e => {
-      console.error(e);
-    });
-    console.log(response);
+  }, {
+    actionAdded: (page: playwright.Page, actionInContext: actions.ActionInContext) => {
+      const action = actionInContext.action;
+      if (action.name !== 'click' && action.name !== 'press')
+        return;
+      runOneShot(prompt(action)).then(response => {
+        console.log(response);
+      }).catch(e => {
+        console.error(e);
+      });
+    },
+    actionUpdated: (page: playwright.Page, actionInContext: actions.ActionInContext) => {
+      console.log('actionUpdated', actionInContext);
+    },
+    signalAdded: (page: playwright.Page, signal: actions.SignalInContext) => {
+      console.log('signalAdded', signal);
+    },
   });
   const page = await context.newPage();
   await page.goto('https://playwright.dev/');

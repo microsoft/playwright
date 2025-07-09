@@ -47,6 +47,13 @@ import type * as api from '../../types/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
+import type * as actions from '@recorder/actions';
+
+interface RecorderEventSink {
+  actionAdded(page: Page, actionInContext: actions.ActionInContext): void;
+  actionUpdated(page: Page, actionInContext: actions.ActionInContext): void;
+  signalAdded(page: Page, signal: actions.SignalInContext): void;
+}
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -71,7 +78,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-  private _onRecorderEventSink: ((event: string, data: any) => void) | undefined;
+  private _onRecorderEventSink: RecorderEventSink | undefined;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -141,7 +148,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
-    this._channel.on('recorderEvent', ({ event, data }) => this._onRecorderEventSink?.(event, data));
+    this._channel.on('recorderEvent', ({ event, data, page }) => {
+      if (event === 'actionAdded')
+        this._onRecorderEventSink?.actionAdded(Page.from(page), data as actions.ActionInContext);
+      else if (event === 'actionUpdated')
+        this._onRecorderEventSink?.actionUpdated(Page.from(page), data as actions.ActionInContext);
+      else if (event === 'signalAdded')
+        this._onRecorderEventSink?.signalAdded(Page.from(page), data as actions.SignalInContext);
+    });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
@@ -501,9 +515,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._closedPromise;
   }
 
-  async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, callback?: (event: string, data: any) => void) {
-    if (callback)
-      this._onRecorderEventSink = callback;
+  async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
+    if (eventSink)
+      this._onRecorderEventSink = eventSink;
     await this._channel.enableRecorder(params);
   }
 
