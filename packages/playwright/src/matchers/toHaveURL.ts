@@ -42,9 +42,9 @@ export async function toHaveURLWithPredicate(
     throw new Error(
         [
           // Always display `expected` in expectation place
-          matcherHint(this, undefined, matcherName, expression, undefined, matcherOptions),
+          matcherHint(this, undefined, matcherName, expression, undefined, matcherOptions, undefined),
           `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected')} value must be a string, regular expression, or predicate`,
-          this.utils.printWithType('Expected', expected, this.utils.printExpected,),
+          this.utils.printWithType('Expected', expected, this.utils.printExpected),
         ].join('\n\n'),
     );
   }

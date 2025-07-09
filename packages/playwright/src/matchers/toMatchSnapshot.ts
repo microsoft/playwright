@@ -302,7 +302,7 @@ export function toMatchSnapshot(
     return helper.handleMatching();
 
   const receiver = isString(received) ? 'string' : 'Buffer';
-  const header = matcherHint(this, undefined, 'toMatchSnapshot', receiver, undefined, undefined);
+  const header = matcherHint(this, undefined, 'toMatchSnapshot', receiver, undefined, undefined, undefined);
   return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined, this._stepInfo);
 }
 
