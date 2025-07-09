@@ -12,7 +12,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 - New cookie property `partitionKey` in [`method: BrowserContext.cookies`] and [`method: BrowserContext.addCookies`]. This property allows to save and restore partitioned cookies. See [CHIPS MDN article](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies) for more information. Note that browsers have different support and defaults for cookie partitioning.
 
-- New option `noSnippets` to disable snippets in the html report.
+- New option `noSnippets` to disable code snippets in the html report.
   ```js
   import { defineConfig } from '@playwright/test';
 
@@ -39,8 +39,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 - Support for Node.js 16 has been removed.
 
 - Support for Node.js 18 has been deprecated, and will be removed in the future.
-
-- Chromium has been changing WebGL support, based on the available GPU. There is a new flag `--enable-gpu` available in [chromium headless shell](./browsers.md#chromium-headless-shell) that you can try on your hardware.
 
 ### Browser Versions
 
