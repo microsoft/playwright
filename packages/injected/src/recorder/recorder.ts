@@ -60,7 +60,6 @@ interface RecorderTool {
   onMouseLeave?(event: MouseEvent): void;
   onFocus?(event: Event): void;
   onScroll?(event: Event): void;
-  onLoad?(event: Event): void;
 }
 
 class NoneTool implements RecorderTool {
@@ -633,10 +632,6 @@ class JsonRecordActionTool implements RecorderTool {
     return 'pointer';
   }
 
-  install() {
-    this._pushSnapshot();
-  }
-
   onClick(event: MouseEvent) {
     // in webkit, sliding a range element may trigger a click event with a different target if the mouse is released outside the element bounding box.
     // So we check the hovered element instead, and if it is a range input, we skip click handling
@@ -766,20 +761,6 @@ class JsonRecordActionTool implements RecorderTool {
       signals: [],
       key: event.key,
       modifiers: modifiersForEvent(event),
-    });
-  }
-
-  onLoad() {
-    this._pushSnapshot();
-  }
-
-  private _pushSnapshot() {
-    const { ariaSnapshot } = this._ariaSnapshot(this._recorder.document.body);
-    this._recorder.recordAction({
-      selector: '',
-      name: 'assertSnapshot',
-      signals: [],
-      ariaSnapshot,
     });
   }
 
@@ -1331,7 +1312,6 @@ export class Recorder {
       addEventListener(this.document, 'mouseenter', event => this._onMouseEnter(event as MouseEvent), true),
       addEventListener(this.document, 'focus', event => this._onFocus(event), true),
       addEventListener(this.document, 'scroll', event => this._onScroll(event), true),
-      addEventListener(this.injectedScript.window, 'load', event => this._onLoad(event), true),
     ];
 
     this.highlight.install();
@@ -1513,12 +1493,6 @@ export class Recorder {
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onFocus?.(event);
-  }
-
-  private _onLoad(event: Event) {
-    if (!event.isTrusted)
-      return;
-    this._currentTool.onLoad?.(event);
   }
 
   private _onScroll(event: Event) {

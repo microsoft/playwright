@@ -228,7 +228,7 @@ export class RecorderApp {
       this._onActionAdded(action);
     });
 
-    recorder.on(RecorderEvent.SignalAdded, (signal: actions.Signal) => {
+    recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
       this._onSignalAdded(signal);
     });
 
@@ -266,10 +266,10 @@ export class RecorderApp {
     this._updateActions();
   }
 
-  private _onSignalAdded(signal: actions.Signal) {
-    const lastAction = this._actions[this._actions.length - 1];
+  private _onSignalAdded(signal: actions.SignalInContext) {
+    const lastAction = this._actions.findLast(a => a.frame.pageGuid === signal.frame.pageGuid);
     if (lastAction)
-      lastAction.action.signals.push(signal);
+      lastAction.action.signals.push(signal.signal);
     this._updateActions();
   }
 
@@ -367,16 +367,24 @@ export class ProgrammaticRecorderApp {
   static async run(inspectedContext: BrowserContext, recorder: Recorder) {
     let lastAction: actions.ActionInContext | null = null;
     recorder.on(RecorderEvent.ActionAdded, action => {
+      const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
+      if (!page)
+        return;
       if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page });
       else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page });
       lastAction = action;
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal });
+      const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page });
     });
   }
+}
+
+function findPageByGuid(context: BrowserContext, guid: string) {
+  return context.pages().find(p => p.guid === guid);
 }
 
 const recorderAppSymbol = Symbol('recorderApp');

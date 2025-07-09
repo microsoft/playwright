@@ -221,10 +221,10 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
     actions.push(action);
     actionsChanged();
   });
-  recorder.on(RecorderEvent.SignalAdded, (signal: actions.Signal) => {
-    const lastAction = actions[actions.length - 1];
+  recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
+    const lastAction = actions.findLast(a => a.frame.pageGuid === signal.frame.pageGuid);
     if (lastAction)
-      lastAction.action.signals.push(signal);
+      lastAction.action.signals.push(signal.signal);
     actionsChanged();
   });
 }

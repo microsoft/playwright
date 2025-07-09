@@ -14,26 +14,35 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-
 import { isUnderTest } from '../utils/debug';
 import { monotonicTime } from '../../utils/isomorphic/time';
+import { generateFrameSelector } from './recorderUtils';
 
 import type { Signal } from '../../../../recorder/src/actions';
 import type { Frame } from '../frames';
 import type * as actions from '@recorder/actions';
 
-export class RecorderSignalProcessor extends EventEmitter {
+export interface ProcessorDelegate {
+  addAction(actionInContext: actions.ActionInContext): void;
+  addSignal(signalInContext: actions.SignalInContext): void;
+}
+
+export class RecorderSignalProcessor {
+  private _delegate: ProcessorDelegate;
   private _lastAction: actions.ActionInContext | null = null;
 
-  addAction(actionInContext: actions.ActionInContext, callback?: () => Promise<void>) {
+  constructor(actionSink: ProcessorDelegate) {
+    this._delegate = actionSink;
+  }
+
+  addAction(actionInContext: actions.ActionInContext) {
     this._lastAction = actionInContext;
-    this.emit('action', actionInContext);
+    this._delegate.addAction(actionInContext);
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
+    const timestamp = monotonicTime();
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
-      const timestamp = monotonicTime();
       const lastAction = this._lastAction;
       const signalThreshold = isUnderTest() ? 500 : 5000;
 
@@ -48,6 +57,7 @@ export class RecorderSignalProcessor extends EventEmitter {
       if (generateGoto) {
         this.addAction({
           frame: {
+            pageGuid: frame._page.guid,
             pageAlias,
             framePath: [],
           },
@@ -63,6 +73,17 @@ export class RecorderSignalProcessor extends EventEmitter {
       return;
     }
 
-    this.emit('signal', signal);
+    generateFrameSelector(frame).then(framePath => {
+      const signalInContext: actions.SignalInContext = {
+        frame: {
+          pageGuid: frame._page.guid,
+          pageAlias,
+          framePath,
+        },
+        signal,
+        timestamp,
+      };
+      this._delegate.addSignal(signalInContext);
+    });
   }
 }
