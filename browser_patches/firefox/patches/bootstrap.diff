@@ -2543,6 +2543,130 @@ index 704404c9f094640ad63b685d64bd5a396e733e4b..92bdc21b4d6a015cc2f2bb22781ec675
    /**
     *  InterceptionTimeStamps is used to record the time stamps of the
     *  interception.
+diff --git a/netwerk/protocol/http/nsHttpChannel.cpp b/netwerk/protocol/http/nsHttpChannel.cpp
+index e4479400a4c574f652befbee7d83bd664aa2b840..2761dce9477f7f1622a82fe1da6472597ae82534 100644
+--- a/netwerk/protocol/http/nsHttpChannel.cpp
++++ b/netwerk/protocol/http/nsHttpChannel.cpp
+@@ -688,11 +688,9 @@ nsresult nsHttpChannel::OnBeforeConnect() {
+   // SecurityInfo.sys.mjs
+   mLoadInfo->SetHstsStatus(isSecureURI);
+ 
+-  RefPtr<mozilla::dom::BrowsingContext> bc;
+-  mLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
+   // If bypassing the cache and we're forced offline
+   // we can just return the error here.
+-  if (bc && bc->Top()->GetForceOffline() &&
++  if (IsForcedOffline() &&
+       BYPASS_LOCAL_CACHE(mLoadFlags, LoadPreferCacheLoadOverBypass())) {
+     return NS_ERROR_OFFLINE;
+   }
+@@ -805,9 +803,7 @@ nsresult nsHttpChannel::MaybeUseHTTPSRRForUpgrade(bool aShouldUpgrade,
+     return aStatus;
+   }
+ 
+-  RefPtr<mozilla::dom::BrowsingContext> bc;
+-  mLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
+-  bool forceOffline = bc && bc->Top()->GetForceOffline();
++  bool forceOffline = IsForcedOffline();
+ 
+   if (mURI->SchemeIs("https") || aShouldUpgrade || !LoadUseHTTPSSVC() ||
+       forceOffline) {
+@@ -1266,15 +1262,14 @@ nsresult nsHttpChannel::ContinueConnect() {
+                      "CORS preflight must have been finished by the time we "
+                      "do the rest of ContinueConnect");
+ 
+-  RefPtr<mozilla::dom::BrowsingContext> bc;
+-  mLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
++  bool isForcedOffline = IsForcedOffline();
+ 
+   // we may or may not have a cache entry at this point
+   if (mCacheEntry) {
+     // read straight from the cache if possible...
+     if (CachedContentIsValid()) {
+       // If we're forced offline, and set to bypass the cache, return offline.
+-      if (bc && bc->Top()->GetForceOffline() &&
++      if (isForcedOffline &&
+           BYPASS_LOCAL_CACHE(mLoadFlags, LoadPreferCacheLoadOverBypass())) {
+         return NS_ERROR_OFFLINE;
+       }
+@@ -1316,7 +1311,7 @@ nsresult nsHttpChannel::ContinueConnect() {
+   }
+ 
+   // We're about to hit the network. Don't if we're forced offline.
+-  if (bc && bc->Top()->GetForceOffline()) {
++  if (isForcedOffline) {
+     return NS_ERROR_OFFLINE;
+   }
+ 
+@@ -1421,12 +1416,9 @@ void nsHttpChannel::SpeculativeConnect() {
+   // don't speculate if we are offline, when doing http upgrade (i.e.
+   // websockets bootstrap), or if we can't do keep-alive (because then we
+   // couldn't reuse the speculative connection anyhow).
+-  RefPtr<mozilla::dom::BrowsingContext> bc;
+-  mLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
+-
+   if (gIOService->IsOffline() || mUpgradeProtocolCallback ||
+       !(mCaps & NS_HTTP_ALLOW_KEEPALIVE) ||
+-      (bc && bc->Top()->GetForceOffline())) {
++      IsForcedOffline()) {
+     return;
+   }
+ 
+@@ -4214,9 +4206,6 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(bool isHttps) {
+   uint32_t cacheEntryOpenFlags;
+   bool offline = gIOService->IsOffline();
+ 
+-  RefPtr<mozilla::dom::BrowsingContext> bc;
+-  mLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
+-
+   bool maybeRCWN = false;
+ 
+   nsAutoCString cacheControlRequestHeader;
+@@ -4227,7 +4216,7 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(bool isHttps) {
+     return NS_OK;
+   }
+ 
+-  bool forceOffline = bc && bc->Top()->GetForceOffline();
++  bool forceOffline = IsForcedOffline();
+   if (offline || (mLoadFlags & INHIBIT_CACHING) || forceOffline) {
+     if (BYPASS_LOCAL_CACHE(mLoadFlags, LoadPreferCacheLoadOverBypass()) &&
+         !offline && !forceOffline) {
+@@ -7300,6 +7289,20 @@ void nsHttpChannel::MaybeStartDNSPrefetch() {
+   }
+ }
+ 
++bool nsHttpChannel::IsForcedOffline() {
++  RefPtr<mozilla::dom::BrowsingContext> bc;
++  mLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
++  if (bc && bc->Top()->GetForceOffline())
++    return true;
++
++  RefPtr<mozilla::dom::BrowsingContext> wbc;
++  mLoadInfo->GetWorkerAssociatedBrowsingContext(getter_AddRefs(wbc));
++  if (wbc && wbc->Top()->GetForceOffline())
++    return true;
++
++  return false;
++}
++
+ NS_IMETHODIMP
+ nsHttpChannel::GetEncodedBodySize(uint64_t* aEncodedBodySize) {
+   if (mCacheEntry && !LoadCacheEntryIsWriteOnly()) {
+diff --git a/netwerk/protocol/http/nsHttpChannel.h b/netwerk/protocol/http/nsHttpChannel.h
+index cb8b8b7406411edceb30aa53c9b9007a38058f84..ebdc5384ca20feda399b70532a3036174f1a7431 100644
+--- a/netwerk/protocol/http/nsHttpChannel.h
++++ b/netwerk/protocol/http/nsHttpChannel.h
+@@ -307,6 +307,10 @@ class nsHttpChannel final : public HttpBaseChannel,
+   void MaybeResolveProxyAndBeginConnect();
+   void MaybeStartDNSPrefetch();
+ 
++  // ---- Playwright begin
++  bool IsForcedOffline();
++  // ---- Playwright end
++
+   // Based on the proxy configuration determine the strategy for resolving the
+   // end server host name.
+   ProxyDNSStrategy GetProxyDNSStrategy();
 diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
 index d3b44cc62d3df49bbf842356cbdb153c82c3163c..23cf9bc83fb1faaf1c7406331b78e522b307cbf0 100644
 --- a/parser/html/nsHtml5TreeOpExecutor.cpp
@@ -2669,22 +2793,40 @@ index 75555352b8a15a50e4a21e34fc8ede4e9246c7cc..72855a404effa42b6c55cd0c2fcb8bdd
      // ignored for Linux.
      const unsigned long CHROME_SUPPRESS_ANIMATION     = 1 << 24;
 diff --git a/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs b/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs
-index 76fb919603e8d2b7864d351eb47be2a38e40e31e..cdfef96e20bea13799751154f4076bbcc2f827d4 100644
+index 76fb919603e8d2b7864d351eb47be2a38e40e31e..9f1e880fe9027d1a2540ffeaa11fc0c4e1a36133 100644
 --- a/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs
 +++ b/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs
-@@ -108,6 +108,12 @@ EnterprisePoliciesManager.prototype = {
+@@ -108,7 +108,9 @@ EnterprisePoliciesManager.prototype = {
        Services.prefs.clearUserPref(PREF_POLICIES_APPLIED);
      }
  
-+    // Playwright: Disable enterprise policies
-+    if (true) {
-+      this.status = Ci.nsIEnterprisePolicies.INACTIVE;
-+      return;
-+    }
-+
-     let provider = this._chooseProvider();
+-    let provider = this._chooseProvider();
++    // --- Playwright begin ---
++    let provider = new PlaywrightPoliciesProvider();
++    // --- Playwright end ---
  
      if (provider.failed) {
+       this.status = Ci.nsIEnterprisePolicies.FAILED;
+@@ -631,6 +633,19 @@ class JSONPoliciesProvider {
+   }
+ }
+ 
++class PlaywrightPoliciesProvider extends JSONPoliciesProvider {
++  _getConfigurationFile() {
++    let prefPath = Services.prefs.getStringPref(PREF_ALTERNATE_PATH, "");
++    if (!prefPath)
++      return null;
++
++    dump(`Playwright: loading enterprise policies from ${prefPath}\n`);
++    let configFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
++    configFile.initWithPath(prefPath);
++    return configFile;
++  }
++}
++
+ class WindowsGPOPoliciesProvider {
+   constructor() {
+     this._policies = null;
 diff --git a/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp b/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp
 index 253171bed4dea54fc28bb4ddc9920823dbd9351c..6dc0e620b399ed9ee6b53f97bc080ec17ee4e1b5 100644
 --- a/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp

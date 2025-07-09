@@ -41,16 +41,18 @@
 #include <WebKit/WKWebsiteDataStoreRefCurl.h>
 #include <vector>
 
-std::wstring createPEMString(WKCertificateInfoRef certificateInfo)
+std::wstring createPEMString(WKProtectionSpaceRef protectionSpace)
 {
-    auto chainSize = WKCertificateInfoGetCertificateChainSize(certificateInfo);
+    auto chain = adoptWK(WKProtectionSpaceCopyCertificateChain(protectionSpace));
 
     std::wstring pems;
 
-    for (auto i = 0; i < chainSize; i++) {
-        auto certificate = adoptWK(WKCertificateInfoCopyCertificateAtIndex(certificateInfo, i));
-        auto size = WKDataGetSize(certificate.get());
-        auto data = WKDataGetBytes(certificate.get());
+    for (size_t i = 0; i < WKArrayGetSize(chain.get()); i++) {
+        auto item = WKArrayGetItemAtIndex(chain.get(), i);
+        assert(WKGetTypeID(item) == WKDataGetTypeID());
+        auto certificate = static_cast<WKDataRef>(item);
+        auto size = WKDataGetSize(certificate);
+        auto data = WKDataGetBytes(certificate);
 
         for (size_t i = 0; i < size; i++)
             pems.push_back(data[i]);
@@ -241,7 +243,7 @@ void WebKitBrowserWindow::didReceiveAuthenticationChallenge(WKPageRef page, WKAu
             WKAuthenticationDecisionListenerUseCredential(decisionListener, wkCredential.get());
             return;
         }
-    } else {
+    } else if (!s_headless) {
         WKRetainPtr<WKStringRef> realm(WKProtectionSpaceCopyRealm(protectionSpace));
 
         if (auto credential = askCredential(thisWindow.hwnd(), createString(realm.get()))) {
@@ -259,10 +261,9 @@ void WebKitBrowserWindow::didReceiveAuthenticationChallenge(WKPageRef page, WKAu
 bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protectionSpace)
 {
     auto host = createString(adoptWK(WKProtectionSpaceCopyHost(protectionSpace)).get());
-    auto certificateInfo = adoptWK(WKProtectionSpaceCopyCertificateInfo(protectionSpace));
-    auto verificationError = WKCertificateInfoGetVerificationError(certificateInfo.get());
-    auto description = createString(adoptWK(WKCertificateInfoCopyVerificationErrorDescription(certificateInfo.get())).get());
-    auto pem = createPEMString(certificateInfo.get());
+    auto verificationError = WKProtectionSpaceGetCertificateVerificationError(protectionSpace);
+    auto description = createString(adoptWK(WKProtectionSpaceCopyCertificateVerificationErrorDescription(protectionSpace)).get());
+    auto pem = createPEMString(protectionSpace);
 
     auto it = m_acceptedServerTrustCerts.find(host);
     if (it != m_acceptedServerTrustCerts.end() && it->second == pem)
@@ -272,6 +273,9 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
     textString.append(L"[ERROR] " + std::to_wstring(verificationError) + L"\r\n");
     textString.append(L"[DESCRIPTION] " + description + L"\r\n");
     textString.append(pem);
+
+    if (s_headless)
+        return false;
 
     if (askServerTrustEvaluation(hwnd(), textString)) {
         m_acceptedServerTrustCerts.emplace(host, pem);

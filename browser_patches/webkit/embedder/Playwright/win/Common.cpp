@@ -44,6 +44,8 @@ HINSTANCE hInst;
 POINT s_windowPosition = { 100, 100 };
 SIZE s_windowSize = { 500, 200 };
 
+bool s_headless;
+
 namespace WebCore {
 float deviceScaleFactorForWindow(HWND);
 }

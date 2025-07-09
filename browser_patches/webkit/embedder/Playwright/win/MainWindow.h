@@ -35,7 +35,7 @@
 
 class MainWindow : public BrowserWindowClient {
 public:
-    static void configure(bool headless, bool controlledRemotely, bool disableAcceleratedCompositing);
+    static void configure(bool controlledRemotely, bool disableAcceleratedCompositing);
 
     MainWindow();
 
@@ -55,7 +55,6 @@ private:
     static void registerClass(HINSTANCE hInstance);
     static std::wstring s_windowClass;
     static size_t s_numInstances;
-    static bool s_headless;
     static bool s_controlledRemotely;
     static bool s_disableAcceleratedCompositing;
 
