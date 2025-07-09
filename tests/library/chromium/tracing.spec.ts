@@ -50,7 +50,7 @@ it('should run with custom categories if provided', async ({ browser }, testInfo
   const page = await browser.newPage();
   const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
   await browser.startTracing(page, { path: outputTraceFile, categories: ['disabled-by-default-cc.debug'] });
-  await page.evaluate(() => 1 + 1);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
   await browser.stopTracing();
 
   const traceJson = JSON.parse(fs.readFileSync(outputTraceFile).toString());
