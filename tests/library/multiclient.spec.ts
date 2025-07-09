@@ -54,9 +54,10 @@ test.slow(true, 'All connect tests are slow');
 test.skip(({ mode }) => mode !== 'default');
 
 async function disconnect(page: Page) {
+  const waitForClose = new Promise(f => page.context().browser().once('disconnected', f));
   await page.context().browser().close();
   // Give disconnect some time to cleanup.
-  await new Promise(f => setTimeout(f, 1000));
+  await waitForClose;
 }
 
 test('should connect two clients', async ({ connect, remoteServer, server }) => {
