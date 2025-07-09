@@ -22,6 +22,7 @@ import { parseTraceRaw } from '../config/utils';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
 import { artifactsFolderName } from '../../packages/playwright/src/isomorphic/folders';
+import { rafraf } from '../page/pageTest';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -442,10 +443,13 @@ for (const params of [
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.
-    for (let i = 0; i < 10; ++i) {
-      await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
-      await page.evaluate(() => new Promise(window.builtins.requestAnimationFrame));
+    for (let i = 0; i < 100; ++i) {
+      const percentage = (i + 1) + '%';
+      await page.setContent(`<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: linear-gradient(to bottom, red ${percentage}, transparent ${percentage}); border: 50px solid blue"></body>`);
+      await rafraf(page);
     }
+    for (let i = 0; i < 10; ++i)
+      await rafraf(page);
     await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
     const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
