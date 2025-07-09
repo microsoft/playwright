@@ -206,7 +206,11 @@ class RecordActionTool implements RecorderTool {
     return 'pointer';
   }
 
-  install() {
+  private _installObserverIfNeeded() {
+    if (this._observer)
+      return;
+    if (!this._recorder.injectedScript.document?.body)
+      return;
     this._observer = new MutationObserver(mutations => {
       if (!this._hoveredElement)
         return;
@@ -601,6 +605,7 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _updateModelForHoveredElement() {
+    this._installObserverIfNeeded();
     if (this._performingActions.size)
       return;
     if (!this._hoveredElement || !this._hoveredElement.isConnected) {
