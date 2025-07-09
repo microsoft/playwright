@@ -15,8 +15,6 @@ toc_max_heading_level: 2
 
 - `playwright open` does not open the test recorder anymore. Use `playwright codegen` instead.
 
-- Chromium has been changing WebGL support, based on the available GPU. There is a new flag `--enable-gpu` available in [chromium headless shell](./browsers.md#chromium-headless-shell) that you can try on your hardware.
-
 ### Browser Versions
 
 - Chromium 139.0.7258.5
