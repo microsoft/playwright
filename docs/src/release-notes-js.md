@@ -6,11 +6,58 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.54
+
+### Highlights
+
+- New cookie property `partitionKey` in [`method: BrowserContext.cookies`] and [`method: BrowserContext.addCookies`]. This property allows to save and restore partitioned cookies. See [CHIPS MDN article](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies) for more information. Note that browsers have different support and defaults for cookie partitioning.
+
+- New option `noSnippets` to disable snippets in the html report.
+  ```js
+  import { defineConfig } from '@playwright/test';
+
+  export default defineConfig({
+    reporter: [['html', { noSnippets: true }]]
+  });
+  ```
+
+- New property `location` in test annotations, for example in [`property: TestResult.annotations`] and [`property: TestInfo.annotations`]. It shows where the annotation like `test.skip` or `test.fixme` was added.
+
+### Command Line
+
+- New option `--user-data-dir` in multiple commands. You can specify the same user data dir to reuse browsing state, like authentication, between sessions.
+  ```bash
+  npx playwright codegen --user-data-dir=./user-data
+  ```
+
+- Option `-gv` has been removed from the `npx playwright test` command. Use `--grep-invert` instead.
+
+- `npx playwright open` does not open the test recorder anymore. Use `npx playwright codegen` instead.
+
+### Miscellaneous
+
+- Support for Node.js 16 has been removed.
+
+- Support for Node.js 18 has been deprecated, and will be removed in the future.
+
+- Chromium has been changing WebGL support, based on the available GPU. There is a new flag `--enable-gpu` available in [chromium headless shell](./browsers.md#chromium-headless-shell) that you can try on your hardware.
+
+### Browser Versions
+
+- Chromium 139.0.7258.5
+- Mozilla Firefox 140.0.2
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 140
+- Microsoft Edge 140
+
 ## Version 1.53
 
 ### Trace Viewer and HTML Reporter Updates
 
-- New Steps in Trace Viewer and HTML reporter: 
+- New Steps in Trace Viewer and HTML reporter:
   ![New Trace Viewer Steps](https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2)
 - New option in `'html'` reporter to set the title of a specific test run:
   ```js
@@ -45,7 +92,7 @@ This version was also tested against the following stable channels:
 ## Version 1.52
 
 ### Highlights
- 
+
 - New method [`method: LocatorAssertions.toContainClass`] to ergonomically assert individual class names on the element.
 
   ```ts

@@ -4,11 +4,35 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.54
+
+- New cookie property `partition_key` in [`method: BrowserContext.cookies`] and [`method: BrowserContext.addCookies`]. This property allows to save and restore partitioned cookies. See [CHIPS MDN article](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies) for more information. Note that browsers have different support and defaults for cookie partitioning.
+
+- New option `--user-data-dir` in multiple commands. You can specify the same user data dir to reuse browsing state, like authentication, between sessions.
+  ```bash
+  playwright codegen --user-data-dir=./user-data
+  ```
+
+- `playwright open` does not open the test recorder anymore. Use `playwright codegen` instead.
+
+- Chromium has been changing WebGL support, based on the available GPU. There is a new flag `--enable-gpu` available in [chromium headless shell](./browsers.md#chromium-headless-shell) that you can try on your hardware.
+
+### Browser Versions
+
+- Chromium 139.0.7258.5
+- Mozilla Firefox 140.0.2
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 140
+- Microsoft Edge 140
+
 ## Version 1.53
 
 ### Miscellaneous
 
-- New Steps in Trace Viewer: 
+- New Steps in Trace Viewer:
   ![New Trace Viewer Steps](https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2)
 - New method [`method: Locator.describe`] to describe a locator. Used for trace viewer.
   ```python
@@ -31,7 +55,7 @@ This version was also tested against the following stable channels:
 ## Version 1.52
 
 ### Highlights
- 
+
 - New method [`method: LocatorAssertions.toContainClass`] to ergonomically assert individual class names on the element.
 
   ```python
