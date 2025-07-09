@@ -64,6 +64,7 @@ std::wstring replaceString(std::wstring src, const std::wstring& oldValue, const
 extern HINSTANCE hInst;
 extern POINT s_windowPosition;
 extern SIZE s_windowSize;
+extern bool s_headless;
 
 std::wstring createString(WKStringRef wkString);
 std::wstring createString(WKURLRef wkURL);

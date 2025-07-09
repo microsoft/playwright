@@ -48,12 +48,10 @@ static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 std::wstring MainWindow::s_windowClass;
 size_t MainWindow::s_numInstances;
 
-bool MainWindow::s_headless = false;
 bool MainWindow::s_controlledRemotely = false;
 bool MainWindow::s_disableAcceleratedCompositing = false;
 
-void MainWindow::configure(bool headless, bool controlledRemotely, bool disableAcceleratedCompositing) {
-    s_headless = headless;
+void MainWindow::configure(bool controlledRemotely, bool disableAcceleratedCompositing) {
     s_controlledRemotely = controlledRemotely;
     s_disableAcceleratedCompositing = disableAcceleratedCompositing;
 }

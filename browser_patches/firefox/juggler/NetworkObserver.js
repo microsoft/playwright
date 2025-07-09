@@ -533,6 +533,8 @@ class NetworkRequest {
     };
 
     const { status, statusText, headers } = responseHead(this.httpChannel, opt_statusCode, opt_statusText);
+    if (redirectStatus.includes(status) && this._overriddenHeadersForRedirect)
+      this._overriddenHeadersForRedirect = filterHeadersForRedirect(this._overriddenHeadersForRedirect, this.httpChannel.requestMethod, status);
     let remoteIPAddress = undefined;
     let remotePort = undefined;
     try {
@@ -806,6 +808,18 @@ function clearRequestHeaders(httpChannel) {
 function overrideRequestHeaders(httpChannel, headers) {
   clearRequestHeaders(httpChannel);
   appendExtraHTTPHeaders(httpChannel, headers);
+}
+
+const redirectStatus = [301, 302, 303, 307, 308];
+
+function filterHeadersForRedirect(headers, requestMethod, status) {
+    // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
+  if ((status === 301 || status === 302) && requestMethod === 'POST' ||
+      status === 303 && !['GET', 'HEAD'].includes(requestMethod)) {
+    const requestBodyHeaders = ['content-encoding', 'content-language', 'content-length', 'content-location', 'content-type'];
+    return headers.filter(header => !requestBodyHeaders.includes(header.name.toLowerCase()));
+  }
+  return headers;
 }
 
 function causeTypeToString(causeType) {
