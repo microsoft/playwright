@@ -299,8 +299,6 @@ export class Chromium extends BrowserType {
     const chromeArguments = [...chromiumSwitches(options.assistantMode, options.channel)];
 
     if (os.platform() === 'darwin') {
-      // See https://github.com/microsoft/playwright/issues/7362
-      chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://issues.chromium.org/issues/40277080
       chromeArguments.push('--enable-unsafe-swiftshader');
     }
