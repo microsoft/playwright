@@ -92,7 +92,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   }, [messagesEndRef]);
 
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       switch (event.key) {
         case 'F8':
