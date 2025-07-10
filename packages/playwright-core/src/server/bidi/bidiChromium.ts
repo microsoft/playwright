@@ -119,11 +119,8 @@ export class BidiChromium extends BrowserType {
     const chromeArguments = [...chromiumSwitches(options.assistantMode)];
 
     if (os.platform() === 'darwin') {
-      // See https://github.com/microsoft/playwright/issues/7362
-      chromeArguments.push('--enable-use-zoom-for-dsf=false');
-      // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless)
-        chromeArguments.push('--use-angle');
+      // See https://issues.chromium.org/issues/40277080
+      chromeArguments.push('--enable-unsafe-swiftshader');
     }
 
     if (options.devtools)
