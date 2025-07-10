@@ -1456,7 +1456,8 @@ test('should remove noscript when javaScriptEnabled is set to true', async ({ br
   await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
 });
 
-test('should open snapshot in new browser context', async ({ browser, page, runAndTrace, server }) => {
+test('should open snapshot in new browser context', async ({ browser, page, runAndTrace, server, channel }) => {
+  test.skip(channel === 'webkit-wsl');
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('hello');

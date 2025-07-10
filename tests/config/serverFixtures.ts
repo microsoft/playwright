@@ -24,6 +24,7 @@ import { SocksProxy } from '../../packages/playwright-core/lib/server/utils/sock
 
 export type ServerWorkerOptions = {
   loopback?: string;
+  loopback2?: string;
   __servers: ServerFixtures;
 };
 
@@ -37,16 +38,17 @@ export type ServerFixtures = {
 
 export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
   loopback: [undefined, { scope: 'worker', option: true }],
-  __servers: [async ({ loopback }, run, workerInfo) => {
+  loopback2: [undefined, { scope: 'worker', option: true }],
+  __servers: [async ({ loopback, loopback2 }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 4;
-    const server = await TestServer.create(assetsPath, port, loopback);
+    const server = await TestServer.create(assetsPath, port, loopback, loopback2);
     server.enableHTTPCache(cachedPath);
 
     const httpsPort = port + 1;
-    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback);
+    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback, loopback2);
     httpsServer.enableHTTPCache(cachedPath);
 
     const socksServer = new MockSocksServer();
@@ -54,7 +56,7 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
     await socksServer.listen(socksPort);
 
     const proxyPort = port + 3;
-    const proxyServer = await TestProxy.create(proxyPort);
+    const proxyServer = await TestProxy.create(proxyPort, loopback);
 
     await run({
       asset: (p: string) => path.join(__dirname, '..', 'assets', ...p.split('/')),

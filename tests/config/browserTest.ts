@@ -28,6 +28,7 @@ import type { RemoteServerOptions, PlaywrightServer } from './remoteServer';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
 import type { Log } from '../../packages/trace/src/har';
 import type { TestInfo } from '@playwright/test';
+import { execSync } from 'child_process';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
@@ -57,6 +58,18 @@ type BrowserTestTestFixtures = PageTestFixtures & {
 };
 
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
+  loopback: [async ({ channel }, use) => {
+    if (channel === 'webkit-wsl' && execSync('wsl -d playwright --cd /home/pwuser wslinfo --networking-mode').includes('nat'))
+      return await use(execSync('wsl -d playwright --cd /home/pwuser ip route show', { encoding: 'utf8' }).trim().split('\n').find(line => line.includes('default'))?.split(' ')[2]);
+    return await use(undefined);
+  }, { scope: 'worker', timeout: 10000 }],
+
+  loopback2: [async ({ channel, loopback }, use) => {
+    if (channel === 'webkit-wsl' && loopback)
+      return await use(`${loopback}.nip.io`);
+    return await use(undefined);
+  }, { scope: 'worker', timeout: 10000 }],
+
   browserVersion: [async ({ browser }, run) => {
     await run(browser.version());
   }, { scope: 'worker' }],
@@ -73,10 +86,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run(false);
   }, { scope: 'worker' }],
 
-  defaultSameSiteCookieValue: [async ({ browserName, platform, macVersion }, run) => {
+  defaultSameSiteCookieValue: [async ({ browserName, platform, channel }, run) => {
     if (browserName === 'chromium' || browserName as any === '_bidiChromium')
       await run('Lax');
-    else if (browserName === 'webkit' && platform === 'linux')
+    else if (browserName === 'webkit' && platform === 'linux' || channel === 'webkit-wsl')
       await run('Lax');
     else if (browserName === 'webkit')
       await run('None'); // Windows + older macOS
