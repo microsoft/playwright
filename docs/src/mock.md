@@ -235,16 +235,12 @@ Setting `update` option to true will create or update the HAR file with the actu
 #### 
 * langs: js
 
-:::note
 Alternatively, you can also record HAR files by using the [`option: Browser.newContext.recordHar`] option in [`method: Browser.newContext`] when creating a browser context. This allows you to capture all network traffic for the entire context until the context is closed.
-:::
 
 #### 
 * langs: csharp, java, python
 
-:::note
 Alternatively, you can also record HAR files by using the [`option: Browser.newContext.recordHarPath`] option in [`method: Browser.newContext`] when creating a browser context. This allows you to capture all network traffic for the entire context until the context is closed.
-:::
 
 ```js
 test('records or updates the HAR file', async ({ page }) => {
