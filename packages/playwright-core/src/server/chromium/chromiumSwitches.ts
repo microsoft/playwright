@@ -41,6 +41,8 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'ThirdPartyStoragePartitioning',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
+  // https://chromium-review.googlesource.com/c/chromium/src/+/6711453
+  'ExtensionManifestV2Unsupported',
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
