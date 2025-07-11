@@ -3073,6 +3073,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('passes', async ({}) => {});
+          test('passes2', async ({}) => {});
           test('fails', async ({}) => {
             expect(1).toBe(2);
           });
@@ -3097,12 +3098,16 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.header-title')).toHaveText('flaky');
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('.header-title')).toHaveText('passes');
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.header-title')).toHaveText('passes2');
         // Bounce
         await page.keyboard.press('ArrowRight');
-        await expect(page.locator('.header-title')).toHaveText('passes');
+        await expect(page.locator('.header-title')).toHaveText('passes2');
       });
 
       await test.step('prev', async () => {
+        await page.keyboard.press('ArrowLeft');
+        await expect(page.locator('.header-title')).toHaveText('passes');
         await page.keyboard.press('ArrowLeft');
         await expect(page.locator('.header-title')).toHaveText('flaky');
         await page.keyboard.press('ArrowLeft');
@@ -3113,17 +3118,36 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await test.step('p', async () => {
         await page.keyboard.press('p');
-        await expect(page.locator('.test-file-test')).toHaveCount(1);
+        await expect(page.locator('.test-file-test')).toHaveCount(2);
       });
 
       await test.step('a', async () => {
         await page.keyboard.press('a');
-        await expect(page.locator('.test-file-test')).toHaveCount(3);
+        await expect(page.locator('.test-file-test')).toHaveCount(4);
       });
 
       await test.step('f', async () => {
         await page.keyboard.press('f');
         await expect(page.locator('.test-file-test')).toHaveCount(1);
+      });
+
+      await test.step('should ignore when modifiers are pressed', async () => {
+        await page.keyboard.down('ControlOrMeta');
+        await page.keyboard.press('p');
+        await expect(page.locator('.test-file-test')).toHaveCount(1);
+        await page.keyboard.up('ControlOrMeta');
+
+        await page.keyboard.down('Shift');
+        await page.keyboard.press('a');
+        await expect(page.locator('.test-file-test')).toHaveCount(1);
+        await page.keyboard.up('Shift');
+
+        await page.keyboard.press('p');
+
+        await page.keyboard.down('Alt');
+        await page.keyboard.press('f');
+        await expect(page.locator('.test-file-test')).toHaveCount(2);
+        await page.keyboard.up('Alt');
       });
     });
   });
