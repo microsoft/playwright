@@ -39,6 +39,8 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'PaintHolding',
   // See https://github.com/microsoft/playwright/issues/32230
   'ThirdPartyStoragePartitioning',
+  // See https://github.com/microsoft/playwright/issues/16126
+  'Translate',
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
