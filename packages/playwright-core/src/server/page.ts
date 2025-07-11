@@ -1024,7 +1024,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
   const lines = snapshot.split('\n');
   const result = [];
   for (const line of lines) {
-    const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=(.*)\]/);
+    const match = line.match(/^(\s*)- iframe .*\[ref=(.*)\]/);
     if (!match) {
       result.push(line);
       continue;
