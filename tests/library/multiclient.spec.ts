@@ -30,12 +30,13 @@ const test = playwrightTest.extend<ExtraFixtures>({
     await server.close();
   },
   connect: async ({ browserType }, use) => {
-    let browser: Browser | undefined;
+    const browsers: Browser[] = [];
     await use(async (wsEndpoint, options = {}) => {
-      browser = await browserType.connect(wsEndpoint, options);
+      const browser = await browserType.connect(wsEndpoint, options);
+      browsers.push(browser);
       return browser;
     });
-    await browser?.close();
+    await Promise.all(browsers.map(b => b.close()));
   },
   twoPages: async ({ remoteServer, connect }, use) => {
     const browserA = await connect(remoteServer.wsEndpoint());
@@ -365,4 +366,18 @@ test('should avoid side effects upon disconnect', async ({ twoPages, server }) =
 
   expect(error.message).toContain(kTargetClosedErrorMessage);
   expect(counter).toBe(savedCounter);
+});
+
+test('should stop tracing upon disconnect', async ({ twoPages, trace }) => {
+  test.skip(trace === 'on');
+
+  const { pageA, pageB } = twoPages;
+
+  await pageA.context().tracing.start();
+  const error = await pageB.context().tracing.start().catch(e => e);
+  expect(error.message).toContain('Tracing has been already started');
+
+  await disconnect(pageA);
+
+  await pageB.context().tracing.start();
 });

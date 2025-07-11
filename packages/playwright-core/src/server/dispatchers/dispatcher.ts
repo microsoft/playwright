@@ -372,6 +372,9 @@ export class DispatcherConnection {
     await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
     const response: any = { id };
     try {
+      // If the dispatcher has been disposed while running the instrumentation call, error out.
+      if (this._dispatcherByGuid.get(guid) !== dispatcher)
+        throw new TargetClosedError(closeReason(sdkObject));
       const result = await dispatcher._runCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
