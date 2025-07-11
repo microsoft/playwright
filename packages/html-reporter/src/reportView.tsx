@@ -85,7 +85,7 @@ export const ReportView: React.FC<{
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey)
         return;
 
       switch (event.key) {
