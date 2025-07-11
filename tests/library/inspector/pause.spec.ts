@@ -77,6 +77,7 @@ it.describe('pause', () => {
       await page.pause({ __testHookKeepTestTimeout: true });
     })();
     const recorderPage = await recorderPageGetter();
+    await expect(recorderPage.getByRole('button', { name: 'Resume' })).toBeEnabled();
     await recorderPage.keyboard.press('F8');
     await scriptPromise;
   });
