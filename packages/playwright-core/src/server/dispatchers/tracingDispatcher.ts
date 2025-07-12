@@ -25,6 +25,7 @@ import type { Progress } from '@protocol/progress';
 
 export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChannel, BrowserContextDispatcher | APIRequestContextDispatcher> implements channels.TracingChannel {
   _type_Tracing = true;
+  private _started = false;
 
   static from(scope: BrowserContextDispatcher | APIRequestContextDispatcher, tracing: Tracing): TracingDispatcher {
     const result = scope.connection.existingDispatcher<TracingDispatcher>(tracing);
@@ -37,6 +38,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
 
   async tracingStart(params: channels.TracingTracingStartParams, progress: Progress): Promise<channels.TracingTracingStartResult> {
     this._object.start(params);
+    this._started = true;
   }
 
   async tracingStartChunk(params: channels.TracingTracingStartChunkParams, progress: Progress): Promise<channels.TracingTracingStartChunkResult> {
@@ -58,7 +60,14 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   async tracingStop(params: channels.TracingTracingStopParams, progress: Progress): Promise<channels.TracingTracingStopResult> {
+    this._started = false;
     await this._object.stop(progress);
   }
 
+  override _onDispose() {
+    // Avoid protocol calls for the closed context.
+    if (this._started)
+      this._object.stopChunk(undefined, { mode: 'discard' }).then(() => this._object.stop(undefined)).catch(() => {});
+    this._started = false;
+  }
 }

@@ -299,7 +299,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.networkFile = newNetworkFile;
   }
 
-  async stop(progress: Progress) {
+  async stop(progress: Progress | undefined) {
     if (!this._state)
       return;
     if (this._isStopping)
@@ -309,7 +309,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
-    await progress.race(this._fs.syncAndGetError()).finally(() => {
+    const promise = progress ? progress.race(this._fs.syncAndGetError()) : this._fs.syncAndGetError();
+    await promise.finally(() => {
       this._state = undefined;
     });
   }
@@ -341,7 +342,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this.groupEnd();
   }
 
-  async stopChunk(progress: Progress, params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
+  async stopChunk(progress: Progress | undefined, params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -395,7 +396,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._fs.zip(entries, zipFileName);
 
     // Make sure all file operations complete.
-    const error = await progress.race(this._fs.syncAndGetError()).catch(e => e);
+    const promise = progress ? progress.race(this._fs.syncAndGetError()) : this._fs.syncAndGetError();
+    const error = await promise.catch(e => e);
 
     this._isStopping = false;
     if (this._state)
