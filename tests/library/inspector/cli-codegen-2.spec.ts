@@ -18,7 +18,7 @@ import { test, expect } from './inspectorTest';
 import * as url from 'url';
 import fs from 'fs';
 
-test.describe.only('cli codegen', () => {
+test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
 
   test('should contain open page', async ({ openRecorder }) => {
@@ -90,7 +90,7 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  test('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
+  test.only('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait('');
