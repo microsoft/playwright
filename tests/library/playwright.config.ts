@@ -79,19 +79,22 @@ if (mode === 'service2') {
   };
 }
 
+process.env.DEBUG = 'pw:browser,pw:protocol';
+
 const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
   outputDir,
   expect: {
     timeout: 10000,
   },
-  maxFailures: 200,
+  maxFailures: 1,
   timeout: video ? 60000 : 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: !process.env.CI,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 3 : 0,
+  forbidOnly: false,
+  retries: 0,
+  repeatEach: 100,
   reporter: reporters(),
   projects: [],
   use: {

@@ -18,7 +18,7 @@ import { test, expect } from './inspectorTest';
 import * as url from 'url';
 import fs from 'fs';
 
-test.describe('cli codegen', () => {
+test.describe.only('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
 
   test('should contain open page', async ({ openRecorder }) => {
