@@ -238,6 +238,7 @@ export class CRNetworkManager {
   }
 
   _onRequestPaused(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload) {
+    console.log(new Date(), 'onRequestPaused', event.request.url);
     if (!event.networkId) {
       // Fetch without networkId means that request was not recognized by inspector, and
       // it will never receive Network.requestWillBeSent. Continue the request to not affect it.
