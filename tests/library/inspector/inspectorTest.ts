@@ -85,6 +85,7 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 
   openRecorder: async ({ context, recorderPageGetter }, use) => {
+    test.slow();
     await use(async options => {
       await (context as any)._enableRecorder({
         language: 'javascript',
