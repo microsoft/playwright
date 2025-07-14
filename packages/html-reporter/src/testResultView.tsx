@@ -118,7 +118,7 @@ export const TestResultView: React.FC<{
         </>;
       })}
     </AutoChip>}
-    {!!result.steps.length && <AutoChip header='Test Steps'>
+    {!!result.steps.length && <AutoChip header='Test Steps' role='tree'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0}/>)}
     </AutoChip>}
 

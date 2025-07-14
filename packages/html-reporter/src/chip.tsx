@@ -29,8 +29,10 @@ export const Chip: React.FC<{
   setExpanded?: (expanded: boolean) => void,
   children?: any,
   dataTestId?: string,
-}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
+  role?: string,
+}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId, role }) => {
   const id = React.useId();
+  const title = typeof header === 'string' ? header : undefined;
   return <div className='chip' data-testid={dataTestId}>
     <div
       role='button'
@@ -38,12 +40,12 @@ export const Chip: React.FC<{
       aria-controls={id}
       className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
       onClick={() => setExpanded?.(!expanded)}
-      title={typeof header === 'string' ? header : undefined}>
+      title={title}>
       {setExpanded && !!expanded && icons.downArrow()}
       {setExpanded && !expanded && icons.rightArrow()}
       {header}
     </div>
-    {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>{children}</div>}
+    {(!setExpanded || expanded) && <div id={id} role={role ?? 'region'} title={title} className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>{children}</div>}
   </div>;
 };
 
@@ -54,7 +56,8 @@ export const AutoChip: React.FC<{
   children?: any,
   dataTestId?: string,
   revealOnAnchorId?: AnchorID,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
+  role?: string,
+}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId, role }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
   const onReveal = React.useCallback(() => setExpanded(true), []);
   useAnchor(revealOnAnchorId, onReveal);
@@ -64,6 +67,7 @@ export const AutoChip: React.FC<{
     setExpanded={setExpanded}
     noInsets={noInsets}
     dataTestId={dataTestId}
+    role={role}
   >
     {children}
   </Chip>;

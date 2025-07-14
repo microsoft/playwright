@@ -1292,6 +1292,26 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
+    test('show custom expect titles', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36664' } }, async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.js': `
+          import { test, expect } from '@playwright/test';
+          test('sample', ({}) => {
+            expect(1, 'custom expect title').toBe(1);
+          });
+        `
+      }, { 'reporter': 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      await showReport();
+      await page.getByRole('link', { name: 'sample' }).click();
+      await expect(page.getByRole('tree', { name: 'Test Steps' })).toMatchAriaSnapshot(`
+        - tree:
+          - treeitem "Before Hooks"
+          - treeitem "custom expect title"
+          - treeitem "After Hooks"
+      `);
+    });
+
     test('open tests from required file', async ({ runInlineTest, showReport, page }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11742' });
       const result = await runInlineTest({
