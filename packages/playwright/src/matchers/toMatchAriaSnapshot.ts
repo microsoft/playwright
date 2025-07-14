@@ -96,7 +96,6 @@ export async function toMatchAriaSnapshot(
     return matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, expectedReceivedString);
   };
 
-  // const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = typedReceived === kNoElementsFoundError;
   if (notFound) {
     return {
