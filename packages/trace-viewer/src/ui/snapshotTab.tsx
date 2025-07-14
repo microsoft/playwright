@@ -56,7 +56,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);
   }, [action]);
-  const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo((): SnapshotUrls | { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined } => {
+  const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
     return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
   }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot]);
