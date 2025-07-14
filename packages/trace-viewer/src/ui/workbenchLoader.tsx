@@ -21,6 +21,7 @@ import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 import { SettingsToolbarButton } from './settingsToolbarButton';
+import { Dialog } from './shared/dialog';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -179,9 +180,6 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='spacer'></div>
       <SettingsToolbarButton />
     </div>
-    <div className='progress'>
-      <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
-    </div>
     <Workbench model={model} inert={showFileUploadDropArea} />
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
@@ -191,6 +189,14 @@ export const WorkbenchLoader: React.FunctionComponent<{
         <div>3. Drop the trace from the download shelf into the page</div>
       </div>
     </div>}
+    <Dialog open={progress.done !== progress.total && progress.total !== 0} isModal={true} className='progress-dialog'>
+      <div className='progress-content'>
+        <div className='title' role='heading' aria-level={1}>Loading Playwright Trace...</div>
+        <div className='progress-wrapper'>
+          <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
+        </div>
+      </div>
+    </Dialog>
     {showFileUploadDropArea && <div className='drop-target'>
       <div className='processing-error' role='alert'>{processingErrorMessage}</div>
       <div className='title' role='heading' aria-level={1}>Drop Playwright Trace to load</div>
