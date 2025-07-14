@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, stepTitle, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
@@ -429,8 +429,8 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: name,
       category: 'test.attach',
+      title: stepTitle('test.attach', name),
     });
     this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
     step.complete({});

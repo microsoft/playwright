@@ -17,7 +17,7 @@
 import { ManualPromise } from 'playwright-core/lib/utils';
 
 import { fixtureParameterNames } from '../common/fixtures';
-import { filterStackFile, formatLocation } from '../util';
+import { filterStackFile, formatLocation, stepTitle } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, RunnableDescription } from './timeoutManager';
@@ -47,7 +47,7 @@ class Fixture {
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = shouldGenerateStep ? { title, category: 'fixture', location } : undefined;
+    this._stepInfo = shouldGenerateStep ? { title: stepTitle('fixture', title), category: 'fixture', location } : undefined;
     this._setupDescription = {
       title,
       phase: 'setup',
