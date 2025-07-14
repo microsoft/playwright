@@ -51,7 +51,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
     const parsedProxyURL = new URL(proxyURL);
-    if (params.url.startsWith('http:')) {
+    if (parsedUrl.protocol === 'http:') {
       parsedUrl.pathname = parsedUrl.href;
       parsedUrl.host = parsedProxyURL.host;
     } else {
@@ -75,7 +75,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
       onResponse(res);
     }
   };
-  const request = options.protocol === 'https:' ?
+  const request = parsedUrl.protocol === 'https:' ?
     https.request(parsedUrl, options, requestCallback) :
     http.request(parsedUrl, options, requestCallback);
   request.on('error', onError);
