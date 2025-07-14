@@ -1179,16 +1179,16 @@ export class Frame extends SdkObject {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._blur(progress)));
   }
 
-  async generateLocatorString(progress: Progress, selector: string): Promise<string | undefined> {
+  async resolveSelector(progress: Progress, selector: string): Promise<{ resolvedSelector: string }> {
     const element = await progress.race(this.selectors.query(selector));
     if (!element)
-      throw new Error(`No element matching ${this._asLocator(selector)}`);
+      throw new Error(`No element matching ${selector}`);
 
     const generated = await progress.race(element.evaluateInUtility(async ([injected, node]) => {
       return injected.generateSelectorSimple(node as unknown as Element);
     }, {}));
     if (!generated)
-      throw new Error(`Unable to generate locator for ${this._asLocator(selector)}`);
+      throw new Error(`Unable to generate locator for ${selector}`);
 
     let frame: Frame | null = element._frame;
     const result = [generated];
@@ -1200,12 +1200,13 @@ export class Frame extends SdkObject {
         }, {}));
         frameElement.dispose();
         if (generated === 'error:notconnected' || !generated)
-          throw new Error(`Unable to generate locator for ${this._asLocator(selector)}`);
+          throw new Error(`Unable to generate locator for ${selector}`);
         result.push(generated);
       }
       frame = frame.parentFrame();
     }
-    return asLocator(this._page.browserContext._browser.sdkLanguage(), result.reverse().join(' >> internal:control=enter-frame >> '));
+    const resolvedSelector = result.reverse().join(' >> internal:control=enter-frame >> ');
+    return { resolvedSelector };
   }
 
   async textContent(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string | null> {

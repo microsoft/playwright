@@ -347,6 +347,7 @@ export type FormField = {
   },
 };
 
+export type SDKLanguage = 'javascript' | 'python' | 'java' | 'csharp';
 // ----------- APIRequestContext -----------
 export type APIRequestContextInitializer = {
   tracing: TracingChannel,
@@ -608,7 +609,7 @@ export interface RootChannel extends RootEventTarget, Channel {
   initialize(params: RootInitializeParams, progress?: Progress): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
-  sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
+  sdkLanguage: SDKLanguage,
 };
 export type RootInitializeOptions = {
 
@@ -769,7 +770,7 @@ export type DebugControllerPausedEvent = {
 };
 export type DebugControllerInitializeParams = {
   codegenId: string,
-  sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
+  sdkLanguage: SDKLanguage,
 };
 export type DebugControllerInitializeOptions = {
 
@@ -2649,7 +2650,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   fill(params: FrameFillParams, progress?: Progress): Promise<FrameFillResult>;
   focus(params: FrameFocusParams, progress?: Progress): Promise<FrameFocusResult>;
   frameElement(params?: FrameFrameElementParams, progress?: Progress): Promise<FrameFrameElementResult>;
-  generateLocatorString(params: FrameGenerateLocatorStringParams, progress?: Progress): Promise<FrameGenerateLocatorStringResult>;
+  resolveSelector(params: FrameResolveSelectorParams, progress?: Progress): Promise<FrameResolveSelectorResult>;
   highlight(params: FrameHighlightParams, progress?: Progress): Promise<FrameHighlightResult>;
   getAttribute(params: FrameGetAttributeParams, progress?: Progress): Promise<FrameGetAttributeResult>;
   goto(params: FrameGotoParams, progress?: Progress): Promise<FrameGotoResult>;
@@ -2905,14 +2906,14 @@ export type FrameFrameElementOptions = {};
 export type FrameFrameElementResult = {
   element: ElementHandleChannel,
 };
-export type FrameGenerateLocatorStringParams = {
+export type FrameResolveSelectorParams = {
   selector: string,
 };
-export type FrameGenerateLocatorStringOptions = {
+export type FrameResolveSelectorOptions = {
 
 };
-export type FrameGenerateLocatorStringResult = {
-  value?: string,
+export type FrameResolveSelectorResult = {
+  resolvedSelector: string,
 };
 export type FrameHighlightParams = {
   selector: string,

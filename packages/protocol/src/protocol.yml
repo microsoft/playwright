@@ -357,6 +357,14 @@ FormField:
         mimeType: string?
         buffer: binary
 
+SDKLanguage:
+  type: enum
+  literals:
+  - javascript
+  - python
+  - java
+  - csharp
+
 APIRequestContext:
   type: interface
 
@@ -774,13 +782,7 @@ Root:
     initialize:
       internal: true
       parameters:
-        sdkLanguage:
-          type: enum
-          literals:
-          - javascript
-          - python
-          - java
-          - csharp
+        sdkLanguage: SDKLanguage
       returns:
         playwright: Playwright
 
@@ -883,13 +885,7 @@ DebugController:
       internal: true
       parameters:
         codegenId: string
-        sdkLanguage:
-          type: enum
-          literals:
-          - javascript
-          - python
-          - java
-          - csharp
+        sdkLanguage: SDKLanguage
 
     setReportStateChanged:
       internal: true
@@ -2307,12 +2303,12 @@ Frame:
       returns:
         element: ElementHandle
 
-    generateLocatorString:
+    resolveSelector:
       internal: true
       parameters:
         selector: string
       returns:
-        value: string?
+        resolvedSelector: string
 
     highlight:
       internal: true

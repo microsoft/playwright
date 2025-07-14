@@ -155,7 +155,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Frame.fill', { title: 'Fill "{value}"', slowMo: true, snapshot: true, pausesBeforeInput: true, }],
   ['Frame.focus', { title: 'Focus', slowMo: true, snapshot: true, }],
   ['Frame.frameElement', { internal: true, }],
-  ['Frame.generateLocatorString', { internal: true, }],
+  ['Frame.resolveSelector', { internal: true, }],
   ['Frame.highlight', { internal: true, }],
   ['Frame.getAttribute', { internal: true, snapshot: true, }],
   ['Frame.goto', { title: 'Navigate to "{url}"', slowMo: true, snapshot: true, }],

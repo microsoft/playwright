@@ -178,8 +178,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return { value: await this._frame.innerHTML(progress, params.selector, params) };
   }
 
-  async generateLocatorString(params: channels.FrameGenerateLocatorStringParams, progress: Progress): Promise<channels.FrameGenerateLocatorStringResult> {
-    return { value: await this._frame.generateLocatorString(progress, params.selector) };
+  async resolveSelector(params: channels.FrameResolveSelectorParams, progress: Progress): Promise<channels.FrameResolveSelectorResult> {
+    return await this._frame.resolveSelector(progress, params.selector);
   }
 
   async getAttribute(params: channels.FrameGetAttributeParams, progress: Progress): Promise<channels.FrameGetAttributeResult> {
