@@ -245,57 +245,6 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
   latch.open();
 });
 
-test('should not reload trace during long events', async ({ runUITest, createLatch }) => {
-  const latch = createLatch();
-
-  const { page } = await runUITest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('timeout test', async ({ page }) => {
-        await page.goto('about:blank');
-        await page.setContent('initial');
-        ${latch.blockingCode}
-        await page.waitForTimeout(5000);
-        await new Promise(() => {});
-      });
-    `,
-  });
-
-  await page.getByText('timeout test').dblclick();
-
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
-  await expect(listItem).toHaveText([
-    /Before Hooks[\d.]+m?s/,
-    /Navigate to "about:blank"/,
-    /Set content/,
-  ]);
-
-  await page.evaluate(() => {
-    (window as any)._reloadCount0 = 0;
-    (window as any)._reloadCount1 = 0;
-    const iframes = document.querySelectorAll('iframe');
-    for (let i = 0; i < iframes.length; i++) {
-      iframes[i].addEventListener('load', () => {
-        (window as any)[`_reloadCount${i}`] += 1;
-      });
-    }
-  });
-
-  latch.open();
-
-  await expect(listItem).toHaveText([
-    /Before Hooks[\d.]+m?s/,
-    /Navigate to "about:blank"/,
-    /Set content/,
-    /Wait for timeout5.0s/,
-  ]);
-
-  const [reloadCount0, reloadCount1] = await page.evaluate(() => [(window as any)._reloadCount0, (window as any)._reloadCount1]);
-  // Both iframes will load exactly once
-  expect(reloadCount0).toBe(1);
-  expect(reloadCount1).toBe(1);
-});
-
 test('should show live trace for serial', async ({ runUITest, server, createLatch }) => {
   const latch = createLatch();
 

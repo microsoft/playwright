@@ -110,9 +110,6 @@ export const SnapshotView: React.FunctionComponent<{
 
   React.useEffect(() => {
     (async () => {
-      if (snapshotInfo.snapshotInfoUrl === snapshotUrls?.snapshotInfoUrl)
-        return;
-
       const thisIteration = loadingRef.current.iteration + 1;
       const newVisibleIframe = 1 - loadingRef.current.visibleIframe;
       loadingRef.current.iteration = thisIteration;
@@ -315,7 +312,6 @@ export type Snapshot = {
 
 export type SnapshotInfo = {
   url: string;
-  snapshotInfoUrl?: string;
   viewport: { width: number, height: number };
   timestamp?: number;
   wallTime?: undefined;
@@ -413,8 +409,8 @@ export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScree
   return { snapshotInfoUrl, snapshotUrl, popoutUrl };
 }
 
-export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined): Promise<SnapshotInfo> {
-  const result = { url: '', snapshotInfoUrl, viewport: kDefaultViewport, timestamp: undefined, wallTime: undefined };
+export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined) {
+  const result = { url: '', viewport: kDefaultViewport, timestamp: undefined, wallTime: undefined };
   if (snapshotInfoUrl) {
     const response = await fetch(snapshotInfoUrl);
     const info = await response.json();
