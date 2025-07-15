@@ -21,6 +21,7 @@ import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
 import path from 'path';
+import type http from 'http';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
@@ -1913,4 +1914,23 @@ test('should render locator descriptions', async ({ runAndTrace, page }) => {
     - treeitem /Click.*custom/
     - treeitem /Click.*input.*first/
   `);
+});
+
+test('should load trace from HTTP', async ({ showTraceViewer, server }) => {
+  const [traceViewer, res] = await Promise.all([
+    showTraceViewer([server.PREFIX]),
+    new Promise<http.ServerResponse>(resolve => {
+      server.setRoute('/', (req, res) => resolve(res));
+    }),
+  ]);
+
+  const file = await fs.promises.readFile(traceFile);
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Length', file.byteLength);
+  res.writeHead(200);
+  await expect(traceViewer.page.locator('body')).toContainText('Loading');
+
+  res.end(file);
+  await expect(traceViewer.actionTitles).toContainText([/Create page/]);
 });
