@@ -149,7 +149,7 @@ test('checked attribute', async ({ page }) => {
       - checkbox [checked=false]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -157,7 +157,7 @@ test('checked attribute', async ({ page }) => {
       - checkbox [checked=mixed]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -190,7 +190,7 @@ test('disabled attribute', async ({ page }) => {
       - button [disabled=false]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -223,7 +223,7 @@ test('expanded attribute', async ({ page }) => {
       - button [expanded=false]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -252,7 +252,7 @@ test('level attribute', async ({ page }) => {
       - heading [level=3]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -285,7 +285,7 @@ test('pressed attribute', async ({ page }) => {
       - button [pressed=false]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   // Test for 'mixed' state
@@ -302,7 +302,7 @@ test('pressed attribute', async ({ page }) => {
       - button [pressed=true]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -339,7 +339,7 @@ test('selected attribute', async ({ page }) => {
       - row [selected=false]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-    expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+    expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
@@ -423,7 +423,7 @@ test('expected formatter', async ({ page }) => {
   `, { timeout: 1 }).catch(e => e);
 
   expect(stripAnsi(error.message)).toContain(`
-Locator: locator('body')
+Locator:  locator('body')
 - Expected  - 2
 + Received  + 3
 
@@ -432,7 +432,7 @@ Locator: locator('body')
 + - banner:
 +   - heading "todos" [level=1]
 +   - textbox "What needs to be done?"
-Timeout: 1ms`);
+Timeout:  1ms`);
 });
 
 test('should unpack escaped names', async ({ page }) => {
@@ -726,7 +726,7 @@ test('should detect unexpected children: equal', async ({ page }) => {
   `, { timeout: 1000 }).catch(e => e);
 
   expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-  expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+  expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   expect(stripAnsi(e.message)).toContain('+   - listitem: Two');
 });
 
@@ -766,7 +766,7 @@ test('should detect unexpected children: deep-equal', async ({ page }) => {
   `, { timeout: 1000 }).catch(e => e);
 
   expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-  expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+  expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
 });
 
@@ -791,7 +791,7 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
   `, { timeout: 1000 }).catch(e => e);
 
   expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
-  expect(stripAnsi(e.message)).toContain('Timeout: 1000ms');
+  expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
