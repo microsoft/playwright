@@ -249,9 +249,8 @@ export class Locator implements api.Locator {
     return await this._frame._queryCount(this._selector);
   }
 
-  async _generateLocatorString(): Promise<string | null> {
-    const { value } = await this._frame._channel.generateLocatorString({ selector: this._selector });
-    return value === undefined ? null : value;
+  async _resolveSelector(): Promise<{ resolvedSelector: string }> {
+    return await this._frame._channel.resolveSelector({ selector: this._selector });
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {

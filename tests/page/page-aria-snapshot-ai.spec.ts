@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// @ts-ignore
+import { asLocator } from 'playwright-core/lib/utils';
+
 import { test as it, expect, unshift } from './pageTest';
 
 function snapshotForAI(page: any): Promise<string> {
@@ -89,21 +92,24 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
 
   {
-    const locator = await (page.locator('aria-ref=e1') as any)._generateLocatorString();
-    expect(locator).toBe(`locator('body')`);
+    const { resolvedSelector } = await (page.locator('aria-ref=e1') as any)._resolveSelector();
+    const sourceCode = asLocator('javascript', resolvedSelector);
+    expect(sourceCode).toBe(`locator('body')`);
   }
   {
-    const locator = await (page.locator('aria-ref=f3e2') as any)._generateLocatorString();
-    expect(locator).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
+    const { resolvedSelector } = await (page.locator('aria-ref=f3e2') as any)._resolveSelector();
+    const sourceCode = asLocator('javascript', resolvedSelector);
+    expect(sourceCode).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
     // Should tolerate .describe().
-    const locator = await (page.locator('aria-ref=f2e2').describe('foo bar') as any)._generateLocatorString();
-    expect(locator).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
+    const { resolvedSelector } = await (page.locator('aria-ref=f2e2').describe('foo bar') as any)._resolveSelector();
+    const sourceCode = asLocator('javascript', resolvedSelector);
+    expect(sourceCode).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
-    const error = await (page.locator('aria-ref=e1000') as any)._generateLocatorString().catch(e => e);
-    expect(error.message).toContain(`No element matching locator('aria-ref=e1000')`);
+    const error = await (page.locator('aria-ref=e1000') as any)._resolveSelector().catch(e => e);
+    expect(error.message).toContain(`No element matching aria-ref=e1000`);
   }
 });
 

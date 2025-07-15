@@ -213,6 +213,7 @@ scheme.FormField = tObject({
     buffer: tBinary,
   })),
 });
+scheme.SDKLanguage = tEnum(['javascript', 'python', 'java', 'csharp']);
 scheme.APIRequestContextInitializer = tObject({
   tracing: tChannel(['Tracing']),
 });
@@ -367,7 +368,7 @@ scheme.LocalUtilsGlobToRegexResult = tObject({
 });
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
-  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
+  sdkLanguage: tType('SDKLanguage'),
 });
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),
@@ -456,7 +457,7 @@ scheme.DebugControllerPausedEvent = tObject({
 });
 scheme.DebugControllerInitializeParams = tObject({
   codegenId: tString,
-  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
+  sdkLanguage: tType('SDKLanguage'),
 });
 scheme.DebugControllerInitializeResult = tOptional(tObject({}));
 scheme.DebugControllerSetReportStateChangedParams = tObject({
@@ -1659,11 +1660,11 @@ scheme.FrameFrameElementParams = tOptional(tObject({}));
 scheme.FrameFrameElementResult = tObject({
   element: tChannel(['ElementHandle']),
 });
-scheme.FrameGenerateLocatorStringParams = tObject({
+scheme.FrameResolveSelectorParams = tObject({
   selector: tString,
 });
-scheme.FrameGenerateLocatorStringResult = tObject({
-  value: tOptional(tString),
+scheme.FrameResolveSelectorResult = tObject({
+  resolvedSelector: tString,
 });
 scheme.FrameHighlightParams = tObject({
   selector: tString,
