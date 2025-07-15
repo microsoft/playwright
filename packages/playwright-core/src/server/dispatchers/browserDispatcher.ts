@@ -59,7 +59,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContext(params: channels.BrowserNewContextParams, progress: Progress): Promise<channels.BrowserNewContextResult> {
-    if (params.recordVideo)
+    if (params.recordVideo && this._object.attribution.playwright.options.isServer)
       params.recordVideo.dir = this._object.options.artifactsDir;
 
     if (!this._options.isolateContexts) {
