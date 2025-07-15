@@ -35,6 +35,7 @@ export async function toEqual<T>(
   query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>,
   expected: T,
   options: { timeout?: number, contains?: boolean } = {},
+  messagePreventExtraStatIndent?: boolean
 ): Promise<MatcherResult<any, any>> {
   expectTypes(receiver, [receiverType], matcherName);
 
@@ -88,7 +89,7 @@ export async function toEqual<T>(
   }
   const message = () => {
     const details = printedDiff || `${printedExpected}\n${printedReceived}`;
-    const header = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, details);
+    const header = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, details, messagePreventExtraStatIndent);
     return `${header}${callLogText(log)}`;
   };
   // Passing the actual and expected objects so that a custom reporter

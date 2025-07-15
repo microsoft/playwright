@@ -70,10 +70,10 @@ test.describe('toHaveCount', () => {
     const error = await expect(locator).toHaveCount(0, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveCount(expected) failed
 
-Locator: locator('span')
+Locator:  locator('span')
 Expected: 0
 Received: 1
-Timeout: 1000ms`);
+Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveCount" with timeout 1000ms`);
   });
 
@@ -83,10 +83,10 @@ Timeout: 1000ms`);
     const error = await expect(locator).not.toHaveCount(1, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).not.toHaveCount(expected) failed
 
-Locator: locator('span')
+Locator:  locator('span')
 Expected: not 1
 Received: 1
-Timeout: 1000ms`);
+Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveCount" with timeout 1000ms`);
   });
 });
@@ -121,10 +121,10 @@ test.describe('toHaveJSProperty', () => {
     const error = await expect(locator).toHaveJSProperty('foo', 'error', { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveJSProperty(expected) failed
 
-Locator: locator('div')
+Locator:  locator('div')
 Expected: "error"
 Received: "string"
-Timeout: 200ms`);
+Timeout:  200ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
@@ -142,10 +142,10 @@ Timeout: 200ms`);
     const error = await expect(locator).toHaveJSProperty('foo', 1, { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveJSProperty(expected) failed
 
-Locator: locator('div')
+Locator:  locator('div')
 Expected: 1
 Received: 2021
-Timeout: 200ms`);
+Timeout:  200ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
@@ -163,10 +163,10 @@ Timeout: 200ms`);
     const error = await expect(locator).toHaveJSProperty('foo', true, { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveJSProperty(expected) failed
 
-Locator: locator('div')
+Locator:  locator('div')
 Expected: true
 Received: false
-Timeout: 200ms`);
+Timeout:  200ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 
@@ -184,10 +184,10 @@ Timeout: 200ms`);
     const error = await expect(locator).toHaveJSProperty('foo', true, { timeout: 200 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveJSProperty(expected) failed
 
-Locator: locator('div')
+Locator:  locator('div')
 Expected: true
 Received: false
-Timeout: 200ms`);
+Timeout:  200ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveJSProperty" with timeout 200ms`);
   });
 

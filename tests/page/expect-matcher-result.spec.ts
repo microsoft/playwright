@@ -88,10 +88,10 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeVisible() failed
 
-Locator: locator('#node2')
+Locator:  locator('#node2')
 Expected: visible
 Received: <element(s) not found>
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 
@@ -112,10 +112,10 @@ Call log`);
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeVisible() failed
 
-Locator: locator('#node')
+Locator:  locator('#node')
 Expected: not visible
 Received: visible
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
   }
@@ -139,10 +139,10 @@ test('toEqual-based assertions should have matcher result', async ({ page }) => 
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toHaveCount(expected) failed
 
-Locator: locator('#node2')
+Locator:  locator('#node2')
 Expected: 1
 Received: 0
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
   }
@@ -162,10 +162,10 @@ Call log`);
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toHaveCount(expected) failed
 
-Locator: locator('#node')
+Locator:  locator('#node')
 Expected: not 1
 Received: 1
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 
@@ -193,10 +193,10 @@ test('toBeChecked({ checked }) should have expected', async ({ page }) => {
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked() failed
 
-Locator: locator('#unchecked')
+Locator:  locator('#unchecked')
 Expected: checked
 Received: unchecked
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 
@@ -217,10 +217,10 @@ Call log`);
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeChecked() failed
 
-Locator: locator('#checked')
+Locator:  locator('#checked')
 Expected: not checked
 Received: checked
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 
@@ -241,10 +241,10 @@ Call log`);
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked({ checked: false }) failed
 
-Locator: locator('#checked')
+Locator:  locator('#checked')
 Expected: unchecked
 Received: checked
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 
@@ -265,10 +265,10 @@ Call log`);
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeChecked({ checked: false }) failed
 
-Locator: locator('#unchecked')
+Locator:  locator('#unchecked')
 Expected: not unchecked
 Received: unchecked
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 
@@ -289,10 +289,10 @@ Call log`);
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked({ indeterminate: true }) failed
 
-Locator: locator('#unchecked')
+Locator:  locator('#unchecked')
 Expected: indeterminate
 Received: unchecked
-Timeout: 1ms
+Timeout:  1ms
 
 Call log`);
 

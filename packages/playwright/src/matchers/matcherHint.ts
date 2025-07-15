@@ -22,14 +22,16 @@ import type { Locator } from 'playwright-core';
 
 export const kNoElementsFoundError = '<element(s) not found>';
 
-export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout: number | undefined, expectedReceivedString?: string) {
+export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout: number | undefined, expectedReceivedString?: string, preventExtraStatIndent: boolean = false) {
   let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + ' failed\n\n';
+  // Extra space added after locator and timeout to match Jest's received/expected output
+  const extraSpace = preventExtraStatIndent ? '' : ' ';
   if (locator)
-    header += `Locator: ${String(locator)}\n`;
+    header += `Locator: ${extraSpace}${String(locator)}\n`;
   if (expectedReceivedString)
     header += `${expectedReceivedString}\n`;
   if (timeout)
-    header += `Timeout: ${timeout}ms\n`;
+    header += `Timeout: ${extraSpace}${timeout}ms\n`;
   return header;
 }
 

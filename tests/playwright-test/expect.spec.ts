@@ -68,7 +68,7 @@ test('should include custom expect message with web-first assertions', async ({ 
 
   expect(result.output).toContain('Error: x-foo must be visible');
   expect(result.output).toContain('expect(locator).toBeVisible() failed');
-  expect(result.output).toContain('Timeout: 1ms');
+  expect(result.output).toContain('Timeout:  1ms');
   expect(result.output).toContain('Call log:');
 });
 
@@ -709,7 +709,7 @@ test('should not print timed out error message when test times out', async ({ ru
   expect(result.exitCode).toBe(1);
   const output = result.output;
   expect(output).toContain('Test timeout of 3000ms exceeded');
-  expect(output).not.toContain('Timeout: 5000ms');
+  expect(output).not.toContain('Timeout:  5000ms');
   expect(output).toContain(`Error: expect(locator).toHaveText(expected)`);
 });
 
@@ -1024,7 +1024,7 @@ test('should respect timeout from configured expect when used outside of the tes
   expect(code).toBe(1);
   expect(stdout).toBe('');
   expect(stripAnsi(stderr)).toContain('expect(locator).toBeAttached() failed');
-  expect(stripAnsi(stderr)).toContain('Timeout: 10ms');
+  expect(stripAnsi(stderr)).toContain('Timeout:  10ms');
 });
 
 test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC }) => {
