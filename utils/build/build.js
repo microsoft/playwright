@@ -589,7 +589,7 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
-if (!disableInstall) {
+if (watchMode && !disableInstall) {
   // Keep browser installs up to date.
   onChanges.push({
     inputs: ['packages/playwright-core/browsers.json'],
