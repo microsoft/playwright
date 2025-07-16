@@ -68,7 +68,7 @@ const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
 const withSourceMaps = watchMode;
-const installMode = process.argv.slice(2).includes('--install');
+const disableInstall = process.argv.slice(2).includes('--disable-install');
 const ROOT = path.join(__dirname, '..', '..');
 
 /**
@@ -589,7 +589,7 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
-if (installMode) {
+if (watchMode && !disableInstall) {
   // Keep browser installs up to date.
   onChanges.push({
     inputs: ['packages/playwright-core/browsers.json'],
