@@ -71,9 +71,18 @@ export const TestFilesHeader: React.FC<{
   if (!report)
     return null;
 
+  const showProject = report.projectNames.length === 1 && !!report.projectNames[0];
+  const hasNonMetadataContent = showProject || filteredStats;
+
   const leftSuperHeader = <div className='test-file-header-info'>
-    {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
+    {showProject && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
     {filteredStats && <div data-testid='filtered-tests-count'>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
+    {!isMetadataEmpty(report.metadata) && <>
+      {hasNonMetadataContent && <div className='test-file-header-br' />}
+      <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
+        {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
+      </div>
+    </>}
   </div>;
 
   const rightSuperHeader = <>
@@ -83,9 +92,6 @@ export const TestFilesHeader: React.FC<{
 
   return <>
     <HeaderView title={report.title} leftSuperHeader={leftSuperHeader} rightSuperHeader={rightSuperHeader} />
-    {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
-      {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
-    </div>}
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <CodeSnippet key={'test-report-error-message-' + index} code={error}/>)}
