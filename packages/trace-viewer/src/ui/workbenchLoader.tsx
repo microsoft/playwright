@@ -33,6 +33,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [dragOver, setDragOver] = React.useState<boolean>(false);
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
+  const [showProgressDialog, setShowProgressDialog] = React.useState<boolean>(false);
 
   const processTraceFiles = React.useCallback((files: FileList) => {
     const blobUrls = [];
@@ -168,6 +169,20 @@ export const WorkbenchLoader: React.FunctionComponent<{
     })();
   }, [isServer, traceURLs, uploadedTraceNames]);
 
+  const showLoading = progress.done !== progress.total && progress.total !== 0;
+
+  React.useEffect(() => {
+    if (showLoading) {
+      const timeout = setTimeout(() => {
+        setShowProgressDialog(true);
+      }, 200);
+
+      return () => clearTimeout(timeout);
+    } else {
+      setShowProgressDialog(false);
+    }
+  }, [showLoading]);
+
   const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage));
 
   return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
@@ -189,7 +204,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         <div>3. Drop the trace from the download shelf into the page</div>
       </div>
     </div>}
-    <Dialog open={progress.done !== progress.total && progress.total !== 0} isModal={true} className='progress-dialog'>
+    <Dialog open={showProgressDialog} isModal={true} className='progress-dialog'>
       <div className='progress-content'>
         <div className='title' role='heading' aria-level={1}>Loading Playwright Trace...</div>
         <div className='progress-wrapper'>
