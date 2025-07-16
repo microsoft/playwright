@@ -458,7 +458,7 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
       proxy.httpProxy = url.host;
       break;
     case 'https:':
-      proxy.httpsProxy = url.host;
+      proxy.sslProxy = url.host;
       break;
     case 'socks4:':
       proxy.socksProxy = url.host;
