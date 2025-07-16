@@ -22,6 +22,7 @@ import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
 import { trace } from './icons';
+import { Expandable } from './expandable';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -67,33 +68,6 @@ export const ProjectLink: React.FunctionComponent<{
       {projectName}
     </span>
   </Link>;
-};
-
-export const Expandable: React.FunctionComponent<{
-  summary: React.ReactNode,
-  children: React.ReactNode,
-  className?: string,
-  style?: React.CSSProperties,
-}> = ({ summary, children, className, style }) => {
-  const [expanded, setExpanded] = React.useState(false);
-
-  const handleToggle = (e: React.SyntheticEvent<HTMLDetailsElement>) => {
-    setExpanded(e.currentTarget.open);
-  };
-
-  return (
-    <details
-      style={style}
-      className={className}
-      onToggle={handleToggle}
-    >
-      <summary style={{ cursor: 'pointer', listStyle: 'none', whiteSpace: 'nowrap', paddingLeft: 4 }}>
-        {expanded ? icons.downArrow() : icons.rightArrow()}
-        {summary}
-      </summary>
-      {children}
-    </details>
-  );
 };
 
 export const AttachmentLink: React.FunctionComponent<{
