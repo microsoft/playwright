@@ -262,7 +262,7 @@ export function toHaveClass(
     return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
-    }, expected, options);
+    }, expected, options, true);
   } else {
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
@@ -283,7 +283,7 @@ export function toContainClass(
     return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.contain.class.array', { expectedText, isNot, timeout });
-    }, expected, options);
+    }, expected, options, true);
   } else {
     if (isRegExp(expected))
       throw new Error(`"expected" argument in toContainClass cannot be a RegExp value`);

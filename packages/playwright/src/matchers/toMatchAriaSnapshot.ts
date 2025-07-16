@@ -92,12 +92,15 @@ export async function toMatchAriaSnapshot(
   const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
   const typedReceived = received as MatcherReceived | typeof kNoElementsFoundError;
 
-  const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
+  const matcherHintWithExpect = (expectedReceivedString: string) => {
+    return matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, expectedReceivedString);
+  };
+
   const notFound = typedReceived === kNoElementsFoundError;
   if (notFound) {
     return {
       pass: this.isNot,
-      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('<element not found>')}` + callLogText(log),
+      message: () => matcherHintWithExpect(`Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('<element not found>')}`) + callLogText(log),
       name: 'toMatchAriaSnapshot',
       expected,
     };
@@ -106,15 +109,13 @@ export async function toMatchAriaSnapshot(
   const receivedText = typedReceived.raw;
   const message = () => {
     if (pass) {
-      if (notFound)
-        return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
-      const printedReceived = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${printedReceived}` + callLogText(log);
+      const receivedString = notFound ? receivedText : printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
+      const expectedReceivedString = `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedString}`;
+      return matcherHintWithExpect(expectedReceivedString) + callLogText(log);
     } else {
       const labelExpected = `Expected`;
-      if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false) + callLogText(log);
+      const expectedReceivedString = notFound ? `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` : this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false);
+      return matcherHintWithExpect(expectedReceivedString) + callLogText(log);
     }
   };
 

@@ -51,7 +51,7 @@ export async function toMatchText(
   ) {
     // Same format as jest's matcherErrorMessage
     throw new Error([
-      matcherHint(this, receiverType === 'Locator' ? receiver as Locator : undefined, matcherName, options.receiverLabel ?? receiver, expected, matcherOptions),
+      matcherHint(this, receiverType === 'Locator' ? receiver as Locator : undefined, matcherName, options.receiverLabel ?? receiver, expected, matcherOptions, undefined, undefined, true),
       `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected',)} value must be a string or regular expression`,
       this.utils.printWithType('Expected', expected, this.utils.printExpected)
     ].join('\n\n'));
@@ -71,7 +71,6 @@ export async function toMatchText(
 
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
-  const messagePrefix = matcherHint(this, receiverType === 'Locator' ? receiver as Locator : undefined, matcherName, options.receiverLabel ?? 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
 
   let printedReceived: string | undefined;
@@ -109,7 +108,8 @@ export async function toMatchText(
 
   const message = () => {
     const resultDetails = printedDiff ? printedDiff : printedExpected + '\n' + printedReceived;
-    return messagePrefix + resultDetails + callLogText(log);
+    const hints = matcherHint(this, receiverType === 'Locator' ? receiver as Locator : undefined, matcherName, options.receiverLabel ?? 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, resultDetails, true);
+    return hints + callLogText(log);
   };
 
   return {
