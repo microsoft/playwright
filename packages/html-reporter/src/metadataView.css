@@ -20,6 +20,11 @@
   color: var(--color-fg-default);
 }
 
+.metadata-toggle-second-line {
+  margin-top: 8px;
+  margin-left: 8px;
+}
+
 .metadata-view {
   border: 1px solid var(--color-border-default);
   border-radius: 6px;
