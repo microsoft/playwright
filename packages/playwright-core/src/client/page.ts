@@ -509,6 +509,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.evaluate(pageFunction, arg);
   }
 
+  async _evaluateFunction(functionDeclaration: string) {
+    return this._mainFrame._evaluateFunction(functionDeclaration);
+  }
+
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await evaluationScript(this._platform, script, arg);
     await this._channel.addInitScript({ source });

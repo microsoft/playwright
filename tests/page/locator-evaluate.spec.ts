@@ -54,3 +54,10 @@ it('should not throw in case of missing selector for all', async ({ page, server
   const nodesLength = await element.evaluateAll(nodes => nodes.length);
   expect(nodesLength).toBe(0);
 });
+
+it('should allow calling _evaluateFunction', async ({ page }) => {
+  await page.setContent('<html><body><div class="tweet"><div class="like">100</div><div class="retweets">10</div></div></body></html>');
+  const tweet = page.locator('.tweet .like') as any;
+  const content = await tweet._evaluateFunction('node => node.innerText');
+  expect(content).toBe('100');
+});

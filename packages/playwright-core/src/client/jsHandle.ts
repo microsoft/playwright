@@ -41,6 +41,11 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     return parseResult(result.value);
   }
 
+  async _evaluateFunction(functionDeclaration: string) {
+    const result = await this._channel.evaluateExpression({ expression: functionDeclaration, isFunction: true, arg: serializeArgument(undefined) });
+    return parseResult(result.value);
+  }
+
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
