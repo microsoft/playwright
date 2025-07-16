@@ -39,7 +39,7 @@ export type HTTPRequestParams = {
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
 export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void): { cancel(error: Error | undefined): void } {
-  const parsedUrl = url.parse(params.url);
+  const parsedUrl = urlParse(params.url);
   let options: https.RequestOptions = {
     ...parsedUrl,
     agent: parsedUrl.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
@@ -49,9 +49,9 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
 
-  const proxyURL = getProxyForUrl(params.url);
+  const proxyURL = getProxyForUrl(urlParse(params.url));
   if (proxyURL) {
-    const parsedProxyURL = url.parse(proxyURL);
+    const parsedProxyURL = urlParse(proxyURL);
     if (params.url.startsWith('http:')) {
       options = {
         path: parsedUrl.href,
@@ -137,7 +137,7 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!/^\w+:\/\//.test(proxyServer))
     proxyServer = 'http://' + proxyServer;
 
-  const proxyOpts = url.parse(proxyServer);
+  const proxyOpts = urlParse(proxyServer);
   if (proxyOpts.protocol?.startsWith('socks')) {
     return new SocksProxyAgent({
       host: proxyOpts.hostname,
@@ -225,4 +225,12 @@ function decorateServer(server: net.Server) {
     sockets.clear();
     return close.call(server, callback);
   };
+}
+
+// url.parse prints a deprecation warning in Node 24, but we don't want to touch the code above.
+// this hack prevents the warning, and it's fine because we're only using it on trusted input.
+function urlParse(s: string): url.Url {
+  const u = new (url as any).Url();
+  u.parse(s);
+  return u;
 }
