@@ -113,7 +113,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   }, [open, isModal]);
 
   return (
-    <dialog ref={dialogRef} style={style} className={className} data-testid={dataTestId} open={false}>
+    <dialog ref={dialogRef} style={style} className={className} data-testid={dataTestId}>
       {children}
     </dialog>
   );

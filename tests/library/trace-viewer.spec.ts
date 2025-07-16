@@ -1916,7 +1916,7 @@ test('should render locator descriptions', async ({ runAndTrace, page }) => {
   `);
 });
 
-test('should load trace from HTTP', async ({ showTraceViewer, server }) => {
+test('should load trace from HTTP with progress indicator', async ({ showTraceViewer, server }) => {
   const [traceViewer, res] = await Promise.all([
     showTraceViewer([server.PREFIX]),
     new Promise<http.ServerResponse>(resolve => {
@@ -1926,11 +1926,22 @@ test('should load trace from HTTP', async ({ showTraceViewer, server }) => {
 
   const file = await fs.promises.readFile(traceFile);
 
+  const dialog = traceViewer.page.locator('dialog', { hasText: 'Loading' });
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Length', file.byteLength);
   res.writeHead(200);
-  await expect(traceViewer.page.locator('body')).toContainText('Loading');
+  await expect(dialog).not.toBeVisible({ timeout: 100 });
+
+  // Wait for progress indicator to appear
+  await new Promise(resolve => setTimeout(resolve, 200));
+  await expect(dialog).toBeVisible({ timeout: 100 });
+
+  // It should continue to appear
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  await expect(dialog).toBeVisible({ timeout: 100 });
 
   res.end(file);
+  await expect(dialog).not.toBeVisible();
   await expect(traceViewer.actionTitles).toContainText([/Create page/]);
 });
