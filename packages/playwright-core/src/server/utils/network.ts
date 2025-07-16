@@ -49,6 +49,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
 
+  // passing in parsed URL instead of string, otherwise getProxyForUrl prints a deprecation warning
   const proxyURL = getProxyForUrl(urlParse(params.url));
   if (proxyURL) {
     const parsedProxyURL = urlParse(proxyURL);
