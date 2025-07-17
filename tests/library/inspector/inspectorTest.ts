@@ -85,7 +85,9 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 
   context: async ({ browserType }, use) => {
-    const context = await browserType.launchPersistentContext(`./profiles/${test.info().parallelIndex}`);
+    const context = await browserType.launchPersistentContext(`./profiles/${test.info().parallelIndex}`, {
+      args: ['--enable-crash-reporter', '--crash-dumps-dir=./crashes'],
+    });
     await use(context);
     await context.close();
   },

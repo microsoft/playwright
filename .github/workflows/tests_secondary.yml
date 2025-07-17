@@ -49,3 +49,8 @@ jobs:
       with:
         name: profiles
         path: profiles
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: crashes
+        path: crashes
