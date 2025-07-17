@@ -84,15 +84,21 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  openRecorder: async ({ context, recorderPageGetter }, use) => {
+  context: async ({ browserType }, use) => {
+    const context = await browserType.launchPersistentContext(`./profiles/${test.info().parallelIndex}`);
+    await use(context);
+    await context.close();
+  },
+
+  openRecorder: async ({ recorderPageGetter, context }, use) => {
     test.slow();
     await use(async options => {
+      const page = context.pages()[0];
       await (context as any)._enableRecorder({
         language: 'javascript',
         mode: 'recording',
         ...options
       });
-      const page = await context.newPage();
       return { page, recorder: new Recorder(page, await recorderPageGetter()) };
     });
   },

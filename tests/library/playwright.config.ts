@@ -79,7 +79,7 @@ if (mode === 'service2') {
   };
 }
 
-process.env.DEBUG = 'pw:browser,pw:protocol';
+process.env.DEBUG = 'pw:browser';
 
 const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
