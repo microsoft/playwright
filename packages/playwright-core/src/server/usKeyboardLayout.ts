@@ -153,3 +153,11 @@ export const USKeyboardLayout: KeyboardLayout = {
   'NumpadDecimal': { 'keyCode': 46, 'shiftKeyCode': 110, 'key': '\u0000', 'shiftKey': '.', 'location': 3 },
   'NumpadEnter': { 'keyCode': 13, 'key': 'Enter', 'text': '\r', 'location': 3 },
 };
+
+export const aliases = new Map<string, string[]>([
+  ['ShiftLeft', ['Shift']],
+  ['ControlLeft', ['Control']],
+  ['AltLeft', ['Alt']],
+  ['MetaLeft', ['Meta']],
+  ['Enter', ['\n', '\r']],
+]);

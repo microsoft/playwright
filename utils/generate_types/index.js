@@ -17,6 +17,7 @@
 // @ts-check
 const path = require('path');
 const devices = require('../../packages/playwright-core/lib/server/deviceDescriptorsSource.json');
+const usKeyboardLayout = require('../../packages/playwright-core/lib/server/usKeyboardLayout.js');
 const md = require('../markdown');
 const docs = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
@@ -520,11 +521,14 @@ class TypesGenerator {
     });
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
     const namedDevices = Object.keys(devices).map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`).join('\n');
+    const keys = Object.keys(usKeyboardLayout.USKeyboardLayout).concat(['Shift', 'Control', 'Alt', 'Meta', 'Enter', '\n', '\r']);
     types += [
       `type Devices = {`,
       namedDevices,
       `  [key: string]: DeviceDescriptor;`,
       `}`,
+      ``,
+      `type USKeyboardKey = ${keys.map(key => JSON.stringify(key)).join(' | ')};`,
       ``,
       `export interface ChromiumBrowserContext extends BrowserContext { }`,
       `export interface ChromiumBrowser extends Browser { }`,

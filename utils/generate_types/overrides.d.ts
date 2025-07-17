@@ -72,6 +72,8 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  press(selector: string, key: USKeyboardKeyAutocomplete, options?: PagePressOptions): Promise<void>;
 }
 
 export interface Frame {
@@ -104,6 +106,8 @@ export interface Frame {
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+  
+  press(selector: string, key: USKeyboardKeyAutocomplete, options?: PagePressOptions): Promise<void>;
 }
 
 export interface BrowserContext {
@@ -177,6 +181,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   waitForSelector(selector: string, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: ElementHandleWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+
+  press(key: USKeyboardKeyAutocomplete, options?: ElementHandlePressOptions): Promise<void>;
 }
 
 export interface Locator {
@@ -193,6 +199,14 @@ export interface Locator {
   elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+
+  press(key: USKeyboardKeyAutocomplete, options?: LocatorPressOptions): Promise<void>;
+}
+
+export interface Keyboard {
+  down(key: USKeyboardKeyAutocomplete): Promise<void>;
+  press(key: USKeyboardKeyAutocomplete, options?: KeyboardPressOptions): Promise<void>;
+  up(key: USKeyboardKeyAutocomplete): Promise<void>;
 }
 
 export interface BrowserType<Unused = {}> {
@@ -378,6 +392,8 @@ export type AndroidKey =
   'Cut' |
   'Copy' |
   'Paste';
+
+type USKeyboardKeyAutocomplete = USKeyboardKey | string & {};
 
 export const _electron: Electron;
 export const _android: Android;

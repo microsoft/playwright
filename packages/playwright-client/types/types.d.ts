@@ -1013,6 +1013,57 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  /**
+   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * Focuses the element, and then uses
+   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   *
+   * [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) can specify the intended
+   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
+   * to generate the text for. A superset of the
+   * [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * etc.
+   *
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
+   *
+   * Holding down `Shift` will type the text that corresponds to the
+   * [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) in the upper case.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) is a single character, it is
+   * case-sensitive, so the values `a` and `A` will generate different respective texts.
+   *
+   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
+   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const page = await browser.newPage();
+   * await page.goto('https://keycode.info');
+   * await page.press('body', 'A');
+   * await page.screenshot({ path: 'A.png' });
+   * await page.press('body', 'ArrowLeft');
+   * await page.screenshot({ path: 'ArrowLeft.png' });
+   * await page.press('body', 'Shift+O');
+   * await page.screenshot({ path: 'O.png' });
+   * await browser.close();
+   * ```
+   *
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options
+   */
+  press(selector: string, key: USKeyboardKeyAutocomplete, options?: PagePressOptions): Promise<void>;
   /**
    * Emitted when the page closes.
    */
@@ -3779,84 +3830,6 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
-   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
-   *
-   * Focuses the element, and then uses
-   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
-   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
-   *
-   * [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) can specify the intended
-   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
-   * to generate the text for. A superset of the
-   * [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   *
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
-   * etc.
-   *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
-   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
-   *
-   * Holding down `Shift` will type the text that corresponds to the
-   * [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) in the upper case.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-page#page-press-option-key) is a single character, it is
-   * case-sensitive, so the values `a` and `A` will generate different respective texts.
-   *
-   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
-   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const page = await browser.newPage();
-   * await page.goto('https://keycode.info');
-   * await page.press('body', 'A');
-   * await page.screenshot({ path: 'A.png' });
-   * await page.press('body', 'ArrowLeft');
-   * await page.screenshot({ path: 'ArrowLeft.png' });
-   * await page.press('body', 'Shift+O');
-   * await page.screenshot({ path: 'O.png' });
-   * await browser.close();
-   * ```
-   *
-   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
-   * used.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   * @param options
-   */
-  press(selector: string, key: string, options?: {
-    /**
-     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-
-    /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
-     */
-    noWaitAfter?: boolean;
-
-    /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
-     * element, the call throws an exception.
-     */
-    strict?: boolean;
-
-    /**
-     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-     * option in the config, or by using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
    * This method reloads the current page, in the same way as if the user had triggered a browser refresh. Returns the
    * main resource response. In case of multiple redirects, the navigation will resolve with the response of the last
    * redirect.
@@ -5969,6 +5942,38 @@ export interface Frame {
    * @param options
    */
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+
+  /**
+   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) can specify the intended
+   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
+   * to generate the text for. A superset of the
+   * [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * etc.
+   *
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
+   *
+   * Holding down `Shift` will type the text that corresponds to the
+   * [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) in the upper case.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) is a single character, it is
+   * case-sensitive, so the values `a` and `A` will generate different respective texts.
+   *
+   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
+   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options
+   */
+  press(selector: string, key: USKeyboardKeyAutocomplete, options?: PagePressOptions): Promise<void>;
   /**
    * Returns the added tag when the script's onload fires or when the script content was injected into frame.
    *
@@ -7304,65 +7309,6 @@ export interface Frame {
    * Parent frame, if any. Detached frames and main frames return `null`.
    */
   parentFrame(): null|Frame;
-
-  /**
-   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
-   *
-   * [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) can specify the intended
-   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
-   * to generate the text for. A superset of the
-   * [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   *
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
-   * etc.
-   *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
-   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
-   *
-   * Holding down `Shift` will type the text that corresponds to the
-   * [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) in the upper case.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-frame#frame-press-option-key) is a single character, it is
-   * case-sensitive, so the values `a` and `A` will generate different respective texts.
-   *
-   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
-   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
-   * used.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   * @param options
-   */
-  press(selector: string, key: string, options?: {
-    /**
-     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-
-    /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
-     */
-    noWaitAfter?: boolean;
-
-    /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
-     * element, the call throws an exception.
-     */
-    strict?: boolean;
-
-    /**
-     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-     * option in the config, or by using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<void>;
 
   /**
    * **NOTE** Use locator-based
@@ -11036,6 +10982,40 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param options
    */
   waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+
+  /**
+   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * Focuses the element, and then uses
+   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   *
+   * [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) can specify the
+   * intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single
+   * character to generate the text for. A superset of the
+   * [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * etc.
+   *
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`.
+   *
+   * Holding down `Shift` will type the text that corresponds to the
+   * [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) in the upper case.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) is a single
+   * character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
+   *
+   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
+   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options
+   */
+  press(key: USKeyboardKeyAutocomplete, options?: ElementHandlePressOptions): Promise<void>;
   /**
    * This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
    * calculated relative to the main frame viewport - which is usually the same as the browser window.
@@ -11566,61 +11546,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Returns the frame containing the given element.
    */
   ownerFrame(): Promise<null|Frame>;
-
-  /**
-   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
-   *
-   * Focuses the element, and then uses
-   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
-   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
-   *
-   * [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) can specify the
-   * intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single
-   * character to generate the text for. A superset of the
-   * [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   *
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
-   * etc.
-   *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
-   * `ControlOrMeta`.
-   *
-   * Holding down `Shift` will type the text that corresponds to the
-   * [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) in the upper case.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-elementhandle#element-handle-press-option-key) is a single
-   * character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
-   *
-   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
-   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   * @param options
-   */
-  press(key: string, options?: {
-    /**
-     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-
-    /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
-     */
-    noWaitAfter?: boolean;
-
-    /**
-     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-     * option in the config, or by using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<void>;
 
   /**
    * **NOTE** Use locator-based [locator.screenshot([options])](https://playwright.dev/docs/api/class-locator#locator-screenshot)
@@ -12395,6 +12320,47 @@ export interface Locator {
   elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+
+  /**
+   * Focuses the matching element and presses a combination of the keys.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('textbox').press('Backspace');
+   * ```
+   *
+   * **Details**
+   *
+   * Focuses the element, and then uses
+   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   *
+   * [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) can specify the intended
+   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
+   * to generate the text for. A superset of the
+   * [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * etc.
+   *
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
+   *
+   * Holding down `Shift` will type the text that corresponds to the
+   * [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) in the upper case.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) is a single character, it is
+   * case-sensitive, so the values `a` and `A` will generate different respective texts.
+   *
+   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
+   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options
+   */
+  press(key: USKeyboardKeyAutocomplete, options?: LocatorPressOptions): Promise<void>;
   /**
    * When the locator points to a list of elements, this returns an array of locators, pointing to their respective
    * elements.
@@ -13944,68 +13910,6 @@ export interface Locator {
   page(): Page;
 
   /**
-   * Focuses the matching element and presses a combination of the keys.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.getByRole('textbox').press('Backspace');
-   * ```
-   *
-   * **Details**
-   *
-   * Focuses the element, and then uses
-   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
-   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
-   *
-   * [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) can specify the intended
-   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
-   * to generate the text for. A superset of the
-   * [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   *
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
-   * etc.
-   *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
-   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
-   *
-   * Holding down `Shift` will type the text that corresponds to the
-   * [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) in the upper case.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-locator#locator-press-option-key) is a single character, it is
-   * case-sensitive, so the values `a` and `A` will generate different respective texts.
-   *
-   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
-   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   * @param options
-   */
-  press(key: string, options?: {
-    /**
-     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-
-    /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
-     */
-    noWaitAfter?: boolean;
-
-    /**
-     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-     * option in the config, or by using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
    * **NOTE** In most cases, you should use
    * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
    * to press keys one by one if there is special keyboard handling on the page.
@@ -14599,6 +14503,183 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
+  }): Promise<void>;
+}
+
+/**
+ * Keyboard provides an api for managing a virtual keyboard. The high level api is
+ * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
+ * characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
+ *
+ * For finer control, you can use [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down),
+ * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up), and
+ * [keyboard.insertText(text)](https://playwright.dev/docs/api/class-keyboard#keyboard-insert-text) to manually fire
+ * events as if they were generated from a real keyboard.
+ *
+ * An example of holding down `Shift` in order to select and delete some text:
+ *
+ * ```js
+ * await page.keyboard.type('Hello World!');
+ * await page.keyboard.press('ArrowLeft');
+ *
+ * await page.keyboard.down('Shift');
+ * for (let i = 0; i < ' World'.length; i++)
+ *   await page.keyboard.press('ArrowLeft');
+ * await page.keyboard.up('Shift');
+ *
+ * await page.keyboard.press('Backspace');
+ * // Result text will end up saying 'Hello!'
+ * ```
+ *
+ * An example of pressing uppercase `A`
+ *
+ * ```js
+ * await page.keyboard.press('Shift+KeyA');
+ * // or
+ * await page.keyboard.press('Shift+A');
+ * ```
+ *
+ * An example to trigger select-all with the keyboard
+ *
+ * ```js
+ * await page.keyboard.press('ControlOrMeta+A');
+ * ```
+ *
+ */
+export interface Keyboard {
+  /**
+   * Dispatches a `keydown` event.
+   *
+   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) can specify the intended
+   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
+   * to generate the text for. A superset of the
+   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * etc.
+   *
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
+   *
+   * Holding down `Shift` will type the text that corresponds to the
+   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) in the upper case.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) is a single character, it is
+   * case-sensitive, so the values `a` and `A` will generate different respective texts.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) is a modifier key, `Shift`,
+   * `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier
+   * key, use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   *
+   * After the key is pressed once, subsequent calls to
+   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) will have
+   * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key,
+   * use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   *
+   * **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+   *
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   */
+  down(key: USKeyboardKeyAutocomplete): Promise<void>;
+  /**
+   * **NOTE** In most cases, you should use
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press) instead.
+   *
+   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) can specify the intended
+   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
+   * to generate the text for. A superset of the
+   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * etc.
+   *
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
+   *
+   * Holding down `Shift` will type the text that corresponds to the
+   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) in the upper case.
+   *
+   * If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) is a single character, it is
+   * case-sensitive, so the values `a` and `A` will generate different respective texts.
+   *
+   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
+   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const page = await browser.newPage();
+   * await page.goto('https://keycode.info');
+   * await page.keyboard.press('A');
+   * await page.screenshot({ path: 'A.png' });
+   * await page.keyboard.press('ArrowLeft');
+   * await page.screenshot({ path: 'ArrowLeft.png' });
+   * await page.keyboard.press('Shift+O');
+   * await page.screenshot({ path: 'O.png' });
+   * await browser.close();
+   * ```
+   *
+   * Shortcut for [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options
+   */
+  press(key: USKeyboardKeyAutocomplete, options?: KeyboardPressOptions): Promise<void>;
+  /**
+   * Dispatches a `keyup` event.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   */
+  up(key: USKeyboardKeyAutocomplete): Promise<void>;
+  /**
+   * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
+   *
+   * **Usage**
+   *
+   * ```js
+   * page.keyboard.insertText('嗨');
+   * ```
+   *
+   * **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper
+   * case.
+   *
+   * @param text Sets input to the specified text value.
+   */
+  insertText(text: string): Promise<void>;
+
+  /**
+   * **NOTE** In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page - in this case use
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
+   *
+   * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+   *
+   * To press a special key, like `Control` or `ArrowDown`, use
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.keyboard.type('Hello'); // Types instantly
+   * await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
+   * ```
+   *
+   * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+   *
+   * **NOTE** For characters that are not on a US keyboard, only an `input` event will be sent.
+   *
+   * @param text A text to type into a focused element.
+   * @param options
+   */
+  type(text: string, options?: {
+    /**
+     * Time to wait between key presses in milliseconds. Defaults to 0.
+     */
+    delay?: number;
   }): Promise<void>;
 }
 
@@ -16264,6 +16345,8 @@ export type AndroidKey =
   'Cut' |
   'Copy' |
   'Paste';
+
+type USKeyboardKeyAutocomplete = USKeyboardKey | string & {};
 
 export const _electron: Electron;
 export const _android: Android;
@@ -19927,191 +20010,6 @@ export interface FrameLocator {
 }
 
 /**
- * Keyboard provides an api for managing a virtual keyboard. The high level api is
- * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
- * characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
- *
- * For finer control, you can use [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down),
- * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up), and
- * [keyboard.insertText(text)](https://playwright.dev/docs/api/class-keyboard#keyboard-insert-text) to manually fire
- * events as if they were generated from a real keyboard.
- *
- * An example of holding down `Shift` in order to select and delete some text:
- *
- * ```js
- * await page.keyboard.type('Hello World!');
- * await page.keyboard.press('ArrowLeft');
- *
- * await page.keyboard.down('Shift');
- * for (let i = 0; i < ' World'.length; i++)
- *   await page.keyboard.press('ArrowLeft');
- * await page.keyboard.up('Shift');
- *
- * await page.keyboard.press('Backspace');
- * // Result text will end up saying 'Hello!'
- * ```
- *
- * An example of pressing uppercase `A`
- *
- * ```js
- * await page.keyboard.press('Shift+KeyA');
- * // or
- * await page.keyboard.press('Shift+A');
- * ```
- *
- * An example to trigger select-all with the keyboard
- *
- * ```js
- * await page.keyboard.press('ControlOrMeta+A');
- * ```
- *
- */
-export interface Keyboard {
-  /**
-   * Dispatches a `keydown` event.
-   *
-   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) can specify the intended
-   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
-   * to generate the text for. A superset of the
-   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   *
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
-   * etc.
-   *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
-   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
-   *
-   * Holding down `Shift` will type the text that corresponds to the
-   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) in the upper case.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) is a single character, it is
-   * case-sensitive, so the values `a` and `A` will generate different respective texts.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) is a modifier key, `Shift`,
-   * `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier
-   * key, use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
-   *
-   * After the key is pressed once, subsequent calls to
-   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) will have
-   * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key,
-   * use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
-   *
-   * **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
-   *
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   */
-  down(key: string): Promise<void>;
-
-  /**
-   * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
-   *
-   * **Usage**
-   *
-   * ```js
-   * page.keyboard.insertText('嗨');
-   * ```
-   *
-   * **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper
-   * case.
-   *
-   * @param text Sets input to the specified text value.
-   */
-  insertText(text: string): Promise<void>;
-
-  /**
-   * **NOTE** In most cases, you should use
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press) instead.
-   *
-   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) can specify the intended
-   * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
-   * to generate the text for. A superset of the
-   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   *
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
-   * etc.
-   *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
-   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
-   *
-   * Holding down `Shift` will type the text that corresponds to the
-   * [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) in the upper case.
-   *
-   * If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-option-key) is a single character, it is
-   * case-sensitive, so the values `a` and `A` will generate different respective texts.
-   *
-   * Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When
-   * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const page = await browser.newPage();
-   * await page.goto('https://keycode.info');
-   * await page.keyboard.press('A');
-   * await page.screenshot({ path: 'A.png' });
-   * await page.keyboard.press('ArrowLeft');
-   * await page.screenshot({ path: 'ArrowLeft.png' });
-   * await page.keyboard.press('Shift+O');
-   * await page.screenshot({ path: 'O.png' });
-   * await browser.close();
-   * ```
-   *
-   * Shortcut for [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
-   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   * @param options
-   */
-  press(key: string, options?: {
-    /**
-     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * **NOTE** In most cases, you should use
-   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
-   * to press keys one by one if there is special keyboard handling on the page - in this case use
-   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
-   *
-   * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-   *
-   * To press a special key, like `Control` or `ArrowDown`, use
-   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.keyboard.type('Hello'); // Types instantly
-   * await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
-   * ```
-   *
-   * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
-   *
-   * **NOTE** For characters that are not on a US keyboard, only an `input` event will be sent.
-   *
-   * @param text A text to type into a focused element.
-   * @param options
-   */
-  type(text: string, options?: {
-    /**
-     * Time to wait between key presses in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * Dispatches a `keyup` event.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   */
-  up(key: string): Promise<void>;
-}
-
-/**
  * Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
  *
  * ```js
@@ -21921,6 +21819,13 @@ export interface ConnectOptions {
   timeout?: number;
 }
 
+interface KeyboardPressOptions {
+  /**
+   * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   */
+  delay?: number;
+}
+
 export interface LocatorScreenshotOptions {
   /**
    * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
@@ -22002,6 +21907,29 @@ export interface LocatorScreenshotOptions {
   type?: "png"|"jpeg";
 }
 
+interface LocatorPressOptions {
+  /**
+   * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   */
+  delay?: number;
+
+  /**
+   * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @deprecated This option will default to `true` in the future.
+   */
+  noWaitAfter?: boolean;
+
+  /**
+   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+}
+
 interface ElementHandleWaitForSelectorOptions {
   /**
    * Defaults to `'visible'`. Can be either:
@@ -22019,6 +21947,29 @@ interface ElementHandleWaitForSelectorOptions {
    * element, the call throws an exception.
    */
   strict?: boolean;
+
+  /**
+   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+}
+
+interface ElementHandlePressOptions {
+  /**
+   * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   */
+  delay?: number;
+
+  /**
+   * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @deprecated This option will default to `true` in the future.
+   */
+  noWaitAfter?: boolean;
 
   /**
    * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -22670,6 +22621,35 @@ export interface PageScreenshotOptions {
   type?: "png"|"jpeg";
 }
 
+interface PagePressOptions {
+  /**
+   * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   */
+  delay?: number;
+
+  /**
+   * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @deprecated This option will default to `true` in the future.
+   */
+  noWaitAfter?: boolean;
+
+  /**
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   */
+  strict?: boolean;
+
+  /**
+   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+}
+
 type Devices = {
   "Blackberry PlayBook": DeviceDescriptor;
   "Blackberry PlayBook landscape": DeviceDescriptor;
@@ -22816,6 +22796,8 @@ type Devices = {
   "Desktop Firefox": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }
+
+type USKeyboardKey = "Escape" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12" | "Backquote" | "Digit1" | "Digit2" | "Digit3" | "Digit4" | "Digit5" | "Digit6" | "Digit7" | "Digit8" | "Digit9" | "Digit0" | "Minus" | "Equal" | "Backslash" | "Backspace" | "Tab" | "KeyQ" | "KeyW" | "KeyE" | "KeyR" | "KeyT" | "KeyY" | "KeyU" | "KeyI" | "KeyO" | "KeyP" | "BracketLeft" | "BracketRight" | "CapsLock" | "KeyA" | "KeyS" | "KeyD" | "KeyF" | "KeyG" | "KeyH" | "KeyJ" | "KeyK" | "KeyL" | "Semicolon" | "Quote" | "Enter" | "ShiftLeft" | "KeyZ" | "KeyX" | "KeyC" | "KeyV" | "KeyB" | "KeyN" | "KeyM" | "Comma" | "Period" | "Slash" | "ShiftRight" | "ControlLeft" | "MetaLeft" | "AltLeft" | "Space" | "AltRight" | "AltGraph" | "MetaRight" | "ContextMenu" | "ControlRight" | "PrintScreen" | "ScrollLock" | "Pause" | "PageUp" | "PageDown" | "Insert" | "Delete" | "Home" | "End" | "ArrowLeft" | "ArrowUp" | "ArrowRight" | "ArrowDown" | "NumLock" | "NumpadDivide" | "NumpadMultiply" | "NumpadSubtract" | "Numpad7" | "Numpad8" | "Numpad9" | "Numpad4" | "Numpad5" | "Numpad6" | "NumpadAdd" | "Numpad1" | "Numpad2" | "Numpad3" | "Numpad0" | "NumpadDecimal" | "NumpadEnter" | "Shift" | "Control" | "Alt" | "Meta" | "Enter" | "\n" | "\r";
 
 export interface ChromiumBrowserContext extends BrowserContext { }
 export interface ChromiumBrowser extends Browser { }

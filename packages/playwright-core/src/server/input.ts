@@ -240,6 +240,7 @@ export class Mouse {
   }
 }
 
+// also update utils/generate_types/index.js
 const aliases = new Map<string, string[]>([
   ['ShiftLeft', ['Shift']],
   ['ControlLeft', ['Control']],
