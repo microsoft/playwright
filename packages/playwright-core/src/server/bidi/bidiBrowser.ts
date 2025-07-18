@@ -47,40 +47,11 @@ export class BidiBrowser extends Browser {
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
 
-    let proxy: bidi.Session.ManualProxyConfiguration | undefined;
-    if (options.proxy) {
-      proxy = {
-        proxyType: 'manual',
-      };
-      const url = new URL(options.proxy.server);  // Validate proxy server.
-      switch (url.protocol) {
-        case 'http:':
-          proxy.httpProxy = url.host;
-          break;
-        case 'https:':
-          proxy.httpsProxy = url.host;
-          break;
-        case 'socks4:':
-          proxy.socksProxy = url.host;
-          proxy.socksVersion = 4;
-          break;
-        case 'socks5:':
-          proxy.socksProxy = url.host;
-          proxy.socksVersion = 5;
-          break;
-        default:
-          throw new Error('Invalid proxy server protocol: ' + options.proxy.server);
-      }
-      if (options.proxy.bypass)
-        proxy.noProxy = options.proxy.bypass.split(',');
-      // TODO: support authentication.
-    }
-
     browser._bidiSessionInfo = await browser._browserSession.send('session.new', {
       capabilities: {
         alwaysMatch: {
           acceptInsecureCerts: false,
-          proxy,
+          proxy: getProxyConfiguration(options.proxy),
           unhandledPromptBehavior: {
             default: bidi.Session.UserPromptHandlerType.Ignore,
           },
@@ -126,6 +97,7 @@ export class BidiBrowser extends Browser {
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     const { userContext } = await this._browserSession.send('browser.createUserContext', {
       acceptInsecureCerts: options.ignoreHTTPSErrors,
+      proxy: getProxyConfiguration(options.proxy),
     });
     const context = new BidiBrowserContext(this, userContext, options);
     await context._initialize();
@@ -471,6 +443,39 @@ function toBidiSameSite(sameSite: channels.SetNetworkCookie['sameSite']): bidi.N
     case 'None': return bidi.Network.SameSite.None;
   }
   return bidi.Network.SameSite.None;
+}
+
+function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Session.ManualProxyConfiguration | undefined {
+  if (!proxySettings)
+    return undefined;
+
+  const proxy: bidi.Session.ManualProxyConfiguration = {
+    proxyType: 'manual',
+  };
+  const url = new URL(proxySettings.server);  // Validate proxy server.
+  switch (url.protocol) {
+    case 'http:':
+      proxy.httpProxy = url.host;
+      break;
+    case 'https:':
+      proxy.sslProxy = url.host;
+      break;
+    case 'socks4:':
+      proxy.socksProxy = url.host;
+      proxy.socksVersion = 4;
+      break;
+    case 'socks5:':
+      proxy.socksProxy = url.host;
+      proxy.socksVersion = 5;
+      break;
+    default:
+      throw new Error('Invalid proxy server protocol: ' + proxySettings.server);
+  }
+  if (proxySettings.bypass)
+    proxy.noProxy = proxySettings.bypass.split(',');
+  // TODO: support authentication.
+
+  return proxy;
 }
 
 export namespace Network {
