@@ -354,3 +354,23 @@ it('should mark iframe as active when it contains focused element', async ({ pag
         - textbox "Input in iframe" [active] [ref=f1e2]
   `);
 });
+
+it('return empty snapshot when iframe is not loaded', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/pull/36710' } }, async ({ page, server }) => {
+  await page.setContent(`
+    <div style="height: 5000px;">Test</div>
+    <iframe loading="lazy" src="${server.PREFIX}/frame.html"></iframe>
+  `);
+
+  // Wait for the iframe to load
+  await page.waitForSelector('iframe');
+
+  // Get the snapshot of the page
+  const snapshot = await snapshotForAI(page);
+
+  // The iframe should be present but empty
+  expect(snapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - generic [ref=e2]: Test
+      - iframe [ref=e3]:
+  `);
+});
