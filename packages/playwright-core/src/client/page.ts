@@ -832,8 +832,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async _snapshotForAI(): Promise<string> {
-    const result = await this._channel.snapshotForAI();
+  async _snapshotForAI(options: TimeoutOptions = {}): Promise<string> {
+    const result = await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options) });
     return result.snapshot;
   }
 }

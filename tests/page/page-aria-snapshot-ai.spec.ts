@@ -19,8 +19,8 @@ import { asLocator } from 'playwright-core/lib/utils';
 
 import { test as it, expect, unshift } from './pageTest';
 
-function snapshotForAI(page: any): Promise<string> {
-  return page._snapshotForAI();
+function snapshotForAI(page: any, options?: { timeout?: number }): Promise<string> {
+  return page._snapshotForAI(options);
 }
 
 it('should generate refs', async ({ page }) => {
@@ -352,5 +352,25 @@ it('should mark iframe as active when it contains focused element', async ({ pag
       - textbox "Regular input" [ref=e2]
       - iframe [active] [ref=e3]:
         - textbox "Input in iframe" [active] [ref=f1e2]
+  `);
+});
+
+it('return empty snapshot when iframe is not loaded', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/pull/36710' } }, async ({ page, server }) => {
+  await page.setContent(`
+    <div style="height: 5000px;">Test</div>
+    <iframe loading="lazy" src="${server.PREFIX}/frame.html"></iframe>
+  `);
+
+  // Wait for the iframe to load
+  await page.waitForSelector('iframe');
+
+  // Get the snapshot of the page
+  const snapshot = await snapshotForAI(page, { timeout: 100 });
+
+  // The iframe should be present but empty
+  expect(snapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - generic [ref=e2]: Test
+      - iframe [ref=e3]
   `);
 });
