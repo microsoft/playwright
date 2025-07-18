@@ -712,6 +712,10 @@ export class Frame extends SdkObject {
     });
   }
 
+  _isExistContext(world: types.World): boolean {
+    return !!this._contextData.get(world)?.context;
+  }
+
   _mainContext(): Promise<dom.FrameExecutionContext> {
     return this._context('main');
   }

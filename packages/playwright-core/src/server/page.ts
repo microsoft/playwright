@@ -1000,6 +1000,9 @@ class FrameThrottler {
 }
 
 async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
+  const hasUtilityContext = frame._isExistContext('utility');
+  if (!hasUtilityContext)
+    return [];
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
