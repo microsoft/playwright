@@ -14,6 +14,10 @@
   limitations under the License.
 */
 
+.action-title > .hbox {
+  align-items: center;
+}
+
 .action-title-line {
   display: block;
   overflow: hidden;
