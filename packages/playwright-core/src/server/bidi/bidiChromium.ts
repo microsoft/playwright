@@ -26,7 +26,6 @@ import { waitForReadyState } from '../chromium/chromium';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
@@ -77,10 +76,6 @@ export class BidiChromium extends BrowserType {
     return error;
   }
 
-  override amendEnvironment(env: Env): Env {
-    return env;
-  }
-
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     const bidiTransport = (transport as any)[kBidiOverCdpWrapper];
     if (bidiTransport)
@@ -92,7 +87,7 @@ export class BidiChromium extends BrowserType {
     return false;
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     chromeArguments.push('--remote-debugging-port=0');

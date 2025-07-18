@@ -57,14 +57,14 @@ export class TestServer {
   readonly HOST: string;
   readonly HOSTNAME: string;
 
-  static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
-    const server = new TestServer(dirPath, port, loopback);
+  static async create(dirPath: string, port: number, loopback?: string, loopback2?: string): Promise<TestServer> {
+    const server = new TestServer(dirPath, port, loopback, loopback2);
     await server.waitUntilReady();
     return server;
   }
 
-  static async createHTTPS(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
-    const server = new TestServer(dirPath, port, loopback, {
+  static async createHTTPS(dirPath: string, port: number, loopback?: string, loopback2?: string): Promise<TestServer> {
+    const server = new TestServer(dirPath, port, loopback, loopback2, {
       key: await fs.promises.readFile(path.join(__dirname, 'key.pem')),
       cert: await fs.promises.readFile(path.join(__dirname, 'cert.pem')),
       passphrase: 'aaaa',
@@ -73,7 +73,7 @@ export class TestServer {
     return server;
   }
 
-  constructor(dirPath: string, port: number, loopback?: string, sslOptions?: object) {
+  constructor(dirPath: string, port: number, loopback?: string, loopback2?: string, sslOptions?: object) {
     if (sslOptions)
       this._server = createHttpsServer(sslOptions, this._onRequest.bind(this));
     else
@@ -113,8 +113,8 @@ export class TestServer {
     this._startTime = new Date();
     this._cachedPathPrefix = null;
 
-    const cross_origin = loopback || '127.0.0.1';
     const same_origin = loopback || 'localhost';
+    const cross_origin = loopback2 || '127.0.0.1';
     const protocol = sslOptions ? 'https' : 'http';
     this.PORT = port;
     this.PREFIX = `${protocol}://${same_origin}:${port}`;

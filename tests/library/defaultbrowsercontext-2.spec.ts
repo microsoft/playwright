@@ -67,7 +67,8 @@ it('should support locale option', async ({ launchPersistent }) => {
   expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
 });
 
-it('should support geolocation and permissions options', async ({ server, launchPersistent }) => {
+it('should support geolocation and permissions options', async ({ server, launchPersistent, channel }) => {
+  it.fixme(channel === 'webkit-wsl', '[blocked] Access to geolocation was blocked over insecure connection');
   const { page } = await launchPersistent({ geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] });
   await page.goto(server.EMPTY_PAGE);
   const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
@@ -153,7 +154,8 @@ it('should throw if page argument is passed', async ({ browserType, server, crea
   expect(error.message).toContain('can not specify page');
 });
 
-it('should have passed URL when launching with ignoreDefaultArgs: true', async ({ browserType, server, createUserDataDir, toImpl, mode, browserName }) => {
+it('should have passed URL when launching with ignoreDefaultArgs: true', async ({ browserType, server, createUserDataDir, toImpl, mode, browserName, channel }) => {
+  it.fixme(channel === 'webkit-wsl');
   it.skip(mode !== 'default');
 
   const userDataDir = await createUserDataDir();
