@@ -59,14 +59,15 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContext(params: channels.BrowserNewContextParams, progress: Progress): Promise<channels.BrowserNewContextResult> {
+    if (params.recordVideo && this._object.attribution.playwright.options.isServer)
+      params.recordVideo.dir = this._object.options.artifactsDir;
+
     if (!this._options.isolateContexts) {
       const context = await this._object.newContext(progress, params);
       const contextDispatcher = BrowserContextDispatcher.from(this, context);
       return { context: contextDispatcher };
     }
 
-    if (params.recordVideo)
-      params.recordVideo.dir = this._object.options.artifactsDir;
     const context = await this._object.newContext(progress, params);
     this._isolatedContexts.add(context);
     context.on(BrowserContext.Events.Close, () => this._isolatedContexts.delete(context));
