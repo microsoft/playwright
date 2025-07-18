@@ -1918,6 +1918,8 @@ Page:
 
     snapshotForAI:
       internal: true
+      parameters:
+        timeout: number
       returns:
         snapshot: string
       flags:

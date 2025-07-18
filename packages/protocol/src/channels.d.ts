@@ -2111,7 +2111,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, progress?: Progress): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
-  snapshotForAI(params?: PageSnapshotForAIParams, progress?: Progress): Promise<PageSnapshotForAIResult>;
+  snapshotForAI(params: PageSnapshotForAIParams, progress?: Progress): Promise<PageSnapshotForAIResult>;
   startJSCoverage(params: PageStartJSCoverageParams, progress?: Progress): Promise<PageStartJSCoverageResult>;
   stopJSCoverage(params?: PageStopJSCoverageParams, progress?: Progress): Promise<PageStopJSCoverageResult>;
   startCSSCoverage(params: PageStartCSSCoverageParams, progress?: Progress): Promise<PageStartCSSCoverageResult>;
@@ -2540,8 +2540,12 @@ export type PagePdfOptions = {
 export type PagePdfResult = {
   pdf: Binary,
 };
-export type PageSnapshotForAIParams = {};
-export type PageSnapshotForAIOptions = {};
+export type PageSnapshotForAIParams = {
+  timeout: number,
+};
+export type PageSnapshotForAIOptions = {
+
+};
 export type PageSnapshotForAIResult = {
   snapshot: string,
 };
