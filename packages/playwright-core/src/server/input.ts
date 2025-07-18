@@ -16,6 +16,7 @@
 
 import { assert } from '../utils';
 import * as keyboardLayout from './usKeyboardLayout';
+import { NonRecoverableDOMError } from './dom';
 
 import type { Progress } from './progress';
 import type { Page } from './page';
@@ -64,7 +65,8 @@ export class Keyboard {
   private _keyDescriptionForString(str: string): KeyDescription {
     const keyString = resolveSmartModifierString(str);
     let description = usKeyboardLayout.get(keyString);
-    assert(description, `Unknown key: "${keyString}"`);
+    if (!description)
+      throw new NonRecoverableDOMError(`Unknown key: "${keyString}"`);
     const shift = this._pressedModifiers.has('Shift');
     description = shift && description.shifted ? description.shifted : description;
 
