@@ -7492,6 +7492,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Proxy bypass list, similar to the one passed to --proxy-bypass-list
        */
       proxyBypassList?: string;
+      /**
+       * Wether to use storage partitioning. Be default Playwright disables the partitioning.
+       */
+      enableStoragePartitioning?: boolean;
     }
     export type createContextReturnValue = {
       /**
