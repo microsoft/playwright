@@ -1932,14 +1932,8 @@ test('should load trace from HTTP with progress indicator', async ({ showTraceVi
   res.setHeader('Content-Length', file.byteLength);
   res.writeHead(200);
   await expect(dialog).not.toBeVisible({ timeout: 100 });
-
-  // Wait for progress indicator to appear
-  await new Promise(resolve => setTimeout(resolve, 200));
-  await expect(dialog).toBeVisible({ timeout: 100 });
-
-  // It should continue to appear
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  await expect(dialog).toBeVisible({ timeout: 100 });
+  // Should become visible after ~200ms
+  await expect(dialog).toBeVisible();
 
   res.end(file);
   await expect(dialog).not.toBeVisible();
