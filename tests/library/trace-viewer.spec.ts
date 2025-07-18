@@ -21,6 +21,7 @@ import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
 import path from 'path';
+import type http from 'http';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
@@ -1913,4 +1914,28 @@ test('should render locator descriptions', async ({ runAndTrace, page }) => {
     - treeitem /Click.*custom/
     - treeitem /Click.*input.*first/
   `);
+});
+
+test('should load trace from HTTP with progress indicator', async ({ showTraceViewer, server }) => {
+  const [traceViewer, res] = await Promise.all([
+    showTraceViewer([server.PREFIX]),
+    new Promise<http.ServerResponse>(resolve => {
+      server.setRoute('/', (req, res) => resolve(res));
+    }),
+  ]);
+
+  const file = await fs.promises.readFile(traceFile);
+
+  const dialog = traceViewer.page.locator('dialog', { hasText: 'Loading' });
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Length', file.byteLength);
+  res.writeHead(200);
+  await expect(dialog).not.toBeVisible({ timeout: 100 });
+  // Should become visible after ~200ms
+  await expect(dialog).toBeVisible();
+
+  res.end(file);
+  await expect(dialog).not.toBeVisible();
+  await expect(traceViewer.actionTitles).toContainText([/Create page/]);
 });

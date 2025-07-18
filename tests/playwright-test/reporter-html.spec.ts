@@ -620,7 +620,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
-      await expect(page.locator('.workbench-loader .title')).toHaveText('a.test.js:3 › passes');
+      await expect(page.locator('.progress-dialog')).toBeHidden();
+      await expect(page.locator('.workbench-loader > .header > .title')).toHaveText('a.test.js:3 › passes');
     });
 
     test('should show multi trace source', async ({ runInlineTest, page, server, showReport }) => {
