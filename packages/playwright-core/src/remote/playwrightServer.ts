@@ -365,6 +365,8 @@ function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowFSPaths: bo
     proxy: options.proxy,
     chromiumSandbox: options.chromiumSandbox,
     firefoxUserPrefs: options.firefoxUserPrefs,
+    chromiumDisableFeatures: options.chromiumDisableFeatures,
+    chromiumEnableFeatures: options.chromiumEnableFeatures,
     slowMo: options.slowMo,
     executablePath: (isUnderTest() || allowFSPaths) ? options.executablePath : undefined,
     downloadsPath: allowFSPaths ? options.downloadsPath : undefined,

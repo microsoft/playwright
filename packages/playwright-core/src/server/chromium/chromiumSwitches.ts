@@ -17,7 +17,14 @@
 
 // No dependencies as it is used from the Electron loader.
 
-const disabledFeatures = (assistantMode?: boolean) => [
+type SwitchOptions = {
+  assistantMode?: boolean;
+  channel?: string;
+  chromiumDisableFeatures?: string[];
+  chromiumEnableFeatures?: string[];
+};
+
+const disabledFeatures = (options: SwitchOptions) => [
   // See https://github.com/microsoft/playwright/pull/10380
   'AcceptCHFrame',
   // See https://github.com/microsoft/playwright/issues/14047
@@ -25,9 +32,6 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'DestroyProfileOnBrowserClose',
   // See https://github.com/microsoft/playwright/pull/13854
   'DialMediaRouteProvider',
-  // Chromium is disabling manifest version 2. Allow testing it as long as Chromium can actually run it.
-  // Disabled in https://chromium-review.googlesource.com/c/chromium/src/+/6265903.
-  'ExtensionManifestV2Disabled',
   'GlobalMediaControls',
   // See https://github.com/microsoft/playwright/pull/27605
   'HttpsUpgrades',
@@ -41,12 +45,13 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'ThirdPartyStoragePartitioning',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
-  // https://chromium-review.googlesource.com/c/chromium/src/+/6711453
-  'ExtensionManifestV2Unsupported',
-  assistantMode ? 'AutomationControlled' : '',
-].filter(Boolean);
+  options.assistantMode ? 'AutomationControlled' : '',
+  ...(options.chromiumDisableFeatures || []),
+].filter(Boolean).filter(feature => !options.chromiumEnableFeatures?.includes(feature));
 
-export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
+const enabledFeatures = (options: SwitchOptions) => options.chromiumEnableFeatures || [];
+
+export const chromiumSwitches = (options: SwitchOptions = {}) => [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--disable-background-timer-throttling',
@@ -60,8 +65,9 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   '--disable-default-apps',
   '--disable-dev-shm-usage',
   '--disable-extensions',
-  '--disable-features=' + disabledFeatures(assistantMode).join(','),
-  channel === 'chromium-tip-of-tree' ? '--enable-features=CDPScreenshotNewSurface' : '',
+  '--disable-features=' + disabledFeatures(options).join(','),
+  '--enable-features=' + enabledFeatures(options).join(','),
+  options.channel === 'chromium-tip-of-tree' ? '--enable-features=CDPScreenshotNewSurface' : '',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
@@ -82,5 +88,5 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   '--unsafely-disable-devtools-self-xss-warnings',
   // Edge can potentially restart on Windows (msRelaunchNoCompatLayer) which looses its file descriptors (stdout/stderr) and CDP (3/4). Disable until fixed upstream.
   '--edge-skip-compat-layer-relaunch',
-  assistantMode ? '' : '--enable-automation',
+  options.assistantMode ? '' : '--enable-automation',
 ].filter(Boolean);

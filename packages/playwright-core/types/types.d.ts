@@ -14807,6 +14807,21 @@ export interface BrowserType<Unused = {}> {
     channel?: string;
 
     /**
+     * Disable specific
+     * [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies
+     * after features enabled/disabled by default in Playwright.
+     */
+    chromiumDisableFeatures?: Array<string>;
+
+    /**
+     * Enable specific
+     * [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies
+     * after features enabled/disabled by default in Playwright, and after
+     * [`chromiumDisableFeatures`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-chromium-disable-features).
+     */
+    chromiumEnableFeatures?: Array<string>;
+
+    /**
      * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
@@ -15315,6 +15330,21 @@ export interface BrowserType<Unused = {}> {
      * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
     channel?: string;
+
+    /**
+     * Disable specific
+     * [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies
+     * after features enabled/disabled by default in Playwright.
+     */
+    chromiumDisableFeatures?: Array<string>;
+
+    /**
+     * Enable specific
+     * [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies
+     * after features enabled/disabled by default in Playwright, and after
+     * [`chromiumDisableFeatures`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server-option-chromium-disable-features).
+     */
+    chromiumEnableFeatures?: Array<string>;
 
     /**
      * Enable Chromium sandboxing. Defaults to `false`.
@@ -21726,6 +21756,21 @@ export interface LaunchOptions {
    * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
    */
   channel?: string;
+
+  /**
+   * Disable specific
+   * [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies
+   * after features enabled/disabled by default in Playwright.
+   */
+  chromiumDisableFeatures?: Array<string>;
+
+  /**
+   * Enable specific
+   * [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies
+   * after features enabled/disabled by default in Playwright, and after
+   * [`chromiumDisableFeatures`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-chromium-disable-features).
+   */
+  chromiumEnableFeatures?: Array<string>;
 
   /**
    * Enable Chromium sandboxing. Defaults to `false`.

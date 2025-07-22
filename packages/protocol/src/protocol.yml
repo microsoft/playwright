@@ -522,6 +522,12 @@ LaunchOptions:
     tracesDir: string?
     chromiumSandbox: boolean?
     firefoxUserPrefs: json?
+    chromiumDisableFeatures:
+      type: array?
+      items: string
+    chromiumEnableFeatures:
+      type: array?
+      items: string
     cdpPort: number?
 
 

@@ -42,6 +42,11 @@ it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support
 it.describe('MV2', () => {
   it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
 
+  // Chromium is disabling manifest version 2. Allow testing it as long as Chromium can actually run it.
+  // Disabled in https://chromium-review.googlesource.com/c/chromium/src/+/6265903 and
+  // https://chromium-review.googlesource.com/c/chromium/src/+/6711453.
+  const chromiumDisableFeatures = ['ExtensionManifestV2Disabled', 'ExtensionManifestV2Unsupported'];
+
   it('should return background pages', async ({ browserType, asset }) => {
     const extensionPath = asset('extension-mv2-simple');
     const extensionOptions = {
@@ -49,6 +54,7 @@ it.describe('MV2', () => {
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
       ],
+      chromiumDisableFeatures,
     };
     const context = await browserType.launchPersistentContext('', extensionOptions);
     const backgroundPages = context.backgroundPages();
@@ -70,6 +76,7 @@ it.describe('MV2', () => {
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
       ],
+      chromiumDisableFeatures,
       recordVideo: {
         dir: testInfo.outputPath(''),
       },
@@ -96,6 +103,7 @@ it.describe('MV2', () => {
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
       ],
+      chromiumDisableFeatures,
     };
     const context = await browserType.launchPersistentContext('', extensionOptions);
     const backgroundPages = context.backgroundPages();

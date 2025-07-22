@@ -942,6 +942,8 @@ export type BrowserTypeLaunchParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  chromiumDisableFeatures?: string[],
+  chromiumEnableFeatures?: string[],
   cdpPort?: number,
   slowMo?: number,
 };
@@ -968,6 +970,8 @@ export type BrowserTypeLaunchOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  chromiumDisableFeatures?: string[],
+  chromiumEnableFeatures?: string[],
   cdpPort?: number,
   slowMo?: number,
 };
@@ -998,6 +1002,8 @@ export type BrowserTypeLaunchPersistentContextParams = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  chromiumDisableFeatures?: string[],
+  chromiumEnableFeatures?: string[],
   cdpPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {
@@ -1081,6 +1087,8 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   tracesDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
+  chromiumDisableFeatures?: string[],
+  chromiumEnableFeatures?: string[],
   cdpPort?: number,
   noDefaultViewport?: boolean,
   viewport?: {

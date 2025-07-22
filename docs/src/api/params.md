@@ -1028,6 +1028,18 @@ Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-be
 Enable Chromium sandboxing. Defaults to `false`.
 
 
+## browser-option-chromiumdisablefeatures
+- `chromiumDisableFeatures` <[Array]<[string]>>
+
+Disable specific [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies after features enabled/disabled by default in Playwright.
+
+
+## browser-option-chromiumenablefeatures
+- `chromiumEnableFeatures` <[Array]<[string]>>
+
+Enable specific [Chromium features](https://chromium.googlesource.com/chromium/src/+/main/docs/configuration.md#Features). Applies after features enabled/disabled by default in Playwright, and after [`option: chromiumDisableFeatures`].
+
+
 ## browser-option-downloadspath
 - `downloadsPath` <[path]>
 

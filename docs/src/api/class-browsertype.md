@@ -300,6 +300,12 @@ describes some differences for Linux users.
 ### option: BrowserType.launch.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
 * since: v1.8
 
+### option: BrowserType.launch.chromiumDisableFeatures = %%-browser-option-chromiumdisablefeatures-%%
+* since: v1.55
+
+### option: BrowserType.launch.chromiumEnableFeatures = %%-browser-option-chromiumenablefeatures-%%
+* since: v1.55
+
 ### option: BrowserType.launch.logger = %%-browser-option-logger-%%
 * since: v1.8
 
@@ -354,6 +360,12 @@ Note that browsers do not allow launching multiple instances with the same User 
 ### option: BrowserType.launchPersistentContext.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
 * since: v1.40
 
+### option: BrowserType.launchPersistentContext.chromiumDisableFeatures = %%-browser-option-chromiumdisablefeatures-%%
+* since: v1.55
+
+### option: BrowserType.launchPersistentContext.chromiumEnableFeatures = %%-browser-option-chromiumenablefeatures-%%
+* since: v1.55
+
 ### option: BrowserType.launchPersistentContext.clientCertificates = %%-context-option-clientCertificates-%%
 * since: 1.46
 
@@ -390,6 +402,12 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 
 ### option: BrowserType.launchServer.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
 * since: v1.8
+
+### option: BrowserType.launchServer.chromiumDisableFeatures = %%-browser-option-chromiumdisablefeatures-%%
+* since: v1.55
+
+### option: BrowserType.launchServer.chromiumEnableFeatures = %%-browser-option-chromiumenablefeatures-%%
+* since: v1.55
 
 ### option: BrowserType.launchServer.logger = %%-browser-option-logger-%%
 * since: v1.8
