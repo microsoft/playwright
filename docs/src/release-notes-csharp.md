@@ -6,6 +6,8 @@ toc_max_heading_level: 2
 
 ## Version 1.54
 
+### Highlights
+
 - New cookie property `PartitionKey` in [`method: BrowserContext.cookies`] and [`method: BrowserContext.addCookies`]. This property allows to save and restore partitioned cookies. See [CHIPS MDN article](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies) for more information. Note that browsers have different support and defaults for cookie partitioning.
 
 - New option `--user-data-dir` in multiple commands. You can specify the same user data dir to reuse browsing state, like authentication, between sessions.
@@ -28,7 +30,7 @@ This version was also tested against the following stable channels:
 
 ## Version 1.53
 
-### Miscellaneous
+### Trace Viewer and HTML Reporter Updates
 
 - New Steps in Trace Viewer:
   ![New Trace Viewer Steps](https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2)

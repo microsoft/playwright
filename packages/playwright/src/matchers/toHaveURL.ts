@@ -42,9 +42,9 @@ export async function toHaveURLWithPredicate(
     throw new Error(
         [
           // Always display `expected` in expectation place
-          matcherHint(this, undefined, matcherName, expression, undefined, matcherOptions),
+          matcherHint(this, undefined, matcherName, expression, undefined, matcherOptions, undefined, undefined, true),
           `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected')} value must be a string, regular expression, or predicate`,
-          this.utils.printWithType('Expected', expected, this.utils.printExpected,),
+          this.utils.printWithType('Expected', expected, this.utils.printExpected),
         ].join('\n\n'),
     );
   }
@@ -118,7 +118,7 @@ function toHaveURLMessage(
     promise: state.promise,
   };
   const receivedString = received || '';
-  const messagePrefix = matcherHint(state, undefined, matcherName, expression, undefined, matcherOptions, didTimeout ? timeout : undefined);
+  const messagePrefix = matcherHint(state, undefined, matcherName, expression, undefined, matcherOptions, didTimeout ? timeout : undefined, undefined, true);
 
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;

@@ -191,7 +191,8 @@ test('should respect timeout', async ({ runInlineTest }, testInfo) => {
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Timed out 1ms waiting for`);
+  expect(result.output).toContain(`expect(locator).toMatchAriaSnapshot(expected) failed`);
+  expect(result.output).toContain('Timeout:  1ms');
 });
 
 test('should respect config.snapshotPathTemplate', async ({ runInlineTest }, testInfo) => {

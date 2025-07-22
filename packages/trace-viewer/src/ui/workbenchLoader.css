@@ -65,17 +65,40 @@ body.dark-mode .drop-target {
   cursor: pointer;
 }
 
-.progress {
-  flex: none;
+.progress-dialog {
+  width: 400px;
+  inset: 0;
+  border: none;
+  outline: none;
+  background-color: var(--vscode-sideBar-background);
+}
+
+.progress-dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.progress-content {
+  padding: 16px;
+}
+
+.progress-content .title {
+  /* This is set in common.css */
+  background-color: unset;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 0;
+}
+
+.progress-wrapper {
+  background-color: var(--vscode-commandCenter-activeBackground);
   width: 100%;
-  height: 3px;
-  margin-top: -3px;
-  z-index: 10;
+  margin-top: 16px;
+  margin-bottom: 8px;
 }
 
 .inner-progress {
   background-color: var(--vscode-progressBar-background);
-  height: 100%;
+  height: 4px;
 }
 
 .header {

@@ -513,9 +513,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'fails' }).click();
-      await page.locator('text=stdout').click();
-      await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
-      await page.locator('text=stderr').click();
+      await page.getByText('stdout').click();
+      await expect(page.locator('.attachment-body').nth(0)).toHaveText('First line\nSecond line');
+      await page.getByText('stderr').click();
       await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
     });
 
@@ -620,7 +620,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passes' }).click();
       await page.click('img');
-      await expect(page.locator('.workbench-loader .title')).toHaveText('a.test.js:3 › passes');
+      await expect(page.locator('.progress-dialog')).toBeHidden();
+      await expect(page.locator('.workbench-loader > .header > .title')).toHaveText('a.test.js:3 › passes');
     });
 
     test('should show multi trace source', async ({ runInlineTest, page, server, showReport }) => {
@@ -2960,7 +2961,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByText('my test').click();
-      await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
+      await expect(page.getByTestId('attachments').getByText('stdout')).toHaveCount(1);
     });
 
     test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {

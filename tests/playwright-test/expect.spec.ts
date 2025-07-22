@@ -67,7 +67,8 @@ test('should include custom expect message with web-first assertions', async ({ 
   expect(result.passed).toBe(0);
 
   expect(result.output).toContain('Error: x-foo must be visible');
-  expect(result.output).toContain(`Timed out 1ms waiting for expect(locator).toBeVisible()`);
+  expect(result.output).toContain('expect(locator).toBeVisible() failed');
+  expect(result.output).toContain('Timeout:  1ms');
   expect(result.output).toContain('Call log:');
 });
 
@@ -548,7 +549,8 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
       test('timeout', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
         const error = await expect(page).toHaveURL('data:text/html,<div>B</div>').catch(e => e);
-        expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
+        expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected) failed');
+        expect(stripVTControlCharacters(error.message)).toContain('Timeout: 1000ms');
         expect(error.message).toContain('data:text/html,<div>');
       });
       `,
@@ -567,7 +569,8 @@ test('should support toHaveURL predicate', async ({ runInlineTest }) => {
       test('predicate', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
         const error = await expect(page).toHaveURL(url => url === 'data:text/html,<div>B</div>').catch(e => e);
-        expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
+        expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected) failed');
+        expect(stripVTControlCharacters(error.message)).toContain('Timeout: 1000ms');
         expect(error.message).toContain('data:text/html,<div>');
       });
       `,
@@ -706,7 +709,7 @@ test('should not print timed out error message when test times out', async ({ ru
   expect(result.exitCode).toBe(1);
   const output = result.output;
   expect(output).toContain('Test timeout of 3000ms exceeded');
-  expect(output).not.toContain('Timed out 5000ms waiting for expect');
+  expect(output).not.toContain('Timeout:  5000ms');
   expect(output).toContain(`Error: expect(locator).toHaveText(expected)`);
 });
 
@@ -1020,7 +1023,8 @@ test('should respect timeout from configured expect when used outside of the tes
 
   expect(code).toBe(1);
   expect(stdout).toBe('');
-  expect(stripAnsi(stderr)).toContain('Timed out 10ms waiting for expect(locator).toBeAttached()');
+  expect(stripAnsi(stderr)).toContain('expect(locator).toBeAttached() failed');
+  expect(stripAnsi(stderr)).toContain('Timeout:  10ms');
 });
 
 test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC }) => {

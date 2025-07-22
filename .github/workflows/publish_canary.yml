@@ -3,7 +3,7 @@ name: "publish canary"
 on:
   workflow_dispatch:
   schedule:
-    - cron: "10 0 * * *"
+    - cron: "10 5 * * *"
   push:
     branches:
       - release-*
