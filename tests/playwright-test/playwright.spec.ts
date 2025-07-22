@@ -895,3 +895,19 @@ test('page.pause() should disable test timeout', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.output).toContain('success!');
 });
+
+test('PWDEBUG=console should expose window.playwright', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        await page.setContent('<body></body>');
+        const bodyTag = await page.evaluate(() => window.playwright.$('body').tagName);
+        expect(bodyTag).toBe('BODY');
+      });
+    `,
+  }, {}, { PWDEBUG: 'console' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

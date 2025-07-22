@@ -138,8 +138,12 @@ export abstract class BrowserContext extends SdkObject {
         RecorderApp.showInspectorNoReply(this);
     });
 
-    if (debugMode() === 'console')
-      await this.extendInjectedScript('function Console(injectedScript) { injectedScript.consoleApi.install(); }');
+    if (debugMode() === 'console') {
+      await this.extendInjectedScript(`
+        function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
+        module.exports = { default: () => installConsoleApi };
+      `);
+    }
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
