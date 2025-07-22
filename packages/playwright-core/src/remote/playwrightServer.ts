@@ -292,7 +292,6 @@ export class PlaywrightServer {
     return {
       preLaunchedBrowser: browser,
       socksProxy,
-      sharedBrowser: true,
       denyLaunch: true,
       dispose: async () => {
         await browser.close({ reason: 'Connection terminated' });
