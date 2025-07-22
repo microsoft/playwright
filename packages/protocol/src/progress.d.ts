@@ -38,9 +38,4 @@ export interface Progress {
   raceWithCleanup<T>(promise: Promise<T>, cleanup: (result: T) => any): Promise<T>;
   wait(timeout: number): Promise<void>;
   metadata: CallMetadata;
-
-  // Legacy lenient mode api only. To be removed.
-  legacyDisableTimeout(): void;
-  legacyEnableTimeout(): void;
-  legacySetErrorHandler(handler: (error: Error) => void): void;
 }
