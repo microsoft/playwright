@@ -31,6 +31,7 @@ import type { ClientInstrumentationListener } from '../../playwright-core/src/cl
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
 import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
+import type { Page as PageImpl } from '../../playwright-core/src/client/page';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -664,10 +665,12 @@ class ArtifactsRecorder {
     if (this._pageSnapshot)
       return;
     const page = context.pages()[0];
+    if (!page)
+      return;
 
     try {
       // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
-      this._pageSnapshot = await page?.locator('body').ariaSnapshot({ timeout: 5000 });
+      this._pageSnapshot = await (page as PageImpl)._snapshotForAI({ timeout: 5000 });
     } catch {}
   }
 
