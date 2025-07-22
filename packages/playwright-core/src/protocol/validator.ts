@@ -1454,7 +1454,9 @@ scheme.PagePdfParams = tObject({
 scheme.PagePdfResult = tObject({
   pdf: tBinary,
 });
-scheme.PageSnapshotForAIParams = tOptional(tObject({}));
+scheme.PageSnapshotForAIParams = tObject({
+  timeout: tNumber,
+});
 scheme.PageSnapshotForAIResult = tObject({
   snapshot: tString,
 });
