@@ -100,20 +100,27 @@ export abstract class Browser extends SdkObject {
   async newContext(progress: Progress, options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     let clientCertificatesProxy: ClientCertificatesProxy | undefined;
-    if (options.clientCertificates?.length) {
-      clientCertificatesProxy = await progress.raceWithCleanup(ClientCertificatesProxy.create(options), proxy => proxy.close());
-      options = { ...options };
-      options.proxyOverride = clientCertificatesProxy.proxySettings();
-      options.internalIgnoreHTTPSErrors = true;
+    let context: BrowserContext | undefined;
+    try {
+      if (options.clientCertificates?.length) {
+        clientCertificatesProxy = await ClientCertificatesProxy.create(progress, options);
+        options = { ...options };
+        options.proxyOverride = clientCertificatesProxy.proxySettings();
+        options.internalIgnoreHTTPSErrors = true;
+      }
+      context = await progress.race(this.doCreateNewContext(options));
+      context._clientCertificatesProxy = clientCertificatesProxy;
+      if ((options as any).__testHookBeforeSetStorageState)
+        await progress.race((options as any).__testHookBeforeSetStorageState());
+      if (options.storageState)
+        await context.setStorageState(progress, options.storageState);
+      this.emit(Browser.Events.Context, context);
+      return context;
+    } catch (error) {
+      await context?.close({ reason: 'Failed to create context' }).catch(() => {});
+      await clientCertificatesProxy?.close().catch(() => {});
+      throw error;
     }
-    const context = await progress.raceWithCleanup(this.doCreateNewContext(options), context => context.close({ reason: 'Failed to create context' }));
-    context._clientCertificatesProxy = clientCertificatesProxy;
-    if ((options as any).__testHookBeforeSetStorageState)
-      await progress.race((options as any).__testHookBeforeSetStorageState());
-    if (options.storageState)
-      await context.setStorageState(progress, options.storageState);
-    this.emit(Browser.Events.Context, context);
-    return context;
   }
 
   async newContextForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams): Promise<BrowserContext> {

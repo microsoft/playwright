@@ -141,13 +141,18 @@ export async function harOpen(progress: Progress, harBackends: Map<string, HarBa
   let harBackend: HarBackend;
   if (params.file.endsWith('.zip')) {
     const zipFile = new ZipFile(params.file);
-    const entryNames = await zipFile.entries();
-    const harEntryName = entryNames.find(e => e.endsWith('.har'));
-    if (!harEntryName)
-      return { error: 'Specified archive does not have a .har file' };
-    const har = await progress.raceWithCleanup(zipFile.read(harEntryName), () => zipFile.close());
-    const harFile = JSON.parse(har.toString()) as har.HARFile;
-    harBackend = new HarBackend(harFile, null, zipFile);
+    try {
+      const entryNames = await progress.race(zipFile.entries());
+      const harEntryName = entryNames.find(e => e.endsWith('.har'));
+      if (!harEntryName)
+        return { error: 'Specified archive does not have a .har file' };
+      const har = await progress.race(zipFile.read(harEntryName));
+      const harFile = JSON.parse(har.toString()) as har.HARFile;
+      harBackend = new HarBackend(harFile, null, zipFile);
+    } catch (error) {
+      zipFile.close();
+      throw error;
+    }
   } else {
     const harFile = JSON.parse(await progress.race(fs.promises.readFile(params.file, 'utf-8'))) as har.HARFile;
     harBackend = new HarBackend(harFile, path.dirname(params.file), null);

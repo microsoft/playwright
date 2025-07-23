@@ -78,15 +78,6 @@ export class ProgressController {
         const promises = Array.isArray(promise) ? promise : [promise];
         return Promise.race([...promises, this._forceAbortPromise]);
       },
-      raceWithCleanup: <T>(promise: Promise<T>, cleanup: (result: T) => any) => {
-        return progress.race(promise.then(result => {
-          if (this._state !== 'running')
-            cleanup(result);
-          else
-            this._cleanups.push(() => cleanup(result));
-          return result;
-        }));
-      },
       wait: async (timeout: number) => {
         let timer: NodeJS.Timeout;
         const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
