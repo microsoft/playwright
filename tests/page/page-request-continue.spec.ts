@@ -904,15 +904,6 @@ it('should not forward Host header on cross-origin redirect', {
 }, async ({ page, server, browserName }) => {
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/36719');
 
-  /*
-   * Test flow:
-   *
-   *  page.goto()       302 redirect              200 OK
-   * [localhost] -----> [/redirect] ---------> [other-host/final]
-   *                                              |
-   *                                          check host header
-   *                                          is "other-host"
-   */
   const redirectTargetPath = '/final';
   const redirectSourcePath = '/redirect';
 
@@ -928,7 +919,9 @@ it('should not forward Host header on cross-origin redirect', {
   });
 
   await page.route('**/*', async route => {
-    await route.continue({ headers: route.request().headers() });
+    const headers = route.request().headers();
+    expect(headers).not.toHaveProperty('host');
+    await route.continue({ headers });
   });
 
   const response = await page.goto(server.PREFIX + redirectSourcePath);
