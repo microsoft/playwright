@@ -28,14 +28,13 @@ import type { CallMetadata } from './callMetadata';
 //     In this case, it is important that awaited method has no side effects, for example
 //     it is a read-only browser protocol call.
 //   - In rare cases, when the awaited method does not take a Progress argument,
-//     but it does have side effects such as creating a page -  a proper cleanup
+//     but it does have side effects such as creating a page - a proper cleanup
 //     must be taken in case Progress is aborted before the awaited method finishes.
-//     That's usually done by `progress.raceWithCleanup()` or `progress.cleanupWhenAborted()`.
+//     That's usually done by `progress.cleanupWhenAborted()`.
 export interface Progress {
   log(message: string): void;
   cleanupWhenAborted(cleanup: (error: Error | undefined) => any): void;
   race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
-  raceWithCleanup<T>(promise: Promise<T>, cleanup: (result: T) => any): Promise<T>;
   wait(timeout: number): Promise<void>;
   metadata: CallMetadata;
 }

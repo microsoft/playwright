@@ -528,14 +528,20 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async newPage(progress: Progress, isServerSide: boolean): Promise<Page> {
-    const page = await progress.raceWithCleanup(this.doCreateNewPage(isServerSide), page => page.close());
-    const pageOrError = await progress.race(page.waitForInitializedOrError());
-    if (pageOrError instanceof Page) {
-      if (pageOrError.isClosed())
-        throw new Error('Page has been closed.');
-      return pageOrError;
+    let page: Page | undefined;
+    try {
+      page = await progress.race(this.doCreateNewPage(isServerSide));
+      const pageOrError = await progress.race(page.waitForInitializedOrError());
+      if (pageOrError instanceof Page) {
+        if (pageOrError.isClosed())
+          throw new Error('Page has been closed.');
+        return pageOrError;
+      }
+      throw pageOrError;
+    } catch (error) {
+      await page?.close({ reason: 'Failed to create page' }).catch(() => {});
+      throw error;
     }
-    throw pageOrError;
   }
 
   addVisitedOrigin(origin: string) {

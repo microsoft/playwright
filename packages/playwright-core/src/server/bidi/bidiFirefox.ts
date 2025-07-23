@@ -78,6 +78,7 @@ export class BidiFirefox extends BrowserType {
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+    // Note that it's fine to reuse the transport, since our connection ignores kBrowserCloseMessageId.
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
   }
 

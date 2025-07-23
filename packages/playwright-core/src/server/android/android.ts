@@ -79,8 +79,7 @@ export class Android extends SdkObject {
       newSerials.add(d.serial);
       if (this._devices.has(d.serial))
         continue;
-      const device = await progress.raceWithCleanup(AndroidDevice.create(this, d, options), device => device.close());
-      this._devices.set(d.serial, device);
+      await progress.race(AndroidDevice.create(this, d, options).then(device => this._devices.set(d.serial, device)));
     }
     for (const d of this._devices.keys()) {
       if (!newSerials.has(d))
@@ -152,7 +151,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   async open(progress: Progress, command: string): Promise<SocketBackend> {
-    return await progress.raceWithCleanup(this._backend.open(`${command}`), socket => socket.close());
+    return await this._open(progress, command);
   }
 
   async screenshot(): Promise<Buffer> {
@@ -216,7 +215,7 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')(`Polling the socket localabstract:${socketName}`);
     while (!socket) {
       try {
-        socket = await progress.raceWithCleanup(this._backend.open(`localabstract:${socketName}`), socket => socket.close());
+        socket = await this._open(progress, `localabstract:${socketName}`);
       } catch (e) {
         if (isAbortError(e))
           throw e;
@@ -354,6 +353,21 @@ export class AndroidDevice extends SdkObject {
     return defaultContext;
   }
 
+  private async _open(progress: Progress, command: string): Promise<SocketBackend> {
+    let aborted = false;
+    try {
+      return await progress.race(this._backend.open(command).then(socket => {
+        // Make sure to close the opened socket if progress was aborted before that.
+        if (aborted)
+          socket.close();
+        return socket;
+      }));
+    } catch (error) {
+      aborted = true;
+      throw error;
+    }
+  }
+
   webViews(): channels.AndroidWebView[] {
     return [...this._webViews.values()];
   }
@@ -361,7 +375,7 @@ export class AndroidDevice extends SdkObject {
   async installApk(progress: Progress, content: Buffer, options?: { args?: string[] }): Promise<void> {
     const args = options && options.args ? options.args : ['-r', '-t', '-S'];
     debug('pw:android')('Opening install socket');
-    const installSocket = await progress.raceWithCleanup(this._backend.open(`shell:cmd package install ${args.join(' ')} ${content.length}`), socket => socket.close());
+    const installSocket = await this._open(progress, `shell:cmd package install ${args.join(' ')} ${content.length}`);
     debug('pw:android')('Writing driver bytes: ' + content.length);
     await progress.race(installSocket.write(content));
     const success = await progress.race(new Promise(f => installSocket.on('data', f)));
@@ -370,7 +384,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   async push(progress: Progress, content: Buffer, path: string, mode = 0o644): Promise<void> {
-    const socket = await progress.raceWithCleanup(this._backend.open(`sync:`), socket => socket.close());
+    const socket = await this._open(progress, `sync:`);
     const sendHeader = async (command: string, length: number) => {
       const buffer = Buffer.alloc(command.length + 4);
       buffer.write(command, 0);
