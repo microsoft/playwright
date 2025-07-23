@@ -210,6 +210,39 @@ it('should fill contenteditable with new lines', async ({ page, server, browserN
   expect(await page.locator('div[contenteditable]').innerText()).toBe('John\nDoe');
 });
 
+it('should not double-fill in contenteditable with beforeinput handler in Firefox', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/36715'
+  }
+}, async ({ page, browserName }) => {
+  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/36715');
+
+  await page.setContent(`
+    <div id="editor" contenteditable="true"></div>
+    <script>
+      const editor = document.getElementById('editor');
+      editor.addEventListener('beforeinput', (event) => {
+        event.preventDefault();
+        const value = event.data || '';
+        editor.textContent = value;
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        const range = document.createRange();
+        range.setStart(editor.firstChild, value.length);
+        range.setEnd(editor.firstChild, value.length);
+        selection.addRange(range);
+      });
+    </script>
+  `);
+
+  const locator = page.locator('#editor');
+  const testValue = 'Playwright';
+  await locator.fill(testValue);
+  await expect(locator).toHaveText(testValue);
+});
+
 it('should fill elements with existing value and selection', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
 
