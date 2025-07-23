@@ -329,7 +329,8 @@ class HtmlBuilder {
         const popup = window.open(hmrURL);
         const listener = (evt: MessageEvent) => {
           if (evt.source === popup && evt.data === 'ready') {
-            popup!.postMessage((window as any).playwrightReportBase64, hmrURL.origin);
+            const element = document.getElementById('playwrightReportBase64');
+            popup!.postMessage(element?.textContent ?? '', hmrURL.origin);
             window.removeEventListener('message', listener);
             // This is generally not allowed
             window.close();
@@ -372,7 +373,7 @@ class HtmlBuilder {
   }
 
   private async _writeReportData(filePath: string) {
-    fs.appendFileSync(filePath, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    fs.appendFileSync(filePath, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
     await new Promise(f => {
       this._dataZipFile!.end(undefined, () => {
         this._dataZipFile!.outputStream
@@ -380,7 +381,7 @@ class HtmlBuilder {
             .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
       });
     });
-    fs.appendFileSync(filePath, '";</script>');
+    fs.appendFileSync(filePath, '"</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {
