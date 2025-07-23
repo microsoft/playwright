@@ -895,3 +895,36 @@ it('continue should not change multipart/form-data body', async ({ page, server,
   expect.soft((await reqBefore.postBody).toString('utf8')).toContain(fileContent);
   expect.soft((await reqAfter.postBody).toString('utf8')).toContain(fileContent);
 });
+
+it('should not forward Host header on cross-origin redirect', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/36719'
+  }
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/36719');
+
+  const redirectTargetPath = '/final';
+  const redirectSourcePath = '/redirect';
+
+  let receivedHostHeader: string | undefined;
+  server.setRoute(redirectTargetPath, (req, res) => {
+    receivedHostHeader = req.headers['host'];
+    res.end('OK');
+  });
+
+  server.setRoute(redirectSourcePath, (req, res) => {
+    res.writeHead(302, { location: `${server.CROSS_PROCESS_PREFIX}${redirectTargetPath}` });
+    res.end();
+  });
+
+  await page.route('**/*', async route => {
+    const headers = route.request().headers();
+    expect(headers).not.toHaveProperty('host');
+    await route.continue({ headers });
+  });
+
+  const response = await page.goto(server.PREFIX + redirectSourcePath);
+  expect(response.status()).toBe(200);
+  expect(receivedHostHeader).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
+});
