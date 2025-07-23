@@ -224,15 +224,7 @@ it('should not double-fill in contenteditable with beforeinput handler in Firefo
       const editor = document.getElementById('editor');
       editor.addEventListener('beforeinput', (event) => {
         event.preventDefault();
-        const value = event.data || '';
-        editor.textContent = value;
-
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        const range = document.createRange();
-        range.setStart(editor.firstChild, value.length);
-        range.setEnd(editor.firstChild, value.length);
-        selection.addRange(range);
+        editor.textContent = event.data;
       });
     </script>
   `);
