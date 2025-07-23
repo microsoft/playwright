@@ -286,7 +286,7 @@ export class TestInfoImpl implements TestInfo {
       ...data,
       steps: [],
       attachmentIndices,
-      info: new TestStepInfoImpl(this, stepId),
+      info: new TestStepInfoImpl(this, stepId, data.title, parentStep?.info),
       complete: result => {
         if (step.endWallTime)
           return;
@@ -589,12 +589,16 @@ export class TestStepInfoImpl implements TestStepInfo {
 
   private _testInfo: TestInfoImpl;
   private _stepId: string;
+  private _title: string;
+  private _parentStep?: TestStepInfoImpl;
 
   skip: (arg?: any, description?: string) => void;
 
-  constructor(testInfo: TestInfoImpl, stepId: string) {
+  constructor(testInfo: TestInfoImpl, stepId: string, title: string, parentStep?: TestStepInfoImpl) {
     this._testInfo = testInfo;
     this._stepId = stepId;
+    this._title = title;
+    this._parentStep = parentStep;
     this.skip = wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
       // skip();
       // skip(condition: boolean, description: string);
@@ -626,6 +630,11 @@ export class TestStepInfoImpl implements TestStepInfo {
 
   async attach(name: string, options?: { body?: string | Buffer; contentType?: string; path?: string; }): Promise<void> {
     this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
+  }
+
+  get titlePath(): string[] {
+    const parent = this._parentStep ?? this._testInfo;
+    return [...parent.titlePath, this._title];
   }
 }
 

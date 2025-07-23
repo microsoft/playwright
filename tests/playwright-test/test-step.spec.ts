@@ -1637,6 +1637,38 @@ hook      |After Hooks
 `);
 });
 
+test('step.titlePath works in custom matcher', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36739' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect as baseExpect } from '@playwright/test';
+      const expect = baseExpect.extend({
+        async toHaveTitlePath(receiver, expected: string[]) {
+          return await test.step('get titlepath', async step => {
+            const actual = step.titlePath;
+            try {
+              expect(actual).toEqual(expected);
+              return { name: 'toHaveTitlePath', pass: true, message: '' };
+            } catch {
+              return { name: 'toHaveTitlePath', pass: false, message: () => \`Expected \${JSON.stringify(expected)}, got \${JSON.stringify(actual)}\` };
+            }
+          });
+        },
+      });
+      test('test', async ({ }) => {
+        await expect().toHaveTitlePath(['a.test.ts', 'test', 'toHaveTitlePath', 'get titlepath']);
+        await test.step('outer step', async () => {
+          await expect().toHaveTitlePath(['a.test.ts', 'test', 'outer step', 'toHaveTitlePath', 'get titlepath']);
+          await test.step('inner step', async () => {
+            await expect().toHaveTitlePath(['a.test.ts', 'test', 'outer step', 'inner step', 'toHaveTitlePath', 'get titlepath']);
+          });
+        });
+      });
+      `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+});
+
 test('should differentiate test.skip and step.skip', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,

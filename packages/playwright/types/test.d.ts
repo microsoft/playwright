@@ -9914,6 +9914,11 @@ export interface TestStepInfo {
    * @param description Optional description that will be reflected in a test report.
    */
   skip(condition: boolean, description?: string): void;
+
+  /**
+   * The full title path starting with the test file name, including the step titles.
+   */
+  titlePath: Array<string>;
 }
 
 /**
