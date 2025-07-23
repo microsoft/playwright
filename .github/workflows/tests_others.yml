@@ -134,27 +134,6 @@ jobs:
       env:
         PW_CLOCK: ${{ matrix.clock }}
 
-  test_legacy_progress_timeouts:
-    name: legacy progress timeouts
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
-      contents: read    # This is required for actions/checkout to succeed
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        node-version: 20
-        browsers-to-install: chromium
-        command: npm run test -- --project=chromium-*
-        bot-name: "legacy-progress-timeouts-linux"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PLAYWRIGHT_LEGACY_TIMEOUTS: 1
-
   test_electron:
     name: Electron - ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}

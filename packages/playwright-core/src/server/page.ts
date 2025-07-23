@@ -632,22 +632,6 @@ export class Page extends SdkObject {
         intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
       return false;
     };
-    const handleError = (e: any) => {
-      // Q: Why not throw upon isNonRetriableError(e) as in other places?
-      // A: We want user to receive a friendly diff between actual and expected/previous.
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
-        throw e;
-      let errorMessage = e.message;
-      if (e instanceof TimeoutError && intermediateResult?.previous)
-        errorMessage = `Failed to take two consecutive stable screenshots.`;
-      return {
-        log: compressCallLog(e.message ? [...progress.metadata.log, e.message] : progress.metadata.log),
-        ...intermediateResult,
-        errorMessage,
-        timedOut: (e instanceof TimeoutError),
-      };
-    };
-    progress.legacySetErrorHandler(handleError);
 
     try {
       let actual: Buffer | undefined;
@@ -700,7 +684,19 @@ export class Page extends SdkObject {
       }
       throw new Error(intermediateResult!.errorMessage);
     } catch (e) {
-      return handleError(e);
+      // Q: Why not throw upon isNonRetriableError(e) as in other places?
+      // A: We want user to receive a friendly diff between actual and expected/previous.
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        throw e;
+      let errorMessage = e.message;
+      if (e instanceof TimeoutError && intermediateResult?.previous)
+        errorMessage = `Failed to take two consecutive stable screenshots.`;
+      return {
+        log: compressCallLog(e.message ? [...progress.metadata.log, e.message] : progress.metadata.log),
+        ...intermediateResult,
+        errorMessage,
+        timedOut: (e instanceof TimeoutError),
+      };
     }
   }
 
