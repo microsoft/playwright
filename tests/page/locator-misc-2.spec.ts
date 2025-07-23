@@ -201,3 +201,11 @@ it('should fill programmatically enabled textarea', { annotation: { type: 'issue
   await page.locator('#text').fill('Hello');
   await expect(page.locator('#text')).toHaveValue('Hello');
 });
+
+it('press should throw on unknown keys', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36697' } }, async ({ page, server }) => {
+  await page.setContent(`<input type='text' value='hello' />`);
+  const locator = page.getByRole('textbox');
+  await expect(locator.press('NotARealKey')).rejects.toThrowError(/Unknown key: "NotARealKey"/);
+  await expect(locator.press('ё')).rejects.toThrowError(/Unknown key: "ё"/);
+  await expect(locator.press('😊')).rejects.toThrowError(/Unknown key: "😊"/);
+});
