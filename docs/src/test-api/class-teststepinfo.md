@@ -133,4 +133,4 @@ Optional description that will be reflected in a test report.
 * since: v1.55
 - type: <[Array]<[string]>>
 
-The full title path starting with the test file name, including the step titles.
+The full title path starting with the test file name, including the step titles. See also [`property: TestInfo.titlePath`].

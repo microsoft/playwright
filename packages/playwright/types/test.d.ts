@@ -9916,7 +9916,8 @@ export interface TestStepInfo {
   skip(condition: boolean, description?: string): void;
 
   /**
-   * The full title path starting with the test file name, including the step titles.
+   * The full title path starting with the test file name, including the step titles. See also
+   * [testInfo.titlePath](https://playwright.dev/docs/api/class-testinfo#test-info-title-path).
    */
   titlePath: Array<string>;
 }
