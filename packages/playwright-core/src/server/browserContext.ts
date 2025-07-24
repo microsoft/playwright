@@ -139,10 +139,7 @@ export abstract class BrowserContext extends SdkObject {
     });
 
     if (debugMode() === 'console' || this._options.debugConsoleApi) {
-      await this.extendInjectedScript(`
-        function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
-        module.exports = { default: () => installConsoleApi };
-      `);
+      await this._installConsoleApi();
     }
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
@@ -196,10 +193,7 @@ export abstract class BrowserContext extends SdkObject {
       // Handle debugConsoleApi option change
       if (oldDebugConsoleApi !== params.debugConsoleApi) {
         if (params.debugConsoleApi) {
-          await this.extendInjectedScript(`
-            function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
-            module.exports = { default: () => installConsoleApi };
-          `);
+          await this._installConsoleApi();
         }
       }
     }
@@ -668,6 +662,13 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
+  }
+
+  private async _installConsoleApi() {
+    await this.extendInjectedScript(`
+      function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
+      module.exports = { default: () => installConsoleApi };
+    `);
   }
 
   async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
