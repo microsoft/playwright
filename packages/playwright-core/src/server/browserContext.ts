@@ -194,6 +194,8 @@ export abstract class BrowserContext extends SdkObject {
       if (oldDebugConsoleApi !== params.debugConsoleApi) {
         if (params.debugConsoleApi) {
           await this._installConsoleApi();
+        } else {
+          await this._removeConsoleApi();
         }
       }
     }
@@ -668,6 +670,13 @@ export abstract class BrowserContext extends SdkObject {
     await this.extendInjectedScript(`
       function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
       module.exports = { default: () => installConsoleApi };
+    `);
+  }
+
+  private async _removeConsoleApi() {
+    await this.extendInjectedScript(`
+      function uninstallConsoleApi(injectedScript) { injectedScript.consoleApi.uninstall(); }
+      module.exports = { default: () => uninstallConsoleApi };
     `);
   }
 

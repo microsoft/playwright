@@ -415,3 +415,4 @@ it('should not expose console API by default', async ({ browser }) => {
   
   await context.close();
 });
+
