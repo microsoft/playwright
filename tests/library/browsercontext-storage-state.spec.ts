@@ -74,6 +74,25 @@ it('should set local storage', async ({ contextFactory }) => {
   await context.close();
 });
 
+it('should report good error if the url is not valid', async ({ contextFactory }) => {
+  const error = await contextFactory({
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'foo',
+          localStorage: [{
+            name: 'name1',
+            value: 'value1'
+          }]
+        },
+      ]
+    }
+  }).catch(e => e);
+  expect(error.message).toContain('browser.newContext: Error setting storage state:');
+  expect(error.message).toContain('foo');
+});
+
 it('should round-trip through the file', async ({ contextFactory }, testInfo) => {
   const context = await contextFactory();
   const page1 = await context.newPage();

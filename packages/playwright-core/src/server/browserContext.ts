@@ -25,6 +25,7 @@ import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
 import { mkdirIfNeeded } from './utils/fileUtils';
+import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';
@@ -644,6 +645,9 @@ export abstract class BrowserContext extends SdkObject {
         }
         await page.close();
       }
+    } catch (error) {
+      rewriteErrorMessage(error, `Error setting storage state:\n` + error.message);
+      throw error;
     } finally {
       this._settingStorageState = false;
     }
