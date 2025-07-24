@@ -24,6 +24,7 @@ import { CodeSnippet } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
 import { HeaderView } from './headerView';
+import { clsx } from '@web/uiUtils';
 
 export const TestFilesView: React.FC<{
   tests: TestFileSummary[],
@@ -71,9 +72,19 @@ export const TestFilesHeader: React.FC<{
   if (!report)
     return null;
 
+  const showProject = report.projectNames.length === 1 && !!report.projectNames[0];
+  const isMetadataInTopLine = !showProject && !filteredStats;
+
+  const metadataToggleButton = !isMetadataEmpty(report.metadata) && (
+    <div className={clsx('metadata-toggle', !isMetadataInTopLine && 'metadata-toggle-second-line')} role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
+      {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
+    </div>
+  );
+
   const leftSuperHeader = <div className='test-file-header-info'>
-    {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
+    {showProject && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
     {filteredStats && <div data-testid='filtered-tests-count'>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
+    {isMetadataInTopLine && metadataToggleButton}
   </div>;
 
   const rightSuperHeader = <>
@@ -83,9 +94,7 @@ export const TestFilesHeader: React.FC<{
 
   return <>
     <HeaderView title={report.title} leftSuperHeader={leftSuperHeader} rightSuperHeader={rightSuperHeader} />
-    {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
-      {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
-    </div>}
+    {!isMetadataInTopLine && metadataToggleButton}
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <CodeSnippet key={'test-report-error-message-' + index} code={error}/>)}
