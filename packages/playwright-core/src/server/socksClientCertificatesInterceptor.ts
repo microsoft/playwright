@@ -394,60 +394,85 @@ export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
 }
 
 
-function parseALPNFromClientHello(buffer: Buffer) {
-  if (!buffer || buffer.length < 6)
+/**
+ * Parses the ALPN (Application-Layer Protocol Negotiation) extension from a TLS ClientHello.
+ * Based on RFC 8446 (TLS 1.3): https://datatracker.ietf.org/doc/html/rfc8446
+ */
+function parseALPNFromClientHello(buffer: Buffer): string[] | null {
+  if (buffer.length < 6)
     return null;
 
-  // Check if this is a TLS handshake record (0x16)
+  // --- TLS Record Header (RFC 8446 §5.1) ---
+  // https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
+  // TLSPlaintext.type (1 byte): 0x16 = TLS handshake
   if (buffer[0] !== 0x16)
     return null;
 
-  let offset = 5; // Skip TLS record header (5 bytes)
+  let offset = 5; // TLS record header is 5 bytes
 
-  // Check if this is a ClientHello (0x01)
+  // --- Handshake Header (RFC 8446 §4.1) ---
+  // HandshakeType (1 byte): 0x01 = ClientHello
+  // https://datatracker.ietf.org/doc/html/rfc8446#section-4
   if (buffer[offset] !== 0x01)
     return null;
 
-  offset += 4; // Skip handshake header (4 bytes total)
-  offset += 2; // Skip TLS version (2 bytes)
-  offset += 32; // Skip random (32 bytes)
+  offset += 4; // Handshake header: type (1) + length (3)
 
-  // Skip session ID
+  // --- ClientHello (RFC 8446 §4.1.2) ---
+  // https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.2
+
+  // legacy_version (2 bytes) — always 0x0303 (TLS 1.2 for compatibility)
+  offset += 2;
+  // random (32 bytes)
+  offset += 32;
+
+  // legacy_session_id<0..32> (preceded by 1-byte length)
   if (offset >= buffer.length)
     return null;
   const sessionIdLength = buffer[offset];
   offset += 1 + sessionIdLength;
 
-  // Skip cipher suites
-  if (offset + 1 >= buffer.length)
+  // cipher_suites<2..2^16-2> (preceded by 2-byte length)
+  if (offset + 2 > buffer.length)
     return null;
   const cipherSuitesLength = buffer.readUInt16BE(offset);
   offset += 2 + cipherSuitesLength;
 
-  // Skip compression methods
+  // legacy_compression_methods<1..2^8-1> (preceded by 1-byte length)
   if (offset >= buffer.length)
     return null;
   const compressionMethodsLength = buffer[offset];
   offset += 1 + compressionMethodsLength;
 
-  // Check if we have extensions
-  if (offset + 1 >= buffer.length)
+  // extensions<8..2^16-1> (preceded by 2-byte length)
+  if (offset + 2 > buffer.length)
     return null;
-
   const extensionsLength = buffer.readUInt16BE(offset);
   offset += 2;
 
   const extensionsEnd = offset + extensionsLength;
+  if (extensionsEnd > buffer.length)
+    return null;
 
-  // Parse extensions looking for ALPN (0x0010)
-  while (offset + 3 < extensionsEnd) {
+  // --- Extensions (RFC 8446 §4.2) ---
+  // https://datatracker.ietf.org/doc/html/rfc8446#section-4.2
+  // Each extension is structured as:
+  // - extension_type (2 bytes)
+  // - extension_data length (2 bytes)
+  // - extension_data (variable)
+  while (offset + 4 <= extensionsEnd) {
     const extensionType = buffer.readUInt16BE(offset);
-    const extensionLength = buffer.readUInt16BE(offset + 2);
-    offset += 4;
+    offset += 2;
+    const extensionLength = buffer.readUInt16BE(offset);
+    offset += 2;
 
-    if (extensionType === 0x0010) { // ALPN extension
+    if (offset + extensionLength > extensionsEnd)
+      return null;
+
+    // ALPN extension (RFC 8446 §4.2.11): extension_type = 16
+    // https://datatracker.ietf.org/doc/html/rfc8446#section-4.2
+    if (extensionType === 16)
       return parseALPNExtension(buffer.subarray(offset, offset + extensionLength));
-    }
 
     offset += extensionLength;
   }
@@ -455,25 +480,33 @@ function parseALPNFromClientHello(buffer: Buffer) {
   return null; // No ALPN extension found
 }
 
-function parseALPNExtension(data: Buffer) {
-  if (data.length < 2)
+/**
+ * Parses the ALPN extension data from a ClientHello extension block.
+ *
+ * The ALPN structure is defined in:
+ * - RFC 7301 §3.1: https://datatracker.ietf.org/doc/html/rfc7301#section-3.1
+ */
+function parseALPNExtension(buffer: Buffer): string[] | null {
+  if (buffer.length < 2)
     return null;
 
-  const listLength = data.readUInt16BE(0);
-  if (listLength !== data.length - 2)
+  // protocol_name_list<2..2^16-1> (preceded by 2-byte length)
+  const listLength = buffer.readUInt16BE(0);
+  if (listLength !== buffer.length - 2)
     return null;
 
-  const protocols = [];
+  const protocols: string[] = [];
   let offset = 2;
 
-  while (offset < data.length) {
-    const protocolLength = data[offset];
+  while (offset < buffer.length) {
+    // ProtocolName<1..2^8-1> (preceded by 1-byte length)
+    const protocolLength = buffer[offset];
     offset += 1;
 
-    if (offset + protocolLength > data.length)
+    if (offset + protocolLength > buffer.length)
       break;
 
-    const protocol = data.subarray(offset, offset + protocolLength).toString('utf8');
+    const protocol = buffer.subarray(offset, offset + protocolLength).toString('utf8');
     protocols.push(protocol);
     offset += protocolLength;
   }
