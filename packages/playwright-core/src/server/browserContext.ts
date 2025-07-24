@@ -138,7 +138,7 @@ export abstract class BrowserContext extends SdkObject {
         RecorderApp.showInspectorNoReply(this);
     });
 
-    if (debugMode() === 'console') {
+    if (debugMode() === 'console' || this._options.debugConsoleApi) {
       await this.extendInjectedScript(`
         function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
         module.exports = { default: () => installConsoleApi };
@@ -187,10 +187,21 @@ export abstract class BrowserContext extends SdkObject {
     await this.tracing.resetForReuse(progress);
 
     if (params) {
+      const oldDebugConsoleApi = this._options.debugConsoleApi;
       for (const key of paramsThatAllowContextReuse)
         (this._options as any)[key] = params[key];
       if (params.testIdAttributeName)
         this.selectors().setTestIdAttributeName(params.testIdAttributeName);
+      
+      // Handle debugConsoleApi option change
+      if (oldDebugConsoleApi !== params.debugConsoleApi) {
+        if (params.debugConsoleApi) {
+          await this.extendInjectedScript(`
+            function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
+            module.exports = { default: () => installConsoleApi };
+          `);
+        }
+      }
     }
 
     // Close extra pages early.
@@ -785,6 +796,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'userAgent',
   'viewport',
   'testIdAttributeName',
+  'debugConsoleApi',
 ];
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
@@ -799,4 +811,5 @@ const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   strictSelectors: false,
   serviceWorkers: 'allow',
   locale: 'en-US',
+  debugConsoleApi: false,
 };
