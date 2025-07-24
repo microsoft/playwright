@@ -128,3 +128,9 @@ A skip condition. Test step is skipped when the condition is `true`.
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
+
+## property: TestStepInfo.titlePath
+* since: v1.55
+- type: <[Array]<[string]>>
+
+The full title path starting with the test file name, including the step titles. See also [`property: TestInfo.titlePath`].
