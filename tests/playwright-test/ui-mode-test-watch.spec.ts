@@ -150,6 +150,8 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
+  await page.getByTitle('Watch all').click();
+
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ test
@@ -160,7 +162,6 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
     ▼ ◯ d.test.ts
         ◯ test
   `);
-  await page.getByTitle('Watch all').click();
 
   await writeFiles({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
