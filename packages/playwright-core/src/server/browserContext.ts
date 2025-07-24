@@ -138,12 +138,8 @@ export abstract class BrowserContext extends SdkObject {
         RecorderApp.showInspectorNoReply(this);
     });
 
-    if (debugMode() === 'console') {
-      await this.extendInjectedScript(`
-        function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
-        module.exports = { default: () => installConsoleApi };
-      `);
-    }
+    if (debugMode() === 'console' || this._options.debugConsoleApi)
+      await this._installConsoleApi();
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
@@ -187,10 +183,19 @@ export abstract class BrowserContext extends SdkObject {
     await this.tracing.resetForReuse(progress);
 
     if (params) {
+      const oldDebugConsoleApi = this._options.debugConsoleApi;
       for (const key of paramsThatAllowContextReuse)
         (this._options as any)[key] = params[key];
       if (params.testIdAttributeName)
         this.selectors().setTestIdAttributeName(params.testIdAttributeName);
+
+      // Handle debugConsoleApi option change
+      if (oldDebugConsoleApi !== params.debugConsoleApi) {
+        if (params.debugConsoleApi)
+          await this._installConsoleApi();
+        else
+          await this._removeConsoleApi();
+      }
     }
 
     // Close extra pages early.
@@ -659,6 +664,20 @@ export abstract class BrowserContext extends SdkObject {
     return Promise.all(this.pages().map(installInPage));
   }
 
+  private async _installConsoleApi() {
+    await this.extendInjectedScript(`
+      function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
+      module.exports = { default: () => installConsoleApi };
+    `);
+  }
+
+  private async _removeConsoleApi() {
+    await this.extendInjectedScript(`
+      function uninstallConsoleApi(injectedScript) { injectedScript.consoleApi.uninstall(); }
+      module.exports = { default: () => uninstallConsoleApi };
+    `);
+  }
+
   async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
     await Promise.all(this.pages().map(page => page.safeNonStallingEvaluateInAllFrames(expression, world, options)));
   }
@@ -785,6 +804,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'userAgent',
   'viewport',
   'testIdAttributeName',
+  'debugConsoleApi',
 ];
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
@@ -799,4 +819,5 @@ const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   strictSelectors: false,
   serviceWorkers: 'allow',
   locale: 'en-US',
+  debugConsoleApi: false,
 };
