@@ -100,7 +100,9 @@ export abstract class Browser extends SdkObject {
   async newContext(progress: Progress, options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     let clientCertificatesProxy: ClientCertificatesProxy | undefined;
-    if (options.clientCertificates?.length) {
+    // Empty array is valid for scenarios where a user wants to deny all client certificates. Without, the browser would
+    // show a certificate selection dialog.
+    if (options.clientCertificates !== undefined) {
       clientCertificatesProxy = await progress.raceWithCleanup(ClientCertificatesProxy.create(options), proxy => proxy.close());
       options = { ...options };
       options.proxyOverride = clientCertificatesProxy.proxySettings();
