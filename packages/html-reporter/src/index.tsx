@@ -38,7 +38,7 @@ const ReportLoader: React.FC = () => {
   React.useEffect(() => {
     const zipReport = new ZipReport();
     zipReport.load().then(() => {
-      // Drop node with duplicate data if it exists to free up memory
+      // Drop node after consumption
       document.getElementById('playwrightReportBase64')?.remove();
       setReport(zipReport);
     });
