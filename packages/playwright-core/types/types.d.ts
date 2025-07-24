@@ -9800,6 +9800,15 @@ export interface Browser {
     contrast?: null|"no-preference"|"more";
 
     /**
+     * Whether to enable the Playwright console API in browser contexts. When enabled, provides access to
+     * `window.playwright` object with debugging helper methods. Defaults to `false`.
+     *
+     * This option is useful for debugging and can be enabled independently of debug mode. See
+     * [Browser Developer Tools](https://playwright.dev/docs/debug#browser-developer-tools) for more details about the console API.
+     */
+    debugConsoleApi?: boolean;
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -14883,6 +14892,15 @@ export interface BrowserType<Unused = {}> {
     contrast?: null|"no-preference"|"more";
 
     /**
+     * Whether to enable the Playwright console API in browser contexts. When enabled, provides access to
+     * `window.playwright` object with debugging helper methods. Defaults to `false`.
+     *
+     * This option is useful for debugging and can be enabled independently of debug mode. See
+     * [Browser Developer Tools](https://playwright.dev/docs/debug#browser-developer-tools) for more details about the console API.
+     */
+    debugConsoleApi?: boolean;
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -16708,6 +16726,15 @@ export interface AndroidDevice {
      * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
      */
     contrast?: null|"no-preference"|"more";
+
+    /**
+     * Whether to enable the Playwright console API in browser contexts. When enabled, provides access to
+     * `window.playwright` object with debugging helper methods. Defaults to `false`.
+     *
+     * This option is useful for debugging and can be enabled independently of debug mode. See
+     * [Browser Developer Tools](https://playwright.dev/docs/debug#browser-developer-tools) for more details about the console API.
+     */
+    debugConsoleApi?: boolean;
 
     /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
@@ -22128,6 +22155,15 @@ export interface BrowserContextOptions {
    * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
    */
   contrast?: null|"no-preference"|"more";
+
+  /**
+   * Whether to enable the Playwright console API in browser contexts. When enabled, provides access to
+   * `window.playwright` object with debugging helper methods. Defaults to `false`.
+   *
+   * This option is useful for debugging and can be enabled independently of debug mode. See
+   * [Browser Developer Tools](https://playwright.dev/docs/debug#browser-developer-tools) for more details about the console API.
+   */
+  debugConsoleApi?: boolean;
 
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about

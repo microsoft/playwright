@@ -398,10 +398,10 @@ it('should expose working console API when debugConsoleApi is true', async ({ br
   const context = await browser.newContext({ debugConsoleApi: true } as any);
   const page = await context.newPage();
   await page.setContent('<body></body>');
-  
+
   const bodyTag = await page.evaluate(() => (window as any).playwright.$('body').tagName);
   expect(bodyTag).toBe('BODY');
-  
+
   await context.close();
 });
 
@@ -409,10 +409,9 @@ it('should not expose console API by default', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.setContent('<body></body>');
-  
+
   const hasPlaywrightAPI = await page.evaluate(() => typeof (window as any).playwright !== 'undefined');
   expect(hasPlaywrightAPI).toBe(false);
-  
+
   await context.close();
 });
-

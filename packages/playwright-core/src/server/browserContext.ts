@@ -138,9 +138,8 @@ export abstract class BrowserContext extends SdkObject {
         RecorderApp.showInspectorNoReply(this);
     });
 
-    if (debugMode() === 'console' || this._options.debugConsoleApi) {
+    if (debugMode() === 'console' || this._options.debugConsoleApi)
       await this._installConsoleApi();
-    }
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
@@ -189,14 +188,13 @@ export abstract class BrowserContext extends SdkObject {
         (this._options as any)[key] = params[key];
       if (params.testIdAttributeName)
         this.selectors().setTestIdAttributeName(params.testIdAttributeName);
-      
+
       // Handle debugConsoleApi option change
       if (oldDebugConsoleApi !== params.debugConsoleApi) {
-        if (params.debugConsoleApi) {
+        if (params.debugConsoleApi)
           await this._installConsoleApi();
-        } else {
+        else
           await this._removeConsoleApi();
-        }
       }
     }
 
