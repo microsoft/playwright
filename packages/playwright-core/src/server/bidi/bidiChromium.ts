@@ -82,6 +82,7 @@ export class BidiChromium extends BrowserType {
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+    // Note that it's fine to reuse the transport, since our connection ignores kBrowserCloseMessageId.
     const bidiTransport = (transport as any)[kBidiOverCdpWrapper];
     if (bidiTransport)
       transport = bidiTransport;

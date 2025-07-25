@@ -65,6 +65,7 @@ export class Firefox extends BrowserType {
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+    // Note that it's fine to reuse the transport, since our connection ignores kBrowserCloseMessageId.
     const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
     transport.send(message);
   }

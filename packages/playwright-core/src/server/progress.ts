@@ -78,15 +78,6 @@ export class ProgressController {
         const promises = Array.isArray(promise) ? promise : [promise];
         return Promise.race([...promises, this._forceAbortPromise]);
       },
-      raceWithCleanup: <T>(promise: Promise<T>, cleanup: (result: T) => any) => {
-        return progress.race(promise.then(result => {
-          if (this._state !== 'running')
-            cleanup(result);
-          else
-            this._cleanups.push(() => cleanup(result));
-          return result;
-        }));
-      },
       wait: async (timeout: number) => {
         let timer: NodeJS.Timeout;
         const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
@@ -132,4 +123,20 @@ const kAbortErrorSymbol = Symbol('kAbortError');
 
 export function isAbortError(error: Error): boolean {
   return !!(error as any)[kAbortErrorSymbol];
+}
+
+// Use this method to race some external operation that you really want to undo
+// when it goes beyond the progress abort.
+export async function raceUncancellableOperationWithCleanup<T>(progress: Progress, run: () => Promise<T>, cleanup: (t: T) => void | Promise<unknown>): Promise<T> {
+  let aborted = false;
+  try {
+    return await progress.race(run().then(async t => {
+      if (aborted)
+        await cleanup(t);
+      return t;
+    }));
+  } catch (error) {
+    aborted = true;
+    throw error;
+  }
 }

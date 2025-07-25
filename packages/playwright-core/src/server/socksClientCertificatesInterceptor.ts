@@ -30,6 +30,7 @@ import { createSocket, createTLSSocket } from './utils/happyEyeballs';
 import type * as types from './types';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from './utils/socksProxy';
 import type https from 'https';
+import type { Progress } from '@protocol/progress';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
@@ -294,10 +295,15 @@ export class ClientCertificatesProxy {
     }
   }
 
-  public static async create(contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>) {
+  public static async create(progress: Progress, contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>) {
     const proxy = new ClientCertificatesProxy(contextOptions);
-    await proxy._socksProxy.listen(0, '127.0.0.1');
-    return proxy;
+    try {
+      await progress.race(proxy._socksProxy.listen(0, '127.0.0.1'));
+      return proxy;
+    } catch (error) {
+      await proxy.close();
+      throw error;
+    }
   }
 
   public proxySettings(): types.ProxySettings {
