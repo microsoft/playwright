@@ -20,9 +20,7 @@ import { Download } from './download';
 import { SdkObject } from './instrumentation';
 import { Page } from './page';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
-import { ProgressController } from './progress';
 
-import type { CallMetadata } from './instrumentation';
 import type * as types from './types';
 import type { ProxySettings } from './types';
 import type { RecentLogsCollector } from './utils/debugLogger';
@@ -90,11 +88,6 @@ export abstract class Browser extends SdkObject {
 
   sdkLanguage() {
     return this.options.sdkLanguage || this.attribution.playwright.options.sdkLanguage;
-  }
-
-  newContextFromMetadata(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.newContext(progress, options));
   }
 
   async newContext(progress: Progress, options: types.BrowserContextOptions): Promise<BrowserContext> {

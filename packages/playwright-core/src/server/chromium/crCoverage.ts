@@ -17,6 +17,7 @@
 
 import { assert } from '../../utils';
 import { eventsHelper } from '../utils/eventsHelper';
+import { raceUncancellableOperationWithCleanup } from '../progress';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
@@ -35,8 +36,7 @@ export class CRCoverage {
   }
 
   async startJSCoverage(progress: Progress, options: channels.PageStartJSCoverageParams) {
-    progress.cleanupWhenAborted(() => this._jsCoverage.stop());
-    await progress.race(this._jsCoverage.start(options));
+    await raceUncancellableOperationWithCleanup(progress, () => this._jsCoverage.start(options), () => this._jsCoverage.stop());
   }
 
   async stopJSCoverage(): Promise<channels.PageStopJSCoverageResult> {
@@ -44,8 +44,7 @@ export class CRCoverage {
   }
 
   async startCSSCoverage(progress: Progress, options: channels.PageStartCSSCoverageParams) {
-    progress.cleanupWhenAborted(() => this._cssCoverage.stop());
-    await progress.race(this._cssCoverage.start(options));
+    await raceUncancellableOperationWithCleanup(progress, () => this._cssCoverage.start(options), () => this._cssCoverage.stop());
   }
 
   async stopCSSCoverage(): Promise<channels.PageStopCSSCoverageResult> {

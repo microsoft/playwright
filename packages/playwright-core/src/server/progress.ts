@@ -124,3 +124,19 @@ const kAbortErrorSymbol = Symbol('kAbortError');
 export function isAbortError(error: Error): boolean {
   return !!(error as any)[kAbortErrorSymbol];
 }
+
+// Use this method to race some external operation that you really want to undo
+// when it goes beyond the progress abort.
+export async function raceUncancellableOperationWithCleanup<T>(progress: Progress, run: () => Promise<T>, cleanup: (t: T) => void | Promise<unknown>): Promise<T> {
+  let aborted = false;
+  try {
+    return await progress.race(run().then(async t => {
+      if (aborted)
+        await cleanup(t);
+      return t;
+    }));
+  } catch (error) {
+    aborted = true;
+    throw error;
+  }
+}
