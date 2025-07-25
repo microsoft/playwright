@@ -39,102 +39,10 @@ const it = base.extend<{
 
 it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support for extensions');
 
-it.describe('MV2', () => {
-  it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
-
-  it('should return background pages', async ({ browserType, asset }) => {
-    const extensionPath = asset('extension-mv2-simple');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
-    const backgroundPages = context.backgroundPages();
-    const backgroundPage = backgroundPages.length
-      ? backgroundPages[0]
-      : await context.waitForEvent('backgroundpage');
-    expect(backgroundPage).toBeTruthy();
-    expect(context.backgroundPages()).toContain(backgroundPage);
-    expect(context.pages()).not.toContain(backgroundPage);
-    await context.close();
-    expect(context.pages().length).toBe(0);
-    expect(context.backgroundPages().length).toBe(0);
-  });
-
-  it('should return background pages when recording video', async ({ browserType, asset }, testInfo) => {
-    const extensionPath = asset('extension-mv2-simple');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-      recordVideo: {
-        dir: testInfo.outputPath(''),
-      },
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
-    const backgroundPages = context.backgroundPages();
-    const backgroundPage = backgroundPages.length
-      ? backgroundPages[0]
-      : await context.waitForEvent('backgroundpage');
-    expect(backgroundPage).toBeTruthy();
-    expect(context.backgroundPages()).toContain(backgroundPage);
-    expect(context.pages()).not.toContain(backgroundPage);
-    await context.close();
-  });
-
-  it('should support request/response events when using backgroundPage()', async ({ browserType, asset, server }) => {
-    server.setRoute('/empty.html', (req, res) => {
-      res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
-      res.end(`<span>hello world!</span>`);
-    });
-    const extensionPath = asset('extension-mv2-simple');
-    const extensionOptions = {
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-    };
-    const context = await browserType.launchPersistentContext('', extensionOptions);
-    const backgroundPages = context.backgroundPages();
-    const backgroundPage = backgroundPages.length
-      ? backgroundPages[0]
-      : await context.waitForEvent('backgroundpage');
-    await backgroundPage.waitForURL(/chrome-extension\:\/\/.*/);
-    const [request, response, contextRequest, contextResponse] = await Promise.all([
-      backgroundPage.waitForEvent('request'),
-      backgroundPage.waitForEvent('response'),
-      context.waitForEvent('request'),
-      context.waitForEvent('response'),
-      backgroundPage.evaluate(url => fetch(url, {
-        method: 'POST',
-        body: 'foobar',
-        headers: { 'X-FOOBAR': 'KEKBAR' }
-      }), server.EMPTY_PAGE),
-    ]);
-    expect(request).toBe(contextRequest);
-    expect(response).toBe(contextResponse);
-    expect(request.url()).toBe(server.EMPTY_PAGE);
-    expect(request.method()).toBe('POST');
-    expect(await request.allHeaders()).toEqual(expect.objectContaining({ 'x-foobar': 'KEKBAR' }));
-    expect(request.postData()).toBe('foobar');
-
-    expect(response.status()).toBe(200);
-    expect(response.url()).toBe(server.EMPTY_PAGE);
-    expect(response.request()).toBe(request);
-    expect(await response.text()).toBe('<span>hello world!</span>');
-    expect(await response.allHeaders()).toEqual(expect.objectContaining({ 'x-response-foobar': 'BarFoo' }));
-
-    await context.close();
-  });
-});
-
 it.describe('MV3', () => {
   it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
 
-  it('should return background pages', async ({ launchPersistentContext, asset }) => {
+  it('should give access to the service worker', async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-simple');
     const context = await launchPersistentContext(extensionPath);
     const serviceWorkers = context.serviceWorkers();
@@ -146,7 +54,7 @@ it.describe('MV3', () => {
     expect(context.backgroundPages().length).toBe(0);
   });
 
-  it('should return background pages when recording video', async ({ launchPersistentContext, asset }, testInfo) => {
+  it('should give access to the service worker when recording video', async ({ launchPersistentContext, asset }, testInfo) => {
     const extensionPath = asset('extension-mv3-simple');
     const context = await launchPersistentContext(extensionPath, {
       recordVideo: {
@@ -161,7 +69,7 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('should support request/response events when using backgroundPage()', async ({ launchPersistentContext, asset, server }) => {
+  it('should support request/response events in the service worker', async ({ launchPersistentContext, asset, server }) => {
     it.fixme(true, 'Waiting for https://issues.chromium.org/u/1/issues/407795731 getting fixed.');
     process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
     server.setRoute('/empty.html', (req, res) => {

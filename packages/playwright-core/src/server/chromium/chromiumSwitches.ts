@@ -25,9 +25,6 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'DestroyProfileOnBrowserClose',
   // See https://github.com/microsoft/playwright/pull/13854
   'DialMediaRouteProvider',
-  // Chromium is disabling manifest version 2. Allow testing it as long as Chromium can actually run it.
-  // Disabled in https://chromium-review.googlesource.com/c/chromium/src/+/6265903.
-  'ExtensionManifestV2Disabled',
   'GlobalMediaControls',
   // See https://github.com/microsoft/playwright/pull/27605
   'HttpsUpgrades',
@@ -41,8 +38,6 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'ThirdPartyStoragePartitioning',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
-  // https://chromium-review.googlesource.com/c/chromium/src/+/6711453
-  'ExtensionManifestV2Unsupported',
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
