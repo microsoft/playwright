@@ -200,11 +200,17 @@ export class TestServer {
     this._gzipRoutes.clear();
     this._upgradeCallback = undefined;
     this._wsServer.removeAllListeners('connection');
-    this._server.closeAllConnections();
     const error = new Error('Static Server has been reset');
     for (const subscriber of this._requestSubscribers.values())
       subscriber[rejectSymbol].call(null, error);
     this._requestSubscribers.clear();
+
+    // Ideally, we would like to call `server.closeAllConnections()` to ensure clean state for the next test.
+    //
+    // However, our fetch() tests use Node.js to issue HTTP requests, where http.globalAgent sets keepAlive
+    // to true - and reuses the same connection to the server (same socket) for the next request.
+    //
+    // Thus, if we close connections here, we will get a "Socket hang up" error in the next fetch() test.
   }
 
   _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
