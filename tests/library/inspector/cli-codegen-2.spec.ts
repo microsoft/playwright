@@ -92,15 +92,25 @@ await page.CloseAsync();`);
 
   test('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
+    console.log('Opened recorder');
 
     await recorder.setContentAndWait('');
+    console.log('Set content');
     await page.context().newPage();
+    console.log('Opened new page');
     const errors: any[] = [];
-    recorder.page.on('pageerror', e => errors.push(e));
+    recorder.page.on('pageerror', e => {
+      console.log('Page error', e);
+      errors.push(e);
+    });
     await recorder.page.evaluate(() => document.querySelector('body')!.remove());
+    console.log('Removed body');
     await page.dispatchEvent('html', 'mousemove', { detail: 1 });
+    console.log('Dispatched mousemove');
     await recorder.page.close();
+    console.log('Closed page');
     await recorder.waitForOutput('JavaScript', 'page.close();');
+    console.log('Waited for output');
     expect(errors.length).toBe(0);
   });
 
