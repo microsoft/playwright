@@ -17,6 +17,8 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
+it.fixme(({ channel }) => channel === 'webkit-wsl');
+
 it('should work @smoke', async ({ server, contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
