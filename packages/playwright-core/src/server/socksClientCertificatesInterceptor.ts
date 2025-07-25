@@ -260,6 +260,7 @@ export class ClientCertificatesProxy {
         await connection.connect();
         this._connections.set(payload.uid, connection);
       } catch (error) {
+        debugLogger.log('client-certificates', `Failed to connect to ${payload.host}:${payload.port}: ${error.message}`);
         this._socksProxy.socketFailed({ uid: payload.uid, errorCode: error.code });
       }
     });
