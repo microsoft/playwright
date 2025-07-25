@@ -37,7 +37,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
     setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
-    header={<span>
+    header={<span className='chip-header-allow-selection'>
       {file.fileName}
     </span>}>
     {file.tests.map(test =>

@@ -27,6 +27,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
+}
+
+.chip-header-allow-selection {
+  user-select: text;
 }
 
 .chip-header.expanded-false {
