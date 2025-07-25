@@ -463,6 +463,7 @@ await page1.GotoAsync("about:blank?foo");`);
     await new Promise(resolve => setTimeout(resolve, 2000));
     await cli.process.kill('SIGINT');
     const { exitCode, signal } = await cli.process.exited;
+    console.log(`Process exited with code: ${exitCode}, signal: ${signal}, output: ${cli.text()}`);
     if (exitCode !== null) {
       expect(exitCode).toBe(130);
     } else {
