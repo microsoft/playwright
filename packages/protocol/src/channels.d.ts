@@ -1055,6 +1055,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   userDataDir: string,
   slowMo?: number,
 };
@@ -1138,6 +1139,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -1259,6 +1261,7 @@ export type BrowserNewContextParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1327,6 +1330,7 @@ export type BrowserNewContextOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1398,6 +1402,7 @@ export type BrowserNewContextForReuseParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1466,6 +1471,7 @@ export type BrowserNewContextForReuseOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1601,6 +1607,7 @@ export type BrowserContextInitializer = {
     serviceWorkers?: 'allow' | 'block',
     selectorEngines?: SelectorEngine[],
     testIdAttributeName?: string,
+    debugConsoleApi?: boolean,
   },
 };
 export interface BrowserContextEventTarget {
@@ -4847,6 +4854,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -4913,6 +4921,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  debugConsoleApi?: boolean,
   pkg?: string,
   args?: string[],
   proxy?: {

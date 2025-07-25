@@ -810,6 +810,13 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
 * `'block'`: Playwright will block all registration of Service Workers.
 
+## context-option-debugConsoleApi
+- `debugConsoleApi` <[boolean]>
+
+Whether to enable the Playwright console API in browser contexts. When enabled, provides access to `window.playwright` object with debugging helper methods. Defaults to `false`.
+
+This option is useful for debugging and can be enabled independently of debug mode. See [Browser Developer Tools](../debug.md#browser-developer-tools) for more details about the console API.
+
 ## remove-all-listeners-options-behavior
 * langs: js
 * since: v1.47
@@ -1002,6 +1009,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
 - %%-context-option-service-worker-policy-%%
+- %%-context-option-debugConsoleApi-%%
 
 ## browser-option-args
 - `args` <[Array]<[string]>>
