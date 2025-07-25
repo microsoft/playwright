@@ -246,7 +246,7 @@ class ListReporter extends TerminalReporter {
   private _testPrefix(index: string, statusMark: string) {
     const statusMarkLength = stripAnsiEscapes(statusMark).length;
     const indexLength = Math.ceil(Math.log10(this.totalTestCount));
-    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + this.screen.colors.dim(index.padEnd(indexLength) + ' ');
+    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + this.screen.colors.dim(index.padStart(indexLength) + ' ');
   }
 
   private _retrySuffix(result: TestResult) {
