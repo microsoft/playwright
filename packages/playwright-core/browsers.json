@@ -15,15 +15,15 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1351",
+      "revision": "1353",
       "installByDefault": false,
-      "browserVersion": "140.0.7311.0"
+      "browserVersion": "140.0.7315.0"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1351",
+      "revision": "1353",
       "installByDefault": false,
-      "browserVersion": "140.0.7311.0"
+      "browserVersion": "140.0.7315.0"
     },
     {
       "name": "firefox",
