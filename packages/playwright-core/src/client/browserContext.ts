@@ -486,6 +486,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
+    console.trace('BrowserContext.close');
     if (this._closingStatus !== 'none')
       return;
     this._closeReason = options.reason;

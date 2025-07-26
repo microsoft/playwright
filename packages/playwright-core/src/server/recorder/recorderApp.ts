@@ -87,7 +87,9 @@ export class RecorderApp {
 
         const uri = route.request().url().substring('https://playwright/'.length);
         const file = require.resolve('../../vite/recorder/' + uri);
+        console.log(new Date(), 'readFile:' + file);
         fs.promises.readFile(file).then(buffer => {
+          console.log(new Date(), 'fulfill:' + file);
           route.fulfill({
             status: 200,
             headers: [

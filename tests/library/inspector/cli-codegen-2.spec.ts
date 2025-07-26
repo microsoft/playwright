@@ -90,14 +90,22 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  test('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
+  test.only('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait('');
     await page.context().newPage();
     const errors: any[] = [];
     recorder.page.on('pageerror', e => errors.push(e));
-    await recorder.page.evaluate(() => document.querySelector('body')!.remove());
+    await recorder.page.evaluate(() => {
+      console.log('evaluating');
+      const body = document.querySelector('body');
+      if (body)
+        console.log('there is a body');
+      else
+        console.log('there is no body');
+      return body!.remove();
+    });
     await page.dispatchEvent('html', 'mousemove', { detail: 1 });
     await recorder.page.close();
     await recorder.waitForOutput('JavaScript', 'page.close();');
