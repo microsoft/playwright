@@ -463,7 +463,6 @@ await page1.GotoAsync("about:blank?foo");`);
     await new Promise(resolve => setTimeout(resolve, 2000));
     await cli.process.kill('SIGINT');
     const { exitCode, signal } = await cli.process.exited;
-    console.log(`Process exited with code: ${exitCode}, signal: ${signal}, output: ${cli.text()}`);
     if (exitCode !== null) {
       // 130 is the expected SIGINT exit code. Like below, the exit code can also be 1 if the runner is slow enough to require forcible termination via SIGKILL.
       expect([130, 1]).toContain(exitCode);
