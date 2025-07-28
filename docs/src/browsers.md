@@ -906,7 +906,7 @@ npx playwright install
 ```
 
 ```bash tab=bash-bash lang=python
-PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" pip install playwright
+pip install playwright
 PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" playwright install
 ```
 
