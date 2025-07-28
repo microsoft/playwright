@@ -7007,9 +7007,6 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Client certificate authentication is only active when at least one client certificate is provided. If you want to
-   * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
-   * does not match any of the domains you plan to visit.
    */
   clientCertificates: ClientCertificate[] | undefined;
   /**
