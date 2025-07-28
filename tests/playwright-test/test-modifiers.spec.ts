@@ -756,3 +756,21 @@ test('should skip beforeEach hooks upon modifiers', async ({ runInlineTest }) =>
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(1);
 });
+
+test('should skip if TestSkipError surfaces via unhandled exception', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36783' } }, async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test', async ({ page }) => {
+        page.on("response", (response) => {
+          test.skip();
+        });
+        await page.goto("${server.EMPTY_PAGE}").catch(() => {});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.passed).toBe(0);
+});

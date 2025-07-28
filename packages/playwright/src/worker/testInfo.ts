@@ -360,6 +360,11 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _failWithError(error: Error | unknown) {
+    if (this._allowSkips && (error instanceof TestSkipError)) {
+      if (this.status === 'passed')
+        this.status = 'skipped';
+      return;
+    }
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);
@@ -387,19 +392,14 @@ export class TestInfoImpl implements TestInfo {
         try {
           await cb();
         } catch (e) {
-          if (this._allowSkips && (e instanceof TestSkipError)) {
-            if (this.status === 'passed')
-              this.status = 'skipped';
-          } else {
-            // Unfortunately, we have to handle user errors and timeout errors differently.
-            // Consider the following scenario:
-            // - locator.click times out
-            // - all steps containing the test function finish with TimeoutManagerError
-            // - test finishes, the page is closed and this triggers locator.click error
-            // - we would like to present the locator.click error to the user
-            // - therefore, we need a try/catch inside the "run with timeout" block and capture the error
-            this._failWithError(e);
-          }
+          // Unfortunately, we have to handle user errors and timeout errors differently.
+          // Consider the following scenario:
+          // - locator.click times out
+          // - all steps containing the test function finish with TimeoutManagerError
+          // - test finishes, the page is closed and this triggers locator.click error
+          // - we would like to present the locator.click error to the user
+          // - therefore, we need a try/catch inside the "run with timeout" block and capture the error
+          this._failWithError(e);
           throw e;
         }
       });
