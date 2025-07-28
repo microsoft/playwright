@@ -984,7 +984,7 @@ scheme.BrowserContextRecorderEventEvent = tObject({
   event: tEnum(['actionAdded', 'actionUpdated', 'signalAdded']),
   data: tAny,
   page: tChannel(['Page']),
-  code: tArray(tString),
+  code: tString,
 });
 scheme.BrowserContextAddCookiesParams = tObject({
   cookies: tArray(tType('SetNetworkCookie')),

@@ -81,10 +81,22 @@ function isSameSelector(action: actions.ActionInContext, lastAction: actions.Act
   return 'selector' in action.action && 'selector' in lastAction.action && action.action.selector === lastAction.action.selector;
 }
 
+function isShortlyAfter(action: actions.ActionInContext, lastAction: actions.ActionInContext): boolean {
+  return action.startTime - lastAction.startTime < 500;
+}
+
 export function shouldMergeAction(action: actions.ActionInContext, lastAction: actions.ActionInContext | undefined): boolean {
   if (!lastAction)
     return false;
-  return isSameAction(action, lastAction) && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector(action, lastAction)));
+  switch (action.action.name) {
+    case 'fill':
+      return isSameAction(action, lastAction) && isSameSelector(action, lastAction);
+    case 'navigate':
+      return isSameAction(action, lastAction);
+    case 'click':
+      return isSameAction(action, lastAction) && isSameSelector(action, lastAction) && isShortlyAfter(action, lastAction) && action.action.clickCount > (lastAction.action as actions.ClickAction).clickCount;
+  }
+  return false;
 }
 
 export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {

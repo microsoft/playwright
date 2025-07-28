@@ -41,7 +41,7 @@ export interface RecorderDelegate {
 }
 
 interface RecorderTool {
-  cursor(): string;
+  cursor?(): string;
   install?(): void;
   uninstall?(): void;
   onClick?(event: MouseEvent): void;
@@ -63,9 +63,6 @@ interface RecorderTool {
 }
 
 class NoneTool implements RecorderTool {
-  cursor() {
-    return 'default';
-  }
 }
 
 class InspectTool implements RecorderTool {
@@ -633,10 +630,6 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder = recorder;
   }
 
-  cursor() {
-    return 'pointer';
-  }
-
   onClick(event: MouseEvent) {
     // in webkit, sliding a range element may trigger a click event with a different target if the mouse is released outside the element bounding box.
     // So we check the hovered element instead, and if it is a range input, we skip click handling
@@ -676,13 +669,8 @@ class JsonRecordActionTool implements RecorderTool {
     });
   }
 
-  onDblClick(event: MouseEvent) {
+  onContextMenu(event: MouseEvent): void {
     const element = this._recorder.deepEventTarget(event);
-    if (isRangeInput(element))
-      return;
-    if (this._shouldIgnoreMouseEvent(event))
-      return;
-
     const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     this._recorder.recordAction({
       name: 'click',
@@ -691,9 +679,9 @@ class JsonRecordActionTool implements RecorderTool {
       ariaSnapshot,
       position: positionForEvent(event),
       signals: [],
-      button: buttonForEvent(event),
+      button: 'right',
       modifiers: modifiersForEvent(event),
-      clickCount: event.detail,
+      clickCount: 1,
     });
   }
 
@@ -1351,7 +1339,9 @@ export class Recorder {
     this.clearHighlight();
     this._currentTool = newTool;
     this._currentTool.install?.();
-    this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
+    const cursor = newTool.cursor?.();
+    if (cursor)
+      this.injectedScript.document.body?.setAttribute('data-pw-cursor', cursor);
   }
 
   setUIState(state: UIState, delegate: RecorderDelegate) {

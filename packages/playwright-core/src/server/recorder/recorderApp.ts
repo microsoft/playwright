@@ -384,14 +384,14 @@ export class ProgrammaticRecorderApp {
         return;
       const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
       if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
       else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
       lastAction = action;
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
       const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: [] });
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
     });
   }
 }

@@ -50,8 +50,8 @@ import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 
 interface RecorderEventSink {
-  actionAdded?(page: Page, actionInContext: actions.ActionInContext, code: string[]): void;
-  actionUpdated?(page: Page, actionInContext: actions.ActionInContext, code: string[]): void;
+  actionAdded?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
+  actionUpdated?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
   signalAdded?(page: Page, signal: actions.SignalInContext): void;
 }
 
