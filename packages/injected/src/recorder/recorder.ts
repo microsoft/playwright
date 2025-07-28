@@ -650,12 +650,13 @@ class JsonRecordActionTool implements RecorderTool {
       return;
 
     const checkbox = asCheckbox(element);
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     if (checkbox && event.detail === 1) {
       // Interestingly, inputElement.checked is reversed inside this event handler.
       this._recorder.recordAction({
         name: checkbox.checked ? 'check' : 'uncheck',
         selector,
+        ref,
         signals: [],
         ariaSnapshot,
       });
@@ -665,6 +666,7 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder.recordAction({
       name: 'click',
       selector,
+      ref,
       ariaSnapshot,
       position: positionForEvent(event),
       signals: [],
@@ -681,27 +683,29 @@ class JsonRecordActionTool implements RecorderTool {
     if (this._shouldIgnoreMouseEvent(event))
       return;
 
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     this._recorder.recordAction({
       name: 'click',
       selector,
+      ref,
       ariaSnapshot,
       position: positionForEvent(event),
       signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
-      clickCount: event.detail
+      clickCount: event.detail,
     });
   }
 
   onInput(event: Event) {
     const element = this._recorder.deepEventTarget(event);
 
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     if (isRangeInput(element)) {
       this._recorder.recordAction({
         name: 'fill',
         selector,
+        ref,
         ariaSnapshot,
         signals: [],
         text: element.value,
@@ -717,6 +721,7 @@ class JsonRecordActionTool implements RecorderTool {
 
       this._recorder.recordAction({
         name: 'fill',
+        ref,
         selector,
         ariaSnapshot,
         signals: [],
@@ -730,6 +735,7 @@ class JsonRecordActionTool implements RecorderTool {
       this._recorder.recordAction({
         name: 'select',
         selector,
+        ref,
         ariaSnapshot,
         options: [...selectElement.selectedOptions].map(option => option.value),
         signals: []
@@ -743,7 +749,7 @@ class JsonRecordActionTool implements RecorderTool {
       return;
 
     const element = this._recorder.deepEventTarget(event);
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
 
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
@@ -752,6 +758,7 @@ class JsonRecordActionTool implements RecorderTool {
         this._recorder.recordAction({
           name: checkbox.checked ? 'uncheck' : 'check',
           selector,
+          ref,
           ariaSnapshot,
           signals: [],
         });
@@ -762,6 +769,7 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder.recordAction({
       name: 'press',
       selector,
+      ref,
       ariaSnapshot,
       signals: [],
       key: event.key,
@@ -819,12 +827,12 @@ class JsonRecordActionTool implements RecorderTool {
     return false;
   }
 
-  private _ariaSnapshot(element: HTMLElement): { ariaSnapshot: string, selector: string };
-  private _ariaSnapshot(element: HTMLElement | undefined): { ariaSnapshot: string, selector?: string } {
+  private _ariaSnapshot(element: HTMLElement): { ariaSnapshot: string, selector: string, ref?: string };
+  private _ariaSnapshot(element: HTMLElement | undefined): { ariaSnapshot: string, selector?: string, ref?: string } {
     const { ariaSnapshot, refs } = this._recorder.injectedScript.ariaSnapshotForRecorder();
     const ref = element ? refs.get(element) : undefined;
-    const selector = ref ? `aria-ref=${ref}` : undefined;
-    return { ariaSnapshot, selector };
+    const elementInfo = element ? this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : undefined;
+    return { ariaSnapshot, selector: elementInfo?.selector, ref };
   }
 }
 
