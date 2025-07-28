@@ -54,9 +54,10 @@ it('should fire for fetches with keepalive: true', {
   expect(requests.length).toBe(2);
 });
 
-it('should report requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron }) => {
+it('should report requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron, channel }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
+  it.fixme(channel === 'webkit-wsl');
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
@@ -82,10 +83,11 @@ it('should report requests and responses handled by service worker', async ({ pa
   expect(await failedRequest.response()).toBe(null);
 });
 
-it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, browserName, platform }) => {
+it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, browserName, platform, channel }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
   it.fixme(mode.startsWith('service') && platform === 'linux', 'Times out for no clear reason');
+  it.fixme(channel === 'webkit-wsl');
 
   const interceptedUrls = [];
   await page.route('**/*', route => {
@@ -120,8 +122,9 @@ it('should report requests and responses handled by service worker with routing'
   expect(interceptedUrls).toEqual(expectedUrls);
 });
 
-it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, browserName }) => {
+it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, browserName, channel }) => {
   it.fixme(isAndroid);
+  it.fixme(channel === 'webkit-wsl');
 
   await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');
   await page.evaluate(() => window['activationPromise']);
@@ -148,8 +151,9 @@ it('should report navigation requests and responses handled by service worker', 
   }
 });
 
-it('should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, browserName }) => {
+it('should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, browserName, channel }) => {
   it.fixme(isAndroid);
+  it.fixme(channel === 'webkit-wsl');
 
   await page.route('**/*', route => route.continue());
   await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');

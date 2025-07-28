@@ -61,8 +61,9 @@ it('should throw if page argument is passed', async ({ browserType, browserName 
   expect(waitError!.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, isWindows }) => {
+it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, isWindows, channel }) => {
   it.skip(mode.startsWith('service'));
+  it.skip(channel === 'webkit-wsl');
 
   let waitError: Error | undefined;
   await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
