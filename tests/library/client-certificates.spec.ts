@@ -393,7 +393,7 @@ test.describe('browser', () => {
   });
 
   test('should pass with matching certificates and when a http proxy is used from config but env is there', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
-    process.env.HTTPS_PROXY = `http://this-should-not-taken-into-account:424242`;
+    process.env.HTTPS_PROXY = `http://this-should-not-taken-into-account:4242`;
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
     const page = await browser.newPage({
