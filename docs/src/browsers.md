@@ -888,7 +888,7 @@ pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ## Using a pre-installed Node.js
-
+* langs: python, java, dotnet
 By default, Playwright uses its bundled Node.js runtime for certain operations. If you want Playwright to use a pre-installed Node.js binary instead, you can specify it using the `PLAYWRIGHT_NODEJS_PATH` environment variable.
 
 ```bash tab=bash-bash lang=js
