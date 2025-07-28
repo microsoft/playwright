@@ -41,6 +41,21 @@
   align-items: center;
 }
 
+.test-file-details-row-items {
+  display: flex;
+  height: 16px;
+}
+
+.test-file-details-row-items > .link-badge {
+  /* Align badges */
+  margin-top: -2px;
+}
+
+.test-file-details-row-items > .trace-link {
+  /* Center in row */
+  margin-top: -4px;
+}
+
 .test-file-path {
   text-overflow: ellipsis;
   overflow: hidden;
