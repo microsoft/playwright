@@ -1179,8 +1179,8 @@ export class Frame extends SdkObject {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._blur(progress)));
   }
 
-  async resolveSelector(progress: Progress, selector: string): Promise<{ resolvedSelector: string }> {
-    const element = await progress.race(this.selectors.query(selector));
+  async resolveSelector(progress: Progress, selector: string, options: { mainWorld?: boolean } = {}): Promise<{ resolvedSelector: string }> {
+    const element = await progress.race(this.selectors.query(selector, options));
     if (!element)
       throw new Error(`No element matching ${selector}`);
 

@@ -517,4 +517,61 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
     expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
   });
+
+  test('should auto-generate toBeVisible', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <button id=one>one</button>
+      <div id=insertion></div>
+      <button id=two>two</button>
+      <script>
+        const one = document.getElementById('one');
+        const insertion = document.getElementById('insertion');
+        one.addEventListener('click', () => {
+          insertion.innerHTML = '<h2>new header</h2>';
+          console.log('clicked one');
+        });
+        two.addEventListener('click', () => {
+          console.log('clicked two');
+        });
+      </script>
+    `);
+
+    const locatorOne = await recorder.hoverOverElement('#one');
+    expect(locatorOne).toBe(`getByRole('button', { name: 'one' })`);
+    await Promise.all([
+      page.waitForEvent('console', msg => msg.text() === 'clicked one'),
+      recorder.waitForOutput('JavaScript', 'one'),
+      recorder.trustedClick(),
+    ]);
+
+    const locatorTwo = await recorder.hoverOverElement('#two');
+    expect(locatorTwo).toBe(`getByRole('button', { name: 'two' })`);
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'two'),
+      page.waitForEvent('console', msg => msg.text() === 'clicked two'),
+      recorder.trustedClick(),
+    ]);
+
+    expect.soft(sources.get('Playwright Test')!.text).toContain(`
+  await expect(page.getByRole('heading', { name: 'new header' })).toBeVisible();
+  await page.getByRole('button', { name: 'two' }).click();`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    expect(page.get_by_role("heading", name="new header")).to_be_visible()
+    page.get_by_role("button", name="two").click()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await expect(page.get_by_role("heading", name="new header")).to_be_visible()
+    await page.get_by_role("button", name="two").click()`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("new header"))).isVisible();
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("two")).click();`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "new header" })).ToBeVisibleAsync();
+await page.GetByRole(AriaRole.Button, new() { Name = "two" }).ClickAsync();`);
+  });
 });
