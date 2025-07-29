@@ -39,7 +39,10 @@ test('should render counters', async ({ mount }) => {
   await expect(component).toMatchAriaSnapshot(`
     - navigation:
       - link "All90"
-      - text: Passed42 Failed31 Flaky17 Skipped10
+      - link "Passed42"
+      - link "Failed31"
+      - link "Flaky17"
+      - link "Skipped10"
   `);
 });
 
