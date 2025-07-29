@@ -334,10 +334,14 @@ export abstract class BrowserContext extends SdkObject {
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     binding.forClient = forClient;
     this._pageBindings.set(name, binding);
-    progress.cleanupWhenAborted(() => this._pageBindings.delete(name));
-    await progress.race(this.doAddInitScript(binding.initScript));
-    await progress.race(this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main'));
-    return binding;
+    try {
+      await progress.race(this.doAddInitScript(binding.initScript));
+      await progress.race(this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main'));
+      return binding;
+    } catch (error) {
+      this._pageBindings.delete(name);
+      throw error;
+    }
   }
 
   async removeExposedBindings(bindings: PageBinding[]) {
@@ -370,21 +374,27 @@ export abstract class BrowserContext extends SdkObject {
   async setExtraHTTPHeaders(progress: Progress, headers: types.HeadersArray) {
     const oldHeaders = this._options.extraHTTPHeaders;
     this._options.extraHTTPHeaders = headers;
-    progress.cleanupWhenAborted(async () => {
+    try {
+      await progress.race(this.doUpdateExtraHTTPHeaders());
+    } catch (error) {
       this._options.extraHTTPHeaders = oldHeaders;
-      await this.doUpdateExtraHTTPHeaders();
-    });
-    await progress.race(this.doUpdateExtraHTTPHeaders());
+      // Note: no await, headers will be reset in the background as soon as possible.
+      this.doUpdateExtraHTTPHeaders().catch(() => {});
+      throw error;
+    }
   }
 
   async setOffline(progress: Progress, offline: boolean) {
     const oldOffline = this._options.offline;
     this._options.offline = offline;
-    progress.cleanupWhenAborted(async () => {
+    try {
+      await progress.race(this.doUpdateOffline());
+    } catch (error) {
       this._options.offline = oldOffline;
-      await this.doUpdateOffline();
-    });
-    await progress.race(this.doUpdateOffline());
+      // Note: no await, offline will be reset in the background as soon as possible.
+      this.doUpdateOffline().catch(() => {});
+      throw error;
+    }
   }
 
   async _loadDefaultContextAsIs(progress: Progress): Promise<Page | undefined> {
@@ -442,13 +452,18 @@ export abstract class BrowserContext extends SdkObject {
   async addInitScript(progress: Progress | undefined, source: string) {
     const initScript = new InitScript(source);
     this.initScripts.push(initScript);
-    progress?.cleanupWhenAborted(() => this.removeInitScripts([initScript]));
-    const promise = this.doAddInitScript(initScript);
-    if (progress)
-      await progress.race(promise);
-    else
-      await promise;
-    return initScript;
+    try {
+      const promise = this.doAddInitScript(initScript);
+      if (progress)
+        await progress.race(promise);
+      else
+        await promise;
+      return initScript;
+    } catch (error) {
+      // Note: no await, init script will be removed in the background as soon as possible.
+      this.removeInitScripts([initScript]).catch(() => {});
+      throw error;
+    }
   }
 
   async removeInitScripts(initScripts: InitScript[]) {
@@ -528,14 +543,19 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async newPage(progress: Progress, isServerSide: boolean): Promise<Page> {
-    const page = await progress.raceWithCleanup(this.doCreateNewPage(isServerSide), page => page.close());
-    const pageOrError = await progress.race(page.waitForInitializedOrError());
-    if (pageOrError instanceof Page) {
-      if (pageOrError.isClosed())
-        throw new Error('Page has been closed.');
-      return pageOrError;
+    const page = await progress.race(this.doCreateNewPage(isServerSide));
+    try {
+      const pageOrError = await progress.race(page.waitForInitializedOrError());
+      if (pageOrError instanceof Page) {
+        if (pageOrError.isClosed())
+          throw new Error('Page has been closed.');
+        return pageOrError;
+      }
+      throw pageOrError;
+    } catch (error) {
+      await page.close({ reason: 'Failed to create page' }).catch(() => {});
+      throw error;
     }
-    throw pageOrError;
   }
 
   addVisitedOrigin(origin: string) {
@@ -574,17 +594,20 @@ export abstract class BrowserContext extends SdkObject {
     // If there are still origins to save, create a blank page to iterate over origins.
     if (originsToSave.size)  {
       const page = await this.newPage(progress, true);
-      await page.addRequestInterceptor(progress, route => {
-        route.fulfill({ body: '<html></html>' }).catch(() => {});
-      }, 'prepend');
-      for (const origin of originsToSave) {
-        const frame = page.mainFrame();
-        await frame.gotoImpl(progress, origin, {});
-        const storage: SerializedStorage = await progress.race(frame.evaluateExpression(collectScript, { world: 'utility' }));
-        if (storage.localStorage.length || storage.indexedDB?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
+      try {
+        await page.addRequestInterceptor(progress, route => {
+          route.fulfill({ body: '<html></html>' }).catch(() => {});
+        }, 'prepend');
+        for (const origin of originsToSave) {
+          const frame = page.mainFrame();
+          await frame.gotoImpl(progress, origin, {});
+          const storage: SerializedStorage = await progress.race(frame.evaluateExpression(collectScript, { world: 'utility' }));
+          if (storage.localStorage.length || storage.indexedDB?.length)
+            result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
+        }
+      } finally {
+        await page.close();
       }
-      await page.close();
     }
     return result;
   }
@@ -602,20 +625,20 @@ export abstract class BrowserContext extends SdkObject {
     const interceptor = (route: network.Route) => {
       route.fulfill({ body: '<html></html>' }).catch(() => {});
     };
-
-    progress.cleanupWhenAborted(() => page.removeRequestInterceptor(interceptor));
     await page.addRequestInterceptor(progress, interceptor, 'prepend');
 
-    for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
-      const frame = page.mainFrame();
-      await frame.gotoImpl(progress, origin, {});
-      await progress.race(frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin)));
+    try {
+      for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
+        const frame = page.mainFrame();
+        await frame.gotoImpl(progress, origin, {});
+        await progress.race(frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin)));
+      }
+
+      this._origins = new Set([...newOrigins.keys()]);
+      // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
+    } finally {
+      await page.removeRequestInterceptor(interceptor);
     }
-
-    await page.removeRequestInterceptor(interceptor);
-
-    this._origins = new Set([...newOrigins.keys()]);
-    // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
   }
 
   isSettingStorageState(): boolean {
@@ -623,12 +646,13 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async setStorageState(progress: Progress, state: NonNullable<channels.BrowserNewContextParams['storageState']>) {
+    let page: Page | undefined;
     this._settingStorageState = true;
     try {
       if (state.cookies)
         await progress.race(this.addCookies(state.cookies));
       if (state.origins && state.origins.length)  {
-        const page = await this.newPage(progress, true);
+        page = await this.newPage(progress, true);
         await page.addRequestInterceptor(progress, route => {
           route.fulfill({ body: '<html></html>' }).catch(() => {});
         }, 'prepend');
@@ -643,12 +667,12 @@ export abstract class BrowserContext extends SdkObject {
           })()`;
           await progress.race(frame.evaluateExpression(restoreScript, { world: 'utility' }));
         }
-        await page.close();
       }
     } catch (error) {
       rewriteErrorMessage(error, `Error setting storage state:\n` + error.message);
       throw error;
     } finally {
+      await page?.close();
       this._settingStorageState = false;
     }
   }
