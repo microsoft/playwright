@@ -46,7 +46,7 @@ function normalizeCode(code: string): string {
   return code.replace(/\s+/g, ' ').trim();
 }
 
-test('should click', async ({ context }) => {
+test('should click', async ({ context, browserName }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
@@ -59,7 +59,7 @@ test('should click', async ({ context }) => {
         name: 'click',
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
-        ariaSnapshot: '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: `- button "Submit"${browserName === 'webkit' ? '' : ' [active]'} [ref=e2]`,
       }),
       startTime: expect.any(Number),
     })
@@ -68,7 +68,7 @@ test('should click', async ({ context }) => {
   expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
 });
 
-test('should double click', async ({ context }) => {
+test('should double click', async ({ context, browserName }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')" ondblclick="console.log('dblclick')">Submit</button>`);
@@ -82,7 +82,7 @@ test('should double click', async ({ context }) => {
         clickCount: 2,
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
-        ariaSnapshot: '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: `- button "Submit"${browserName === 'webkit' ? '' : ' [active]'} [ref=e2]`,
       }),
       startTime: expect.any(Number),
     })
@@ -91,7 +91,7 @@ test('should double click', async ({ context }) => {
   expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
 });
 
-test('should right click', async ({ context }) => {
+test('should right click', async ({ context, browserName }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button oncontextmenu="console.log('contextmenu')">Submit</button>`);
@@ -105,7 +105,7 @@ test('should right click', async ({ context }) => {
         button: 'right',
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
-        ariaSnapshot: '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: `- button "Submit"${browserName === 'webkit' ? '' : ' [active]'} [ref=e2]`,
       }),
       startTime: expect.any(Number),
     })
