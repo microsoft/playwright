@@ -37,7 +37,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
     setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
-    header={<span>
+    header={<span className='chip-header-allow-selection'>
       {file.fileName}
     </span>}>
     {file.tests.map(test =>
@@ -59,12 +59,14 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
           <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
         </div>
         <div className='test-file-details-row'>
-          <Link href={testResultHref({ test })} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
-            <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
-          </Link>
-          {imageDiffBadge(test)}
-          {videoBadge(test)}
-          <TraceLink test={test} dim={true} />
+          <div className='test-file-details-row-items'>
+            <Link href={testResultHref({ test })} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
+              <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
+            </Link>
+            {imageDiffBadge(test)}
+            {videoBadge(test)}
+            <TraceLink test={test} dim={true} />
+          </div>
         </div>
       </div>
     )}

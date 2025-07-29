@@ -765,14 +765,6 @@ LocalUtils:
       parameters:
         stacksId: string
 
-    globToRegex:
-      internal: true
-      parameters:
-        glob: string
-        baseURL: string?
-        webSocketUrl: boolean?
-      returns:
-        regex: string
 
 Root:
   type: interface
@@ -892,14 +884,6 @@ DebugController:
       parameters:
         enabled: boolean
 
-    resetForReuse:
-      internal: true
-
-    navigate:
-      internal: true
-      parameters:
-        url: string
-
     setRecorderMode:
       internal: true
       parameters:
@@ -924,9 +908,6 @@ DebugController:
       internal: true
 
     kill:
-      internal: true
-
-    closeAllBrowsers:
       internal: true
 
   events:
@@ -1549,6 +1530,7 @@ BrowserContext:
           - signalAdded
         data: json
         page: Page
+        code: string
 
 Page:
   type: interface

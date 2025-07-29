@@ -35,7 +35,7 @@ import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
-import { ProgrammaticRecorderApp, RecorderApp } from '../recorder/recorderApp';
+import { RecorderApp } from '../recorder/recorderApp';
 
 import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
@@ -200,8 +200,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
     });
-    this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page }) => {
-      this._dispatchEvent('recorderEvent', { event, data, page: PageDispatcher.from(this, page) });
+    this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }) => {
+      this._dispatchEvent('recorderEvent', { event, data, code, page: PageDispatcher.from(this, page) });
     });
   }
 
@@ -336,11 +336,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
-    const recorder = await Recorder.forContext(this._context, params);
-    if (params.recorderMode === 'api') {
-      await ProgrammaticRecorderApp.run(this._context, recorder);
-      return;
-    }
     await RecorderApp.show(this._context, params);
   }
 

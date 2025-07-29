@@ -103,7 +103,7 @@ async function finishTaskRun(testRun: TestRun, status: FullResult['status']) {
 
 export function createGlobalSetupTasks(config: FullConfigInternal) {
   const tasks: Task<TestRun>[] = [];
-  if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
+  if (!config.configCLIOverrides.preserveOutputDir)
     tasks.push(createRemoveOutputDirsTask());
   tasks.push(
       ...createPluginSetupTasks(config),

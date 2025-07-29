@@ -48,7 +48,9 @@ type AriaRef = {
 
 let lastRef = 0;
 
-export function generateAriaTree(rootElement: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaSnapshot {
+export type AriaTreeOptions = { forAI?: boolean, refPrefix?: string, refs?: boolean, visibleOnly?: boolean };
+
+export function generateAriaTree(rootElement: Element, options?: AriaTreeOptions): AriaSnapshot {
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
@@ -91,7 +93,7 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
       }
     }
 
-    const visible = !isElementHiddenForAria || isElementVisible(element);
+    const visible = options?.visibleOnly ? isElementVisible(element) : !isElementHiddenForAria || isElementVisible(element);
     const childAriaNode = visible ? toAriaNode(element, options) : null;
     if (childAriaNode) {
       if (childAriaNode.ref) {
@@ -155,8 +157,8 @@ export function generateAriaTree(rootElement: Element, options?: { forAI?: boole
   return snapshot;
 }
 
-function ariaRef(element: Element, role: string, name: string, options?: { forAI?: boolean, refPrefix?: string }): string | undefined {
-  if (!options?.forAI)
+function ariaRef(element: Element, role: string, name: string, options?: AriaTreeOptions): string | undefined {
+  if (!options?.forAI && !options?.refs)
     return undefined;
 
   let ariaRef: AriaRef | undefined;
@@ -168,7 +170,7 @@ function ariaRef(element: Element, role: string, name: string, options?: { forAI
   return ariaRef.ref;
 }
 
-function toAriaNode(element: Element, options?: { forAI?: boolean, refPrefix?: string }): AriaNode | null {
+function toAriaNode(element: Element, options?: AriaTreeOptions): AriaNode | null {
   const active = element.ownerDocument.activeElement === element;
   if (element.nodeName === 'IFRAME') {
     return {
@@ -409,7 +411,7 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
   return results;
 }
 
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'raw' | 'regex', forAI?: boolean }): string {
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'raw' | 'regex', forAI?: boolean, refs?: boolean }): string {
   const lines: string[] = [];
   const includeText = options?.mode === 'regex' ? textContributesInfo : () => true;
   const renderString = options?.mode === 'regex' ? convertToBestGuessRegex : (str: string) => str;
@@ -450,11 +452,12 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, options?: { mode?: 'r
       key += ` [pressed]`;
     if (ariaNode.selected === true)
       key += ` [selected]`;
-    if (options?.forAI && receivesPointerEvents(ariaNode)) {
-      const ref = ariaNode.ref;
-      const cursor = hasPointerCursor(ariaNode) ? ' [cursor=pointer]' : '';
-      if (ref)
-        key += ` [ref=${ref}]${cursor}`;
+
+    const includeRef = (options?.forAI && receivesPointerEvents(ariaNode)) || options?.refs;
+    if (includeRef && ariaNode.ref) {
+      key += ` [ref=${ariaNode.ref}]`;
+      if (hasPointerCursor(ariaNode))
+        key += ' [cursor=pointer]';
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);

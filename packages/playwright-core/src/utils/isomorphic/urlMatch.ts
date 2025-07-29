@@ -102,7 +102,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   return match(url);
 }
 
-export function resolveGlobToRegexPattern(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): string {
+function resolveGlobToRegexPattern(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): string {
   if (webSocketUrl)
     baseURL = toWebSocketBaseUrl(baseURL);
   glob = resolveGlobBase(baseURL, glob);

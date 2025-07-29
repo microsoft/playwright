@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import { assert, monotonicTime } from '../../utils';
-import { serverSideCallMetadata } from '../instrumentation';
+import { assert, debugLogger, monotonicTime } from '../../utils';
 import { Page } from '../page';
 import { launchProcess } from '../utils/processLauncher';
-import { ProgressController } from '../progress';
 
-import type { Progress } from '../progress';
 import type * as types from '../types';
 import type { ChildProcess } from 'child_process';
 
@@ -33,7 +30,6 @@ export class VideoRecorder {
   private _lastFrameTimestamp: number = 0;
   private _lastFrameBuffer: Buffer | null = null;
   private _lastWriteTimestamp: number = 0;
-  private readonly _progress: Progress;
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
@@ -42,18 +38,12 @@ export class VideoRecorder {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
-    const controller = new ProgressController(serverSideCallMetadata(), page);
-    controller.setLogName('browser');
-    return await controller.run(async progress => {
-      const recorder = new VideoRecorder(page, ffmpegPath, progress);
-      progress.cleanupWhenAborted(() => recorder.stop());
-      await recorder._launch(options);
-      return recorder;
-    });
+    const recorder = new VideoRecorder(page, ffmpegPath);
+    await recorder._launch(options);
+    return recorder;
   }
 
-  private constructor(page: Page, ffmpegPath: string, progress: Progress) {
-    this._progress = progress;
+  private constructor(page: Page, ffmpegPath: string) {
     this._ffmpegPath = ffmpegPath;
     page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
   }
@@ -102,27 +92,26 @@ export class VideoRecorder {
     const h = options.height;
     const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
-    const progress = this._progress;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
       args,
       stdio: 'stdin',
-      log: (message: string) => progress.log(message),
+      log: (message: string) => debugLogger.log('browser', message),
       tempDirectories: [],
       attemptToGracefullyClose: async () => {
-        progress.log('Closing stdin...');
+        debugLogger.log('browser', 'Closing stdin...');
         launchedProcess.stdin!.end();
       },
       onExit: (exitCode, signal) => {
-        progress.log(`ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
+        debugLogger.log('browser', `ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
       },
     });
     launchedProcess.stdin!.on('finish', () => {
-      progress.log('ffmpeg finished input.');
+      debugLogger.log('browser', 'ffmpeg finished input.');
     });
     launchedProcess.stdin!.on('error', () => {
-      progress.log('ffmpeg error.');
+      debugLogger.log('browser', 'ffmpeg error.');
     });
     this._process = launchedProcess;
     this._gracefullyClose = gracefullyClose;
@@ -154,7 +143,7 @@ export class VideoRecorder {
   private async _sendFrame(frame: Buffer) {
     return new Promise(f => this._process!.stdin!.write(frame, f)).then(error => {
       if (error)
-        this._progress.log(`ffmpeg failed to write: ${String(error)}`);
+        debugLogger.log('browser', `ffmpeg failed to write: ${String(error)}`);
     });
   }
 

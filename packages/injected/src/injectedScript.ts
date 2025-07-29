@@ -39,7 +39,7 @@ import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
 import type * as channels from '@protocol/channels';
-import type { AriaSnapshot } from './ariaSnapshot';
+import type { AriaSnapshot, AriaTreeOptions } from './ariaSnapshot';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
@@ -297,7 +297,7 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', forAI?: boolean, refPrefix?: string }): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex' } & AriaTreeOptions): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     this._lastAriaSnapshot = generateAriaTree(node as Element, options);

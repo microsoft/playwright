@@ -49,7 +49,7 @@ export class FrameSelectors {
     return this.frame._page.browserContext.selectors().parseSelector(selector, strict);
   }
 
-  async query(selector: string, options?: types.StrictOptions, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
+  async query(selector: string, options?: types.StrictOptions & { mainWorld?: boolean }, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
     const resolved = await this.resolveInjectedForSelector(selector, options, scope);
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)

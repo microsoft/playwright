@@ -358,14 +358,6 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
-scheme.LocalUtilsGlobToRegexParams = tObject({
-  glob: tString,
-  baseURL: tOptional(tString),
-  webSocketUrl: tOptional(tBoolean),
-});
-scheme.LocalUtilsGlobToRegexResult = tObject({
-  regex: tString,
-});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
@@ -464,12 +456,6 @@ scheme.DebugControllerSetReportStateChangedParams = tObject({
   enabled: tBoolean,
 });
 scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
-scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
-scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
-scheme.DebugControllerNavigateParams = tObject({
-  url: tString,
-});
-scheme.DebugControllerNavigateResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
   testIdAttributeName: tOptional(tString),
@@ -486,8 +472,6 @@ scheme.DebugControllerResumeParams = tOptional(tObject({}));
 scheme.DebugControllerResumeResult = tOptional(tObject({}));
 scheme.DebugControllerKillParams = tOptional(tObject({}));
 scheme.DebugControllerKillResult = tOptional(tObject({}));
-scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
-scheme.DebugControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,
@@ -984,6 +968,7 @@ scheme.BrowserContextRecorderEventEvent = tObject({
   event: tEnum(['actionAdded', 'actionUpdated', 'signalAdded']),
   data: tAny,
   page: tChannel(['Page']),
+  code: tString,
 });
 scheme.BrowserContextAddCookiesParams = tObject({
   cookies: tArray(tType('SetNetworkCookie')),

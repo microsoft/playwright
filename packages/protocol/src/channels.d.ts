@@ -485,7 +485,6 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   tracingStarted(params: LocalUtilsTracingStartedParams, progress?: Progress): Promise<LocalUtilsTracingStartedResult>;
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress?: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress?: Progress): Promise<LocalUtilsTraceDiscardedResult>;
-  globToRegex(params: LocalUtilsGlobToRegexParams, progress?: Progress): Promise<LocalUtilsGlobToRegexResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -584,18 +583,6 @@ export type LocalUtilsTraceDiscardedOptions = {
 
 };
 export type LocalUtilsTraceDiscardedResult = void;
-export type LocalUtilsGlobToRegexParams = {
-  glob: string,
-  baseURL?: string,
-  webSocketUrl?: boolean,
-};
-export type LocalUtilsGlobToRegexOptions = {
-  baseURL?: string,
-  webSocketUrl?: boolean,
-};
-export type LocalUtilsGlobToRegexResult = {
-  regex: string,
-};
 
 export interface LocalUtilsEvents {
 }
@@ -739,14 +726,11 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
   _type_DebugController: boolean;
   initialize(params: DebugControllerInitializeParams, progress?: Progress): Promise<DebugControllerInitializeResult>;
   setReportStateChanged(params: DebugControllerSetReportStateChangedParams, progress?: Progress): Promise<DebugControllerSetReportStateChangedResult>;
-  resetForReuse(params?: DebugControllerResetForReuseParams, progress?: Progress): Promise<DebugControllerResetForReuseResult>;
-  navigate(params: DebugControllerNavigateParams, progress?: Progress): Promise<DebugControllerNavigateResult>;
   setRecorderMode(params: DebugControllerSetRecorderModeParams, progress?: Progress): Promise<DebugControllerSetRecorderModeResult>;
   highlight(params: DebugControllerHighlightParams, progress?: Progress): Promise<DebugControllerHighlightResult>;
   hideHighlight(params?: DebugControllerHideHighlightParams, progress?: Progress): Promise<DebugControllerHideHighlightResult>;
   resume(params?: DebugControllerResumeParams, progress?: Progress): Promise<DebugControllerResumeResult>;
   kill(params?: DebugControllerKillParams, progress?: Progress): Promise<DebugControllerKillResult>;
-  closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, progress?: Progress): Promise<DebugControllerCloseAllBrowsersResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
@@ -783,16 +767,6 @@ export type DebugControllerSetReportStateChangedOptions = {
 
 };
 export type DebugControllerSetReportStateChangedResult = void;
-export type DebugControllerResetForReuseParams = {};
-export type DebugControllerResetForReuseOptions = {};
-export type DebugControllerResetForReuseResult = void;
-export type DebugControllerNavigateParams = {
-  url: string,
-};
-export type DebugControllerNavigateOptions = {
-
-};
-export type DebugControllerNavigateResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
   testIdAttributeName?: string,
@@ -819,9 +793,6 @@ export type DebugControllerResumeResult = void;
 export type DebugControllerKillParams = {};
 export type DebugControllerKillOptions = {};
 export type DebugControllerKillResult = void;
-export type DebugControllerCloseAllBrowsersParams = {};
-export type DebugControllerCloseAllBrowsersOptions = {};
-export type DebugControllerCloseAllBrowsersResult = void;
 
 export interface DebugControllerEvents {
   'inspectRequested': DebugControllerInspectRequestedEvent;
@@ -1721,6 +1692,7 @@ export type BrowserContextRecorderEventEvent = {
   event: 'actionAdded' | 'actionUpdated' | 'signalAdded',
   data: any,
   page: PageChannel,
+  code: string,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],

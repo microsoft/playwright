@@ -761,7 +761,7 @@ export class Frame extends SdkObject {
           return null;
         return continuePolling;
       }
-      const result = await progress.raceWithCleanup(resolved.injected.evaluateHandle((injected, { info, root }) => {
+      const result = await progress.race(resolved.injected.evaluateHandle((injected, { info, root }) => {
         if (root && !root.isConnected)
           throw injected.createStacklessError('Element is not attached to the DOM');
         const elements = injected.querySelectorAll(info.parsed, root || document);
@@ -776,7 +776,7 @@ export class Frame extends SdkObject {
           log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
         }
         return { log, element, visible, attached: !!element };
-      }, { info: resolved.info, root: resolved.frame === this ? scope : undefined }), handle => handle.dispose());
+      }, { info: resolved.info, root: resolved.frame === this ? scope : undefined }));
       const { log, visible, attached } = await progress.race(result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached })));
       if (log)
         progress.log(log);
@@ -1085,7 +1085,7 @@ export class Frame extends SdkObject {
       const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, { strict }));
       if (!resolved)
         return continuePolling;
-      const result = await progress.raceWithCleanup(resolved.injected.evaluateHandle((injected, { info, callId }) => {
+      const result = await progress.race(resolved.injected.evaluateHandle((injected, { info, callId }) => {
         const elements = injected.querySelectorAll(info.parsed, document);
         if (callId)
           injected.markTargetElements(new Set(elements), callId);
@@ -1099,7 +1099,7 @@ export class Frame extends SdkObject {
           log = `  locator resolved to ${injected.previewNode(element)}`;
         }
         return { log, success: !!element, element };
-      }, { info: resolved.info, callId: progress.metadata.id }), handle => handle.dispose());
+      }, { info: resolved.info, callId: progress.metadata.id }));
       const { log, success } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success })));
       if (log)
         progress.log(log);
@@ -1179,8 +1179,8 @@ export class Frame extends SdkObject {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._blur(progress)));
   }
 
-  async resolveSelector(progress: Progress, selector: string): Promise<{ resolvedSelector: string }> {
-    const element = await progress.race(this.selectors.query(selector));
+  async resolveSelector(progress: Progress, selector: string, options: { mainWorld?: boolean } = {}): Promise<{ resolvedSelector: string }> {
+    const element = await progress.race(this.selectors.query(selector, options));
     if (!element)
       throw new Error(`No element matching ${selector}`);
 

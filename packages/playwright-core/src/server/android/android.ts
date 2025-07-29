@@ -34,7 +34,7 @@ import { removeFolders } from '../utils/fileUtils';
 import { helper } from '../helper';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import { gracefullyCloseSet } from '../utils/processLauncher';
-import { isAbortError, Progress, ProgressController } from '../progress';
+import { isAbortError, Progress, ProgressController, raceUncancellableOperationWithCleanup } from '../progress';
 import { registry } from '../registry';
 
 import type { BrowserOptions, BrowserProcess } from '../browser';
@@ -79,8 +79,7 @@ export class Android extends SdkObject {
       newSerials.add(d.serial);
       if (this._devices.has(d.serial))
         continue;
-      const device = await progress.raceWithCleanup(AndroidDevice.create(this, d, options), device => device.close());
-      this._devices.set(d.serial, device);
+      await progress.race(AndroidDevice.create(this, d, options).then(device => this._devices.set(d.serial, device)));
     }
     for (const d of this._devices.keys()) {
       if (!newSerials.has(d))
@@ -152,7 +151,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   async open(progress: Progress, command: string): Promise<SocketBackend> {
-    return await progress.raceWithCleanup(this._backend.open(`${command}`), socket => socket.close());
+    return await this._open(progress, command);
   }
 
   async screenshot(): Promise<Buffer> {
@@ -216,7 +215,7 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')(`Polling the socket localabstract:${socketName}`);
     while (!socket) {
       try {
-        socket = await progress.raceWithCleanup(this._backend.open(`localabstract:${socketName}`), socket => socket.close());
+        socket = await this._open(progress, `localabstract:${socketName}`);
       } catch (e) {
         if (isAbortError(e))
           throw e;
@@ -273,8 +272,13 @@ export class AndroidDevice extends SdkObject {
     await progress.race(this._backend.runCommand(`shell:echo "${Buffer.from(commandLine).toString('base64')}" | base64 -d > /data/local/tmp/chrome-command-line`));
     await progress.race(this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`));
     const browserContext = await this._connectToBrowser(progress, socketName, options);
-    await progress.race(this._backend.runCommand(`shell:rm /data/local/tmp/chrome-command-line`));
-    return browserContext;
+    try {
+      await progress.race(this._backend.runCommand(`shell:rm /data/local/tmp/chrome-command-line`));
+      return browserContext;
+    } catch (error) {
+      await browserContext.close({ reason: 'Failed to launch' }).catch(() => {});
+      throw error;
+    }
   }
 
   private _defaultArgs(options: channels.AndroidDeviceLaunchBrowserParams, socketName: string): string[] {
@@ -315,43 +319,50 @@ export class AndroidDevice extends SdkObject {
 
   private async _connectToBrowser(progress: Progress, socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
     const socket = await this._waitForLocalAbstract(progress, socketName);
-    const androidBrowser = new AndroidBrowser(this, socket);
-    progress.cleanupWhenAborted(() => androidBrowser.close());
-    await progress.race(androidBrowser._init());
-    this._browserConnections.add(androidBrowser);
+    try {
+      const androidBrowser = new AndroidBrowser(this, socket);
+      await progress.race(androidBrowser._init());
+      this._browserConnections.add(androidBrowser);
 
-    const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
-    const cleanupArtifactsDir = async () => {
-      const errors = (await removeFolders([artifactsDir])).filter(Boolean);
-      for (let i = 0; i < (errors || []).length; ++i)
-        debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
-    };
-    progress.cleanupWhenAborted(cleanupArtifactsDir);
-    gracefullyCloseSet.add(cleanupArtifactsDir);
-    socket.on('close', async () => {
-      gracefullyCloseSet.delete(cleanupArtifactsDir);
-      cleanupArtifactsDir().catch(e => debug('pw:android')(`could not cleanup artifacts dir: ${e}`));
-    });
-    const browserOptions: BrowserOptions = {
-      name: 'clank',
-      isChromium: true,
-      slowMo: 0,
-      persistent: { ...options, noDefaultViewport: true },
-      artifactsDir,
-      downloadsPath: artifactsDir,
-      tracesDir: artifactsDir,
-      browserProcess: new ClankBrowserProcess(androidBrowser),
-      proxy: options.proxy,
-      protocolLogger: helper.debugProtocolLogger(),
-      browserLogsCollector: new RecentLogsCollector(),
-      originalLaunchOptions: {},
-    };
-    validateBrowserContextOptions(options, browserOptions);
+      const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
+      const cleanupArtifactsDir = async () => {
+        const errors = (await removeFolders([artifactsDir])).filter(Boolean);
+        for (let i = 0; i < (errors || []).length; ++i)
+          debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
+      };
+      gracefullyCloseSet.add(cleanupArtifactsDir);
+      socket.on('close', async () => {
+        gracefullyCloseSet.delete(cleanupArtifactsDir);
+        cleanupArtifactsDir().catch(e => debug('pw:android')(`could not cleanup artifacts dir: ${e}`));
+      });
+      const browserOptions: BrowserOptions = {
+        name: 'clank',
+        isChromium: true,
+        slowMo: 0,
+        persistent: { ...options, noDefaultViewport: true },
+        artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: artifactsDir,
+        browserProcess: new ClankBrowserProcess(androidBrowser),
+        proxy: options.proxy,
+        protocolLogger: helper.debugProtocolLogger(),
+        browserLogsCollector: new RecentLogsCollector(),
+        originalLaunchOptions: {},
+      };
+      validateBrowserContextOptions(options, browserOptions);
 
-    const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions));
-    const defaultContext = browser._defaultContext!;
-    await defaultContext._loadDefaultContextAsIs(progress);
-    return defaultContext;
+      const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions));
+      const defaultContext = browser._defaultContext!;
+      await defaultContext._loadDefaultContextAsIs(progress);
+      return defaultContext;
+    } catch (error) {
+      socket.close();
+      throw error;
+    }
+  }
+
+  private _open(progress: Progress, command: string): Promise<SocketBackend> {
+    return raceUncancellableOperationWithCleanup(progress, () => this._backend.open(command), socket => socket.close());
   }
 
   webViews(): channels.AndroidWebView[] {
@@ -361,7 +372,7 @@ export class AndroidDevice extends SdkObject {
   async installApk(progress: Progress, content: Buffer, options?: { args?: string[] }): Promise<void> {
     const args = options && options.args ? options.args : ['-r', '-t', '-S'];
     debug('pw:android')('Opening install socket');
-    const installSocket = await progress.raceWithCleanup(this._backend.open(`shell:cmd package install ${args.join(' ')} ${content.length}`), socket => socket.close());
+    const installSocket = await this._open(progress, `shell:cmd package install ${args.join(' ')} ${content.length}`);
     debug('pw:android')('Writing driver bytes: ' + content.length);
     await progress.race(installSocket.write(content));
     const success = await progress.race(new Promise(f => installSocket.on('data', f)));
@@ -370,7 +381,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   async push(progress: Progress, content: Buffer, path: string, mode = 0o644): Promise<void> {
-    const socket = await progress.raceWithCleanup(this._backend.open(`sync:`), socket => socket.close());
+    const socket = await this._open(progress, `sync:`);
     const sendHeader = async (command: string, length: number) => {
       const buffer = Buffer.alloc(command.length + 4);
       buffer.write(command, 0);

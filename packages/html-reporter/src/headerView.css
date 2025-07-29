@@ -24,6 +24,7 @@
 
 .header-view div {
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .header-superheader {
