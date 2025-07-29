@@ -46,7 +46,7 @@ function normalizeCode(code: string): string {
   return code.replace(/\s+/g, ' ').trim();
 }
 
-test('should click', async ({ context, browserName }) => {
+test('should click', async ({ context, browserName, platform }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
@@ -60,7 +60,7 @@ test('should click', async ({ context, browserName }) => {
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
-        ariaSnapshot: browserName === 'webkit' ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: (browserName === 'webkit' && platform === 'darwin') ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
@@ -69,7 +69,7 @@ test('should click', async ({ context, browserName }) => {
   expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
 });
 
-test('should double click', async ({ context, browserName }) => {
+test('should double click', async ({ context, browserName, platform }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')" ondblclick="console.log('dblclick')">Submit</button>`);
@@ -84,7 +84,7 @@ test('should double click', async ({ context, browserName }) => {
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
-        ariaSnapshot: browserName === 'webkit' ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: (browserName === 'webkit' && platform === 'darwin') ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
@@ -93,7 +93,7 @@ test('should double click', async ({ context, browserName }) => {
   expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
 });
 
-test('should right click', async ({ context, browserName }) => {
+test('should right click', async ({ context, browserName, platform }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button oncontextmenu="console.log('contextmenu')">Submit</button>`);
@@ -108,7 +108,7 @@ test('should right click', async ({ context, browserName }) => {
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
-        ariaSnapshot: browserName === 'webkit' ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: (browserName === 'webkit' && platform === 'darwin') ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
