@@ -135,22 +135,12 @@ test('should report pages', async ({ backend, connectedBrowser }) => {
   ]);
 });
 
-test('should navigate all', async ({ backend, connectedBrowser }) => {
-  const context = await connectedBrowser.newContextForReuse();
-  const page1 = await context.newPage();
-  const page2 = await context.newPage();
-
-  await backend.navigate({ url: 'data:text/plain,Hello world' });
-
-  expect(await page1.evaluate(() => window.location.href)).toBe('data:text/plain,Hello world');
-  expect(await page2.evaluate(() => window.location.href)).toBe('data:text/plain,Hello world');
-});
-
 test('should reset for reuse', async ({ backend, connectedBrowser }) => {
   const context = await connectedBrowser.newContextForReuse();
   const page1 = await context.newPage();
   const page2 = await context.newPage();
-  await backend.navigate({ url: 'data:text/plain,Hello world' });
+  await page1.goto('data:text/plain,Hello world');
+  await page2.goto('data:text/plain,Hello world');
 
   const context2 = await connectedBrowser.newContextForReuse();
   expect(context2.pages().length).toBe(1);
@@ -167,7 +157,8 @@ test('should highlight all', async ({ backend, connectedBrowser }) => {
   const context = await connectedBrowser.newContextForReuse();
   const page1 = await context.newPage();
   const page2 = await context.newPage();
-  await backend.navigate({ url: 'data:text/html,<button>Submit</button>' });
+  await page1.goto('data:text/html,<button>Submit</button>');
+  await page2.goto('data:text/html,<button>Submit</button>');
   await backend.highlight({ selector: 'button' });
   await expect(page1.getByText('locator(\'button\')')).toBeVisible();
   await expect(page2.getByText('locator(\'button\')')).toBeVisible();
@@ -275,7 +266,7 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
 
   const context = await connectedBrowser.newContextForReuse();
   const page = await context.newPage();
-  await backend.navigate({ url: `data:text/html,<div>bar</div><iframe srcdoc="<div>bar</div>"/>` });
+  await page.goto(`data:text/html,<div>bar</div><iframe srcdoc="<div>bar</div>"/>`);
 
 
   await page.frameLocator('iframe').getByText('bar').highlight();
@@ -299,7 +290,7 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
 test('should highlight aria template', async ({ backend, connectedBrowser }, testInfo) => {
   const context = await connectedBrowser.newContextForReuse();
   const page = await context.newPage();
-  await backend.navigate({ url: `data:text/html,<button>Submit</button>` });
+  await page.goto(`data:text/html,<button>Submit</button>`);
 
   const button = page.getByRole('button');
   const highlight = page.locator('x-pw-highlight');
@@ -314,7 +305,6 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
 });
 
 test('should report error in aria template', async ({ backend }) => {
-  await backend.navigate({ url: `data:text/html,<button>Submit</button>` });
   const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
   expect(error.message).toContain('Unterminated string:');
 });
