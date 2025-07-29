@@ -200,7 +200,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
     });
-    this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string[] }) => {
+    this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }) => {
       this._dispatchEvent('recorderEvent', { event, data, code, page: PageDispatcher.from(this, page) });
     });
   }

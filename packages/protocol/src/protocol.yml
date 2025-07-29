@@ -1549,9 +1549,7 @@ BrowserContext:
           - signalAdded
         data: json
         page: Page
-        code:
-          type: array
-          items: string
+        code: string
 
 Page:
   type: interface
