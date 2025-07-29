@@ -298,6 +298,7 @@ export abstract class APIRequestContext extends SdkObject {
     };
     this.emit(APIRequestContext.Events.Request, requestEvent);
 
+    let destroyRequest: (() => void) | undefined;
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
@@ -483,7 +484,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('end', notifyBodyFinished);
       });
       request.on('error', reject);
-      progress.cleanupWhenAborted(() => request.destroy());
+      destroyRequest = () => request.destroy();
 
       listeners.push(
           eventsHelper.addEventListener(this, APIRequestContext.Events.Dispose, () => {
@@ -539,7 +540,11 @@ export abstract class APIRequestContext extends SdkObject {
         request.write(postData);
       request.end();
     });
-    return progress.race(resultPromise);
+
+    return progress.race(resultPromise).catch(error => {
+      destroyRequest?.();
+      throw error;
+    });
   }
 
   private _getHttpCredentials(url: URL) {

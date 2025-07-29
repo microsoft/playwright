@@ -22,6 +22,7 @@ import url from 'url';
 
 import { HttpsProxyAgent, SocksProxyAgent, getProxyForUrl } from '../../utilsBundle';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type net from 'net';
 import type { ProxySettings } from '../types';
@@ -90,27 +91,37 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
       request.abort();
     });
   }
-  cancelRequest = e => request.destroy(e);
+  cancelRequest = e => {
+    try {
+      request.destroy(e);
+    } catch {
+    }
+  };
   request.end(params.data);
   return { cancel: e => cancelRequest(e) };
 }
 
-export function fetchData(progress: Progress | undefined, params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
-  const promise = new Promise<string>((resolve, reject) => {
-    const { cancel } = httpRequest(params, async response => {
-      if (response.statusCode !== 200) {
-        const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
-        reject(error);
-        return;
-      }
-      let body = '';
-      response.on('data', (chunk: string) => body += chunk);
-      response.on('error', (error: any) => reject(error));
-      response.on('end', () => resolve(body));
-    }, reject);
-    progress?.cleanupWhenAborted(cancel);
-  });
-  return progress ? progress.race(promise) : promise;
+export async function fetchData(progress: Progress | undefined, params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
+  const promise = new ManualPromise<string>();
+  const { cancel } = httpRequest(params, async response => {
+    if (response.statusCode !== 200) {
+      const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
+      promise.reject(error);
+      return;
+    }
+    let body = '';
+    response.on('data', (chunk: string) => body += chunk);
+    response.on('error', (error: any) => promise.reject(error));
+    response.on('end', () => promise.resolve(body));
+  }, error => promise.reject(error));
+  if (!progress)
+    return promise;
+  try {
+    return await progress.race(promise);
+  } catch (error) {
+    cancel(error);
+    throw error;
+  }
 }
 
 function shouldBypassProxy(url: URL, bypass?: string): boolean {

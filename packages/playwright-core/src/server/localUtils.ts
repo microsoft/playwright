@@ -179,16 +179,18 @@ export function harClose(harBackends: Map<string, HarBackend>, params: channels.
 export async function harUnzip(progress: Progress, params: channels.LocalUtilsHarUnzipParams): Promise<void> {
   const dir = path.dirname(params.zipFile);
   const zipFile = new ZipFile(params.zipFile);
-  progress.cleanupWhenAborted(() => zipFile.close());
-  for (const entry of await progress.race(zipFile.entries())) {
-    const buffer = await progress.race(zipFile.read(entry));
-    if (entry === 'har.har')
-      await progress.race(fs.promises.writeFile(params.harFile, buffer));
-    else
-      await progress.race(fs.promises.writeFile(path.join(dir, entry), buffer));
+  try {
+    for (const entry of await progress.race(zipFile.entries())) {
+      const buffer = await progress.race(zipFile.read(entry));
+      if (entry === 'har.har')
+        await progress.race(fs.promises.writeFile(params.harFile, buffer));
+      else
+        await progress.race(fs.promises.writeFile(path.join(dir, entry), buffer));
+    }
+    await progress.race(fs.promises.unlink(params.zipFile));
+  } finally {
+    zipFile.close();
   }
-  await progress.race(fs.promises.unlink(params.zipFile));
-  zipFile.close();
 }
 
 export async function tracingStarted(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsTracingStartedParams): Promise<channels.LocalUtilsTracingStartedResult> {
