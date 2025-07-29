@@ -208,6 +208,7 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   line-height: 20px;
   color: var(--color-fg-default);
   border: 1px solid var(--color-border-default);
+  user-select: none;
 }
 
 .subnav-item:hover {
