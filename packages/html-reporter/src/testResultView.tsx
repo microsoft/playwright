@@ -91,6 +91,18 @@ export const TestResultView: React.FC<{
   }, [result]);
 
   const prompt = useAsyncMemo(async () => {
+    // Extract stdout and stderr from attachments
+    const stdoutAttachment = result.attachments.find(a => a.name === 'stdout');
+    const stderrAttachment = result.attachments.find(a => a.name === 'stderr');
+
+    const stdout = stdoutAttachment?.path ?
+      await fetch(stdoutAttachment.path).then(r => r.text()) :
+      stdoutAttachment?.body;
+
+    const stderr = stderrAttachment?.path ?
+      await fetch(stderrAttachment.path).then(r => r.text()) :
+      stderrAttachment?.body;
+
     return await copyPrompt({
       testInfo: [
         `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
@@ -100,6 +112,8 @@ export const TestResultView: React.FC<{
       errorContext: errorContext?.path ? await fetch(errorContext.path!).then(r => r.text()) : errorContext?.body,
       errors: result.errors,
       buildCodeFrame: async error => error.codeframe,
+      stdout,
+      stderr,
     });
   }, [test, errorContext, testRunMetadata, result], undefined);
 

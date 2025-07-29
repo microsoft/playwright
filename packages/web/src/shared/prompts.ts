@@ -31,6 +31,8 @@ export async function copyPrompt<ErrorInfo extends { message: string }>({
 
   errors,
   buildCodeFrame,
+  stdout,
+  stderr,
 }: {
   testInfo: string;
   metadata: MetadataWithCommitInfo | undefined;
@@ -38,6 +40,8 @@ export async function copyPrompt<ErrorInfo extends { message: string }>({
 
   errors: ErrorInfo[];
   buildCodeFrame(error: ErrorInfo): Promise<string | undefined>;
+  stdout?: string;
+  stderr?: string;
 }) {
   const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of errors) {
@@ -66,9 +70,20 @@ export async function copyPrompt<ErrorInfo extends { message: string }>({
     `# Test info`,
     '',
     testInfo,
-    '',
-    '# Error details',
   ];
+
+  if (stdout || stderr) {
+    lines.push('');
+    lines.push('# Console output');
+
+    if (stdout)
+      lines.push('', '## stdout', '', '```', stripAnsiEscapes(stdout), '```');
+
+    if (stderr)
+      lines.push('', '## stderr', '', '```', stripAnsiEscapes(stderr), '```');
+  }
+
+  lines.push('', '# Error details');
 
   for (const error of meaningfulErrors) {
     lines.push(
