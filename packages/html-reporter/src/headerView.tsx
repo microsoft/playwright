@@ -97,7 +97,7 @@ const StatsNavView: React.FC<{
       {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
     </Link>
     <Link className='subnav-item' click={filterWithQuery(q, 's:skipped', false)} ctrlClick={filterWithQuery(q, 's:skipped', true)}>
-      Skipped <span className='d-inline counter'>{stats.skipped}</span>
+      {!!stats.skipped && statusIcon('skipped')} Skipped <span className='d-inline counter'>{stats.skipped}</span>
     </Link>
   </nav>;
 };
