@@ -98,7 +98,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.clockSetFixedTime', { title: 'Set fixed time "{timeNumber}{timeString}"', }],
   ['BrowserContext.clockSetSystemTime', { title: 'Set system time "{timeNumber}{timeString}"', }],
   ['Page.addInitScript', { }],
-  ['Page.close', { title: 'Close', }],
+  ['Page.close', { title: 'Close page', }],
   ['Page.emulateMedia', { title: 'Emulate media', snapshot: true, }],
   ['Page.exposeBinding', { title: 'Expose binding', }],
   ['Page.goBack', { title: 'Go back', slowMo: true, snapshot: true, }],

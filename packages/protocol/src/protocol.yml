@@ -1554,7 +1554,7 @@ Page:
         source: string
 
     close:
-      title: Close
+      title: Close page
       parameters:
         runBeforeUnload: boolean?
         reason: string?
