@@ -38,6 +38,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   _type_Browser = true;
   private _options: BrowserDispatcherOptions;
   private _isolatedContexts = new Set<BrowserContext>();
+  private _reusedContext: BrowserContextDispatcher | undefined;
 
   constructor(scope: BrowserTypeDispatcher, browser: Browser, options: BrowserDispatcherOptions = {}) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
@@ -78,17 +79,16 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, progress: Progress): Promise<channels.BrowserNewContextForReuseResult> {
     const context = await this._object.newContextForReuse(progress, params);
-    const contextDispatcher = BrowserContextDispatcher.from(this, context);
-    this._dispatchEvent('context', { context: contextDispatcher });
-    return { context: contextDispatcher };
+    this._reusedContext = BrowserContextDispatcher.from(this, context);
+    this._dispatchEvent('context', { context: this._reusedContext });
+    return { context: this._reusedContext };
   }
 
   async disconnectFromReusedContext(params: channels.BrowserDisconnectFromReusedContextParams, progress: Progress): Promise<void> {
-    const context = this._object.contextForReuse();
-    const contextDispatcher = context ? this.connection.existingDispatcher<BrowserContextDispatcher>(context) : undefined;
-    if (contextDispatcher) {
-      await contextDispatcher.stopPendingOperations(new Error(params.reason));
-      contextDispatcher._dispose();
+    if (this._reusedContext) {
+      await this._reusedContext.stopPendingOperations(new Error(params.reason));
+      this._reusedContext._dispose();
+      this._reusedContext = undefined;
     }
   }
 

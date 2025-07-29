@@ -70,6 +70,7 @@ export abstract class Browser extends SdkObject {
   private _startedClosing = false;
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
+  private _contextForReuseQueue = Promise.resolve();
   _closeReason: string | undefined;
   _isCollocatedWithServer: boolean = true;
 
@@ -116,20 +117,24 @@ export abstract class Browser extends SdkObject {
     }
   }
 
-  async newContextForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams): Promise<BrowserContext> {
-    const hash = BrowserContext.reusableContextHash(params);
-    if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
-      if (this._contextForReuse)
-        await this._contextForReuse.context.close({ reason: 'Context reused' });
-      this._contextForReuse = { context: await this.newContext(progress, params), hash };
-      return this._contextForReuse.context;
-    }
-    await this._contextForReuse.context.resetForReuse(progress, params);
-    return this._contextForReuse.context;
+  private _queueContextForReuseOperation<T>(op: () => Promise<T>): Promise<T> {
+    const promise = this._contextForReuseQueue.then(() => op());
+    this._contextForReuseQueue = promise.then(() => {}, () => {});
+    return promise;
   }
 
-  contextForReuse() {
-    return this._contextForReuse?.context;
+  async newContextForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams): Promise<BrowserContext> {
+    return await this._queueContextForReuseOperation(async () => {
+      const hash = BrowserContext.reusableContextHash(params);
+      if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
+        if (this._contextForReuse)
+          await this._contextForReuse.context.close({ reason: 'Context reused' });
+        this._contextForReuse = { context: await this.newContext(progress, params), hash };
+        return this._contextForReuse.context;
+      }
+      await this._contextForReuse.context.resetForReuse(progress, params);
+      return this._contextForReuse.context;
+    });
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
