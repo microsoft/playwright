@@ -17,7 +17,7 @@
 .test-file-test {
   line-height: 32px;
   align-items: center;
-  padding: 2px 10px;
+  padding: 2px 8px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
