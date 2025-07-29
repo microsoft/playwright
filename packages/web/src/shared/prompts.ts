@@ -72,16 +72,11 @@ export async function copyPrompt<ErrorInfo extends { message: string }>({
     testInfo,
   ];
 
-  if (stdout || stderr) {
-    lines.push('');
-    lines.push('# Console output');
+  if (stdout)
+    lines.push('', '# Stdout', '', '```', stripAnsiEscapes(stdout), '```');
 
-    if (stdout)
-      lines.push('', '## stdout', '', '```', stripAnsiEscapes(stdout), '```');
-
-    if (stderr)
-      lines.push('', '## stderr', '', '```', stripAnsiEscapes(stderr), '```');
-  }
+  if (stderr)
+    lines.push('', '# Stderr', '', '```', stripAnsiEscapes(stderr), '```');
 
   lines.push('', '# Error details');
 

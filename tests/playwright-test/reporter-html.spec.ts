@@ -546,9 +546,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'should contain stdout content').toContain('Output line 2');
       expect(prompt, 'should contain stderr content').toContain('Error line 1');
       expect(prompt, 'should contain stderr content').toContain('Error line 2');
-      expect(prompt, 'should contain console output header').toContain('# Console output');
-      expect(prompt, 'should contain stdout section').toContain('## stdout');
-      expect(prompt, 'should contain stderr section').toContain('## stderr');
+      expect(prompt, 'should contain stdout section').toContain('# Stdout');
+      expect(prompt, 'should contain stderr section').toContain('# Stderr');
     });
 
     test('should highlight error', async ({ runInlineTest, page, showReport }) => {
