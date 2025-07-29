@@ -383,7 +383,7 @@ class RecordActionTool implements RecorderTool {
     const target = this._recorder.deepEventTarget(event);
 
     if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
-      this._recorder.recordAction({
+      this._recordAction({
         name: 'setInputFiles',
         selector: this._activeModel!.selector,
         signals: [],
@@ -393,7 +393,7 @@ class RecordActionTool implements RecorderTool {
     }
 
     if (isRangeInput(target)) {
-      this._recorder.recordAction({
+      this._recordAction({
         name: 'fill',
         // must use hoveredModel instead of activeModel for it to work in webkit
         selector: this._hoveredModel!.selector,
@@ -412,7 +412,7 @@ class RecordActionTool implements RecorderTool {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      this._recorder.recordAction({
+      this._recordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -545,9 +545,21 @@ class RecordActionTool implements RecorderTool {
       consumeEvent(event);
   }
 
+  private _captureAriaSnapshotForAction(action: actions.Action) {
+    const documentElement = this._recorder.injectedScript.document.documentElement;
+    if (documentElement)
+      action.ariaSnapshot = this._recorder.injectedScript.ariaSnapshot(documentElement, { mode: 'raw', refs: true, visibleOnly: true });
+  }
+
+  private _recordAction(action: actions.Action) {
+    this._captureAriaSnapshotForAction(action);
+    this._recorder.recordAction(action);
+  }
+
   private _performAction(action: actions.PerformOnRecordAction) {
     this._recorder.updateHighlight(null, false);
 
+    this._captureAriaSnapshotForAction(action);
     this._performingActions.add(action);
 
     const promise = this._recorder.performAction(action).then(() => {

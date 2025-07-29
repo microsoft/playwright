@@ -32,6 +32,7 @@ export type AriaProps = {
   level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
+  ref?: string;
 };
 
 // We pass parsed template between worlds using JSON, make it easy.
@@ -64,22 +65,23 @@ type YamlLibrary = {
 };
 
 type ParsedYamlPosition = { line: number; col: number; };
+type ParsingOptions = yamlTypes.ParseOptions & { allowRef?: boolean, allowUnknownAttributes?: boolean };
 
 export type ParsedYamlError = {
   message: string;
   range: [ParsedYamlPosition, ParsedYamlPosition];
 };
 
-export function parseAriaSnapshotUnsafe(yaml: YamlLibrary, text: string): AriaTemplateNode {
-  const result = parseAriaSnapshot(yaml, text);
+export function parseAriaSnapshotUnsafe(yaml: YamlLibrary, text: string, options: ParsingOptions = {}): AriaTemplateNode {
+  const result = parseAriaSnapshot(yaml, text, options);
   if (result.errors.length)
     throw new Error(result.errors[0].message);
   return result.fragment;
 }
 
-export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yamlTypes.ParseOptions = {}): { fragment: AriaTemplateNode, errors: ParsedYamlError[] } {
+export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: ParsingOptions = {}): { fragment: AriaTemplateNode, errors: ParsedYamlError[] } {
   const lineCounter = new yaml.LineCounter();
-  const parseOptions: yamlTypes.ParseOptions = {
+  const parseOptions: ParsingOptions = {
     keepSourceTokens: true,
     lineCounter,
     ...options,
@@ -265,10 +267,11 @@ export class KeyParser {
   private _input: string;
   private _pos: number;
   private _length: number;
+  private _options: ParsingOptions;
 
-  static parse(text: yamlTypes.Scalar<string>, options: yamlTypes.ParseOptions, errors: ParsedYamlError[]): AriaTemplateRoleNode | null {
+  static parse(text: yamlTypes.Scalar<string>, options: ParsingOptions, errors: ParsedYamlError[]): AriaTemplateRoleNode | null {
     try {
-      return new KeyParser(text.value)._parse();
+      return new KeyParser(text.value, options)._parse();
     } catch (e) {
       if (e instanceof ParserError) {
         const message = options.prettyErrors === false ? e.message : e.message + ':\n\n' + text.value + '\n' + ' '.repeat(e.pos) + '^\n';
@@ -282,10 +285,11 @@ export class KeyParser {
     }
   }
 
-  constructor(input: string) {
+  constructor(input: string, options: ParsingOptions) {
     this._input = input;
     this._pos = 0;
     this._length = input.length;
+    this._options = options;
   }
 
   private _peek() {
@@ -430,6 +434,10 @@ export class KeyParser {
   }
 
   private _applyAttribute(node: AriaTemplateRoleNode, key: string, value: string, errorPos: number) {
+    if (this._options.allowRef && key === 'ref') {
+      node.ref = value;
+      return;
+    }
     if (key === 'checked') {
       this._assert(value === 'true' || value === 'false' || value === 'mixed', 'Value of "checked\" attribute must be a boolean or "mixed"', errorPos);
       node.checked = value === 'true' ? true : value === 'false' ? false : 'mixed';
@@ -465,6 +473,8 @@ export class KeyParser {
       node.selected = value === 'true';
       return;
     }
+    if (this._options.allowUnknownAttributes)
+      return;
     this._assert(false, `Unsupported attribute [${key}]`, errorPos);
   }
 
@@ -481,4 +491,56 @@ export class ParserError extends Error {
     super(message);
     this.pos = pos;
   }
+}
+
+export function findNewElementRef(yaml: YamlLibrary, fromSnapshot: string, toSnapshot: string): string | undefined {
+  type ByRoleAndName = Map<string, Map<string, { node: AriaTemplateRoleNode, sizeAndPosition: number }>>;
+
+  function fillMap(root: AriaTemplateRoleNode, map: ByRoleAndName, position: number) {
+    let size = 1;
+    let childPosition = position + size;
+    for (const child of root.children || []) {
+      if (child.kind === 'role') {
+        size += fillMap(child, map, childPosition);
+        childPosition += size;
+      } else {
+        size++;
+        childPosition++;
+      }
+    }
+    if (!['none', 'presentation', 'fragment', 'iframe', 'generic'].includes(root.role) && typeof root.name === 'string' && root.name) {
+      let byRole = map.get(root.role);
+      if (!byRole) {
+        byRole = new Map();
+        map.set(root.role, byRole);
+      }
+      const existing = byRole.get(root.name);
+      // This heuristic prioritizes elements at the top of the page, even if somewhat smaller.
+      const sizeAndPosition = size * 100 - position;
+      if (!existing || existing.sizeAndPosition < sizeAndPosition)
+        byRole.set(root.name, { node: root, sizeAndPosition });
+    }
+    return size;
+  }
+
+  const fromMap: ByRoleAndName = new Map();
+  const from = parseAriaSnapshotUnsafe(yaml, fromSnapshot, { allowRef: true, allowUnknownAttributes: true });
+  if (from.kind === 'role')
+    fillMap(from, fromMap, 0);
+
+  const toMap: ByRoleAndName = new Map();
+  const to = parseAriaSnapshotUnsafe(yaml, toSnapshot, { allowRef: true, allowUnknownAttributes: true });
+  if (to.kind === 'role')
+    fillMap(to, toMap, 0);
+
+  const result: { node: AriaTemplateRoleNode, sizeAndPosition: number }[] = [];
+  for (const [role, byRole] of toMap) {
+    for (const [name, byName] of byRole) {
+      const inFrom = fromMap.get(role)?.get(name);
+      if (!inFrom)
+        result.push(byName);
+    }
+  }
+  result.sort((a, b) => b.sizeAndPosition - a.sizeAndPosition);
+  return result.find(r => r.node.ref)?.node.ref;
 }
