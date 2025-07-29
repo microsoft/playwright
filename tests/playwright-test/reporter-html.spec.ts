@@ -525,8 +525,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           import { test, expect } from '@playwright/test';
           test('fails', async ({ page }) => {
             console.log('Output line 1');
-            console.log('Output line 2');
+            process.stdout.write('Output line 2\\n');
             console.error('Error line 1');
+            process.stderr.write('Error line 2\\n');
             await expect(true).toBeFalsy();
           });
         `,
@@ -544,6 +545,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'should contain stdout content').toContain('Output line 1');
       expect(prompt, 'should contain stdout content').toContain('Output line 2');
       expect(prompt, 'should contain stderr content').toContain('Error line 1');
+      expect(prompt, 'should contain stderr content').toContain('Error line 2');
       expect(prompt, 'should contain console output header').toContain('# Console output');
       expect(prompt, 'should contain stdout section').toContain('## stdout');
       expect(prompt, 'should contain stderr section').toContain('## stderr');

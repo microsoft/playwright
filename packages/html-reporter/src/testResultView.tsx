@@ -91,17 +91,10 @@ export const TestResultView: React.FC<{
   }, [result]);
 
   const prompt = useAsyncMemo(async () => {
-    // Extract stdout and stderr from attachments
     const stdoutAttachment = result.attachments.find(a => a.name === 'stdout');
     const stderrAttachment = result.attachments.find(a => a.name === 'stderr');
-
-    const stdout = stdoutAttachment?.path ?
-      await fetch(stdoutAttachment.path).then(r => r.text()) :
-      stdoutAttachment?.body;
-
-    const stderr = stderrAttachment?.path ?
-      await fetch(stderrAttachment.path).then(r => r.text()) :
-      stderrAttachment?.body;
+    const stdout = stdoutAttachment?.body && stdoutAttachment.contentType === 'text/plain' ? stdoutAttachment.body : undefined;
+    const stderr = stderrAttachment?.body && stderrAttachment.contentType === 'text/plain' ? stderrAttachment.body : undefined;
 
     return await copyPrompt({
       testInfo: [
