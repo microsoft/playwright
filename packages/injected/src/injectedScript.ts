@@ -89,7 +89,6 @@ export class InjectedScript {
   private _markedElements?: { callId: string, elements: Set<Element> };
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
-  readonly document: Document;
   readonly consoleApi: ConsoleAPI;
   private _lastAriaSnapshot: AriaSnapshot | undefined;
 
@@ -122,7 +121,6 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   constructor(window: Window & typeof globalThis, options: InjectedScriptOptions) {
     this.window = window;
-    this.document = window.document;
     this.isUnderTest = options.isUnderTest;
     // Make sure builtins are created from "window". This is important for InjectedScript instantiated
     // inside a trace viewer snapshot, where "window" differs from "globalThis".
@@ -241,6 +239,10 @@ export class InjectedScript {
 
     if (this.isUnderTest)
       (this.window as any).__injectedScript = this;
+  }
+
+  get document(): Document {
+    return this.window.document;
   }
 
   eval(expression: string): any {

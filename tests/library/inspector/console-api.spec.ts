@@ -121,3 +121,36 @@ it('expected properties on playwright object', async ({ page }) => {
     'getByRole',
   ]);
 });
+
+
+it('should correcly inject itself into popups', async ({ page }) => {
+  const firstPageContent = `
+      <html>
+        <body>
+          <button onclick="openPopup()">open popup</button>
+          
+          <script>
+            const secondPageContent = \`
+            <html>
+              <body>
+                <input type="email">
+              </body>
+            </html>
+            \`;
+            
+            function openPopup() {
+              const popup = window.open('', '_blank', 'width=400,height=300');
+              popup.document.write(secondPageContent);
+              popup.document.close();
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+  await page.setContent(firstPageContent);
+  const newWindowPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'open popup' }).click();
+  const newPage = await newWindowPromise;
+  expect(await newPage.evaluate("window.playwright.$$('input').length")).toBe(1);
+});
