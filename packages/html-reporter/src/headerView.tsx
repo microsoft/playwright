@@ -85,19 +85,27 @@ const StatsNavView: React.FC<{
   const q = searchParams.get('q')?.toString() || '';
   return <nav>
     <Link className='subnav-item' href='#?'>
-      All <span className='d-inline counter'>{stats.total - stats.skipped}</span>
+      <span className='subnav-item-label'>All</span>
+      <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
     <Link className='subnav-item' click={filterWithQuery(q, 's:passed', false)} ctrlClick={filterWithQuery(q, 's:passed', true)}>
-      Passed <span className='d-inline counter'>{stats.expected}</span>
+      <span className='subnav-item-label'>Passed</span>
+      <span className='d-inline counter'>{stats.expected}</span>
     </Link>
     <Link className='subnav-item' click={filterWithQuery(q, 's:failed', false)} ctrlClick={filterWithQuery(q, 's:failed', true)}>
-      {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
+      {!!stats.unexpected && statusIcon('unexpected')}
+      <span className='subnav-item-label'>Failed</span>
+      <span className='d-inline counter'>{stats.unexpected}</span>
     </Link>
     <Link className='subnav-item' click={filterWithQuery(q, 's:flaky', false)} ctrlClick={filterWithQuery(q, 's:flaky', true)}>
-      {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
+      {!!stats.flaky && statusIcon('flaky')}
+      <span className='subnav-item-label'>Flaky</span>
+      <span className='d-inline counter'>{stats.flaky}</span>
     </Link>
     <Link className='subnav-item' click={filterWithQuery(q, 's:skipped', false)} ctrlClick={filterWithQuery(q, 's:skipped', true)}>
-      {!!stats.skipped && statusIcon('skipped')} Skipped <span className='d-inline counter'>{stats.skipped}</span>
+      {!!stats.skipped && statusIcon('skipped')}
+      <span className='subnav-item-label'>Skipped</span>
+      <span className='d-inline counter'>{stats.skipped}</span>
     </Link>
   </nav>;
 };
