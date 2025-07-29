@@ -6,61 +6,62 @@ This project incorporates components from the projects listed below. The origina
 
 -	@ampproject/remapping@2.2.1 (https://github.com/ampproject/remapping)
 -	@babel/code-frame@7.24.7 (https://github.com/babel/babel)
--	@babel/code-frame@7.26.2 (https://github.com/babel/babel)
--	@babel/compat-data@7.26.8 (https://github.com/babel/babel)
--	@babel/core@7.26.10 (https://github.com/babel/babel)
--	@babel/generator@7.26.10 (https://github.com/babel/babel)
--	@babel/helper-annotate-as-pure@7.25.9 (https://github.com/babel/babel)
--	@babel/helper-compilation-targets@7.26.5 (https://github.com/babel/babel)
--	@babel/helper-create-class-features-plugin@7.26.9 (https://github.com/babel/babel)
--	@babel/helper-member-expression-to-functions@7.25.9 (https://github.com/babel/babel)
--	@babel/helper-module-imports@7.25.9 (https://github.com/babel/babel)
--	@babel/helper-module-transforms@7.26.0 (https://github.com/babel/babel)
--	@babel/helper-optimise-call-expression@7.25.9 (https://github.com/babel/babel)
--	@babel/helper-plugin-utils@7.26.5 (https://github.com/babel/babel)
--	@babel/helper-replace-supers@7.26.5 (https://github.com/babel/babel)
--	@babel/helper-skip-transparent-expression-wrappers@7.25.9 (https://github.com/babel/babel)
--	@babel/helper-string-parser@7.25.9 (https://github.com/babel/babel)
+-	@babel/code-frame@7.27.1 (https://github.com/babel/babel)
+-	@babel/compat-data@7.28.0 (https://github.com/babel/babel)
+-	@babel/core@7.28.0 (https://github.com/babel/babel)
+-	@babel/generator@7.28.0 (https://github.com/babel/babel)
+-	@babel/helper-annotate-as-pure@7.27.3 (https://github.com/babel/babel)
+-	@babel/helper-compilation-targets@7.27.2 (https://github.com/babel/babel)
+-	@babel/helper-create-class-features-plugin@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-globals@7.28.0 (https://github.com/babel/babel)
+-	@babel/helper-member-expression-to-functions@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-module-imports@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-module-transforms@7.27.3 (https://github.com/babel/babel)
+-	@babel/helper-optimise-call-expression@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-plugin-utils@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-replace-supers@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-skip-transparent-expression-wrappers@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-string-parser@7.27.1 (https://github.com/babel/babel)
 -	@babel/helper-validator-identifier@7.24.7 (https://github.com/babel/babel)
--	@babel/helper-validator-identifier@7.25.9 (https://github.com/babel/babel)
--	@babel/helper-validator-option@7.25.9 (https://github.com/babel/babel)
--	@babel/helpers@7.26.10 (https://github.com/babel/babel)
+-	@babel/helper-validator-identifier@7.27.1 (https://github.com/babel/babel)
+-	@babel/helper-validator-option@7.27.1 (https://github.com/babel/babel)
+-	@babel/helpers@7.28.2 (https://github.com/babel/babel)
 -	@babel/highlight@7.24.7 (https://github.com/babel/babel)
--	@babel/parser@7.26.10 (https://github.com/babel/babel)
--	@babel/plugin-proposal-decorators@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-proposal-explicit-resource-management@7.25.9 (https://github.com/babel/babel)
+-	@babel/parser@7.28.0 (https://github.com/babel/babel)
+-	@babel/plugin-proposal-decorators@7.28.0 (https://github.com/babel/babel)
+-	@babel/plugin-proposal-explicit-resource-management@7.27.4 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-async-generators@7.8.4 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-async-generators)
--	@babel/plugin-syntax-decorators@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-syntax-import-attributes@7.26.0 (https://github.com/babel/babel)
+-	@babel/plugin-syntax-decorators@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-syntax-import-attributes@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-json-strings@7.8.3 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-json-strings)
--	@babel/plugin-syntax-jsx@7.25.9 (https://github.com/babel/babel)
+-	@babel/plugin-syntax-jsx@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-object-rest-spread@7.8.3 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-object-rest-spread)
 -	@babel/plugin-syntax-optional-catch-binding@7.8.3 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-optional-catch-binding)
--	@babel/plugin-syntax-typescript@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-class-properties@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-class-static-block@7.26.0 (https://github.com/babel/babel)
--	@babel/plugin-transform-export-namespace-from@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-logical-assignment-operators@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-modules-commonjs@7.26.3 (https://github.com/babel/babel)
--	@babel/plugin-transform-nullish-coalescing-operator@7.26.6 (https://github.com/babel/babel)
--	@babel/plugin-transform-numeric-separator@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-optional-chaining@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-private-methods@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-private-property-in-object@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-react-jsx@7.25.9 (https://github.com/babel/babel)
--	@babel/plugin-transform-typescript@7.26.8 (https://github.com/babel/babel)
--	@babel/preset-typescript@7.26.0 (https://github.com/babel/babel)
--	@babel/template@7.26.9 (https://github.com/babel/babel)
--	@babel/traverse@7.26.10 (https://github.com/babel/babel)
--	@babel/types@7.26.10 (https://github.com/babel/babel)
+-	@babel/plugin-syntax-typescript@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-class-properties@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-class-static-block@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-destructuring@7.28.0 (https://github.com/babel/babel)
+-	@babel/plugin-transform-export-namespace-from@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-logical-assignment-operators@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-modules-commonjs@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-nullish-coalescing-operator@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-numeric-separator@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-optional-chaining@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-private-methods@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-private-property-in-object@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-react-jsx@7.27.1 (https://github.com/babel/babel)
+-	@babel/plugin-transform-typescript@7.28.0 (https://github.com/babel/babel)
+-	@babel/preset-typescript@7.27.1 (https://github.com/babel/babel)
+-	@babel/template@7.27.2 (https://github.com/babel/babel)
+-	@babel/traverse@7.28.0 (https://github.com/babel/babel)
+-	@babel/types@7.28.2 (https://github.com/babel/babel)
 -	@jest/expect-utils@29.7.0 (https://github.com/jestjs/jest)
 -	@jest/schemas@29.6.3 (https://github.com/jestjs/jest)
 -	@jest/types@29.6.3 (https://github.com/jestjs/jest)
--	@jridgewell/gen-mapping@0.3.5 (https://github.com/jridgewell/gen-mapping)
+-	@jridgewell/gen-mapping@0.3.12 (https://github.com/jridgewell/sourcemaps)
 -	@jridgewell/resolve-uri@3.1.1 (https://github.com/jridgewell/resolve-uri)
--	@jridgewell/set-array@1.2.1 (https://github.com/jridgewell/set-array)
--	@jridgewell/sourcemap-codec@1.4.15 (https://github.com/jridgewell/sourcemap-codec)
--	@jridgewell/trace-mapping@0.3.25 (https://github.com/jridgewell/trace-mapping)
+-	@jridgewell/sourcemap-codec@1.5.4 (https://github.com/jridgewell/sourcemaps)
+-	@jridgewell/trace-mapping@0.3.29 (https://github.com/jridgewell/sourcemaps)
 -	@sinclair/typebox@0.27.8 (https://github.com/sinclairzx81/typebox)
 -	@types/istanbul-lib-coverage@2.0.6 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/istanbul-lib-report@3.0.3 (https://github.com/DefinitelyTyped/DefinitelyTyped)
@@ -76,9 +77,9 @@ This project incorporates components from the projects listed below. The origina
 -	anymatch@3.1.3 (https://github.com/micromatch/anymatch)
 -	binary-extensions@2.2.0 (https://github.com/sindresorhus/binary-extensions)
 -	braces@3.0.3 (https://github.com/micromatch/braces)
--	browserslist@4.24.4 (https://github.com/browserslist/browserslist)
+-	browserslist@4.25.1 (https://github.com/browserslist/browserslist)
 -	buffer-from@1.1.2 (https://github.com/LinusU/buffer-from)
--	caniuse-lite@1.0.30001703 (https://github.com/browserslist/caniuse-lite)
+-	caniuse-lite@1.0.30001731 (https://github.com/browserslist/caniuse-lite)
 -	chalk@2.4.2 (https://github.com/chalk/chalk)
 -	chalk@4.1.2 (https://github.com/chalk/chalk)
 -	chokidar@3.6.0 (https://github.com/paulmillr/chokidar)
@@ -91,7 +92,7 @@ This project incorporates components from the projects listed below. The origina
 -	convert-source-map@2.0.0 (https://github.com/thlorenz/convert-source-map)
 -	debug@4.4.0 (https://github.com/debug-js/debug)
 -	diff-sequences@29.6.3 (https://github.com/jestjs/jest)
--	electron-to-chromium@1.5.115 (https://github.com/kilian/electron-to-chromium)
+-	electron-to-chromium@1.5.192 (https://github.com/kilian/electron-to-chromium)
 -	enquirer@2.3.6 (https://github.com/enquirer/enquirer)
 -	escalade@3.2.0 (https://github.com/lukeed/escalade)
 -	escape-string-regexp@1.0.5 (https://github.com/sindresorhus/escape-string-regexp)
@@ -100,7 +101,6 @@ This project incorporates components from the projects listed below. The origina
 -	gensync@1.0.0-beta.2 (https://github.com/loganfsmyth/gensync)
 -	get-east-asian-width@1.3.0 (https://github.com/sindresorhus/get-east-asian-width)
 -	glob-parent@5.1.2 (https://github.com/gulpjs/glob-parent)
--	globals@11.12.0 (https://github.com/sindresorhus/globals)
 -	graceful-fs@4.2.11 (https://github.com/isaacs/node-graceful-fs)
 -	has-flag@3.0.0 (https://github.com/sindresorhus/has-flag)
 -	has-flag@4.0.0 (https://github.com/sindresorhus/has-flag)
@@ -374,7 +374,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/code-frame@7.24.7 AND INFORMATION
 
-%% @babel/code-frame@7.26.2 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/code-frame@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -399,9 +399,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/code-frame@7.26.2 AND INFORMATION
+END OF @babel/code-frame@7.27.1 AND INFORMATION
 
-%% @babel/compat-data@7.26.8 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/compat-data@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -426,9 +426,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/compat-data@7.26.8 AND INFORMATION
+END OF @babel/compat-data@7.28.0 AND INFORMATION
 
-%% @babel/core@7.26.10 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/core@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -453,9 +453,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/core@7.26.10 AND INFORMATION
+END OF @babel/core@7.28.0 AND INFORMATION
 
-%% @babel/generator@7.26.10 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/generator@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -480,9 +480,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/generator@7.26.10 AND INFORMATION
+END OF @babel/generator@7.28.0 AND INFORMATION
 
-%% @babel/helper-annotate-as-pure@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-annotate-as-pure@7.27.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -507,9 +507,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-annotate-as-pure@7.25.9 AND INFORMATION
+END OF @babel/helper-annotate-as-pure@7.27.3 AND INFORMATION
 
-%% @babel/helper-compilation-targets@7.26.5 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-compilation-targets@7.27.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -534,9 +534,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-compilation-targets@7.26.5 AND INFORMATION
+END OF @babel/helper-compilation-targets@7.27.2 AND INFORMATION
 
-%% @babel/helper-create-class-features-plugin@7.26.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-create-class-features-plugin@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -561,9 +561,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-create-class-features-plugin@7.26.9 AND INFORMATION
+END OF @babel/helper-create-class-features-plugin@7.27.1 AND INFORMATION
 
-%% @babel/helper-member-expression-to-functions@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-globals@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -588,9 +588,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-member-expression-to-functions@7.25.9 AND INFORMATION
+END OF @babel/helper-globals@7.28.0 AND INFORMATION
 
-%% @babel/helper-module-imports@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-member-expression-to-functions@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -615,9 +615,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-module-imports@7.25.9 AND INFORMATION
+END OF @babel/helper-member-expression-to-functions@7.27.1 AND INFORMATION
 
-%% @babel/helper-module-transforms@7.26.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-module-imports@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -642,9 +642,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-module-transforms@7.26.0 AND INFORMATION
+END OF @babel/helper-module-imports@7.27.1 AND INFORMATION
 
-%% @babel/helper-optimise-call-expression@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-module-transforms@7.27.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -669,9 +669,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-optimise-call-expression@7.25.9 AND INFORMATION
+END OF @babel/helper-module-transforms@7.27.3 AND INFORMATION
 
-%% @babel/helper-plugin-utils@7.26.5 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-optimise-call-expression@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -696,9 +696,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-plugin-utils@7.26.5 AND INFORMATION
+END OF @babel/helper-optimise-call-expression@7.27.1 AND INFORMATION
 
-%% @babel/helper-replace-supers@7.26.5 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-plugin-utils@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -723,9 +723,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-replace-supers@7.26.5 AND INFORMATION
+END OF @babel/helper-plugin-utils@7.27.1 AND INFORMATION
 
-%% @babel/helper-skip-transparent-expression-wrappers@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-replace-supers@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -750,9 +750,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-skip-transparent-expression-wrappers@7.25.9 AND INFORMATION
+END OF @babel/helper-replace-supers@7.27.1 AND INFORMATION
 
-%% @babel/helper-string-parser@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-skip-transparent-expression-wrappers@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -777,7 +777,34 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-string-parser@7.25.9 AND INFORMATION
+END OF @babel/helper-skip-transparent-expression-wrappers@7.27.1 AND INFORMATION
+
+%% @babel/helper-string-parser@7.27.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF @babel/helper-string-parser@7.27.1 AND INFORMATION
 
 %% @babel/helper-validator-identifier@7.24.7 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -806,7 +833,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/helper-validator-identifier@7.24.7 AND INFORMATION
 
-%% @babel/helper-validator-identifier@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-validator-identifier@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -831,9 +858,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-validator-identifier@7.25.9 AND INFORMATION
+END OF @babel/helper-validator-identifier@7.27.1 AND INFORMATION
 
-%% @babel/helper-validator-option@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helper-validator-option@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -858,13 +885,14 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helper-validator-option@7.25.9 AND INFORMATION
+END OF @babel/helper-validator-option@7.27.1 AND INFORMATION
 
-%% @babel/helpers@7.26.10 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helpers@7.28.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
+Copyright (c) 2014-present, Facebook, Inc. (ONLY ./src/helpers/regenerator* files)
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -885,7 +913,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helpers@7.26.10 AND INFORMATION
+END OF @babel/helpers@7.28.2 AND INFORMATION
 
 %% @babel/highlight@7.24.7 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -914,7 +942,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/highlight@7.24.7 AND INFORMATION
 
-%% @babel/parser@7.26.10 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/parser@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (C) 2012-2014 by various contributors (see AUTHORS)
 
@@ -936,9 +964,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF @babel/parser@7.26.10 AND INFORMATION
+END OF @babel/parser@7.28.0 AND INFORMATION
 
-%% @babel/plugin-proposal-decorators@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-proposal-decorators@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -963,9 +991,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-proposal-decorators@7.25.9 AND INFORMATION
+END OF @babel/plugin-proposal-decorators@7.28.0 AND INFORMATION
 
-%% @babel/plugin-proposal-explicit-resource-management@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-proposal-explicit-resource-management@7.27.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -990,7 +1018,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-proposal-explicit-resource-management@7.25.9 AND INFORMATION
+END OF @babel/plugin-proposal-explicit-resource-management@7.27.4 AND INFORMATION
 
 %% @babel/plugin-syntax-async-generators@7.8.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1019,7 +1047,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-syntax-async-generators@7.8.4 AND INFORMATION
 
-%% @babel/plugin-syntax-decorators@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-syntax-decorators@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1044,9 +1072,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-syntax-decorators@7.25.9 AND INFORMATION
+END OF @babel/plugin-syntax-decorators@7.27.1 AND INFORMATION
 
-%% @babel/plugin-syntax-import-attributes@7.26.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-syntax-import-attributes@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1071,7 +1099,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-syntax-import-attributes@7.26.0 AND INFORMATION
+END OF @babel/plugin-syntax-import-attributes@7.27.1 AND INFORMATION
 
 %% @babel/plugin-syntax-json-strings@7.8.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1100,7 +1128,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-syntax-json-strings@7.8.3 AND INFORMATION
 
-%% @babel/plugin-syntax-jsx@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-syntax-jsx@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1125,7 +1153,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-syntax-jsx@7.25.9 AND INFORMATION
+END OF @babel/plugin-syntax-jsx@7.27.1 AND INFORMATION
 
 %% @babel/plugin-syntax-object-rest-spread@7.8.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1181,7 +1209,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-syntax-optional-catch-binding@7.8.3 AND INFORMATION
 
-%% @babel/plugin-syntax-typescript@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-syntax-typescript@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1206,9 +1234,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-syntax-typescript@7.25.9 AND INFORMATION
+END OF @babel/plugin-syntax-typescript@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-class-properties@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-class-properties@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1233,9 +1261,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-class-properties@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-class-properties@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-class-static-block@7.26.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-class-static-block@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1260,9 +1288,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-class-static-block@7.26.0 AND INFORMATION
+END OF @babel/plugin-transform-class-static-block@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-export-namespace-from@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-destructuring@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1287,9 +1315,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-export-namespace-from@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-destructuring@7.28.0 AND INFORMATION
 
-%% @babel/plugin-transform-logical-assignment-operators@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-export-namespace-from@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1314,9 +1342,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-logical-assignment-operators@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-export-namespace-from@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-modules-commonjs@7.26.3 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-logical-assignment-operators@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1341,9 +1369,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-modules-commonjs@7.26.3 AND INFORMATION
+END OF @babel/plugin-transform-logical-assignment-operators@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-nullish-coalescing-operator@7.26.6 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-modules-commonjs@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1368,9 +1396,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-nullish-coalescing-operator@7.26.6 AND INFORMATION
+END OF @babel/plugin-transform-modules-commonjs@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-numeric-separator@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-nullish-coalescing-operator@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1395,9 +1423,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-numeric-separator@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-nullish-coalescing-operator@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-optional-chaining@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-numeric-separator@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1422,9 +1450,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-optional-chaining@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-numeric-separator@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-private-methods@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-optional-chaining@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1449,9 +1477,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-private-methods@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-optional-chaining@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-private-property-in-object@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-private-methods@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1476,9 +1504,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-private-property-in-object@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-private-methods@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-react-jsx@7.25.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-private-property-in-object@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1503,9 +1531,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-react-jsx@7.25.9 AND INFORMATION
+END OF @babel/plugin-transform-private-property-in-object@7.27.1 AND INFORMATION
 
-%% @babel/plugin-transform-typescript@7.26.8 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-react-jsx@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1530,9 +1558,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-transform-typescript@7.26.8 AND INFORMATION
+END OF @babel/plugin-transform-react-jsx@7.27.1 AND INFORMATION
 
-%% @babel/preset-typescript@7.26.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-transform-typescript@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1557,9 +1585,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/preset-typescript@7.26.0 AND INFORMATION
+END OF @babel/plugin-transform-typescript@7.28.0 AND INFORMATION
 
-%% @babel/template@7.26.9 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/preset-typescript@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1584,9 +1612,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/template@7.26.9 AND INFORMATION
+END OF @babel/preset-typescript@7.27.1 AND INFORMATION
 
-%% @babel/traverse@7.26.10 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/template@7.27.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1611,9 +1639,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/traverse@7.26.10 AND INFORMATION
+END OF @babel/template@7.27.2 AND INFORMATION
 
-%% @babel/types@7.26.10 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/traverse@7.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1638,7 +1666,34 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/types@7.26.10 AND INFORMATION
+END OF @babel/traverse@7.28.0 AND INFORMATION
+
+%% @babel/types@7.28.2 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF @babel/types@7.28.2 AND INFORMATION
 
 %% @jest/expect-utils@29.7.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1718,9 +1773,9 @@ SOFTWARE.
 =========================================
 END OF @jest/types@29.6.3 AND INFORMATION
 
-%% @jridgewell/gen-mapping@0.3.5 NOTICES AND INFORMATION BEGIN HERE
+%% @jridgewell/gen-mapping@0.3.12 NOTICES AND INFORMATION BEGIN HERE
 =========================================
-Copyright 2022 Justin Ridgewell <jridgewell@google.com>
+Copyright 2024 Justin Ridgewell <justin@ridgewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1740,7 +1795,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @jridgewell/gen-mapping@0.3.5 AND INFORMATION
+END OF @jridgewell/gen-mapping@0.3.12 AND INFORMATION
 
 %% @jridgewell/resolve-uri@3.1.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1766,9 +1821,9 @@ SOFTWARE.
 =========================================
 END OF @jridgewell/resolve-uri@3.1.1 AND INFORMATION
 
-%% @jridgewell/set-array@1.2.1 NOTICES AND INFORMATION BEGIN HERE
+%% @jridgewell/sourcemap-codec@1.5.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
-Copyright 2022 Justin Ridgewell <jridgewell@google.com>
+Copyright 2024 Justin Ridgewell <justin@ridgewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1788,37 +1843,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @jridgewell/set-array@1.2.1 AND INFORMATION
+END OF @jridgewell/sourcemap-codec@1.5.4 AND INFORMATION
 
-%% @jridgewell/sourcemap-codec@1.4.15 NOTICES AND INFORMATION BEGIN HERE
+%% @jridgewell/trace-mapping@0.3.29 NOTICES AND INFORMATION BEGIN HERE
 =========================================
-The MIT License
-
-Copyright (c) 2015 Rich Harris
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF @jridgewell/sourcemap-codec@1.4.15 AND INFORMATION
-
-%% @jridgewell/trace-mapping@0.3.25 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-Copyright 2022 Justin Ridgewell <justin@ridgewell.name>
+Copyright 2024 Justin Ridgewell <justin@ridgewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1838,7 +1867,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @jridgewell/trace-mapping@0.3.25 AND INFORMATION
+END OF @jridgewell/trace-mapping@0.3.29 AND INFORMATION
 
 %% @sinclair/typebox@0.27.8 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2178,7 +2207,7 @@ THE SOFTWARE.
 =========================================
 END OF braces@3.0.3 AND INFORMATION
 
-%% browserslist@4.24.4 NOTICES AND INFORMATION BEGIN HERE
+%% browserslist@4.25.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -2201,7 +2230,7 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF browserslist@4.24.4 AND INFORMATION
+END OF browserslist@4.25.1 AND INFORMATION
 
 %% buffer-from@1.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2229,7 +2258,7 @@ SOFTWARE.
 =========================================
 END OF buffer-from@1.1.2 AND INFORMATION
 
-%% caniuse-lite@1.0.30001703 NOTICES AND INFORMATION BEGIN HERE
+%% caniuse-lite@1.0.30001731 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Attribution 4.0 International
 
@@ -2627,7 +2656,7 @@ public licenses.
 
 Creative Commons may be contacted at creativecommons.org.
 =========================================
-END OF caniuse-lite@1.0.30001703 AND INFORMATION
+END OF caniuse-lite@1.0.30001731 AND INFORMATION
 
 %% chalk@2.4.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2889,7 +2918,7 @@ SOFTWARE.
 =========================================
 END OF diff-sequences@29.6.3 AND INFORMATION
 
-%% electron-to-chromium@1.5.115 NOTICES AND INFORMATION BEGIN HERE
+%% electron-to-chromium@1.5.192 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright 2018 Kilian Valkhof
 
@@ -2897,7 +2926,7 @@ Permission to use, copy, modify, and/or distribute this software for any purpose
 
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
-END OF electron-to-chromium@1.5.115 AND INFORMATION
+END OF electron-to-chromium@1.5.192 AND INFORMATION
 
 %% enquirer@2.3.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3050,20 +3079,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF glob-parent@5.1.2 AND INFORMATION
-
-%% globals@11.12.0 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF globals@11.12.0 AND INFORMATION
 
 %% graceful-fs@4.2.11 NOTICES AND INFORMATION BEGIN HERE
 =========================================
