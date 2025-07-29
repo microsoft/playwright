@@ -548,7 +548,7 @@ class RecordActionTool implements RecorderTool {
   private _captureAriaSnapshotForAction(action: actions.Action) {
     const documentElement = this._recorder.injectedScript.document.documentElement;
     if (documentElement)
-      action.ariaSnapshot = this._recorder.injectedScript.ariaSnapshot(documentElement, { mode: 'raw', refs: true, visibleOnly: true });
+      action.ariaSnapshot = this._recorder.injectedScript.ariaSnapshot(documentElement, { mode: 'autoexpect' });
   }
 
   private _recordAction(action: actions.Action) {
@@ -951,7 +951,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertSnapshot',
         selector: this._hoverHighlight.selector,
         signals: [],
-        ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'regex' }),
+        ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'codegen' }),
       };
     } else {
       const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
@@ -1384,7 +1384,7 @@ export class Recorder {
 
     const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
     if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
-      const elements = state.ariaTemplate ? this.injectedScript.getAllByAria(this.document, state.ariaTemplate) : [];
+      const elements = state.ariaTemplate ? this.injectedScript.getAllElementsMatchingExpectAriaTemplate(this.document, state.ariaTemplate) : [];
       if (elements.length) {
         const color = elements.length > 1 ? HighlightColors.multiple : HighlightColors.single;
         highlight = elements.map(element => ({ element, color }));
@@ -1591,7 +1591,7 @@ export class Recorder {
   }
 
   elementPicked(selector: string, model: HighlightModel) {
-    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0]);
+    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0], { mode: 'expect' });
     void this._delegate.elementPicked?.({ selector, ariaSnapshot });
   }
 }

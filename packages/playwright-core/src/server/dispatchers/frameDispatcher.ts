@@ -273,6 +273,6 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async ariaSnapshot(params: channels.FrameAriaSnapshotParams, progress: Progress): Promise<channels.FrameAriaSnapshotResult> {
-    return { snapshot: await this._frame.ariaSnapshot(progress, params.selector, params) };
+    return { snapshot: await this._frame.ariaSnapshot(progress, params.selector) };
   }
 }

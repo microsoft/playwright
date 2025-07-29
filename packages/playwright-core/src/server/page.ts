@@ -1005,7 +1005,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.ariaSnapshot(node, { forAI: true, refPrefix });
+        return injected.ariaSnapshot(node, { mode: 'ai', refPrefix });
       }, frameOrdinal ? 'f' + frameOrdinal : ''));
       if (snapshotOrRetry === true)
         return continuePolling;

@@ -2126,7 +2126,6 @@ Frame:
       title: Aria snapshot
       parameters:
         selector: string
-        forAI: boolean?
         timeout: number
       returns:
         snapshot: string

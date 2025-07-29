@@ -1341,8 +1341,8 @@ export class Frame extends SdkObject {
     return progress.wait(timeout);
   }
 
-  async ariaSnapshot(progress: Progress, selector: string, options: { forAI?: boolean }): Promise<string> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot(options)));
+  async ariaSnapshot(progress: Progress, selector: string): Promise<string> {
+    return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot()));
   }
 
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams, timeout?: number): Promise<ExpectResult> {
