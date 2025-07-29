@@ -371,7 +371,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates and when a http proxy is used from env', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+  test('should pass with matching certificates and when a http proxy is used from env', async ({ mode, browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
     process.env.HTTPS_PROXY = `http://localhost:${proxyServer.PORT}`;
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
