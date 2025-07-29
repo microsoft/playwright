@@ -59,7 +59,8 @@ test('should click', async ({ context, browserName }) => {
         name: 'click',
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
-        ariaSnapshot: `- button "Submit"${browserName === 'webkit' ? '' : ' [active]'} [ref=e2]`,
+        // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
+        ariaSnapshot: browserName === 'webkit' ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
@@ -82,7 +83,8 @@ test('should double click', async ({ context, browserName }) => {
         clickCount: 2,
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
-        ariaSnapshot: `- button "Submit"${browserName === 'webkit' ? '' : ' [active]'} [ref=e2]`,
+        // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
+        ariaSnapshot: browserName === 'webkit' ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
@@ -105,7 +107,8 @@ test('should right click', async ({ context, browserName }) => {
         button: 'right',
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
-        ariaSnapshot: `- button "Submit"${browserName === 'webkit' ? '' : ' [active]'} [ref=e2]`,
+        // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
+        ariaSnapshot: browserName === 'webkit' ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
