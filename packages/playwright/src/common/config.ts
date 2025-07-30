@@ -91,6 +91,7 @@ export class FullConfigInternal {
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
+      forbidTestFileImports: takeFirst(configCLIOverrides.forbidTestFileImports, userConfig.forbidTestFileImports, true),
       fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
       globalSetup: this.globalSetups[0] ?? null,
       globalTeardown: this.globalTeardowns[0] ?? null,

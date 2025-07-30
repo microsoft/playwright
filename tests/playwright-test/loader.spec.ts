@@ -961,6 +961,31 @@ test('should complain when one test file imports another', async ({ runInlineTes
   expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });
 
+test('should allow test file imports when forbidTestFileImports is false', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { forbidTestFileImports: false };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { foo } from './b.test';
+
+      test('pass1', async () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      export const foo = 'foo';
+
+      test('pass2', async () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
 test('should support dynamic imports and requires of js, ts from js, ts and cjs', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `

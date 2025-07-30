@@ -100,15 +100,17 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
 
   // Check that no test file imports another test file.
   // Loader must be stopped first, since it populates the dependency tree.
-  for (const file of allTestFiles) {
-    for (const dependency of dependenciesForTestFile(file)) {
-      if (allTestFiles.has(dependency)) {
-        const importer = path.relative(config.config.rootDir, file);
-        const importee = path.relative(config.config.rootDir, dependency);
-        errors.push({
-          message: `Error: test file "${importer}" should not import test file "${importee}"`,
-          location: { file, line: 1, column: 1 },
-        });
+  if (config.config.forbidTestFileImports) {
+    for (const file of allTestFiles) {
+      for (const dependency of dependenciesForTestFile(file)) {
+        if (allTestFiles.has(dependency)) {
+          const importer = path.relative(config.config.rootDir, file);
+          const importee = path.relative(config.config.rootDir, dependency);
+          errors.push({
+            message: `Error: test file "${importer}" should not import test file "${importee}"`,
+            location: { file, line: 1, column: 1 },
+          });
+        }
       }
     }
   }
