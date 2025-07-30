@@ -282,6 +282,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   const overrides: ConfigCLIOverrides = {
     failOnFlakyTests: options.failOnFlakyTests ? true : undefined,
     forbidOnly: options.forbidOnly ? true : undefined,
+    forbidTestFileImports: options.forbidTestFileImports ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
@@ -381,6 +382,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
+  ['--forbid-test-file-imports', { description: `Fail if test files import other test files (default: true)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],
   ['--global-timeout <timeout>', { description: `Maximum time this test suite can run in milliseconds (default: unlimited)` }],
   ['-g, --grep <grep>', { description: `Only run tests matching this regular expression (default: ".*")` }],

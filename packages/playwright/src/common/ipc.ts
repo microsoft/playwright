@@ -26,6 +26,7 @@ export type ConfigCLIOverrides = {
   debug?: boolean;
   failOnFlakyTests?: boolean;
   forbidOnly?: boolean;
+  forbidTestFileImports?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
   maxFailures?: number;
