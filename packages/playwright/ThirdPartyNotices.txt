@@ -29,7 +29,6 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/highlight@7.24.7 (https://github.com/babel/babel)
 -	@babel/parser@7.28.0 (https://github.com/babel/babel)
 -	@babel/plugin-proposal-decorators@7.28.0 (https://github.com/babel/babel)
--	@babel/plugin-proposal-explicit-resource-management@7.27.4 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-async-generators@7.8.4 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-async-generators)
 -	@babel/plugin-syntax-decorators@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-import-attributes@7.27.1 (https://github.com/babel/babel)
@@ -41,6 +40,7 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/plugin-transform-class-properties@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-class-static-block@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-destructuring@7.28.0 (https://github.com/babel/babel)
+-	@babel/plugin-transform-explicit-resource-management@7.28.0 (https://github.com/babel/babel)
 -	@babel/plugin-transform-export-namespace-from@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-logical-assignment-operators@7.27.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-modules-commonjs@7.27.1 (https://github.com/babel/babel)
@@ -993,33 +993,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-proposal-decorators@7.28.0 AND INFORMATION
 
-%% @babel/plugin-proposal-explicit-resource-management@7.27.4 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF @babel/plugin-proposal-explicit-resource-management@7.27.4 AND INFORMATION
-
 %% @babel/plugin-syntax-async-generators@7.8.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -1316,6 +1289,33 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-transform-destructuring@7.28.0 AND INFORMATION
+
+%% @babel/plugin-transform-explicit-resource-management@7.28.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF @babel/plugin-transform-explicit-resource-management@7.28.0 AND INFORMATION
 
 %% @babel/plugin-transform-export-namespace-from@7.27.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
