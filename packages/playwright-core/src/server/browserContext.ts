@@ -85,7 +85,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
   readonly _tempDirs: string[] = [];
-  private _settingStorageState = false;
+  private _creatingStorageStatePage = false;
   bindingsInitScript?: InitScript;
   initScripts: InitScript[] = [];
   private _routesInFlight = new Set<network.Route>();
@@ -209,15 +209,11 @@ export abstract class BrowserContext extends SdkObject {
 
     // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
     // All other properties force a new context.
-    await this._resetStorage(progress);
     await this.clock.uninstall(progress);
     await progress.race(this.setUserAgent(this._options.userAgent));
-    await progress.race(this.clearCache());
-    await progress.race(this.doClearCookies());
     await progress.race(this.doUpdateDefaultEmulatedMedia());
     await progress.race(this.doUpdateDefaultViewport());
-    if (this._options.storageState?.cookies)
-      await progress.race(this.addCookies(this._options.storageState?.cookies));
+    await this.setStorageState(progress, this._options.storageState, 'reset');
 
     await page?.resetForReuse(progress);
   }
@@ -612,68 +608,62 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
-  async _resetStorage(progress: Progress) {
-    const oldOrigins = this._origins;
-    const newOrigins = new Map(this._options.storageState?.origins?.map(p => [p.origin, p]) || []);
-    if (!oldOrigins.size && !newOrigins.size)
-      return;
-    let page = this.pages()[0];
+  isCreatingStorageStatePage(): boolean {
+    return this._creatingStorageStatePage;
+  }
 
-    // Do not mark this page as internal, because we will leave it for later reuse
-    // as a user-visible page.
-    page = page || await this.newPage(progress, false);
-    const interceptor = (route: network.Route) => {
-      route.fulfill({ body: '<html></html>' }).catch(() => {});
-    };
-    await page.addRequestInterceptor(progress, interceptor, 'prepend');
-
+  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'reset') {
+    let page: Page | undefined;
+    let interceptor: network.RouteHandler | undefined;
     try {
-      for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
-        const frame = page.mainFrame();
-        await frame.gotoImpl(progress, origin, {});
-        await progress.race(frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin)));
+      if (mode === 'reset') {
+        await progress.race(this.clearCache());
+        await progress.race(this.doClearCookies());
       }
 
-      this._origins = new Set([...newOrigins.keys()]);
-      // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
-    } finally {
-      await page.removeRequestInterceptor(interceptor);
-    }
-  }
-
-  isSettingStorageState(): boolean {
-    return this._settingStorageState;
-  }
-
-  async setStorageState(progress: Progress, state: NonNullable<channels.BrowserNewContextParams['storageState']>) {
-    let page: Page | undefined;
-    this._settingStorageState = true;
-    try {
-      if (state.cookies)
+      if (state?.cookies)
         await progress.race(this.addCookies(state.cookies));
-      if (state.origins && state.origins.length)  {
-        page = await this.newPage(progress, true);
-        await page.addRequestInterceptor(progress, route => {
+
+      const newOrigins = new Map(state?.origins?.map(p => [p.origin, p]) || []);
+      const allOrigins = new Set([...this._origins, ...newOrigins.keys()]);
+      if (allOrigins.size) {
+        if (mode === 'reset')
+          page = this.pages()[0];
+        if (!page) {
+          try {
+            this._creatingStorageStatePage = mode === 'initial';
+            page = await this.newPage(progress, this._creatingStorageStatePage);
+          } finally {
+            this._creatingStorageStatePage = false;
+          }
+        }
+
+        interceptor = (route: network.Route) => {
           route.fulfill({ body: '<html></html>' }).catch(() => {});
-        }, 'prepend');
-        for (const originState of state.origins) {
+        };
+        await page.addRequestInterceptor(progress, interceptor, 'prepend');
+
+        for (const origin of allOrigins) {
           const frame = page.mainFrame();
-          await frame.gotoImpl(progress, originState.origin, {});
+          await frame.gotoImpl(progress, origin, {});
           const restoreScript = `(() => {
             const module = {};
             ${rawStorageSource.source}
             const script = new (module.exports.StorageScript())(${this._browser.options.name === 'firefox'});
-            return script.restore(${JSON.stringify(originState)});
+            return script.restore(${JSON.stringify(newOrigins.get(origin))});
           })()`;
           await progress.race(frame.evaluateExpression(restoreScript, { world: 'utility' }));
         }
       }
+      this._origins = new Set([...newOrigins.keys()]);
     } catch (error) {
       rewriteErrorMessage(error, `Error setting storage state:\n` + error.message);
       throw error;
     } finally {
-      await page?.close();
-      this._settingStorageState = false;
+      if (mode === 'initial')
+        await page?.close();
+      else if (interceptor)
+        await page?.removeRequestInterceptor(interceptor);
     }
   }
 

@@ -105,8 +105,7 @@ export abstract class Browser extends SdkObject {
       context._clientCertificatesProxy = clientCertificatesProxy;
       if ((options as any).__testHookBeforeSetStorageState)
         await progress.race((options as any).__testHookBeforeSetStorageState());
-      if (options.storageState)
-        await context.setStorageState(progress, options.storageState);
+      await context.setStorageState(progress, options.storageState, 'initial');
       this.emit(Browser.Events.Context, context);
       return context;
     } catch (error) {
