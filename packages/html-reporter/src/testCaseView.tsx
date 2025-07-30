@@ -78,6 +78,7 @@ export const TestCaseView: React.FC<{
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>
           {statusIcon(result.status)}
+          {/* data-content is fed to CSS to properly center label */}
           <span className='test-case-run-label' data-content={retryLabel(index)}>{retryLabel(index)}</span>
           {(test.results.length > 1) && <span className='test-case-run-duration'>{msToString(result.duration)}</span>}
         </div>,
