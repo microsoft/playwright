@@ -565,3 +565,16 @@ it('correctly increments Date.now()/performance.now() during blocking execution'
   await page.goto(server.PREFIX + '/repro.html');
   await waitForDone;
 });
+
+it('should uninstall', async ({ page }) => {
+  await page.clock.install({ time: 0 });
+  await page.clock.pauseAt(1000);
+  expect(await page.evaluate(() => Date.now())).toBe(1000);
+
+  await page.goto('about:blank');
+  expect(await page.evaluate(() => Date.now())).toBe(1000);
+
+  await page.clock.uninstall();
+  await page.goto('about:blank');
+  expect(await page.evaluate(() => Date.now())).not.toBe(1000);
+});

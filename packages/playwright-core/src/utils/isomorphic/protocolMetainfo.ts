@@ -97,6 +97,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.clockRunFor', { title: 'Run clock "{ticksNumber}{ticksString}"', }],
   ['BrowserContext.clockSetFixedTime', { title: 'Set fixed time "{timeNumber}{timeString}"', }],
   ['BrowserContext.clockSetSystemTime', { title: 'Set system time "{timeNumber}{timeString}"', }],
+  ['BrowserContext.clockUninstall', { title: 'Uninstall clock', }],
   ['Page.addInitScript', { }],
   ['Page.close', { title: 'Close page', }],
   ['Page.emulateMedia', { title: 'Emulate media', snapshot: true, }],

@@ -51,6 +51,10 @@ export class Clock implements api.Clock {
   async setSystemTime(time: string | number | Date) {
     await this._browserContext._channel.clockSetSystemTime(parseTime(time));
   }
+
+  async uninstall() {
+    await this._browserContext._channel.clockUninstall();
+  }
 }
 
 function parseTime(time: string | number | Date): { timeNumber?: number, timeString?: string } {

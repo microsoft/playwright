@@ -1450,6 +1450,9 @@ BrowserContext:
         timeNumber: number?
         timeString: string?
 
+    clockUninstall:
+      title: Uninstall clock
+
   events:
 
     bindingCall:
