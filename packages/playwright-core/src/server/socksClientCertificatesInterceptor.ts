@@ -78,11 +78,10 @@ class SocksProxyConnection {
   private readonly uid: string;
   private readonly host: string;
   private readonly port: number;
-  firstPackageReceived: boolean = false;
-  target!: net.Socket;
-  // In case of http, we just pipe data to the target socket and they are |undefined|.
-  internal: stream.Duplex | undefined;
-  internalTLS: tls.TLSSocket | undefined;
+  private _firstPackageReceived = false;
+  private _target!: net.Socket;
+  private _internal: stream.Duplex;
+  private _internalTLS: tls.TLSSocket | undefined;
   private _targetCloseEventListener: () => void;
   private _dummyServer: tls.Server | undefined;
   private _closed = false;
@@ -95,35 +94,42 @@ class SocksProxyConnection {
     this._targetCloseEventListener = () => {
       // Close the other end and cleanup TLS resources.
       this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid });
-      this.internalTLS?.destroy();
+      this._internalTLS?.destroy();
       this._dummyServer?.close();
     };
+    this._internal = new stream.Duplex({
+      read: () => { },
+      write: (data, encoding, callback) => {
+        this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
+        callback();
+      }
+    });
   }
 
   async connect() {
     const proxyAgent = this.socksProxy.getProxyAgent(this.host, this.port);
     if (proxyAgent)
-      this.target = await proxyAgent.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+      this._target = await proxyAgent.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
-      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+      this._target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
 
-    this.target.once('close', this._targetCloseEventListener);
-    this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
+    this._target.once('close', this._targetCloseEventListener);
+    this._target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     if (this._closed) {
-      this.target.destroy();
+      this._target.destroy();
       return;
     }
     this.socksProxy._socksProxy.socketConnected({
       uid: this.uid,
-      host: this.target.localAddress!,
-      port: this.target.localPort!,
+      host: this._target.localAddress!,
+      port: this._target.localPort!,
     });
   }
 
   public onClose() {
     // Close the other end and cleanup TLS resources.
-    this.target.destroy();
-    this.internalTLS?.destroy();
+    this._target.destroy();
+    this._internalTLS?.destroy();
     this._dummyServer?.close();
     this._closed = true;
   }
@@ -131,28 +137,25 @@ class SocksProxyConnection {
   public onData(data: Buffer) {
     // HTTP / TLS are client-hello based protocols. This allows us to detect
     // the protocol on the first package and attach appropriate listeners.
-    if (!this.firstPackageReceived) {
-      this.firstPackageReceived = true;
+    if (!this._firstPackageReceived) {
+      this._firstPackageReceived = true;
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
       if (data[0] === 0x16)
-        this._attachTLSListeners();
+        this._establishTlsTunnel(this._internal, data);
       else
-        this.target.on('data', data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
+        this._establishPlaintextTunnel(this._internal);
     }
-    if (this.internal)
-      this.internal.push(data);
-    else
-      this.target.write(data);
+
+    this._internal.push(data);
   }
 
-  private _attachTLSListeners() {
-    this.internal = new stream.Duplex({
-      read: () => {},
-      write: (data, encoding, callback) => {
-        this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
-        callback();
-      }
-    });
+
+  private _establishPlaintextTunnel(internal: stream.Duplex) {
+    internal.pipe(this._target);
+    this._target.pipe(internal);
+  }
+
+  private _establishTlsTunnel(internal: stream, clientHello: Buffer) {
     this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
       if (this._closed)
@@ -161,9 +164,9 @@ class SocksProxyConnection {
         ...dummyServerTlsOptions,
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
       });
-      this._dummyServer.emit('connection', this.internal);
+      this._dummyServer.emit('connection', this._internal);
       this._dummyServer.once('secureConnection', internalTLS => {
-        this.internalTLS = internalTLS;
+        this._internalTLS = internalTLS;
         debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
 
         let targetTLS: tls.TLSSocket | undefined = undefined;
@@ -178,11 +181,11 @@ class SocksProxyConnection {
               // In case of an 'error' event on the target connection, we still need to perform the http2 handshake on the browser side.
               // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
               // This means we call this._targetCloseEventListener manually.
-              this.target.removeListener('close', this._targetCloseEventListener);
+              this._target.removeListener('close', this._targetCloseEventListener);
               // @ts-expect-error
               const session: http2.ServerHttp2Session = http2.performServerHandshake(internalTLS);
               session.on('error', () => {
-                this.target.destroy();
+                this._target.destroy();
                 this._targetCloseEventListener();
               });
               session.once('stream', (stream: http2.ServerHttp2Stream) => {
@@ -192,14 +195,14 @@ class SocksProxyConnection {
                 });
                 const cleanup = () => {
                   session.close();
-                  this.target.destroy();
+                  this._target.destroy();
                   this._targetCloseEventListener();
                 };
                 stream.end(responseBody, cleanup);
                 stream.once('error', cleanup);
               });
             } else {
-              this.target.destroy();
+              this._target.destroy();
             }
           } else {
             internalTLS.end([
@@ -209,7 +212,7 @@ class SocksProxyConnection {
               '',
               responseBody,
             ].join('\r\n'));
-            this.target.destroy();
+            this._target.destroy();
           }
         };
 
@@ -218,7 +221,7 @@ class SocksProxyConnection {
           return;
         }
         targetTLS = tls.connect({
-          socket: this.target,
+          socket: this._target,
           host: this.host,
           port: this.port,
           rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
@@ -232,7 +235,7 @@ class SocksProxyConnection {
           targetTLS.pipe(internalTLS);
         });
 
-        internalTLS.once('error', () => this.target.destroy());
+        internalTLS.once('error', () => this._target.destroy());
         targetTLS.once('error', handleError);
       });
     });
@@ -267,7 +270,7 @@ export class ClientCertificatesProxy {
         this._socksProxy.socketFailed({ uid: payload.uid, errorCode: error.code });
       }
     });
-    this._socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
+    this._socksProxy.addListener(SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => {
       this._connections.get(payload.uid)?.onData(payload.data);
     });
     this._socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
