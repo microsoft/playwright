@@ -425,9 +425,7 @@ class RecordActionTool implements RecorderTool {
 
     if (target.nodeName === 'SELECT') {
       const selectElement = target as HTMLSelectElement;
-      if (this._actionInProgress(event))
-        return;
-      this._performAction({
+      this._recordAction({
         name: 'select',
         selector: this._activeModel!.selector,
         options: [...selectElement.selectedOptions].map(option => option.value),
