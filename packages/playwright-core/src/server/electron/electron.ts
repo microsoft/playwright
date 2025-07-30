@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 import * as readline from 'readline';
 
-import { ManualPromise, removeFolders } from '../../utils';
+import { ManualPromise } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { eventsHelper } from '../utils/eventsHelper';
@@ -166,8 +166,6 @@ export class Electron extends SdkObject {
     }
 
     const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
-    progress.cleanupWhenAborted(() => removeFolders([artifactsDir]));
-
     const browserLogsCollector = new RecentLogsCollector();
     const env = options.env ? envArrayToObject(options.env) : process.env;
 
@@ -243,76 +241,76 @@ export class Electron extends SdkObject {
     const chromeMatchPromise = waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
     const debuggerDisconnectPromise = waitForLine(progress, launchedProcess, /Waiting for the debugger to disconnect\.\.\./);
 
-    const nodeMatch = await nodeMatchPromise;
-    const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-    progress.cleanupWhenAborted(() => nodeTransport.close());
-    const nodeConnection = new CRConnection(this, nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
+    try {
+      const nodeMatch = await nodeMatchPromise;
+      const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
+      const nodeConnection = new CRConnection(this, nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
+      // Immediately release exiting process under debug.
+      debuggerDisconnectPromise.then(() => {
+        nodeTransport.close();
+      }).catch(() => {});
 
-    // Immediately release exiting process under debug.
-    debuggerDisconnectPromise.then(() => {
-      nodeTransport.close();
-    }).catch(() => {});
-    const chromeMatch = await Promise.race([
-      chromeMatchPromise,
-      waitForXserverError,
-    ]) as RegExpMatchArray;
-    const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
-    progress.cleanupWhenAborted(() => chromeTransport.close());
-    const browserProcess: BrowserProcess = {
-      onclose: undefined,
-      process: launchedProcess,
-      close: gracefullyClose,
-      kill
-    };
-    const contextOptions: types.BrowserContextOptions = {
-      ...options,
-      noDefaultViewport: true,
-    };
-    const browserOptions: BrowserOptions = {
-      name: 'electron',
-      isChromium: true,
-      headful: true,
-      persistent: contextOptions,
-      browserProcess,
-      protocolLogger: helper.debugProtocolLogger(),
-      browserLogsCollector,
-      artifactsDir,
-      downloadsPath: artifactsDir,
-      tracesDir: options.tracesDir || artifactsDir,
-      originalLaunchOptions: {},
-    };
-    validateBrowserContextOptions(contextOptions, browserOptions);
-    const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));
-    app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
-    await progress.race(app.initialize());
-    return app;
+      const chromeMatch = await Promise.race([
+        chromeMatchPromise,
+        waitForXserverError,
+      ]);
+      const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
+      const browserProcess: BrowserProcess = {
+        onclose: undefined,
+        process: launchedProcess,
+        close: gracefullyClose,
+        kill
+      };
+      const contextOptions: types.BrowserContextOptions = {
+        ...options,
+        noDefaultViewport: true,
+      };
+      const browserOptions: BrowserOptions = {
+        name: 'electron',
+        isChromium: true,
+        headful: true,
+        persistent: contextOptions,
+        browserProcess,
+        protocolLogger: helper.debugProtocolLogger(),
+        browserLogsCollector,
+        artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: options.tracesDir || artifactsDir,
+        originalLaunchOptions: {},
+      };
+      validateBrowserContextOptions(contextOptions, browserOptions);
+      const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));
+      app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
+      await progress.race(app.initialize());
+      return app;
+    } catch (error) {
+      await kill();
+      throw error;
+    }
   }
 }
 
-function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
-  return progress.race(new Promise((resolve, reject) => {
-    const rl = readline.createInterface({ input: process.stderr! });
-    const failError = new Error('Process failed to launch!');
-    const listeners = [
-      eventsHelper.addEventListener(rl, 'line', onLine),
-      eventsHelper.addEventListener(rl, 'close', reject.bind(null, failError)),
-      eventsHelper.addEventListener(process, 'exit', reject.bind(null, failError)),
-      // It is Ok to remove error handler because we did not create process and there is another listener.
-      eventsHelper.addEventListener(process, 'error', reject.bind(null, failError))
-    ];
+async function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp) {
+  const promise = new ManualPromise<RegExpMatchArray>();
+  const rl = readline.createInterface({ input: process.stderr! });
+  const failError = new Error('Process failed to launch!');
+  const listeners = [
+    eventsHelper.addEventListener(rl, 'line', onLine),
+    eventsHelper.addEventListener(rl, 'close', () => promise.reject(failError)),
+    eventsHelper.addEventListener(process, 'exit', () => promise.reject(failError)),
+    // It is Ok to remove error handler because we did not create process and there is another listener.
+    eventsHelper.addEventListener(process, 'error', () => promise.reject(failError)),
+  ];
 
-    progress.cleanupWhenAborted(cleanup);
+  function onLine(line: string) {
+    const match = line.match(regex);
+    if (match)
+      promise.resolve(match);
+  }
 
-    function onLine(line: string) {
-      const match = line.match(regex);
-      if (!match)
-        return;
-      cleanup();
-      resolve(match);
-    }
-
-    function cleanup() {
-      eventsHelper.removeEventListeners(listeners);
-    }
-  }));
+  try {
+    return await progress.race(promise);
+  } finally {
+    eventsHelper.removeEventListeners(listeners);
+  }
 }

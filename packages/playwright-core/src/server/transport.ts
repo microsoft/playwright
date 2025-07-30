@@ -84,11 +84,10 @@ export class WebSocketTransport implements ConnectionTransport {
     const logUrl = stripQueryParams(url);
     progress?.log(`<ws connecting> ${logUrl}`);
     const transport = new WebSocketTransport(progress, url, logUrl, { ...options, followRedirects: !!options.followRedirects && hadRedirects });
-    progress?.cleanupWhenAborted(() => transport.closeAndWait());
-    const resultPromise = new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
+    const resultPromise = new Promise<{ redirect?: IncomingMessage }>((fulfill, reject) => {
       transport._ws.on('open', async () => {
         progress?.log(`<ws connected> ${logUrl}`);
-        fulfill({ transport });
+        fulfill({});
       });
       transport._ws.on('error', event => {
         progress?.log(`<ws connect error> ${logUrl} ${event.message}`);
@@ -116,16 +115,20 @@ export class WebSocketTransport implements ConnectionTransport {
         });
       });
     });
-    const result = progress ? await progress.race(resultPromise) : await resultPromise;
-
-    if (result.redirect) {
-      // Strip authorization headers from the redirected request.
-      const newHeaders = Object.fromEntries(Object.entries(options.headers || {}).filter(([name]) => {
-        return !name.includes('access-key') && name.toLowerCase() !== 'authorization';
-      }));
-      return WebSocketTransport._connect(progress, result.redirect.headers.location!, { ...options, headers: newHeaders }, true /* hadRedirects */);
+    try {
+      const result = progress ? await progress.race(resultPromise) : await resultPromise;
+      if (result.redirect) {
+        // Strip authorization headers from the redirected request.
+        const newHeaders = Object.fromEntries(Object.entries(options.headers || {}).filter(([name]) => {
+          return !name.includes('access-key') && name.toLowerCase() !== 'authorization';
+        }));
+        return WebSocketTransport._connect(progress, result.redirect.headers.location!, { ...options, headers: newHeaders }, true /* hadRedirects */);
+      }
+      return transport;
+    } catch (error) {
+      await transport.closeAndWait();
+      throw error;
     }
-    return transport;
   }
 
   constructor(progress: Progress|undefined, url: string, logUrl: string, options: WebSocketTransportOptions) {
