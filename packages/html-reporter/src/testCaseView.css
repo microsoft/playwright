@@ -41,6 +41,19 @@
   padding: 0 8px 8px;
 }
 
+/* Size the tab text as if the text was bold (selected). This ensures our button stays constant size whether selected or not */
+.test-case-run-label::before {
+  content: attr(data-content);
+  display: block;
+  font-weight: 600;
+  height: 0;
+  visibility: hidden;
+}
+
+.selected .test-case-run-label {
+  font-weight: 600;
+}
+
 .test-case-run-duration {
   color: var(--color-fg-muted);
   padding-left: 8px;

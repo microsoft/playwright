@@ -77,7 +77,8 @@ export const TestCaseView: React.FC<{
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>
-          {statusIcon(result.status)} {retryLabel(index)}
+          {statusIcon(result.status)}
+          <span className='test-case-run-label' data-content={retryLabel(index)}>{retryLabel(index)}</span>
           {(test.results.length > 1) && <span className='test-case-run-duration'>{msToString(result.duration)}</span>}
         </div>,
         render: () => {
