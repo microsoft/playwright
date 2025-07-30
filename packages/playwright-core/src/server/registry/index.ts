@@ -406,8 +406,11 @@ export const registryDirectory = (() => {
       cacheDirectory = path.join(os.homedir(), 'Library', 'Caches');
     else if (process.platform === 'win32')
       cacheDirectory = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-    else
+    else if (process.platform === 'android' && process.env.PLAYWRIGHT_ALLOW_ANDROID === '1') {
+      cacheDirectory = import_path.default.join(import_os.default.homedir(), '.cache');
+    } else {
       throw new Error('Unsupported platform: ' + process.platform);
+    }
     result = path.join(cacheDirectory, 'ms-playwright');
   }
 
