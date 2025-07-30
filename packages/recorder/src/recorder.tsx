@@ -52,22 +52,22 @@ export const Recorder: React.FC<RecorderProps> = ({
   React.useEffect(() => {
     if (!sources.length)
       return;
-    const selectedSource = sources.find(s => s.id === selectedFileId);
+    // When no selected file id present, pick the primary source (target language).
+    let fileId = selectedFileId ?? sources.find(s => s.isPrimary)?.id;
+    const selectedSource = sources.find(s => s.id === fileId);
     const newestSource = sources.sort((a, b) => b.timestamp - a.timestamp)[0];
     if (!selectedSource || newestSource.isRecorded !== selectedSource.isRecorded) {
-      // Debugger kicked in, or recording resumed. Switch selection to the newest source.
-      setSelectedFileId(newestSource.id);
+      // When debugger kicks in, or recording is resumed switch the selection to the newest source.
+      fileId = newestSource.id;
     }
+    // If changes above force the selection to change, update the state.
+    if (fileId !== selectedFileId)
+      setSelectedFileId(fileId);
   }, [sources, selectedFileId]);
 
   const source = React.useMemo(() => {
     const source = sources.find(s => s.id === selectedFileId);
-    if (source)
-      return source;
-    const primarySource = sources.find(s => s.isPrimary);
-    if (primarySource)
-      return primarySource;
-    return emptySource();
+    return source ?? emptySource();
   }, [sources, selectedFileId]);
 
   const [locator, setLocator] = React.useState('');
