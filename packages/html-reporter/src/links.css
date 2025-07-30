@@ -115,6 +115,7 @@
   flex: none;
   background-color: transparent;
   border-color: transparent;
+  user-select: none;
 }
 
 .link-badge-dim span {
