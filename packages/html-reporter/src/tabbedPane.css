@@ -60,7 +60,7 @@
 }
 
 .tabbed-pane-tab-element:hover {
-  background-color: #656c7633;
+  background-color: var(--color-control-transparent-bg-hover);
 }
 
 .tabbed-pane-tab-element.selected {
