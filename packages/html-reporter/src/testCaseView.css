@@ -67,9 +67,3 @@
     margin: 0 !important;
   }
 }
-
-.test-case-project-labels-row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}

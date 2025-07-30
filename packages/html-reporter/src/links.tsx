@@ -23,6 +23,7 @@ import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
 import { trace } from './icons';
 import { Expandable } from './expandable';
+import { Label } from './labels';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -64,9 +65,7 @@ export const ProjectLink: React.FunctionComponent<{
   const encoded = encodeURIComponent(projectName);
   const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
   return <Link href={`#?q=p:${value}`}>
-    <span className={clsx('label', `label-color-${projectNames.indexOf(projectName) % 6}`)} style={{ margin: '6px 0 0 6px' }}>
-      {projectName}
-    </span>
+    <Label label={projectName} colorIndex={projectNames.indexOf(projectName) % 6} />
   </Link>;
 };
 
