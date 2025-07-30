@@ -640,6 +640,15 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder = recorder;
   }
 
+  install() {
+    // No highlight for the lightweight recorder.
+    this._recorder.highlight.uninstall();
+  }
+
+  uninstall() {
+    this._recorder.highlight.install();
+  }
+
   onClick(event: MouseEvent) {
     // in webkit, sliding a range element may trigger a click event with a different target if the mouse is released outside the element bounding box.
     // So we check the hovered element instead, and if it is a range input, we skip click handling
