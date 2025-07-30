@@ -232,7 +232,7 @@ Running 1 test using 1 worker
 
 With the VS Code extension you can run your tests on different browsers by checking the checkbox next to the browser name in the Playwright sidebar. These names are defined in your Playwright config file under the projects section. The default config when installing Playwright gives you 3 projects, Chromium, Firefox and WebKit. The first project is selected by default.
 
-![Projects section in VS Code extension](https://github.com/microsoft/playwright/assets/13063165/58fedea6-a2b9-4942-b2c7-2f3d482210cf)
+![Projects section in VS Code extension](./images/vscode-projects-section.png)
 
 To run tests on multiple projects(browsers), select each project by checking the checkboxes next to the project name.
 

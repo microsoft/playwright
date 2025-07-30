@@ -247,6 +247,8 @@ async function run() {
 
         const badLinks = [];
         for (const { filePath, linkTarget, name } of mdLinks) {
+          if (linkTarget.startsWith(path.join(documentationRoot, 'images')))
+            continue;
           if (!mdSections.has(linkTarget))
             badLinks.push(`${path.relative(PROJECT_DIR, filePath)} references to '${linkTarget}' as '${name}' which does not exist.`);
         }
