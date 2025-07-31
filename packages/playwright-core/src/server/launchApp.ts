@@ -66,7 +66,7 @@ export async function launchApp(browserType: BrowserType, options: {
       error = rewriteErrorMessage(error, [
         `Failed to launch "${channel}" channel.`,
         'Using custom channels could lead to unexpected behavior due to Enterprise policies (chrome://policy).',
-        'Try launching with the default channel instead and install the browser using the Playwright CLI:',
+        'Install the default browser instead:',
         wrapInASCIIBox(`${buildPlaywrightCLICommand(options.sdkLanguage, 'install')}`, 2),
       ].join('\n'));
     }
