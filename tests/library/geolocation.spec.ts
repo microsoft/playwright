@@ -85,7 +85,7 @@ it('should throw with missing latitude', async ({ contextFactory }) => {
   } catch (e) {
     error = e;
   }
-  expect(error.message).toContain('geolocation.latitude: expected number, got undefined');
+  expect(error.message).toContain('geolocation.latitude: expected float, got undefined');
 });
 
 it('should not modify passed default options object', async ({ browser }) => {
@@ -106,7 +106,7 @@ it('should throw with missing longitude in default options', async ({ browser })
   } catch (e) {
     error = e;
   }
-  expect(error.message).toContain('geolocation.longitude: expected number, got undefined');
+  expect(error.message).toContain('geolocation.longitude: expected float, got undefined');
 });
 
 it('should use context options', async ({ browser, server }) => {
