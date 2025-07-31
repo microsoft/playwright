@@ -984,6 +984,22 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
+   * Whether to exit with an error if test files import other test files. Defaults to `true`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   forbidTestFileImports: false,
+   * });
+   * ```
+   *
+   */
+  forbidTestFileImports?: boolean;
+  /**
    * Playwright transpiler configuration.
    *
    * **Usage**
@@ -1931,6 +1947,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.webServer](https://playwright.dev/docs/api/class-testconfig#test-config-web-server).
    */
   webServer: TestConfigWebServer | null;
+  /**
+   * See
+   * [testConfig.forbidTestFileImports](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-test-file-imports).
+   */
+  forbidTestFileImports: boolean;
   /**
    * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
    */

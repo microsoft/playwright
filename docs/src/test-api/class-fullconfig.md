@@ -16,6 +16,12 @@ Path to the configuration file used to run the tests. The value is an empty stri
 
 See [`property: TestConfig.forbidOnly`].
 
+## property: FullConfig.forbidTestFileImports
+* since: v1.55
+- type: <[boolean]>
+
+See [`property: TestConfig.forbidTestFileImports`].
+
 ## property: FullConfig.fullyParallel
 * since: v1.20
 - type: <[boolean]>

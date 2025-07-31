@@ -142,6 +142,21 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.forbidTestFileImports
+* since: v1.55
+- type: ?<[boolean]>
+
+Whether to exit with an error if test files import other test files. Defaults to `true`.
+
+**Usage**
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  forbidTestFileImports: false,
+});
+```
+
 ## property: TestConfig.fullyParallel
 * since: v1.20
 - type: ?<[boolean]>

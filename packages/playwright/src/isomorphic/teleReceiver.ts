@@ -732,6 +732,7 @@ export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
   forbidOnly: false,
+  forbidTestFileImports: true,
   fullyParallel: false,
   globalSetup: null,
   globalTeardown: null,

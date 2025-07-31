@@ -56,6 +56,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   use?: UseOptions<TestArgs, WorkerArgs>;
   webServer?: TestConfigWebServer | TestConfigWebServer[];
+  forbidTestFileImports?: boolean;
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestArgs, WorkerArgs> {
@@ -67,6 +68,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
   webServer: TestConfigWebServer | null;
+  forbidTestFileImports: boolean;
 }
 
 export interface TestInfo {
