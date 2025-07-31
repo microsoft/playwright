@@ -1363,7 +1363,8 @@ export async function installBrowsersForNpmInstall(browsers: string[]) {
   await registry.install(executables, false /* forceReinstall */);
 }
 
-export function findChromiumChannel(sdkLanguage: string): string | undefined {
+// for launchApp -> UI Mode / Trace Viewer
+export function findChromiumChannelBestEffort(sdkLanguage: string): string | undefined {
   // Fall back to the stable channels of popular vendors to work out of the box.
   // Null means no installation and no channels found.
   let channel = null;
