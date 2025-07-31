@@ -446,7 +446,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    const isSettingStorageState = this._page.browserContext.isSettingStorageState();
+    const isSettingStorageState = this._page.browserContext.isCreatingStorageStatePage();
     if (!isSettingStorageState && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
