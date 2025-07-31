@@ -222,7 +222,7 @@ it('should throw if passed wrong types', async ({ page, server }) => {
   } catch (e) {
     error = e;
   }
-  expect(error.message).toContain('options[0].index: expected number, got string');
+  expect(error.message).toContain('options[0].index: expected integer, got string');
 });
 // @see https://github.com/GoogleChrome/puppeteer/issues/3327
 it('should work when re-defining top-level Event class', async ({ page, server }) => {
