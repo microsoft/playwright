@@ -2721,11 +2721,10 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameAriaSnapshotParams = {
   selector: string,
-  forAI?: boolean,
   timeout: number,
 };
 export type FrameAriaSnapshotOptions = {
-  forAI?: boolean,
+
 };
 export type FrameAriaSnapshotResult = {
   snapshot: string,

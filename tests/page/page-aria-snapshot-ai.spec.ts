@@ -140,10 +140,10 @@ it('should not generate refs for elements with pointer-events:none', async ({ pa
   expect(snapshot).toContainYaml(`
     - generic [active] [ref=e1]:
       - button "no-ref"
+      - button "with-ref" [ref=e2]
       - button "with-ref" [ref=e4]
-      - button "with-ref" [ref=e7]
-      - button "with-ref" [ref=e10]
-      - generic [ref=e11]:
+      - button "with-ref" [ref=e6]
+      - generic [ref=e7]:
         - generic:
           - button "no-ref"
   `);
@@ -187,15 +187,15 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
       - generic [ref=e3]:
         - generic [ref=e4]:
           - radio "Apple" [checked]
-        - generic [ref=e6]: Apple
-      - generic [ref=e7]:
-        - generic [ref=e8]:
+        - generic [ref=e5]: Apple
+      - generic [ref=e6]:
+        - generic [ref=e7]:
           - radio "Pear"
-        - generic [ref=e10]: Pear
-      - generic [ref=e11]:
-        - generic [ref=e12]:
+        - generic [ref=e8]: Pear
+      - generic [ref=e9]:
+        - generic [ref=e10]:
           - radio "Orange"
-        - generic [ref=e14]: Orange
+        - generic [ref=e11]: Orange
   `);
 });
 

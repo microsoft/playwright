@@ -1543,7 +1543,6 @@ scheme.FrameAddStyleTagResult = tObject({
 });
 scheme.FrameAriaSnapshotParams = tObject({
   selector: tString,
-  forAI: tOptional(tBoolean),
   timeout: tNumber,
 });
 scheme.FrameAriaSnapshotResult = tObject({
