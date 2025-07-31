@@ -210,7 +210,7 @@ export abstract class BrowserContext extends SdkObject {
     // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
     // All other properties force a new context.
     await this._resetStorage(progress);
-    await progress.race(this.clock.resetForReuse());
+    await this.clock.uninstall(progress);
     await progress.race(this.setUserAgent(this._options.userAgent));
     await progress.race(this.clearCache());
     await progress.race(this.doClearCookies());
