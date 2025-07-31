@@ -41,7 +41,7 @@ export interface RecorderDelegate {
 }
 
 interface RecorderTool {
-  cursor(): string;
+  cursor?(): string;
   install?(): void;
   uninstall?(): void;
   onClick?(event: MouseEvent): void;
@@ -63,9 +63,6 @@ interface RecorderTool {
 }
 
 class NoneTool implements RecorderTool {
-  cursor() {
-    return 'default';
-  }
 }
 
 class InspectTool implements RecorderTool {
@@ -386,7 +383,7 @@ class RecordActionTool implements RecorderTool {
     const target = this._recorder.deepEventTarget(event);
 
     if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
-      this._recorder.recordAction({
+      this._recordAction({
         name: 'setInputFiles',
         selector: this._activeModel!.selector,
         signals: [],
@@ -396,7 +393,7 @@ class RecordActionTool implements RecorderTool {
     }
 
     if (isRangeInput(target)) {
-      this._recorder.recordAction({
+      this._recordAction({
         name: 'fill',
         // must use hoveredModel instead of activeModel for it to work in webkit
         selector: this._hoveredModel!.selector,
@@ -415,7 +412,7 @@ class RecordActionTool implements RecorderTool {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      this._recorder.recordAction({
+      this._recordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -425,9 +422,7 @@ class RecordActionTool implements RecorderTool {
 
     if (target.nodeName === 'SELECT') {
       const selectElement = target as HTMLSelectElement;
-      if (this._actionInProgress(event))
-        return;
-      this._performAction({
+      this._recordAction({
         name: 'select',
         selector: this._activeModel!.selector,
         options: [...selectElement.selectedOptions].map(option => option.value),
@@ -548,9 +543,21 @@ class RecordActionTool implements RecorderTool {
       consumeEvent(event);
   }
 
+  private _captureAriaSnapshotForAction(action: actions.Action) {
+    const documentElement = this._recorder.injectedScript.document.documentElement;
+    if (documentElement)
+      action.ariaSnapshot = this._recorder.injectedScript.ariaSnapshot(documentElement, { mode: 'autoexpect' });
+  }
+
+  private _recordAction(action: actions.Action) {
+    this._captureAriaSnapshotForAction(action);
+    this._recorder.recordAction(action);
+  }
+
   private _performAction(action: actions.PerformOnRecordAction) {
     this._recorder.updateHighlight(null, false);
 
+    this._captureAriaSnapshotForAction(action);
     this._performingActions.add(action);
 
     const promise = this._recorder.performAction(action).then(() => {
@@ -633,8 +640,13 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder = recorder;
   }
 
-  cursor() {
-    return 'pointer';
+  install() {
+    // No highlight for the lightweight recorder.
+    this._recorder.highlight.uninstall();
+  }
+
+  uninstall() {
+    this._recorder.highlight.install();
   }
 
   onClick(event: MouseEvent) {
@@ -650,12 +662,13 @@ class JsonRecordActionTool implements RecorderTool {
       return;
 
     const checkbox = asCheckbox(element);
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     if (checkbox && event.detail === 1) {
       // Interestingly, inputElement.checked is reversed inside this event handler.
       this._recorder.recordAction({
         name: checkbox.checked ? 'check' : 'uncheck',
         selector,
+        ref,
         signals: [],
         ariaSnapshot,
       });
@@ -665,6 +678,7 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder.recordAction({
       name: 'click',
       selector,
+      ref,
       ariaSnapshot,
       position: positionForEvent(event),
       signals: [],
@@ -674,34 +688,31 @@ class JsonRecordActionTool implements RecorderTool {
     });
   }
 
-  onDblClick(event: MouseEvent) {
+  onContextMenu(event: MouseEvent): void {
     const element = this._recorder.deepEventTarget(event);
-    if (isRangeInput(element))
-      return;
-    if (this._shouldIgnoreMouseEvent(event))
-      return;
-
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     this._recorder.recordAction({
       name: 'click',
       selector,
+      ref,
       ariaSnapshot,
       position: positionForEvent(event),
       signals: [],
-      button: buttonForEvent(event),
+      button: 'right',
       modifiers: modifiersForEvent(event),
-      clickCount: event.detail
+      clickCount: 1,
     });
   }
 
   onInput(event: Event) {
     const element = this._recorder.deepEventTarget(event);
 
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     if (isRangeInput(element)) {
       this._recorder.recordAction({
         name: 'fill',
         selector,
+        ref,
         ariaSnapshot,
         signals: [],
         text: element.value,
@@ -717,6 +728,7 @@ class JsonRecordActionTool implements RecorderTool {
 
       this._recorder.recordAction({
         name: 'fill',
+        ref,
         selector,
         ariaSnapshot,
         signals: [],
@@ -730,6 +742,7 @@ class JsonRecordActionTool implements RecorderTool {
       this._recorder.recordAction({
         name: 'select',
         selector,
+        ref,
         ariaSnapshot,
         options: [...selectElement.selectedOptions].map(option => option.value),
         signals: []
@@ -743,7 +756,7 @@ class JsonRecordActionTool implements RecorderTool {
       return;
 
     const element = this._recorder.deepEventTarget(event);
-    const { ariaSnapshot, selector } = this._ariaSnapshot(element);
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
 
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
@@ -752,6 +765,7 @@ class JsonRecordActionTool implements RecorderTool {
         this._recorder.recordAction({
           name: checkbox.checked ? 'uncheck' : 'check',
           selector,
+          ref,
           ariaSnapshot,
           signals: [],
         });
@@ -762,6 +776,7 @@ class JsonRecordActionTool implements RecorderTool {
     this._recorder.recordAction({
       name: 'press',
       selector,
+      ref,
       ariaSnapshot,
       signals: [],
       key: event.key,
@@ -819,12 +834,12 @@ class JsonRecordActionTool implements RecorderTool {
     return false;
   }
 
-  private _ariaSnapshot(element: HTMLElement): { ariaSnapshot: string, selector: string };
-  private _ariaSnapshot(element: HTMLElement | undefined): { ariaSnapshot: string, selector?: string } {
+  private _ariaSnapshot(element: HTMLElement): { ariaSnapshot: string, selector: string, ref?: string };
+  private _ariaSnapshot(element: HTMLElement | undefined): { ariaSnapshot: string, selector?: string, ref?: string } {
     const { ariaSnapshot, refs } = this._recorder.injectedScript.ariaSnapshotForRecorder();
     const ref = element ? refs.get(element) : undefined;
-    const selector = ref ? `aria-ref=${ref}` : undefined;
-    return { ariaSnapshot, selector };
+    const elementInfo = element ? this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : undefined;
+    return { ariaSnapshot, selector: elementInfo?.selector, ref };
   }
 }
 
@@ -943,7 +958,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertSnapshot',
         selector: this._hoverHighlight.selector,
         signals: [],
-        ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'regex' }),
+        ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'codegen' }),
       };
     } else {
       const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
@@ -1343,7 +1358,9 @@ export class Recorder {
     this.clearHighlight();
     this._currentTool = newTool;
     this._currentTool.install?.();
-    this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
+    const cursor = newTool.cursor?.();
+    if (cursor)
+      this.injectedScript.document.body?.setAttribute('data-pw-cursor', cursor);
   }
 
   setUIState(state: UIState, delegate: RecorderDelegate) {
@@ -1374,7 +1391,7 @@ export class Recorder {
 
     const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
     if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
-      const elements = state.ariaTemplate ? this.injectedScript.getAllByAria(this.document, state.ariaTemplate) : [];
+      const elements = state.ariaTemplate ? this.injectedScript.getAllElementsMatchingExpectAriaTemplate(this.document, state.ariaTemplate) : [];
       if (elements.length) {
         const color = elements.length > 1 ? HighlightColors.multiple : HighlightColors.single;
         highlight = elements.map(element => ({ element, color }));
@@ -1581,7 +1598,7 @@ export class Recorder {
   }
 
   elementPicked(selector: string, model: HighlightModel) {
-    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0]);
+    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0], { mode: 'expect' });
     void this._delegate.elementPicked?.({ selector, ariaSnapshot });
   }
 }

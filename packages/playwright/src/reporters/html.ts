@@ -381,7 +381,7 @@ class HtmlBuilder {
             .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
       });
     });
-    fs.appendFileSync(filePath, '"</script>');
+    fs.appendFileSync(filePath, '</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {

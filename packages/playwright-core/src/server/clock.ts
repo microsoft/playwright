@@ -28,8 +28,8 @@ export class Clock {
     this._browserContext = browserContext;
   }
 
-  async resetForReuse() {
-    await this._browserContext.removeInitScripts(this._initScripts);
+  async uninstall(progress: Progress) {
+    await progress.race(this._browserContext.removeInitScripts(this._initScripts));
     this._initScripts = [];
   }
 

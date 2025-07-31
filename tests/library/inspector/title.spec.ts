@@ -57,3 +57,9 @@ test('should update primary page URL when original primary closes', async ({
       `Playwright Inspector - ${server.PREFIX}/dom.html`,
   );
 });
+
+test('should render primary language', async ({ openRecorder }) => {
+  const { recorder } = await openRecorder({ language: 'python' });
+  await recorder.setContentAndWait('');
+  await expect(recorder.recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue('python');
+});

@@ -19,7 +19,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { generateAriaTree, getAllByAria, matchesAriaTree, renderAriaTree } from './ariaSnapshot';
+import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree } from './ariaSnapshot';
 import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
@@ -39,7 +39,7 @@ import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
 import type * as channels from '@protocol/channels';
-import type { AriaSnapshot } from './ariaSnapshot';
+import type { AriaSnapshot, AriaTreeOptions } from './ariaSnapshot';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
@@ -297,7 +297,7 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', forAI?: boolean, refPrefix?: string }): string {
+  ariaSnapshot(node: Node, options: AriaTreeOptions): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     this._lastAriaSnapshot = generateAriaTree(node as Element, options);
@@ -305,13 +305,13 @@ export class InjectedScript {
   }
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
-    const tree = generateAriaTree(this.document.body, { forAI: true });
-    const ariaSnapshot = renderAriaTree(tree, { forAI: true });
+    const tree = generateAriaTree(this.document.body, { mode: 'ai' });
+    const ariaSnapshot = renderAriaTree(tree, { mode: 'ai' });
     return { ariaSnapshot, refs: tree.refs };
   }
 
-  getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
-    return getAllByAria(document.documentElement, template);
+  getAllElementsMatchingExpectAriaTemplate(document: Document, template: AriaTemplateNode): Element[] {
+    return getAllElementsMatchingExpectAriaTemplate(document.documentElement, template);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -1469,7 +1469,7 @@ export class InjectedScript {
 
     {
       if (expression === 'to.match.aria') {
-        const result = matchesAriaTree(element, options.expectedValue);
+        const result = matchesExpectAriaTemplate(element, options.expectedValue);
         return {
           received: result.received,
           matches: !!result.matches.length,

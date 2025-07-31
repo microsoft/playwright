@@ -72,6 +72,7 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationAborted', this._onNavigationAborted.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationFailed', this._onNavigationFailed.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.fragmentNavigated', this._onFragmentNavigated.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.historyUpdated', this._onHistoryUpdated.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.domContentLoaded', this._onDomContentLoaded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.load', this._onLoad.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptOpened', this._onUserPromptOpened.bind(this)),
@@ -216,6 +217,10 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onFragmentNavigated(params: bidi.BrowsingContext.NavigationInfo) {
+    this._page.frameManager.frameCommittedSameDocumentNavigation(params.context, params.url);
+  }
+
+  private _onHistoryUpdated(params: bidi.BrowsingContext.HistoryUpdatedParameters) {
     this._page.frameManager.frameCommittedSameDocumentNavigation(params.context, params.url);
   }
 

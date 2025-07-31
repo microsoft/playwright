@@ -519,6 +519,37 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
     });
 
+    test('should include stdout/stderr in copy prompt', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('fails', async ({ page }) => {
+            console.log('Output line 1');
+            process.stdout.write('Output line 2\\n');
+            console.error('Error line 1');
+            process.stderr.write('Error line 2\\n');
+            await expect(true).toBeFalsy();
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+
+      await showReport();
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+
+      await page.getByRole('link', { name: 'fails' }).click();
+      await page.getByRole('button', { name: 'Copy prompt' }).click();
+      await page.waitForFunction(() => navigator.clipboard.readText());
+      const prompt = await page.evaluate(() => navigator.clipboard.readText());
+      expect(prompt, 'should contain stdout content').toContain('Output line 1');
+      expect(prompt, 'should contain stdout content').toContain('Output line 2');
+      expect(prompt, 'should contain stderr content').toContain('Error line 1');
+      expect(prompt, 'should contain stderr content').toContain('Error line 2');
+      expect(prompt, 'should contain stdout section').toContain('# Stdout');
+      expect(prompt, 'should contain stderr section').toContain('# Stderr');
+    });
+
     test('should highlight error', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `

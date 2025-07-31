@@ -166,7 +166,8 @@ export class RecorderApp {
       return;
     const recorder = await Recorder.forContext(context, params);
     if (params.recorderMode === 'api') {
-      await ProgrammaticRecorderApp.run(context, recorder);
+      const browserName = context._browser.options.name;
+      await ProgrammaticRecorderApp.run(context, recorder, browserName, params);
       return;
     }
     await RecorderApp._show(recorder, context, params);
@@ -364,21 +365,33 @@ export class RecorderApp {
 }
 
 export class ProgrammaticRecorderApp {
-  static async run(inspectedContext: BrowserContext, recorder: Recorder) {
+  static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
     let lastAction: actions.ActionInContext | null = null;
+    const languages = [...languageSet()];
+
+    const languageGeneratorOptions = {
+      browserName: browserName,
+      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
+      contextOptions: { ...params.contextOptions },
+      deviceName: params.device,
+      saveStorage: params.saveStorage,
+    };
+    const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
+
     recorder.on(RecorderEvent.ActionAdded, action => {
       const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
       if (!page)
         return;
+      const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
       if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
       else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
       lastAction = action;
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
       const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page });
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
     });
   }
 }

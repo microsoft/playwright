@@ -203,11 +203,12 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   flex: none;
   position: relative;
   float: left;
-  padding: 5px 10px;
+  padding: 5px 8px;
   font-weight: 500;
   line-height: 20px;
   color: var(--color-fg-default);
   border: 1px solid var(--color-border-default);
+  user-select: none;
 }
 
 .subnav-item:hover {
@@ -226,6 +227,14 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
 
 .subnav-item + .subnav-item {
   margin-left: -1px;
+}
+
+.subnav-item .octicon {
+  margin-right: 8px;
+}
+
+.subnav-item-label {
+  margin-right: 8px;
 }
 
 .counter {
@@ -293,7 +302,6 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   }
 
   .subnav-item {
-    padding: 5px 3px;
     border: none;
   }
 

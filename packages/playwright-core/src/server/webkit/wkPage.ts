@@ -113,7 +113,7 @@ export class WKPage implements PageDelegate {
   }
 
   private async _initializePageProxySession() {
-    if (this._page.browserContext.isSettingStorageState())
+    if (this._page.browserContext.isCreatingStorageStatePage())
       return;
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),
@@ -187,7 +187,7 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
     }
-    if (this._page.browserContext.isSettingStorageState()) {
+    if (this._page.browserContext.isCreatingStorageStatePage()) {
       await Promise.all(promises);
       return;
     }

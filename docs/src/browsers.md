@@ -232,7 +232,7 @@ Running 1 test using 1 worker
 
 With the VS Code extension you can run your tests on different browsers by checking the checkbox next to the browser name in the Playwright sidebar. These names are defined in your Playwright config file under the projects section. The default config when installing Playwright gives you 3 projects, Chromium, Firefox and WebKit. The first project is selected by default.
 
-![Projects section in VS Code extension](https://github.com/microsoft/playwright/assets/13063165/58fedea6-a2b9-4942-b2c7-2f3d482210cf)
+![Projects section in VS Code extension](./images/vscode-projects-section.png)
 
 To run tests on multiple projects(browsers), select each project by checking the checkboxes next to the project name.
 
@@ -886,6 +886,70 @@ $Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 $Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="http://203.0.113.3"
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
+
+## Using a pre-installed Node.js
+* langs: python, java, dotnet
+By default, Playwright uses its bundled Node.js runtime for operations such as browser installation and script execution. If you want Playwright to use a pre-installed Node.js binary instead of the bundled runtime, you can specify it using the `PLAYWRIGHT_NODEJS_PATH` environment variable. This can be useful in environments where you need to use a specific version of Node.js or where the bundled runtime is not compatible.
+
+```bash tab=bash-bash lang=js
+PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" npx playwright install
+```
+
+```batch tab=bash-batch lang=js
+set PLAYWRIGHT_NODEJS_PATH=C:\Program Files\nodejs\node.exe
+npx playwright install
+```
+
+```powershell tab=bash-powershell lang=js
+$Env:PLAYWRIGHT_NODEJS_PATH="C:\Program Files\nodejs\node.exe"
+npx playwright install
+```
+
+```bash tab=bash-bash lang=python
+pip install playwright
+PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" playwright install
+```
+
+```batch tab=bash-batch lang=python
+set PLAYWRIGHT_NODEJS_PATH=C:\Program Files\nodejs\node.exe
+pip install playwright
+playwright install
+```
+
+```powershell tab=bash-powershell lang=python
+$Env:PLAYWRIGHT_NODEJS_PATH="C:\Program Files\nodejs\node.exe"
+pip install playwright
+playwright install
+```
+
+```bash tab=bash-bash lang=java
+PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```batch tab=bash-batch lang=java
+set PLAYWRIGHT_NODEJS_PATH=C:\Program Files\nodejs\node.exe
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```powershell tab=bash-powershell lang=java
+$Env:PLAYWRIGHT_NODEJS_PATH="C:\Program Files\nodejs\node.exe"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```bash tab=bash-bash lang=csharp
+PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+```batch tab=bash-batch lang=csharp
+set PLAYWRIGHT_NODEJS_PATH=C:\Program Files\nodejs\node.exe
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+```powershell tab=bash-powershell lang=csharp
+$Env:PLAYWRIGHT_NODEJS_PATH="C:\Program Files\nodejs\node.exe"
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
 ## Managing browser binaries
 
 Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:

@@ -38,8 +38,11 @@ test('should render counters', async ({ mount }) => {
   await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
   await expect(component).toMatchAriaSnapshot(`
     - navigation:
-      - link "All 90"
-      - text: Passed 42 Failed 31 Flaky 17 Skipped 10
+      - link "All90"
+      - link "Passed42"
+      - link "Failed31"
+      - link "Flaky17"
+      - link "Skipped10"
   `);
 });
 

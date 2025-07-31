@@ -650,7 +650,7 @@ export class Registry {
     }));
 
     this._executables.push(this._createChromiumChannel('chrome-canary', {
-      'linux': '',
+      'linux': '/opt/google/chrome-canary/chrome',
       'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
     }));
@@ -713,7 +713,7 @@ export class Registry {
       'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
     }));
     this._executables.push(this._createBidiChromiumChannel('bidi-chrome-canary', {
-      'linux': '',
+      'linux': '/opt/google/chrome-canary/chrome',
       'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
     }));

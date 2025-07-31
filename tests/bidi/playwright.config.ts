@@ -27,10 +27,14 @@ const trace = !!process.env.PWTEST_TRACE;
 const hasDebugOutput = process.env.DEBUG?.includes('pw:');
 
 function firefoxUserPrefs() {
+  const defaultPrefs = {
+    'network.proxy.allow_hijacking_localhost': true,
+    'network.proxy.testing_localhost_is_secure_when_hijacked': true,
+  };
   const prefsString = process.env.PWTEST_FIREFOX_USER_PREFS;
   if (!prefsString)
-    return undefined;
-  return JSON.parse(prefsString);
+    return defaultPrefs;
+  return { ...defaultPrefs, ...JSON.parse(prefsString) };
 }
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');

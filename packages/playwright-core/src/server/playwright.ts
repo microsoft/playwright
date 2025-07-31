@@ -74,10 +74,6 @@ export class Playwright extends SdkObject {
     this.debugController = new DebugController(this);
   }
 
-  async hideHighlight() {
-    await Promise.all([...this._allPages].map(p => p.hideHighlight().catch(() => {})));
-  }
-
   allBrowsers(): Browser[] {
     return [...this._allBrowsers];
   }

@@ -371,6 +371,50 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should pass with matching certificates and when a http proxy is used from env', async ({ mode, browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    test.skip(mode !== 'default', 'Out of process transport does not allow us to set env vars dynamically');
+    process.env.HTTPS_PROXY = `http://localhost:${proxyServer.PORT}`;
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    expect(proxyServer.connectHosts).toEqual([]);
+    await page.goto(serverURL);
+    const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`${host}:${new URL(serverURL).port}`]);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+    delete process.env.HTTPS_PROXY;
+  });
+
+  test('should pass with matching certificates and when a http proxy is used from config but env is there', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    process.env.HTTPS_PROXY = `http://this-should-not-taken-into-account:4242`;
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: `localhost:${proxyServer.PORT}` }
+    });
+    expect(proxyServer.connectHosts).toEqual([]);
+    await page.goto(serverURL);
+    const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`${host}:${new URL(serverURL).port}`]);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+    delete process.env.HTTPS_PROXY;
+  });
+
   test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);

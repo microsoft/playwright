@@ -31,6 +31,7 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
       ...actionInContext.action,
       ...actionInContext.frame,
       locator,
+      ariaSnapshot: undefined,
     };
     return JSON.stringify(entry);
   }

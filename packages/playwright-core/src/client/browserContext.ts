@@ -50,9 +50,9 @@ import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 
 interface RecorderEventSink {
-  actionAdded(page: Page, actionInContext: actions.ActionInContext): void;
-  actionUpdated(page: Page, actionInContext: actions.ActionInContext): void;
-  signalAdded(page: Page, signal: actions.SignalInContext): void;
+  actionAdded?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
+  actionUpdated?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
+  signalAdded?(page: Page, signal: actions.SignalInContext): void;
 }
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -148,13 +148,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
-    this._channel.on('recorderEvent', ({ event, data, page }) => {
+    this._channel.on('recorderEvent', ({ event, data, page, code }) => {
       if (event === 'actionAdded')
-        this._onRecorderEventSink?.actionAdded(Page.from(page), data as actions.ActionInContext);
+        this._onRecorderEventSink?.actionAdded?.(Page.from(page), data as actions.ActionInContext, code);
       else if (event === 'actionUpdated')
-        this._onRecorderEventSink?.actionUpdated(Page.from(page), data as actions.ActionInContext);
+        this._onRecorderEventSink?.actionUpdated?.(Page.from(page), data as actions.ActionInContext, code);
       else if (event === 'signalAdded')
-        this._onRecorderEventSink?.signalAdded(Page.from(page), data as actions.SignalInContext);
+        this._onRecorderEventSink?.signalAdded?.(Page.from(page), data as actions.SignalInContext);
     });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 

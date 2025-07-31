@@ -765,14 +765,6 @@ LocalUtils:
       parameters:
         stacksId: string
 
-    globToRegex:
-      internal: true
-      parameters:
-        glob: string
-        baseURL: string?
-        webSocketUrl: boolean?
-      returns:
-        regex: string
 
 Root:
   type: interface
@@ -892,14 +884,6 @@ DebugController:
       parameters:
         enabled: boolean
 
-    resetForReuse:
-      internal: true
-
-    navigate:
-      internal: true
-      parameters:
-        url: string
-
     setRecorderMode:
       internal: true
       parameters:
@@ -924,9 +908,6 @@ DebugController:
       internal: true
 
     kill:
-      internal: true
-
-    closeAllBrowsers:
       internal: true
 
   events:
@@ -1469,6 +1450,9 @@ BrowserContext:
         timeNumber: number?
         timeString: string?
 
+    clockUninstall:
+      title: Uninstall clock
+
   events:
 
     bindingCall:
@@ -1549,6 +1533,7 @@ BrowserContext:
           - signalAdded
         data: json
         page: Page
+        code: string
 
 Page:
   type: interface
@@ -1572,7 +1557,7 @@ Page:
         source: string
 
     close:
-      title: Close
+      title: Close page
       parameters:
         runBeforeUnload: boolean?
         reason: string?
@@ -2125,7 +2110,6 @@ Frame:
       title: Aria snapshot
       parameters:
         selector: string
-        forAI: boolean?
         timeout: number
       returns:
         snapshot: string

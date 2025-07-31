@@ -340,3 +340,8 @@ Time to be set.
 - `time` <[string]|[Date]>
 
 Time to be set.
+
+## async method: Clock.uninstall
+* since: v1.55
+
+Uninstall fake clock. Note that any currently open page will be still affected by the fake clock, until it navigates away to a new document.

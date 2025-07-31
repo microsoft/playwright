@@ -58,14 +58,6 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.setReportStateChanged(params.enabled);
   }
 
-  async resetForReuse(params: channels.DebugControllerResetForReuseParams, progress: Progress) {
-    await this._object.resetForReuse(progress);
-  }
-
-  async navigate(params: channels.DebugControllerNavigateParams, progress: Progress) {
-    await this._object.navigate(progress, params.url);
-  }
-
   async setRecorderMode(params: channels.DebugControllerSetRecorderModeParams, progress: Progress) {
     await this._object.setRecorderMode(progress, params);
   }
@@ -84,10 +76,6 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
 
   async kill(params: channels.DebugControllerKillParams, progress: Progress) {
     this._object.kill();
-  }
-
-  async closeAllBrowsers(params: channels.DebugControllerCloseAllBrowsersParams, progress: Progress) {
-    await this._object.closeAllBrowsers();
   }
 
   override _onDispose() {

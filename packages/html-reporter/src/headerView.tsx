@@ -81,23 +81,34 @@ export const GlobalFilterView: React.FC<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  const searchParams = React.useContext(SearchParamsContext);
-  const q = searchParams.get('q')?.toString() || '';
   return <nav>
     <Link className='subnav-item' href='#?'>
-      All <span className='d-inline counter'>{stats.total - stats.skipped}</span>
+      <span className='subnav-item-label'>All</span>
+      <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
-    <Link className='subnav-item' click={filterWithQuery(q, 's:passed', false)} ctrlClick={filterWithQuery(q, 's:passed', true)}>
-      Passed <span className='d-inline counter'>{stats.expected}</span>
-    </Link>
-    <Link className='subnav-item' click={filterWithQuery(q, 's:failed', false)} ctrlClick={filterWithQuery(q, 's:failed', true)}>
-      {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
-    </Link>
-    <Link className='subnav-item' click={filterWithQuery(q, 's:flaky', false)} ctrlClick={filterWithQuery(q, 's:flaky', true)}>
-      {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
-    </Link>
-    <Link className='subnav-item' click={filterWithQuery(q, 's:skipped', false)} ctrlClick={filterWithQuery(q, 's:skipped', true)}>
-      Skipped <span className='d-inline counter'>{stats.skipped}</span>
-    </Link>
+    <NavLink token='passed' count={stats.expected} />
+    <NavLink token='failed' count={stats.unexpected} />
+    <NavLink token='flaky' count={stats.flaky} />
+    <NavLink token='skipped' count={stats.skipped} />
   </nav>;
+};
+
+const NavLink: React.FC<{
+  token: string,
+  count: number,
+}> = ({ token, count }) => {
+  const searchParams = React.useContext(SearchParamsContext);
+  const q = searchParams.get('q')?.toString() || '';
+  const queryToken = `s:${token}`;
+
+  const clickUrl = filterWithQuery(q, queryToken, false);
+  const ctrlClickUrl = filterWithQuery(q, queryToken, true);
+
+  const label = token.charAt(0).toUpperCase() + token.slice(1);
+
+  return <Link className='subnav-item' href={clickUrl} click={clickUrl} ctrlClick={ctrlClickUrl}>
+    {count > 0 && statusIcon(token as any)}
+    <span className='subnav-item-label'>{label}</span>
+    <span className='d-inline counter'>{count}</span>
+  </Link>;
 };

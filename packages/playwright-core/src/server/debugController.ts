@@ -26,7 +26,6 @@ import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
 
 import type { Language } from '../utils';
-import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -72,19 +71,6 @@ export class DebugController extends SdkObject {
       this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
       this._trackHierarchyListener = undefined;
     }
-  }
-
-  async resetForReuse(progress: Progress) {
-    const contexts = new Set<BrowserContext>();
-    for (const page of this._playwright.allPages())
-      contexts.add(page.browserContext);
-    for (const context of contexts)
-      await context.resetForReuse(progress, null);
-  }
-
-  async navigate(progress: Progress, url: string) {
-    for (const p of this._playwright.allPages())
-      await p.mainFrame().goto(progress, url);
   }
 
   async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string }) {
@@ -137,11 +123,7 @@ export class DebugController extends SdkObject {
     for (const recorder of await progress.race(this._allRecorders()))
       recorder.hideHighlightedSelector();
     // Hide all locator.highlight highlights.
-    await this._playwright.hideHighlight();
-  }
-
-  allBrowsers(): Browser[] {
-    return [...this._playwright.allBrowsers()];
+    await Promise.all(this._playwright.allPages().map(p => p.hideHighlight().catch(() => {})));
   }
 
   async resume(progress: Progress) {
@@ -151,10 +133,6 @@ export class DebugController extends SdkObject {
 
   kill() {
     gracefullyProcessExitDoNotHang(0);
-  }
-
-  async closeAllBrowsers() {
-    await Promise.all(this.allBrowsers().map(browser => browser.close({ reason: 'Close all browsers requested' })));
   }
 
   private _emitSnapshot(initial: boolean) {

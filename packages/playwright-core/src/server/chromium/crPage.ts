@@ -446,7 +446,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    const isSettingStorageState = this._page.browserContext.isSettingStorageState();
+    const isSettingStorageState = this._page.browserContext.isCreatingStorageStatePage();
     if (!isSettingStorageState && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
@@ -516,7 +516,16 @@ class FrameSession {
         worldName: this._crPage.utilityWorldName,
       }),
       this._crPage._networkManager.addSession(this._client, undefined, this._isMainFrame()),
-      this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
+      this._client.send('Target.setAutoAttach', {
+        autoAttach: true,
+        waitForDebuggerOnStart: true,
+        flatten: true,
+        filter: [
+          { type: 'iframe' },
+          { type: 'worker' },
+          { type: 'service_worker', exclude: !process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS }
+        ]
+      }),
     ];
     if (!isSettingStorageState) {
       if (this._crPage._browserContext.needsPlaywrightBinding())
@@ -734,7 +743,15 @@ class FrameSession {
     // TODO: attribute workers to the right frame.
     this._crPage._networkManager.addSession(session, this._page.frameManager.frame(this._targetId) ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
-    session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+    session._sendMayFail('Target.setAutoAttach', {
+      autoAttach: true,
+      waitForDebuggerOnStart: true,
+      flatten: true,
+      filter: [
+        { type: 'worker' },
+        { type: 'service_worker', exclude: !process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS }
+      ]
+    });
     session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
