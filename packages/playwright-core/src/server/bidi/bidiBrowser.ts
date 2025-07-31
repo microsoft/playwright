@@ -199,6 +199,12 @@ export class BidiBrowserContext extends BrowserContext {
     promises.push(this.doUpdateDefaultViewport());
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
+    if (this._options.locale) {
+      promises.push(this._browser._browserSession.send('emulation.setLocaleOverride', {
+        locale: this._options.locale,
+        userContexts: [this._userContextId()],
+      }));
+    }
     await Promise.all(promises);
   }
 
@@ -295,7 +301,7 @@ export class BidiBrowserContext extends BrowserContext {
       },
       state,
       origin,
-      userContext: this._browserContextId || 'default',
+      userContext: this._userContextId(),
     });
   }
 
@@ -310,7 +316,7 @@ export class BidiBrowserContext extends BrowserContext {
         longitude: geolocation.longitude,
         accuracy: geolocation.accuracy,
       } : null,
-      userContexts: [this._browserContextId || 'default'],
+      userContexts: [this._userContextId()],
     });
   }
 
@@ -333,7 +339,7 @@ export class BidiBrowserContext extends BrowserContext {
     const { script } = await this._browser._browserSession.send('script.addPreloadScript', {
       // TODO: remove function call from the source.
       functionDeclaration: `() => { return ${initScript.source} }`,
-      userContexts: [this._browserContextId || 'default'],
+      userContexts: [this._userContextId()],
     });
     this._initScriptIds.set(initScript, script);
   }

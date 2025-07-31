@@ -118,6 +118,11 @@ export interface Commands {
     returnType: Bidi.EmptyResult;
   };
 
+  'emulation.setLocaleOverride': {
+    params: Bidi.Emulation.SetLocaleOverrideParameters;
+    returnType: Bidi.EmptyResult;
+  };
+
   'permissions.setPermission': {
     params: Bidi.Permissions.SetPermissionParameters;
     returnType: Bidi.EmptyResult;
