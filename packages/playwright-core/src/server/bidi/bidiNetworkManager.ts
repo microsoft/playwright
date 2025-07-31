@@ -31,17 +31,15 @@ export class BidiNetworkManager {
   private readonly _requests: Map<string, BidiRequest>;
   private readonly _page: Page;
   private readonly _eventListeners: RegisteredListener[];
-  private readonly _onNavigationResponseStarted: (params: bidi.Network.ResponseStartedParameters) => void;
   private _userRequestInterceptionEnabled: boolean = false;
   private _protocolRequestInterceptionEnabled: boolean = false;
   private _credentials: types.Credentials | undefined;
   private _intercepId: bidi.Network.Intercept | undefined;
 
-  constructor(bidiSession: BidiSession, page: Page, onNavigationResponseStarted: (params: bidi.Network.ResponseStartedParameters) => void) {
+  constructor(bidiSession: BidiSession, page: Page) {
     this._session = bidiSession;
     this._requests = new Map();
     this._page = page;
-    this._onNavigationResponseStarted = onNavigationResponseStarted;
     this._eventListeners = [
       eventsHelper.addEventListener(bidiSession, 'network.beforeRequestSent', this._onBeforeRequestSent.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'network.responseStarted', this._onResponseStarted.bind(this)),
@@ -116,8 +114,6 @@ export class BidiNetworkManager {
     response.setRawResponseHeaders(null);
     response.setResponseHeadersSize(params.response.headersSize);
     this._page.frameManager.requestReceivedResponse(response);
-    if (params.navigation)
-      this._onNavigationResponseStarted(params);
   }
 
   private _onResponseCompleted(params: bidi.Network.ResponseCompletedParameters) {
