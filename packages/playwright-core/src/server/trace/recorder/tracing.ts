@@ -459,7 +459,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
-    if (metadata.isServerSide || metadata.internal)
+    if (!this._state?.callIds.has(metadata.id))
+      return;
+    if (metadata.internal)
       return;
     if (logName !== 'api')
       return;

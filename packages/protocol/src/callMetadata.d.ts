@@ -29,9 +29,6 @@ export type CallMetadata = {
   // Client is making an internal call that should not show up in
   // the inspector or trace.
   internal?: boolean;
-  // Service-side is making a call to itself, this metadata does not go
-  // through the dispatcher, so is always excluded from inspector / tracing.
-  isServerSide?: boolean;
   // Test runner step id.
   stepId?: string;
   location?: { file: string, line?: number, column?: number };
