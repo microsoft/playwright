@@ -121,6 +121,5 @@ export function serverSideCallMetadata(): CallMetadata {
     method: '',
     params: {},
     log: [],
-    isServerSide: true,
   };
 }
