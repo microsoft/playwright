@@ -213,7 +213,7 @@ export abstract class BrowserContext extends SdkObject {
     await progress.race(this.setUserAgent(this._options.userAgent));
     await progress.race(this.doUpdateDefaultEmulatedMedia());
     await progress.race(this.doUpdateDefaultViewport());
-    await this.setStorageState(progress, this._options.storageState, 'reset');
+    await this.setStorageState(progress, this._options.storageState, 'resetForReuse');
 
     await page?.resetForReuse(progress);
   }
@@ -612,11 +612,11 @@ export abstract class BrowserContext extends SdkObject {
     return this._creatingStorageStatePage;
   }
 
-  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'reset') {
+  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'resetForReuse' | 'update') {
     let page: Page | undefined;
     let interceptor: network.RouteHandler | undefined;
     try {
-      if (mode === 'reset') {
+      if (mode !== 'initial') {
         await progress.race(this.clearCache());
         await progress.race(this.doClearCookies());
       }
@@ -627,11 +627,11 @@ export abstract class BrowserContext extends SdkObject {
       const newOrigins = new Map(state?.origins?.map(p => [p.origin, p]) || []);
       const allOrigins = new Set([...this._origins, ...newOrigins.keys()]);
       if (allOrigins.size) {
-        if (mode === 'reset')
+        if (mode === 'resetForReuse')
           page = this.pages()[0];
         if (!page) {
           try {
-            this._creatingStorageStatePage = mode === 'initial';
+            this._creatingStorageStatePage = mode !== 'resetForReuse';
             page = await this.newPage(progress, this._creatingStorageStatePage);
           } finally {
             this._creatingStorageStatePage = false;
@@ -660,7 +660,7 @@ export abstract class BrowserContext extends SdkObject {
       rewriteErrorMessage(error, `Error setting storage state:\n` + error.message);
       throw error;
     } finally {
-      if (mode === 'initial')
+      if (mode !== 'resetForReuse')
         await page?.close();
       else if (interceptor)
         await page?.removeRequestInterceptor(interceptor);

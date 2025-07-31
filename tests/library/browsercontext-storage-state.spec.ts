@@ -500,3 +500,74 @@ it('should support empty indexedDB', { annotation: { type: 'issue', description:
   const context = await contextFactory({ storageState });
   expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
 });
+
+it('should cleanup existing and set new storage state', async ({ contextFactory }, testInfo) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await page.goto('https://www.example.com');
+  await page.evaluate(async () => {
+    localStorage['name1'] = 'value1';
+    document.cookie = 'username=John Doe';
+    return document.cookie;
+  });
+
+  const state = await context.storageState();
+  expect(state).toEqual({
+    cookies: [
+      expect.objectContaining({
+        domain: 'www.example.com',
+        name: 'username',
+        value: 'John Doe',
+      }),
+    ],
+    origins: [
+      {
+        origin: 'https://www.example.com',
+        localStorage: [{
+          name: 'name1',
+          value: 'value1',
+        }],
+      },
+    ],
+  });
+
+  await context.setStorageState({
+    cookies: [
+      {
+        domain: 'www.example.com',
+        name: 'foo',
+        value: 'bar',
+        path: '/',
+        expires: -1,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+      },
+    ],
+    origins: [
+      {
+        origin: 'https://www.another.com',
+        localStorage: [{
+          name: 'name2',
+          value: 'value2',
+        }],
+      },
+    ],
+  });
+
+  expect(context.pages()).toHaveLength(1);
+  await expect(page).toHaveURL('https://www.example.com/');
+
+  await page.goto('https://www.another.com');
+  expect(await page.evaluate(() => document.cookie)).toBe('');
+  expect(await page.evaluate(() => window.localStorage['name1'])).toBe(undefined);
+  expect(await page.evaluate(() => window.localStorage['name2'])).toBe('value2');
+
+  await page.goto('https://www.example.com');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=bar');
+  expect(await page.evaluate(() => window.localStorage['name1'])).toBe(undefined);
+  expect(await page.evaluate(() => window.localStorage['name2'])).toBe(undefined);
+});
