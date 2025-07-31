@@ -41,7 +41,7 @@ import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
-import type { BrowserContextOptions, Headers, StorageState, WaitForEventOptions } from './types';
+import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
@@ -455,6 +455,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return state;
   }
 
+  async setStorageState(storageState: string | SetStorageState) {
+    await this._channel.setStorageState({ storageState: await prepareStorageState(this._platform, storageState) });
+  }
+
   backgroundPages(): Page[] {
     return [...this._backgroundPages];
   }
@@ -527,13 +531,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 }
 
-async function prepareStorageState(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
-  if (typeof options.storageState !== 'string')
-    return options.storageState as any;
+async function prepareStorageState(platform: Platform, storageState: string | SetStorageState): Promise<NonNullable<channels.BrowserNewContextParams['storageState']>> {
+  if (typeof storageState !== 'string')
+    return storageState as any;
   try {
-    return JSON.parse(await platform.fs().promises.readFile(options.storageState, 'utf8'));
+    return JSON.parse(await platform.fs().promises.readFile(storageState, 'utf8'));
   } catch (e) {
-    rewriteErrorMessage(e, `Error reading storage state from ${options.storageState}:\n` + e.message);
+    rewriteErrorMessage(e, `Error reading storage state from ${storageState}:\n` + e.message);
     throw e;
   }
 }
@@ -548,7 +552,7 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    storageState: await prepareStorageState(platform, options),
+    storageState: options.storageState ? await prepareStorageState(platform, options.storageState) : undefined,
     serviceWorkers: options.serviceWorkers,
     colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
