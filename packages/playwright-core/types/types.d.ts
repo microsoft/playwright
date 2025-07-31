@@ -9274,6 +9274,64 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
+   * Resets storage state in the context by clearing cookies, cache and storage, and then applying the new storage
+   * state.
+   * @param storageState Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   *
+   * Populates context with given storage state. This option can be used to initialize context with logged-in
+   * information obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+   */
+  setStorageState(storageState: string|{
+    /**
+     * Cookies to set for context
+     */
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      /**
+       * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+       * this: ".example.com"
+       */
+      domain: string;
+
+      /**
+       * Domain and path are required
+       */
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      /**
+       * sameSite flag
+       */
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    origins: Array<{
+      origin: string;
+
+      /**
+       * localStorage to set for context
+       */
+      localStorage: Array<{
+        name: string;
+
+        value: string;
+      }>;
+    }>;
+  }): Promise<void>;
+
+  /**
    * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
    * snapshot.
    * @param options
