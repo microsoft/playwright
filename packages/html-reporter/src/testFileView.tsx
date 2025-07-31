@@ -51,7 +51,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               <Link href={testResultHref({ test }) + filterParam} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
-              <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags.map(tag => tag.slice(1))} />
+              <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
             </span>
           </div>
           <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>

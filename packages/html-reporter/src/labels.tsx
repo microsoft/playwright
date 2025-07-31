@@ -23,12 +23,13 @@ import './labels.css';
 
 export const Label: React.FC<{
   label: string,
+  trimAtSymbolPrefix?: boolean,
   href?: string,
   onClick?: (e: React.MouseEvent, label: string) => void,
   colorIndex?: number,
-}> = ({ label, href, onClick, colorIndex }) => {
+}> = ({ label, href, onClick, colorIndex, trimAtSymbolPrefix }) => {
   const baseLabel = <span className={clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)))} onClick={onClick ? e => onClick(e, label) : undefined}>
-    {label}
+    {trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label}
   </span>;
 
   return href
@@ -61,12 +62,12 @@ const LabelsClickView: React.FC<{
   }, [searchParams]);
 
   return <>
-    {labels.map(label => <Label key={label} label={label} onClick={onClickHandle} />)}
+    {labels.map(label => <Label key={label} label={label} trimAtSymbolPrefix={true} onClick={onClickHandle} />)}
   </>;
 };
 
 const LabelsLinkView: React.FC<{
   labels: string[],
 }> = ({ labels }) => <>
-  {labels.map((label, index) => <Label key={index} label={label} href={`#?q=${label}`} />)}
+  {labels.map((label, index) => <Label key={index} label={label} trimAtSymbolPrefix={true} href={`#?q=${label}`} />)}
 </>;

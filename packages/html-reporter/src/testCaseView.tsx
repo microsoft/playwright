@@ -44,7 +44,6 @@ export const TestCaseView: React.FC<{
   const searchParams = React.useContext(SearchParamsContext);
 
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
-  const labels = React.useMemo(() => test.tags.map(tag => tag.slice(1)), [test]);
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
 
   return <>
@@ -67,7 +66,7 @@ export const TestCaseView: React.FC<{
       <TraceLink test={test} trailingSeparator={true} />
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>
-    <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={labels} />
+    <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
     {test.results.length === 0 && visibleTestAnnotations.length !== 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
       {visibleTestAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}
