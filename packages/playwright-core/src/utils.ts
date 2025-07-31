@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-export * from './utils/isomorphic/colors';
+export * from './utils/isomorphic/ariaSnapshot';
 export * from './utils/isomorphic/assert';
+export * from './utils/isomorphic/colors';
 export * from './utils/isomorphic/headers';
 export * from './utils/isomorphic/locatorGenerators';
 export * from './utils/isomorphic/manualPromise';
