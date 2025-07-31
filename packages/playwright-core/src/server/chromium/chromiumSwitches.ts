@@ -38,9 +38,9 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'ThirdPartyStoragePartitioning',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
-  assistantMode ? 'AutomationControlled' : '',
   // See https://issues.chromium.org/u/1/issues/435410220
   'AutoDeElevate',
+  assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
 export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
