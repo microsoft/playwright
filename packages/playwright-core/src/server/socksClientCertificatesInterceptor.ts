@@ -47,7 +47,7 @@ function loadDummyServerCertsIfNeeded() {
 // Key Decision Point: First byte check (0x16 = TLS handshake)
 
 // HTTP FLOW (Plain text):
-//     BROWSER                    PROXY                     TARGET
+//     BROWSER                    PROXY                     SERVER
 //        │                        │                         │
 //        │   SOCKS5 Connect       │                         │
 //        │───────────────────────►│                         │
@@ -66,7 +66,7 @@ function loadDummyServerCertsIfNeeded() {
 //        │      Plain HTTP        │      Plain HTTP         │
 
 // HTTPS FLOW (TLS with client certificates):
-//     BROWSER                    PROXY                     TARGET
+//     BROWSER                    PROXY                     SERVER
 //        │                        │                         │
 //        │   SOCKS5 Connect       │                         │
 //        │───────────────────────►│                         │
@@ -97,10 +97,10 @@ class SocksProxyConnection {
   private readonly host: string;
   private readonly port: number;
   private _firstPackageReceived = false;
-  private _target!: net.Socket;
-  private _internal: stream.Duplex;
-  private _internalTLS: Promise<tls.TLSSocket> | undefined;
-  private _targetCloseEventListener: () => void;
+  private _serverEncrypted!: net.Socket;
+  private _browserEncrypted: stream.Duplex;
+  private _brorwserDecrypted: Promise<tls.TLSSocket> | undefined;
+  private _serverCloseEventListener: () => void;
   private _closed = false;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
@@ -108,10 +108,10 @@ class SocksProxyConnection {
     this.uid = uid;
     this.host = host;
     this.port = port;
-    this._targetCloseEventListener = () => {
-      this._internal.destroy();
+    this._serverCloseEventListener = () => {
+      this._browserEncrypted.destroy();
     };
-    this._internal = new stream.Duplex({
+    this._browserEncrypted = new stream.Duplex({
       read: () => { },
       write: (data, encoding, callback) => {
         this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
@@ -130,27 +130,27 @@ class SocksProxyConnection {
   async connect() {
     const proxyAgent = this.socksProxy.getProxyAgent(this.host, this.port);
     if (proxyAgent)
-      this._target = await proxyAgent.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+      this._serverEncrypted = await proxyAgent.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
-      this._target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+      this._serverEncrypted = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
 
-    this._target.once('close', this._targetCloseEventListener);
-    this._target.once('error', error => this._internal.destroy(error));
+    this._serverEncrypted.once('close', this._serverCloseEventListener);
+    this._serverEncrypted.once('error', error => this._browserEncrypted.destroy(error));
     if (this._closed) {
-      this._target.destroy();
+      this._serverEncrypted.destroy();
       return;
     }
     this.socksProxy._socksProxy.socketConnected({
       uid: this.uid,
-      host: this._target.localAddress!,
-      port: this._target.localPort!,
+      host: this._serverEncrypted.localAddress!,
+      port: this._serverEncrypted.localPort!,
     });
   }
 
   public onClose() {
     // Close the other end and cleanup TLS resources.
-    this._target.destroy();
-    this._internal.destroy();
+    this._serverEncrypted.destroy();
+    this._browserEncrypted.destroy();
     this._closed = true;
   }
 
@@ -161,26 +161,26 @@ class SocksProxyConnection {
       this._firstPackageReceived = true;
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
       if (data[0] === 0x16)
-        this._establishTlsTunnel(this._internal, data);
+        this._establishTlsTunnel(this._browserEncrypted, data);
       else
-        this._establishPlaintextTunnel(this._internal);
+        this._establishPlaintextTunnel(this._browserEncrypted);
     }
 
-    this._internal.push(data);
+    this._browserEncrypted.push(data);
   }
 
 
-  private _establishPlaintextTunnel(internal: stream.Duplex) {
-    internal.pipe(this._target);
-    this._target.pipe(internal);
+  private _establishPlaintextTunnel(browserEncrypted: stream.Duplex) {
+    browserEncrypted.pipe(this._serverEncrypted);
+    this._serverEncrypted.pipe(browserEncrypted);
   }
 
-  private _establishTlsTunnel(internal: stream.Duplex, clientHello: Buffer) {
+  private _establishTlsTunnel(browserEncrypted: stream.Duplex, clientHello: Buffer) {
     const browserALPNProtocols = parseALPNFromClientHello(clientHello) || ['http/1.1'];
-    debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} offers ALPN ${browserALPNProtocols}`);
+    debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} offers ALPN ${browserALPNProtocols}`);
 
-    const targetTLS = tls.connect({
-      socket: this._target,
+    const serverDecrypted = tls.connect({
+      socket: this._serverEncrypted,
       host: this.host,
       port: this.port,
       rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
@@ -188,46 +188,46 @@ class SocksProxyConnection {
       servername: !net.isIP(this.host) ? this.host : undefined,
       secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
     }, async () => {
-      const internalTLS = await this._upgradeToTLSIfNeeded(internal, targetTLS.alpnProtocol);
-      debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
-      internalTLS.pipe(targetTLS);
-      targetTLS.pipe(internalTLS);
+      const browserDecrypted = await this._upgradeToTLSIfNeeded(browserEncrypted, serverDecrypted.alpnProtocol);
+      debugLogger.log('client-certificates', `Proxy->Server ${this.host}:${this.port} chooses ALPN ${browserDecrypted.alpnProtocol}`);
+      browserDecrypted.pipe(serverDecrypted);
+      serverDecrypted.pipe(browserDecrypted);
 
-      const cleanup = (error: Error | undefined) => this._target.destroy(error);
+      const cleanup = (error: Error | undefined) => this._serverEncrypted.destroy(error);
 
-      internalTLS.once('error', cleanup);
-      targetTLS.once('error', cleanup);
-      internalTLS.once('close', cleanup);
-      targetTLS.once('close', cleanup);
+      browserDecrypted.once('error', cleanup);
+      serverDecrypted.once('error', cleanup);
+      browserDecrypted.once('close', cleanup);
+      serverDecrypted.once('close', cleanup);
 
       if (this._closed)
-        internalTLS.destroy();
+        serverDecrypted.destroy();
     });
-    targetTLS.once('error', async (error: Error) => {
-      debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
+    serverDecrypted.once('error', async (error: Error) => {
+      debugLogger.log('client-certificates', `error when connecting to server: ${error.message.replaceAll('\n', ' ')}`);
 
-      // Once we receive an error, we manually close the target connection.
-      // In case of an 'error' event on the target connection, we still need to perform the http2 handshake on the browser side.
+      // Once we receive an error, we manually close the server connection.
+      // In case of an 'error' event on the server connection, we still need to perform the http2 handshake on the browser side.
       // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
-      // This means we call this._targetCloseEventListener manually.
-      this._target.removeListener('close', this._targetCloseEventListener);
-      this._target.destroy();
+      // This means we call this._serverCloseEventListener manually.
+      this._serverEncrypted.removeListener('close', this._serverCloseEventListener);
+      this._serverEncrypted.destroy();
 
-      const internalTLS = await this._upgradeToTLSIfNeeded(this._internal, targetTLS.alpnProtocol);
+      const browserDecrypted = await this._upgradeToTLSIfNeeded(this._browserEncrypted, serverDecrypted.alpnProtocol);
       const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
           .replaceAll('\n', ' <br>');
-      if (internalTLS.alpnProtocol === 'h2') {
+      if (browserDecrypted.alpnProtocol === 'h2') {
         // This method is available only in Node.js 20+
         if ('performServerHandshake' in http2) {
           // @ts-expect-error
-          const session: http2.ServerHttp2Session = http2.performServerHandshake(internalTLS);
+          const session: http2.ServerHttp2Session = http2.performServerHandshake(browserDecrypted);
           session.on('error', error => {
-            this._internal.destroy(error);
+            this._browserEncrypted.destroy(error);
           });
           session.once('stream', (stream: http2.ServerHttp2Stream) => {
             const cleanup = (error?: Error) => {
               session.close();
-              this._internal.destroy(error);
+              this._browserEncrypted.destroy(error);
             };
             stream.once('end', cleanup);
             stream.once('error', cleanup);
@@ -238,25 +238,25 @@ class SocksProxyConnection {
             stream.end(responseBody);
           });
         } else {
-          this._internal.destroy(error);
+          this._browserEncrypted.destroy(error);
         }
       } else {
-        internalTLS.end([
+        browserDecrypted.end([
           'HTTP/1.1 503 Internal Server Error',
           'Content-Type: text/html; charset=utf-8',
           'Content-Length: ' + Buffer.byteLength(responseBody),
           '',
           responseBody,
         ].join('\r\n'), () => {
-          this._internal.destroy();
+          this._browserEncrypted.destroy();
         });
       }
     });
   }
 
   private async _upgradeToTLSIfNeeded(socket: stream.Duplex, alpnProtocol: string | false | null): Promise<tls.TLSSocket> {
-    // TLS errors can happen after secureConnect event from the target. In this case the socket is already upgraded to TLS.
-    this._internalTLS ??= new Promise<tls.TLSSocket>((resolve, reject) => {
+    // TLS errors can happen after secureConnect event from the server. In this case the socket is already upgraded to TLS.
+    this._brorwserDecrypted ??= new Promise<tls.TLSSocket>((resolve, reject) => {
       const dummyServer = tls.createServer({
         ...dummyServerTlsOptions,
         ALPNProtocols: [alpnProtocol || 'http/1.1'],
@@ -271,7 +271,7 @@ class SocksProxyConnection {
         reject(error);
       });
     });
-    return this._internalTLS;
+    return this._brorwserDecrypted;
   }
 }
 
