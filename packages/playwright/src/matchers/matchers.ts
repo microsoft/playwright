@@ -305,6 +305,28 @@ export function toHaveCount(
   }, expected, options);
 }
 
+export function toHaveCountMoreThan(
+  this: ExpectMatcherState,
+  locator: LocatorEx,
+  expected: number,
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveCountMoreThan', locator, 'Locator', async (isNot, timeout) => {
+    return await locator._expect('to.have.count.more.than', { expectedNumber: expected, isNot, timeout });
+  }, `> ${expected}`, options);
+}
+
+export function toHaveCountLessThan(
+  this: ExpectMatcherState,
+  locator: LocatorEx,
+  expected: number,
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveCountLessThan', locator, 'Locator', async (isNot, timeout) => {
+    return await locator._expect('to.have.count.less.than', { expectedNumber: expected, isNot, timeout });
+  }, `< ${expected}`, options);
+}
+
 export function toHaveCSS(
   this: ExpectMatcherState,
   locator: LocatorEx,

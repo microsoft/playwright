@@ -31,7 +31,7 @@ import { LongStandingScope, asLocator, assert, constructURLBasedOnBaseURL, makeW
 import { isSessionClosedError } from './protocolError';
 import { debugLogger } from './utils/debugLogger';
 import { eventsHelper } from './utils/eventsHelper';
-import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
+import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { compressCallLog } from './callLog';
 
@@ -63,7 +63,7 @@ type ConsoleTagHandler = () => void;
 
 type RegularLifecycleEvent = Exclude<types.LifecycleEvent, 'networkidle'>;
 
-export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
+export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame }, ...args: any) => any;
 
 export type NavigationEvent = {
   // New frame url after navigation.
@@ -297,7 +297,7 @@ export class FrameManager {
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
       // Abort favicon requests to avoid network access in case of interception.
-      route?.abort('aborted').catch(() => {});
+      route?.abort('aborted').catch(() => { });
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
@@ -765,7 +765,7 @@ export class Frame extends SdkObject {
         if (root && !root.isConnected)
           throw injected.createStacklessError('Element is not attached to the DOM');
         const elements = injected.querySelectorAll(info.parsed, root || document);
-        const element: Element | undefined  = elements[0];
+        const element: Element | undefined = elements[0];
         const visible = element ? injected.utils.isElementVisible(element) : false;
         let log = '';
         if (elements.length > 1) {
@@ -909,10 +909,10 @@ export class Frame extends SdkObject {
   }
 
   async addScriptTag(params: {
-      url?: string,
-      content?: string,
-      type?: string,
-    }): Promise<dom.ElementHandle> {
+    url?: string,
+    content?: string,
+    type?: string,
+  }): Promise<dom.ElementHandle> {
     const {
       url = null,
       content = null,
@@ -1415,7 +1415,7 @@ export class Frame extends SdkObject {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
       if (callId)
         injected.markTargetElements(new Set(elements), callId);
-      const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+      const isArray = options.expression.startsWith('to.have.count') || options.expression.endsWith('.array');
       let log = '';
       if (isArray)
         log = `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`;
@@ -1662,7 +1662,7 @@ class SignalBarrier {
     LongStandingScope.raceMultiple([
       frame._page.openScope,
       frame._detachedScope,
-    ], waiter.promise).catch(() => {}).finally(() => {
+    ], waiter.promise).catch(() => { }).finally(() => {
       waiter.dispose();
       this.release();
     });

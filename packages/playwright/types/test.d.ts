@@ -9042,6 +9042,48 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to a number of DOM nodes less than
+   * the expected count.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const list = page.locator('list > .component');
+   * await expect(list).toHaveCountLessThan(5);
+   * ```
+   *
+   * @param count Expected maximum count (exclusive).
+   * @param options
+   */
+  toHaveCountLessThan(count: number, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to a number of DOM nodes greater than
+   * the expected count.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const list = page.locator('list > .component');
+   * await expect(list).toHaveCountMoreThan(2);
+   * ```
+   *
+   * @param count Expected minimum count (exclusive).
+   * @param options
+   */
+  toHaveCountMoreThan(count: number, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
    * CSS style.
    *

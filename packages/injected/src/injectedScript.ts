@@ -1328,7 +1328,7 @@ export class InjectedScript {
   }
 
   async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
-    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const isArray = options.expression.startsWith('to.have.count') || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);
     if (!element) {
@@ -1528,6 +1528,18 @@ export class InjectedScript {
     if (expression === 'to.have.count') {
       const received = elements.length;
       const matches = received === options.expectedNumber;
+      return { received, matches };
+    }
+
+    if (expression === 'to.have.count.more.than') {
+      const received = elements.length;
+      const matches = received > options.expectedNumber!;
+      return { received, matches };
+    }
+
+    if (expression === 'to.have.count.less.than') {
+      const received = elements.length;
+      const matches = received < options.expectedNumber!;
       return { received, matches };
     }
 

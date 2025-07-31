@@ -91,6 +91,143 @@ Timeout:  1000ms`);
   });
 });
 
+test.describe('toHaveCountMoreThan', () => {
+  test('toHaveCountMoreThan pass', async ({ page }) => {
+    await page.setContent('<select><option>One</option></select>');
+    const locator = page.locator('option');
+    let done = false;
+    const promise = expect(locator).toHaveCountMoreThan(1).then(() => { done = true; });
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.setContent('<select><option>One</option><option>Two</option><option>Three</option></select>');
+    await promise;
+    expect(done).toBe(true);
+  });
+
+  test('pass with exact threshold', async ({ page }) => {
+    await page.setContent('<div><span>one</span><span>two</span></div>');
+    const locator = page.locator('span');
+    await expect(locator).toHaveCountMoreThan(1);
+    await expect(locator).not.toHaveCountMoreThan(2);
+  });
+
+  test('eventually pass', async ({ page }) => {
+    await page.setContent('<ul><li>one</li></ul>');
+    setTimeout(async () => {
+      await page.setContent('<ul><li>one</li><li>two</li><li>three</li></ul>');
+    }, 500);
+    const locator = page.locator('li');
+    await expect(locator).toHaveCountMoreThan(2);
+  });
+
+  test('eventually pass not', async ({ page }) => {
+    await page.setContent('<ul><li>one</li><li>two</li><li>three</li></ul>');
+    setTimeout(async () => {
+      await page.setContent('<ul><li>one</li></ul>');
+    }, 500);
+    const locator = page.locator('li');
+    await expect(locator).not.toHaveCountMoreThan(2);
+  });
+
+  test('fail', async ({ page }) => {
+    await page.setContent('<div><span></span></div>');
+    const locator = page.locator('span');
+    const error = await expect(locator).toHaveCountMoreThan(1, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveCountMoreThan(expected) failed
+
+Locator:  locator('span')
+Expected: \"> 1\"
+Received: 1
+Timeout:  1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveCountMoreThan" with timeout 1000ms`);
+  });
+
+  test('fail not', async ({ page }) => {
+    await page.setContent('<div><span></span><span></span></div>');
+    const locator = page.locator('span');
+    const error = await expect(locator).not.toHaveCountMoreThan(1, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`expect(locator).not.toHaveCountMoreThan(expected) failed
+
+Locator:  locator('span')
+Expected: not \"> 1\"
+Received: 2
+Timeout:  1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveCountMoreThan" with timeout 1000ms`);
+  });
+});
+
+test.describe('toHaveCountLessThan', () => {
+  test('toHaveCountLessThan pass', async ({ page }) => {
+    await page.setContent('<select><option>One</option><option>Two</option><option>Three</option></select>');
+    const locator = page.locator('option');
+    let done = false;
+    const promise = expect(locator).toHaveCountLessThan(2).then(() => { done = true; });
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.setContent('<select><option>One</option></select>');
+    await promise;
+    expect(done).toBe(true);
+  });
+
+  test('pass with exact threshold', async ({ page }) => {
+    await page.setContent('<div><span>one</span></div>');
+    const locator = page.locator('span');
+    await expect(locator).toHaveCountLessThan(2);
+    await expect(locator).not.toHaveCountLessThan(1);
+  });
+
+  test('pass zero', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.locator('span');
+    await expect(locator).toHaveCountLessThan(1);
+    await expect(locator).not.toHaveCountLessThan(0);
+  });
+
+  test('eventually pass', async ({ page }) => {
+    await page.setContent('<ul><li>one</li><li>two</li><li>three</li></ul>');
+    setTimeout(async () => {
+      await page.setContent('<ul><li>one</li></ul>');
+    }, 500);
+    const locator = page.locator('li');
+    await expect(locator).toHaveCountLessThan(2);
+  });
+
+  test('eventually pass not', async ({ page }) => {
+    await page.setContent('<ul><li>one</li></ul>');
+    setTimeout(async () => {
+      await page.setContent('<ul><li>one</li><li>two</li><li>three</li></ul>');
+    }, 500);
+    const locator = page.locator('li');
+    await expect(locator).not.toHaveCountLessThan(2);
+  });
+
+  test('fail', async ({ page }) => {
+    await page.setContent('<div><span></span><span></span></div>');
+    const locator = page.locator('span');
+    const error = await expect(locator).toHaveCountLessThan(2, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveCountLessThan(expected) failed
+
+Locator:  locator('span')
+Expected: \"< 2\"
+Received: 2
+Timeout:  1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toHaveCountLessThan" with timeout 1000ms`);
+  });
+
+  test('fail not', async ({ page }) => {
+    await page.setContent('<div><span></span></div>');
+    const locator = page.locator('span');
+    const error = await expect(locator).not.toHaveCountLessThan(2, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`expect(locator).not.toHaveCountLessThan(expected) failed
+
+Locator:  locator('span')
+Expected: not \"< 2\"
+Received: 1
+Timeout:  1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveCountLessThan" with timeout 1000ms`);
+  });
+});
+
 test.describe('toHaveJSProperty', () => {
   test('pass', async ({ page }) => {
     await page.setContent('<div></div>');

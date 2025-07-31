@@ -1694,6 +1694,50 @@ Expected count.
 ### option: LocatorAssertions.toHaveCount.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+## async method: LocatorAssertions.toHaveCountMoreThan
+* since: v1.55
+* langs: js
+
+Ensures the [Locator] resolves to a number of DOM nodes greater than the expected count.
+
+**Usage**
+
+```js
+const list = page.locator('list > .component');
+await expect(list).toHaveCountMoreThan(2);
+```
+
+### param: LocatorAssertions.toHaveCountMoreThan.count
+* since: v1.55
+- `count` <[int]>
+
+Expected minimum count (exclusive).
+
+### option: LocatorAssertions.toHaveCountMoreThan.timeout = %%-js-assertions-timeout-%%
+* since: v1.55
+
+## async method: LocatorAssertions.toHaveCountLessThan
+* since: v1.55
+* langs: js
+
+Ensures the [Locator] resolves to a number of DOM nodes less than the expected count.
+
+**Usage**
+
+```js
+const list = page.locator('list > .component');
+await expect(list).toHaveCountLessThan(5);
+```
+
+### param: LocatorAssertions.toHaveCountLessThan.count
+* since: v1.55
+- `count` <[int]>
+
+Expected maximum count (exclusive).
+
+### option: LocatorAssertions.toHaveCountLessThan.timeout = %%-js-assertions-timeout-%%
+* since: v1.55
+
 ## async method: LocatorAssertions.toHaveCSS
 * since: v1.20
 * langs:
