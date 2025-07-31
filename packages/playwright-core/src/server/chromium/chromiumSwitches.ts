@@ -40,7 +40,7 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'Translate',
   assistantMode ? 'AutomationControlled' : '',
   // See https://issues.chromium.org/u/1/issues/435410220
-  'AutoDeElevate'
+  'AutoDeElevate',
 ].filter(Boolean);
 
 export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
