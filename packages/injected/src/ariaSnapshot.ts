@@ -77,7 +77,7 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
   }
   if (options.mode === 'autoexpect') {
     // To auto-generate assertions on visible elements.
-    return { visibility: 'ariaAndVisible', refs: 'all' };
+    return { visibility: 'ariaAndVisible', refs: 'none' };
   }
   if (options.mode === 'codegen') {
     // To generate aria assertion with regex heurisitcs.

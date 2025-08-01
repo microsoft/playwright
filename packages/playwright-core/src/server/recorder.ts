@@ -20,7 +20,7 @@ import fs from 'fs';
 import { isUnderTest } from '../utils';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
-import { buildFullSelector, generateFrameSelector, isAssertAction, metadataToCallLog, shouldMergeAction } from './recorder/recorderUtils';
+import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import { ProgressController } from './progress';
@@ -31,8 +31,6 @@ import { eventsHelper, monotonicTime } from './../utils';
 import { Frame } from './frames';
 import { Page } from './page';
 import { performAction } from './recorder/recorderRunner';
-import { findNewElementRef } from '../utils/isomorphic/ariaSnapshot';
-import { yaml } from '../utilsBundle';
 
 import type { Language } from './codegen/types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
@@ -522,60 +520,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return actionInContext;
   }
 
-  private async _maybeGenerateAssertAction(frame: Frame, actionInContext: actions.ActionInContext) {
-    const lastAction = getLastFrameAction(frame);
-    if (isAssertAction(actionInContext.action))
-      return;
-    if (lastAction && (isAssertAction(lastAction.action) || shouldMergeAction(actionInContext, lastAction)))
-      return;
-    const newSnapshot = actionInContext.action.ariaSnapshot;
-    if (!newSnapshot)
-      return;
-    const lastSnapshot = lastAction?.action.ariaSnapshot || `- document [ref=e1]\n`;
-    if (!lastSnapshot)
-      return;
-    const callMetadata = serverSideCallMetadata();
-    const controller = new ProgressController(callMetadata, frame);
-    const selector = await controller.run(async progress => {
-      const ref = findNewElementRef(yaml, lastSnapshot, newSnapshot);
-      if (!ref)
-        return;
-      // Note: recorder runs in the main world, so we need to resolve the ref in the main world.
-      // Note: resolveSelector always returns a |page|-based selector, not |frame|-based.
-      const { resolvedSelector } = await frame.resolveSelector(progress, `aria-ref=${ref}`, { mainWorld: true }).catch(() => ({ resolvedSelector: undefined }));
-      if (!resolvedSelector)
-        return;
-      const isVisible = await frame._page.mainFrame().isVisible(progress, resolvedSelector, { strict: true }).catch(() => false);
-      return isVisible ? resolvedSelector : undefined;
-    }).catch(() => undefined);
-    if (!selector)
-      return;
-    if (!actionInContext.frame.framePath.length && 'selector' in actionInContext.action && actionInContext.action.selector === selector)
-      return;  // Do not assert the action target, auto-waiting takes care of it.
-    const assertActionInContext: actions.ActionInContext = {
-      frame: {
-        pageGuid: actionInContext.frame.pageGuid,
-        pageAlias: actionInContext.frame.pageAlias,
-        framePath: [],
-      },
-      action: {
-        name: 'assertVisible',
-        selector,
-        signals: [],
-      },
-      startTime: actionInContext.startTime,
-      endTime: actionInContext.startTime,
-    };
-    return assertActionInContext;
-  }
-
   private async _performAction(frame: Frame, action: actions.PerformOnRecordAction) {
     const actionInContext = await this._createActionInContext(frame, action);
-    const assertActionInContext = await this._maybeGenerateAssertAction(frame, actionInContext);
-    if (assertActionInContext)
-      this._signalProcessor.addAction(assertActionInContext);
     this._signalProcessor.addAction(actionInContext);
-    setLastFrameAction(frame, actionInContext);
     if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
       await performAction(this._pageAliases, actionInContext);
     actionInContext.endTime = monotonicTime();
@@ -584,7 +531,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private async _recordAction(frame: Frame, action: actions.Action) {
     const actionInContext = await this._createActionInContext(frame, action);
     this._signalProcessor.addAction(actionInContext);
-    setLastFrameAction(frame, actionInContext);
   }
 
   private _onFrameNavigated(frame: Frame, page: Page) {
@@ -623,12 +569,4 @@ function languageForFile(file: string) {
   if (file.endsWith('.cs'))
     return 'csharp';
   return 'javascript';
-}
-
-const kLastFrameActionSymbol = Symbol('lastFrameAction');
-function getLastFrameAction(frame: Frame): actions.ActionInContext | undefined {
-  return (frame as any)[kLastFrameActionSymbol];
-}
-function setLastFrameAction(frame: Frame, action: actions.ActionInContext | undefined) {
-  (frame as any)[kLastFrameActionSymbol] = action;
 }

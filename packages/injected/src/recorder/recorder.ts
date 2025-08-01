@@ -23,6 +23,7 @@ import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
+import type { AriaNode, AriaSnapshot } from '@injected/ariaSnapshot';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',
@@ -543,21 +544,13 @@ class RecordActionTool implements RecorderTool {
       consumeEvent(event);
   }
 
-  private _captureAriaSnapshotForAction(action: actions.Action) {
-    const documentElement = this._recorder.injectedScript.document.documentElement;
-    if (documentElement)
-      action.ariaSnapshot = this._recorder.injectedScript.ariaSnapshot(documentElement, { mode: 'autoexpect' });
-  }
-
   private _recordAction(action: actions.Action) {
-    this._captureAriaSnapshotForAction(action);
     this._recorder.recordAction(action);
   }
 
   private _performAction(action: actions.PerformOnRecordAction) {
     this._recorder.updateHighlight(null, false);
 
-    this._captureAriaSnapshotForAction(action);
     this._performingActions.add(action);
 
     const promise = this._recorder.performAction(action).then(() => {
@@ -1267,6 +1260,7 @@ export class Recorder {
   private _tools: Record<Mode, RecorderTool>;
   private _lastHighlightedSelector: string | undefined = undefined;
   private _lastHighlightedAriaTemplateJSON: string = 'undefined';
+  private _lastActionAutoexpectSnapshot: AriaSnapshot | undefined;
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
   private _stylesheet: CSSStyleSheet;
@@ -1585,11 +1579,25 @@ export class Recorder {
     void this._delegate.setMode?.(mode);
   }
 
+  private _captureAutoExpectSnapshot() {
+    const documentElement = this.injectedScript.document.documentElement;
+    return documentElement ? this.injectedScript.utils.generateAriaTree(documentElement, { mode: 'autoexpect' }) : undefined;
+  }
+
   async performAction(action: actions.PerformOnRecordAction) {
+    const previousSnapshot = this._lastActionAutoexpectSnapshot;
+    this._lastActionAutoexpectSnapshot = this._captureAutoExpectSnapshot();
+    if (!isAssertAction(action) && this._lastActionAutoexpectSnapshot) {
+      const element = findNewElement(previousSnapshot, this._lastActionAutoexpectSnapshot);
+      action.preconditionSelector = element ? this.injectedScript.generateSelector(element, { testIdAttributeName: this.state.testIdAttributeName }).selector : undefined;
+      if (action.preconditionSelector === action.selector)
+        action.preconditionSelector = undefined;
+    }
     await this._delegate.performAction?.(action).catch(() => {});
   }
 
   recordAction(action: actions.Action) {
+    this._lastActionAutoexpectSnapshot = this._captureAutoExpectSnapshot();
     void this._delegate.recordAction?.(action);
   }
 
@@ -1793,4 +1801,57 @@ function createSvgElement(doc: Document, { tagName, attrs, children }: SvgJson):
   }
 
   return elem;
+}
+
+function isAssertAction(action: actions.Action): action is actions.AssertAction {
+  return action.name.startsWith('assert');
+}
+
+function findNewElement(from: AriaSnapshot | undefined, to: AriaSnapshot): Element | undefined {
+  type ByRoleAndName = Map<string, Map<string, { node: AriaNode, sizeAndPosition: number }>>;
+
+  function fillMap(root: AriaNode, map: ByRoleAndName, position: number) {
+    let size = 1;
+    let childPosition = position + size;
+    for (const child of root.children || []) {
+      if (typeof child === 'string') {
+        size++;
+        childPosition++;
+      } else {
+        size += fillMap(child, map, childPosition);
+        childPosition += size;
+      }
+    }
+    if (!['none', 'presentation', 'fragment', 'iframe', 'generic'].includes(root.role) && root.name) {
+      let byRole = map.get(root.role);
+      if (!byRole) {
+        byRole = new Map();
+        map.set(root.role, byRole);
+      }
+      const existing = byRole.get(root.name);
+      // This heuristic prioritizes elements at the top of the page, even if somewhat smaller.
+      const sizeAndPosition = size * 100 - position;
+      if (!existing || existing.sizeAndPosition < sizeAndPosition)
+        byRole.set(root.name, { node: root, sizeAndPosition });
+    }
+    return size;
+  }
+
+  const fromMap: ByRoleAndName = new Map();
+  if (from)
+    fillMap(from.root, fromMap, 0);
+
+  const toMap: ByRoleAndName = new Map();
+  fillMap(to.root, toMap, 0);
+
+  const result: { node: AriaNode, sizeAndPosition: number }[] = [];
+  for (const [role, byRole] of toMap) {
+    for (const [name, byName] of byRole) {
+      const inFrom = fromMap.get(role)?.get(name);
+      if (!inFrom)
+        result.push(byName);
+    }
+  }
+  result.sort((a, b) => b.sizeAndPosition - a.sizeAndPosition);
+  return result[0]?.node.element;
 }
