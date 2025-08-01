@@ -91,6 +91,10 @@ await page.CloseAsync();`);
   });
 
   test.only('should repro', async ({ page }) => {
+    await (page.context() as any)._enableRecorder({
+      language: 'javascript',
+      mode: 'recording',
+    });
     await page.context().newPage();
     await page.evaluate(() => {
       console.log('evaluating');
