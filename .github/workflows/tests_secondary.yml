@@ -30,18 +30,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [chrome-beta]
+        channel: [chrome-canary]
         runs-on: [macos-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
       with:
-        browsers-to-install: chromium
+        browsers-to-install: ${{ matrix.channel }}
         command: npm run ctest
         bot-name: ${{ matrix.channel }}-${{ matrix.runs-on }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        PWTEST_CHANNEL: ${{ matrix.channel }}
     - uses: actions/upload-artifact@v4
       if: always()
       with:
