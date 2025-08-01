@@ -92,6 +92,9 @@ await page.CloseAsync();`);
 
   test.only('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
+
+    const errors: any[] = [];
+    recorder.page.on('pageerror', e => errors.push(e));
     await recorder.page.evaluate(() => {
       console.log('evaluating');
       const body = document.querySelector('body');
