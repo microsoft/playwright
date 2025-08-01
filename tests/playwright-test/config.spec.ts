@@ -661,8 +661,8 @@ test('should merge configs', async ({ runInlineTest }) => {
         use: { foo: 1, bar: 2 },
         expect: { timeout: 12 },
         projects: [
-          { name: 'B', timeout: 40, use: {} },
-          { name: 'A', timeout: 50, use: {} }
+          { name: 'A', timeout: 50, use: {} },
+          { name: 'B', timeout: 40 },
         ],
         webServer: [{
           command: 'echo 123',
