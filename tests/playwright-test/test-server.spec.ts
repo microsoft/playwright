@@ -120,7 +120,7 @@ test('file watching', async ({ startTestServer, writeFiles }, testInfo) => {
   ]);
 });
 
-test('should list tests with testIdAttribute', async ({ startTestServer, writeFiles }) => {
+test('should list tests with testIdAttribute, contextOptions and launchOptions', async ({ startTestServer, writeFiles }) => {
   await writeFiles({
     'a.test.ts': `
       import { test } from '@playwright/test';
@@ -132,6 +132,16 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
           name: 'chromium',
           use: {
             testIdAttribute: 'testId',
+            baseURL: 'http://localhost:1234',
+            contextOptions: {
+              recordVideo: {
+                dir: 'videos/',
+                size: { width: 1280, height: 720 }
+              }
+            },
+            launchOptions: {
+              slowMo: 100,
+            },
           }
         }]
       };
@@ -143,6 +153,17 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
   const onProject = events.report.find(e => e.method === 'onProject').params.project;
   expect(onProject.name).toBe('chromium');
   expect(onProject.use.testIdAttribute).toBe('testId');
+  expect(onProject.use.contextOptions).toEqual({
+    baseURL: 'http://localhost:1234',
+    recordVideo: {
+      dir: 'videos/',
+      size: { width: 1280, height: 720 }
+    },
+  });
+  expect(onProject.use.launchOptions).toEqual({
+    handleSIGINT: false,
+    slowMo: 100,
+  });
 });
 
 test('stdio interception', async ({ startTestServer, writeFiles }) => {

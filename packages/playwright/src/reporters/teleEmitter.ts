@@ -22,7 +22,7 @@ import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 import type { ReporterV2 } from './reporterV2';
 import type * as reporterTypes from '../../types/testReporter';
-import type { TestAnnotation } from '../../types/test';
+import type { PlaywrightTestOptions, TestAnnotation } from '../../types/test';
 import type * as teleReceiver from '../isomorphic/teleReceiver';
 
 export type TeleReporterEmitterOptions = {
@@ -30,9 +30,12 @@ export type TeleReporterEmitterOptions = {
   omitBuffers?: boolean;
 };
 
+type ClientCertificates = NonNullable<PlaywrightTestOptions['clientCertificates']>;
+
 export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
+  private _configFile?: string;
   private _emitterOptions: TeleReporterEmitterOptions;
   private _resultKnownAttachmentCounts = new Map<string, number>();
   // In case there is blob reporter and UI mode, make sure one does override
@@ -50,6 +53,7 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onConfigure(config: reporterTypes.FullConfig) {
     this._rootDir = config.rootDir;
+    this._configFile = config.configFile;
     this._messageSink({ method: 'onConfigure', params: { config: this._serializeConfig(config) } });
   }
 
@@ -199,8 +203,66 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   private _serializeProjectUseOptions(use: reporterTypes.FullProject['use']): Record<string, any> {
+    const contextOptions = use.contextOptions ?? {};
+    if (use.acceptDownloads !== undefined)
+      contextOptions.acceptDownloads = use.acceptDownloads;
+    if (use.bypassCSP !== undefined)
+      contextOptions.bypassCSP = use.bypassCSP;
+    if (use.clientCertificates !== undefined)
+      contextOptions.clientCertificates = this._resolveClientCerticates(use.clientCertificates);
+    if (use.colorScheme !== undefined)
+      contextOptions.colorScheme = use.colorScheme;
+    if (use.deviceScaleFactor !== undefined)
+      contextOptions.deviceScaleFactor = use.deviceScaleFactor;
+    if (use.extraHTTPHeaders !== undefined)
+      contextOptions.extraHTTPHeaders = use.extraHTTPHeaders;
+    if (use.hasTouch !== undefined)
+      contextOptions.hasTouch = use.hasTouch;
+    if (use.geolocation !== undefined)
+      contextOptions.geolocation = use.geolocation;
+    if (use.httpCredentials !== undefined)
+      contextOptions.httpCredentials = use.httpCredentials;
+    if (use.ignoreHTTPSErrors !== undefined)
+      contextOptions.ignoreHTTPSErrors = use.ignoreHTTPSErrors;
+    if (use.isMobile !== undefined)
+      contextOptions.isMobile = use.isMobile;
+    if (use.javaScriptEnabled !== undefined)
+      contextOptions.javaScriptEnabled = use.javaScriptEnabled;
+    if (use.locale !== undefined)
+      contextOptions.locale = use.locale;
+    if (use.offline !== undefined)
+      contextOptions.offline = use.offline;
+    if (use.permissions !== undefined)
+      contextOptions.permissions = use.permissions;
+    if (use.proxy !== undefined)
+      contextOptions.proxy = use.proxy;
+    if (use.storageState !== undefined)
+      contextOptions.storageState = use.storageState;
+    if (use.viewport !== undefined)
+      contextOptions.viewport = use.viewport;
+    if (use.timezoneId !== undefined)
+      contextOptions.timezoneId = use.timezoneId;
+    if (use.userAgent !== undefined)
+      contextOptions.userAgent = use.userAgent;
+    if (use.baseURL !== undefined)
+      contextOptions.baseURL = use.baseURL;
+    if (use.serviceWorkers !== undefined)
+      contextOptions.serviceWorkers = use.serviceWorkers;
+
+    const launchOptions = {
+      handleSIGINT: false,
+      ...use.launchOptions,
+      // tracesDir: missing,
+    };
+    if (use.headless !== undefined)
+      launchOptions.headless = use.headless;
+    if (use.channel !== undefined)
+      launchOptions.channel = use.channel;
+
     return {
       testIdAttribute: use.testIdAttribute,
+      contextOptions,
+      launchOptions,
     };
   }
 
@@ -323,5 +385,23 @@ export class TeleReporterEmitter implements ReporterV2 {
     if (!absolutePath)
       return absolutePath;
     return path.relative(this._rootDir, absolutePath);
+  }
+
+  private _resolveClientCerticates(clientCertificates: ClientCertificates): ClientCertificates {
+    for (const cert of clientCertificates) {
+      cert.certPath = this._resolveFileToConfig(cert.certPath);
+      cert.keyPath = this._resolveFileToConfig(cert.keyPath);
+      cert.pfxPath = this._resolveFileToConfig(cert.pfxPath);
+    }
+    return clientCertificates;
+  }
+
+  private _resolveFileToConfig(file: string | undefined) {
+    const config = this._configFile;
+    if (!config || !file)
+      return file;
+    if (path.isAbsolute(file))
+      return file;
+    return path.resolve(path.dirname(config), file);
   }
 }
