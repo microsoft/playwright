@@ -90,7 +90,9 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  test('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
+  test('should not lead to an error if html gets clicked', async ({ openRecorder, platform, macVersion }) => {
+    test.skip(platform === 'darwin' && macVersion < 15, 'recorder.page.evaluate hangs on CDP layer for some reason on macOS 14.');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait('');
