@@ -653,7 +653,11 @@ export class Registry {
       'linux': '',
       'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
-    }));
+    }, () => this._installChromiumChannel('chrome-canary', {
+      'linux': 'reinstall_chrome_canary_linux.sh',
+      'darwin': 'reinstall_chrome_canary_mac.sh',
+      'win32': 'reinstall_chrome_canary_win.ps1',
+    })));
 
     this._executables.push(this._createChromiumChannel('msedge', {
       'linux': '/opt/microsoft/msedge/msedge',
