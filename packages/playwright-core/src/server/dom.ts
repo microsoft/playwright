@@ -447,12 +447,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return { hitTargetDescription: error };
       }
       hitTargetInterceptionHandle = handle as any;
-      progress.cleanupWhenAborted(() => {
-        // Do not await here, just in case the renderer is stuck (e.g. on alert)
-        // and we won't be able to cleanup.
-        hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
-        hitTargetInterceptionHandle!.dispose();
-      });
     }
 
     const actionResult = await this._page.frameManager.waitForSignalsCreatedBy(progress, options.waitAfter === true, async () => {
@@ -484,6 +478,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookAfterPointerAction)
         await progress.race((options as any).__testHookAfterPointerAction());
       return 'done';
+    }).finally(() => {
+      // Do not await here, just in case the renderer is stuck (e.g. on alert)
+      // and we won't be able to cleanup.
+      const stopPromise = hitTargetInterceptionHandle?.evaluate(h => h.stop()).catch(() => {});
+      stopPromise?.then(() => hitTargetInterceptionHandle?.dispose());
     });
     if (actionResult !== 'done')
       return actionResult;

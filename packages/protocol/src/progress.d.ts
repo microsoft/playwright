@@ -16,24 +16,26 @@
 
 import type { CallMetadata } from './callMetadata';
 
-// Most server operations are run inside a Progress instance.
+// Most server operations are run inside a Progress instance, which is conceptually
+// similar to a cancellation token.
+//
 // Each method that takes a Progress must result in one of the three outcomes:
 //   - It finishes successfully, returning a value, before the Progress is aborted.
 //   - It throws some error, before the Progress is aborted.
 //   - It throws the Progress's aborted error, because the Progress was aborted before
 //     the method could finish.
+//
 // As a rule of thumb, the above is achieved by:
 //   - Passing the Progress instance when awaiting other methods.
 //   - Using `progress.race()` when awaiting other methods that do not take a Progress argument.
 //     In this case, it is important that awaited method has no side effects, for example
 //     it is a read-only browser protocol call.
 //   - In rare cases, when the awaited method does not take a Progress argument,
-//     but it does have side effects such as creating a page - a proper cleanup
-//     must be taken in case Progress is aborted before the awaited method finishes.
-//     That's usually done by `progress.cleanupWhenAborted()`.
+//     but it does have side effects such as creating a page - a proper try/catch/finally
+//     should be used to cleanup. Whether the cleanup is awaited or not depends on the method details.
+//     For the trickiest cases, look at `raceUncancellableOperationWithCleanup()` helper method.
 export interface Progress {
   log(message: string): void;
-  cleanupWhenAborted(cleanup: (error: Error | undefined) => any): void;
   race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
   wait(timeout: number): Promise<void>;
   metadata: CallMetadata;

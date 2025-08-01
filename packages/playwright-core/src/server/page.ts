@@ -324,10 +324,14 @@ export class Page extends SdkObject {
     await progress.race(this.browserContext.exposePlaywrightBindingIfNeeded());
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
-    progress.cleanupWhenAborted(() => this._pageBindings.delete(name));
-    await progress.race(this.delegate.addInitScript(binding.initScript));
-    await progress.race(this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main'));
-    return binding;
+    try {
+      await progress.race(this.delegate.addInitScript(binding.initScript));
+      await progress.race(this.safeNonStallingEvaluateInAllFrames(binding.initScript.source, 'main'));
+      return binding;
+    } catch (error) {
+      this._pageBindings.delete(name);
+      throw error;
+    }
   }
 
   async removeExposedBindings(bindings: PageBinding[]) {
@@ -341,12 +345,15 @@ export class Page extends SdkObject {
 
   async setExtraHTTPHeaders(progress: Progress, headers: types.HeadersArray) {
     const oldHeaders = this._extraHTTPHeaders;
-    this._extraHTTPHeaders = headers;
-    progress.cleanupWhenAborted(async () => {
+    try {
+      this._extraHTTPHeaders = headers;
+      await progress.race(this.delegate.updateExtraHTTPHeaders());
+    } catch (error) {
       this._extraHTTPHeaders = oldHeaders;
-      await this.delegate.updateExtraHTTPHeaders();
-    });
-    await progress.race(this.delegate.updateExtraHTTPHeaders());
+      // Note: no await, headers will be updated in the background as soon as possible.
+      this.delegate.updateExtraHTTPHeaders().catch(() => {});
+      throw error;
+    }
   }
 
   extraHTTPHeaders(): types.HeadersArray | undefined {
@@ -501,10 +508,6 @@ export class Page extends SdkObject {
 
   async emulateMedia(progress: Progress, options: Partial<EmulatedMedia>) {
     const oldEmulatedMedia = { ...this._emulatedMedia };
-    progress.cleanupWhenAborted(async () => {
-      this._emulatedMedia = oldEmulatedMedia;
-      await this.delegate.updateEmulateMedia();
-    });
 
     if (options.media !== undefined)
       this._emulatedMedia.media = options.media;
@@ -517,7 +520,14 @@ export class Page extends SdkObject {
     if (options.contrast !== undefined)
       this._emulatedMedia.contrast = options.contrast;
 
-    await progress.race(this.delegate.updateEmulateMedia());
+    try {
+      await progress.race(this.delegate.updateEmulateMedia());
+    } catch (error) {
+      this._emulatedMedia = oldEmulatedMedia;
+      // Note: no await, emulated media will be updated in the background as soon as possible.
+      this.delegate.updateEmulateMedia().catch(() => {});
+      throw error;
+    }
   }
 
   emulatedMedia(): EmulatedMedia {
@@ -533,13 +543,15 @@ export class Page extends SdkObject {
 
   async setViewportSize(progress: Progress, viewportSize: types.Size) {
     const oldEmulatedSize = this._emulatedSize;
-    progress.cleanupWhenAborted(async () => {
+    try {
+      this._setEmulatedSize({ viewport: { ...viewportSize }, screen: { ...viewportSize } });
+      await progress.race(this.delegate.updateEmulatedViewportSize());
+    } catch (error) {
       this._emulatedSize = oldEmulatedSize;
-      await this.delegate.updateEmulatedViewportSize();
-    });
-
-    this._setEmulatedSize({ viewport: { ...viewportSize }, screen: { ...viewportSize } });
-    await progress.race(this.delegate.updateEmulatedViewportSize());
+      // Note: no await, emulated size will be updated in the background as soon as possible.
+      this.delegate.updateEmulatedViewportSize().catch(() => {});
+      throw error;
+    }
   }
 
   setEmulatedSizeFromWindowOpen(emulatedSize: EmulatedSize) {
@@ -565,8 +577,13 @@ export class Page extends SdkObject {
   async addInitScript(progress: Progress, source: string) {
     const initScript = new InitScript(source);
     this.initScripts.push(initScript);
-    progress.cleanupWhenAborted(() => this.removeInitScripts([initScript]));
-    await progress.race(this.delegate.addInitScript(initScript));
+    try {
+      await progress.race(this.delegate.addInitScript(initScript));
+    } catch (error) {
+      // Note: no await, script will be removed in the background as soon as possible.
+      this.removeInitScripts([initScript]).catch(() => {});
+      throw error;
+    }
     return initScript;
   }
 

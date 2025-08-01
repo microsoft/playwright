@@ -166,14 +166,16 @@ export class FrameManager {
       return action();
     const barrier = new SignalBarrier(progress);
     this._signalBarriers.add(barrier);
-    progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
-    const result = await action();
-    await progress.race(this._page.delegate.inputActionEpilogue());
-    await barrier.waitFor();
-    this._signalBarriers.delete(barrier);
-    // Resolve in the next task, after all waitForNavigations.
-    await new Promise<void>(makeWaitForNextTask());
-    return result;
+    try {
+      const result = await action();
+      await progress.race(this._page.delegate.inputActionEpilogue());
+      await barrier.waitFor();
+      // Resolve in the next task, after all waitForNavigations.
+      await new Promise<void>(makeWaitForNextTask());
+      return result;
+    } finally {
+      this._signalBarriers.delete(barrier);
+    }
   }
 
   frameWillPotentiallyRequestNavigation() {
@@ -862,10 +864,10 @@ export class Frame extends SdkObject {
   }
 
   async setContent(progress: Progress, html: string, options: types.NavigateOptions): Promise<void> {
+    const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
     await this.raceNavigationAction(progress, async () => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
       progress.log(`setting frame content, waiting until "${waitUntil}"`);
-      const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
       const context = await progress.race(this._utilityContext());
       const tagPromise = new ManualPromise<void>();
       this._page.frameManager._consoleMessageTags.set(tag, () => {
@@ -873,7 +875,6 @@ export class Frame extends SdkObject {
         this._onClearLifecycle();
         tagPromise.resolve();
       });
-      progress.cleanupWhenAborted(() => this._page.frameManager._consoleMessageTags.delete(tag));
       const lifecyclePromise = progress.race(tagPromise).then(() => this._waitForLoadState(progress, waitUntil));
       const contentPromise = progress.race(context.evaluate(({ html, tag }) => {
         document.open();
@@ -883,6 +884,8 @@ export class Frame extends SdkObject {
       }, { html, tag }));
       await Promise.all([contentPromise, lifecyclePromise]);
       return null;
+    }).finally(() => {
+      this._page.frameManager._consoleMessageTags.delete(tag);
     });
   }
 
@@ -1489,10 +1492,16 @@ export class Frame extends SdkObject {
         next();
         return { result, abort: () => aborted = true };
       }, { expression, isFunction, polling: options.pollingInterval, arg }));
-      progress.cleanupWhenAborted(() => handle.evaluate(h => h.abort()).finally(() => handle.dispose()));
-      const result = await progress.race(handle.evaluateHandle(h => h.result));
-      handle.dispose();
-      return result;
+      try {
+        return await progress.race(handle.evaluateHandle(h => h.result));
+      } catch (error) {
+        // Note: it is important to await "abort()" to prevent any side effects
+        // after this method returns.
+        await handle.evaluate(h => h.abort()).catch(() => {});
+        throw error;
+      } finally {
+        handle.dispose();
+      }
     });
   }
 
