@@ -91,7 +91,7 @@ export class DebugController extends SdkObject {
     if (!pages.length) {
       const [browser] = this._playwright.allBrowsers();
       const context = await browser.newContextForReuse(progress, {});
-      await context.newPage(progress, false /* isServerSide */);
+      await context.newPage(progress);
     }
     // Update test id attribute.
     if (params.testIdAttributeName) {

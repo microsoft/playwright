@@ -161,7 +161,7 @@ export class Page extends SdkObject {
   readonly requestInterceptors: network.RouteHandler[] = [];
   video: Artifact | null = null;
   private _opener: Page | undefined;
-  private _isServerSideOnly = false;
+  readonly isStorageStatePage: boolean;
   private _locatorHandlers = new Map<number, { selector: string, noWaitAfter?: boolean, resolved?: ManualPromise<void> }>();
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
@@ -186,6 +186,7 @@ export class Page extends SdkObject {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
+    this.isStorageStatePage = browserContext.isCreatingStorageStatePage();
   }
 
   async reportAsNew(opener: Page | undefined, error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
@@ -234,13 +235,13 @@ export class Page extends SdkObject {
   }
 
   emitOnContext(event: string | symbol, ...args: any[]) {
-    if (this._isServerSideOnly)
+    if (this.isStorageStatePage)
       return;
     this.browserContext.emit(event, ...args);
   }
 
   emitOnContextOnceInitialized(event: string | symbol, ...args: any[]) {
-    if (this._isServerSideOnly)
+    if (this.isStorageStatePage)
       return;
     // Some events, like console messages, may come before page is ready.
     // In this case, postpone the event until page is initialized,
@@ -811,10 +812,6 @@ export class Page extends SdkObject {
 
   async hideHighlight() {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
-  }
-
-  markAsServerSideOnly() {
-    this._isServerSideOnly = true;
   }
 
   async snapshotForAI(progress: Progress): Promise<string> {

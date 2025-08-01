@@ -94,10 +94,6 @@ export class BidiPage implements PageDelegate {
       this.updateRequestInterception(),
       // If the page is created by the Playwright client's call, some initialization
       // may be pending. Wait for it to complete before reporting the page as new.
-      //
-      // TODO: ideally we'd wait only for the commands that created this page, but currently
-      // there is no way in Bidi to track which command created this page.
-      this._browserContext.waitForBlockingPageCreations(),
     ]);
   }
 

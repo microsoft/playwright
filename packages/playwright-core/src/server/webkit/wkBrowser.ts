@@ -244,12 +244,9 @@ export class WKBrowserContext extends BrowserContext {
     return this._wkPages().map(wkPage => wkPage._page);
   }
 
-  override async doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page> {
+  override async doCreateNewPage(): Promise<Page> {
     const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
-    const page = this._browser._wkPages.get(pageProxyId)!._page;
-    if (markAsServerSideOnly)
-      page.markAsServerSideOnly();
-    return page;
+    return this._browser._wkPages.get(pageProxyId)!._page;
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {

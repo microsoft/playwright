@@ -244,7 +244,7 @@ export abstract class BrowserContext extends SdkObject {
 
   // BrowserContext methods.
   abstract possiblyUninitializedPages(): Page[];
-  abstract doCreateNewPage(markAsServerSideOnly?: boolean): Promise<Page>;
+  abstract doCreateNewPage(): Promise<Page>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setUserAgent(userAgent: string | undefined): Promise<void>;
@@ -418,7 +418,7 @@ export abstract class BrowserContext extends SdkObject {
       // Workaround for:
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
-      await this.newPage(progress, false);
+      await this.newPage(progress);
       await defaultPage.close();
     }
   }
@@ -538,9 +538,11 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  async newPage(progress: Progress, isServerSide: boolean): Promise<Page> {
-    const page = await progress.race(this.doCreateNewPage(isServerSide));
+  async newPage(progress: Progress, forStorageState?: boolean): Promise<Page> {
+    let page: Page | undefined;
     try {
+      this._creatingStorageStatePage = !!forStorageState;
+      page = await progress.race(this.doCreateNewPage());
       const pageOrError = await progress.race(page.waitForInitializedOrError());
       if (pageOrError instanceof Page) {
         if (pageOrError.isClosed())
@@ -549,8 +551,10 @@ export abstract class BrowserContext extends SdkObject {
       }
       throw pageOrError;
     } catch (error) {
-      await page.close({ reason: 'Failed to create page' }).catch(() => {});
+      await page?.close({ reason: 'Failed to create page' }).catch(() => {});
       throw error;
+    } finally {
+      this._creatingStorageStatePage = false;
     }
   }
 
@@ -589,7 +593,7 @@ export abstract class BrowserContext extends SdkObject {
 
     // If there are still origins to save, create a blank page to iterate over origins.
     if (originsToSave.size)  {
-      const page = await this.newPage(progress, true);
+      const page = await this.newPage(progress, true /* forStorageState */);
       try {
         await page.addRequestInterceptor(progress, route => {
           route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -629,14 +633,8 @@ export abstract class BrowserContext extends SdkObject {
       if (allOrigins.size) {
         if (mode === 'resetForReuse')
           page = this.pages()[0];
-        if (!page) {
-          try {
-            this._creatingStorageStatePage = mode !== 'resetForReuse';
-            page = await this.newPage(progress, this._creatingStorageStatePage);
-          } finally {
-            this._creatingStorageStatePage = false;
-          }
-        }
+        if (!page)
+          page = await this.newPage(progress, mode !== 'resetForReuse' /* forStorageState */);
 
         interceptor = (route: network.Route) => {
           route.fulfill({ body: '<html></html>' }).catch(() => {});
