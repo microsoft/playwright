@@ -305,7 +305,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   grep?: RegExp|Array<RegExp>;
 
   /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * Filter to only run tests with a title **not** matching any of the patterns. This is the opposite of
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
    * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
    *
