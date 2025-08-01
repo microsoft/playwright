@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         channel: [chrome-canary]
-        runs-on: [macos-latest]
+        runs-on: [macos-15-xlarge]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
