@@ -680,6 +680,33 @@ test('should merge configs', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should merge projects in the config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig, expect } from '@playwright/test';
+      const baseConfig = defineConfig({
+        projects: [{ name: 'A', timeout: 5_000 }, { name: 'B', timeout: 6_000 }],
+      });
+      const derivedConfig = defineConfig(baseConfig, {
+        projects: [{ name: 'A', timeout: 7_000 }, { name: 'C', timeout: 8_000 }],
+      });
+
+      expect(derivedConfig).toEqual(expect.objectContaining({
+        projects: [
+          { name: 'A', timeout: 7_000, use: {} },
+          { name: 'B', timeout: 6_000 },
+          { name: 'C', timeout: 8_000 },
+        ],
+      }));
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should merge ct configs', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
