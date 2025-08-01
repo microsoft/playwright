@@ -625,6 +625,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  debugConsoleApi: tOptional(tBoolean),
   userDataDir: tString,
   slowMo: tOptional(tFloat),
 });
@@ -717,6 +718,7 @@ scheme.BrowserNewContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  debugConsoleApi: tOptional(tBoolean),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -788,6 +790,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  debugConsoleApi: tOptional(tBoolean),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -902,6 +905,7 @@ scheme.BrowserContextInitializer = tObject({
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
     selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
     testIdAttributeName: tOptional(tString),
+    debugConsoleApi: tOptional(tBoolean),
   }),
 });
 scheme.BrowserContextBindingCallEvent = tObject({
@@ -2773,6 +2777,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  debugConsoleApi: tOptional(tBoolean),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({

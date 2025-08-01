@@ -633,6 +633,7 @@ ContextOptions:
       type: array?
       items: SelectorEngine
     testIdAttributeName: string?
+    debugConsoleApi: boolean?
 
 
 LocalUtils:
