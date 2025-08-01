@@ -107,6 +107,7 @@ export class InjectedScript {
     isInsideScope,
     normalizeWhiteSpace,
     parseAriaSnapshot,
+    generateAriaTree,
     // Builtins protect injected code from clock emulation.
     builtins: null as unknown as Builtins,
   };

@@ -22,9 +22,31 @@ import type * as actions from '@recorder/actions';
 export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
-  const actionTexts = actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
+  const actionTexts = actions.map(a => generateActionText(languageGenerator, a)).filter(Boolean) as string[];
   const text = [header, ...actionTexts, footer].join('\n');
   return { header, footer, actionTexts, text };
+}
+
+function generateActionText(generator: LanguageGenerator, action: actions.ActionInContext): string | undefined {
+  let text = generator.generateAction(action);
+  if (!text)
+    return;
+  if (action.action.preconditionSelector) {
+    const expectAction: actions.ActionInContext = {
+      frame: action.frame,
+      startTime: action.startTime,
+      endTime: action.startTime,
+      action: {
+        name: 'assertVisible',
+        selector: action.action.preconditionSelector,
+        signals: [],
+      },
+    };
+    const expectText = generator.generateAction(expectAction);
+    if (expectText)
+      text = expectText + '\n' + text;
+  }
+  return text;
 }
 
 export function sanitizeDeviceOptions(device: any, options: BrowserContextOptions): BrowserContextOptions {

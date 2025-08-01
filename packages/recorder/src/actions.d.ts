@@ -37,6 +37,7 @@ export type ActionBase = {
   name: ActionName,
   signals: Signal[],
   ariaSnapshot?: string,
+  preconditionSelector?: string,
 };
 
 export type ActionWithSelector = ActionBase & {
