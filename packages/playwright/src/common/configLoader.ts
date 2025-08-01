@@ -34,6 +34,7 @@ export const defineConfig = (...configs: any[]) => {
   let result = configs[0];
   for (let i = 1; i < configs.length; ++i) {
     const config = configs[i];
+    const prevProjects = result.projects;
     result = {
       ...result,
       ...config,
@@ -63,7 +64,7 @@ export const defineConfig = (...configs: any[]) => {
       projectOverrides.set(project.name, project);
 
     const projects = [];
-    for (const project of result.projects || []) {
+    for (const project of prevProjects || []) {
       const projectOverride = projectOverrides.get(project.name);
       if (projectOverride) {
         projects.push({
