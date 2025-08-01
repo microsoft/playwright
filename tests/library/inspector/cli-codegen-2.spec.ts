@@ -90,7 +90,20 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  test.only('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
+  test.only('should repro', async ({ page }) => {
+    await page.context().newPage();
+    await page.evaluate(() => {
+      console.log('evaluating');
+      const body = document.querySelector('body');
+      if (body)
+        console.log('there is a body');
+      else
+        console.log('there is no body');
+      return body!.remove();
+    });
+  });
+
+  test('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     const errors: any[] = [];
