@@ -209,7 +209,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [chrome, chrome-beta, msedge, msedge-beta, msedge-dev]
+        channel: [chrome, chrome-beta, chrome-canary, msedge, msedge-beta, msedge-dev]
         runs-on: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
