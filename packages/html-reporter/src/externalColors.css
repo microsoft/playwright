@@ -1,0 +1,11 @@
+/* These color variables are separate from the main colors.css that was copied from GitHub */
+
+:root {
+  --color-control-transparent-bg-hover: #818b981a;
+}
+
+@media(prefers-color-scheme: dark) {
+  :root {
+    --color-control-transparent-bg-hover: #656c7633;
+  }
+}
