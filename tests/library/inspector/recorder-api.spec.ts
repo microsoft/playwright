@@ -60,7 +60,7 @@ test('should click', async ({ context, browserName, platform }) => {
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
-        ariaSnapshot: (browserName === 'webkit' && platform === 'darwin') ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || platform === 'win32')) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
@@ -84,7 +84,7 @@ test('should double click', async ({ context, browserName, platform }) => {
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
-        ariaSnapshot: (browserName === 'webkit' && platform === 'darwin') ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || platform === 'win32')) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
@@ -108,7 +108,7 @@ test('should right click', async ({ context, browserName, platform }) => {
         selector: 'internal:role=button[name="Submit"i]',
         ref: 'e2',
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
-        ariaSnapshot: (browserName === 'webkit' && platform === 'darwin') ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
+        ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || platform === 'win32')) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
       startTime: expect.any(Number),
     })
