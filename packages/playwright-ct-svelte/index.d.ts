@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
+import type { SvelteComponent, ComponentProps } from 'svelte';
 import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
 type ComponentSlot = string | string[];
@@ -22,7 +22,7 @@ type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot 
 type ComponentEvents = Record<string, Function>;
 
 export interface MountOptions<HooksConfig, Component extends SvelteComponent> {
-  props?: ComponentProps<Component>;
+  props?: ComponentProps<InstanceType<Component>>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;
@@ -31,7 +31,7 @@ export interface MountOptions<HooksConfig, Component extends SvelteComponent> {
 export interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
   update(options: {
-    props?: Partial<ComponentProps<Component>>;
+    props?: Partial<ComponentProps<InstanceType<Component>>>;
     on?: Partial<ComponentEvents>;
   }): Promise<void>;
 }
@@ -39,7 +39,7 @@ export interface MountResult<Component extends SvelteComponent> extends Locator 
 export const test: TestType<{
   mount<HooksConfig, Component extends SvelteComponent = SvelteComponent>(
     component: new (...args: any[]) => Component,
-    options?: MountOptions<HooksConfig, Component>
+    options?: MountOptions<HooksConfig, InstanceType<Component>>
   ): Promise<MountResult<Component>>;
 }>;
 

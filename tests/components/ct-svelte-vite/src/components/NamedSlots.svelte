@@ -1,11 +1,15 @@
+<script>
+const { header, main, footer } = $props()
+</script>
+
 <div>
   <header>
-    <slot name="header" />
+    {@render header()}
   </header>
   <main>
-    <slot name="main" />
+    {@render main()}
   </main>
   <footer>
-    <slot name="footer" />
+    {@render footer()}
   </footer>
 </div>

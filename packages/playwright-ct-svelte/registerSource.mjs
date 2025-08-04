@@ -17,8 +17,8 @@
 // @ts-check
 
 // This file is injected into the registry as text, no dependencies are allowed.
-
-import { detach as __pwDetach, insert as __pwInsert, noop as __pwNoop } from 'svelte/internal';
+import { createRawSnippet } from 'svelte';
+import { asClassComponent } from 'svelte/legacy';
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
@@ -33,36 +33,30 @@ function isObjectComponent(component) {
   return typeof component === 'object' && component && component.__pw_type === 'object-component';
 }
 
-/**
- * TODO: remove this function when the following issue is fixed:
- * https://github.com/sveltejs/svelte/issues/2588
- */
-function __pwCreateSlots(slots) {
-  const svelteSlots = {};
+/** @type {( component: ObjectComponent ) => Record<string, any>} */
+function extractProps(component) {
+  let { props, slots, on } = component;
 
-  for (const slotName in slots) {
-    const template = document
-        .createRange()
-        .createContextualFragment(slots[slotName]);
-    svelteSlots[slotName] = [createSlotFn(template)];
-  }
+  // Svelte 5 dropped support for the old slot implementation in exchange for prop-based "snippets". Continue
+  // supporting string snippets in Playwright
+  slots = Object.fromEntries(
+    Object.entries(slots ?? {}).map(([key, snippet]) => {
+      if (typeof snippet === "string") {
+        return [key, createRawSnippet(() => ({ render: () => snippet }))];
+      }
 
-  function createSlotFn(element) {
-    return function() {
-      return {
-        c: __pwNoop,
-        m: function mount(target, anchor) {
-          __pwInsert(target, element, anchor);
-        },
-        d: function destroy(detaching) {
-          if (detaching)
-            __pwDetach(element);
-        },
-        l: __pwNoop,
-      };
-    };
-  }
-  return svelteSlots;
+      return [key, snippet]
+    })
+  );
+
+  // Rewrite `on*` API events
+  on = Object.fromEntries(
+    Object.entries(on ?? {}).map(([key, fn]) => {
+      return [`on${key}`, fn]
+    })
+  );
+
+  return { ...props, ...slots, ...on };
 }
 
 const __pwSvelteComponentKey = Symbol('svelteComponent');
@@ -71,23 +65,20 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   if (!isObjectComponent(component))
     throw new Error('JSX mount notation is not supported');
 
-  const objectComponent = component;
-  const componentCtor = component.type;
+  const componentCtor = asClassComponent(component.type);
+  const props = extractProps(component);
 
   class App extends componentCtor {
     constructor(options = {}) {
       super({
         target: rootElement,
-        props: {
-          ...objectComponent.props,
-          $$slots: __pwCreateSlots(objectComponent.slots),
-          $$scope: {},
-        },
+        props,
         ...options
       });
     }
   }
 
+  /** @type {SvelteComponent | undefined} */
   let svelteComponent;
   for (const hook of window.__pw_hooks_before_mount || [])
     svelteComponent = await hook({ hooksConfig, App });
@@ -97,7 +88,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   rootElement[__pwSvelteComponentKey] = svelteComponent;
 
-  for (const [key, listener] of Object.entries(objectComponent.on || {}))
+  for (const [key, listener] of Object.entries(component.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
 
   for (const hook of window.__pw_hooks_after_mount || [])
@@ -123,6 +114,5 @@ window.playwrightUpdate = async (rootElement, component) => {
   for (const [key, listener] of Object.entries(component.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
 
-  if (component.props)
-    svelteComponent.$set(component.props);
+  svelteComponent.$set(extractProps(component));
 };
