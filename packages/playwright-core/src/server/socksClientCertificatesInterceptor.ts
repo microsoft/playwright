@@ -247,9 +247,7 @@ class SocksProxyConnection {
           'Content-Length: ' + Buffer.byteLength(responseBody),
           '',
           responseBody,
-        ].join('\r\n'), () => {
-          this._browserEncrypted.destroy();
-        });
+        ].join('\r\n'));
       }
     });
   }
