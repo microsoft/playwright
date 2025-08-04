@@ -15,6 +15,8 @@
  */
 
 import { test as it, expect } from './inspectorTest';
+import { InjectedScript } from 'packages/injected/src/injectedScript';
+import { ConsoleAPI } from 'packages/injected/src/consoleApi';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -123,7 +125,22 @@ it('expected properties on playwright object', async ({ page }) => {
 });
 
 
-it('should correcly inject itself into popups', async ({ page }) => {
+it.only('should correcly inject itself into popups', async ({ context }) => {
+
+  await context.addInitScript(() => {
+    const injectedScript = new InjectedScript(window, {
+      isUnderTest: true,
+      sdkLanguage: 'javascript',
+      testIdAttributeName: 'data-testid',
+      stableRafCount: 0,
+      browserName: context.browser().browserType().name(),
+      customEngines: [],
+    });
+    const consoleApi = new ConsoleAPI(injectedScript);
+    consoleApi.install();
+  });
+  const page = await context.newPage();
+
   const firstPageContent = `
       <html>
         <body>
