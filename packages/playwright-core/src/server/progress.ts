@@ -20,18 +20,12 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Progress } from '@protocol/progress';
 import type { CallMetadata, SdkObject } from './instrumentation';
-import type { LogName } from './utils/debugLogger';
 
 export type { Progress } from '@protocol/progress';
 
 export class ProgressController {
   private _forceAbortPromise = new ManualPromise<any>();
   private _donePromise = new ManualPromise<void>();
-
-  // Cleanups to be run only in the case of abort.
-  private _cleanups: ((error: Error | undefined) => any)[] = [];
-
-  private _logName: LogName;
   private _state: 'before' | 'running' | { error: Error } | 'finished' = 'before';
   private _sdkObject: SdkObject;
 
@@ -40,12 +34,7 @@ export class ProgressController {
   constructor(metadata: CallMetadata, sdkObject: SdkObject) {
     this.metadata = metadata;
     this._sdkObject = sdkObject;
-    this._logName = sdkObject.logName || 'api';
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
-  }
-
-  setLogName(logName: LogName) {
-    this._logName = logName;
   }
 
   async abort(error: Error) {
@@ -66,12 +55,7 @@ export class ProgressController {
         if (this._state === 'running')
           this.metadata.log.push(message);
         // Note: we might be sending logs after progress has finished, for example browser logs.
-        this._sdkObject.instrumentation.onCallLog(this._sdkObject, this.metadata, this._logName, message);
-      },
-      cleanupWhenAborted: (cleanup: (error: Error | undefined) => any) => {
-        if (this._state !== 'running')
-          throw new Error('Internal error: cannot register cleanup after operation has finished.');
-        this._cleanups.push(cleanup);
+        this._sdkObject.instrumentation.onCallLog(this._sdkObject, this.metadata, this._sdkObject.logName || 'api', message);
       },
       metadata: this.metadata,
       race: <T>(promise: Promise<T> | Promise<T>[]) => {
@@ -103,19 +87,11 @@ export class ProgressController {
       return result;
     } catch (error) {
       this._state = { error };
-      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(error, cleanup)));
       throw error;
     } finally {
       clearTimeout(timer);
       this._donePromise.resolve();
     }
-  }
-}
-
-async function runCleanup(error: Error | undefined, cleanup: (error: Error | undefined) => any) {
-  try {
-    await cleanup(error);
-  } catch (e) {
   }
 }
 
