@@ -419,8 +419,9 @@ function fromBidiSameSite(sameSite: bidi.Network.SameSite): channels.NetworkCook
     case 'strict': return 'Strict';
     case 'lax': return 'Lax';
     case 'none': return 'None';
+    case 'default': return 'Default';
   }
-  return 'None';
+  return 'Default';
 }
 
 function toBidiSameSite(sameSite: channels.SetNetworkCookie['sameSite']): bidi.Network.SameSite {
@@ -428,8 +429,9 @@ function toBidiSameSite(sameSite: channels.SetNetworkCookie['sameSite']): bidi.N
     case 'Strict': return bidi.Network.SameSite.Strict;
     case 'Lax': return bidi.Network.SameSite.Lax;
     case 'None': return bidi.Network.SameSite.None;
+    case 'Default': return bidi.Network.SameSite.Default;
   }
-  return bidi.Network.SameSite.None;
+  return bidi.Network.SameSite.Default;
 }
 
 function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Session.ManualProxyConfiguration | undefined {

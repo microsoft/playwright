@@ -260,7 +260,7 @@ export type SetNetworkCookie = {
   expires?: number,
   httpOnly?: boolean,
   secure?: boolean,
-  sameSite?: 'Strict' | 'Lax' | 'None',
+  sameSite?: 'Strict' | 'Lax' | 'None' | 'Default',
   partitionKey?: string,
   _crHasCrossSiteAncestor?: boolean,
 };
@@ -273,7 +273,7 @@ export type NetworkCookie = {
   expires: number,
   httpOnly: boolean,
   secure: boolean,
-  sameSite: 'Strict' | 'Lax' | 'None',
+  sameSite: 'Strict' | 'Lax' | 'None' | 'Default',
   partitionKey?: string,
   _crHasCrossSiteAncestor?: boolean,
 };
