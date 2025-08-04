@@ -552,6 +552,7 @@ test.describe('browser', () => {
           'Content-Encoding': 'gzip',
           'Transfer-Encoding': 'chunked'
         });
+        res.flushHeaders();
 
         await renegotiate();
 
