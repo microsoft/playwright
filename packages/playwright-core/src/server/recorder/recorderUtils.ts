@@ -73,10 +73,6 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
   return result.frame;
 }
 
-export function isAssertAction(action: actions.Action): action is actions.AssertAction {
-  return action.name.startsWith('assert');
-}
-
 function isSameAction(a: actions.ActionInContext, b: actions.ActionInContext): boolean {
   return a.action.name === b.action.name && a.frame.pageAlias === b.frame.pageAlias && a.frame.framePath.join('|') === b.frame.framePath.join('|');
 }
