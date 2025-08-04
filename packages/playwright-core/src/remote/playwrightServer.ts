@@ -196,8 +196,6 @@ export class PlaywrightServer {
     for (const b of this._playwright.allBrowsers()) {
       if (b === browser)
         continue;
-      if (this._dontReuseBrowsers.has(b))
-        continue;
       if (b.options.name === browserName && b.options.channel === launchOptions.channel)
         await b.close({ reason: 'Connection terminated' });
     }
