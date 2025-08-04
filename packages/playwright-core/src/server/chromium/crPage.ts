@@ -446,8 +446,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    const isSettingStorageState = this._page.browserContext.isCreatingStorageStatePage();
-    if (!isSettingStorageState && hasUIWindow &&
+    if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
@@ -455,7 +454,7 @@ class FrameSession {
     }
 
     let screencastOptions: types.PageScreencastOptions | undefined;
-    if (!isSettingStorageState && this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
+    if (!this._page.isStorageStatePage && this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
       const screencastId = createGuid();
       const outputFile = path.join(this._crPage._browserContext._options.recordVideo.dir, screencastId + '.webm');
       screencastOptions = {
@@ -527,7 +526,7 @@ class FrameSession {
         ]
       }),
     ];
-    if (!isSettingStorageState) {
+    if (!this._page.isStorageStatePage) {
       if (this._crPage._browserContext.needsPlaywrightBinding())
         promises.push(this.exposePlaywrightBinding());
       if (this._isMainFrame())

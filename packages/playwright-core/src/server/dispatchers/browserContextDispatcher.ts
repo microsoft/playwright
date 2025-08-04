@@ -249,7 +249,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, progress: Progress): Promise<channels.BrowserContextNewPageResult> {
-    return { page: PageDispatcher.from(this, await this._context.newPage(progress, false /* isServerSide */)) };
+    return { page: PageDispatcher.from(this, await this._context.newPage(progress)) };
   }
 
   async cookies(params: channels.BrowserContextCookiesParams, progress: Progress): Promise<channels.BrowserContextCookiesResult> {
