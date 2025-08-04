@@ -107,21 +107,21 @@ export class PlaywrightServer {
         const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
 
-        if (process.env.PW_BROWSER_SERVER && url.searchParams.has('connect')) {
-          const filter = url.searchParams.get('connect');
-          if (filter !== 'first')
-            throw new Error(`Unknown connect filter: ${filter}`);
-          return new PlaywrightConnection(
-              browserSemaphore,
-              ws,
-              false,
-              this._playwright,
-              () => this._initConnectMode(id, filter, browserName, launchOptions),
-              id,
-          );
-        }
-
         if (isExtension) {
+          const connectFilter = url.searchParams.get('connect');
+          if (connectFilter) {
+            if (connectFilter !== 'first')
+              throw new Error(`Unknown connect filter: ${connectFilter}`);
+            return new PlaywrightConnection(
+                browserSemaphore,
+                ws,
+                false,
+                this._playwright,
+                () => this._initConnectMode(id, connectFilter, browserName, launchOptions),
+                id,
+            );
+          }
+
           if (url.searchParams.has('debug-controller')) {
             return new PlaywrightConnection(
                 controllerSemaphore,
