@@ -6,6 +6,7 @@ test('unmount', async ({ page, mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit',
+      onsubmit: () => {},
     },
   });
   await expect(page.locator('#root')).toContainText('Submit');
@@ -26,6 +27,7 @@ test('unmount twice throws an error', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit',
+      onsubmit: () => {},
     },
   });
   await component.unmount();
@@ -36,12 +38,14 @@ test('mount then unmount then mount', async ({ mount }) => {
   let component = await mount(Button, {
     props: {
       title: 'Submit',
+      onsubmit: () => {},
     },
   });
   await component.unmount();
   component = await mount(Button, {
     props: {
       title: 'Save',
+      onsubmit: () => {},
     },
   });
   await expect(component).toContainText('Save');

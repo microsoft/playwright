@@ -6,6 +6,7 @@ test('unmount', async ({ page, mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit',
+      onsubmit: () => {},
     },
   });
   await expect(page.locator('#root')).toContainText('Submit');
@@ -13,7 +14,7 @@ test('unmount', async ({ page, mount }) => {
   await expect(page.locator('#root')).not.toContainText('Submit');
 });
 
-test('unmount a multi root component', async ({ page, mount }) => {
+test('unmount a multi root component', async ({ mount, page }) => {
   const component = await mount(MultiRoot);
   await expect(page.locator('#root')).toContainText('root 1');
   await expect(page.locator('#root')).toContainText('root 2');
@@ -26,6 +27,7 @@ test('unmount twice throws an error', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit',
+      onsubmit: () => {},
     },
   });
   await component.unmount();

@@ -20,7 +20,7 @@
 import { createRawSnippet } from 'svelte';
 import { asClassComponent } from 'svelte/legacy';
 
-/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').Component} PlaywrightComponent */
 /** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {any} FrameworkComponent */
 /** @typedef {import('svelte').SvelteComponent} SvelteComponent */
@@ -35,7 +35,7 @@ function isObjectComponent(component) {
 
 /** @type {( component: ObjectComponent ) => Record<string, any>} */
 function extractProps(component) {
-  let { props, slots, on } = component;
+  let { props, slots } = component;
 
   // Svelte 5 dropped support for the old slot implementation in exchange for prop-based "snippets". Continue
   // supporting string snippets in Playwright
@@ -49,14 +49,7 @@ function extractProps(component) {
     })
   );
 
-  // Rewrite `on*` API events
-  on = Object.fromEntries(
-    Object.entries(on ?? {}).map(([key, fn]) => {
-      return [`on${key}`, fn]
-    })
-  );
-
-  return { ...props, ...slots, ...on };
+  return { ...props, ...slots };
 }
 
 const __pwSvelteComponentKey = Symbol('svelteComponent');
@@ -88,9 +81,6 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   rootElement[__pwSvelteComponentKey] = svelteComponent;
 
-  for (const [key, listener] of Object.entries(component.on || {}))
-    svelteComponent.$on(key, event => listener(event.detail));
-
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig, svelteComponent });
 };
@@ -110,9 +100,6 @@ window.playwrightUpdate = async (rootElement, component) => {
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
   if (!svelteComponent)
     throw new Error('Component was not mounted');
-
-  for (const [key, listener] of Object.entries(component.on || {}))
-    svelteComponent.$on(key, event => listener(event.detail));
 
   svelteComponent.$set(extractProps(component));
 };

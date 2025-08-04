@@ -8,6 +8,7 @@ test('render props', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit',
+      onsubmit: () => {},
     },
   });
   await expect(component).toContainText('Submit');
