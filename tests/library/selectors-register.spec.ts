@@ -76,15 +76,14 @@ it('should work when registered on global', async ({ browser, mode }) => {
 });
 
 it('should work with path', async ({ playwright, browser, asset }) => {
-  const page = await browser.newPage();
   await playwright.selectors.register('foo', { path: asset('sectionselectorengine.js') });
+  const page = await browser.newPage();
   await page.setContent('<section></section>');
   expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
   await page.close();
 });
 
 it('should work in main and isolated world', async ({ playwright, browser }) => {
-  const page = await browser.newPage();
   const createDummySelector = () => ({
     query(root, selector) {
       return window['__answer'];
@@ -95,6 +94,7 @@ it('should work in main and isolated world', async ({ playwright, browser }) => 
   });
   await playwright.selectors.register('main', createDummySelector);
   await playwright.selectors.register('isolated', createDummySelector, { contentScript: true });
+  const page = await browser.newPage();
   await page.setContent('<div><span><section></section></span></div>');
   await page.evaluate(() => window['__answer'] = document.querySelector('span'));
   // Works in main if asked.
@@ -151,7 +151,6 @@ it('should throw "already registered" error when registering', { annotation: { t
 });
 
 it('should not rely on engines working from the root', async ({ playwright, browser }) => {
-  const page = await browser.newPage();
   const createValueEngine = () => ({
     query(root, selector) {
       return root && root.value.includes(selector) ? root : undefined;
@@ -160,15 +159,14 @@ it('should not rely on engines working from the root', async ({ playwright, brow
       return root && root.value.includes(selector) ? [root] : [];
     },
   });
-
   await playwright.selectors.register('__value', createValueEngine);
+  const page = await browser.newPage();
   await page.setContent(`<input id=input1 value=value1><input id=input2 value=value2>`);
   expect(await page.$eval('input >> __value=value2', e => e.id)).toBe('input2');
   await page.close();
 });
 
 it('should throw a nice error if the selector returns a bad value', async ({ playwright, browser }) => {
-  const page = await browser.newPage();
   const createFakeEngine = () => ({
     query(root, selector) {
       return [document.body];
@@ -179,6 +177,7 @@ it('should throw a nice error if the selector returns a bad value', async ({ pla
   });
 
   await playwright.selectors.register('__fake', createFakeEngine);
+  const page = await browser.newPage();
   const error = await page.$('__fake=value2').catch(e => e);
   expect(error.message).toContain('Expected a Node but got [object Array]');
   await page.close();

@@ -71,7 +71,7 @@ declare global {
   interface Window {
     playwright?: any;
     inspect: (element: Element | undefined) => void;
-    __pw_resume: () => Promise<void>;
+    __pw_resume?: () => Promise<void>;
   }
 }
 
@@ -139,6 +139,6 @@ export class ConsoleAPI {
   }
 
   private _resume() {
-    this._injectedScript.window.__pw_resume().catch(() => {});
+    this._injectedScript.window.__pw_resume?.().catch(() => {});
   }
 }
