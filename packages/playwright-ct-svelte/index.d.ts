@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
+import type { ComponentProps, Component, SvelteComponent } from 'svelte';
 import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
-type ComponentSlot = string | string[];
+type ComponentSlot = Snippet | string;
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
 type ComponentEvents = Record<string, Function>;
 
-export interface MountOptions<HooksConfig, Component extends SvelteComponent> {
+// TODO: Remove after Svelte has removed S4 fallback TypeScript types for `*.svelte` files
+type InteropComponent = (new (...args: unknown[]) => SvelteComponent) | Component<any, any, any>;
+
+export interface MountOptions<HooksConfig, Component extends InteropComponent> {
   props?: ComponentProps<Component>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;
 }
 
-export interface MountResult<Component extends SvelteComponent> extends Locator {
+export interface MountResult<Component extends InteropComponent> extends Locator {
   unmount(): Promise<void>;
   update(options: {
     props?: Partial<ComponentProps<Component>>;
@@ -37,8 +40,8 @@ export interface MountResult<Component extends SvelteComponent> extends Locator 
 }
 
 export const test: TestType<{
-  mount<HooksConfig, Component extends SvelteComponent = SvelteComponent>(
-    component: new (...args: any[]) => Component,
+  mount<HooksConfig, Component extends InteropComponent = InteropComponent>(
+    component: Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
 }>;

@@ -27,7 +27,6 @@ export type MountOptions = {
 export type ObjectComponentOptions = {
   props?: Record<string, any>;
   slots?: Record<string, string | string[]>;
-  on?: Record<string, Function>;
 };
 
 export type ObjectComponent = ObjectComponentOptions & {
