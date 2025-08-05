@@ -27,10 +27,8 @@ import type { Progress } from '@protocol/progress';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher> implements channels.AndroidChannel {
   _type_Android = true;
-  _denyLaunch: boolean;
-  constructor(scope: RootDispatcher, android: Android, denyLaunch: boolean) {
+  constructor(scope: RootDispatcher, android: Android) {
     super(scope, android, 'Android', {});
-    this._denyLaunch = denyLaunch;
   }
 
   async devices(params: channels.AndroidDevicesParams, progress: Progress): Promise<channels.AndroidDevicesResult> {
@@ -161,8 +159,6 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams, progress: Progress): Promise<channels.AndroidDeviceLaunchBrowserResult> {
-    if (this.parentScope()._denyLaunch)
-      throw new Error(`Launching more browsers is not allowed.`);
     const context = await this._object.launchBrowser(progress, params.pkg, params);
     return { context: BrowserContextDispatcher.from(this, context) };
   }
@@ -172,8 +168,6 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams, progress: Progress): Promise<channels.AndroidDeviceConnectToWebViewResult> {
-    if (this.parentScope()._denyLaunch)
-      throw new Error(`Launching more browsers is not allowed.`);
     return { context: BrowserContextDispatcher.from(this, await this._object.connectToWebView(progress, params.socketName)) };
   }
 }
