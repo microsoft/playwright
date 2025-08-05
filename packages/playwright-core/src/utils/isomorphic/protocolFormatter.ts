@@ -31,10 +31,12 @@ export function formatProtocolParam(params: Record<string, string> | undefined, 
       return params[name];
     }
   }
-  if (name === 'timeNumber') {
+  if (name === 'time') {
     // eslint-disable-next-line no-restricted-globals
-    return new Date(params[name]).toString();
+    return params.timeNumber ?  new Date(params.timeNumber).toString() : deepParam(params, 'timeString');
   }
+  if (name === 'ticks')
+    return deepParam(params, 'ticksNumber') ?? deepParam(params, 'ticksString');
   return deepParam(params, name);
 }
 
