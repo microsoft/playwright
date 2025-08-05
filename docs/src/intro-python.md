@@ -102,7 +102,7 @@ pip install pytest-playwright playwright -U
 - Python 3.8 or higher.
 - Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
 - macOS 14 Ventura, or later.
-- Debian 12, Ubuntu 22.04, Ubuntu 24.04, on x86-64 and arm64 architecture.
+- Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04, on x86-64 and arm64 architecture.
 
 ## What's next
 
