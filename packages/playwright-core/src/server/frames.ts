@@ -1628,10 +1628,10 @@ export class Frame extends SdkObject {
     this._firedNetworkIdleSelf = false;
   }
 
-  async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
+  async extendInjectedScript(source: string, arg?: any) {
     const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
-    return injectedScriptHandle.evaluateHandle((injectedScript, { source, arg }) => {
+    await injectedScriptHandle.evaluate((injectedScript, { source, arg }) => {
       return injectedScript.extend(source, arg);
     }, { source, arg });
   }
