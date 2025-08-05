@@ -40,6 +40,10 @@ test.only('should run dev-server and use it for tests', async ({ writeFiles, run
   console.log('Starting dev server');
   const devServerProcess = await startCLICommand({}, 'dev-server');
   console.log('Dev server started');
+
+  await new Promise(resolve => setTimeout(resolve, 10000));
+  console.log(`Output: ${devServerProcess.output}`);
+
   await devServerProcess.waitForOutput('Dev Server listening on');
   console.log('Dev server is running');
 

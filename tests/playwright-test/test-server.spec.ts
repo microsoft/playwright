@@ -173,8 +173,9 @@ test.only('start dev server', async ({ startTestServer, writeFiles, runInlineTes
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });
   expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
-  console.log(await testServerConnection.startDevServer({}));
-  expect((await testServerConnection.startDevServer({})).status).toBe('passed');
+  const output = await testServerConnection.startDevServer({});
+  console.log(JSON.stringify(output));
+  expect(output).toBe('passed');
 
   const result = await runInlineTest({}, { workers: 1 });
   expect(result.exitCode).toBe(0);
