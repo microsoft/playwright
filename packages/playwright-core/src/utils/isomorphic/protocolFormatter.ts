@@ -30,11 +30,12 @@ export function formatProtocolParam(params: Record<string, string> | undefined, 
           return params[name];
         return urlObject.pathname + urlObject.search;
       } catch (error) {
-        return params[name];
+        if (params[name] !== undefined)
+          return params[name];
       }
     }
-    if (name === 'timeNumber') {
-    // eslint-disable-next-line no-restricted-globals
+    if (name === 'timeNumber' && params[name] !== undefined) {
+      // eslint-disable-next-line no-restricted-globals
       return new Date(params[name]).toString();
     }
 
