@@ -33,7 +33,7 @@ const reporters = () => {
 };
 export default defineConfig({
   timeout: 30000,
-  forbidOnly: false,
+  forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
   projects: [
