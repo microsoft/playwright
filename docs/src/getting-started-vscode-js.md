@@ -12,7 +12,7 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 Get started by installing Playwright and generating a test to see it in action. Alternatively you can also get started and run your tests using the [CLI](./intro.md).
 
 <LiteYouTube
-    id="Xz6lhEzgI5I"
+    id="WvsLGZnHmzw"
     title="Getting Started with Playwright in VS Code"
 />
 
