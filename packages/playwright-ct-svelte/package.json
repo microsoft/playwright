@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.55.0-next",
-    "@sveltejs/vite-plugin-svelte": "^6.0.0"
+    "@sveltejs/vite-plugin-svelte": "6.0.0"
   },
   "devDependencies": {
     "svelte": "^5.37.3"
