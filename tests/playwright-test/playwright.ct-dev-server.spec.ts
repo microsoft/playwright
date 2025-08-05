@@ -44,7 +44,7 @@ test.only('should run dev-server and use it for tests', async ({ writeFiles, run
   console.log('Dev server is running');
 
   const result = await runInlineTest({}, { workers: 1 });
-  console.log('Test run completed');
+  console.log('Test run completed2');
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Dev Server is already running at');
