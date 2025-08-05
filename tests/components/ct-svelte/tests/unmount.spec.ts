@@ -14,7 +14,7 @@ test('unmount', async ({ page, mount }) => {
   await expect(page.locator('#root')).not.toContainText('Submit');
 });
 
-test('unmount a multi root component', async ({ mount, page }) => {
+test('unmount a multi root component', async ({ page, mount }) => {
   const component = await mount(MultiRoot);
   await expect(page.locator('#root')).toContainText('root 1');
   await expect(page.locator('#root')).toContainText('root 2');
