@@ -3183,7 +3183,7 @@ page.get_by_role("button", name="Start here").click()
 
 ```python async
 # Setup the handler.
-def handler():
+async def handler():
   await page.get_by_role("button", name="No thanks").click()
 await page.add_locator_handler(page.get_by_text("Sign up to the newsletter"), handler)
 
@@ -3240,7 +3240,7 @@ page.get_by_role("button", name="Start here").click()
 
 ```python async
 # Setup the handler.
-def handler():
+async def handler():
   await page.get_by_role("button", name="Remind me later").click()
 await page.add_locator_handler(page.get_by_text("Confirm your security details"), handler)
 
@@ -3297,7 +3297,7 @@ page.get_by_role("button", name="Start here").click()
 
 ```python async
 # Setup the handler.
-def handler():
+async def handler():
   await page.evaluate("window.removeObstructionsForTestIfNeeded()")
 await page.add_locator_handler(page.locator("body"), handler, no_wait_after=True)
 
@@ -3338,7 +3338,7 @@ page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
 ```
 
 ```python async
-def handler(locator):
+async def handler(locator):
   await locator.click()
 await page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
 ```

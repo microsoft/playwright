@@ -35,6 +35,11 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
+    # See https://github.com/microsoft/playwright/issues/36923
+    - name: Pin NPM (if Node.js 24)
+      if: ${{ inputs.node-version == '24' }}
+      run: npm i -g npm@10.4
+      shell: bash
     - uses: ./.github/actions/enable-microphone-access
     - run: |
         echo "::group::npm ci"

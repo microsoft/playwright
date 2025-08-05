@@ -33,6 +33,7 @@ export type HostPlatform = 'win64' |
                            'ubuntu24.04-x64' | 'ubuntu24.04-arm64' |
                            'debian11-x64' | 'debian11-arm64' |
                            'debian12-x64' | 'debian12-arm64' |
+                           'debian13-x64' | 'debian13-arm64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
@@ -103,10 +104,12 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       if (distroInfo?.version === '12')
         return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+      if (distroInfo?.version === '13')
+        return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       // use most recent supported release for 'debian testing' and 'unstable'.
       // they never include a numeric version entry in /etc/os-release.
       if (distroInfo?.version === '')
-        return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+        return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
     return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
