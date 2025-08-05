@@ -264,17 +264,21 @@ export abstract class BrowserType extends SdkObject {
       close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_PLAYWRIGHT_TIMEOUT),
       kill
     };
-    progress.cleanupWhenAborted(() => closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT));
-    const { wsEndpoint } = await progress.race([
-      this.waitForReadyState(options, browserLogsCollector),
-      exitPromise.then(() => ({ wsEndpoint: undefined })),
-    ]);
-    if (options.cdpPort !== undefined || !this.supportsPipeTransport())
-      transport = await WebSocketTransport.connect(progress, wsEndpoint!);
-    else
-      transport = new PipeTransport(processLifecycleHooks.writePipe(launchedProcess), processLifecycleHooks.readPipe(launchedProcess));
-    progress.cleanupWhenAborted(() => transport.close());
-    return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
+    try {
+      const { wsEndpoint } = await progress.race([
+        this.waitForReadyState(options, browserLogsCollector),
+        exitPromise.then(() => ({ wsEndpoint: undefined })),
+      ]);
+      if (options.cdpPort !== undefined || !this.supportsPipeTransport())
+        transport = await WebSocketTransport.connect(progress, wsEndpoint!);
+      else
+        transport = new PipeTransport(processLifecycleHooks.writePipe(launchedProcess), processLifecycleHooks.readPipe(launchedProcess));
+      return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
+    } catch (error) {
+      transport?.close();
+      await closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {});
+      throw error;
+    }
   }
 
   async _createArtifactDirs(options: types.LaunchOptions): Promise<void> {
