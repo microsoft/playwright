@@ -23,7 +23,7 @@ export function debugMode() {
     return 'console';
   if (_debugMode === '0' || _debugMode === 'false')
     return '';
-  return _debugMode ? 'inspector' : '';
+  return _debugMode ? 'inspector' : 'console';
 }
 
 const _isUnderTest = getAsBooleanFromENV('PWTEST_UNDER_TEST');

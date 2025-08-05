@@ -896,7 +896,7 @@ test('page.pause() should disable test timeout', async ({ runInlineTest }) => {
   expect(result.output).toContain('success!');
 });
 
-test('PWDEBUG=console should expose window.playwright', async ({ runInlineTest }) => {
+test('window.playwright should be exposed by default', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36772' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -907,7 +907,37 @@ test('PWDEBUG=console should expose window.playwright', async ({ runInlineTest }
         expect(bodyTag).toBe('BODY');
       });
     `,
+  }, {}, {});
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('window.playwright should not override existing property', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36772' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        await page.setContent('<script>window.playwright = "foo"</script>');
+        expect(await page.evaluate(() => window.playwright)).toBe('foo');
+      });
+    `,
   }, {}, { PWDEBUG: 'console' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('PWDEBUG=0 should opt-out from exposing window.playwright', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36772' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        await page.setContent('<body></body>');
+        expect(await page.evaluate(() => window.playwright)).toBeUndefined();
+      });
+    `,
+  }, {}, { PWDEBUG: '0' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });

@@ -139,7 +139,7 @@ export abstract class BrowserContext extends SdkObject {
         RecorderApp.showInspectorNoReply(this);
     });
 
-    if (debugMode() === 'console') {
+    if (debugMode() !== '') {
       await this.extendInjectedScript(`
         function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
         module.exports = { default: () => installConsoleApi };
