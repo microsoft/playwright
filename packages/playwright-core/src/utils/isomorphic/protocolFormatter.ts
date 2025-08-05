@@ -35,7 +35,7 @@ export function formatProtocolParam(params: Record<string, string> | undefined, 
     }
     if (name === 'timeNumber') {
     // eslint-disable-next-line no-restricted-globals
-      return new Date(params.timeNumber).toString();
+      return new Date(params[name]).toString();
     }
 
     const value = deepParam(params, name);
