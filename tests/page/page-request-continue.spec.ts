@@ -902,29 +902,33 @@ it('should not forward Host header on cross-origin redirect', {
     description: 'https://github.com/microsoft/playwright/issues/36719'
   }
 }, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/36719');
-
   const redirectTargetPath = '/final';
   const redirectSourcePath = '/redirect';
 
-  let receivedHostHeader: string | undefined;
+  let redirectedHost: string | undefined;
   server.setRoute(redirectTargetPath, (req, res) => {
-    receivedHostHeader = req.headers['host'];
+    redirectedHost = req.headers['host'];
     res.end('OK');
   });
 
+  let firstHost: string | undefined;
   server.setRoute(redirectSourcePath, (req, res) => {
+    firstHost = req.headers['host'];
     res.writeHead(302, { location: `${server.CROSS_PROCESS_PREFIX}${redirectTargetPath}` });
     res.end();
   });
 
   await page.route('**/*', async route => {
     const headers = route.request().headers();
-    expect(headers).not.toHaveProperty('host');
+    if (browserName === 'firefox')
+      expect(headers).toHaveProperty('host');
+    else
+      expect(headers).not.toHaveProperty('host');
     await route.continue({ headers });
   });
 
   const response = await page.goto(server.PREFIX + redirectSourcePath);
   expect(response.status()).toBe(200);
-  expect(receivedHostHeader).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
+  expect(firstHost).toBe(new URL(server.PREFIX).host);
+  expect(redirectedHost).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
 });
