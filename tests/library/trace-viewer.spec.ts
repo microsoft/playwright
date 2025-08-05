@@ -110,12 +110,14 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
 });
 
 test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36483' });
+
   const traceViewer = await test.step('create trace with groups', async () => {
     await page.context().tracing.group('ignored group');
     return await runAndTrace(async () => {
       await context.tracing.group('outer group');
       await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
-      await context.tracing.group('inner group 1', { location: { file: __filename, line: 17, column: 1 } });
+      await context.tracing.group('inner group 1 {{ eager_beaver }}', { location: { file: __filename, line: 17, column: 1 } });
       await page.locator('body').click();
       await context.tracing.groupEnd();
       await context.tracing.group('inner group 2');
@@ -128,7 +130,7 @@ test('should show tracing.group in the action list with location', async ({ runA
   await expect(traceViewer.actionTitles).toHaveText([
     /outer group/,
     /Navigate/,
-    /inner group 1/,
+    /inner group 1 {{ eager_beaver }}/,
     /inner group 2/,
     /toBeVisible/,
   ]);
@@ -138,7 +140,7 @@ test('should show tracing.group in the action list with location', async ({ runA
   await expect(traceViewer.actionTitles).toHaveText([
     /outer group/,
     /Navigate/,
-    /inner group 1/,
+    /inner group 1 {{ eager_beaver }}/,
     /Click.*locator/,
     /inner group 2/,
   ]);
