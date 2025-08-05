@@ -16,9 +16,9 @@
 
 import { methodMetainfo } from './protocolMetainfo';
 
-export function formatProtocolParam(params: Record<string, string> | undefined, name: string): string {
+export function formatProtocolParam(params: Record<string, string> | undefined, name: string): string | undefined {
   if (!params)
-    return '';
+    return undefined;
   if (name === 'url') {
     try {
       const urlObject = new URL(params[name]);
@@ -38,22 +38,22 @@ export function formatProtocolParam(params: Record<string, string> | undefined, 
   return deepParam(params, name);
 }
 
-function deepParam(params: Record<string, any>, name: string): string {
+function deepParam(params: Record<string, any>, name: string): string | undefined {
   const tokens = name.split('.');
   let current = params;
   for (const token of tokens) {
     if (typeof current !== 'object' || current === null)
-      return '';
+      return undefined;
     current = current[token];
   }
   if (current === undefined)
-    return '';
+    return undefined;
   return String(current);
 }
 
 export function renderTitleForCall(metadata: { title?: string, type: string, method: string, params: Record<string, string> | undefined }) {
   const titleFormat = metadata.title ?? methodMetainfo.get(metadata.type + '.' + metadata.method)?.title ?? metadata.method;
-  return titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => {
-    return formatProtocolParam(metadata.params, p1);
+  return titleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
+    return formatProtocolParam(metadata.params, p1) ?? fullMatch;
   });
 }
