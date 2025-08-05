@@ -167,15 +167,13 @@ export function renderTitleForCall(action: ActionTraceEvent): { elements: React.
     if (param === undefined) {
       elements.push(fullMatch);
       title.push(fullMatch);
-      currentIndex = match.index + fullMatch.length;
-      continue;
-    }
-
-    if (match.index === 0)
+    } else if (match.index === 0) {
       elements.push(param);
-    else
+      title.push(param);
+    } else {
       elements.push(<span className='action-title-param'>{param}</span>);
-    title.push(param);
+      title.push(param);
+    }
     currentIndex = match.index + fullMatch.length;
   }
 

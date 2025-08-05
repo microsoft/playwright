@@ -16,28 +16,32 @@
 
 import { methodMetainfo } from './protocolMetainfo';
 
-export function formatProtocolParam(params: Record<string, string> | undefined, name: string): string | undefined {
+export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
   if (!params)
     return undefined;
-  if (name === 'url') {
-    try {
-      const urlObject = new URL(params[name]);
-      if (urlObject.protocol === 'data:')
-        return urlObject.protocol;
-      if (urlObject.protocol === 'about:')
+
+  for (const name of alternatives.split('|')) {
+    if (name === 'url') {
+      try {
+        const urlObject = new URL(params[name]);
+        if (urlObject.protocol === 'data:')
+          return urlObject.protocol;
+        if (urlObject.protocol === 'about:')
+          return params[name];
+        return urlObject.pathname + urlObject.search;
+      } catch (error) {
         return params[name];
-      return urlObject.pathname + urlObject.search;
-    } catch (error) {
-      return params[name];
+      }
     }
-  }
-  if (name === 'time') {
+    if (name === 'timeNumber') {
     // eslint-disable-next-line no-restricted-globals
-    return params.timeNumber ?  new Date(params.timeNumber).toString() : deepParam(params, 'timeString');
+      return new Date(params.timeNumber).toString();
+    }
+
+    const value = deepParam(params, name);
+    if (value !== undefined)
+      return value;
   }
-  if (name === 'ticks')
-    return deepParam(params, 'ticksNumber') ?? deepParam(params, 'ticksString');
-  return deepParam(params, name);
 }
 
 function deepParam(params: Record<string, any>, name: string): string | undefined {
