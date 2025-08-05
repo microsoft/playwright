@@ -235,7 +235,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
-    if (debugMode())
+    if (debugMode() === 'inspector')
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
