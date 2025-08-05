@@ -168,6 +168,8 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /Wait for timeout/,
     /Navigate to "\/frames\/frame.html"/,
     /Set viewport size/,
+    /Hover/,
+    /Close page/,
   ]);
 });
 
@@ -1597,7 +1599,8 @@ test('should not leak recorders', {
     return frame;
   };
 
-  await expect(traceViewer.snapshotContainer.contentFrame().locator('body')).toContainText(`Hi, I'm frame`);
+  const frame0 = await traceViewer.snapshotFrame('Set viewport');
+  await expect(frame0.locator('body')).toContainText(`Hi, I'm frame`);
 
   const frame1 = await forceRecorder('Navigate');
   await expect(frame1.locator('body')).toContainText('Hello world');
@@ -1845,6 +1848,8 @@ test('should render blob trace received from message', async ({ showTraceViewer 
     /Wait for timeout/,
     /Navigate to "\/frames\/frame.html"/,
     /Set viewport size/,
+    /Hover/,
+    /Close page/,
   ]);
 });
 

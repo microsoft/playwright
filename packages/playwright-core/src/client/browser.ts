@@ -60,20 +60,18 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _newContextForReuse(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    return await this._wrapApiCall(() => this._innerNewContext(options, true), { internal: true });
+    return await this._innerNewContext(options, true);
   }
 
   async _disconnectFromReusedContext(reason: string) {
-    return await this._wrapApiCall(async () => {
-      const context = [...this._contexts].find(context => context._forReuse);
-      if (!context)
-        return;
-      await this._instrumentation.runBeforeCloseBrowserContext(context);
-      for (const page of context.pages())
-        page._onClose();
-      context._onClose();
-      await this._channel.disconnectFromReusedContext({ reason });
-    }, { internal: true });
+    const context = [...this._contexts].find(context => context._forReuse);
+    if (!context)
+      return;
+    await this._instrumentation.runBeforeCloseBrowserContext(context);
+    for (const page of context.pages())
+      page._onClose();
+    context._onClose();
+    await this._channel.disconnectFromReusedContext({ reason });
   }
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {

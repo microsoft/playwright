@@ -153,6 +153,7 @@ test.step |  inner step 2.2 @ a.test.ts:10
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -217,6 +218,7 @@ test.step |my step @ a.test.ts:4
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 hook      |Worker Cleanup
 fixture   |  browser
           |Test timeout of 2000ms exceeded.
@@ -566,6 +568,7 @@ hook      |  afterEach hook @ a.test.ts:15
 test.step |    in afterEach @ a.test.ts:16
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 hook      |  afterAll hook @ a.test.ts:7
 test.step |    in afterAll @ a.test.ts:8
 `);
@@ -893,6 +896,7 @@ expect    |Checking color @ a.test.ts:6
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -989,6 +993,7 @@ expect    |    toBe @ a.test.ts:9
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1041,6 +1046,7 @@ expect    |  toHaveLength @ a.test.ts:6
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1093,6 +1099,7 @@ expect    |  toBe @ a.test.ts:6
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1142,6 +1149,7 @@ expect    |not toHaveTitle @ a.test.ts:11
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1230,6 +1238,7 @@ hook      |After Hooks
 fixture   |  request
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1265,6 +1274,7 @@ pw:api    |↪ error: TimeoutError: page.click: Timeout 1ms exceeded.
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 hook      |Worker Cleanup
 fixture   |  browser
           |TimeoutError: page.click: Timeout 1ms exceeded.
@@ -1301,6 +1311,7 @@ pw:api    |Evaluate locator('button') @ a.test.ts:6
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1390,6 +1401,7 @@ pw:api    |        Set content @ a.test.ts:8
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1444,6 +1456,7 @@ expect    |toBe @ a.test.ts:18
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1480,6 +1493,7 @@ pw:api    |Navigate to "/empty.html" @ a.test.ts:10
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1524,6 +1538,7 @@ expect    |  toBe @ a.test.ts:8
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
 
@@ -1749,5 +1764,6 @@ pw:api    |Set content @ a.test.ts:19
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
+pw:api    |    Close context
 `);
 });
