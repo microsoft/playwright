@@ -167,12 +167,13 @@ test('stdio interception', async ({ startTestServer, writeFiles }) => {
   ]));
 });
 
-test('start dev server', async ({ startTestServer, writeFiles, runInlineTest }) => {
+test.only('start dev server', async ({ startTestServer, writeFiles, runInlineTest }) => {
   await writeFiles(ctFiles);
 
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });
   expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
+  console.log(await testServerConnection.startDevServer({}));
   expect((await testServerConnection.startDevServer({})).status).toBe('passed');
 
   const result = await runInlineTest({}, { workers: 1 });

@@ -18,7 +18,7 @@ import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures
 
 test.describe.configure({ mode: 'parallel' });
 
-test('should run dev-server and use it for tests', async ({ writeFiles, runInlineTest, startCLICommand }) => {
+test.only('should run dev-server and use it for tests', async ({ writeFiles, runInlineTest, startCLICommand }) => {
   await writeFiles({
     'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
@@ -37,13 +37,18 @@ test('should run dev-server and use it for tests', async ({ writeFiles, runInlin
     `,
   });
 
+  console.log('Starting dev server');
   const devServerProcess = await startCLICommand({}, 'dev-server');
+  console.log('Dev server started');
   await devServerProcess.waitForOutput('Dev Server listening on');
+  console.log('Dev server is running');
 
   const result = await runInlineTest({}, { workers: 1 });
+  console.log('Test run completed');
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Dev Server is already running at');
 
   await devServerProcess.kill();
+  console.log('Dev server process killed');
 });
