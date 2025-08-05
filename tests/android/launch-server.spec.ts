@@ -153,3 +153,15 @@ test('android.launchServer should terminate WS connection when device gets disco
     await new Promise(f => forwardingServer.close(f));
   }
 });
+
+test('android.launchServer should be able to launch browser', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36911' } }, async ({ playwright }) => {
+  const browserServer = await playwright._android.launchServer();
+  const device = await playwright._android.connect(browserServer.wsEndpoint());
+  const context = await device.launchBrowser();
+  const [page] = context.pages();
+  await page.goto('data:text/html,<title>Hello world!</title>');
+  expect(await page.title()).toBe('Hello world!');
+  await context.close();
+  await device.close();
+  await browserServer.close();
+});
