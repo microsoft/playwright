@@ -268,6 +268,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
     `end [expect] toHaveScreenshot(foo.png)`,
     `end [expect] toHaveScreenshot(is-a-test-1.png)`,
     `end [fixture] page`,
+    `end [pw:api] Close context`,
     `end [fixture] context`,
     `end [hook] After Hooks`,
   ]);

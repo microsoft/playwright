@@ -102,6 +102,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
     '  Fixture "request"',
   ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
@@ -126,6 +127,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
     '  Fixture "request"',
     'Worker Cleanup',
     '  Fixture "browser"',
@@ -325,6 +327,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
     '  afterAll hook',
     '    Fixture "request"',
     '      Create request context',
@@ -615,6 +618,7 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
   ]);
 });
 
@@ -648,6 +652,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -776,6 +781,7 @@ test('should use custom expect message in trace', async ({ runInlineTest }, test
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
   ]);
 });
 
@@ -959,6 +965,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
     '      Set content',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
     '  afterAll hook',
     '    Fixture "barPage"',
     '      Expect "barPage setup"',
@@ -1018,6 +1025,7 @@ test('should not produce an action entry for calling a binding', async ({ runInl
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
   ]);
 });
 
@@ -1248,6 +1256,7 @@ test('should not nest top level expect into unfinished api calls ', {
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
+    '    Close context',
   ]);
 });
 

@@ -105,7 +105,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {
-    await run(_contextFactory);
+    await run(async options => {
+      const { context } = await _contextFactory(options);
+      return context;
+    });
   },
 
   createUserDataDir: async ({ mode }, run) => {
