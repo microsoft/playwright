@@ -16,7 +16,6 @@
 
 import { asLocator } from '../utils';
 import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
-import { progress } from '../utilsBundle';
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
