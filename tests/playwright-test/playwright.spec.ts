@@ -941,3 +941,26 @@ test('PWDEBUG=0 should opt-out from exposing window.playwright', { annotation: {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('init script should not observe playwright internals', async ({ server, runInlineTest }) => {
+  test.skip(!!process.env.PW_CLOCK, 'clock installs globalThis.__pwClock');
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        await page.addInitScript(() => {
+          window['check'] = () => {
+            const keys = Reflect.ownKeys(globalThis).map(k => k.toString());
+            return keys.find(name => name.includes('playwright') || name.includes('_pw')) || 'none';
+          };
+          window['found'] = window['check']();
+        });
+        await page.goto("${server.EMPTY_PAGE}");
+        expect(await page.evaluate(() => window['found'])).toBe('none');
+        expect(await page.evaluate(() => window['check']())).toBe('none');
+      });
+    `,
+  }, {}, { PWDEBUG: '0' });
+  expect(result.exitCode).toBe(0);
+});
