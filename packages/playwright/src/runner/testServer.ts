@@ -331,14 +331,17 @@ export class TestServerDispatcher implements TestServerInterface {
     if (!config)
       return { status: 'failed' };
 
-    const testIdSet = params.testIds ? new Set<string>(params.testIds) : null;
     config.cliListOnly = false;
     config.cliPassWithNoTests = true;
     config.cliArgs = params.locations || [];
     config.cliGrep = params.grep;
     config.cliGrepInvert = params.grepInvert;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
-    config.testIdMatcher = testIdSet ? id => testIdSet.has(id) : undefined;
+    config.preOnlyTestFilters = [];
+    if (params.testIds) {
+      const testIdSet = new Set<string>(params.testIds);
+      config.preOnlyTestFilters.push(test => testIdSet.has(test.id));
+    }
 
     const configReporters = await createReporters(config, 'test', true);
     const reporter = new InternalReporter([...configReporters, wireReporter]);

@@ -82,6 +82,7 @@ npx playwright test --ui
 | `-c <file>` or `--config <file>` | Configuration file, or a test directory with optional "playwright.config.&#123;m,c&#125;?&#123;js,ts&#125;". Defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
 | `--debug` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. |
 | `--fail-on-flaky-tests` | Fail if any test is flagged as flaky (default: false). |
+| `--filter` | Path to a [test filter file](#test-filter-file). |
 | `--forbid-only` | Fail if `test.only` is called (default: false). Useful on CI. |
 | `--fully-parallel` | Run all tests in parallel (default: false). |
 | `--global-timeout <timeout>` | Maximum time this test suite can run in milliseconds (default: unlimited). |
@@ -112,6 +113,19 @@ npx playwright test --ui
 | `-u` or `--update-snapshots [mode]` | Update snapshots with actual results. Possible values are "all", "changed", "missing", and "none". Running tests without the flag defaults to "missing"; running tests with the flag but without a value defaults to "changed". |
 | `--update-source-method [mode]` | Update snapshots with actual results. Possible values are "patch" (default), "3way" and "overwrite". "Patch" creates a unified diff file that can be used to update the source code later. "3way" generates merge conflict markers in source code. "Overwrite" overwrites the source code with the new snapshot values.|
 | `-x` | Stop after the first failure. |
+
+#### Test filter file
+
+Option `--filter` allows to specify a json file to filter tests. It must contain an array property `titlePath`. For each test that should be run, `titlePath` contains a project name, relative path to the test file, all suite titles and the test title, similar to [`method: TestCase.titlePath`].
+
+```json title="filter.json"
+{
+  "titlePath": [
+    ["chromium", "path/to/example.spec.ts", "describe title", "test title"],
+    ["firefox", "path/to/another.spec.ts", "top-level test title"]
+  ]
+}
+```
 
 ### Show Report
 

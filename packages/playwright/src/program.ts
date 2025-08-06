@@ -176,6 +176,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliLastFailed = !!opts.lastFailed;
+  config.cliFilterFile = opts.filter ? path.resolve(process.cwd(), opts.filter) : undefined;
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   filterProjects(config.projects, config.cliProjectFilter);
@@ -380,6 +381,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
   ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
+  ['--filter <file>', { description: `Path to a test filter file. See documentation for details.` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],
   ['--global-timeout <timeout>', { description: `Maximum time this test suite can run in milliseconds (default: unlimited)` }],
