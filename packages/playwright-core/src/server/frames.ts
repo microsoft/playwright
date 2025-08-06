@@ -1632,7 +1632,7 @@ export class Frame extends SdkObject {
     const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
     await injectedScriptHandle.evaluate((injectedScript, { source, arg }) => {
-      return injectedScript.extend(source, arg);
+      injectedScript.extend(source, arg);
     }, { source, arg });
   }
 
