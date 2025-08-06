@@ -1449,20 +1449,20 @@ fixture   |  context
 
 test('reading network request / response should not be listed as step', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' }
-}, async ({ runInlineTest, server }) => {
+}, async ({ runInlineTest, server, page }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('waitForResponse step nesting', async ({ page }) => {
-        page.on('request', async request => {
-          await request.allHeaders();
-        });
-        page.on('response', async response => {
-          await response.text();
-        });
-        await page.goto('${server.EMPTY_PAGE}');
+        const [request, response] = await Promise.all([
+          page.waitForRequest('${server.EMPTY_PAGE}'),
+          page.waitForResponse('${server.EMPTY_PAGE}'),
+          page.goto('${server.EMPTY_PAGE}'),
+        ]);
+        await request.allHeaders();
+        await response.text();
       });
       `
   }, { reporter: '', workers: 1, timeout: 3000 });
@@ -1476,7 +1476,9 @@ fixture   |  context
 pw:api    |    Create context
 fixture   |  page
 pw:api    |    Create page
-pw:api    |Navigate to "/empty.html" @ a.test.ts:10
+pw:api    |Wait for event "request" @ a.test.ts:5
+pw:api    |Wait for event "response" @ a.test.ts:6
+pw:api    |Navigate to "/empty.html" @ a.test.ts:7
 hook      |After Hooks
 fixture   |  page
 fixture   |  context
