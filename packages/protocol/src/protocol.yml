@@ -1425,19 +1425,19 @@ BrowserContext:
         enabled: boolean
 
     clockFastForward:
-      title: Fast forward clock "{ticksNumber}{ticksString}"
+      title: Fast forward clock "{ticksNumber|ticksString}"
       parameters:
         ticksNumber: float?
         ticksString: string?
 
     clockInstall:
-      title: Install clock "{timeNumber}{timeString}"
+      title: Install clock "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
 
     clockPauseAt:
-      title: Pause clock "{timeNumber}{timeString}"
+      title: Pause clock "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
@@ -1446,19 +1446,19 @@ BrowserContext:
       title: Resume clock
 
     clockRunFor:
-      title: Run clock "{ticksNumber}{ticksString}"
+      title: Run clock "{ticksNumber|ticksString}"
       parameters:
         ticksNumber: float?
         ticksString: string?
 
     clockSetFixedTime:
-      title: Set fixed time "{timeNumber}{timeString}"
+      title: Set fixed time "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
 
     clockSetSystemTime:
-      title: Set system time "{timeNumber}{timeString}"
+      title: Set system time "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
