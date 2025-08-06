@@ -16,6 +16,7 @@
 
 import { asLocator } from '../utils';
 import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
+import { progress } from '../utilsBundle';
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
@@ -75,11 +76,12 @@ export class FrameSelectors {
     }, { info: resolved.info, scope: resolved.scope });
   }
 
-  async queryCount(selector: string): Promise<number> {
+  async queryCount(selector: string, options: any): Promise<number> {
     const resolved = await this.resolveInjectedForSelector(selector);
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)
       throw new Error(`Failed to find frame for selector "${selector}"`);
+    await options.__testHookAfterStable?.();
     return await resolved.injected.evaluate((injected, { info }) => {
       return injected.querySelectorAll(info.parsed, document).length;
     }, { info: resolved.info });
