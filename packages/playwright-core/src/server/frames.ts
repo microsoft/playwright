@@ -844,7 +844,9 @@ export class Frame extends SdkObject {
   async queryCount(selector: string, options: any): Promise<number> {
     try {
       return await this.selectors.queryCount(selector, options);
-    } catch {
+    } catch (e) {
+      if (this.isNonRetriableError(e))
+        throw e;
       return 0;
     }
   }

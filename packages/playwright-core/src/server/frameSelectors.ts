@@ -80,7 +80,7 @@ export class FrameSelectors {
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)
       throw new Error(`Failed to find frame for selector "${selector}"`);
-    await options.__testHookAfterStable?.();
+    await options.__testHookBeforeQuery?.();
     return await resolved.injected.evaluate((injected, { info }) => {
       return injected.querySelectorAll(info.parsed, document).length;
     }, { info: resolved.info });

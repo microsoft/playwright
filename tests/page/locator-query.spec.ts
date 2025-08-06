@@ -275,13 +275,7 @@ it('alias methods coverage', async ({ page }) => {
 
 it('count() should not throw during navigation', async ({ page }) => {
   await page.setContent(`<div>A</div>`);
-  let triggered = false;
-  const __testHookAfterStable = () => {
-    if (triggered)
-      return;
-    triggered = true;
-    return page.goto('data:text/html,<div>A</div><div>B</div>');
-  };
+  const __testHookBeforeQuery = () => page.goto('data:text/html,<div>A</div><div>B</div>');
   // @ts-expect-error
-  expect(await page.locator('div').count({ __testHookAfterStable })).toBe(0);
+  expect(await page.locator('div').count({ __testHookBeforeQuery })).toBe(0);
 });

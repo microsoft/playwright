@@ -651,7 +651,7 @@ it('should not oom in locator parser', async ({ page }) => {
       .contentFrame().locator('text=L26').or(l('text=L27'))).or(l('#f0')
       .contentFrame().locator('#f0_mid_0')
       .contentFrame().locator('text=L28').or(l('text=L29')))));
-  const error = await locator.isHidden().catch(e => e);
+  const error = await locator.count().catch(e => e);
   expect(error.message).toContain('Frame locators are not allowed inside composite locators');
 });
 
