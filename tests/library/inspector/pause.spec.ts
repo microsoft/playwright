@@ -87,11 +87,7 @@ it.describe('pause', () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
     })();
-    await Promise.all([
-      page.waitForFunction(() => (window as any).playwright && (window as any).playwright.resume).then(() => {
-        return page.evaluate('window.playwright.resume()');
-      })
-    ]);
+    await page.waitForFunction(() => (window as any).playwright?.resume() !== false);
     await scriptPromise;
   });
 

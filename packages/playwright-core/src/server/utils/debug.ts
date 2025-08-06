@@ -19,11 +19,12 @@ import { getFromENV, getAsBooleanFromENV } from './env';
 const _debugMode = getFromENV('PWDEBUG') || '';
 
 export function debugMode() {
-  if (_debugMode === 'console')
+  const debugMode = (globalThis as any).__testHookDebugMode ?? _debugMode;
+  if (debugMode === 'console')
     return 'console';
-  if (_debugMode === '0' || _debugMode === 'false')
+  if (debugMode === '0' || debugMode === 'false')
     return '';
-  return _debugMode ? 'inspector' : 'console';
+  return debugMode ? 'inspector' : 'console';
 }
 
 const _isUnderTest = getAsBooleanFromENV('PWTEST_UNDER_TEST');

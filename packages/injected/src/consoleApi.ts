@@ -139,6 +139,8 @@ export class ConsoleAPI {
   }
 
   private _resume() {
-    this._injectedScript.window.__pw_resume?.().catch(() => {});
+    if (!this._injectedScript.window.__pw_resume)
+      return false;
+    this._injectedScript.window.__pw_resume().catch(() => {});
   }
 }
