@@ -1769,3 +1769,59 @@ fixture   |  context
 pw:api    |    Close context
 `);
 });
+
+test('should box fixtures with everything inside them', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.test.ts': `
+      import { test as baseTest, expect, type Page } from '@playwright/test';
+
+      const test = baseTest.extend<{ foo: number, bar: number }>({
+        foo: [async ({ page }, use) => {
+          await page.setContent('<div>here we go</div>');
+          await test.step('inner step', async () => {
+            await page.goto('data:text/html,<div>here we go</div>');
+          });
+          await use(1);
+        }, { box: true }],
+        bar: [async ({ page }, use) => {
+          await page.setContent('<div>here we go</div>');
+          await test.step('inner step', async () => {
+            await page.goto('data:text/html,<div>here we go</div>');
+          });
+          await use(2);
+        }, { box: false }],
+      });
+
+      test('test', async ({ foo, bar, page }) => {
+        await expect(page.locator('body')).toBeVisible();
+        expect(foo).toBe(1);
+        expect(bar).toBe(2);
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  browser
+pw:api    |    Launch browser
+fixture   |  context
+pw:api    |    Create context
+fixture   |  page
+pw:api    |    Create page
+fixture   |  bar @ a.test.ts:4
+pw:api    |    Set content @ a.test.ts:13
+test.step |    inner step @ a.test.ts:14
+pw:api    |      Navigate to "data:" @ a.test.ts:15
+expect    |toBeVisible @ a.test.ts:22
+expect    |toBe @ a.test.ts:23
+expect    |toBe @ a.test.ts:24
+hook      |After Hooks
+fixture   |  bar @ a.test.ts:4
+fixture   |  page
+fixture   |  context
+pw:api    |    Close context
+`);
+});
