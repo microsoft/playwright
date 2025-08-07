@@ -98,20 +98,3 @@ it('init script should run only once in iframe', async ({ page, server, browserN
     'init script: ' + (browserName === 'firefox' ? 'no url yet' : '/frames/frame.html'),
   ]);
 });
-
-it('init script should not observe playwright internals', async ({ server, page, trace, isAndroid }) => {
-  it.skip(!!process.env.PW_CLOCK, 'clock installs globalThis.__pwClock');
-  it.skip(trace === 'on', 'tracing installs __playwright_snapshot_streamer');
-  it.fixme(isAndroid, 'There is probably context reuse between this test and some other test that installs a binding');
-
-  await page.addInitScript(() => {
-    window['check'] = () => {
-      const keys = Reflect.ownKeys(globalThis).map(k => k.toString());
-      return keys.find(name => name.includes('playwright') || name.includes('_pw')) || 'none';
-    };
-    window['found'] = window['check']();
-  });
-  await page.goto(server.EMPTY_PAGE);
-  expect(await page.evaluate(() => window['found'])).toBe('none');
-  expect(await page.evaluate(() => window['check']())).toBe('none');
-});

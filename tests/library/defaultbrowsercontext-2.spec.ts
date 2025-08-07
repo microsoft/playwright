@@ -209,8 +209,6 @@ it('coverage should work', async ({ server, launchPersistent, browserName }) => 
 });
 
 it('should respect selectors', async ({ playwright, launchPersistent }) => {
-  const { page } = await launchPersistent();
-
   const defaultContextCSS = () => ({
     query(root, selector) {
       return root.querySelector(selector);
@@ -221,6 +219,7 @@ it('should respect selectors', async ({ playwright, launchPersistent }) => {
   });
   await playwright.selectors.register('defaultContextCSS', defaultContextCSS);
 
+  const { page } = await launchPersistent();
   await page.setContent(`<div>hello</div>`);
   expect(await page.innerHTML('css=div')).toBe('hello');
   expect(await page.innerHTML('defaultContextCSS=div')).toBe('hello');

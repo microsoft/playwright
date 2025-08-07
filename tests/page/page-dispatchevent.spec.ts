@@ -119,7 +119,7 @@ it('should be atomic', async ({ playwright, page }) => {
     }
   });
   await playwright.selectors.register('dispatchEvent', createDummySelector);
-  await page.setContent(`<div onclick="window._clicked=true">Hello</div>`);
+  await page.goto(`data:text/html,<div onclick="window._clicked=true">Hello</div>`);
   await page.dispatchEvent('dispatchEvent=div', 'click');
   expect(await page.evaluate(() => window['_clicked'])).toBe(true);
 });
