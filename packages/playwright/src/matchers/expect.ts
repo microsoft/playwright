@@ -18,6 +18,7 @@ import {
   captureRawStack,
   createGuid,
   currentZone,
+  escapeWithQuotes,
   isString,
   pollAgainstDeadline } from 'playwright-core/lib/utils';
 
@@ -67,8 +68,7 @@ import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { TestStepInfoImpl } from '../worker/testInfo';
-import type { TestStepCategory } from '../util';
+import type { TestStepCategory, TestStepInfoImpl } from '../worker/testInfo';
 
 
 // #region
@@ -345,21 +345,20 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
       const defaultTitle = `${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${argsSuffix}`;
-      const title = customMessage || defaultTitle;
+      const title = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
       const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
       const stackFrames = filteredStackTrace(captureRawStack());
       const category = matcherName === 'toPass' || this._info.poll ? 'test.step' : 'expect' as TestStepCategory;
-      const formattedTitle = category === 'expect' ? title : `Expect "${title}"`;
 
       // toPass and poll matchers can contain other steps, expects and API calls,
       // so they behave like a retriable step.
       const stepInfo = {
         category,
         apiName,
-        title: formattedTitle,
+        title,
         params: args[0] ? { expected: args[0] } : undefined,
         infectParentStepsWithError: this._info.isSoft,
       };

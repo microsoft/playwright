@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -32,9 +32,9 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
-import type { TestStepCategory } from '../util';
 
 export type TestStepVisibility = 'internal' | 'hidden';
+export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
 
 interface TestStepData {
   title: string;
@@ -453,7 +453,7 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: name,
+      title: `Attach ${escapeWithQuotes(name, '"')}`,
       category: 'test.attach',
     });
     this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
@@ -466,7 +466,7 @@ export class TestInfoImpl implements TestInfo {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
     } else {
       const stepId = `attach@${createGuid()}`;
-      this._tracing.appendBeforeActionForStep({ stepId, title: attachment.name, category: 'test.attach', stack: [] });
+      this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 

@@ -20,15 +20,14 @@ import path from 'path';
 import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
-import { filteredStackTrace, stepTitle } from '../util';
+import { filteredStackTrace } from '../util';
 
-import type { TestInfoImpl } from './testInfo';
+import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
 import type { TestInfoErrorImpl } from '../common/ipc';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
-import type { TestStepCategory } from '../util';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
@@ -273,7 +272,7 @@ export class TestTracing {
       startTime: monotonicTime(),
       class: 'Test',
       method: options.category,
-      title: stepTitle(options.category, options.title),
+      title: options.title,
       params: Object.fromEntries(Object.entries(options.params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack: options.stack,
       visibility: options.visibility,
