@@ -22,7 +22,6 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { stepTitle } from './util';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -268,7 +267,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           if (zone.apiName)
             data.apiName = zone.apiName;
           if (zone.title)
-            data.title = stepTitle(zone.category, zone.title);
+            data.title = zone.title;
           data.stepId = zone.stepId;
           return;
         }
