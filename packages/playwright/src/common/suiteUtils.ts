@@ -22,10 +22,10 @@ import { createFileMatcher } from '../util';
 
 import type { FullProjectInternal } from './config';
 import type { Suite, TestCase } from './test';
-import type { Matcher, TestFileFilter } from '../util';
+import type { TestCaseFilter, TestFileFilter } from '../util';
 
 
-export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: TestCaseFilter) {
   for (const child of suite.suites) {
     if (!suiteFilter(child))
       filterSuite(child, suiteFilter, testFilter);
@@ -35,7 +35,7 @@ export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolea
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
 }
 
-export function filterTestsRemoveEmptySuites(suite: Suite, filter: (test: TestCase) => boolean): boolean {
+export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilter): boolean {
   const filteredSuites = suite.suites.filter(child => filterTestsRemoveEmptySuites(child, filter));
   const filteredTests = suite.tests.filter(filter);
   const entries = new Set([...filteredSuites, ...filteredTests]);
@@ -111,7 +111,7 @@ export function filterOnly(suite: Suite) {
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
-export function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: TestCaseFilter) {
   const onlySuites = suite.suites.filter(child => filterSuiteWithOnlySemantics(child, suiteFilter, testFilter) || suiteFilter(child));
   const onlyTests = suite.tests.filter(testFilter);
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
@@ -130,12 +130,6 @@ export function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFile
   const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
-}
-
-export function filterByTestIds(suite: Suite, testIdMatcher: Matcher | undefined) {
-  if (!testIdMatcher)
-    return;
-  filterTestsRemoveEmptySuites(suite, test => testIdMatcher(test.id));
 }
 
 function createFileMatcherFromFilter(filter: TestFileFilter) {

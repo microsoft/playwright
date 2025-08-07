@@ -19,13 +19,14 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames, escapeWithQuotes } from 'playwright-core/lib/utils';
+import { rewriteErrorMessage, toPosixPath, parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames, escapeWithQuotes } from 'playwright-core/lib/utils';
 import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
 import type { RawStack } from 'playwright-core/lib/utils';
+import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -81,6 +82,8 @@ export type TestFileFilter = {
   line: number | null;
   column: number | null;
 };
+
+export type TestCaseFilter = (test: TestCase) => boolean;
 
 export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
   return args.map(arg => {
@@ -437,5 +440,26 @@ export function stepTitle(category: TestStepCategory, title: string): string {
       return title;
     default:
       return `[${category}] ${title}`;
+  }
+}
+
+type TestFileFilterData = {
+  titlePath: string[][],
+};
+
+export async function loadTestFilterFile(filePath: string): Promise<TestCaseFilter> {
+  try {
+    const data = JSON.parse(await fs.promises.readFile(filePath, 'utf8')) as TestFileFilterData;
+    if (!data || typeof data !== 'object' || !Array.isArray(data.titlePath) || !data.titlePath.every(path => Array.isArray(path)))
+      throw new Error(`Wrong test filter file format`);
+    const toId = (titlePath: string[]) => {
+      const [project, file, ...titles] = titlePath; // At the time of filtering, there is no root yet.
+      return `${project}\x1e${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
+    };
+    const ids = new Set(data.titlePath.map(titlePath => toId(titlePath)));
+    return test => ids.has(toId(test.titlePath()));
+  } catch (error) {
+    rewriteErrorMessage(error, `Failed to read test filter file "${filePath}": ${error.message}`);
+    throw error;
   }
 }
