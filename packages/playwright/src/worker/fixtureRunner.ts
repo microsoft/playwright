@@ -19,7 +19,7 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import { fixtureParameterNames } from '../common/fixtures';
 import { filterStackFile, formatLocation } from '../util';
 
-import type { TestInfoImpl } from './testInfo';
+import type { TestInfoImpl, TestStepVisibility } from './testInfo';
 import type { FixtureDescription, RunnableDescription } from './timeoutManager';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -35,7 +35,7 @@ class Fixture {
   private _selfTeardownComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
-  private _stepInfo: { title: string, category: 'fixture', location?: Location, hidden?: boolean };
+  private _stepInfo: { title: string, category: 'fixture', location?: Location, visibility?: TestStepVisibility };
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -43,11 +43,12 @@ class Fixture {
     this.runner = runner;
     this.registration = registration;
     this.value = null;
-    const hidden = this.registration.box || this.registration.option;
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = { title, category: 'fixture', location, hidden };
+    this._stepInfo = { title, category: 'fixture', location };
+    if (this.registration.box)
+      this._stepInfo.visibility = isUserFixture ? 'hidden' : 'internal';
     this._setupDescription = {
       title,
       phase: 'setup',

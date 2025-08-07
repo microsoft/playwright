@@ -50,8 +50,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [shouldPopulateCanvasFromScreenshot, _] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+  const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);

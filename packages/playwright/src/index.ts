@@ -69,20 +69,20 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
-  defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
-  browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
+  defaultBrowserType: ['chromium', { scope: 'worker', option: true, box: true }],
+  browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true, box: true }],
   playwright: [async ({}, use) => {
     await use(require('playwright-core'));
   }, { scope: 'worker', box: true }],
-  headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
-  channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
-  launchOptions: [{}, { scope: 'worker', option: true }],
+  headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true, box: true }],
+  channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true, box: true }],
+  launchOptions: [{}, { scope: 'worker', option: true, box: true }],
   connectOptions: [async ({ _optionConnectOptions }, use) => {
     await use(connectOptionsFromEnv() || _optionConnectOptions);
-  }, { scope: 'worker', option: true }],
-  screenshot: ['off', { scope: 'worker', option: true }],
-  video: ['off', { scope: 'worker', option: true }],
-  trace: ['off', { scope: 'worker', option: true }],
+  }, { scope: 'worker', option: true, box: true }],
+  screenshot: ['off', { scope: 'worker', option: true, box: true }],
+  video: ['off', { scope: 'worker', option: true, box: true }],
+  trace: ['off', { scope: 'worker', option: true, box: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -124,34 +124,34 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await browser.close({ reason: 'Test ended.' });
   }, { scope: 'worker', timeout: 0 }],
 
-  acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
-  bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true }],
-  colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true }],
-  deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true }],
-  extraHTTPHeaders: [({ contextOptions }, use) => use(contextOptions.extraHTTPHeaders), { option: true }],
-  geolocation: [({ contextOptions }, use) => use(contextOptions.geolocation), { option: true }],
-  hasTouch: [({ contextOptions }, use) => use(contextOptions.hasTouch ?? false), { option: true }],
-  httpCredentials: [({ contextOptions }, use) => use(contextOptions.httpCredentials), { option: true }],
-  ignoreHTTPSErrors: [({ contextOptions }, use) => use(contextOptions.ignoreHTTPSErrors ?? false), { option: true }],
-  isMobile: [({ contextOptions }, use) => use(contextOptions.isMobile ?? false), { option: true }],
-  javaScriptEnabled: [({ contextOptions }, use) => use(contextOptions.javaScriptEnabled ?? true), { option: true }],
-  locale: [({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true }],
-  offline: [({ contextOptions }, use) => use(contextOptions.offline ?? false), { option: true }],
-  permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
-  proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
-  storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
-  clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true }],
-  timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
-  userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
-  viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
-  actionTimeout: [0, { option: true }],
-  testIdAttribute: ['data-testid', { option: true }],
-  navigationTimeout: [0, { option: true }],
+  acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true, box: true }],
+  bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true, box: true }],
+  colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true, box: true }],
+  deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true, box: true }],
+  extraHTTPHeaders: [({ contextOptions }, use) => use(contextOptions.extraHTTPHeaders), { option: true, box: true }],
+  geolocation: [({ contextOptions }, use) => use(contextOptions.geolocation), { option: true, box: true }],
+  hasTouch: [({ contextOptions }, use) => use(contextOptions.hasTouch ?? false), { option: true, box: true }],
+  httpCredentials: [({ contextOptions }, use) => use(contextOptions.httpCredentials), { option: true, box: true }],
+  ignoreHTTPSErrors: [({ contextOptions }, use) => use(contextOptions.ignoreHTTPSErrors ?? false), { option: true, box: true }],
+  isMobile: [({ contextOptions }, use) => use(contextOptions.isMobile ?? false), { option: true, box: true }],
+  javaScriptEnabled: [({ contextOptions }, use) => use(contextOptions.javaScriptEnabled ?? true), { option: true, box: true }],
+  locale: [({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true, box: true }],
+  offline: [({ contextOptions }, use) => use(contextOptions.offline ?? false), { option: true, box: true }],
+  permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true, box: true }],
+  proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true, box: true }],
+  storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true, box: true }],
+  clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true, box: true }],
+  timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true, box: true }],
+  userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true, box: true }],
+  viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true, box: true }],
+  actionTimeout: [0, { option: true, box: true }],
+  testIdAttribute: ['data-testid', { option: true, box: true }],
+  navigationTimeout: [0, { option: true, box: true }],
   baseURL: [async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
-  }, { option: true }],
-  serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true }],
-  contextOptions: [{}, { option: true }],
+  }, { option: true, box: true }],
+  serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true, box: true }],
+  contextOptions: [{}, { option: true, box: true }],
 
   _combinedContextOptions: [async ({
     acceptDownloads,
@@ -398,8 +398,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await Promise.all([...contexts.values()].map(data => data.close()));
   }, { scope: 'test',  title: 'context', box: true }],
 
-  _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
-  _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
+  _optionContextReuseMode: ['none', { scope: 'worker', option: true, box: true }],
+  _optionConnectOptions: [undefined, { scope: 'worker', option: true, box: true }],
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;

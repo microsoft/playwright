@@ -34,6 +34,8 @@ import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 import type { TestStepCategory } from '../util';
 
+export type TestStepVisibility = 'default' | 'internal' | 'hidden';
+
 interface TestStepData {
   title: string;
   category: TestStepCategory;
@@ -42,7 +44,7 @@ interface TestStepData {
   params?: Record<string, any>;
   infectParentStepsWithError?: boolean;
   box?: boolean;
-  hidden?: boolean;
+  visibility?: TestStepVisibility;
 }
 
 export interface TestStepInternal extends TestStepData {
@@ -284,12 +286,13 @@ export class TestInfoImpl implements TestInfo {
       location = location || boxedStack[0];
     }
     location = location || filteredStack[0];
-    const hidden = data.hidden || parentStep?.hidden;
+    const visibility = (parentStep?.visibility === 'internal' || data.visibility === 'internal') ? 'internal' :
+      (parentStep?.visibility === 'hidden' || data.visibility === 'hidden' ? 'hidden' : 'default');
 
     const step: TestStepInternal = {
       ...data,
       stepId,
-      hidden,
+      visibility,
       boxedStack,
       location,
       steps: [],
@@ -322,7 +325,7 @@ export class TestInfoImpl implements TestInfo {
           }
         }
 
-        if (!step.hidden) {
+        if (visibility === 'default') {
           const payload: StepEndPayload = {
             testId: this.testId,
             stepId,
@@ -332,6 +335,8 @@ export class TestInfoImpl implements TestInfo {
             annotations: step.info.annotations,
           };
           this._onStepEnd(payload);
+        }
+        if (visibility !== 'internal') {
           const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
           const attachments = step.attachmentIndices.map(i => this.attachments[i]);
           this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.info.annotations);
@@ -342,7 +347,7 @@ export class TestInfoImpl implements TestInfo {
     parentStepList.push(step);
     this._stepMap.set(stepId, step);
 
-    if (!step.hidden) {
+    if (visibility === 'default') {
       const payload: StepBeginPayload = {
         testId: this.testId,
         stepId,
@@ -353,11 +358,16 @@ export class TestInfoImpl implements TestInfo {
         location: step.location,
       };
       this._onStepBegin(payload);
-      this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, {
+    }
+    if (visibility !== 'internal') {
+      this._tracing.appendBeforeActionForStep({
+        stepId,
+        parentId: parentStep?.stepId,
         title: step.title,
         category: step.category,
         params: step.params,
-        stack: step.location ? [step.location] : []
+        stack: step.location ? [step.location] : [],
+        visibility: visibility === 'hidden' ? 'hidden' : undefined,
       });
     }
 
@@ -384,7 +394,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, hidden?: boolean }, cb: () => Promise<any>) {
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, visibility?: TestStepVisibility }, cb: () => Promise<any>) {
     const step = this._addStep(stepInfo);
     try {
       await cb();
@@ -455,9 +465,9 @@ export class TestInfoImpl implements TestInfo {
     if (stepId) {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
     } else {
-      const callId = `attach@${createGuid()}`;
-      this._tracing.appendBeforeActionForStep(callId, undefined, { title: attachment.name, category: 'test.attach', stack: [] });
-      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
+      const stepId = `attach@${createGuid()}`;
+      this._tracing.appendBeforeActionForStep({ stepId, title: attachment.name, category: 'test.attach', stack: [] });
+      this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 
     this._onAttach({

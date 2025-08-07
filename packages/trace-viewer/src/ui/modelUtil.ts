@@ -120,6 +120,10 @@ export class MultiTraceModel {
     return this.actions.findLast(a => a.error);
   }
 
+  filteredActions(showAllActions: boolean) {
+    return showAllActions ? this.actions : this.actions.filter(a => a.visibility !== 'hidden');
+  }
+
   private _errorDescriptorsFromActions(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
     for (const action of this.actions || []) {
@@ -268,6 +272,8 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
           existing.annotations = action.annotations;
         if (action.parentId)
           existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
+        if (action.visibility === 'hidden')
+          existing.visibility = 'hidden';
         // For the events that are present in the test runner context, always take
         // their time from the test runner context to preserve client side order.
         existing.startTime = action.startTime;
