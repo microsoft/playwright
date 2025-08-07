@@ -70,6 +70,7 @@ export type BeforeActionTraceEvent = {
   stack?: StackFrame[];
   pageId?: string;
   parentId?: string;
+  visibility?: 'hidden';
 };
 
 export type InputActionTraceEvent = {

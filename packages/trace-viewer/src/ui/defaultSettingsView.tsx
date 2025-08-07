@@ -27,6 +27,7 @@ export const DefaultSettingsView: React.FC<{}> = () => {
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+  const [showAllActions, setShowAllActions] = useSetting('showAllActions', false);
   const [darkMode, setDarkMode] = useDarkModeSetting();
 
   return (
@@ -37,7 +38,12 @@ export const DefaultSettingsView: React.FC<{}> = () => {
           value: shouldPopulateCanvasFromScreenshot,
           set: setShouldPopulateCanvasFromScreenshot,
           name: 'Display canvas content',
-          title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.'
+          title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.',
+        },
+        {
+          value: showAllActions,
+          set: setShowAllActions,
+          name: 'Show all actions',
         },
       ]}
     />

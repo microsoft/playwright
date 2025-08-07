@@ -122,7 +122,7 @@ export const renderAction = (
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
-  const isSkipped = action.class === 'Test' && action.method === 'step' && action.annotations?.some(a => a.type === 'skip');
+  const isSkipped = action.class === 'Test' && action.method === 'test.step' && action.annotations?.some(a => a.type === 'skip');
   let time: string = '';
   if (action.endTime)
     time = msToString(action.endTime - action.startTime);
