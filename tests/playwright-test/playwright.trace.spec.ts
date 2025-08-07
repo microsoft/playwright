@@ -1018,7 +1018,6 @@ test('should not produce an action entry for calling a binding', async ({ runInl
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'Expose binding',
     'Evaluate',
     'Expect "toBe"',
     'Expect "toBe"',

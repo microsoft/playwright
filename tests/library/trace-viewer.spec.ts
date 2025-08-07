@@ -911,6 +911,9 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     });
   }
 
+  await traceViewer.showSettings();
+  await traceViewer.showAllActionsSetting.click();
+
   const framePageClick = await traceViewer.snapshotFrame('Click');
   await expect.poll(() => highlightedDivs(framePageClick)).toEqual(['t1']);
   const box1 = await framePageClick.getByText('t1').boundingBox();
@@ -1480,6 +1483,8 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
 
 test('should show similar actions from legacy library-only trace', async ({ showTraceViewer, asset }) => {
   const traceViewer = await showTraceViewer([asset('trace-library-1.46.zip')]);
+  await traceViewer.showSettings();
+  await traceViewer.showAllActionsSetting.click();
   await expect(traceViewer.actionTitles).toHaveText([
     /page\.setContent/,
     /locator\.getAttribute/,
@@ -1543,13 +1548,17 @@ test('should not record network actions', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' },
 }, async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
+    let counter = 0;
     page.on('request', async request => {
       await request.allHeaders();
+      ++counter;
     });
     page.on('response', async response => {
       await response.text();
+      ++counter;
     });
     await page.goto(server.EMPTY_PAGE);
+    await expect.poll(() => counter).toBe(2);
   });
 
   await expect(traceViewer.actionTitles).toHaveText([
@@ -1945,4 +1954,32 @@ test('should load trace from HTTP with progress indicator', async ({ showTraceVi
   res.end(file);
   await expect(dialog).not.toBeVisible();
   await expect(traceViewer.actionTitles).toContainText([/Create page/]);
+});
+
+test('should show all actions', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.route('**/*', async route => {
+      await route.fulfill({ contentType: 'text/html', body: '<input type=checkbox checked>' });
+    });
+    await page.goto('https://does.not.exist');
+    await page.locator('input').getAttribute('checked');
+    await expect(page.locator('input')).toBeChecked();
+  });
+
+  await expect(traceViewer.actionTitles).toHaveText([
+    /Navigate to/,
+    /Expect "toBeChecked"/,
+  ]);
+
+  await traceViewer.showSettings();
+  await expect(traceViewer.showAllActionsSetting).not.toBeChecked();
+  await traceViewer.showAllActionsSetting.click();
+
+  await expect(traceViewer.actionTitles).toHaveText([
+    /Route requests/,
+    /Navigate to/,
+    /Fulfill request/,
+    /Get attribute "checked"/,
+    /Expect "toBeChecked"/,
+  ]);
 });

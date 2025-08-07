@@ -34,7 +34,7 @@ import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 import type { TestStepCategory } from '../util';
 
-export type TestStepVisibility = 'default' | 'internal' | 'hidden';
+export type TestStepVisibility = 'internal' | 'hidden';
 
 interface TestStepData {
   title: string;
@@ -287,7 +287,7 @@ export class TestInfoImpl implements TestInfo {
     }
     location = location || filteredStack[0];
     const visibility = (parentStep?.visibility === 'internal' || data.visibility === 'internal') ? 'internal' :
-      (parentStep?.visibility === 'hidden' || data.visibility === 'hidden' ? 'hidden' : 'default');
+      (parentStep?.visibility === 'hidden' || data.visibility === 'hidden' ? 'hidden' : undefined);
 
     const step: TestStepInternal = {
       ...data,
@@ -325,7 +325,7 @@ export class TestInfoImpl implements TestInfo {
           }
         }
 
-        if (visibility === 'default') {
+        if (!step.visibility) {
           const payload: StepEndPayload = {
             testId: this.testId,
             stepId,
@@ -336,7 +336,7 @@ export class TestInfoImpl implements TestInfo {
           };
           this._onStepEnd(payload);
         }
-        if (visibility !== 'internal') {
+        if (step.visibility !== 'internal') {
           const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
           const attachments = step.attachmentIndices.map(i => this.attachments[i]);
           this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.info.annotations);
@@ -347,7 +347,7 @@ export class TestInfoImpl implements TestInfo {
     parentStepList.push(step);
     this._stepMap.set(stepId, step);
 
-    if (visibility === 'default') {
+    if (!step.visibility) {
       const payload: StepBeginPayload = {
         testId: this.testId,
         stepId,
@@ -359,7 +359,7 @@ export class TestInfoImpl implements TestInfo {
       };
       this._onStepBegin(payload);
     }
-    if (visibility !== 'internal') {
+    if (step.visibility !== 'internal') {
       this._tracing.appendBeforeActionForStep({
         stepId,
         parentId: parentStep?.stepId,
@@ -367,7 +367,7 @@ export class TestInfoImpl implements TestInfo {
         category: step.category,
         params: step.params,
         stack: step.location ? [step.location] : [],
-        visibility: visibility === 'hidden' ? 'hidden' : undefined,
+        visibility: step.visibility,
       });
     }
 

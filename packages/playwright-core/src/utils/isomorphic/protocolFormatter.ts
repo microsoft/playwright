@@ -64,3 +64,7 @@ export function renderTitleForCall(metadata: { title?: string, type: string, met
     return formatProtocolParam(metadata.params, p1) ?? fullMatch;
   });
 }
+
+export function getActionGroup(metadata: { type: string, method: string }) {
+  return methodMetainfo.get(metadata.type + '.' + metadata.method)?.group as undefined | 'configuration' | 'route' | 'getter';
+}
