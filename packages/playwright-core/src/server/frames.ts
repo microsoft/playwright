@@ -21,7 +21,7 @@ import { TimeoutError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
-import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -603,7 +603,7 @@ export class Frame extends SdkObject {
   }
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
-    const controller = new ProgressController(serverSideCallMetadata(), this);
+    const controller = new ProgressController();
     const data = {
       url,
       gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), 0),

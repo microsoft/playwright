@@ -19,7 +19,7 @@ import { assert } from '../utils';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Progress } from '@protocol/progress';
-import type { CallMetadata, SdkObject } from './instrumentation';
+import type { CallMetadata } from './instrumentation';
 
 export type { Progress } from '@protocol/progress';
 
@@ -27,13 +27,13 @@ export class ProgressController {
   private _forceAbortPromise = new ManualPromise<any>();
   private _donePromise = new ManualPromise<void>();
   private _state: 'before' | 'running' | { error: Error } | 'finished' = 'before';
-  private _sdkObject: SdkObject;
+  private _onCallLog?: (message: string) => void;
 
   readonly metadata: CallMetadata;
 
-  constructor(metadata: CallMetadata, sdkObject: SdkObject) {
-    this.metadata = metadata;
-    this._sdkObject = sdkObject;
+  constructor(metadata?: CallMetadata, onCallLog?: (message: string) => void) {
+    this.metadata = metadata || { id: '', startTime: 0, endTime: 0, type: 'Internal', method: '', params: {}, log: [], internal: true };
+    this._onCallLog = onCallLog;
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
   }
 
@@ -55,7 +55,7 @@ export class ProgressController {
         if (this._state === 'running')
           this.metadata.log.push(message);
         // Note: we might be sending logs after progress has finished, for example browser logs.
-        this._sdkObject.instrumentation.onCallLog(this._sdkObject, this.metadata, this._sdkObject.logName || 'api', message);
+        this._onCallLog?.(message);
       },
       metadata: this.metadata,
       race: <T>(promise: Promise<T> | Promise<T>[]) => {

@@ -19,7 +19,6 @@ import { createPlaywright } from './server/playwright';
 import { createGuid } from './server/utils/crypto';
 import { ws } from './utilsBundle';
 import { ProgressController } from './server/progress';
-import { serverSideCallMetadata } from './server';
 
 import type { BrowserServer } from './client/browserType';
 import type { LaunchAndroidServerOptions } from './client/types';
@@ -29,7 +28,7 @@ export class AndroidServerLauncherImpl {
   async launchServer(options: LaunchAndroidServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
     // 1. Pre-connect to the device
-    const controller = new ProgressController(serverSideCallMetadata(), playwright);
+    const controller = new ProgressController();
     let devices = await controller.run(progress => playwright.android.devices(progress, {
       host: options.adbHost,
       port: options.adbPort,
