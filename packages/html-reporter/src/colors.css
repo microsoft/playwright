@@ -450,7 +450,7 @@ SOFTWARE. */
   --color-scale-coral-6: #9E2F1C;
   --color-scale-coral-7: #801F0F;
   --color-scale-coral-8: #691105;
-  --color-scale-coral-9: #510901
+  --color-scale-coral-9: #510901;
 }
 
 @media(prefers-color-scheme: dark) {
@@ -884,6 +884,6 @@ SOFTWARE. */
     --color-scale-coral-6: #AC3220;
     --color-scale-coral-7: #872012;
     --color-scale-coral-8: #640D04;
-    --color-scale-coral-9: #460701
+    --color-scale-coral-9: #460701;
   }
 }
