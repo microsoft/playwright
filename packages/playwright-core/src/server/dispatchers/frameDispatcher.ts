@@ -117,7 +117,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async queryCount(params: channels.FrameQueryCountParams, progress: Progress): Promise<channels.FrameQueryCountResult> {
-    return { value: await progress.race(this._frame.queryCount(params.selector)) };
+    return { value: await progress.race(this._frame.queryCount(params.selector, params)) };
   }
 
   async content(params: channels.FrameContentParams, progress: Progress): Promise<channels.FrameContentResult> {

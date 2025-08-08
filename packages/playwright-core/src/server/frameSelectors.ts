@@ -75,11 +75,12 @@ export class FrameSelectors {
     }, { info: resolved.info, scope: resolved.scope });
   }
 
-  async queryCount(selector: string): Promise<number> {
+  async queryCount(selector: string, options: any): Promise<number> {
     const resolved = await this.resolveInjectedForSelector(selector);
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)
       throw new Error(`Failed to find frame for selector "${selector}"`);
+    await options.__testHookBeforeQuery?.();
     return await resolved.injected.evaluate((injected, { info }) => {
       return injected.querySelectorAll(info.parsed, document).length;
     }, { info: resolved.info });

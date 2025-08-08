@@ -247,8 +247,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return result.elements.map(e => ElementHandle.from(e) as ElementHandle<SVGElement | HTMLElement>);
   }
 
-  async _queryCount(selector: string): Promise<number> {
-    return (await this._channel.queryCount({ selector })).value;
+  async _queryCount(selector: string, options?: {}): Promise<number> {
+    return (await this._channel.queryCount({ selector, ...options })).value;
   }
 
   async content(): Promise<string> {
