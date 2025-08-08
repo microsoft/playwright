@@ -1044,6 +1044,8 @@ Browser:
       title: Close browser
       parameters:
         reason: string?
+      flags:
+        pausesBeforeAction: true
 
     killForTests:
       internal: true
@@ -1225,6 +1227,8 @@ BrowserContext:
       title: Close context
       parameters:
         reason: string?
+      flags:
+        pausesBeforeAction: true
 
     cookies:
       title: Get cookies
@@ -1593,6 +1597,8 @@ Page:
       parameters:
         runBeforeUnload: boolean?
         reason: string?
+      flags:
+        pausesBeforeAction: true
 
     emulateMedia:
       title: Emulate media
@@ -1630,6 +1636,7 @@ Page:
           - no-override
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     exposeBinding:
       title: Expose binding
@@ -1648,6 +1655,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     goForward:
       title: Go forward
@@ -1659,6 +1667,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     requestGC:
       title: Request garbage collection
@@ -1693,6 +1702,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     expectScreenshot:
       title: Expect screenshot
@@ -1723,6 +1733,7 @@ Page:
           items: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     screenshot:
       title: Screenshot
@@ -1741,6 +1752,7 @@ Page:
         binary: binary
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
@@ -1786,6 +1798,7 @@ Page:
             height: int
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardDown:
       title: Key down "{key}"
@@ -1794,6 +1807,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardUp:
       title: Key up "{key}"
@@ -1802,6 +1816,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardInsertText:
       title: Insert "{text}"
@@ -1810,6 +1825,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardType:
       title: Type "{text}"
@@ -1819,6 +1835,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardPress:
       title: Press "{key}"
@@ -1828,6 +1845,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseMove:
       title: Mouse move
@@ -1838,6 +1856,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseDown:
       title: Mouse down
@@ -1852,6 +1871,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseUp:
       title: Mouse up
@@ -1866,6 +1886,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseClick:
       title: Click
@@ -1883,6 +1904,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseWheel:
       title: Mouse wheel
@@ -1892,6 +1914,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     touchscreenTap:
       title: Tap
@@ -1901,6 +1924,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     accessibilitySnapshot:
       title: Accessibility snapshot
@@ -2110,6 +2134,7 @@ Frame:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evalOnSelectorAll:
       title: Evaluate
@@ -2122,6 +2147,7 @@ Frame:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     addScriptTag:
       title: Add script tag
@@ -2133,6 +2159,7 @@ Frame:
         element: ElementHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     addStyleTag:
       title: Add style tag
@@ -2143,6 +2170,7 @@ Frame:
         element: ElementHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     ariaSnapshot:
       title: Aria snapshot
@@ -2153,6 +2181,7 @@ Frame:
         snapshot: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     blur:
       title: Blur
@@ -2163,6 +2192,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     check:
       title: Check
@@ -2217,6 +2247,7 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     dragAndDrop:
       title: Drag and drop
@@ -2276,6 +2307,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     evaluateExpression:
       title: Evaluate
@@ -2287,6 +2319,7 @@ Frame:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evaluateExpressionHandle:
       title: Evaluate
@@ -2298,6 +2331,7 @@ Frame:
         handle: JSHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     fill:
       title: Fill "{value}"
@@ -2321,6 +2355,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     frameElement:
       title: Get frame element
@@ -2353,6 +2388,7 @@ Frame:
         value: string?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     goto:
       title: Navigate to "{url}"
@@ -2366,6 +2402,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     hover:
       title: Hover
@@ -2402,6 +2439,7 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     innerText:
       title: Get inner text
@@ -2414,6 +2452,7 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     inputValue:
       title: Get input value
@@ -2426,6 +2465,7 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isChecked:
       title: Is checked
@@ -2438,6 +2478,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isDisabled:
       title: Is disabled
@@ -2450,6 +2491,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEnabled:
       title: Is enabled
@@ -2462,6 +2504,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isHidden:
       title: Is hidden
@@ -2474,6 +2517,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isVisible:
       title: Is visible
@@ -2486,6 +2530,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEditable:
       title: Is editable
@@ -2498,6 +2543,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     press:
       title: Press "{key}"
@@ -2542,6 +2588,7 @@ Frame:
         value: int
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     selectOption:
       title: Select option
@@ -2579,6 +2626,7 @@ Frame:
         waitUntil: LifecycleEvent?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     setInputFiles:
       title: Set input files
@@ -2643,6 +2691,7 @@ Frame:
         value: string?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     title:
       title: Get page title
@@ -2697,6 +2746,7 @@ Frame:
         handle: JSHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     waitForSelector:
       title: Wait for selector
@@ -2740,6 +2790,7 @@ Frame:
           items: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
   events:
 
@@ -2812,6 +2863,7 @@ JSHandle:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evaluateExpressionHandle:
       title: Evaluate
@@ -2823,6 +2875,7 @@ JSHandle:
         handle: JSHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     getPropertyList:
       title: Get property list
@@ -2877,6 +2930,7 @@ ElementHandle:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evalOnSelectorAll:
       title: Evaluate
@@ -2889,6 +2943,7 @@ ElementHandle:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     boundingBox:
       title: Get bounding box
@@ -2896,6 +2951,7 @@ ElementHandle:
         value: Rect?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     check:
       title: Check
@@ -2945,8 +3001,6 @@ ElementHandle:
       group: getter
       returns:
         frame: Frame?
-      flags:
-        snapshot: true
 
     dblclick:
       title: Double click
@@ -2985,6 +3039,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     fill:
       title: Fill "{value}"
@@ -3002,6 +3057,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     getAttribute:
       title: Get attribute
@@ -3010,6 +3066,9 @@ ElementHandle:
         name: string
       returns:
         value: string?
+      flags:
+        snapshot: true
+        pausesBeforeAction: true
 
     hover:
       title: Hover
@@ -3040,6 +3099,7 @@ ElementHandle:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     innerText:
       title: Get inner text
@@ -3048,6 +3108,7 @@ ElementHandle:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     inputValue:
       title: Get input value
@@ -3056,6 +3117,7 @@ ElementHandle:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isChecked:
       title: Is checked
@@ -3064,6 +3126,7 @@ ElementHandle:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isDisabled:
       title: Is disabled
@@ -3072,6 +3135,7 @@ ElementHandle:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEditable:
       title: Is editable
@@ -3080,6 +3144,7 @@ ElementHandle:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEnabled:
       title: Is enabled
@@ -3088,6 +3153,7 @@ ElementHandle:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isHidden:
       title: Is hidden
@@ -3096,6 +3162,7 @@ ElementHandle:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isVisible:
       title: Is visible
@@ -3104,6 +3171,7 @@ ElementHandle:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     ownerFrame:
       title: Get owner frame
@@ -3159,6 +3227,7 @@ ElementHandle:
         binary: binary
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     scrollIntoViewIfNeeded:
       title: Scroll into view
@@ -3167,6 +3236,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     selectOption:
       title: Select option
@@ -3202,6 +3272,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     setInputFiles:
       title: Set input files
@@ -3258,6 +3329,7 @@ ElementHandle:
         value: string?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     type:
       title: Type
@@ -3297,6 +3369,7 @@ ElementHandle:
         timeout: float
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     waitForSelector:
       title: Wait for selector
