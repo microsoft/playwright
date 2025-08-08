@@ -47,7 +47,7 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
   }, { scope: 'worker' }],
 
   toImplInWorkerScope: [async ({ playwright }, use) => {
-    await use((playwright as any)._toImpl);
+    await use((playwright as any)._connection.toImpl);
   }, { scope: 'worker' }],
 
   toImpl: async ({ toImplInWorkerScope: toImplWorker, mode }, use, testInfo) => {
