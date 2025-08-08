@@ -24,7 +24,6 @@ import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './r
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import { ProgressController } from './progress';
-import { serverSideCallMetadata } from './instrumentation';
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
 import * as rawRecorderSource from './../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime } from './../utils';
@@ -159,7 +158,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this.emit(RecorderEvent.ContextClosed);
     });
 
-    const controller = new ProgressController(serverSideCallMetadata(), this._context);
+    const controller = new ProgressController();
     await controller.run(async progress => {
       await this._context.exposeBinding(progress, '__pw_recorderState', false, async source => {
         let actionSelector: string | undefined;

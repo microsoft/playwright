@@ -32,7 +32,7 @@ import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { CRBrowser } from '../chromium/crBrowser';
 import { removeFolders } from '../utils/fileUtils';
 import { helper } from '../helper';
-import { SdkObject, serverSideCallMetadata } from '../instrumentation';
+import { SdkObject } from '../instrumentation';
 import { gracefullyCloseSet } from '../utils/processLauncher';
 import { isAbortError, Progress, ProgressController, raceUncancellableOperationWithCleanup } from '../progress';
 import { registry } from '../registry';
@@ -162,7 +162,7 @@ export class AndroidDevice extends SdkObject {
     if (this._isClosed)
       return;
     if (!this._driverPromise) {
-      const controller = new ProgressController(serverSideCallMetadata(), this);
+      const controller = new ProgressController();
       this._driverPromise = controller.run(progress => this._installDriver(progress));
     }
     return this._driverPromise;

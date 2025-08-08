@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { debugLogger  } from '../utils';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { BidiChromium } from './bidi/bidiChromium';
@@ -29,7 +28,6 @@ import { WebKit } from './webkit/webkit';
 import type { BrowserType } from './browserType';
 import type { Language } from '../utils';
 import type { Browser } from './browser';
-import type { CallMetadata } from './instrumentation';
 import type { Page } from './page';
 
 type PlaywrightOptions = {
@@ -60,9 +58,6 @@ export class Playwright extends SdkObject {
       onBrowserClose: browser => this._allBrowsers.delete(browser),
       onPageOpen: page => this._allPages.add(page),
       onPageClose: page => this._allPages.delete(page),
-      onCallLog: (sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) => {
-        debugLogger.log(logName as any, message);
-      }
     }, null);
     this.chromium = new Chromium(this);
     this._bidiChromium = new BidiChromium(this);

@@ -21,18 +21,17 @@ import type { TestServer } from '../config/testserver';
 
 async function checkSlowMo(toImpl: (api: any) => any, page: Page, task: () => Promise<unknown>) {
   let didSlowMo = false;
-  const contextDebugger = toImpl(page.context()).debugger();
-  contextDebugger._slowMo = 100;
-  const orig = contextDebugger._doSlowMo;
-  contextDebugger._doSlowMo = async () => {
+  const dispatcherConnection = toImpl((page as any)._connection);
+  const orig = dispatcherConnection._doSlowMo;
+  dispatcherConnection._doSlowMo = async (sdkObject: any) => {
     if (didSlowMo)
       throw new Error('already did slowmo');
     await new Promise(x => setTimeout(x, 100));
     didSlowMo = true;
-    return orig.call(contextDebugger);
   };
   await task();
   expect(!!didSlowMo).toBe(true);
+  dispatcherConnection._doSlowMo = orig;
 }
 
 async function checkPageSlowMo(toImpl: (api: any) => any, page: Page, task: () => Promise<unknown>) {
