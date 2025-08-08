@@ -80,8 +80,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run('Lax');
     else if (browserName === 'webkit')
       await run('None'); // Windows + older macOS
-    else if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
+    else if (browserName === 'firefox')
       await run('None');
+    else if (browserName as any === '_bidiFirefox')
+      await run('Default');
     else
       throw new Error('unknown browser - ' + browserName);
   }, { scope: 'worker' }],
