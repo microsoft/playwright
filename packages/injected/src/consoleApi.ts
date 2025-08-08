@@ -105,6 +105,10 @@ export class ConsoleAPI {
     delete this._injectedScript.window.playwright.or;
   }
 
+  uninstall() {
+    delete this._injectedScript.window.playwright;
+  }
+
   private _querySelector(selector: string, strict: boolean): (Element | undefined) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);

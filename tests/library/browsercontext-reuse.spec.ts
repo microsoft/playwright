@@ -415,5 +415,33 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
       await verifyViewport(page, 600, 800);
     });
+
+    test('should handle debugConsoleApi during context reuse', async ({ reusedContext }) => {
+      // Start without console API
+      let context = await reusedContext({ debugConsoleApi: false } as any);
+      let page = await context.newPage();
+      await page.setContent('<body></body>');
+
+      // Verify API is not available
+      expect(await page.evaluate(() => typeof (window as any).playwright !== 'undefined')).toBe(false);
+
+      // Reuse context with console API enabled
+      context = await reusedContext({ debugConsoleApi: true } as any);
+      page = context.pages()[0];
+
+      // Verify API is now available after context reuse
+      expect(await page.evaluate(() => typeof (window as any).playwright !== 'undefined')).toBe(true);
+
+      // Test that API works
+      const bodyTag = await page.evaluate(() => (window as any).playwright.$('body').tagName);
+      expect(bodyTag).toBe('BODY');
+
+      // Reuse context with console API disabled again
+      context = await reusedContext({ debugConsoleApi: false } as any);
+      page = context.pages()[0];
+
+      // Verify API is removed after context reuse
+      expect(await page.evaluate(() => typeof (window as any).playwright !== 'undefined')).toBe(false);
+    });
   });
 }
