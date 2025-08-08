@@ -402,7 +402,8 @@ APIRequestContext:
         response: APIResponse
 
     fetchResponseBody:
-      internal: true
+      title: Get response body
+      group: getter
       parameters:
         fetchUid: string
       returns:
@@ -418,7 +419,7 @@ APIRequestContext:
           items: string
 
     storageState:
-      internal: true
+      title: Get storage state
       parameters:
         indexedDB: boolean?
       returns:
@@ -1105,12 +1106,13 @@ Browser:
 
     newBrowserCDPSession:
       title: Create CDP session
-      internal: true
+      group: configuration
       returns:
         session: CDPSession
 
     startTracing:
-      internal: true
+      title: Start browser tracing
+      group: configuration
       parameters:
         page: Page?
         screenshots: boolean?
@@ -1119,7 +1121,8 @@ Browser:
           items: string
 
     stopTracing:
-      internal: true
+      title: Stop browser tracing
+      group: configuration
       returns:
         artifact: Artifact
 
@@ -1188,6 +1191,7 @@ BrowserContext:
 
     addCookies:
       title: Add cookies
+      group: configuration
       parameters:
         cookies:
           type: array
@@ -1195,11 +1199,13 @@ BrowserContext:
 
     addInitScript:
       title: Add init script
+      group: configuration
       parameters:
         source: string
 
     clearCookies:
       title: Clear cookies
+      group: configuration
       parameters:
         name: string?
         nameRegexSource: string?
@@ -1213,6 +1219,7 @@ BrowserContext:
 
     clearPermissions:
       title: Clear permissions
+      group: configuration
 
     close:
       title: Close context
@@ -1221,6 +1228,7 @@ BrowserContext:
 
     cookies:
       title: Get cookies
+      group: getter
       parameters:
         urls:
           type: array
@@ -1232,12 +1240,14 @@ BrowserContext:
 
     exposeBinding:
       title: Expose binding
+      group: configuration
       parameters:
         name: string
         needsHandle: boolean?
 
     grantPermissions:
       title: Grant permissions
+      group: configuration
       parameters:
         permissions:
           type: array
@@ -1261,6 +1271,7 @@ BrowserContext:
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
+      group: configuration
       parameters:
         headers:
           type: array
@@ -1268,6 +1279,7 @@ BrowserContext:
 
     setGeolocation:
       title: Set geolocation
+      group: configuration
       parameters:
         geolocation:
           type: object?
@@ -1278,6 +1290,7 @@ BrowserContext:
 
     setHTTPCredentials:
       title: Set HTTP credentials
+      group: configuration
       parameters:
         httpCredentials:
           type: object?
@@ -1287,7 +1300,8 @@ BrowserContext:
             origin: string?
 
     setNetworkInterceptionPatterns:
-      internal: true
+      title: Route requests
+      group: route
       parameters:
         patterns:
           type: array
@@ -1299,7 +1313,8 @@ BrowserContext:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
-      internal: true
+      title: Route WebSockets
+      group: route
       parameters:
         patterns:
           type: array
@@ -1329,6 +1344,7 @@ BrowserContext:
 
     setStorageState:
       title: Set storage state
+      group: configuration
       parameters:
         storageState:
           type: object
@@ -1371,7 +1387,8 @@ BrowserContext:
       internal: true
 
     newCDPSession:
-      internal: true
+      title: Create CDP session
+      group: configuration
       parameters:
         page: Page?
         frame: Frame?
@@ -1566,6 +1583,8 @@ Page:
   commands:
 
     addInitScript:
+      title: Add init script
+      group: configuration
       parameters:
         source: string
 
@@ -1614,6 +1633,7 @@ Page:
 
     exposeBinding:
       title: Expose binding
+      group: configuration
       parameters:
         name: string
         needsHandle: boolean?
@@ -1642,6 +1662,7 @@ Page:
 
     requestGC:
       title: Request garbage collection
+      group: configuration
 
     registerLocatorHandler:
       title: Register locator handler
@@ -1723,13 +1744,15 @@ Page:
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
+      group: configuration
       parameters:
         headers:
           type: array
           items: NameValue
 
     setNetworkInterceptionPatterns:
-      internal: true
+      title: Route requests
+      group: route
       parameters:
         patterns:
           type: array
@@ -1741,7 +1764,8 @@ Page:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
-      internal: true
+      title: Route WebSockets
+      group: route
       parameters:
         patterns:
           type: array
@@ -1879,14 +1903,13 @@ Page:
         snapshot: true
 
     accessibilitySnapshot:
-      internal: true
+      title: Accessibility snapshot
+      group: getter
       parameters:
         interestingOnly: boolean?
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
-      flags:
-        snapshot: true
 
     pdf:
       title: PDF
@@ -1920,17 +1943,17 @@ Page:
         timeout: float
       returns:
         snapshot: string
-      flags:
-        snapshot: true
 
     startJSCoverage:
-      internal: true
+      title: Start JS coverage
+      group: configuration
       parameters:
         resetOnNavigation: boolean?
         reportAnonymousScripts: boolean?
 
     stopJSCoverage:
-      internal: true
+      title: Stop JS coverage
+      group: configuration
       returns:
         entries:
           type: array
@@ -1957,12 +1980,14 @@ Page:
                           count: int
 
     startCSSCoverage:
-      internal: true
+      title: Start CSS coverage
+      group: configuration
       parameters:
         resetOnNavigation: boolean?
 
     stopCSSCoverage:
-      internal: true
+      title: Stop CSS coverage
+      group: configuration
       returns:
         entries:
           type: array
@@ -2298,7 +2323,8 @@ Frame:
         snapshot: true
 
     frameElement:
-      internal: true
+      title: Get frame element
+      group: getter
       returns:
         element: ElementHandle
 
@@ -2310,12 +2336,14 @@ Frame:
         resolvedSelector: string
 
     highlight:
-      internal: true
+      title: Highlight element
+      group: configuration
       parameters:
         selector: string
 
     getAttribute:
-      internal: true
+      title: Get attribute "{name}"
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2365,6 +2393,7 @@ Frame:
 
     innerHTML:
       title: Get HTML
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2376,6 +2405,7 @@ Frame:
 
     innerText:
       title: Get inner text
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2387,6 +2417,7 @@ Frame:
 
     inputValue:
       title: Get input value
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2398,6 +2429,7 @@ Frame:
 
     isChecked:
       title: Is checked
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2409,6 +2441,7 @@ Frame:
 
     isDisabled:
       title: Is disabled
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2420,6 +2453,7 @@ Frame:
 
     isEnabled:
       title: Is enabled
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2431,6 +2465,7 @@ Frame:
 
     isHidden:
       title: Is hidden
+      group: getter
       parameters:
         # Note: compared to other isFoo methods, isHidden is a one-shot operation without a timeout.
         selector: string
@@ -2442,6 +2477,7 @@ Frame:
 
     isVisible:
       title: Is visible
+      group: getter
       parameters:
         # Note: compared to other isFoo methods, isVisible is a one-shot operation without a timeout.
         selector: string
@@ -2453,6 +2489,7 @@ Frame:
 
     isEditable:
       title: Is editable
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2597,6 +2634,7 @@ Frame:
 
     textContent:
       title: Get text content
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2607,12 +2645,13 @@ Frame:
         snapshot: true
 
     title:
-      internal: true
+      title: Get page title
+      group: getter
       returns:
         value: string
 
     type:
-      title: Type
+      title: Type "{text}"
       parameters:
         selector: string
         strict: boolean?
@@ -2761,6 +2800,7 @@ JSHandle:
   commands:
 
     dispose:
+      internal: true
 
     evaluateExpression:
       title: Evaluate
@@ -2785,7 +2825,8 @@ JSHandle:
         snapshot: true
 
     getPropertyList:
-      internal: true
+      title: Get property list
+      group: getter
       returns:
         properties:
           type: array
@@ -2796,14 +2837,16 @@ JSHandle:
               value: JSHandle
 
     getProperty:
-      internal: true
+      title: Get JS property
+      group: getter
       parameters:
         name: string
       returns:
         handle: JSHandle
 
     jsonValue:
-      internal: true
+      title: Get JSON value
+      group: getter
       returns:
         value: SerializedValue
 
@@ -2898,7 +2941,8 @@ ElementHandle:
         pausesBeforeInput: true
 
     contentFrame:
-      internal: true
+      title: Get content frame
+      group: getter
       returns:
         frame: Frame?
       flags:
@@ -2960,7 +3004,8 @@ ElementHandle:
         snapshot: true
 
     getAttribute:
-      internal: true
+      title: Get attribute
+      group: getter
       parameters:
         name: string
       returns:
@@ -2990,6 +3035,7 @@ ElementHandle:
 
     innerHTML:
       title: Get HTML
+      group: getter
       returns:
         value: string
       flags:
@@ -2997,6 +3043,7 @@ ElementHandle:
 
     innerText:
       title: Get inner text
+      group: getter
       returns:
         value: string
       flags:
@@ -3004,6 +3051,7 @@ ElementHandle:
 
     inputValue:
       title: Get input value
+      group: getter
       returns:
         value: string
       flags:
@@ -3011,6 +3059,7 @@ ElementHandle:
 
     isChecked:
       title: Is checked
+      group: getter
       returns:
         value: boolean
       flags:
@@ -3018,6 +3067,7 @@ ElementHandle:
 
     isDisabled:
       title: Is disabled
+      group: getter
       returns:
         value: boolean
       flags:
@@ -3025,6 +3075,7 @@ ElementHandle:
 
     isEditable:
       title: Is editable
+      group: getter
       returns:
         value: boolean
       flags:
@@ -3032,6 +3083,7 @@ ElementHandle:
 
     isEnabled:
       title: Is enabled
+      group: getter
       returns:
         value: boolean
       flags:
@@ -3039,6 +3091,7 @@ ElementHandle:
 
     isHidden:
       title: Is hidden
+      group: getter
       returns:
         value: boolean
       flags:
@@ -3046,6 +3099,7 @@ ElementHandle:
 
     isVisible:
       title: Is visible
+      group: getter
       returns:
         value: boolean
       flags:
@@ -3053,6 +3107,7 @@ ElementHandle:
 
     ownerFrame:
       title: Get owner frame
+      group: getter
       returns:
         frame: Frame?
 
@@ -3198,6 +3253,7 @@ ElementHandle:
 
     textContent:
       title: Get text content
+      group: getter
       returns:
         value: string?
       flags:
@@ -3306,11 +3362,14 @@ Route:
         url: string
 
     abort:
+      title: Abort request
+      group: route
       parameters:
         errorCode: string?
 
     continue:
-      internal: true
+      title: Continue request
+      group: route
       parameters:
         url: string?
         method: string?
@@ -3321,7 +3380,8 @@ Route:
         isFallback: boolean
 
     fulfill:
-      internal: true
+      title: Fulfill request
+      group: route
       parameters:
         # default is 200
         status: int?
@@ -3342,19 +3402,22 @@ WebSocketRoute:
   commands:
 
     connect:
-      internal: true
+      title: Connect WebSocket to server
+      group: route
 
     ensureOpened:
       internal: true
 
     sendToPage:
-      internal: true
+      title: Send WebSocket message
+      group: route
       parameters:
         message: string
         isBase64: boolean
 
     sendToServer:
-      internal: true
+      title: Send WebSocket message
+      group: route
       parameters:
         message: string
         isBase64: boolean
@@ -3428,7 +3491,8 @@ Response:
   commands:
 
     body:
-      internal: true
+      title: Get response body
+      group: getter
       returns:
         binary: binary
 
@@ -3558,7 +3622,8 @@ Tracing:
   commands:
 
     tracingStart:
-      internal: true
+      title: Start tracing
+      group: configuration
       parameters:
         name: string?
         snapshots: boolean?
@@ -3566,7 +3631,8 @@ Tracing:
         live: boolean?
 
     tracingStartChunk:
-      internal: true
+      title: Start tracing
+      group: configuration
       parameters:
         name: string?
         title: string?
@@ -3588,7 +3654,8 @@ Tracing:
       title: Group end
 
     tracingStopChunk:
-      internal: true
+      title: Stop tracing
+      group: configuration
       parameters:
         mode:
           type: enum
@@ -3606,7 +3673,8 @@ Tracing:
           items: NameValue
 
     tracingStop:
-      internal: true
+      title: Stop tracing
+      group: configuration
 
 
 Artifact:
@@ -3687,7 +3755,8 @@ CDPSession:
   commands:
 
     send:
-      internal: true
+      title: Send CDP command
+      group: configuration
       parameters:
         method: string
         params: json?
@@ -3695,7 +3764,8 @@ CDPSession:
         result: json
 
     detach:
-      internal: true
+      title: Detach CDP session
+      group: configuration
 
   events:
 
@@ -3870,7 +3940,7 @@ AndroidDevice:
 
   commands:
     wait:
-      hidden: Wait
+      title: Wait
       parameters:
         androidSelector: AndroidSelector
         state:
@@ -4036,7 +4106,8 @@ AndroidDevice:
         socket: AndroidSocket
 
     shell:
-      internal: true
+      title: Execute shell command
+      group: configuration
       parameters:
         command: string
       returns:
@@ -4058,7 +4129,7 @@ AndroidDevice:
         mode: int?
 
     connectToWebView:
-      internal: true
+      title: Connect to Web View
       parameters:
         socketName: string
       returns:

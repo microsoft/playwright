@@ -284,12 +284,25 @@ for (const [name, item] of Object.entries(protocol)) {
 
 
       for (const className of [name, ...(derivedClasses.get(name) || [])]) {
+        if (method.flags?.slowMo && method.internal)
+          throw new Error(`Method "${className}.${methodName}" has "slowMo" flag, so cannot be "internal" in protocol.yml`);
+        if (method.flags?.snapshot && method.internal)
+          throw new Error(`Method "${className}.${methodName}" has "snapshot" flag, so cannot be "internal" in protocol.yml`);
+        if (method.flags?.pausesBeforeInput && method.internal)
+          throw new Error(`Method "${className}.${methodName}" has "pausesBeforeInput" flag, so cannot be "internal" in protocol.yml`);
+        if (!method.title && !method.internal)
+          throw new Error(`Method "${className}.${methodName}" must have a "title" because it is not "internal" in protocol.yml`);
+        if (method.group && method.internal)
+          throw new Error(`Method "${className}.${methodName}" must should not specify "group" because it is "internal" in protocol.yml`);
+        if (method.group && !['getter', 'configuration', 'route', 'default'].includes(method.group))
+          throw new Error(`Unknown group "${method.group}" for method "${className}.${methodName}" in protocol.yml`);
         const internalProp = method.internal ? ` internal: ${method.internal},` : '';
         const titleProp = method.title ? ` title: '${method.title}',` : '';
+        const groupProp = method.group ? ` group: '${method.group}',` : '';
         const slowMoProp = method.flags?.slowMo ? ` slowMo: ${method.flags.slowMo},` : '';
         const snapshotProp = method.flags?.snapshot ? ` snapshot: ${method.flags.snapshot},` : '';
         const pauseProp = method.flags?.pausesBeforeInput ? ` pausesBeforeInput: ${method.flags.pausesBeforeInput},` : '';
-        methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp} }]`);
+        methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp}${groupProp} }]`);
       }
 
       const parameters = objectType(method.parameters || {}, '');
@@ -333,7 +346,7 @@ for (const [name, item] of Object.entries(protocol)) {
   }
 }
 
-metainfo_ts.push(`export const methodMetainfo = new Map<string, { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean }>([
+metainfo_ts.push(`export const methodMetainfo = new Map<string, { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean, group?: string }>([
   ${methodMetainfo.join(`,\n  `)}
 ]);`);
 

@@ -44,6 +44,7 @@ export const DefaultSettingsView: React.FC<{}> = () => {
           value: showAllActions,
           set: setShowAllActions,
           name: 'Show all actions',
+          title: 'Show all actions including routes, getters, boxed fixtures, etc.',
         },
       ]}
     />

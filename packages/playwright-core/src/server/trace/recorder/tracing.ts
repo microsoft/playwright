@@ -20,6 +20,7 @@ import path from 'path';
 
 import { Snapshotter } from './snapshotter';
 import { methodMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
+import { getActionGroup } from '../../../utils/isomorphic/protocolFormatter';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
@@ -650,7 +651,7 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
   return object;
 }
 
-export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
+function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
   return !!metainfo?.snapshot;
 }
@@ -668,6 +669,7 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     params: metadata.params,
     stepId: metadata.stepId,
     pageId: metadata.pageId,
+    visibility: getActionGroup(metadata) ? 'hidden' : undefined,
   };
   if (parentId)
     event.parentId = parentId;

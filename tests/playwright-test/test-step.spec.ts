@@ -1716,7 +1716,7 @@ test('show api calls inside expects', async ({ runInlineTest }) => {
       const expect = baseExpect.extend({
         async toBeInvisible(locator: Locator) {
           try {
-            await expect.poll(() => locator.isVisible()).toBe(false);
+            await expect.poll(() => locator.filter({ visible: true }).count()).toBe(0);
             return { name: 'toBeInvisible', pass: true, message: '' };
           } catch (e) {
             return { name: 'toBeInvisible', pass: false, message: () => 'Expected to be invisible, got visible!' };
@@ -1747,19 +1747,19 @@ pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:16
 expect    |toBeInvisible @ a.test.ts:17
 test.step |  Expect "poll toBe" @ a.test.ts:7
-pw:api    |    Is visible locator('div') @ a.test.ts:7
+pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Is visible locator('div') @ a.test.ts:7
+pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Is visible locator('div') @ a.test.ts:7
+pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Is visible locator('div') @ a.test.ts:7
+pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    toBe @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Is visible locator('div') @ a.test.ts:7
+pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    toBe @ a.test.ts:7
 pw:api    |Wait for timeout @ a.test.ts:18
 pw:api    |Set content @ a.test.ts:19
