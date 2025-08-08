@@ -495,8 +495,8 @@ it('should support simple cut-pasting', async ({ page }) => {
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
-it('should support undo-redo', async ({ page, browserName, isLinux }) => {
-  it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/12000');
+it('should support undo-redo', async ({ page, browserName, isLinux, channel }) => {
+  it.fixme(browserName === 'webkit' && isLinux || channel === 'webkit-wsl', 'https://github.com/microsoft/playwright/issues/12000');
   await page.setContent(`<div contenteditable></div>`);
   const div = page.locator('div');
   await expect(div).toHaveText('');

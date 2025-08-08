@@ -16,15 +16,18 @@
  */
 
 import path from 'path';
+import net from 'net';
+import { PassThrough } from 'stream';
 
 import { kBrowserCloseMessageId } from './wkConnection';
 import { wrapInASCIIBox } from '../utils/ascii';
-import { BrowserType, kNoXServerRunningError } from '../browserType';
+import { BrowserType, kNoXServerRunningError, LaunchLifecycleHooks } from '../browserType';
 import { WKBrowser } from '../webkit/wkBrowser';
+import { spawnAsync } from '../utils/spawnAsync';
+import { registry } from '../registry';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
@@ -36,13 +39,6 @@ export class WebKit extends BrowserType {
 
   override connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
-  }
-
-  override amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env {
-    return {
-      ...env,
-      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
-    };
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
@@ -58,20 +54,35 @@ export class WebKit extends BrowserType {
     transport.send({ method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId });
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]> {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
+
     const webkitArguments = ['--inspector-pipe'];
-    if (process.platform === 'win32')
+
+    if (options.channel === 'webkit-wsl') {
+      const executablePath = registry.findExecutable('webkit-wsl')!._wslExecutablePath!;
+      webkitArguments.unshift(
+          '-d',
+          'playwright',
+          '--cd',
+          '/home/pwuser',
+          '/home/pwuser/node/bin/node',
+          '/home/pwuser/webkit-wsl-pipe-wrapper.mjs',
+          executablePath,
+      );
+    }
+
+    if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
       webkitArguments.push('--disable-accelerated-compositing');
     if (headless)
       webkitArguments.push('--headless');
     if (isPersistent)
-      webkitArguments.push(`--user-data-dir=${userDataDir}`);
+      webkitArguments.push(`--user-data-dir=${options.channel === 'webkit-wsl' ? await translatePathToWSL(userDataDir) : userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
     const proxy = options.proxyOverride || options.proxy;
@@ -80,7 +91,7 @@ export class WebKit extends BrowserType {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
-      } else if (process.platform === 'linux') {
+      } else if (process.platform === 'linux' || process.platform === 'win32' && options.channel === 'webkit-wsl') {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
@@ -97,4 +108,51 @@ export class WebKit extends BrowserType {
       webkitArguments.push('about:blank');
     return webkitArguments;
   }
+
+  override processLifecycleHooks(options: types.LaunchOptions): LaunchLifecycleHooks {
+    if (options.channel !== 'webkit-wsl') {
+      return {
+        ...super.processLifecycleHooks(options),
+        async amendEnvironment(env, options, userDataDir, isPersistent) {
+          return {
+            ...env,
+            'CURL_COOKIE_JAR_PATH': process.platform === 'win32' && isPersistent && options.channel !== 'webkit-wsl' ? path.join(userDataDir, 'cookiejar.db') : undefined,
+          };
+        }
+      };
+    }
+    let transportServer: net.Server = undefined!;
+    const [readPipe, writePipe] = [new PassThrough(), new PassThrough()];
+    return {
+      preLaunch: async () => {
+        transportServer = net.createServer({
+          highWaterMark: 128 * 1024, // 128KB
+        }, socket => {
+          socket.setNoDelay(true);
+          writePipe!.pipe(socket);
+          socket.pipe(readPipe!);
+        });
+        await new Promise<void>(resolve => transportServer.listen(0, resolve));
+      },
+      onExit: async () => {
+        transportServer.close();
+        readPipe.destroy();
+        writePipe.destroy();
+      },
+      amendEnvironment: async (env, options, userDataDir, isPersistent) => {
+        return {
+          ...env,
+          'WSLENV': 'PW_WKWSL_PORT',
+          'PW_WKWSL_PORT': (transportServer.address() as net.AddressInfo)?.port?.toString() ?? '',
+        };
+      },
+      readPipe: () => readPipe,
+      writePipe: () => writePipe,
+    };
+  }
+}
+
+export async function translatePathToWSL(path: string): Promise<string> {
+  const { stdout } = await spawnAsync('wsl.exe', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]);
+  return stdout.toString().trim();
 }

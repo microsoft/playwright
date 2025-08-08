@@ -432,8 +432,8 @@ it.describe('download event', () => {
     ]).toContain(saveError.message);
   });
 
-  it('should close the context without awaiting the download', async ({ browser, server, browserName, platform }, testInfo) => {
-    it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
+  it('should close the context without awaiting the download', async ({ browser, server, browserName, platform, channel }, testInfo) => {
+    it.skip(browserName === 'webkit' && platform === 'linux' || channel === 'webkit-wsl', 'WebKit on linux does not convert to the download immediately upon receiving headers');
 
     server.setRoute('/downloadStall', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
@@ -467,8 +467,8 @@ it.describe('download event', () => {
     ]).toContain(saveError.message);
   });
 
-  it('should throw if browser dies', async ({ server, browserType, browserName, platform }, testInfo) => {
-    it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
+  it('should throw if browser dies', async ({ server, browserType, browserName, platform, channel }, testInfo) => {
+    it.skip(browserName === 'webkit' && platform === 'linux' || channel === 'webkit-wsl', 'WebKit on linux does not convert to the download immediately upon receiving headers');
     server.setRoute('/downloadStall', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment; filename=file.txt');

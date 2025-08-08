@@ -42,7 +42,7 @@ it('Page.Events.Response @smoke', async ({ page, server }) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platform }) => {
+it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platform, channel }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -57,7 +57,7 @@ it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platf
   if (browserName === 'chromium') {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
   } else if (browserName === 'webkit') {
-    if (platform === 'linux')
+    if (platform === 'linux' || channel === 'webkit-wsl')
       expect(failedRequests[0].failure().errorText).toMatch(/(Message Corrupt)|(Connection terminated unexpectedly)/i);
     else if (platform === 'darwin')
       expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
