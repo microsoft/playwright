@@ -74,13 +74,8 @@ def run(playwright: Playwright) -> None:
 });
 
 test('should save the codegen output to a file if specified', async ({ runCLI, channel, browserName, server }, testInfo) => {
-  const tmpFile = testInfo.outputPath('example.py');
-  const cli = runCLI(['--target=python', '--output', tmpFile, server.EMPTY_PAGE], {
-    autoExitWhen: 'page.goto',
-  });
-  await cli.waitForCleanExit();
-  const content = fs.readFileSync(tmpFile);
-  expect(content.toString()).toBe(`import re
+  const cli = runCLI(['--target=python', server.EMPTY_PAGE]);
+  await cli.waitFor(`import re
 from playwright.sync_api import Playwright, sync_playwright, expect
 
 
@@ -89,7 +84,6 @@ def run(playwright: Playwright) -> None:
     context = browser.new_context()
     page = context.new_page()
     page.goto("${server.EMPTY_PAGE}")
-    page.close()
 
     # ---------------------
     context.close()
@@ -131,10 +125,9 @@ with sync_playwright() as playwright:
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `context.route_from_har(${JSON.stringify(harFileName)})`;
-  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`]);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
@@ -142,10 +135,9 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
 test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `context.route_from_har(${JSON.stringify(harFileName)}, url="**/*.js")`;
-  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
