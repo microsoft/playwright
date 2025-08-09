@@ -18,9 +18,9 @@ import { contextTest } from '../../config/browserTest';
 import type { Locator, Page } from 'playwright-core';
 import { step } from '../../config/baseTest';
 import * as path from 'path';
+import fs from 'fs';
 import type { Source } from '../../../packages/recorder/src/recorderTypes';
 import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtures';
-import { stripAnsi } from '../../config/utils';
 import { expect } from '@playwright/test';
 import { nodePlatform } from '../../../packages/playwright-core/lib/server/utils/nodePlatform';
 export { expect } from '@playwright/test';
@@ -29,7 +29,7 @@ type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
   openRecorder: (options?: { testIdAttributeName?: string, language?: string }) => Promise<{ recorder: Recorder, page: Page }>;
-  runCLI: (args: string[], options?: { autoExitWhen?: string }) => CLIMock;
+  runCLI: (args: string[]) => CLIMock;
 };
 
 const codegenLang2Id: Map<string, string> = new Map([
@@ -72,16 +72,20 @@ export const test = contextTest.extend<CLITestArgs>({
     testInfo.slow();
     testInfo.skip(mode.startsWith('service'));
 
-    await run((cliArgs, { autoExitWhen } = {}) => {
-      return new CLIMock(childProcess, {
+    let cli: CLIMock | undefined;
+    await run(cliArgs => {
+      const outputFile = testInfo.outputPath('codegen.output');
+      cli = new CLIMock(childProcess, {
+        outputFile,
         browserName,
         channel,
         headless,
         args: cliArgs,
         executablePath: launchOptions.executablePath,
-        autoExitWhen,
       });
+      return cli;
     });
+    await cli?.exit();
   },
 
   openRecorder: async ({ context, recorderPageGetter }, use) => {
@@ -240,22 +244,25 @@ export class Recorder {
 }
 
 class CLIMock {
-  process: TestChildProcess;
+  private _process: TestChildProcess;
+  private _outputFile: string;
+  private _exitPromise: Promise<void> | undefined;
 
-  constructor(childProcess: CommonFixtures['childProcess'], options: { browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined}) {
+  constructor(childProcess: CommonFixtures['childProcess'], options: { outputFile: string, browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined }) {
+    this._outputFile = options.outputFile;
     const nodeArgs = [
       'node',
       path.join(__dirname, '..', '..', '..', 'packages', 'playwright-core', 'cli.js'),
       'codegen',
       ...options.args,
       `--browser=${options.browserName}`,
+      `--output=${this._outputFile}`,
     ];
     if (options.channel)
       nodeArgs.push(`--channel=${options.channel}`);
-    this.process = childProcess({
+    this._process = childProcess({
       command: nodeArgs,
       env: {
-        PWTEST_CLI_AUTO_EXIT_WHEN: options.autoExitWhen,
         PWTEST_CLI_IS_UNDER_TEST: '1',
         PWTEST_CLI_HEADLESS: options.headless ? '1' : undefined,
         PWTEST_CLI_EXECUTABLE_PATH: options.executablePath,
@@ -266,17 +273,29 @@ class CLIMock {
 
   @step
   async waitFor(text: string): Promise<void> {
-    await expect(() => {
-      expect(this.text()).toContain(text);
-    }).toPass();
+    await expect.poll(() => this.text()).toContain(text);
   }
 
   @step
-  async waitForCleanExit() {
-    return this.process.cleanExit();
+  async exit() {
+    if (!this._exitPromise) {
+      this._process.write('exit\n');
+      this._exitPromise = this._process.cleanExit();
+    }
+    await this._exitPromise;
   }
 
-  text() {
-    return stripAnsi(this.process.output);
+  sigint() {
+    const result = this._process.kill('SIGINT');
+    this._exitPromise = this._process.exited.then(() => undefined); // Avoid double closing.
+    return result;
+  }
+
+  async text() {
+    try {
+      return await fs.promises.readFile(this._outputFile, 'utf-8');
+    } catch {
+      return '';
+    }
   }
 }
