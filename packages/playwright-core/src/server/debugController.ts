@@ -22,7 +22,6 @@ import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { generateCode } from './codegen/language';
-import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
 
 import type { Language } from '../utils';
@@ -176,8 +175,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
   const languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
 
   const actionsChanged = () => {
-    const aa = collapseActions(actions);
-    const { header, footer, text, actionTexts } = generateCode(aa, languageGenerator, {
+    const { header, footer, text, actionTexts } = generateCode(actions, languageGenerator, {
       browserName: 'chromium',
       launchOptions: {},
       contextOptions: {},
@@ -197,6 +195,10 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
   });
   recorder.on(RecorderEvent.ActionAdded, (action: actions.ActionInContext) => {
     actions.push(action);
+    actionsChanged();
+  });
+  recorder.on(RecorderEvent.ActionUpdated, (action: actions.ActionInContext) => {
+    actions[actions.length - 1] = action;
     actionsChanged();
   });
   recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {

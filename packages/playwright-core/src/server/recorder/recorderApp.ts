@@ -17,18 +17,15 @@
 import fs from 'fs';
 import path from 'path';
 
-import { isUnderTest } from '../utils/debug';
+import { monotonicTime, isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { serverSideCallMetadata } from '../instrumentation';
-import { syncLocalStorageWithSettings } from '../launchApp';
-import { launchApp } from '../launchApp';
+import { syncLocalStorageWithSettings, launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
 import { languageSet } from '../codegen/languages';
-import { collapseActions, shouldMergeAction } from './recorderUtils';
 import { generateCode } from '../codegen/language';
 import { Recorder, RecorderEvent } from '../recorder';
-import { monotonicTime } from '../../utils/isomorphic/time';
 import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
@@ -229,6 +226,10 @@ export class RecorderApp {
       this._onActionAdded(action);
     });
 
+    recorder.on(RecorderEvent.ActionUpdated, (action: actions.ActionInContext) => {
+      this._onActionUpdated(action);
+    });
+
     recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
       this._onSignalAdded(signal);
     });
@@ -264,6 +265,11 @@ export class RecorderApp {
 
   private _onActionAdded(action: actions.ActionInContext) {
     this._actions.push(action);
+    this._updateActions();
+  }
+
+  private _onActionUpdated(action: actions.ActionInContext) {
+    this._actions[this._actions.length - 1] = action;
     this._updateActions();
   }
 
@@ -335,10 +341,9 @@ export class RecorderApp {
   private _updateActions(initial: boolean = false) {
     const timestamp = initial ? 0 : monotonicTime();
     const recorderSources = [];
-    const actions = collapseActions(this._actions);
 
     for (const languageGenerator of languageSet()) {
-      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
+      const { header, footer, actionTexts, text } = generateCode(this._actions, languageGenerator, this._languageGeneratorOptions);
       const source: Source = {
         isPrimary: languageGenerator.id === this._primaryLanguage,
         timestamp,
@@ -366,7 +371,6 @@ export class RecorderApp {
 
 export class ProgrammaticRecorderApp {
   static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
-    let lastAction: actions.ActionInContext | null = null;
     const languages = [...languageSet()];
 
     const languageGeneratorOptions = {
@@ -383,11 +387,14 @@ export class ProgrammaticRecorderApp {
       if (!page)
         return;
       const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
-      if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
-      else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
-      lastAction = action;
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
+    });
+    recorder.on(RecorderEvent.ActionUpdated, action => {
+      const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
+      if (!page)
+        return;
+      const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
       const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);

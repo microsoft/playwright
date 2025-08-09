@@ -22,8 +22,6 @@ import { methodMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 
-const symbol = Symbol('Debugger');
-
 export class Debugger extends EventEmitter implements InstrumentationListener {
   private _pauseOnNextStatement = false;
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
@@ -39,7 +37,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   constructor(context: BrowserContext) {
     super();
     this._context = context;
-    (this._context as any)[symbol] = this;
     this._enabled = debugMode() === 'inspector';
     if (this._enabled)
       this.pauseOnNextStatement();

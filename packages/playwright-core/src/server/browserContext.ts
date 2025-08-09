@@ -130,10 +130,6 @@ export abstract class BrowserContext extends SdkObject {
     if (debugMode() === 'inspector')
       await RecorderApp.show(this, { pauseOnNextStatement: true });
 
-    // When paused, show inspector.
-    if (this._debugger.isPaused())
-      RecorderApp.showInspectorNoReply(this);
-
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
       if (this._debugger.isPaused())
         RecorderApp.showInspectorNoReply(this);

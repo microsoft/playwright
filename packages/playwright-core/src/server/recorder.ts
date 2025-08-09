@@ -52,6 +52,7 @@ export const RecorderEvent = {
   CallLogsUpdated: 'callLogsUpdated',
   UserSourcesChanged: 'userSourcesChanged',
   ActionAdded: 'actionAdded',
+  ActionUpdated: 'actionUpdated',
   SignalAdded: 'signalAdded',
   PageNavigated: 'pageNavigated',
   ContextClosed: 'contextClosed',
@@ -64,13 +65,13 @@ export type RecorderEventMap = {
   [RecorderEvent.CallLogsUpdated]: [callLogs: CallLog[]];
   [RecorderEvent.UserSourcesChanged]: [sources: Source[]];
   [RecorderEvent.ActionAdded]: [action: actions.ActionInContext];
+  [RecorderEvent.ActionUpdated]: [action: actions.ActionInContext];
   [RecorderEvent.SignalAdded]: [signal: actions.SignalInContext];
   [RecorderEvent.PageNavigated]: [url: string];
   [RecorderEvent.ContextClosed]: [];
 };
 
 export class Recorder extends EventEmitter<RecorderEventMap> implements InstrumentationListener {
-  readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _params: channels.BrowserContextEnableRecorderParams;
   private _mode: Mode;
@@ -117,12 +118,15 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._params = params;
     this._mode = params.mode || 'none';
     this._recorderMode = params.recorderMode ?? 'default';
-    this.handleSIGINT = params.handleSIGINT;
 
     this._signalProcessor = new RecorderSignalProcessor({
       addAction: (actionInContext: actions.ActionInContext) => {
         if (this._enabled)
           this.emit(RecorderEvent.ActionAdded, actionInContext);
+      },
+      updateAction: (actionInContext: actions.ActionInContext) => {
+        if (this._enabled)
+          this.emit(RecorderEvent.ActionUpdated, actionInContext);
       },
       addSignal: (signal: actions.SignalInContext) => {
         if (this._enabled)

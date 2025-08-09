@@ -16,7 +16,7 @@
 
 import { isUnderTest } from '../utils/debug';
 import { monotonicTime } from '../../utils/isomorphic/time';
-import { generateFrameSelector } from './recorderUtils';
+import { generateFrameSelector, shouldMergeAction } from './recorderUtils';
 
 import type { Signal } from '../../../../recorder/src/actions';
 import type { Frame } from '../frames';
@@ -24,20 +24,27 @@ import type * as actions from '@recorder/actions';
 
 export interface ProcessorDelegate {
   addAction(actionInContext: actions.ActionInContext): void;
+  updateAction(actionInContext: actions.ActionInContext): void;
   addSignal(signalInContext: actions.SignalInContext): void;
 }
 
 export class RecorderSignalProcessor {
   private _delegate: ProcessorDelegate;
-  private _lastAction: actions.ActionInContext | null = null;
+  private _lastAction: actions.ActionInContext | undefined;
 
   constructor(actionSink: ProcessorDelegate) {
     this._delegate = actionSink;
   }
 
   addAction(actionInContext: actions.ActionInContext) {
-    this._lastAction = actionInContext;
-    this._delegate.addAction(actionInContext);
+    if (this._lastAction && shouldMergeAction(actionInContext, this._lastAction)) {
+      actionInContext.startTime = this._lastAction.startTime;
+      this._lastAction = actionInContext;
+      this._delegate.updateAction(actionInContext);
+    } else {
+      this._lastAction = actionInContext;
+      this._delegate.addAction(actionInContext);
+    }
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
