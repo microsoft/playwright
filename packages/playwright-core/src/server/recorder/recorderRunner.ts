@@ -15,7 +15,7 @@
  */
 
 import { serializeExpectedTextValues } from '../../utils';
-import { toKeyboardModifiers } from '../codegen/language';
+import { toKeyboardModifiers } from '../../utils/isomorphic/codegen/codegenUtils';
 import { serverSideCallMetadata } from '../instrumentation';
 import { buildFullSelector, mainFrameForAction } from './recorderUtils';
 import { Progress, ProgressController } from '../progress';

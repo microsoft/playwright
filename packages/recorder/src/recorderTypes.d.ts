@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
+import type { Language } from '@isomorphic/locatorGenerators';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 
 export type Point = { x: number; y: number };

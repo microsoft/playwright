@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
-import { asLocator, escapeWithQuotes, toSnakeCase } from '../../utils';
+import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './codegenUtils';
+import { asLocator } from '../locatorGenerators';
+import { escapeWithQuotes, toSnakeCase } from '../stringUtils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type { BrowserContextOptions } from '../../../types/types';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './codegen';
+import type { BrowserContextOptions } from 'playwright-core';
 import type * as actions from '@recorder/actions';
 
 export class PythonLanguageGenerator implements LanguageGenerator {

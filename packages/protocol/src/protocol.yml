@@ -1563,7 +1563,6 @@ BrowserContext:
           - signalAdded
         data: json
         page: Page
-        code: string
 
 Page:
   type: interface

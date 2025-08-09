@@ -64,7 +64,6 @@ export abstract class BrowserContext extends SdkObject {
     RequestContinued: 'requestcontinued',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
-    RecorderEvent: 'recorderevent',
   };
 
   readonly _pageBindings = new Map<string, PageBinding>();

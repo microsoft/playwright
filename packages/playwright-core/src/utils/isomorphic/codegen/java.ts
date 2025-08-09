@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import { toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './codegenUtils';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { asLocator, escapeWithQuotes } from '../../utils';
+import { asLocator } from '../locatorGenerators';
+import { escapeWithQuotes } from '../stringUtils';
 
-import type { BrowserContextOptions } from '../../../types/types';
-import type * as types from '../types';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type { BrowserContextOptions } from 'playwright-core';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './codegen';
+import type { ClickOptionsForSourceCode } from './codegenUtils';
 import type * as actions from '@recorder/actions';
 
 type JavaLanguageMode = 'library' | 'junit';
@@ -266,7 +267,7 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
   return lines.join('\n');
 }
 
-function formatClickOptions(options: types.MouseClickOptions) {
+function formatClickOptions(options: ClickOptionsForSourceCode) {
   const lines = [];
   if (options.button)
     lines.push(`  .setButton(MouseButton.${options.button.toUpperCase()})`);

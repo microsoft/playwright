@@ -84,16 +84,6 @@ export type ForcedColors = 'active' | 'none' | 'no-override';
 
 export type Contrast = 'no-preference' | 'more' | 'no-override';
 
-export type DeviceDescriptor = {
-  userAgent: string,
-  viewport: Size,
-  deviceScaleFactor: number,
-  isMobile: boolean,
-  hasTouch: boolean,
-  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
-};
-export type Devices = { [name: string]: DeviceDescriptor };
-
 export type ProxySettings = {
   server: string,
   bypass?: string,

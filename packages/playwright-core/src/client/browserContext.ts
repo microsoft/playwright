@@ -40,6 +40,7 @@ import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
+import { generateCode, languageSet } from '../utils/isomorphic/codegen/codegen';
 
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
@@ -78,7 +79,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-  private _onRecorderEventSink: RecorderEventSink | undefined;
+  private _onRecorderEventListener?: (args: channels.BrowserContextRecorderEventEvent) => void;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -148,14 +149,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
-    this._channel.on('recorderEvent', ({ event, data, page, code }) => {
-      if (event === 'actionAdded')
-        this._onRecorderEventSink?.actionAdded?.(Page.from(page), data as actions.ActionInContext, code);
-      else if (event === 'actionUpdated')
-        this._onRecorderEventSink?.actionUpdated?.(Page.from(page), data as actions.ActionInContext, code);
-      else if (event === 'signalAdded')
-        this._onRecorderEventSink?.signalAdded?.(Page.from(page), data as actions.SignalInContext);
-    });
+    this._channel.on('recorderEvent', args => this._onRecorderEventListener?.(args));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
@@ -520,13 +514,36 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
-    if (eventSink)
-      this._onRecorderEventSink = eventSink;
+    if (eventSink) {
+      const languages = [...languageSet()];
+      const languageGeneratorOptions = {
+        browserName: this._browser?._name ?? 'chromium',
+        launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
+        contextOptions: { ...params.contextOptions },
+        deviceName: params.device,
+        saveStorage: params.saveStorage,
+      };
+      const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
+
+      this._onRecorderEventListener = ({ event, data, page }) => {
+        if (event === 'actionAdded') {
+          const action = data as actions.ActionInContext;
+          const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
+          eventSink.actionAdded?.(Page.from(page), action, actionTexts.join('\n'));
+        } else if (event === 'actionUpdated') {
+          const action = data as actions.ActionInContext;
+          const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
+          eventSink.actionUpdated?.(Page.from(page), action, actionTexts.join('\n'));
+        } else if (event === 'signalAdded') {
+          eventSink.signalAdded?.(Page.from(page), data as actions.SignalInContext);
+        }
+      };
+    }
     await this._channel.enableRecorder(params);
   }
 
   async _disableRecorder() {
-    this._onRecorderEventSink = undefined;
+    this._onRecorderEventListener = undefined;
     await this._channel.disableRecorder();
   }
 }

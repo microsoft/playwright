@@ -18,7 +18,7 @@ import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../../server/instrumentation';
 import * as localUtils from '../localUtils';
 import { getUserAgent } from '../utils/userAgent';
-import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
+import { deviceDescriptors as descriptors }  from '../../utils/isomorphic/deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { Progress } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';

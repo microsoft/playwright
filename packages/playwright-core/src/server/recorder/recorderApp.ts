@@ -23,15 +23,14 @@ import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings, launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
-import { languageSet } from '../codegen/languages';
-import { generateCode } from '../codegen/language';
+import { generateCode, languageSet } from '../../utils/isomorphic/codegen/codegen';
 import { Recorder, RecorderEvent } from '../recorder';
 import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
-import type { Language, LanguageGeneratorOptions } from '../codegen/types';
+import type { Language, LanguageGeneratorOptions } from '../../utils/isomorphic/codegen/codegen';
 import type * as channels from '@protocol/channels';
 
 export type RecorderAppParams = channels.BrowserContextEnableRecorderParams & {
@@ -159,14 +158,10 @@ export class RecorderApp {
   }
 
   static async show(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
+    // Note: recorderMode === 'api' should not get here ever.
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
     const recorder = await Recorder.forContext(context, params);
-    if (params.recorderMode === 'api') {
-      const browserName = context._browser.options.name;
-      await ProgrammaticRecorderApp.run(context, recorder, browserName, params);
-      return;
-    }
     await RecorderApp._show(recorder, context, params);
   }
 
@@ -367,44 +362,6 @@ export class RecorderApp {
     this._recorderSources = recorderSources;
     this._pushAllSources();
   }
-}
-
-export class ProgrammaticRecorderApp {
-  static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
-    const languages = [...languageSet()];
-
-    const languageGeneratorOptions = {
-      browserName: browserName,
-      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
-      contextOptions: { ...params.contextOptions },
-      deviceName: params.device,
-      saveStorage: params.saveStorage,
-    };
-    const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
-
-    recorder.on(RecorderEvent.ActionAdded, action => {
-      const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
-      if (!page)
-        return;
-      const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
-    });
-    recorder.on(RecorderEvent.ActionUpdated, action => {
-      const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
-      if (!page)
-        return;
-      const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
-    });
-    recorder.on(RecorderEvent.SignalAdded, signal => {
-      const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
-    });
-  }
-}
-
-function findPageByGuid(context: BrowserContext, guid: string) {
-  return context.pages().find(p => p.guid === guid);
 }
 
 const recorderAppSymbol = Symbol('recorderApp');
