@@ -18,7 +18,6 @@ import { isUnderTest } from '../utils/debug';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { generateFrameSelector, shouldMergeAction } from './recorderUtils';
 
-import type { Signal } from '../../../../recorder/src/actions';
 import type { Frame } from '../frames';
 import type * as actions from '@recorder/actions';
 
@@ -47,7 +46,7 @@ export class RecorderSignalProcessor {
     }
   }
 
-  signal(pageAlias: string, frame: Frame, signal: Signal) {
+  signal(pageAlias: string, frame: Frame, signal: actions.Signal) {
     const timestamp = monotonicTime();
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
       const lastAction = this._lastAction;

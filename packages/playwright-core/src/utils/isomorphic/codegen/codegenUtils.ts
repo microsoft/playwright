@@ -14,40 +14,8 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../..';
-import type * as types from '../types';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type { BrowserContextOptions } from 'playwright-core';
 import type * as actions from '@recorder/actions';
-
-export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
-  const header = languageGenerator.generateHeader(options);
-  const footer = languageGenerator.generateFooter(options.saveStorage);
-  const actionTexts = actions.map(a => generateActionText(languageGenerator, a)).filter(Boolean) as string[];
-  const text = [header, ...actionTexts, footer].join('\n');
-  return { header, footer, actionTexts, text };
-}
-
-function generateActionText(generator: LanguageGenerator, action: actions.ActionInContext): string | undefined {
-  let text = generator.generateAction(action);
-  if (!text)
-    return;
-  if (action.action.preconditionSelector) {
-    const expectAction: actions.ActionInContext = {
-      frame: action.frame,
-      startTime: action.startTime,
-      endTime: action.startTime,
-      action: {
-        name: 'assertVisible',
-        selector: action.action.preconditionSelector,
-        signals: [],
-      },
-    };
-    const expectText = generator.generateAction(expectAction);
-    if (expectText)
-      text = expectText + '\n' + text;
-  }
-  return text;
-}
 
 export function sanitizeDeviceOptions(device: any, options: BrowserContextOptions): BrowserContextOptions {
   // Filter out all the properties from the device descriptor.
@@ -78,8 +46,10 @@ export function toSignalMap(action: actions.Action) {
   };
 }
 
-export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModifier[] {
-  const result: types.SmartKeyboardModifier[] = [];
+export type KeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift' | 'ControlOrMeta';
+
+export function toKeyboardModifiers(modifiers: number): KeyboardModifier[] {
+  const result: KeyboardModifier[] = [];
   if (modifiers & 1)
     result.push('Alt');
   if (modifiers & 2)
@@ -91,7 +61,7 @@ export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModif
   return result;
 }
 
-export function fromKeyboardModifiers(modifiers?: types.SmartKeyboardModifier[]): number {
+export function fromKeyboardModifiers(modifiers?: KeyboardModifier[]): number {
   let result = 0;
   if (!modifiers)
     return result;
@@ -108,9 +78,16 @@ export function fromKeyboardModifiers(modifiers?: types.SmartKeyboardModifier[])
   return result;
 }
 
-export function toClickOptionsForSourceCode(action: actions.ClickAction): types.MouseClickOptions {
+export type ClickOptionsForSourceCode = {
+  button?: 'left' | 'right' | 'middle',
+  modifiers?: KeyboardModifier[],
+  clickCount?: number,
+  position?: actions.Point,
+};
+
+export function toClickOptionsForSourceCode(action: actions.ClickAction) {
   const modifiers = toKeyboardModifiers(action.modifiers);
-  const options: types.MouseClickOptions = {};
+  const options: ClickOptionsForSourceCode = {};
   if (action.button !== 'left')
     options.button = action.button;
   if (modifiers.length)

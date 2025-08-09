@@ -21,8 +21,8 @@ import { asLocator  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { generateCode } from './codegen/language';
-import { JavaScriptLanguageGenerator } from './codegen/javascript';
+import { generateCode } from '../utils/isomorphic/codegen/codegen';
+import { JavaScriptLanguageGenerator } from '../utils/isomorphic/codegen/javascript';
 
 import type { Language } from '../utils';
 import type { BrowserContext } from './browserContext';

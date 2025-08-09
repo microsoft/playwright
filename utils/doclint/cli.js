@@ -91,7 +91,7 @@ async function run() {
 
   // Update device descriptors
   {
-    const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'deviceDescriptorsSource.json')
+    const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'utils', 'isomorphic', 'deviceDescriptorsSource.json')
     const devicesDescriptors = require(devicesDescriptorsSourceFile)
     for (const deviceName of Object.keys(devicesDescriptors)) {
       switch (devicesDescriptors[deviceName].defaultBrowserType) {
