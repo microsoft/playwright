@@ -17,24 +17,20 @@
 import fs from 'fs';
 import path from 'path';
 
-import { isUnderTest } from '../utils/debug';
+import { monotonicTime, isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { serverSideCallMetadata } from '../instrumentation';
-import { syncLocalStorageWithSettings } from '../launchApp';
-import { launchApp } from '../launchApp';
+import { syncLocalStorageWithSettings, launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
-import { languageSet } from '../codegen/languages';
-import { collapseActions, shouldMergeAction } from './recorderUtils';
-import { generateCode } from '../codegen/language';
+import { generateCode, languageSet } from '../../utils/isomorphic/codegen/codegen';
 import { Recorder, RecorderEvent } from '../recorder';
-import { monotonicTime } from '../../utils/isomorphic/time';
 import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
-import type { Language, LanguageGeneratorOptions } from '../codegen/types';
+import type { Language, LanguageGeneratorOptions } from '../../utils/isomorphic/codegen/codegen';
 import type * as channels from '@protocol/channels';
 
 export type RecorderAppParams = channels.BrowserContextEnableRecorderParams & {
@@ -162,14 +158,9 @@ export class RecorderApp {
   }
 
   static async show(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
+    if (process.env.PW_CODEGEN_NO_INSPECTOR || params.recorderMode === 'api')
       return;
     const recorder = await Recorder.forContext(context, params);
-    if (params.recorderMode === 'api') {
-      const browserName = context._browser.options.name;
-      await ProgrammaticRecorderApp.run(context, recorder, browserName, params);
-      return;
-    }
     await RecorderApp._show(recorder, context, params);
   }
 
@@ -229,6 +220,10 @@ export class RecorderApp {
       this._onActionAdded(action);
     });
 
+    recorder.on(RecorderEvent.ActionUpdated, (action: actions.ActionInContext) => {
+      this._onActionUpdated(action);
+    });
+
     recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
       this._onSignalAdded(signal);
     });
@@ -264,6 +259,11 @@ export class RecorderApp {
 
   private _onActionAdded(action: actions.ActionInContext) {
     this._actions.push(action);
+    this._updateActions();
+  }
+
+  private _onActionUpdated(action: actions.ActionInContext) {
+    this._actions[this._actions.length - 1] = action;
     this._updateActions();
   }
 
@@ -335,10 +335,9 @@ export class RecorderApp {
   private _updateActions(initial: boolean = false) {
     const timestamp = initial ? 0 : monotonicTime();
     const recorderSources = [];
-    const actions = collapseActions(this._actions);
 
     for (const languageGenerator of languageSet()) {
-      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
+      const { header, footer, actionTexts, text } = generateCode(this._actions, languageGenerator, this._languageGeneratorOptions);
       const source: Source = {
         isPrimary: languageGenerator.id === this._primaryLanguage,
         timestamp,
@@ -362,42 +361,6 @@ export class RecorderApp {
     this._recorderSources = recorderSources;
     this._pushAllSources();
   }
-}
-
-export class ProgrammaticRecorderApp {
-  static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
-    let lastAction: actions.ActionInContext | null = null;
-    const languages = [...languageSet()];
-
-    const languageGeneratorOptions = {
-      browserName: browserName,
-      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
-      contextOptions: { ...params.contextOptions },
-      deviceName: params.device,
-      saveStorage: params.saveStorage,
-    };
-    const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
-
-    recorder.on(RecorderEvent.ActionAdded, action => {
-      const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
-      if (!page)
-        return;
-      const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
-      if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
-      else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
-      lastAction = action;
-    });
-    recorder.on(RecorderEvent.SignalAdded, signal => {
-      const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
-    });
-  }
-}
-
-function findPageByGuid(context: BrowserContext, guid: string) {
-  return context.pages().find(p => p.guid === guid);
 }
 
 const recorderAppSymbol = Symbol('recorderApp');

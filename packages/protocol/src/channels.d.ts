@@ -1694,7 +1694,6 @@ export type BrowserContextRecorderEventEvent = {
   event: 'actionAdded' | 'actionUpdated' | 'signalAdded',
   data: any,
   page: PageChannel,
-  code: string,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],
