@@ -463,8 +463,7 @@ await page1.GotoAsync("about:blank?foo");`);
     // Since our interrupt is non-graceful, we need to wait for the process to settle.
     // This test should be fixed.
     await new Promise(resolve => setTimeout(resolve, 2000));
-    await cli.process.kill('SIGINT');
-    const { exitCode, signal } = await cli.process.exited;
+    const { exitCode, signal } = await cli.sigint();
     if (exitCode !== null) {
       expect(exitCode).toBe(130);
     } else {

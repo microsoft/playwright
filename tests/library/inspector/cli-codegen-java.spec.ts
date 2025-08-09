@@ -55,7 +55,8 @@ test('should print the correct context options when using a device', async ({ br
         .setIsMobile(true)
         .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/XXXX Mobile Safari/537.36")
         .setViewportSize(411, 731));`;
-  expect(cli.text().replace(/(.*Chrome\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
+  const text = await cli.text();
+  expect(text.replace(/(.*Chrome\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, runCLI, server }) => {
@@ -70,7 +71,8 @@ test('should print the correct context options when using a device and additiona
         .setIsMobile(true)
         .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/XXXX Mobile/15E148 Safari/604.1")
         .setViewportSize(414, 715));`;
-  expect(cli.text().replace(/(.*Version\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
+  const text = await cli.text();
+  expect(text.replace(/(.*Version\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
 });
 
 test('should print load/save storage_state', async ({ runCLI, server }, testInfo) => {
@@ -91,11 +93,9 @@ test('should work with --save-har and --save-har-glob as java-library', async ({
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `context.routeFromHAR(Paths.get(${JSON.stringify(harFileName)}), new BrowserContext.RouteFromHAROptions()
         .setUrl("**/*.js"));`;
-  const cli = runCLI(['--target=java', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
-    autoExitWhen: expectedResult,
-  });
-
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=java', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
@@ -104,11 +104,9 @@ test('should work with --save-har and --save-har-glob as java-junit', async ({ r
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `page.routeFromHAR(Paths.get(${JSON.stringify(harFileName)}), new Page.RouteFromHAROptions()
       .setUrl("**/*.js"));`;
-  const cli = runCLI(['--target=java-junit', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
-    autoExitWhen: expectedResult,
-  });
-
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=java-junit', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });

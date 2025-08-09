@@ -23,50 +23,62 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
   await exec('npx playwright install chromium');
 
   await test.step('codegen without arguments', async () => {
-    const result = await exec('npx playwright codegen', {
+    const outputFile = test.info().outputPath('codegen.output');
+    await exec(`npx playwright codegen --output=${outputFile}`, {
       env: {
         PWTEST_CLI_IS_UNDER_TEST: '1',
-        PWTEST_CLI_AUTO_EXIT_WHEN: '@playwright/test',
+        PWTEST_CLI_EXIT_AFTER_TIMEOUT: '10000',
       }
     });
-    expect(result).toContain(`{ page }`);
+    const contents = fs.readFileSync(outputFile, 'utf-8');
+    expect(contents).toContain(`@playwright/test`);
+    expect(contents).toContain(`{ page }`);
   });
 
   await test.step('codegen with user data dir', async () => {
     const userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-custom-user-data-dir'));
+    const outputFile = test.info().outputPath('codegen.output');
 
     try {
-      const result = await exec(`npx playwright codegen --user-data-dir ${userDataDir} about:blank`, {
+      await exec(`npx playwright codegen  --output=${outputFile} --user-data-dir ${userDataDir} about:blank`, {
         env: {
           PWTEST_CLI_IS_UNDER_TEST: '1',
-          PWTEST_CLI_AUTO_EXIT_WHEN: `goto('about:blank')`,
+          PWTEST_CLI_EXIT_AFTER_TIMEOUT: '10000',
         }
       });
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-      expect(result).toContain(`{ page }`);
+      const contents = fs.readFileSync(outputFile, 'utf-8');
+      expect(contents).toContain(`goto('about:blank')`);
+      expect(contents).toContain(`{ page }`);
     } finally {
       fs.rmSync(userDataDir, { recursive: true });
     }
   });
 
   await test.step('codegen --target=javascript', async () => {
-    const result = await exec('npx playwright codegen --target=javascript', {
+    const outputFile = test.info().outputPath('codegen.output');
+    await exec(`npx playwright codegen --target=javascript --output=${outputFile}`, {
       env: {
         PWTEST_CLI_IS_UNDER_TEST: '1',
-        PWTEST_CLI_AUTO_EXIT_WHEN: 'context.close',
+        PWTEST_CLI_EXIT_AFTER_TIMEOUT: '10000',
       }
     });
-    expect(result).toContain(`playwright`);
+    const contents = fs.readFileSync(outputFile, 'utf-8');
+    expect(contents).toContain(`context.close`);
+    expect(contents).toContain(`playwright`);
   });
 
   await test.step('codegen --target=python', async () => {
-    const result = await exec('npx playwright codegen --target=python', {
+    const outputFile = test.info().outputPath('codegen.output');
+    await exec(`npx playwright codegen --target=python --output=${outputFile}`, {
       env: {
         PWTEST_CLI_IS_UNDER_TEST: '1',
-        PWTEST_CLI_AUTO_EXIT_WHEN: 'chromium.launch',
+        PWTEST_CLI_EXIT_AFTER_TIMEOUT: '10000',
       },
     });
-    expect(result).toContain(`browser.close`);
+    const contents = fs.readFileSync(outputFile, 'utf-8');
+    expect(contents).toContain(`chromium.launch`);
+    expect(contents).toContain(`browser.close`);
   });
 
   await test.step('screenshot', async () => {
