@@ -64,7 +64,6 @@ export abstract class BrowserContext extends SdkObject {
     RequestContinued: 'requestcontinued',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
-    RecorderEvent: 'recorderevent',
   };
 
   readonly _pageBindings = new Map<string, PageBinding>();
@@ -129,10 +128,6 @@ export abstract class BrowserContext extends SdkObject {
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
       await RecorderApp.show(this, { pauseOnNextStatement: true });
-
-    // When paused, show inspector.
-    if (this._debugger.isPaused())
-      RecorderApp.showInspectorNoReply(this);
 
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
       if (this._debugger.isPaused())

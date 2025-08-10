@@ -17,7 +17,16 @@
 
 import deviceDescriptorsSource from './deviceDescriptorsSource.json';
 
-import type { Devices } from './types';
+import type { Size } from './types';
 
+type DeviceDescriptor = {
+  userAgent: string,
+  viewport: Size,
+  deviceScaleFactor: number,
+  isMobile: boolean,
+  hasTouch: boolean,
+  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
+};
+type Devices = { [name: string]: DeviceDescriptor };
 
 export const deviceDescriptors = deviceDescriptorsSource as Devices;

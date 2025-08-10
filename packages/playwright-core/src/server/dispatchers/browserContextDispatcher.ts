@@ -34,8 +34,9 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
-import { Recorder } from '../recorder';
+import { Recorder, RecorderEvent } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
+import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
 
 import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
@@ -45,6 +46,7 @@ import type { InitScript, Page, PageBinding } from '../page';
 import type { DispatcherScope } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type * as actions from '@recorder/actions';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -59,6 +61,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: (string | RegExp)[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
+  private _recorderListeners: RegisteredListener[] = [];
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -200,9 +203,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
     });
-    this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }) => {
-      this._dispatchEvent('recorderEvent', { event, data, code, page: PageDispatcher.from(this, page) });
-    });
   }
 
   private _shouldDispatchNetworkEvent(request: Request, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
@@ -340,13 +340,37 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
-    await RecorderApp.show(this._context, params);
+    if (params.recorderMode !== 'api') {
+      await RecorderApp.show(this._context, params);
+      return;
+    }
+
+    const findPageByGuid = (guid: string) => this._context.pages().find(p => p.guid === guid);
+    const recorder = await Recorder.forContext(this._context, params);
+    this._recorderListeners = [
+      eventsHelper.addEventListener(recorder, RecorderEvent.ActionAdded, (action: actions.ActionInContext) => {
+        const page = findPageByGuid(action.frame.pageGuid);
+        if (page)
+          this._dispatchEvent('recorderEvent', { event: 'actionAdded', data: action, page: PageDispatcher.from(this, page) });
+      }),
+      eventsHelper.addEventListener(recorder, RecorderEvent.ActionUpdated, (action: actions.ActionInContext) => {
+        const page = findPageByGuid(action.frame.pageGuid);
+        if (page)
+          this._dispatchEvent('recorderEvent', { event: 'actionUpdated', data: action, page: PageDispatcher.from(this, page) });
+      }),
+      eventsHelper.addEventListener(recorder, RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
+        const page = findPageByGuid(signal.frame.pageGuid);
+        if (page)
+          this._dispatchEvent('recorderEvent', { event: 'signalAdded', data: signal, page: PageDispatcher.from(this, page) });
+      }),
+    ];
   }
 
   async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
     const recorder = Recorder.existingForContext(this._context);
     if (recorder)
       recorder.setMode('none');
+    eventsHelper.removeEventListeners(this._recorderListeners);
   }
 
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {
@@ -442,5 +466,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     if (this._clockPaused)
       this._context.clock.resumeNoReply();
     this._clockPaused = false;
+    eventsHelper.removeEventListeners(this._recorderListeners);
   }
 }

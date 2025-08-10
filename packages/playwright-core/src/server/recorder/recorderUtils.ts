@@ -99,22 +99,6 @@ export function shouldMergeAction(action: actions.ActionInContext, lastAction: a
   return false;
 }
 
-export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
-  const result: actions.ActionInContext[] = [];
-  for (const action of actions) {
-    const lastAction = result[result.length - 1];
-    const shouldMerge = shouldMergeAction(action, lastAction);
-    if (!shouldMerge) {
-      result.push(action);
-      continue;
-    }
-    const startTime = result[result.length - 1].startTime;
-    result[result.length - 1] = action;
-    result[result.length - 1].startTime = startTime;
-  }
-  return result;
-}
-
 export async function generateFrameSelector(frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
   while (frame) {

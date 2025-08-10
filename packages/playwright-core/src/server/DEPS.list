@@ -3,6 +3,7 @@
 ../protocol/
 ../utils
 ../utils/isomorphic/
+../utils/isomorphic/codegen
 ../utilsBundle.ts
 ../zipBundle.ts
 ./

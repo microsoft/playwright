@@ -32,10 +32,10 @@ import { Frame } from './frames';
 import { Page } from './page';
 import { performAction } from './recorder/recorderRunner';
 
-import type { Language } from './codegen/types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
-import type { Point } from '../utils/isomorphic/types';
+import type { Point } from '@isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { Language } from '@isomorphic/locatorGenerators';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
@@ -52,6 +52,7 @@ export const RecorderEvent = {
   CallLogsUpdated: 'callLogsUpdated',
   UserSourcesChanged: 'userSourcesChanged',
   ActionAdded: 'actionAdded',
+  ActionUpdated: 'actionUpdated',
   SignalAdded: 'signalAdded',
   PageNavigated: 'pageNavigated',
   ContextClosed: 'contextClosed',
@@ -64,13 +65,13 @@ export type RecorderEventMap = {
   [RecorderEvent.CallLogsUpdated]: [callLogs: CallLog[]];
   [RecorderEvent.UserSourcesChanged]: [sources: Source[]];
   [RecorderEvent.ActionAdded]: [action: actions.ActionInContext];
+  [RecorderEvent.ActionUpdated]: [action: actions.ActionInContext];
   [RecorderEvent.SignalAdded]: [signal: actions.SignalInContext];
   [RecorderEvent.PageNavigated]: [url: string];
   [RecorderEvent.ContextClosed]: [];
 };
 
 export class Recorder extends EventEmitter<RecorderEventMap> implements InstrumentationListener {
-  readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _params: channels.BrowserContextEnableRecorderParams;
   private _mode: Mode;
@@ -117,12 +118,15 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._params = params;
     this._mode = params.mode || 'none';
     this._recorderMode = params.recorderMode ?? 'default';
-    this.handleSIGINT = params.handleSIGINT;
 
     this._signalProcessor = new RecorderSignalProcessor({
       addAction: (actionInContext: actions.ActionInContext) => {
         if (this._enabled)
           this.emit(RecorderEvent.ActionAdded, actionInContext);
+      },
+      updateAction: (actionInContext: actions.ActionInContext) => {
+        if (this._enabled)
+          this.emit(RecorderEvent.ActionUpdated, actionInContext);
       },
       addSignal: (signal: actions.SignalInContext) => {
         if (this._enabled)
