@@ -205,7 +205,9 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
 
   const link = page.getByText('https://fb.me/react-devtools');
   await expect(link).toHaveCSS('color', 'rgb(0, 0, 255)');
-  await expect(link).toHaveCSS('text-decoration', 'none solid rgb(0, 0, 255)');
+  await expect(link).toHaveCSS('text-decoration-color', 'rgb(0, 0, 255)');
+  await expect(link).toHaveCSS('text-decoration-style', 'solid');
+  await expect(link).toHaveCSS('text-decoration-line', 'none');
 });
 
 test('should stream console messages live', async ({ runUITest }) => {
