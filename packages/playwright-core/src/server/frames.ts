@@ -1451,7 +1451,7 @@ export class Frame extends SdkObject {
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     expression = js.normalizeEvaluationExpression(expression, isFunction);
-    return this.retryWithProgressAndTimeouts(progress, [100], async () => {
+    return this.retryWithProgressAndTimeouts(progress, [100], async continuePolling => {
       const context = world === 'main' ? await progress.race(this._mainContext()) : await progress.race(this._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
       const handle = await progress.race(injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
@@ -1501,6 +1501,13 @@ export class Frame extends SdkObject {
       try {
         return await progress.race(handle.evaluateHandle(h => h.result));
       } catch (error) {
+        // unsafe-eval sometimes occurs because of race conditions with other evals.
+        // we can safely retry.
+        if (
+          error instanceof js.JavaScriptErrorInEvaluate
+          && error.message.includes(`Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source`)
+        )
+          return continuePolling;
         // Note: it is important to await "abort()" to prevent any side effects
         // after this method returns.
         await handle.evaluate(h => h.abort()).catch(() => {});
