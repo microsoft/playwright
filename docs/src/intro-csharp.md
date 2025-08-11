@@ -18,6 +18,7 @@ You can choose to use MSTest, NUnit, or xUnit [base classes](./test-runners.md) 
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -44,6 +45,14 @@ cd PlaywrightTests
 ```
 
 </TabItem>
+<TabItem value="xunit-v3">
+
+```bash
+dotnet new xunit -n PlaywrightTests
+cd PlaywrightTests
+```
+
+</TabItem>
 </Tabs>
 
 2. Install the necessary Playwright dependencies:
@@ -55,6 +64,7 @@ cd PlaywrightTests
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -75,6 +85,13 @@ dotnet add package Microsoft.Playwright.MSTest
 
 ```bash
 dotnet add package Microsoft.Playwright.Xunit
+```
+
+</TabItem>
+<TabItem value="xunit-v3">
+
+```bash
+dotnet add package Microsoft.Playwright.Xunit.v3
 ```
 
 </TabItem>
@@ -105,6 +122,7 @@ Edit the `UnitTest1.cs` file with the code below to create an example end-to-end
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -216,6 +234,40 @@ public class UnitTest1: PageTest
 }
 ```
 </TabItem>
+<TabItem value="xunit-v3">
+
+```csharp title="UnitTest1.cs"
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task HasTitle()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Expect a title "to contain" a substring.
+        await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Click the get started link.
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
+
+        // Expects page to have a heading with the name of Installation.
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
+    } 
+}
+```
+</TabItem>
 
 </Tabs>
 
@@ -243,4 +295,4 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
-- [Learn more about the MSTest, NUnit, and xUnit base classes](./test-runners.md)
+- [Learn more about the MSTest, NUnit, xUnit and xUnit v3 base classes](./test-runners.md)
