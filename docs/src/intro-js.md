@@ -126,7 +126,8 @@ pnpm exec playwright test
 
 </Tabs>
 
-![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
+![tests running in command line](./images/getting-started/run-tests-cli.jpg)
+
 Tips:
 - See the browser window: add `--headed`.
 - Run a single project/browser: `--project=chromium`.
@@ -174,7 +175,7 @@ pnpm exec playwright show-report
 
 </Tabs>
 
-![HTML Report](https://github.com/microsoft/playwright/assets/13063165/38ec17a7-9e61-4002-b137-a93812765501)
+![HTML Report](./images/getting-started/html-report-cli.jpg)
 
 ## Running the Example Test in UI Mode
 
@@ -216,13 +217,13 @@ pnpm exec playwright test --ui
 
 </Tabs>
 
-![UI Mode](https://github.com/microsoft/playwright/assets/13063165/c5b501cc-4f5d-485a-87cc-66044c651786)
+![UI Mode](./images/getting-started/ui-mode.jpg)
 
 See the [detailed guide on UI Mode](./test-ui-mode.md) for watch filters, step details and trace integration.
 
 ## Updating Playwright
 
-Update Playwright and (optionally) refresh browsers:
+Update Playwright and download new browser binaries and their dependencies:
 
 <Tabs
   groupId="js-package-manager"
@@ -238,7 +239,6 @@ Update Playwright and (optionally) refresh browsers:
 
 ```bash
 npm install -D @playwright/test@latest
-# Also download new browser binaries and their dependencies:
 npx playwright install --with-deps
 ```
 
@@ -248,7 +248,6 @@ npx playwright install --with-deps
 
 ```bash
 yarn add --dev @playwright/test@latest
-# Also download new browser binaries and their dependencies:
 yarn playwright install --with-deps
 ```
 
@@ -258,7 +257,6 @@ yarn playwright install --with-deps
 
 ```bash
 pnpm install --save-dev @playwright/test@latest
-# Also download new browser binaries and their dependencies:
 pnpm exec playwright install --with-deps
 ```
 
