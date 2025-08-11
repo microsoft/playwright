@@ -42,7 +42,7 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
       }
       for (const paramName of params) {
         const found = members.some(member => paramsForMember(member).has(paramName));
-        if (!found)
+        if (!found && !paramName.startsWith('_'))
           errors.push(`Missing documentation for "${className}.${methodName}.${paramName}"`);
       }
     }
