@@ -67,7 +67,8 @@ it('should work with different subtypes @smoke', async ({ page, browserName }) =
   expect((await page.evaluateHandle('new Set()')).toString()).toContain('Set');
   expect((await page.evaluateHandle('[]')).toString()).toContain('Array');
   expect((await page.evaluateHandle('null')).toString()).toBe('null');
-  expect((await page.evaluateHandle('document.body')).toString()).toBe('JSHandle@node');
+  const bodyHandle = await page.evaluateHandle('document.body');
+  await expect.poll(() => bodyHandle.toString()).toBe('JSHandle@<body></body>');
   expect((await page.evaluateHandle('new WeakMap()')).toString()).toBe('WeakMap');
   expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('WeakSet');
   expect((await page.evaluateHandle('new Error()')).toString()).toContain('Error');
