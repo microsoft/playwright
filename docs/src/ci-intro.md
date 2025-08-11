@@ -271,7 +271,7 @@ You can upload Traces which get created on your CI like GitHub Actions as artifa
 ######
 * langs: csharp
 
-![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/84150084-5019-470a-8449-b61d206bfbb0)
+![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.png)
 
 ## Publishing report on the web
 * langs: js
