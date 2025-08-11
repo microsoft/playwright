@@ -250,8 +250,8 @@ export class Locator implements api.Locator {
   }
 
   // options are only here for testing
-  async count(options?: {}): Promise<number> {
-    return await this._frame._queryCount(this._selector, options);
+  async count(_options?: {}): Promise<number> {
+    return await this._frame._queryCount(this._selector, _options);
   }
 
   async _resolveSelector(): Promise<{ resolvedSelector: string }> {
