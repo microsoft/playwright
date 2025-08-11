@@ -1462,7 +1462,7 @@ pw:api    |    Close context
 
 test('reading network request / response should not be listed as step', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' }
-}, async ({ runInlineTest, server, page }) => {
+}, async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
