@@ -126,7 +126,7 @@ pnpm exec playwright test
 
 </Tabs>
 
-![tests running in command line](./images/getting-started/run-tests-cli.jpg)
+![tests running in command line](./images/getting-started/run-tests-cli.png)
 
 Tips:
 - See the browser window: add `--headed`.
@@ -175,7 +175,7 @@ pnpm exec playwright show-report
 
 </Tabs>
 
-![HTML Report](./images/getting-started/html-report-cli.jpg)
+![HTML Report](./images/getting-started/html-report-cli.png)
 
 ## Running the Example Test in UI Mode
 
@@ -217,7 +217,7 @@ pnpm exec playwright test --ui
 
 </Tabs>
 
-![UI Mode](./images/getting-started/ui-mode.jpg)
+![UI Mode](./images/getting-started/ui-mode.png)
 
 See the [detailed guide on UI Mode](./test-ui-mode.md) for watch filters, step details and trace integration.
 
