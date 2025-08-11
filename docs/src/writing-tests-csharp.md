@@ -40,6 +40,7 @@ Take a look at the following example to see how to write a test.
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -125,6 +126,40 @@ public class ExampleTest : PageTest
 using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task HasTitle()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Expect a title "to contain" a substring.
+        await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Click the get started link.
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
+
+        // Expects page to have a heading with the name of Installation.
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
+    } 
+}
+```
+</TabItem>
+<TabItem value="xunit-v3">
+
+```csharp title="UnitTest1.cs"
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
 
 namespace PlaywrightTests;
 
@@ -231,7 +266,7 @@ Here is the list of the most popular async assertions. Note that there are [many
 
 ## Test Isolation
 
-The Playwright NUnit and MSTest test framework base classes will isolate each test from each other by providing a separate `Page` instance. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
+The Playwright NUnit, MSTest, xUnit, and xUnit v3 test framework base classes will isolate each test from each other by providing a separate `Page` instance. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
 <Tabs
   groupId="test-runners"
@@ -240,6 +275,7 @@ The Playwright NUnit and MSTest test framework base classes will isolate each te
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -304,6 +340,25 @@ public class UnitTest1: PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit-v3">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task BasicTest()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+    }
+}
+```
+
+</TabItem>
 </Tabs>
 
 ## Using Test Hooks
@@ -315,6 +370,7 @@ public class UnitTest1: PageTest
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -411,6 +467,39 @@ public class UnitTest1: PageTest
 }
 ```
 </TabItem>
+<TabItem value="xunit-v3">
+
+You can use `InitializeAsync`/`DisposeAsync` to prepare and clean up your test environment:
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task MainNavigation()
+    {
+        // Assertions use the expect API.
+        await Expect(Page).ToHaveURLAsync("https://playwright.dev/");
+    }
+
+    override public async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await Page.GotoAsync("https://playwright.dev");
+    }
+
+    public override async Task DisposeAsync()
+    {
+        Console.WriteLine("After each test cleanup");
+        await base.DisposeAsync();
+    }
+}
+```
+</TabItem>
 </Tabs>
 
 ## What's Next
@@ -419,4 +508,4 @@ public class UnitTest1: PageTest
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
-- [Learn more about the MSTest, NUnit, or xUnit base classes](./test-runners.md)
+- [Learn more about the MSTest, NUnit, xUnit, or xUnit v3 base classes](./test-runners.md)
