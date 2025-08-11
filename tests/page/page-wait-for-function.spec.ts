@@ -106,7 +106,7 @@ it('should work with strict CSP policy', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let error = null;
   const p = page.waitForFunction(() => window['__FOO'] === 'hit', {}, { polling: 'raf' }).catch(e => error = e);
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(1000);
   await page.evaluate(() => window['__FOO'] = 'hit');
   await p;
   expect(error).toBe(null);
