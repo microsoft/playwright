@@ -21,7 +21,7 @@ You can run your tests with the `playwright test` command. This runs your tests 
 npx playwright test
 ```
 
-![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
+![tests running in command line](./images/getting-started/run-tests-cli.jpg)
 
 ### Run tests in UI mode
 
@@ -31,7 +31,7 @@ We highly recommend running your tests with [UI Mode](./test-ui-mode.md) for a b
 npx playwright test --ui
 ```
 
-![UI Mode](https://github.com/microsoft/playwright/assets/13063165/c5b501cc-4f5d-485a-87cc-66044c651786)
+![UI Mode](./images/getting-started/ui-mode.jpg)
 
 Check out our [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
 
@@ -110,11 +110,11 @@ We highly recommend debugging your tests with [UI Mode](./test-ui-mode.md) for a
 npx playwright test --ui
 ```
 
-![showing errors in ui mode](https://github.com/microsoft/playwright/assets/13063165/ffca2fd1-5349-41fb-ade9-ace143bb2c58)
+![showing errors in ui mode](./images/getting-started/ui-mode-error.jpg)
 
 While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator in the locator playground and see it highlighting live in the browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
-![pick locator in ui mode](https://github.com/microsoft/playwright/assets/13063165/9e7eeb84-bd26-4010-8614-75e24b56c716)
+![pick locator in ui mode](./images/getting-started/ui-mode-pick-locator.jpg)
 
 Check out our [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
 
@@ -126,7 +126,7 @@ To debug all tests, run the Playwright test command followed by the `--debug` fl
 npx playwright test --debug
 ```
 
-![Debugging Tests with the Playwright inspector](https://github.com/microsoft/playwright/assets/13063165/6b3b3caa-d258-4cb8-aa05-cd407f501626)
+![Debugging Tests with the Playwright inspector](./images/getting-started/run-tests-debug.jpg)
 
 This command opens a browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or, press the play button to run your test from start to finish. Once the test finishes, the browser window closes.
 
@@ -144,7 +144,7 @@ npx playwright test example.spec.ts:10 --debug
 
 While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator and see it highlighting live in the browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
-![Locator picker in the Playwright Inspector](https://github.com/microsoft/playwright/assets/13063165/013d5edb-583e-423a-bb53-9f57bab7f3e1)
+![Locator picker in the Playwright Inspector](./images/getting-started/run-tests-pick-locator.jpg)
 
 
 Check out our [debugging guide](./debug.md) to learn more about debugging with the [VS Code debugger](./debug.md#vs-code-debugger), UI Mode, and the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
@@ -152,17 +152,17 @@ Check out our [debugging guide](./debug.md) to learn more about debugging with t
 
 ## Test reports
 
-The [HTML Reporter](./test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests, and flaky tests. By default, the HTML report opens automatically if some of the tests failed, otherwise you can open it with the following command.
+The [HTML Reporter](./test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests, and flaky tests. By default, the HTML report opens automatically if some tests failed, otherwise you can open it with the following command.
 
 ```bash
 npx playwright show-report
 ```
 
-![HTML Report](https://github.com/microsoft/playwright/assets/13063165/c5f60e56-fb75-4a2d-a4b6-054b8c5d69c1)
+![HTML Report](./images/getting-started/html-report.jpg)
 
 You can filter and search for tests as well as click on each test to see the test errors and explore each step of the test.
 
-![HTML Reporter detail view](https://github.com/microsoft/playwright/assets/13063165/f36ada14-4701-4534-a3be-ed22c2b16cf5)
+![HTML Reporter detail view](./images/getting-started/html-report-detail.jpg)
 
 
 ## What's next
