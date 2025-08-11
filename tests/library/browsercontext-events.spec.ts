@@ -29,9 +29,9 @@ test('console event should work @smoke', async ({ page }) => {
 
 test('console event should work with element handles', async ({ page }) => {
   await page.setContent('<body>hello</body>');
-  const [, message] = await Promise.all([
-    page.evaluate(() => console.log(document.body)),
+  const [message] = await Promise.all([
     page.context().waitForEvent('console'),
+    page.evaluate(() => console.log(document.body)),
   ]);
   const body = message.args()[0];
   expect(await body.evaluate(x => x.nodeName)).toBe('BODY');
