@@ -3612,7 +3612,7 @@ A glob pattern, regex pattern, or predicate that receives a [URL] to match durin
 ### param: Page.route.handler
 * since: v1.8
 * langs: js, python
-- `handler` <[function]\([Route], [Request]\): [Promise<any>|any]>
+- `handler` <[function]\([Route]\): [Promise<any>|any]|[function]\([Route], [Request]\): [Promise<any>|any]>
 
 handler function to route the request.
 
