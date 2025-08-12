@@ -1,4 +1,3 @@
-````markdown
 ---
 id: writing-tests
 title: "Writing tests"
