@@ -322,13 +322,6 @@ export class RecorderApp {
     this._page.mainFrame().evaluateExpression((({ sources }: { sources: Source[] }) => {
       window.playwrightSetSources(sources);
     }).toString(), { isFunction: true }, { sources }).catch(() => {});
-
-    // Testing harness for runCLI mode.
-    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
-      const primarySource = sources.find(s => s.isPrimary);
-      if ((process as any)._didSetSourcesForTest(primarySource?.text ?? ''))
-        this._page.close().catch(() => {});
-    }
   }
 
   private _updateActions(initial: boolean = false) {

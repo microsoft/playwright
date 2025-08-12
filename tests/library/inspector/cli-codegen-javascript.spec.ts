@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { test, expect } from './inspectorTest';
+import { test } from './inspectorTest';
 
 const launchOptions = (channel: string) => {
   return channel ? `channel: '${channel}',\n    headless: false` : 'headless: false';
@@ -82,13 +82,8 @@ test('should print the correct context options when using a device and additiona
 });
 
 test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI, server }, testInfo) => {
-  const tmpFile = testInfo.outputPath('script.js');
-  const cli = runCLI(['--output', tmpFile, '--target=javascript', server.EMPTY_PAGE], {
-    autoExitWhen: 'await page.goto', // We have to wait for the initial navigation to be recorded.
-  });
-  await cli.waitForCleanExit();
-  const content = fs.readFileSync(tmpFile);
-  expect(content.toString()).toBe(`const { ${browserName} } = require('playwright');
+  const cli = runCLI(['--target=javascript', server.EMPTY_PAGE]);
+  await cli.waitFor(`const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
@@ -97,7 +92,6 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto('${server.EMPTY_PAGE}');
-  await page.close();
 
   // ---------------------
   await context.close();

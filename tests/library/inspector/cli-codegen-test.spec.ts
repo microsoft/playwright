@@ -22,6 +22,7 @@ test('should print the correct imports and context options', async ({ runCLI, se
   const expectedResult = `import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
+  await page.goto('${server.EMPTY_PAGE}');
 });`;
   await cli.waitFor(expectedResult);
 });
@@ -85,10 +86,9 @@ test('test', async ({ page }) => {`;
 test('should not generate recordHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');`;
-  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`]);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
@@ -98,10 +98,9 @@ test('should generate routeFromHAR with --save-har', async ({ runCLI }, testInfo
   const expectedResult = `test('test', async ({ page }) => {
   await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');
 });`;
-  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`]);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
@@ -113,10 +112,9 @@ test('should generate routeFromHAR with --save-har and --save-har-glob', async (
     url: '**/*.js'
   });
 });`;
-  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
