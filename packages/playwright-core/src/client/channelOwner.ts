@@ -20,7 +20,7 @@ import { methodMetainfo } from '../utils/isomorphic/protocolMetainfo';
 import { captureLibraryStackTrace } from './clientStackTrace';
 import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 
-import type { ClientInstrumentation } from './clientInstrumentation';
+import type { ClientInstrumentation, RecoverFromApiErrorHandler } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 import type { ValidatorContext } from '../protocol/validator';
@@ -199,7 +199,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       else
         e.stack = '';
       if (!options?.internal) {
+        const recoveryHandlers: RecoverFromApiErrorHandler[] = [];
         apiZone.error = e;
+        this._instrumentation.onApiCallRecovery(apiZone, e, recoveryHandlers);
+        for (const handler of recoveryHandlers) {
+          const recoverResult = await handler();
+          if (recoverResult.status === 'recovered')
+            return recoverResult.value as R;
+        }
         logApiCall(this._platform, logger, `<= ${apiZone.apiName} failed`);
         this._instrumentation.onApiCallEnd(apiZone);
       }
