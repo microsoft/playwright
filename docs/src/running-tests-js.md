@@ -4,7 +4,7 @@ title: "Running and debugging tests"
 ---
 ## Introduction
 
-With Playwright you can run a single test, a set of tests, or all tests. Tests can be run on one browser or multiple browsers using the `--project` flag. Tests run in parallel by default and in headless mode, meaning no browser window opens while running the tests and results appear in the terminal. You can run tests in headed mode using the `--headed` CLI argument, or run your tests in [UI mode](./test-ui-mode.md) using the `--ui` flag to see a full trace of your tests with watch mode, time travel debugging, and more.
+With Playwright you can run a single test, a set of tests, or all tests. Tests can be run on one browser or multiple browsers using the `--project` flag. Tests run in parallel by default and in headless mode, meaning no browser window opens while running the tests and results appear in the terminal. You can run tests in headed mode using the `--headed` CLI argument, or run your tests in [UI mode](./test-ui-mode.md) using the `--ui` flag to see a full trace of your tests.
 
 **You will learn**
 
@@ -15,7 +15,7 @@ With Playwright you can run a single test, a set of tests, or all tests. Tests c
 ## Running tests
 ### Command line
 
-You can run your tests with the `playwright test` command. This runs your tests on all browsers as configured in the `playwright.config` file. Tests run in headless mode by default, meaning no browser window opens while running the tests and results appear in the terminal.
+You can run your tests with the `playwright test` command. This runs your tests on all browsers as configured in the `playwright.config` file, and results appear in the terminal. Tests run in headless mode by default, meaning no browser window opens while running the tests.
 
 ```bash
 npx playwright test
@@ -100,7 +100,7 @@ Tests can be run right from VS Code using the [VS Code extension](https://market
 
 ## Debugging tests
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice (e.g. using `console.log`, inside your IDE, or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md)). Playwright comes with [UI Mode](./test-ui-mode.md), where you can easily walk through each step of the test, see logs, errors, network requests, inspect the DOM snapshot, and more. You can also use the [Playwright Inspector](./debug.md#playwright-inspector), which allows you to step through Playwright API calls, see their debug logs, and explore [locators](./locators.md).
+Since Playwright runs in Node.js, you can debug it with your debugger of choice, e.g. using `console.log`, inside your IDE, or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with [UI Mode](./test-ui-mode.md), where you can easily walk through each step of the test, see logs, errors, network requests, inspect the DOM snapshot, and more. You can also use the [Playwright Inspector](./debug.md#playwright-inspector), which allows you to step through Playwright API calls, see their debug logs, and explore [locators](./locators.md).
 
 ### Debug tests in UI mode
 
