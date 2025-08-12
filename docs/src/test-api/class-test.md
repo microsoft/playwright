@@ -1289,13 +1289,13 @@ Test body that takes one or two arguments: an object with fixtures and optional 
 * since: v1.10
 - `condition` ?<[boolean]>
 
-Test is marked as "should fail" when the condition is `true`.
+Test is marked as "fixme" when the condition is `true`.
 
 ### param: Test.fixme.callback
 * since: v1.10
 - `callback` ?<[function]\([Fixtures]\):[boolean]>
 
-A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as "should fail" when the return value is `true`.
+A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
 
 ### param: Test.fixme.description
 * since: v1.10
