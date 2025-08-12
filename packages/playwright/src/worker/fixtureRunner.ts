@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
 
 import { fixtureParameterNames } from '../common/fixtures';
 import { filterStackFile, formatLocation } from '../util';
@@ -46,7 +46,7 @@ class Fixture {
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = { title, category: 'fixture', location };
+    this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', location };
     if (this.registration.box)
       this._stepInfo.visibility = isUserFixture ? 'hidden' : 'internal';
     this._setupDescription = {
