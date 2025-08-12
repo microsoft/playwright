@@ -14,7 +14,7 @@ Playwright can generate tests out of the box, providing a quick way to get start
 
 ## Running Codegen
 
-Use the `codegen` command to run the test generator followed by the URL of the website you want to generate tests for. The URL is optional—you can run the command without it and then add the URL directly into the browser window.
+Use the `codegen` command to run the test generator followed by the URL of the website you want to generate tests for. The URL is optional — you can run the command without it and then add the URL directly into the browser window.
 
 ```bash js
 npx playwright codegen demo.playwright.dev/todomvc

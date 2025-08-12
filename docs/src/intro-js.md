@@ -132,13 +132,13 @@ Tips:
 - See the browser window: add `--headed`.
 - Run a single project/browser: `--project=chromium`.
 - Run one file: `npx playwright test tests/example.spec.ts`.
-- List tests without running: `--list`.
+- Open testing UI: `--ui`.
 
 See [Running Tests](./running-tests.md) for details on filtering, headed mode, sharding and retries.
 
 ## HTML Test Reports
 
-After a run the [HTML Reporter](./test-reporters.md#html-reporter) provides a filterable dashboard (browsers, passed, failed, skipped, flaky). Click a test to inspect errors, attachments and steps. It auto-opens only when failures occur; open manually with the command below.
+After a test run, the [HTML Reporter](./test-reporters.md#html-reporter) provides a dashboard filterable by the browser, passed, failed, skipped, flaky and more. Click a test to inspect errors, attachments and steps. It auto-opens only when failures occur; open manually with the command below.
 
 <Tabs
   groupId="js-package-manager"

@@ -116,7 +116,7 @@ Playwright also includes async matchers that wait until the expected condition i
 await expect(page).toHaveTitle(/Playwright/);
 ```
 
-Here are the most popular async assertions. For the complete list, see [many more](./test-assertions.md):
+Here are the most popular async assertions. For the complete list, see [assertions guide](./test-assertions.md):
 
 | Assertion | Description |
 | :- | :- |
