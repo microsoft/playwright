@@ -103,13 +103,7 @@ Here are the most popular Playwright actions. For the complete list, check the [
 
 Playwright includes [test assertions](./test-assertions.md) in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation.
 
-Playwright includes generic matchers like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
-
-```js
-expect(success).toBeTruthy();
-```
-
-Playwright also includes async matchers that wait until the expected condition is met. Using these matchers makes tests non-flaky and resilient. For example, this code waits until the page gets the title containing "Playwright":
+Playwright includes async matchers that wait until the expected condition is met. Using these matchers makes tests non-flaky and resilient. For example, this code waits until the page gets the title containing "Playwright":
 
 ```js
 await expect(page).toHaveTitle(/Playwright/);
@@ -129,6 +123,13 @@ Here are the most popular async assertions. For the complete list, see [assertio
 | [`method: LocatorAssertions.toHaveValue`] | Input element has value |
 | [`method: PageAssertions.toHaveTitle`] | Page has title |
 | [`method: PageAssertions.toHaveURL`] | Page has URL |
+
+Playwright also includes generic matchers like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions. These assertions do not use the `await` keyword as they perform immediate synchronous checks on already available values.
+
+```js
+expect(success).toBeTruthy();
+```
+
 
 ### Test Isolation
 
