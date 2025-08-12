@@ -23,7 +23,7 @@ export function escapeWithQuotes(text: string, char: string = '\'') {
   if (char === '"')
     return char + escapedText.replace(/["]/g, '\\"') + char;
   if (char === '`')
-    return char + escapedText.replace(/[`]/g, '`') + char;
+    return char + escapedText.replace(/[`]/g, '\\`') + char;
   throw new Error('Invalid escape char');
 }
 
