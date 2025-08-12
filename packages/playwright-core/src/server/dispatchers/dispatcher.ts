@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 
 import { eventsHelper } from '../utils/eventsHelper';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
-import { assert, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { assert, monotonicTime, rewriteErrorMessage, debugLogger } from '../../utils';
 import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
@@ -101,7 +101,11 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   }
 
   async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const controller = new ProgressController(callMetadata, this._object);
+    const controller = new ProgressController(callMetadata, message => {
+      const logName = this._object.logName || 'api';
+      debugLogger.log(logName, message);
+      this._object.instrumentation.onCallLog(this._object, callMetadata, logName, message);
+    });
     this._activeProgressControllers.add(controller);
     try {
       return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
@@ -318,7 +322,8 @@ export class DispatcherConnection {
       return;
     }
 
-    if (methodMetainfo.get(dispatcher._type + '.' + method)?.internal) {
+    const metainfo = methodMetainfo.get(dispatcher._type + '.' + method);
+    if (metainfo?.internal) {
       // For non-js ports, it is easier to detect internal calls here rather
       // than generate protocol metainfo for each language.
       validMetadata.internal = true;
@@ -396,11 +401,19 @@ export class DispatcherConnection {
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
+      if (metainfo?.slowMo)
+        await this._doSlowMo(sdkObject);
     }
 
     if (response.error)
       response.log = compressCallLog(callMetadata.log);
     this.onmessage(response);
+  }
+
+  private async _doSlowMo(sdkObject: SdkObject): Promise<void> {
+    const slowMo = sdkObject.attribution.browser?.options.slowMo;
+    if (slowMo)
+      await new Promise(f => setTimeout(f, slowMo));
   }
 }
 

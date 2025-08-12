@@ -34,7 +34,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     PausedStateChanged: 'pausedstatechanged'
   };
   private _muted = false;
-  private _slowMo: number | undefined;
 
   constructor(context: BrowserContext) {
     super();
@@ -47,7 +46,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
     });
-    this._slowMo = this._context._browser.options.slowMo;
   }
 
   async setMuted(muted: boolean) {
@@ -59,15 +57,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
       return;
     if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseBeforeStep(metadata)))
       await this.pause(sdkObject, metadata);
-  }
-
-  async _doSlowMo() {
-    await new Promise(f => setTimeout(f, this._slowMo));
-  }
-
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._slowMo && shouldSlowMo(metadata))
-      await this._doSlowMo();
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -134,9 +123,4 @@ function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
     return false;
   const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
   return !!metainfo?.pausesBeforeAction;
-}
-
-function shouldSlowMo(metadata: CallMetadata): boolean {
-  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
-  return !!metainfo?.slowMo;
 }

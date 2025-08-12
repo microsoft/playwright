@@ -19,7 +19,6 @@ import path from 'path';
 
 import { isUnderTest } from '../utils/debug';
 import { mime } from '../../utilsBundle';
-import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
@@ -77,7 +76,7 @@ export class RecorderApp {
   private async _init(inspectedContext: BrowserContext) {
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
-    const controller = new ProgressController(serverSideCallMetadata(), this._page);
+    const controller = new ProgressController();
     await controller.run(async progress => {
       await this._page.addRequestInterceptor(progress, route => {
         if (!route.request().url().startsWith('https://playwright/')) {
@@ -204,7 +203,7 @@ export class RecorderApp {
         channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
       }
     });
-    const controller = new ProgressController(serverSideCallMetadata(), appContext._browser);
+    const controller = new ProgressController();
     await controller.run(async progress => {
       await appContext._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
