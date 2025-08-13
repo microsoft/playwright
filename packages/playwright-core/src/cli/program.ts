@@ -458,8 +458,8 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   if (!extraOptions.headless)
     contextOptions.deviceScaleFactor = os.platform() === 'darwin' ? 2 : 1;
 
-  // Work around the WebKit GTK scrolling issue.
-  if (browserType.name() === 'webkit' && process.platform === 'linux') {
+  // Work around the WebKit mobile emulation issues.
+  if (browserType.name() === 'webkit') {
     delete contextOptions.hasTouch;
     delete contextOptions.isMobile;
   }
@@ -488,7 +488,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
         throw new Error('bad values');
       contextOptions.viewport = { width, height };
     } catch (e) {
-      throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800,600"');
+      throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800, 720"');
     }
   }
 
