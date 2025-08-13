@@ -136,11 +136,13 @@ function formatTestTitle(rootDir: string, test: TestCase): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   const relativeTestPath = path.relative(rootDir, test.location.file);
-  const location = `${relativeTestPath}:${test.location.line}:${test.location.column}`;
+  // intentionally add a zero-width space to prevent creating markdown icons on GitHub comments
+  const location = `${relativeTestPath}:​${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
-  return `${testTitle}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
+  const formattedTags = extraTags.map(t => `\`${t}\``).join(' ');
+  return `${testTitle}${extraTags.length ? ' ' + formattedTags : ''}`;
 }
 
 export default MarkdownReporter;

@@ -66,13 +66,13 @@ test('simple report', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
   expect(reportFile.toString()).toContain(`**2 failed**
-:x: dir1${path.sep}a.test.js:6:11 › failing 1
-:x: dir2${path.sep}b.test.js:6:11 › failing 2
+:x: dir1${path.sep}a.test.js:​6:11 › failing 1
+:x: dir2${path.sep}b.test.js:​6:11 › failing 2
 
 <details>
 <summary><b>2 flaky</b></summary>
-:warning: c.test.js:6:11 › flaky 2 <br/>
-:warning: dir1${path.sep}a.test.js:9:11 › flaky 1 <br/>
+:warning: c.test.js:​6:11 › flaky 2 <br/>
+:warning: dir1${path.sep}a.test.js:​9:11 › flaky 1 <br/>
 
 </details>
 
@@ -125,7 +125,7 @@ test('report error without snippet', async ({ runInlineTest }) => {
   await runInlineTest(files);
   const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
   expect(reportFile.toString()).toContain(`**1 failed**
-:x: a.test.js:3:11 › math 1
+:x: a.test.js:​3:11 › math 1
 
 **0 passed**
 :heavy_check_mark::heavy_check_mark::heavy_check_mark:
@@ -157,4 +157,54 @@ test('report with worker error', async ({ runInlineTest }) => {
 **0 passed**
 :heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
+});
+
+test('report with annotations', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 0,
+        reporter: ${JSON.stringify(markdownReporter)},
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      
+      test('test login page', {
+        annotation: {
+          type: 'issue',
+          description: 'https://github.com/microsoft/playwright/issues/23180',
+        },
+        tag: '@login',
+      }, async ({ page }) => {
+        expect(1 + 1).toBe(2);
+      });
+      
+      test('failing test with annotation', {
+        annotation: [
+          { type: 'bug', description: 'Known issue' },
+          { type: 'performance', description: 'slow test' }
+        ],
+        tag: '@slow',
+      }, async ({ page }) => {
+        expect(1).toBe(2);
+      });
+    `,
+  };
+
+  const { exitCode } = await runInlineTest(files);
+  expect(exitCode).toBe(1);
+  const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
+  const reportContent = reportFile.toString();
+
+  // Check that failed tests are reported with tags
+  expect(reportContent).toContain(`**1 failed**
+:x: a.test.js:​14:11 › failing test with annotation \`@slow\``);
+
+  // Check that passed tests are reported (but without individual titles)
+  expect(reportContent).toContain(`**1 passed**
+:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
+
+  // Check that tags are included in the failed test output
+  expect(reportContent).toContain('`@slow`');
 });
