@@ -141,9 +141,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         // a) removing "dialog" listener subscription (client->server)
         // b) actual "dialog" event (server->client)
         if (dialogObject.type() === 'beforeunload')
-          dialog.accept({}).catch(() => { });
+          dialog.accept({}).catch(() => {});
         else
-          dialog.dismiss().catch(() => { });
+          dialog.dismiss().catch(() => {});
       }
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
@@ -238,13 +238,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._updateInterceptionPatterns({ internal: true }).catch(() => { });
+        this._updateInterceptionPatterns({ internal: true }).catch(() => {});
       if (handled)
         return;
     }
     // If the page is closed or unrouteAll() was called without waiting and interception disabled,
     // the method will throw an error - silence it.
-    await route._innerContinue(true /* isFallback */).catch(() => { });
+    await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
   async _onWebSocketRoute(webSocketRoute: network.WebSocketRoute) {
@@ -361,7 +361,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
     const { harId } = await this._channel.harStart({
       page: page?._channel,
       options: {
@@ -394,7 +394,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._harRouters = [];
   }
 
-  async unrouteAll(options?: { behavior?: 'wait' | 'ignoreErrors' | 'default' }): Promise<void> {
+  async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     await this._unrouteInternal(this._routes, [], options?.behavior);
     this._disposeHarRouters();
   }
@@ -411,7 +411,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._unrouteInternal(removed, remaining, 'default');
   }
 
-  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait' | 'ignoreErrors' | 'default'): Promise<void> {
+  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
     this._routes = remaining;
     if (behavior && behavior !== 'default') {
       const promises = removed.map(routeHandler => routeHandler.stop(behavior));
@@ -436,8 +436,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
+      const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.BrowserContext.Close)
