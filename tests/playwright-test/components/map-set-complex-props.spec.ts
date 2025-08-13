@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from '../playwright-test-fixtures';
 
 test('should support Map and Set as props with complex values', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -34,7 +34,7 @@ test('should support Map and Set as props with complex values', async ({ runInli
             <div data-testid="map-keys">{Array.from(mapProp.keys()).join(',')}</div>
             <div data-testid="map-values">
               {Array.from(mapProp.entries()).map(([key, value]) => 
-                <div key={key} data-testid={`map-value-${key}`}>
+                <div key={key} data-testid={\`map-value-\${String(key)}\`}>
                   {value.name}:{value.count}
                 </div>
               )}
@@ -42,7 +42,7 @@ test('should support Map and Set as props with complex values', async ({ runInli
             <div data-testid="set-size">{setProp.size}</div>
             <div data-testid="set-values">
               {Array.from(setProp).map((value, index) => 
-                <div key={index} data-testid={`set-value-${index}`}>
+                <div key={index} data-testid={\`set-value-\${index}\`}>
                   {value.id}:{value.label}
                 </div>
               )}

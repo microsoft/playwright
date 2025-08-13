@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from '../playwright-test-fixtures';
 
 test('should support Map and Set as props', async ({ runInlineTest }) => {
   const result = await runInlineTest({
