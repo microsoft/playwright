@@ -623,3 +623,45 @@ test('should throw test error when template index.html is not provided', async (
   expect(result.output).toContain('Component testing template file playwright/index.html is missing and there is no existing Vite server. Component tests will fail.');
   expect(result.results[0].error.message).toBe('Error: Component testing could not determine the base URL of your component under test. Ensure you have supplied a template playwright/index.html or have set the PLAYWRIGHT_TEST_BASE_URL environment variable.');
 });
+
+// Add our test for Map and Set support
+test('should support Map and Set as props', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/component.tsx': `
+      import React from 'react';
+
+      export const TestComponent: React.FC<{ mapProp: Map<string, string>, setProp: Set<string> }> = ({ mapProp, setProp }) => {
+        return (
+          <div>
+            <div data-testid="map-size">{mapProp.size}</div>
+            <div data-testid="map-keys">{Array.from(mapProp.keys()).join(',')}</div>
+            <div data-testid="set-size">{setProp.size}</div>
+            <div data-testid="set-values">{Array.from(setProp.values()).join(',')}</div>
+          </div>
+        );
+      };
+    `,
+    'src/component.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { TestComponent } from './component';
+
+      test('should render with Map and Set props', async ({ mount }) => {
+        const map = new Map([['key1', 'value1'], ['key2', 'value2']]);
+        const set = new Set(['item1', 'item2', 'item3']);
+        
+        const component = await mount(<TestComponent mapProp={map} setProp={set} />);
+        
+        await expect(component.getByTestId('map-size')).toHaveText('2');
+        await expect(component.getByTestId('map-keys')).toHaveText('key1,key2');
+        await expect(component.getByTestId('set-size')).toHaveText('3');
+        await expect(component.getByTestId('set-values')).toHaveText('item1,item2,item3');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

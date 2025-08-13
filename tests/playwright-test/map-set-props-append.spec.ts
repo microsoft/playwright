@@ -1,0 +1,60 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+
+// ... existing tests ...
+
+test('should support Map and Set as props', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/component.tsx': `
+      import React from 'react';
+
+      export const TestComponent: React.FC<{ mapProp: Map<string, string>, setProp: Set<string> }> = ({ mapProp, setProp }) => {
+        return (
+          <div>
+            <div data-testid="map-size">{mapProp.size}</div>
+            <div data-testid="map-keys">{Array.from(mapProp.keys()).join(',')}</div>
+            <div data-testid="set-size">{setProp.size}</div>
+            <div data-testid="set-values">{Array.from(setProp.values()).join(',')}</div>
+          </div>
+        );
+      };
+    `,
+    'src/component.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { TestComponent } from './component';
+
+      test('should render with Map and Set props', async ({ mount }) => {
+        const map = new Map([['key1', 'value1'], ['key2', 'value2']]);
+        const set = new Set(['item1', 'item2', 'item3']);
+        
+        const component = await mount(<TestComponent mapProp={map} setProp={set} />);
+        
+        await expect(component.getByTestId('map-size')).toHaveText('2');
+        await expect(component.getByTestId('map-keys')).toHaveText('key1,key2');
+        await expect(component.getByTestId('set-size')).toHaveText('3');
+        await expect(component.getByTestId('set-values')).toHaveText('item1,item2,item3');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

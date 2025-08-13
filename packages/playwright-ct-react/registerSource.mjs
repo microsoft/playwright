@@ -61,6 +61,18 @@ function __pwRender(value) {
         createElementArguments.push(children);
       return { result: __pwReact.createElement(type, ...createElementArguments) };
     }
+    if (v && typeof v === 'object' && v.__pw_type === 'map') {
+      const map = new Map();
+      for (const [k, v] of v.value)
+        map.set(k, __pwRender(v));
+      return { result: map };
+    }
+    if (v && typeof v === 'object' && v.__pw_type === 'set') {
+      const set = new Set();
+      for (const v of v.value)
+        set.add(__pwRender(v));
+      return { result: set };
+    }
   });
 }
 

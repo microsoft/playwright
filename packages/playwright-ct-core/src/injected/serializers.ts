@@ -60,6 +60,18 @@ export function transformObject(value: any, mapping: (v: any) => { result: any }
     return value;
   if (value instanceof Date || value instanceof RegExp || value instanceof URL)
     return value;
+  if (value instanceof Map) {
+    const obj: Record<string, any> = { __pw_type: 'map', value: [] };
+    for (const [k, v] of value)
+      obj.value.push([k, transformObject(v, mapping)]);
+    return obj;
+  }
+  if (value instanceof Set) {
+    const obj: Record<string, any> = { __pw_type: 'set', value: [] };
+    for (const v of value)
+      obj.value.push(transformObject(v, mapping));
+    return obj;
+  }
   if (Array.isArray(value)) {
     const result = [];
     for (const item of value)
@@ -87,6 +99,18 @@ export async function transformObjectAsync(value: any, mapping: (v: any) => Prom
     return value;
   if (value instanceof Date || value instanceof RegExp || value instanceof URL)
     return value;
+  if (value instanceof Map) {
+    const obj: Record<string, any> = { __pw_type: 'map', value: [] };
+    for (const [k, v] of value)
+      obj.value.push([k, await transformObjectAsync(v, mapping)]);
+    return obj;
+  }
+  if (value instanceof Set) {
+    const obj: Record<string, any> = { __pw_type: 'set', value: [] };
+    for (const v of value)
+      obj.value.push(await transformObjectAsync(v, mapping));
+    return obj;
+  }
   if (Array.isArray(value)) {
     const result = [];
     for (const item of value)
