@@ -616,7 +616,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._creatingStorageStatePage;
   }
 
-  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'resetForReuse' | 'update') {
+  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'resetForReuse') {
     let page: Page | undefined;
     let interceptor: network.RouteHandler | undefined;
     try {

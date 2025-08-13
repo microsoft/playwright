@@ -455,10 +455,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return state;
   }
 
-  async setStorageState(storageState: string | SetStorageState) {
-    await this._channel.setStorageState({ storageState: await prepareStorageState(this._platform, storageState) });
-  }
-
   backgroundPages(): Page[] {
     return [...this._backgroundPages];
   }
