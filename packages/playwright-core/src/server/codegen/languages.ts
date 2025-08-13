@@ -21,6 +21,8 @@ import { JsonlLanguageGenerator } from './jsonl';
 import { PythonLanguageGenerator } from './python';
 
 export function languageSet() {
+  // Note: generators are ordered in the order of preference for each language.
+  // For example, 'playwright-test' comes before 'javascript'.
   return new Set([
     new JavaScriptLanguageGenerator(/* isPlaywrightTest */true),
     new JavaScriptLanguageGenerator(/* isPlaywrightTest */false),

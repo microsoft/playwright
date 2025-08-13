@@ -61,7 +61,7 @@ export type RecorderEventMap = {
   [RecorderEvent.ModeChanged]: [mode: Mode];
   [RecorderEvent.ElementPicked]: [elementInfo: ElementInfo, userGesture?: boolean];
   [RecorderEvent.CallLogsUpdated]: [callLogs: CallLog[]];
-  [RecorderEvent.UserSourcesChanged]: [sources: Source[]];
+  [RecorderEvent.UserSourcesChanged]: [sources: Source[], pausedSourceId?: string];
   [RecorderEvent.ActionAdded]: [action: actions.ActionInContext];
   [RecorderEvent.SignalAdded]: [signal: actions.SignalInContext];
   [RecorderEvent.PageNavigated]: [url: string];
@@ -305,6 +305,17 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._refreshOverlay();
   }
 
+  pausedSourceId() {
+    for (const { metadata } of this._debugger.pausedDetails()) {
+      if (!metadata.location)
+        continue;
+      const source = this._userSources.get(metadata.location.file);
+      if (!source)
+        continue;
+      return source.id;
+    }
+  }
+
   userSources() {
     return [...this._userSources.values()];
   }
@@ -368,7 +379,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   private _updateUserSources() {
     // Remove old decorations.
-    const timestamp = monotonicTime();
     for (const source of this._userSources.values()) {
       source.highlight = [];
       source.revealLine = undefined;
@@ -381,7 +391,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       const { file, line } = metadata.location;
       let source = this._userSources.get(file);
       if (!source) {
-        source = { isPrimary: false, isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file), timestamp };
+        source = { isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file) };
         this._userSources.set(file, source);
       }
       if (line) {
@@ -390,7 +400,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         source.revealLine = line;
       }
     }
-    this.emit(RecorderEvent.UserSourcesChanged, this.userSources());
+    this.emit(RecorderEvent.UserSourcesChanged, this.userSources(), this.pausedSourceId());
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {

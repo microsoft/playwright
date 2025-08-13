@@ -19,6 +19,7 @@ import { test as it, expect, Recorder } from './inspectorTest';
 import { waitForTestLog } from '../../config/utils';
 import { roundBox } from '../../page/pageTest';
 import type { BoundingBox } from '../../page/pageTest';
+import { pauseHelper } from './pause-helper';
 
 it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
   it.skip(mode !== 'default');
@@ -106,11 +107,16 @@ it.describe('pause', () => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
+      await pauseHelper(page);
     })();
     const recorderPage = await recorderPageGetter();
     await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue(/pause\.spec\.ts/);
-    const source = await recorderPage.textContent('.source-line-paused');
-    expect(source).toContain('page.pause({ __testHookKeepTestTimeout: true })');
+    await expect(recorderPage.locator('.source-line-paused')).toContainText('page.pause({ __testHookKeepTestTimeout: true })');
+
+    await recorderPage.click('[title="Step over (F10)"]');
+    await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue(/pause-helper\.ts/);
+    await expect(recorderPage.locator('.source-line-paused')).toContainText('page.setContent(\'<div>here we go</div>\')');
+
     await recorderPage.click('[title="Resume (F8)"]');
     await scriptPromise;
   });
