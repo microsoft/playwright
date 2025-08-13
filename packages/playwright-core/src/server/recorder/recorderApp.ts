@@ -52,8 +52,8 @@ export class RecorderApp {
   private _actions: actions.ActionInContext[] = [];
   private _userSources: Source[] = [];
   private _recorderSources: Source[] = [];
-  private _primaryLanguage: string;
-  private _selectedLanguageId: string;
+  private _primaryGeneratorId: string;
+  private _selectedGeneratorId: string;
 
   private constructor(recorder: Recorder, params: RecorderAppParams, page: Page, wsEndpointForTest: string | undefined) {
     this._page = page;
@@ -70,8 +70,8 @@ export class RecorderApp {
     };
 
     this._throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
-    this._primaryLanguage = process.env.TEST_INSPECTOR_LANGUAGE || params.language || determinePrimaryLanguage(params.sdkLanguage);
-    this._selectedLanguageId = this._primaryLanguage;
+    this._primaryGeneratorId = process.env.TEST_INSPECTOR_LANGUAGE || params.language || determinePrimaryGeneratorId(params.sdkLanguage);
+    this._selectedGeneratorId = this._primaryGeneratorId;
   }
 
   private async _init(inspectedContext: BrowserContext) {
@@ -133,7 +133,7 @@ export class RecorderApp {
       const source = [...this._recorderSources, ...this._userSources].find(s => s.id === data.params.fileId);
       if (source) {
         if (source.isRecorded)
-          this._selectedLanguageId = source.id;
+          this._selectedGeneratorId = source.id;
         this._recorder.setLanguage(source.language);
       }
       return;
@@ -358,9 +358,9 @@ export class RecorderApp {
       };
       source.revealLine = text.split('\n').length - 1;
       recorderSources.push(source);
-      if (languageGenerator.id === this._primaryLanguage)
+      if (languageGenerator.id === this._primaryGeneratorId)
         this._throttledOutputFile?.setContent(source.text);
-      if (reveal === 'reveal' && source.id === this._selectedLanguageId)
+      if (reveal === 'reveal' && source.id === this._selectedGeneratorId)
         revealSourceId = source.id;
     }
 
@@ -370,8 +370,8 @@ export class RecorderApp {
   }
 }
 
-// For example, if the SDK language is 'javascript', we return 'playwright-test' as the primary language.
-function determinePrimaryLanguage(sdkLanguage: Language): string {
+// For example, if the SDK language is 'javascript', this returns 'playwright-test'.
+function determinePrimaryGeneratorId(sdkLanguage: Language): string {
   for (const language of languageSet()) {
     if (language.highlighter === sdkLanguage)
       return language.id;

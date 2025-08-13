@@ -570,7 +570,7 @@ function isScreenshotCommand(metadata: CallMetadata) {
   return metadata.method.toLowerCase().includes('screenshot');
 }
 
-function languageForFile(file: string) {
+function languageForFile(file: string): Language {
   if (file.endsWith('.py'))
     return 'python';
   if (file.endsWith('.java'))
