@@ -148,9 +148,12 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
       const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
       return newPrefix + newSuffix;
     }).join('/');
-    let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);
-    for (const [token, original] of tokenMap)
-      resolved = resolved.replace(token, original);
+    const result = resolveBaseURL(baseURL, relativePath);
+    let resolved = result.resolved;
+    for (const [token, original] of tokenMap) {
+      const normalize = result.caseInsensitivePart?.includes(token);
+      resolved = resolved.replace(token, normalize ? original.toLowerCase() : original);
+    }
     match = resolved;
   }
   return match;
@@ -166,8 +169,20 @@ function parseURL(url: string): URL | null {
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
   try {
-    return (new URL(givenURL, baseURL)).toString();
+    return resolveBaseURL(baseURL, givenURL).resolved;
   } catch (e) {
     return givenURL;
+  }
+}
+
+function resolveBaseURL(baseURL: string | undefined, givenURL: string) {
+  try {
+    const url = new URL(givenURL, baseURL);
+    const resolved = url.toString();
+    // Schema and domain are case-insensitive.
+    const caseInsensitivePrefix = url.origin;
+    return { resolved, caseInsensitivePart: caseInsensitivePrefix };
+  } catch (e) {
+    return { resolved: givenURL };
   }
 }
