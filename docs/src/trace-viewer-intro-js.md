@@ -55,12 +55,12 @@ npx playwright show-report
 
 In the HTML report, click on the trace icon next to the test file name to directly open the trace for the required test.
 
-![playwright html report](./images/getting-started/html-report-failed-tests.png)
+![playwright html report](./images/getting-started/html-report-failed-tests.webp)
 
 
 You can also click to open the detailed view of the test and scroll down to the `'Traces'` tab and open the trace by clicking on the trace screenshot.
 
-![playwright html report detailed view](./images/getting-started/html-report-trace.png)
+![playwright html report detailed view](./images/getting-started/html-report-trace.webp)
 
 
 To learn more about reporters, check out our detailed guide on reporters including the [HTML Reporter](/test-reporters.md#html-reporter).
@@ -69,7 +69,7 @@ To learn more about reporters, check out our detailed guide on reporters includi
 
 View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network, errors, and console during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it and open the browser DevTools to inspect the HTML, CSS, etc.
 
-![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.png)
+![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.webp)
 
 To learn more about traces, check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
