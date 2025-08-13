@@ -18856,12 +18856,6 @@ export interface Clock {
    * @param time Time to be set in milliseconds.
    */
   setSystemTime(time: number|string|Date): Promise<void>;
-
-  /**
-   * Uninstall fake clock. Note that any currently open page will be still affected by the fake clock, until it
-   * navigates away to a new document.
-   */
-  uninstall(): Promise<void>;
 }
 
 /**

@@ -404,10 +404,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.clock.setSystemTime(progress, params.timeString ?? params.timeNumber ?? 0);
   }
 
-  async clockUninstall(params: channels.BrowserContextClockUninstallParams, progress: Progress): Promise<channels.BrowserContextClockUninstallResult> {
-    await this._context.clock.uninstall(progress);
-  }
-
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);
