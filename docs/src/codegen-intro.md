@@ -46,22 +46,22 @@ With the test generator you can record:
 ######
 * langs: js
 
-![Recording a test](./images/getting-started/record-test-js.webp)
+![Recording a test](./images/getting-started/record-test-js.png)
 
 ######
 * langs: java
 
-![recording a test](./images/getting-started/record-test-java.webp)
+![recording a test](./images/getting-started/record-test-java.png)
 
 ######
 * langs: python
 
-![recording a test](./images/getting-started/record-test-python.webp)
+![recording a test](./images/getting-started/record-test-python.png)
 
 ######
 * langs: csharp
 
-![recording a test](./images/getting-started/record-test-csharp.webp)
+![recording a test](./images/getting-started/record-test-csharp.png)
 
 ######
 * langs: js, java, python, csharp
@@ -85,22 +85,22 @@ You can generate [locators](/locators.md) with the test generator.
 ######
 * langs: js
 
-![picking a locator](./images/getting-started/pick-locator-js.webp)
+![picking a locator](./images/getting-started/pick-locator-js.png)
 
 ######
 * langs: java
 
-![picking a locator](./images/getting-started/pick-locator-java.webp)
+![picking a locator](./images/getting-started/pick-locator-java.png)
 
 ######
 * langs: python
 
-![picking a locator](./images/getting-started/pick-locator-python.webp)
+![picking a locator](./images/getting-started/pick-locator-python.png)
 
 ######
 * langs: csharp
 
-![picking a locator](./images/getting-started/pick-locator-csharp.webp)
+![picking a locator](./images/getting-started/pick-locator-csharp.png)
 
 ### Emulation
 

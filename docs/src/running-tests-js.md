@@ -21,7 +21,7 @@ You can run your tests with the `playwright test` command. This runs your tests 
 npx playwright test
 ```
 
-![tests running in command line](./images/getting-started/run-tests-cli.webp)
+![tests running in command line](./images/getting-started/run-tests-cli.png)
 
 ### Run tests in UI mode
 
@@ -31,7 +31,7 @@ We highly recommend running your tests with [UI Mode](./test-ui-mode.md) for a b
 npx playwright test --ui
 ```
 
-![UI Mode](./images/getting-started/ui-mode.webp)
+![UI Mode](./images/getting-started/ui-mode.png)
 
 Check out our [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
 
@@ -96,7 +96,7 @@ npx playwright test --last-failed
 
 Tests can be run right from VS Code using the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Once installed you can simply click the green triangle next to the test you want to run or run all tests from the testing sidebar. Check out our [Getting Started with VS Code](./getting-started-vscode.md) guide for more details.
 
-![install playwright extension](./images/getting-started/vscode-extension.webp)
+![install playwright extension](./images/getting-started/vscode-extension.png)
 
 ## Debugging tests
 
@@ -110,11 +110,11 @@ We highly recommend debugging your tests with [UI Mode](./test-ui-mode.md) for a
 npx playwright test --ui
 ```
 
-![showing errors in ui mode](./images/getting-started/ui-mode-error.webp)
+![showing errors in ui mode](./images/getting-started/ui-mode-error.png)
 
 While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator in the locator playground and see it highlighting live in the browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
-![pick locator in ui mode](./images/getting-started/ui-mode-pick-locator.webp)
+![pick locator in ui mode](./images/getting-started/ui-mode-pick-locator.png)
 
 Check out our [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
 
@@ -126,7 +126,7 @@ To debug all tests, run the Playwright test command followed by the `--debug` fl
 npx playwright test --debug
 ```
 
-![Debugging Tests with the Playwright inspector](./images/getting-started/run-tests-debug.webp)
+![Debugging Tests with the Playwright inspector](./images/getting-started/run-tests-debug.png)
 
 This command opens a browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or, press the play button to run your test from start to finish. Once the test finishes, the browser window closes.
 
@@ -144,7 +144,7 @@ npx playwright test example.spec.ts:10 --debug
 
 While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator and see it highlighting live in the browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
-![Locator picker in the Playwright Inspector](./images/getting-started/run-tests-pick-locator.webp)
+![Locator picker in the Playwright Inspector](./images/getting-started/run-tests-pick-locator.png)
 
 
 Check out our [debugging guide](./debug.md) to learn more about debugging with the [VS Code debugger](./debug.md#vs-code-debugger), UI Mode, and the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
@@ -158,11 +158,11 @@ The [HTML Reporter](./test-reporters.md#html-reporter) shows you a full report o
 npx playwright show-report
 ```
 
-![HTML Report](./images/getting-started/html-report.webp)
+![HTML Report](./images/getting-started/html-report.png)
 
 You can filter and search for tests as well as click on each test to see the test errors and explore each step of the test.
 
-![HTML Reporter detail view](./images/getting-started/html-report-detail.webp)
+![HTML Reporter detail view](./images/getting-started/html-report-detail.png)
 
 
 ## What's next
