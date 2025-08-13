@@ -116,6 +116,13 @@ it('should work with glob', async () => {
   expect(urlMatches('http://playwright.dev', 'http://playwright.dev/?x=y', '?x=y')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
 
+  // Case insensitive matching
+  expect(urlMatches(undefined, 'https://playwright.dev/fooBAR', 'HtTpS://pLaYwRiGhT.dEv/fooBAR')).toBeTruthy();
+  expect(urlMatches('http://ignored', 'https://playwright.dev/fooBAR', 'HtTpS://pLaYwRiGhT.dEv/fooBAR')).toBeTruthy();
+  // Path and search query are case-sensitive
+  expect(urlMatches(undefined, 'https://playwright.dev/foobar', 'https://playwright.dev/fooBAR')).toBeFalsy();
+  expect(urlMatches(undefined, 'https://playwright.dev/foobar?a=b', 'https://playwright.dev/foobar?A=B')).toBeFalsy();
+
   // This is not supported, we treat ? as a query separator.
   expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeFalsy();
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.?ev')).toBeFalsy();
