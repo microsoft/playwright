@@ -97,15 +97,16 @@ var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server, proxyServer }) => {
   test.skip(browserName !== 'webkit');
 
+  proxyServer.forwardTo(server.PORT);
   const cli = runCLI([
     '--device=iPhone 11',
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
     '--lang=es',
-    '--proxy-server=http://myproxy:3128',
+    '--proxy-server=' + proxyServer.HOST,
     '--timezone=Europe/Rome',
     '--user-agent=hardkodemium',
     '--viewport-size=1280,720',
@@ -118,7 +119,7 @@ await using var browser = await playwright.${capitalize(browserName)}.LaunchAsyn
     ${launchOptions(channel)}
     Proxy = new ProxySettings
     {
-        Server = "http://myproxy:3128",
+        Server = "${proxyServer.HOST}",
     },
 });
 var context = await browser.NewContextAsync(new BrowserNewContextOptions(playwright.Devices["iPhone 11"])
