@@ -261,7 +261,7 @@ Once you have served the report using `npx playwright show-report`, click on the
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
-![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/6d5885dc-d511-4c20-b728-040a7ef6cea4)
+![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.png)
 
 ## Viewing the Trace
 * langs: csharp
