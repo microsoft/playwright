@@ -1496,28 +1496,6 @@ its geolocation.
 Whether to emulate network being offline for the browser context.
 
 
-## async method: BrowserContext.setStorageState
-* since: v1.55
-
-Resets storage state in the context by clearing cookies, cache and storage, and then applying the new storage state.
-
-### param: BrowserContext.setStorageState.storageState = %%-js-python-context-option-storage-state-%%
-* since: v1.55
-
-### param: BrowserContext.setStorageState.storageState = %%-csharp-java-context-option-storage-state-%%
-* since: v1.55
-
-
-## async method: BrowserContext.setStorageStatePath
-* since: v1.55
-* langs: csharp, java
-
-Resets storage state in the context by clearing cookies, cache and storage, and then applying the new storage state from a file.
-
-### param: BrowserContext.setStorageStatePath.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
-* since: v1.55
-
-
 ## async method: BrowserContext.storageState
 * since: v1.8
 - returns: <[Object]>
