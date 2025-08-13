@@ -3614,7 +3614,7 @@ A glob pattern, regex pattern, or predicate that receives a [URL] to match durin
 * langs: js, python
 - `handler` <[function]\([Route], [Request]\): [Promise<any>|any]>
 
-handler function to route the request.
+handler function to route the request. Supports both forms: `(route)` and `(route, request)`.
 
 ### param: Page.route.handler
 * since: v1.8
