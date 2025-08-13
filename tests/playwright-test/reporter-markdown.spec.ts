@@ -77,7 +77,6 @@ test('simple report', async ({ runInlineTest }) => {
 </details>
 
 **3 passed, 3 skipped**
-:heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
 });
 
@@ -100,7 +99,6 @@ test('custom report file', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
   const reportFile = await fs.promises.readFile(test.info().outputPath('my-report.md'));
   expect(reportFile.toString()).toBe(`**1 passed**
-:heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
 });
 
@@ -128,7 +126,6 @@ test('report error without snippet', async ({ runInlineTest }) => {
 :x: a.test.js:​3:11 › math 1
 
 **0 passed**
-:heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
 });
 
@@ -155,7 +152,6 @@ test('report with worker error', async ({ runInlineTest }) => {
   const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
   expect(reportFile.toString()).toContain(`**3 fatal errors, not part of any test**
 **0 passed**
-:heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
 });
 
@@ -202,8 +198,7 @@ test('report with annotations', async ({ runInlineTest }) => {
 :x: a.test.js:​14:11 › failing test with annotation \`@slow\``);
 
   // Check that passed tests are reported (but without individual titles)
-  expect(reportContent).toContain(`**1 passed**
-:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
+  expect(reportContent).toContain(`**1 passed**`);
 
   // Check that tags are included in the failed test output
   expect(reportContent).toContain('`@slow`');
