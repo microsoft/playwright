@@ -109,7 +109,7 @@ export abstract class BrowserContext extends SdkObject {
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
-    this.dialogManager = new DialogManager(this.instrumentation);
+    this.dialogManager = new DialogManager(this.instrumentation, this._options.unhandledDialogCallback);
   }
 
   isPersistentContext(): boolean {

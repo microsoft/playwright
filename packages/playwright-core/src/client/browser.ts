@@ -86,6 +86,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
       context._forReuse = true;
     if (options.logger)
       context._logger = options.logger;
+    if (options.unhandledDialogCallback)
+      context._unhandledDialogCallback = options.unhandledDialogCallback;
     await context._initializeHarFromOptions(options.recordHar);
     await this._instrumentation.runAfterCreateBrowserContext(context);
     return context;

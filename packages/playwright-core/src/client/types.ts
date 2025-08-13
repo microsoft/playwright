@@ -84,6 +84,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   contrast?: 'more' | 'no-preference' | null;
   acceptDownloads?: boolean;
   clientCertificates?: ClientCertificate[];
+  unhandledDialogCallback?: (dialog: import('./dialog').Dialog) => void;
 };
 
 type LaunchOverrides = {

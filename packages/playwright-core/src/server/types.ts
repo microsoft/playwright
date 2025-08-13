@@ -160,6 +160,7 @@ export type LaunchOptions = Omit<channels.BrowserTypeLaunchParams, 'timeout'> & 
 export type BrowserContextOptions = channels.BrowserNewContextOptions & {
   proxyOverride?: ProxySettings;
   internalIgnoreHTTPSErrors?: boolean;
+  unhandledDialogCallback?: (dialog: import('../server/dialog').Dialog) => void;
 };
 
 export type ProtocolLogger = (direction: 'send' | 'receive', message: object) => void;

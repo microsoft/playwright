@@ -82,11 +82,13 @@ export class Dialog extends SdkObject {
 
 export class DialogManager {
   private _instrumentation: Instrumentation;
+  private _unhandledDialogCallback?: (dialog: Dialog) => void;
   private _dialogHandlers = new Set<(dialog: Dialog) => boolean>();
   private _openedDialogs = new Set<Dialog>();
 
-  constructor(instrumentation: Instrumentation) {
+  constructor(instrumentation: Instrumentation, unhandledDialogCallback?: (dialog: Dialog) => void) {
     this._instrumentation = instrumentation;
+    this._unhandledDialogCallback = unhandledDialogCallback;
   }
 
   dialogDidOpen(dialog: Dialog) {
@@ -101,8 +103,11 @@ export class DialogManager {
       if (handler(dialog))
         hasHandlers = true;
     }
-    if (!hasHandlers)
+    if (!hasHandlers) {
+      if (this._unhandledDialogCallback)
+        this._unhandledDialogCallback(dialog);
       dialog.close().then(() => {});
+    }
   }
 
   dialogWillClose(dialog: Dialog) {
