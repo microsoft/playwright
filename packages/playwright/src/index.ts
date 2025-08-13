@@ -286,6 +286,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
+      onApiCallRecovery: (data, error, recoveryHandlers) => {
+        const step = data.userData as TestStepInternal;
+        if (step)
+          recoveryHandlers.push(() => step.recoverFromStepError(error));
+      },
       onApiCallEnd: data => {
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
         if (data.apiName === 'tracing.group')

@@ -17,10 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, serializeError, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
@@ -29,9 +29,10 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, ResumeAfterStepErrorPayload, StepBeginPayload, StepEndPayload, StepRecoverFromErrorPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
+import type { RecoverFromStepErrorResult } from '@testIsomorphic/testServerInterface';
 
 export type TestStepVisibility = 'internal' | 'hidden';
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
@@ -48,6 +49,7 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
+  recoverFromStepError(error: Error): Promise<RecoverFromStepErrorResult>;
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
@@ -65,6 +67,7 @@ type SnapshotNames = {
 
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
+  private _onStepRecoverFromError: (payload: StepRecoverFromErrorPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -118,6 +121,7 @@ export class TestInfoImpl implements TestInfo {
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
+  private _recoverFromStepErrorResults: Map<string, ManualPromise<ResumeAfterStepErrorPayload>> | undefined;
 
   get error(): TestInfoErrorImpl | undefined {
     return this.errors[0];
@@ -157,11 +161,13 @@ export class TestInfoImpl implements TestInfo {
     test: TestCase | undefined,
     retry: number,
     onStepBegin: (payload: StepBeginPayload) => void,
+    onStepRecoverFromError: (payload: StepRecoverFromErrorPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
+    this._onStepRecoverFromError = onStepRecoverFromError;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
     this._startTime = monotonicTime();
@@ -185,6 +191,7 @@ export class TestInfoImpl implements TestInfo {
     this.tags = test?.tags ?? [];
     this.fn = test?.fn ?? (() => {});
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
+    this._recoverFromStepErrorResults = workerParams.recoverFromStepErrors ? new Map() : undefined;
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
     if (configInternal.configCLIOverrides.debug)
@@ -298,6 +305,22 @@ export class TestInfoImpl implements TestInfo {
       steps: [],
       attachmentIndices: [],
       info: new TestStepInfoImpl(this, stepId, data.title, parentStep?.info),
+      recoverFromStepError: async (error: Error) => {
+        if (!this._recoverFromStepErrorResults)
+          return { stepId, status: 'failed' };
+        const payload: StepRecoverFromErrorPayload = {
+          testId: this.testId,
+          stepId,
+          error: serializeError(error),
+        };
+        this._onStepRecoverFromError(payload);
+        const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();
+        this._recoverFromStepErrorResults.set(stepId, recoveryPromise);
+        const recoveryResult = await recoveryPromise;
+        if (recoveryResult.stepId !== stepId)
+          return { stepId, status: 'failed' };
+        return recoveryResult;
+      },
       complete: result => {
         if (step.endWallTime)
           return;
@@ -372,6 +395,12 @@ export class TestInfoImpl implements TestInfo {
     }
 
     return step;
+  }
+
+  resumeAfterStepError(result: ResumeAfterStepErrorPayload) {
+    const recoveryPromise = this._recoverFromStepErrorResults?.get(result.stepId);
+    if (recoveryPromise)
+      recoveryPromise.resolve(result);
   }
 
   _interrupt() {

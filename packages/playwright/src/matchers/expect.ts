@@ -365,20 +365,37 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const step = testInfo._addStep(stepInfo);
 
-      const reportStepError = (e: Error | unknown) => {
+      const reportStepError = (isAsync: boolean, e: Error | unknown) => {
         const jestError = isJestError(e) ? e : null;
-        const error = jestError ? new ExpectError(jestError, customMessage, stackFrames) : e;
+        const expectError = jestError ? new ExpectError(jestError, customMessage, stackFrames) : undefined;
         if (jestError?.matcherResult.suggestedRebaseline) {
           // NOTE: this is a workaround for the fact that we can't pass the suggested rebaseline
           // for passing matchers. See toMatchAriaSnapshot for a counterpart.
           step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
           return;
         }
+
+        const error = expectError ?? e;
         step.complete({ error });
-        if (this._info.isSoft)
-          testInfo._failWithError(error);
-        else
-          throw error;
+
+        if (!isAsync || !expectError) {
+          if (this._info.isSoft)
+            testInfo._failWithError(error);
+          else
+            throw error;
+          return;
+        }
+
+        // Recoverable async failure.
+        return (async () => {
+          const recoveryResult = await step.recoverFromStepError(expectError);
+          if (recoveryResult.status === 'recovered')
+            return recoveryResult.value as any;
+          if (this._info.isSoft)
+            testInfo._failWithError(expectError);
+          else
+            throw expectError;
+        })();
       };
 
       const finalizer = () => {
@@ -390,11 +407,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const callback = () => matcher.call(target, ...args);
         const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise)
-          return result.then(finalizer).catch(reportStepError);
+          return result.then(finalizer).catch(reportStepError.bind(null, true));
         finalizer();
         return result;
       } catch (e) {
-        reportStepError(e);
+        void reportStepError(false, e);
       }
     };
   }

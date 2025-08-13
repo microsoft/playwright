@@ -44,6 +44,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
+import type { RecoverFromStepErrorResult } from '../isomorphic/testServerInterface';
 
 const originalDebugLog = debug.log;
 const originalStdoutWrite = process.stdout.write;
@@ -90,6 +91,8 @@ export class TestServerDispatcher implements TestServerInterface {
   private _watchTestDirs = false;
   private _closeOnDisconnect = false;
   private _populateDependenciesOnList = false;
+  private _recoverFromStepErrors = false;
+  private _resumeAfterStepErrors: Map<string, ManualPromise<RecoverFromStepErrorResult>> = new Map();
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     this._configLocation = configLocation;
@@ -127,6 +130,7 @@ export class TestServerDispatcher implements TestServerInterface {
     await this._setInterceptStdio(!!params.interceptStdio);
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
+    this._recoverFromStepErrors = !!params.recoverFromStepErrors;
   }
 
   async ping() {}
@@ -351,12 +355,34 @@ export class TestServerDispatcher implements TestServerInterface {
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }),
       ...createRunTestsTasks(config),
     ];
-    const run = runTasks(new TestRun(config, reporter), tasks, 0, stop).then(async status => {
+    const testRun = new TestRun(config, reporter);
+    testRun.failureTracker.setRecoverFromStepErrorHandler(this._recoverFromStepError.bind(this));
+    const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;
     });
     this._testRun = { run, stop };
     return { status: await run };
+  }
+
+  private async _recoverFromStepError(stepId: string, error: reporterTypes.TestError): Promise<RecoverFromStepErrorResult> {
+    if (!this._recoverFromStepErrors)
+      return { stepId, status: 'failed' };
+    const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();
+    this._resumeAfterStepErrors.set(stepId, recoveryPromise);
+    if (!error?.message || !error?.location)
+      return { stepId, status: 'failed' };
+    this._dispatchEvent('recoverFromStepError', { stepId, message: error.message, location: error.location });
+    const recoveredResult = await recoveryPromise;
+    if (recoveredResult.stepId !== stepId)
+      return { stepId, status: 'failed' };
+    return recoveredResult;
+  }
+
+  async resumeAfterStepError(params: RecoverFromStepErrorResult): Promise<void> {
+    const recoveryPromise = this._resumeAfterStepErrors.get(params.stepId);
+    if (recoveryPromise)
+      recoveryPromise.resolve(params);
   }
 
   async watch(params: { fileNames: string[]; }) {
@@ -385,6 +411,7 @@ export class TestServerDispatcher implements TestServerInterface {
   async stopTests() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
+    this._resumeAfterStepErrors.clear();
   }
 
   async _setInterceptStdio(intercept: boolean) {

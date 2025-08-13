@@ -26,11 +26,12 @@ import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload } from '../common/ipc';
+import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, StepRecoverFromErrorPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload } from '../common/ipc';
 import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { RegisteredListener } from 'playwright-core/lib/utils';
+import type { RecoverFromStepErrorResult } from '@testIsomorphic/testServerInterface';
 
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
@@ -218,7 +219,8 @@ export class Dispatcher {
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
     const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
     const outputDir = projectConfig.project.outputDir;
-    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir);
+    const recoverFromStepErrors = this._failureTracker.canRecoverFromStepError();
+    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, recoverFromStepErrors, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -396,6 +398,26 @@ class JobDispatcher {
     this._reporter.onStepEnd?.(test, result, step);
   }
 
+  private _onStepRecoverFromError(resumeAfterStepError: (result: RecoverFromStepErrorResult) => void, params: StepRecoverFromErrorPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data) {
+      resumeAfterStepError({ stepId: params.stepId, status: 'failed' });
+      return;
+    }
+    const { steps } = data;
+    const step = steps.get(params.stepId);
+    if (!step) {
+      resumeAfterStepError({ stepId: params.stepId, status: 'failed' });
+      return;
+    }
+
+    const testError: TestError = {
+      ...params.error,
+      location: step.location,
+    };
+    this._failureTracker.recoverFromStepError(params.stepId, testError, resumeAfterStepError);
+  }
+
   private _onAttach(params: AttachmentPayload) {
     const data = this._dataByTestId.get(params.testId)!;
     if (!data) {
@@ -560,12 +582,14 @@ class JobDispatcher {
       }),
     };
     worker.runTestGroup(runPayload);
+    const resumeAfterStepError = worker.resumeAfterStepError.bind(worker);
 
     this._listeners = [
       eventsHelper.addEventListener(worker, 'testBegin', this._onTestBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'testEnd', this._onTestEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
+      eventsHelper.addEventListener(worker, 'stepRecoverFromError', this._onStepRecoverFromError.bind(this, resumeAfterStepError)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
       eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
