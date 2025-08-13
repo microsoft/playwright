@@ -261,7 +261,7 @@ Once you have served the report using `npx playwright show-report`, click on the
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
-![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.webp)
+![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.png)
 
 ## Viewing the Trace
 * langs: csharp
@@ -271,7 +271,7 @@ You can upload Traces which get created on your CI like GitHub Actions as artifa
 ######
 * langs: csharp
 
-![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.webp)
+![playwright trace viewer](./images/getting-started/trace-viewer-failed-test.png)
 
 ## Publishing report on the web
 * langs: js
