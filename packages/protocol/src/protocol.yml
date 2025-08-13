@@ -1470,9 +1470,6 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
-    clockUninstall:
-      title: Uninstall clock
-
   events:
 
     bindingCall:
