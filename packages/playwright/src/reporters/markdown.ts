@@ -73,7 +73,6 @@ class MarkdownReporter implements Reporter {
     const skipped = summary.skipped ? `, ${summary.skipped} skipped` : '';
     const didNotRun = summary.didNotRun ? `, ${summary.didNotRun} did not run` : '';
     lines.push(`**${summary.expected} passed${skipped}${didNotRun}**`);
-    lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
 
     await this.publishReport(lines.join('\n'));
@@ -136,11 +135,13 @@ function formatTestTitle(rootDir: string, test: TestCase): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   const relativeTestPath = path.relative(rootDir, test.location.file);
-  const location = `${relativeTestPath}:${test.location.line}:${test.location.column}`;
+  // intentionally add a zero-width space to prevent creating markdown icons on GitHub
+  const location = `${relativeTestPath}:​${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
-  return `${testTitle}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
+  const formattedTags = extraTags.map(t => `\`${t}\``).join(' ');
+  return `${testTitle}${extraTags.length ? ' ' + formattedTags : ''}`;
 }
 
 export default MarkdownReporter;
