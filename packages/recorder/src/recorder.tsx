@@ -48,22 +48,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   const [selectedTab, setSelectedTab] = useSetting<string>('recorderPropertiesTab', 'log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
-
-  React.useEffect(() => {
-    if (!sources.length)
-      return;
-    // When no selected file id present, pick the primary source (target language).
-    let fileId = selectedFileId ?? sources.find(s => s.isPrimary)?.id;
-    const selectedSource = sources.find(s => s.id === fileId);
-    const newestSource = sources.sort((a, b) => b.timestamp - a.timestamp)[0];
-    if (!selectedSource || newestSource.isRecorded !== selectedSource.isRecorded) {
-      // When debugger kicks in, or recording is resumed switch the selection to the newest source.
-      fileId = newestSource.id;
-    }
-    // If changes above force the selection to change, update the state.
-    if (fileId !== selectedFileId)
-      setSelectedFileId(fileId);
-  }, [sources, selectedFileId]);
+  window.playwrightSelectSource = selectedSourceId => setSelectedFileId(selectedSourceId);
 
   const source = React.useMemo(() => {
     const source = sources.find(s => s.id === selectedFileId);
