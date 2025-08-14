@@ -19,6 +19,7 @@ import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/play
 import { createGuid } from '../../packages/playwright-core/lib/server/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
+import type { Browser as BrowserImpl } from '../../packages/playwright-core/src/client/browser';
 import type * as channels from '@protocol/channels';
 import { roundBox } from '../page/pageTest';
 
@@ -307,4 +308,22 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
 test('should report error in aria template', async ({ backend }) => {
   const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
   expect(error.message).toContain('Unterminated string:');
+});
+
+test('should work with browser._launchServer', async ({ browser }) => {
+  const browserImpl = browser as BrowserImpl;
+  const server = await browserImpl._launchServer({});
+
+  const backend = new Backend();
+  const connectionString = new URL(server.wsEndpoint());
+  connectionString.searchParams.set('debug-controller', '');
+  await backend.connect(connectionString.toString());
+  await backend.initialize();
+  await backend.channel.setReportStateChanged({ enabled: true });
+  const pageCounts: number[] = [];
+  backend.channel.on('stateChanged', event => pageCounts.push(event.pageCount));
+
+  const page = await browser.newPage();
+  await page.close();
+  expect(pageCounts).toEqual([1, 0]);
 });

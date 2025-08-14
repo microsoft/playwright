@@ -38,7 +38,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     this._browserName = browserName;
   }
 
-  async launchServer(options: LaunchOptions & LaunchServerOptions & { _sharedBrowser?: boolean, _userDataDir?: string } = {}): Promise<BrowserServer> {
+  async launchServer(options: LaunchOptions & LaunchServerOptions & { _userDataDir?: string } = {}): Promise<BrowserServer> {
     const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
     // 1. Pre-launch the browser
     const metadata = { id: '', startTime: 0, endTime: 0, type: 'Internal', method: '', params: {}, log: [], internal: true };
@@ -81,7 +81,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     return this.launchServerOnExistingBrowser(browser, options);
   }
 
-  async launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions & { _sharedBrowser?: boolean }): Promise<BrowserServer> {
+  async launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions): Promise<BrowserServer> {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server

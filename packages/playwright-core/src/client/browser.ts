@@ -25,7 +25,7 @@ import { mkdirIfNeeded } from './fileUtils';
 import type { Browser as BrowserImpl } from '../server/browser';
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
-import type { BrowserContextOptions, LaunchOptions, Logger } from './types';
+import type { BrowserContextOptions, LaunchOptions, LaunchServerOptions, Logger } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -147,12 +147,15 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return CDPSession.from((await this._channel.newBrowserCDPSession()).session);
   }
 
-  async _launchServer() {
+  async _launchServer(options: LaunchServerOptions = {}) {
     const serverLauncher = this._browserType._serverLauncher;
     const browser: BrowserImpl = this._connection.toImpl?.(this);
     if (!serverLauncher || !browser)
       throw new Error('Launching server is not supported');
-    return await serverLauncher.launchServerOnExistingBrowser(browser);
+    return await serverLauncher.launchServerOnExistingBrowser(browser, {
+      _sharedBrowser: true,
+      ...options,
+    });
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {

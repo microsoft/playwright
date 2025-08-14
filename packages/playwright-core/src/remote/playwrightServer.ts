@@ -86,6 +86,17 @@ export class PlaywrightServer {
       },
 
       onConnection: (request, url, ws, id) => {
+        if (url.searchParams.has('debug-controller')) {
+          return new PlaywrightConnection(
+              controllerSemaphore,
+              ws,
+              true,
+              this._playwright,
+              async () => { throw new Error('shouldnt be used'); },
+              id,
+          );
+        }
+
         const browserHeader = request.headers['x-playwright-browser'];
         const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
         const proxyHeader = request.headers['x-playwright-proxy'];
@@ -121,16 +132,6 @@ export class PlaywrightServer {
             );
           }
 
-          if (url.searchParams.has('debug-controller')) {
-            return new PlaywrightConnection(
-                controllerSemaphore,
-                ws,
-                true,
-                this._playwright,
-                async () => { throw new Error('shouldnt be used'); },
-                id,
-            );
-          }
           return new PlaywrightConnection(
               reuseBrowserSemaphore,
               ws,

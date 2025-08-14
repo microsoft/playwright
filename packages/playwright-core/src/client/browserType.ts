@@ -34,8 +34,8 @@ import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
 
 export interface BrowserServerLauncher {
-  launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
-  launchServerOnExistingBrowser(browser: BrowserImpl): Promise<api.BrowserServer>;
+  launchServer(options?: LaunchOptions & LaunchServerOptions): Promise<api.BrowserServer>;
+  launchServerOnExistingBrowser(browser: BrowserImpl, options?: LaunchServerOptions): Promise<api.BrowserServer>;
 }
 
 // This is here just for api generation and checking.

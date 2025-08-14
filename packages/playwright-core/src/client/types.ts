@@ -109,6 +109,7 @@ export type LaunchServerOptions = {
   host?: string,
   port?: number,
   wsPath?: string,
+  _sharedBrowser?: boolean;
 };
 
 export type LaunchAndroidServerOptions = {
