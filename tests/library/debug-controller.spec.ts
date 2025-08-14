@@ -116,6 +116,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
   const page1 = await context.newPage();
   const page2 = await context.newPage();
   await page1.close();
+  await page2.goto('data:text/html,Foo');
   await page2.close();
 
   await backend.setReportStateChanged({ enabled: false });
@@ -154,6 +155,17 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
         contexts: [{
           pages: [
             { url: 'about:blank' }
+          ]
+        }]
+      }]
+    }, {
+      pageCount: 1,
+      browsers: [{
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'data:text/html,Foo' }
           ]
         }]
       }]

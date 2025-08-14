@@ -24,6 +24,7 @@ import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorPa
 import { generateCode } from './codegen/language';
 import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
+import { Page } from './page';
 
 import type { Language } from '../utils';
 import type { BrowserContext } from './browserContext';
@@ -62,7 +63,10 @@ export class DebugController extends SdkObject {
   setReportStateChanged(enabled: boolean) {
     if (enabled && !this._trackHierarchyListener) {
       this._trackHierarchyListener = {
-        onPageOpen: () => this._emitSnapshot(false),
+        onPageOpen: page => {
+          this._emitSnapshot(false);
+          page.on(Page.Events.InternalFrameNavigatedToNewDocument, () => this._emitSnapshot(false));
+        },
         onPageClose: () => this._emitSnapshot(false),
       };
       this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
