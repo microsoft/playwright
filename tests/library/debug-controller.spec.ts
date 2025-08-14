@@ -107,7 +107,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toHaveLength(2);
 });
 
-test('should report pages', async ({ backend, connectedBrowser }) => {
+test('should report pages', async ({ backend, connectedBrowser, browserName, channel }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
   await backend.setReportStateChanged({ enabled: true });
@@ -125,12 +125,47 @@ test('should report pages', async ({ backend, connectedBrowser }) => {
   expect(events).toEqual([
     {
       pageCount: 1,
+      browsers: [{
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'about:blank' }
+          ]
+        }]
+      }]
     }, {
       pageCount: 2,
+      browsers: [{
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'about:blank' },
+            { url: 'about:blank' }
+          ]
+        }]
+      }]
     }, {
       pageCount: 1,
+      browsers: [{
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'about:blank' }
+          ]
+        }]
+      }]
     }, {
       pageCount: 0,
+      browsers: [{
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: []
+        }]
+      }]
     }
   ]);
 });

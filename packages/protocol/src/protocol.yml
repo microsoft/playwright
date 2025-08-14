@@ -925,6 +925,24 @@ DebugController:
     stateChanged:
       parameters:
         pageCount: int
+        browsers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              channel: string?
+              contexts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pages:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          url: string
 
     sourceChanged:
       parameters:

@@ -139,7 +139,18 @@ export class DebugController extends SdkObject {
     const pageCount = this._playwright.allPages().length;
     if (initial && !pageCount)
       return;
-    this.emit(DebugController.Events.StateChanged, { pageCount });
+    this.emit(DebugController.Events.StateChanged, {
+      pageCount,
+      browsers: this._playwright.allBrowsers().map(browser => ({
+        name: browser.options.name,
+        channel: browser.options.channel,
+        contexts: browser.contexts().map(context => ({
+          pages: context.pages().map(page => ({
+            url: page.mainFrame().url(),
+          }))
+        }))
+      }))
+    });
   }
 
   private async _allRecorders(): Promise<Recorder[]> {
