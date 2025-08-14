@@ -118,10 +118,12 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   }
 
   resizeTerminal(params: { cols: number, rows: number }) {
+    /* eslint-disable no-restricted-properties */
     process.stdout.columns = params.cols;
     process.stdout.rows = params.rows;
     process.stderr.columns = params.cols;
     process.stderr.rows = params.rows;
+    /* eslint-enable no-restricted-properties */
   }
 
   hasSomeBrowsers(): boolean {

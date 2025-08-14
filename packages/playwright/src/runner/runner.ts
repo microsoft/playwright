@@ -98,7 +98,9 @@ export class Runner {
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
     // See https://github.com/nodejs/node/issues/12921
+    // eslint-disable-next-line no-restricted-properties
     await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
+    // eslint-disable-next-line no-restricted-properties
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
     return status;
   }

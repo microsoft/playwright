@@ -91,6 +91,7 @@ class JUnitReporter implements ReporterV2 {
       await fs.promises.mkdir(path.dirname(this.resolvedOutputFile), { recursive: true });
       await fs.promises.writeFile(this.resolvedOutputFile, reportString);
     } else {
+      // eslint-disable-next-line no-console
       console.log(reportString);
     }
   }

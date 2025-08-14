@@ -643,11 +643,13 @@ async function maybeSetupTestHooks(browser: Browser, closeBrowser: () => Promise
   require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
     const line = require('util').format(...args) + '\n';
     logs.push(line);
+    // eslint-disable-next-line no-restricted-properties
     process.stderr.write(line);
   };
   browser.on('disconnected', () => {
     const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
     if (hasCrashLine) {
+      // eslint-disable-next-line no-restricted-properties
       process.stderr.write('Detected browser crash.\n');
       gracefullyProcessExitDoNotHang(1);
     }

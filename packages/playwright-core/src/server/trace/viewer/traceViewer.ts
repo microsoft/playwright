@@ -182,8 +182,10 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
 
-    if (process.env.PWTEST_PRINT_WS_ENDPOINT)
+    if (process.env.PWTEST_PRINT_WS_ENDPOINT) {
+      // eslint-disable-next-line no-restricted-properties
       process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
+    }
 
     if (!isUnderTest())
       await syncLocalStorageWithSettings(page, 'traceviewer');

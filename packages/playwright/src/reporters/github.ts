@@ -41,7 +41,8 @@ class GitHubLogger {
     const configs = Object.entries(options)
         .map(([key, option]) => `${key}=${option}`)
         .join(',');
-    console.log(stripAnsiEscapes(`::${type} ${configs}::${message}`));
+    // eslint-disable-next-line no-restricted-properties
+    process.stdout.write(stripAnsiEscapes(`::${type} ${configs}::${message}\n`));
   }
 
   debug(message: string, options?: GitHubLogOptions) {
