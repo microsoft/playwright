@@ -22,7 +22,6 @@ import { isTargetClosedError } from './errors';
 import { Events } from './events';
 import { mkdirIfNeeded } from './fileUtils';
 
-import type { Browser as BrowserImpl } from '../server/browser';
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
 import type { BrowserContextOptions, LaunchOptions, LaunchServerOptions, Logger } from './types';
@@ -148,11 +147,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _launchServer(options: LaunchServerOptions = {}) {
-    const serverLauncher = this._browserType._serverLauncher;
-    const browser: BrowserImpl = this._connection.toImpl?.(this);
-    if (!serverLauncher || !browser)
+    if (!this._browserType._serverLauncher)
       throw new Error('Launching server is not supported');
-    return await serverLauncher.launchServerOnExistingBrowser(browser, {
+    return await this._browserType._serverLauncher.launchServerOnExistingBrowser(this, {
       _sharedBrowser: true,
       ...options,
     });

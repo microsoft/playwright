@@ -26,7 +26,6 @@ import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 import { connectOverWebSocket } from './webSocket';
 import { TimeoutSettings } from './timeoutSettings';
 
-import type { Browser as BrowserImpl } from '../server/browser';
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
 import type * as api from '../../types/types';
@@ -35,7 +34,7 @@ import type { ChildProcess } from 'child_process';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchOptions & LaunchServerOptions): Promise<api.BrowserServer>;
-  launchServerOnExistingBrowser(browser: BrowserImpl, options?: LaunchServerOptions): Promise<api.BrowserServer>;
+  launchServerOnExistingBrowser(browser: Browser, options?: LaunchServerOptions): Promise<api.BrowserServer>;
 }
 
 // This is here just for api generation and checking.
