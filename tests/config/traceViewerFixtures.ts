@@ -51,7 +51,6 @@ class TraceViewerPage {
   settingsDialog: Locator;
   darkModeSetting: Locator;
   displayCanvasContentSetting: Locator;
-  showAllActionsSetting: Locator;
 
   constructor(public page: Page) {
     this.actionTitles = page.locator('.action-title');
@@ -70,7 +69,15 @@ class TraceViewerPage {
     this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
     this.darkModeSetting = page.locator('.setting').getByText('Dark mode');
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
-    this.showAllActionsSetting = page.locator('.setting').getByText('Show all actions');
+  }
+
+  @step
+  async showAllActions() {
+    await this.page.getByRole('button', { name: 'Settings' }).click();
+    await this.page.locator('.setting').getByText('Show route actions').click();
+    await this.page.locator('.setting').getByText('Show getter actions').click();
+    await this.page.locator('.setting').getByText('Show configuration actions').click();
+    await this.page.getByRole('button', { name: 'Settings' }).click();
   }
 
   stackFrames(options: { selected?: boolean } = {}) {

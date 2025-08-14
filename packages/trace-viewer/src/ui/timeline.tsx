@@ -25,6 +25,7 @@ import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Entry } from '@trace/har';
 import type { ConsoleEntry } from './consoleTab';
+import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
@@ -53,7 +54,7 @@ export const Timeline: React.FunctionComponent<{
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
-  const [showAllActions] = useSetting('showAllActions', false);
+  const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   const { offsets, curtainLeft, curtainRight } = React.useMemo(() => {
     let activeWindow = selectedTime || boundaries;
@@ -68,7 +69,7 @@ export const Timeline: React.FunctionComponent<{
     return { offsets: calculateDividerOffsets(measure.width, boundaries), curtainLeft, curtainRight };
   }, [selectedTime, boundaries, dragWindow, measure]);
 
-  const actions = React.useMemo(() => model?.filteredActions(showAllActions), [model, showAllActions]);
+  const actions = React.useMemo(() => model?.filteredActions(actionsFilter), [model, actionsFilter]);
 
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];

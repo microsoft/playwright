@@ -279,7 +279,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           title: renderTitle(channel.type, channel.method, channel.params, data.title),
           apiName: data.apiName,
           params: channel.params,
-          visibility: getActionGroup({ type: channel.type, method: channel.method }) ? 'hidden' : undefined,
+          group: getActionGroup({ type: channel.type, method: channel.method }),
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         data.userData = step;
         data.stepId = step.stepId;

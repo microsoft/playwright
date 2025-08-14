@@ -44,6 +44,7 @@ import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
 import type { TestAnnotation } from '@playwright/test';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
+import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -71,14 +72,14 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const [showAllActions] = useSetting('showAllActions', false);
+  const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
     setRevealedError(undefined);
   }, []);
 
-  const actions = React.useMemo(() => model?.filteredActions(showAllActions), [model, showAllActions]);
+  const actions = React.useMemo(() => model?.filteredActions(actionsFilter), [model, actionsFilter]);
 
   const highlightedAction = React.useMemo(() => {
     return actions?.find(a => a.callId === highlightedCallId);
