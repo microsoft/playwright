@@ -312,7 +312,7 @@ test('should report error in aria template', async ({ backend }) => {
 
 test('should work with browser._launchServer', async ({ browser }) => {
   const browserImpl = browser as BrowserImpl;
-  const server = await browserImpl._launchServer({});
+  const server = await browserImpl._launchServer({ _debugController: true });
 
   const backend = new Backend();
   const connectionString = new URL(server.wsEndpoint());

@@ -39,6 +39,7 @@ type ServerOptions = {
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
+  debugController?: boolean;
 };
 
 export class PlaywrightServer {
@@ -86,17 +87,6 @@ export class PlaywrightServer {
       },
 
       onConnection: (request, url, ws, id) => {
-        if (url.searchParams.has('debug-controller')) {
-          return new PlaywrightConnection(
-              controllerSemaphore,
-              ws,
-              true,
-              this._playwright,
-              async () => { throw new Error('shouldnt be used'); },
-              id,
-          );
-        }
-
         const browserHeader = request.headers['x-playwright-browser'];
         const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
         const proxyHeader = request.headers['x-playwright-proxy'];
@@ -116,6 +106,17 @@ export class PlaywrightServer {
         const isExtension = this._options.mode === 'extension';
         const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
+
+        if ((this._options.debugController || isExtension) && url.searchParams.has('debug-controller')) {
+          return new PlaywrightConnection(
+              controllerSemaphore,
+              ws,
+              true,
+              this._playwright,
+              async () => { throw new Error('shouldnt be used'); },
+              id,
+          );
+        }
 
         if (isExtension) {
           const connectFilter = url.searchParams.get('connect');
