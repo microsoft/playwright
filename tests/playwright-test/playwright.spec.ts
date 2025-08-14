@@ -937,7 +937,7 @@ test('window.playwright should not override existing property', async ({ runInli
         expect(await page.evaluate(() => window.playwright)).toBe('foo');
       });
     `,
-  }, {}, {});
+  }, {}, { PWDEBUG: 'console' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
