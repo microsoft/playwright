@@ -47,6 +47,7 @@ class PlaywrightClient {
       },
     });
     this._driverProcess.unref();
+    // eslint-disable-next-line no-restricted-properties
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
     const connection = new Connection(nodePlatform);

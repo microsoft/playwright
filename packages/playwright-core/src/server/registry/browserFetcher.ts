@@ -126,6 +126,7 @@ export function logPolitely(toBeLogged: string) {
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
 function getDownloadProgress(): OnProgressCallback {
+  // eslint-disable-next-line no-restricted-properties
   if (process.stdout.isTTY)
     return getAnimatedDownloadProgress();
   return getBasicDownloadProgress();

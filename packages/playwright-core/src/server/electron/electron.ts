@@ -292,6 +292,7 @@ export class Electron extends SdkObject {
 
 async function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp) {
   const promise = new ManualPromise<RegExpMatchArray>();
+  // eslint-disable-next-line no-restricted-properties
   const rl = readline.createInterface({ input: process.stderr! });
   const failError = new Error('Process failed to launch!');
   const listeners = [

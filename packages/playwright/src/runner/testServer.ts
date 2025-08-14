@@ -35,7 +35,9 @@ import type { RecoverFromStepErrorResult, ReportEntry, TestServerInterface, Test
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 const originalDebugLog = debug.log;
+// eslint-disable-next-line no-restricted-properties
 const originalStdoutWrite = process.stdout.write;
+// eslint-disable-next-line no-restricted-properties
 const originalStderrWrite = process.stderr.write;
 
 class TestServer {
@@ -233,6 +235,7 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 
   async _setInterceptStdio(intercept: boolean) {
+    /* eslint-disable no-restricted-properties */
     if (process.env.PWTEST_DEBUG)
       return;
     if (intercept) {
@@ -243,19 +246,22 @@ export class TestServerDispatcher implements TestServerInterface {
           return (originalStderrWrite as any).apply(process.stderr, [string]);
         };
       }
-      process.stdout.write = (chunk: string | Buffer) => {
+      const stdoutWrite = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
         return true;
       };
-      process.stderr.write = (chunk: string | Buffer) => {
+      const stderrWrite = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
         return true;
       };
+      process.stdout.write = stdoutWrite;
+      process.stderr.write = stderrWrite;
     } else {
       debug.log = originalDebugLog;
       process.stdout.write = originalStdoutWrite;
       process.stderr.write = originalStderrWrite;
     }
+    /* eslint-enable no-restricted-properties */
   }
 
   async closeGracefully() {

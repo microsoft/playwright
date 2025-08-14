@@ -48,8 +48,8 @@ class ListReporter extends TerminalReporter {
     super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
     if (startingMessage) {
-      console.log(startingMessage);
-      console.log();
+      this.writeLine(startingMessage);
+      this.writeLine('');
     }
   }
 
@@ -68,12 +68,12 @@ class ListReporter extends TerminalReporter {
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stdout);
+    this._dumpToStdio(test, chunk, this.screen.stdout);
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stderr);
+    this._dumpToStdio(test, chunk, this.screen.stderr);
   }
 
   private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
@@ -133,7 +133,7 @@ class ListReporter extends TerminalReporter {
   private _maybeWriteNewLine() {
     if (this._needNewLine) {
       this._needNewLine = false;
-      process.stdout.write('\n');
+      this.screen.stdout.write('\n');
       ++this._lastRow;
       this._lastColumn = 0;
     }
@@ -214,10 +214,10 @@ class ListReporter extends TerminalReporter {
   private _appendLine(text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS) {
-      process.stdout.write('#' + this._lastRow + ' : ' + line + '\n');
+      this.screen.stdout.write('#' + this._lastRow + ' : ' + line + '\n');
     } else {
-      process.stdout.write(line);
-      process.stdout.write('\n');
+      this.screen.stdout.write(line);
+      this.screen.stdout.write('\n');
     }
     ++this._lastRow;
     this._lastColumn = 0;
@@ -226,7 +226,7 @@ class ListReporter extends TerminalReporter {
   private _updateLine(row: number, text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS)
-      process.stdout.write('#' + row + ' : ' + line + '\n');
+      this.screen.stdout.write('#' + row + ' : ' + line + '\n');
     else
       this._updateLineForTTY(row, line);
   }
@@ -234,13 +234,13 @@ class ListReporter extends TerminalReporter {
   private _updateLineForTTY(row: number, line: string) {
     // Go up if needed
     if (row !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - row}A`);
+      this.screen.stdout.write(`\u001B[${this._lastRow - row}A`);
     // Erase line, go to the start
-    process.stdout.write('\u001B[2K\u001B[0G');
-    process.stdout.write(line);
+    this.screen.stdout.write('\u001B[2K\u001B[0G');
+    this.screen.stdout.write(line);
     // Go down if needed.
     if (row !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - row}E`);
+      this.screen.stdout.write(`\u001B[${this._lastRow - row}E`);
   }
 
   private _testPrefix(index: string, statusMark: string) {
@@ -258,12 +258,12 @@ class ListReporter extends TerminalReporter {
     this._maybeWriteNewLine();
     const message = this.formatError(error).message + '\n';
     this._updateLineCountAndNewLineFlagForOutput(message);
-    process.stdout.write(message);
+    this.screen.stdout.write(message);
   }
 
   override async onEnd(result: FullResult) {
     await super.onEnd(result);
-    process.stdout.write('\n');
+    this.screen.stdout.write('\n');
     this.epilogue(true);
   }
 }

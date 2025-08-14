@@ -35,6 +35,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common/config';
 import type { TestServerTransport } from '../isomorphic/testServerConnection';
 
+/* eslint-disable no-restricted-properties */
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
   public readonly _send: (data: string) => void;

@@ -234,7 +234,9 @@ async function runTestServer(opts: { [key: string]: any }) {
 
 export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner) => Promise<any>) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
+  // eslint-disable-next-line no-restricted-properties
   const stdoutWrite = process.stdout.write.bind(process.stdout);
+  // eslint-disable-next-line no-restricted-properties
   process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
   try {
     const config = await loadConfigFromFile(configFile);
