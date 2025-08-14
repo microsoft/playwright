@@ -718,7 +718,7 @@ export class WKPage implements PageDelegate {
 
     // WPE WebKit is failing in mesa due to a race condition if we start interacting
     // with the page too quickly.
-    if (!this._browserContext._browser?.options.headful && hostPlatform === 'ubuntu22.04-x64')
+    if (!this._browserContext._browser?.options.headful && (hostPlatform === 'ubuntu22.04-x64' || hostPlatform.startsWith('debian12')))
       await new Promise(r => setTimeout(r, 500));
   }
 
