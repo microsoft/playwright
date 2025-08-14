@@ -146,6 +146,7 @@ export class DebugController extends SdkObject {
     this.emit(DebugController.Events.StateChanged, {
       pageCount,
       browsers: this._playwright.allBrowsers().map(browser => ({
+        guid: browser.guid,
         name: browser.options.name,
         channel: browser.options.channel,
         contexts: browser.contexts().map(context => ({

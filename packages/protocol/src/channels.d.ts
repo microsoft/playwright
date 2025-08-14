@@ -743,6 +743,7 @@ export type DebugControllerSetModeRequestedEvent = {
 export type DebugControllerStateChangedEvent = {
   pageCount: number,
   browsers: {
+    guid: string,
     name: string,
     channel?: string,
     contexts: {
