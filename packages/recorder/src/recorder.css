@@ -57,3 +57,20 @@ body.dark-mode .recorder .toolbar-button.toggled.circle-large-filled {
 .recorder .selector-input {
   flex: auto;
 }
+
+.setting {
+  display: flex;
+  align-items: center;
+}
+
+.setting label {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.setting input {
+  margin-right: 5px;
+  flex-shrink: 0;
+}

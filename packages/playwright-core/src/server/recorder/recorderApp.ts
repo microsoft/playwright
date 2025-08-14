@@ -138,6 +138,11 @@ export class RecorderApp {
       }
       return;
     }
+    if (data.event === 'setAutoExpect') {
+      this._languageGeneratorOptions.generateAutoExpect = data.params.autoExpect;
+      this._updateActions();
+      return;
+    }
     if (data.event === 'setMode') {
       this._recorder.setMode(data.params.mode);
       return;

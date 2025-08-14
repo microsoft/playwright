@@ -25,6 +25,7 @@ export type LanguageGeneratorOptions = {
   contextOptions: BrowserContextOptions;
   deviceName?: string;
   saveStorage?: string;
+  generateAutoExpect?: boolean;
 };
 
 export interface LanguageGenerator {

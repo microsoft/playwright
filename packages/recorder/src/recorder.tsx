@@ -26,10 +26,11 @@ import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { toggleTheme } from '@web/theme';
+import { useDarkModeSetting } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
+import { Dialog } from '@web/components/dialog';
 
 export interface RecorderProps {
   sources: Source[],
@@ -48,7 +49,15 @@ export const Recorder: React.FC<RecorderProps> = ({
   const [selectedTab, setSelectedTab] = useSetting<string>('recorderPropertiesTab', 'log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [autoExpect, setAutoExpect] = useSetting<boolean>('autoExpect', false);
+  const settingsButtonRef = React.useRef<HTMLButtonElement>(null);
   window.playwrightSelectSource = selectedSourceId => setSelectedFileId(selectedSourceId);
+
+  React.useEffect(() => {
+    window.dispatch({ event: 'setAutoExpect', params: { autoExpect } });
+  }, [autoExpect]);
 
   const source = React.useMemo(() => {
     const source = sources.find(s => s.id === selectedFileId);
@@ -178,7 +187,33 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
         window.dispatch({ event: 'clear' });
       }}></ToolbarButton>
-      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
+      <ToolbarButton
+        ref={settingsButtonRef}
+        icon='settings-gear'
+        title='Settings'
+        onClick={() => setSettingsOpen(current => !current)}
+      />
+      <Dialog
+        style={{ padding: '4px 8px' }}
+        open={settingsOpen}
+        width={200}
+        verticalOffset={8}
+        requestClose={() => setSettingsOpen(false)}
+        anchor={settingsButtonRef}
+        dataTestId='settings-dialog'
+      >
+        <div key='dark-mode-setting' className='setting'>
+          <input type='checkbox' id='dark-mode-setting' checked={darkMode} onChange={() => setDarkMode(!darkMode)} />
+          <label htmlFor='dark-mode-setting'>Dark mode</label>
+        </div>
+        <div key='auto-expect-setting' className='setting' title='Automatically generate assertions while recording'>
+          <input type='checkbox' id='auto-expect-setting' checked={autoExpect} onChange={() => {
+            window.dispatch({ event: 'setAutoExpect', params: { autoExpect: !autoExpect } });
+            setAutoExpect(!autoExpect);
+          }} />
+          <label htmlFor='auto-expect-setting'>Generate assertions</label>
+        </div>
+      </Dialog>
     </Toolbar>
     <SplitView
       sidebarSize={200}

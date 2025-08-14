@@ -895,6 +895,7 @@ DebugController:
             - recording
             - none
         testIdAttributeName: string?
+        generateAutoExpect: boolean?
 
     highlight:
       internal: true
