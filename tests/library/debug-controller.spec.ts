@@ -19,7 +19,6 @@ import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/play
 import { createGuid } from '../../packages/playwright-core/lib/server/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
-import type { Browser as BrowserImpl } from '../../packages/playwright-core/src/client/browser';
 import type * as channels from '@protocol/channels';
 import { roundBox } from '../page/pageTest';
 
@@ -311,8 +310,7 @@ test('should report error in aria template', async ({ backend }) => {
 });
 
 test('should work with browser._launchServer', async ({ browser }) => {
-  const browserImpl = browser as BrowserImpl;
-  const server = await browserImpl._launchServer({ debugController: true });
+  const server = await (browser as any)._launchServer({ debugController: true });
 
   const backend = new Backend();
   const connectionString = new URL(server.wsEndpoint());

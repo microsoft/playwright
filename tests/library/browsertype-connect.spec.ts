@@ -28,7 +28,6 @@ import type { Browser, ConnectOptions } from 'playwright-core';
 import { createHttpServer } from '../../packages/playwright-core/lib/server/utils/network';
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { RunServer } from '../config/remoteServer';
-import type { Browser as BrowserImpl } from '../../packages/playwright-core/src/client/browser';
 
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
@@ -1048,10 +1047,9 @@ test.describe('launchServer only', () => {
     await expect(browser._parent.launch({ timeout: 0 })).rejects.toThrowError('Launching more browsers is not allowed.');
   });
 
-  test('should work with existing browser', async ({ connect, page }) => {
+  test('should work with existing browser', async ({ connect, page, browser }) => {
     await page.setContent('hello world');
-    const browserImpl = page.context().browser() as BrowserImpl;
-    const server = await browserImpl._launchServer();
+    const server = await (browser as any)._launchServer();
     const secondBrowser = await connect(server.wsEndpoint());
     const secondPage = secondBrowser.contexts()[0].pages()[0];
     expect(await secondPage.content()).toContain('hello world');

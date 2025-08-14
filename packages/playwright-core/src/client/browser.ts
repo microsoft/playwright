@@ -147,9 +147,11 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _launchServer(options: LaunchServerOptions = {}) {
-    if (!this._browserType._serverLauncher)
+    const serverLauncher = this._browserType._serverLauncher;
+    const browserImpl = this._connection.toImpl?.(this);
+    if (!serverLauncher || !browserImpl)
       throw new Error('Launching server is not supported');
-    return await this._browserType._serverLauncher.launchServerOnExistingBrowser(this, {
+    return await serverLauncher.launchServerOnExistingBrowser(browserImpl, {
       _sharedBrowser: true,
       ...options,
     });

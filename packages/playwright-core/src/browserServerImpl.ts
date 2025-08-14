@@ -30,7 +30,6 @@ import type { LaunchOptions, LaunchServerOptions, Logger, Env } from './client/t
 import type { ProtocolLogger } from './server/types';
 import type { WebSocketEventEmitter } from './utilsBundle';
 import type { Browser } from './server/browser';
-import type { Browser as ClientBrowser } from './client/browser';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserName: 'chromium' | 'firefox' | 'webkit' | '_bidiFirefox' | '_bidiChromium';
@@ -79,17 +78,10 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       throw e;
     }
 
-    return this._launchServerOnExistingBrowser(browser, options);
+    return this.launchServerOnExistingBrowser(browser, options);
   }
 
-  async launchServerOnExistingBrowser(browser: ClientBrowser, options: LaunchServerOptions): Promise<BrowserServer> {
-    const browserImpl = browser._connection.toImpl?.(browser);
-    if (!browserImpl)
-      throw new Error('Launch server is not supported');
-    return this._launchServerOnExistingBrowser(browserImpl, options);
-  }
-
-  private async _launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions): Promise<BrowserServer> {
+  async launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions): Promise<BrowserServer> {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
