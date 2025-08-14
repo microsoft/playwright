@@ -710,15 +710,16 @@ export class WKPage implements PageDelegate {
         height: screenSize.height,
       }),
     ];
-    // WPE WebKit is failing in mesa due to a race condition if we start interacting
-    // with the page too quickly.
-    if (!this._browserContext._browser?.options.headful && hostPlatform === 'ubuntu22.04-x64')
-      promises.push(new Promise(r => setTimeout(r, 500)));
     if (options.isMobile) {
       const angle = viewportSize.width > viewportSize.height ? 90 : 0;
       promises.push(this._pageProxySession.send('Emulation.setOrientationOverride', { angle }));
     }
     await Promise.all(promises);
+
+    // WPE WebKit is failing in mesa due to a race condition if we start interacting
+    // with the page too quickly.
+    if (!this._browserContext._browser?.options.headful && hostPlatform === 'ubuntu22.04-x64')
+      await new Promise(r => setTimeout(r, 500));
   }
 
   async updateRequestInterception(): Promise<void> {
