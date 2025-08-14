@@ -24,7 +24,7 @@ import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorPa
 import { generateCode } from './codegen/language';
 import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
-import { Page } from './page';
+import { Frame } from './frames';
 
 import type { Language } from '../utils';
 import type { BrowserContext } from './browserContext';
@@ -44,6 +44,7 @@ export class DebugController extends SdkObject {
   };
 
   private _trackHierarchyListener: InstrumentationListener | undefined;
+  private _disposeNavigationListeners: (() => void)[] = [];
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
 
@@ -65,7 +66,9 @@ export class DebugController extends SdkObject {
       this._trackHierarchyListener = {
         onPageOpen: page => {
           this._emitSnapshot(false);
-          page.on(Page.Events.InternalFrameNavigatedToNewDocument, () => this._emitSnapshot(false));
+          const handleNavigation = () => this._emitSnapshot(false);
+          page.mainFrame().on(Frame.Events.InternalNavigation, handleNavigation);
+          this._disposeNavigationListeners.push(() => page.mainFrame().off(Frame.Events.InternalNavigation, handleNavigation));
         },
         onPageClose: () => this._emitSnapshot(false),
       };
@@ -74,6 +77,9 @@ export class DebugController extends SdkObject {
     } else if (!enabled && this._trackHierarchyListener) {
       this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
       this._trackHierarchyListener = undefined;
+      for (const dispose of this._disposeNavigationListeners)
+        dispose();
+      this._disposeNavigationListeners = [];
     }
   }
 
@@ -146,7 +152,7 @@ export class DebugController extends SdkObject {
     this.emit(DebugController.Events.StateChanged, {
       pageCount,
       browsers: this._playwright.allBrowsers().map(browser => ({
-        guid: browser.guid,
+        id: browser.guid,
         name: browser.options.name,
         channel: browser.options.channel,
         contexts: browser.contexts().map(context => ({

@@ -930,7 +930,7 @@ DebugController:
           items:
             type: object
             properties:
-              guid: string
+              id: string
               name: string
               channel: string?
               contexts:

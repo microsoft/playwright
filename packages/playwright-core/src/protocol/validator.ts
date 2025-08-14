@@ -438,7 +438,7 @@ scheme.DebugControllerSetModeRequestedEvent = tObject({
 scheme.DebugControllerStateChangedEvent = tObject({
   pageCount: tInt,
   browsers: tArray(tObject({
-    guid: tString,
+    id: tString,
     name: tString,
     channel: tOptional(tString),
     contexts: tArray(tObject({
