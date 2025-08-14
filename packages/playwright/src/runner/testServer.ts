@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -71,7 +72,42 @@ class TestServer {
   }
 }
 
-export class TestServerDispatcher implements TestServerInterface {
+export const TestRunnerEvent = {
+  TestFilesChanged: 'testFilesChanged',
+  RecoverFromStepError: 'recoverFromStepError',
+} as const;
+
+export type TestRunnerEventMap = {
+  [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
+  [TestRunnerEvent.RecoverFromStepError]: [stepId: string, message: string, location: reporterTypes.Location];
+};
+
+export type ListTestsParams = {
+  projects?: string[];
+  locations?: string[];
+  grep?: string;
+  grepInvert?: string;
+};
+
+export type RunTestsParams = {
+  locations?: string[];
+  grep?: string;
+  grepInvert?: string;
+  testIds?: string[];
+  headed?: boolean;
+  workers?: number | string;
+  updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
+  updateSourceMethod?: 'overwrite' | 'patch' | '3way';
+  reporters?: string[],
+  trace?: 'on' | 'off';
+  video?: 'on' | 'off';
+  projects?: string[];
+  reuseContext?: boolean;
+  connectWsEndpoint?: string;
+};
+
+type FullResultStatus = reporterTypes.FullResult['status'];
+export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _configLocation: ConfigLocation;
   private _configCLIOverrides: ConfigCLIOverrides;
 
@@ -81,89 +117,66 @@ export class TestServerDispatcher implements TestServerInterface {
   private _watchedTestDependencies = new Set<string>();
 
   private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
-  readonly transport: Transport;
   private _queue = Promise.resolve();
-  private _globalSetup: { cleanup: () => Promise<any>, report: ReportEntry[] } | undefined;
-  private _devServer: { cleanup: () => Promise<any>, report: ReportEntry[] } | undefined;
-  readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
+  private _globalSetup: { cleanup: () => Promise<any> } | undefined;
+  private _devServer: { cleanup: () => Promise<any> } | undefined;
   private _plugins: TestRunnerPluginRegistration[] | undefined;
-  private _serializer = require.resolve('./uiModeReporter');
   private _watchTestDirs = false;
-  private _closeOnDisconnect = false;
   private _populateDependenciesOnList = false;
   private _recoverFromStepErrors = false;
   private _resumeAfterStepErrors: Map<string, ManualPromise<RecoverFromStepErrorResult>> = new Map();
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+    super();
     this._configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
-    this.transport = {
-      onconnect: () => {},
-      dispatch: (method, params) => (this as any)[method](params),
-      onclose: () => {
-        if (this._closeOnDisconnect)
-          gracefullyProcessExitDoNotHang(0);
-      },
-    };
     this._watcher = new Watcher(events => {
       const collector = new Set<string>();
       events.forEach(f => collectAffectedTestFiles(f.file, collector));
-      this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
+      this.emit(TestRunnerEvent.TestFilesChanged, [...collector]);
     });
-    this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
   }
 
-  private async _wireReporter(messageSink: (message: any) => void) {
-    return await createReporterForTestServer(this._serializer, messageSink);
-  }
-
-  private async _collectingInternalReporter(...extraReporters: ReporterV2[]) {
-    const report: ReportEntry[] = [];
-    const collectingReporter = await createReporterForTestServer(this._serializer, e => report.push(e));
-    return { reporter: new InternalReporter([collectingReporter, ...extraReporters]), report };
-  }
-
-  async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
-    // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
-    this._serializer = params.serializer || require.resolve('./uiModeReporter');
-    this._closeOnDisconnect = !!params.closeOnDisconnect;
-    await this._setInterceptStdio(!!params.interceptStdio);
+  async initialize(params: {
+    watchTestDirs?: boolean;
+    populateDependenciesOnList?: boolean;
+    recoverFromStepErrors?: boolean;
+  }) {
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
     this._recoverFromStepErrors = !!params.recoverFromStepErrors;
   }
 
-  async ping() {}
-
-  async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
-    if (isUnderTest())
-      return;
-    // eslint-disable-next-line no-console
-    open('vscode://file/' + params.location.file + ':' + params.location.line).catch(e => console.error(e));
-  }
-
-  async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {
+  resizeTerminal(params: { cols: number, rows: number }) {
     process.stdout.columns = params.cols;
     process.stdout.rows = params.rows;
     process.stderr.columns = params.cols;
     process.stderr.rows = params.rows;
   }
 
-  async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
-    return { hasBrowsers: hasSomeBrowsers() };
+  hasSomeBrowsers(): boolean {
+    for (const browserName of ['chromium', 'webkit', 'firefox']) {
+      try {
+        registry.findExecutable(browserName)!.executablePathOrDie('javascript');
+        return true;
+      } catch {
+      }
+    }
+    return false;
   }
 
   async installBrowsers() {
-    await installBrowsers();
+    const executables = registry.defaultExecutables();
+    await registry.install(executables, false);
   }
 
-  async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
+  async runGlobalSetup(userReporters: ReporterV2[]): Promise<{ status: FullResultStatus }> {
     await this.runGlobalTeardown();
 
-    const { reporter, report } = await this._collectingInternalReporter(new ListReporter());
+    const reporter = new InternalReporter(userReporters);
     const config = await this._loadConfigOrReportError(reporter, this._configCLIOverrides);
     if (!config)
-      return { status: 'failed', report };
+      return { status: 'failed' };
 
     const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
       ...createGlobalSetupTasks(config),
@@ -171,24 +184,24 @@ export class TestServerDispatcher implements TestServerInterface {
     if (status !== 'passed')
       await cleanup();
     else
-      this._globalSetup = { cleanup, report };
-    return { report, status };
+      this._globalSetup = { cleanup };
+    return { status };
   }
 
   async runGlobalTeardown() {
     const globalSetup = this._globalSetup;
     const status = await globalSetup?.cleanup();
     this._globalSetup = undefined;
-    return { status, report: globalSetup?.report || [] };
+    return { status };
   }
 
-  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
-    await this.stopDevServer({});
+  async startDevServer(userReporters: ReporterV2[]): Promise<{ status: FullResultStatus }> {
+    await this.stopDevServer();
 
-    const { reporter, report } = await this._collectingInternalReporter();
+    const reporter = new InternalReporter(userReporters);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
-      return { report, status: 'failed' };
+      return { status: 'failed' };
 
     const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
       createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false }),
@@ -197,18 +210,18 @@ export class TestServerDispatcher implements TestServerInterface {
     if (status !== 'passed')
       await cleanup();
     else
-      this._devServer = { cleanup, report };
-    return { report, status };
+      this._devServer = { cleanup };
+    return { status };
   }
 
-  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
+  async stopDevServer(): Promise<{ status: FullResultStatus }> {
     const devServer = this._devServer;
     const status = await devServer?.cleanup();
     this._devServer = undefined;
-    return { status, report: devServer?.report || [] };
+    return { status };
   }
 
-  async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
+  async clearCache(): Promise<void> {
     const reporter = new InternalReporter([]);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
@@ -218,35 +231,33 @@ export class TestServerDispatcher implements TestServerInterface {
     ]);
   }
 
-  async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
-    const { reporter, report } = await this._collectingInternalReporter();
+  async listFiles(userReporters: ReporterV2[], params: { projects?: string[] }): Promise<{ status: FullResultStatus }> {
+    const reporter = new InternalReporter(userReporters);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
-      return { status: 'failed', report };
+      return { status: 'failed' };
 
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
     const status = await runTasks(new TestRun(config, reporter), [
       createListFilesTask(),
       createReportBeginTask(),
     ]);
-    return { report, status };
+    return { status };
   }
 
-  async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
-    let result: Awaited<ReturnType<TestServerInterface['listTests']>>;
+  async listTests(userReporters: ReporterV2[], params: ListTestsParams): Promise<{ status: FullResultStatus }> {
+    let result: { status: FullResultStatus } | undefined;
     this._queue = this._queue.then(async () => {
-      const { config, report, status } = await this._innerListTests(params);
+      const { config, status } = await this._innerListTests(userReporters, params);
       if (config)
         await this._updateWatchedDirs(config);
-      result = { report, status };
+      result = { status };
     }).catch(printInternalError);
     await this._queue;
     return result!;
   }
 
-  private async _innerListTests(params: Parameters<TestServerInterface['listTests']>[0]): Promise<{
-    report: ReportEntry[],
-    reporter: InternalReporter,
+  private async _innerListTests(userReporters: ReporterV2[], params: ListTestsParams): Promise<{
     status: reporterTypes.FullResult['status'],
     config?: FullConfigInternal,
   }> {
@@ -255,10 +266,10 @@ export class TestServerDispatcher implements TestServerInterface {
       repeatEach: 1,
       retries: 0,
     };
-    const { reporter, report } = await this._collectingInternalReporter();
+    const reporter = new InternalReporter(userReporters);
     const config = await this._loadConfigOrReportError(reporter, overrides);
     if (!config)
-      return { report, reporter, status: 'failed' };
+      return { status: 'failed' };
 
     config.cliArgs = params.locations || [];
     config.cliGrep = params.grep;
@@ -270,7 +281,7 @@ export class TestServerDispatcher implements TestServerInterface {
       createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false, populateDependencies: this._populateDependenciesOnList }),
       createReportBeginTask(),
     ]);
-    return { config, report, reporter, status };
+    return { config, status };
   }
 
   private async _updateWatchedDirs(config: FullConfigInternal) {
@@ -295,16 +306,16 @@ export class TestServerDispatcher implements TestServerInterface {
     await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
   }
 
-  async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
+  async runTests(userReporters: ReporterV2[], params: RunTestsParams): ReturnType<TestServerInterface['runTests']> {
     let result: Awaited<ReturnType<TestServerInterface['runTests']>> = { status: 'passed' };
     this._queue = this._queue.then(async () => {
-      result = await this._innerRunTests(params).catch(e => { printInternalError(e); return { status: 'failed' }; });
+      result = await this._innerRunTests(userReporters, params).catch(e => { printInternalError(e); return { status: 'failed' }; });
     });
     await this._queue;
     return result;
   }
 
-  private async _innerRunTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
+  private async _innerRunTests(userReporters: ReporterV2[], params: RunTestsParams): ReturnType<TestServerInterface['runTests']> {
     await this.stopTests();
     const overrides: ConfigCLIOverrides = {
       ...this._configCLIOverrides,
@@ -330,8 +341,7 @@ export class TestServerDispatcher implements TestServerInterface {
     else
       process.env.PW_LIVE_TRACE_STACKS = undefined;
 
-    const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
-    const config = await this._loadConfigOrReportError(new InternalReporter([wireReporter]), overrides);
+    const config = await this._loadConfigOrReportError(new InternalReporter(userReporters), overrides);
     if (!config)
       return { status: 'failed' };
 
@@ -348,7 +358,7 @@ export class TestServerDispatcher implements TestServerInterface {
     }
 
     const configReporters = await createReporters(config, 'test', true);
-    const reporter = new InternalReporter([...configReporters, wireReporter]);
+    const reporter = new InternalReporter([...configReporters, ...userReporters]);
     const stop = new ManualPromise();
     const tasks = [
       createApplyRebaselinesTask(),
@@ -372,7 +382,7 @@ export class TestServerDispatcher implements TestServerInterface {
     this._resumeAfterStepErrors.set(stepId, recoveryPromise);
     if (!error?.message || !error?.location)
       return { stepId, status: 'failed' };
-    this._dispatchEvent('recoverFromStepError', { stepId, message: error.message, location: error.location });
+    this.emit(TestRunnerEvent.RecoverFromStepError, stepId, error.message, error.location);
     const recoveredResult = await recoveryPromise;
     if (recoveredResult.stepId !== stepId)
       return { stepId, status: 'failed' };
@@ -414,32 +424,6 @@ export class TestServerDispatcher implements TestServerInterface {
     this._resumeAfterStepErrors.clear();
   }
 
-  async _setInterceptStdio(intercept: boolean) {
-    if (process.env.PWTEST_DEBUG)
-      return;
-    if (intercept) {
-      if (debug.log === originalDebugLog) {
-        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
-        debug.log = (...args) => {
-          const string = util.format(...args) + '\n';
-          return (originalStderrWrite as any).apply(process.stderr, [string]);
-        };
-      }
-      process.stdout.write = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
-        return true;
-      };
-      process.stderr.write = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
-        return true;
-      };
-    } else {
-      debug.log = originalDebugLog;
-      process.stdout.write = originalStdoutWrite;
-      process.stderr.write = originalStderrWrite;
-    }
-  }
-
   async closeGracefully() {
     gracefullyProcessExitDoNotHang(0);
   }
@@ -471,6 +455,175 @@ export class TestServerDispatcher implements TestServerInterface {
     await reporter.onEnd({ status: 'failed' });
     await reporter.onExit();
     return null;
+  }
+}
+export class TestServerDispatcher implements TestServerInterface {
+  readonly transport: Transport;
+  private _serializer = require.resolve('./uiModeReporter');
+  private _closeOnDisconnect = false;
+  private _testRunner: TestRunner;
+  private _globalSetupReport: ReportEntry[] | undefined;
+  private _devServerReport: ReportEntry[] | undefined;
+  readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
+
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+    this._testRunner = new TestRunner(configLocation, configCLIOverrides);
+    this.transport = {
+      onconnect: () => {},
+      dispatch: (method, params) => (this as any)[method](params),
+      onclose: () => {
+        if (this._closeOnDisconnect)
+          gracefullyProcessExitDoNotHang(0);
+      },
+    };
+
+    this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
+    this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
+    this._testRunner.on(TestRunnerEvent.RecoverFromStepError, (stepId, message, location) => this._dispatchEvent('recoverFromStepError', { stepId, message, location }));
+  }
+
+  private async _wireReporter(messageSink: (message: any) => void) {
+    return await createReporterForTestServer(this._serializer, messageSink);
+  }
+
+  private async _collectingReporter(): Promise<{ reporter: ReporterV2, report: ReportEntry[] }> {
+    const report: ReportEntry[] = [];
+    return {
+      reporter: await createReporterForTestServer(this._serializer, e => report.push(e)),
+      report,
+    };
+  }
+
+  async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
+    // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
+    this._serializer = params.serializer || require.resolve('./uiModeReporter');
+    this._closeOnDisconnect = !!params.closeOnDisconnect;
+    await this._setInterceptStdio(!!params.interceptStdio);
+    await this._testRunner.initialize({
+      watchTestDirs: !!params.watchTestDirs,
+      populateDependenciesOnList: !!params.populateDependenciesOnList,
+      recoverFromStepErrors: !!params.recoverFromStepErrors,
+    });
+  }
+
+  async ping() {}
+
+  async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
+    if (isUnderTest())
+      return;
+    // eslint-disable-next-line no-console
+    open('vscode://file/' + params.location.file + ':' + params.location.line).catch(e => console.error(e));
+  }
+
+  async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {
+    this._testRunner.resizeTerminal(params);
+  }
+
+  async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
+    return { hasBrowsers: this._testRunner.hasSomeBrowsers() };
+  }
+
+  async installBrowsers() {
+    await this._testRunner.installBrowsers();
+  }
+
+  async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
+    await this.runGlobalTeardown();
+
+    const { reporter, report } = await this._collectingReporter();
+    this._globalSetupReport = report;
+    const { status } = await this._testRunner.runGlobalSetup([reporter, new ListReporter()]);
+    return { report, status };
+  }
+
+  async runGlobalTeardown() {
+    const { status } = await this._testRunner.runGlobalTeardown();
+    const report = this._globalSetupReport || [];
+    this._globalSetupReport = undefined;
+    return { status, report };
+  }
+
+  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
+    await this.stopDevServer({});
+
+    const { reporter, report } = await this._collectingReporter();
+    const { status } = await this._testRunner.startDevServer([reporter]);
+    return { report, status };
+  }
+
+  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
+    const { status } = await this._testRunner.stopDevServer();
+    const report = this._devServerReport || [];
+    this._devServerReport = undefined;
+    return { status, report };
+  }
+
+  async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
+    await this._testRunner.clearCache();
+  }
+
+  async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
+    const { reporter, report } = await this._collectingReporter();
+    const { status } = await this._testRunner.listFiles([reporter], params);
+    return { report, status };
+  }
+
+  async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
+    const { reporter, report } = await this._collectingReporter();
+    const { status } = await this._testRunner.listTests([reporter], params);
+    return { report, status };
+  }
+
+  async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
+    const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
+    const { status } = await this._testRunner.runTests([wireReporter], params);
+    return { status };
+  }
+
+  async resumeAfterStepError(params: RecoverFromStepErrorResult): Promise<void> {
+    await this._testRunner.resumeAfterStepError(params);
+  }
+
+  async watch(params: { fileNames: string[]; }) {
+    await this._testRunner.watch(params);
+  }
+
+  async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
+    return this._testRunner.findRelatedTestFiles(params);
+  }
+
+  async stopTests() {
+    await this._testRunner.stopTests();
+  }
+
+  async _setInterceptStdio(intercept: boolean) {
+    if (process.env.PWTEST_DEBUG)
+      return;
+    if (intercept) {
+      if (debug.log === originalDebugLog) {
+        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
+        debug.log = (...args) => {
+          const string = util.format(...args) + '\n';
+          return (originalStderrWrite as any).apply(process.stderr, [string]);
+        };
+      }
+      process.stdout.write = (chunk: string | Buffer) => {
+        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
+        return true;
+      };
+      process.stderr.write = (chunk: string | Buffer) => {
+        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
+        return true;
+      };
+    } else {
+      debug.log = originalDebugLog;
+      process.stdout.write = originalStdoutWrite;
+      process.stderr.write = originalStderrWrite;
+    }
+  }
+
+  async closeGracefully() {
+    await this._testRunner.closeGracefully();
   }
 }
 
@@ -543,22 +696,6 @@ function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): Stdi
   if (chunk instanceof Uint8Array)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
-}
-
-function hasSomeBrowsers(): boolean {
-  for (const browserName of ['chromium', 'webkit', 'firefox']) {
-    try {
-      registry.findExecutable(browserName)!.executablePathOrDie('javascript');
-      return true;
-    } catch {
-    }
-  }
-  return false;
-}
-
-async function installBrowsers() {
-  const executables = registry.defaultExecutables();
-  await registry.install(executables, false);
 }
 
 function printInternalError(e: Error) {
