@@ -153,6 +153,8 @@ export class Backend extends EventEmitter {
   }
 
   private _send(method: string, params: any = {}): Promise<any> {
+    if (this._transport.isClosed())
+      throw new Error('Transport is closed');
     return new Promise((fulfill, reject) => {
       const id = ++Backend._lastId;
       const command = { id, guid: 'DebugController', method, params, metadata: {} };

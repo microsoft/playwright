@@ -325,3 +325,15 @@ test('should work with browser._launchServer', async ({ browser }) => {
   await page.close();
   expect(pageCounts).toEqual([1, 0]);
 });
+
+test('should not work with browser._launchServer(debugController: false)', async ({ browser }) => {
+  const server = await (browser as any)._launchServer({ debugController: false });
+
+  const backend = new Backend();
+  const connectionString = new URL(server.wsEndpoint());
+  connectionString.searchParams.set('debug-controller', '');
+  await expect(async () => {
+    await backend.connect(connectionString.toString());
+    await backend.initialize();
+  }).rejects.toThrow();
+});

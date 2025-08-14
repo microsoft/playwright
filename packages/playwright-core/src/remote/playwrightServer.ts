@@ -107,7 +107,9 @@ export class PlaywrightServer {
         const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
 
-        if ((this._options.debugController || isExtension) && url.searchParams.has('debug-controller')) {
+        if (url.searchParams.has('debug-controller')) {
+          if (!(this._options.debugController || isExtension))
+            throw new Error('Debug controller is not enabled');
           return new PlaywrightConnection(
               controllerSemaphore,
               ws,
