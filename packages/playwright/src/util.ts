@@ -19,7 +19,7 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { rewriteErrorMessage, toPosixPath, parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
+import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
 import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
 import type { Location } from './../types/testReporter';
@@ -421,25 +421,4 @@ export async function removeDirAndLogToConsole(dir: string) {
 export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
 export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
-}
-
-type TestFileFilterData = {
-  titlePath: string[][],
-};
-
-export async function loadTestFilterFile(filePath: string): Promise<TestCaseFilter> {
-  try {
-    const data = JSON.parse(await fs.promises.readFile(filePath, 'utf8')) as TestFileFilterData;
-    if (!data || typeof data !== 'object' || !Array.isArray(data.titlePath) || !data.titlePath.every(path => Array.isArray(path)))
-      throw new Error(`Wrong test filter file format`);
-    const toId = (titlePath: string[]) => {
-      const [project, file, ...titles] = titlePath; // At the time of filtering, there is no root yet.
-      return `${project}\x1e${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
-    };
-    const ids = new Set(data.titlePath.map(titlePath => toId(titlePath)));
-    return test => ids.has(toId(test.titlePath()));
-  } catch (error) {
-    rewriteErrorMessage(error, `Failed to read test filter file "${filePath}": ${error.message}`);
-    throw error;
-  }
 }
