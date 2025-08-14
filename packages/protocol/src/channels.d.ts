@@ -770,9 +770,11 @@ export type DebugControllerSetReportStateChangedResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
   testIdAttributeName?: string,
+  generateAutoExpect?: boolean,
 };
 export type DebugControllerSetRecorderModeOptions = {
   testIdAttributeName?: string,
+  generateAutoExpect?: boolean,
 };
 export type DebugControllerSetRecorderModeResult = void;
 export type DebugControllerHighlightParams = {

@@ -459,6 +459,7 @@ scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
   testIdAttributeName: tOptional(tString),
+  generateAutoExpect: tOptional(tBoolean),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({

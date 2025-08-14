@@ -45,6 +45,7 @@ export class DebugController extends SdkObject {
   private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
+  _generateAutoExpect = false;
 
   constructor(playwright: Playwright) {
     super({ attribution: { isInternalPlaywright: true }, instrumentation: createInstrumentation() } as any, undefined, 'DebugController');
@@ -73,8 +74,9 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string }) {
+  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean }) {
     await progress.race(this._closeBrowsersWithoutPages());
+    this._generateAutoExpect = !!params.generateAutoExpect;
 
     if (params.mode === 'none') {
       for (const recorder of await progress.race(this._allRecorders())) {
@@ -181,6 +183,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
       browserName: 'chromium',
       launchOptions: {},
       contextOptions: {},
+      generateAutoExpect: debugController._generateAutoExpect,
     });
     debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions: actionTexts });
   };

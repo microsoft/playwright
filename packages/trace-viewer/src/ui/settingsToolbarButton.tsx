@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { Dialog } from './shared/dialog';
+import { Dialog } from '@web/components/dialog';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { DefaultSettingsView } from './defaultSettingsView';
 
