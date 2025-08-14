@@ -25,6 +25,7 @@ import { generateCode } from './codegen/language';
 import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
 import { Frame } from './frames';
+import { Page } from './page';
 
 import type { Language } from '../utils';
 import type { BrowserContext } from './browserContext';
@@ -44,7 +45,7 @@ export class DebugController extends SdkObject {
   };
 
   private _reportState = false;
-  private _disposeListeners: (() => void)[] = [];
+  private _disposeListeners = new Set<() => void>();
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
 
@@ -71,17 +72,19 @@ export class DebugController extends SdkObject {
           this._emitSnapshot(false);
           const handleNavigation = () => this._emitSnapshot(false);
           page.mainFrame().on(Frame.Events.InternalNavigation, handleNavigation);
-          this._disposeListeners.push(() => page.mainFrame().off(Frame.Events.InternalNavigation, handleNavigation));
+          const dispose = () => page.mainFrame().off(Frame.Events.InternalNavigation, handleNavigation);
+          this._disposeListeners.add(dispose);
+          page.on(Page.Events.Close, () => this._disposeListeners.delete(dispose));
         },
         onPageClose: () => this._emitSnapshot(false),
       };
       this._playwright.instrumentation.addListener(listener, null);
-      this._disposeListeners.push(() => this._playwright.instrumentation.removeListener(listener));
+      this._disposeListeners.add(() => this._playwright.instrumentation.removeListener(listener));
       this._emitSnapshot(true);
     } else {
       for (const dispose of this._disposeListeners)
         dispose();
-      this._disposeListeners = [];
+      this._disposeListeners.clear();
     }
   }
 
