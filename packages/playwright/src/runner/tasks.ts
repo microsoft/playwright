@@ -31,7 +31,7 @@ import { detectChangedTestFiles } from './vcs';
 import { Suite } from '../common/test';
 import { createTestGroups } from '../runner/testGroups';
 import { cacheDir } from '../transform/compilationCache';
-import { loadTestFilterFile, removeDirAndLogToConsole } from '../util';
+import { removeDirAndLogToConsole } from '../util';
 
 import type { TestGroup } from '../runner/testGroups';
 import type { EnvByProjectId } from './dispatcher';
@@ -267,16 +267,6 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
       if (testRun.config.cliOnlyChanged) {
         const changedFiles = await detectChangedTestFiles(testRun.config.cliOnlyChanged, testRun.config.configDir);
         testRun.config.preOnlyTestFilters.push(test => changedFiles.has(test.location.file));
-      }
-
-      if (testRun.config.cliFilterFile) {
-        try {
-          testRun.config.preOnlyTestFilters.push(await loadTestFilterFile(testRun.config.cliFilterFile));
-        } catch (error) {
-          if (options.failOnLoadErrors)
-            throw error;
-          softErrors.push(error);
-        }
       }
 
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);

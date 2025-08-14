@@ -57,7 +57,6 @@ export class FullConfigInternal {
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
   cliLastFailed?: boolean;
-  cliFilterFile?: string;
   preOnlyTestFilters: TestCaseFilter[] = [];
   postShardTestFilters: TestCaseFilter[] = [];
   defineConfigWasUsed = false;
