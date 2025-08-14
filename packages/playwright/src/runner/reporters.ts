@@ -91,14 +91,13 @@ interface ErrorCollectingReporter extends ReporterV2 {
   errors(): TestError[];
 }
 
-export function createErrorCollectingReporter(screen: Screen, writeToConsole?: boolean): ErrorCollectingReporter {
+export function createErrorCollectingReporter(screen: Screen): ErrorCollectingReporter {
   const errors: TestError[] = [];
   return {
     version: () => 'v2',
     onError(error: TestError) {
       errors.push(error);
-      if (writeToConsole)
-        screen.stderr?.write(formatError(screen, error).message + '\n');
+      screen.stderr?.write(formatError(screen, error).message + '\n');
     },
     errors: () => errors,
   };

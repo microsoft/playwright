@@ -31,15 +31,20 @@ import { InternalReporter } from '../reporters/internalReporter';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import { serializeError } from '../util';
 import { createErrorCollectingReporter, createReporters } from './reporters';
-import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks, runTasksDeferCleanup } from './tasks';
+import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks, runTasksDeferCleanup } from './tasks';
+import { LastRunReporter } from './lastRun';
 
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';
-import type { RecoverFromStepErrorResult, TestServerInterface } from '../isomorphic/testServerInterface';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
+export type RecoverFromStepErrorResult = {
+  stepId: string;
+  status: 'recovered' | 'failed';
+  value?: string | number | boolean | undefined;
+};
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
@@ -167,16 +172,17 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async startDevServer(userReporters: ReporterV2[]): Promise<{ status: FullResultStatus }> {
+  async startDevServer(userReporter: ReporterV2, mode: 'in-process' | 'out-of-process'): Promise<{ status: FullResultStatus }> {
     await this.stopDevServer();
 
-    const reporter = new InternalReporter(userReporters);
+    const reporter = new InternalReporter([userReporter]);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return { status: 'failed' };
 
     const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
-      createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false }),
+      ...createPluginSetupTasks(config),
+      createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false }),
       createStartDevServerTask(),
     ]);
     if (status !== 'passed')
@@ -193,23 +199,25 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async clearCache(): Promise<void> {
-    const reporter = new InternalReporter([]);
+  async clearCache(userReporter?: ReporterV2): Promise<{ status: FullResultStatus }> {
+    const reporter = new InternalReporter(userReporter ? [userReporter] : []);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
-      return;
-    await runTasks(new TestRun(config, reporter), [
+      return { status: 'failed' };
+    const status = await runTasks(new TestRun(config, reporter), [
+      ...createPluginSetupTasks(config),
       createClearCacheTask(config),
     ]);
+    return { status };
   }
 
-  async listFiles(userReporters: ReporterV2[], params: { projects?: string[] }): Promise<{ status: FullResultStatus }> {
-    const reporter = new InternalReporter(userReporters);
+  async listFiles(userReporter: ReporterV2, projects?: string[]): Promise<{ status: FullResultStatus }> {
+    const reporter = new InternalReporter([userReporter]);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return { status: 'failed' };
 
-    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
+    config.cliProjectFilter = projects?.length ? projects : undefined;
     const status = await runTasks(new TestRun(config, reporter), [
       createListFilesTask(),
       createReportBeginTask(),
@@ -217,10 +225,10 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async listTests(userReporters: ReporterV2[], params: ListTestsParams): Promise<{ status: FullResultStatus }> {
+  async listTests(userReporter: ReporterV2, params: ListTestsParams): Promise<{ status: FullResultStatus }> {
     let result: { status: FullResultStatus } | undefined;
     this._queue = this._queue.then(async () => {
-      const { config, status } = await this._innerListTests(userReporters, params);
+      const { config, status } = await this._innerListTests(userReporter, params);
       if (config)
         await this._updateWatchedDirs(config);
       result = { status };
@@ -229,7 +237,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return result!;
   }
 
-  private async _innerListTests(userReporters: ReporterV2[], params: ListTestsParams): Promise<{
+  private async _innerListTests(userReporter: ReporterV2, params: ListTestsParams): Promise<{
     status: reporterTypes.FullResult['status'],
     config?: FullConfigInternal,
   }> {
@@ -238,7 +246,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       repeatEach: 1,
       retries: 0,
     };
-    const reporter = new InternalReporter(userReporters);
+    const reporter = new InternalReporter([userReporter]);
     const config = await this._loadConfigOrReportError(reporter, overrides);
     if (!config)
       return { status: 'failed' };
@@ -278,16 +286,16 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
   }
 
-  async runTests(userReporters: ReporterV2[], params: RunTestsParams): ReturnType<TestServerInterface['runTests']> {
-    let result: Awaited<ReturnType<TestServerInterface['runTests']>> = { status: 'passed' };
+  async runTests(userReporter: ReporterV2, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
+    let result: { status: FullResultStatus } = { status: 'passed' };
     this._queue = this._queue.then(async () => {
-      result = await this._innerRunTests(userReporters, params).catch(e => { printInternalError(e); return { status: 'failed' }; });
+      result = await this._innerRunTests(userReporter, params).catch(e => { printInternalError(e); return { status: 'failed' }; });
     });
     await this._queue;
     return result;
   }
 
-  private async _innerRunTests(userReporters: ReporterV2[], params: RunTestsParams): ReturnType<TestServerInterface['runTests']> {
+  private async _innerRunTests(userReporter: ReporterV2, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
     await this.stopTests();
     const overrides: ConfigCLIOverrides = {
       ...this._configCLIOverrides,
@@ -313,7 +321,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     else
       process.env.PW_LIVE_TRACE_STACKS = undefined;
 
-    const config = await this._loadConfigOrReportError(new InternalReporter(userReporters), overrides);
+    const config = await this._loadConfigOrReportError(new InternalReporter([userReporter]), overrides);
     if (!config)
       return { status: 'failed' };
 
@@ -330,7 +338,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     }
 
     const configReporters = await createReporters(config, 'test', true);
-    const reporter = new InternalReporter([...configReporters, ...userReporters]);
+    const reporter = new InternalReporter([...configReporters, userReporter]);
     const stop = new ManualPromise();
     const tasks = [
       createApplyRebaselinesTask(),
@@ -367,27 +375,28 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       recoveryPromise.resolve(params);
   }
 
-  async watch(params: { fileNames: string[]; }) {
+  async watch(fileNames: string[]) {
     this._watchedTestDependencies = new Set();
-    for (const fileName of params.fileNames) {
+    for (const fileName of fileNames) {
       this._watchedTestDependencies.add(fileName);
       dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
     }
     await this._updateWatcher(true);
   }
 
-  async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
+  async findRelatedTestFiles(files: string[], userReporter?: ReporterV2): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }> {
     const errorReporter = createErrorCollectingReporter(internalScreen);
-    const reporter = new InternalReporter([errorReporter]);
+    const reporter = new InternalReporter(userReporter ? [userReporter, errorReporter] : [errorReporter]);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return { errors: errorReporter.errors(), testFiles: [] };
     const status = await runTasks(new TestRun(config, reporter), [
+      ...createPluginSetupTasks(config),
       createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
     ]);
     if (status !== 'passed')
       return { errors: errorReporter.errors(), testFiles: [] };
-    return { testFiles: affectedTestFiles(params.files) };
+    return { testFiles: affectedTestFiles(files) };
   }
 
   async stopTests() {
@@ -447,4 +456,39 @@ async function resolveCtDirs(config: FullConfigInternal) {
     outDir,
     templateDir
   };
+}
+
+export async function runAllTestsWithConfig(config: FullConfigInternal): Promise<FullResultStatus> {
+  const listOnly = config.cliListOnly;
+
+  addGitCommitInfoPlugin(config);
+
+  // Legacy webServer support.
+  webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+
+  const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
+  const lastRun = new LastRunReporter(config);
+  if (config.cliLastFailed)
+    await lastRun.filterLastFailed();
+
+  const reporter = new InternalReporter([...reporters, lastRun]);
+  const tasks = listOnly ? [
+    createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
+    createReportBeginTask(),
+  ] : [
+    createApplyRebaselinesTask(),
+    ...createGlobalSetupTasks(config),
+    createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }),
+    ...createRunTestsTasks(config),
+  ];
+  const status = await runTasks(new TestRun(config, reporter), tasks, config.config.globalTimeout);
+
+  // Calling process.exit() might truncate large stdout/stderr output.
+  // See https://github.com/nodejs/node/issues/6456.
+  // See https://github.com/nodejs/node/issues/12921
+  // eslint-disable-next-line no-restricted-properties
+  await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
+  // eslint-disable-next-line no-restricted-properties
+  await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
+  return status;
 }
