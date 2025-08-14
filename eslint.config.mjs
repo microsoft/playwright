@@ -243,14 +243,12 @@ const importOrderRules = {
     2,
     {
       groups: [
-        "builtin",
-        "external",
+        ["builtin", "external"],
         "internal",
         ["parent", "sibling"],
         "index",
         "type",
       ],
-      "newlines-between": "always",
     },
   ],
   "import/consistent-type-specifier-style": [2, "prefer-top-level"],

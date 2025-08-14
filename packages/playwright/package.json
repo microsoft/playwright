@@ -28,6 +28,7 @@
     "./lib/transform/transform": "./lib/transform/transform.js",
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/plugins": "./lib/plugins/index.js",
+    "./lib/runner/testRunner": "./lib/runner/testRunner.js",
     "./jsx-runtime": {
       "import": "./jsx-runtime.mjs",
       "require": "./jsx-runtime.js",

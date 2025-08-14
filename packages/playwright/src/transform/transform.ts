@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import crypto from 'crypto';
 import fs from 'fs';
 import Module from 'module';
 import path from 'path';
 import url from 'url';
+
+import crypto from 'crypto';
 
 import { loadTsConfig } from '../third_party/tsconfig-loader';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
