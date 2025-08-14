@@ -22,6 +22,7 @@ import { isTargetClosedError } from './errors';
 import { Events } from './events';
 import { mkdirIfNeeded } from './fileUtils';
 
+import type { Browser as BrowserImpl } from '../server/browser';
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
 import type { BrowserContextOptions, LaunchOptions, Logger } from './types';
@@ -144,6 +145,14 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async newBrowserCDPSession(): Promise<api.CDPSession> {
     return CDPSession.from((await this._channel.newBrowserCDPSession()).session);
+  }
+
+  async _launchServer() {
+    const serverLauncher = this._browserType._serverLauncher;
+    const browser: BrowserImpl = this._connection.toImpl?.(this);
+    if (!serverLauncher || !browser)
+      throw new Error('Launching server is not supported');
+    return await serverLauncher.launchServerOnExistingBrowser(browser);
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {

@@ -105,7 +105,7 @@ export type ConnectOptions = {
   timeout?: number,
   logger?: Logger,
 };
-export type LaunchServerOptions = LaunchOptions & {
+export type LaunchServerOptions = {
   host?: string,
   port?: number,
   wsPath?: string,
