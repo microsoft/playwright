@@ -43,8 +43,8 @@ export class DebugController extends SdkObject {
     SetModeRequested: 'setModeRequested',
   };
 
-  private _trackHierarchyListener: InstrumentationListener | undefined;
-  private _disposeNavigationListeners: (() => void)[] = [];
+  private _reportState = false;
+  private _disposeListeners: (() => void)[] = [];
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
 
@@ -62,24 +62,26 @@ export class DebugController extends SdkObject {
   }
 
   setReportStateChanged(enabled: boolean) {
-    if (enabled && !this._trackHierarchyListener) {
-      this._trackHierarchyListener = {
+    if (this._reportState === enabled)
+      return;
+    this._reportState = enabled;
+    if (enabled) {
+      const listener: InstrumentationListener = {
         onPageOpen: page => {
           this._emitSnapshot(false);
           const handleNavigation = () => this._emitSnapshot(false);
           page.mainFrame().on(Frame.Events.InternalNavigation, handleNavigation);
-          this._disposeNavigationListeners.push(() => page.mainFrame().off(Frame.Events.InternalNavigation, handleNavigation));
+          this._disposeListeners.push(() => page.mainFrame().off(Frame.Events.InternalNavigation, handleNavigation));
         },
         onPageClose: () => this._emitSnapshot(false),
       };
-      this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
+      this._playwright.instrumentation.addListener(listener, null);
+      this._disposeListeners.push(() => this._playwright.instrumentation.removeListener(listener));
       this._emitSnapshot(true);
-    } else if (!enabled && this._trackHierarchyListener) {
-      this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
-      this._trackHierarchyListener = undefined;
-      for (const dispose of this._disposeNavigationListeners)
+    } else {
+      for (const dispose of this._disposeListeners)
         dispose();
-      this._disposeNavigationListeners = [];
+      this._disposeListeners = [];
     }
   }
 
