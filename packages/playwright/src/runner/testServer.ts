@@ -185,7 +185,7 @@ export class TestServerDispatcher implements TestServerInterface {
     await this.stopDevServer({});
 
     const { reporter, report } = await this._collectingReporter();
-    const { status } = await this._testRunner.startDevServer([reporter]);
+    const { status } = await this._testRunner.startDevServer(reporter, 'out-of-process');
     return { report, status };
   }
 
@@ -202,19 +202,19 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
     const { reporter, report } = await this._collectingReporter();
-    const { status } = await this._testRunner.listFiles([reporter], params);
+    const { status } = await this._testRunner.listFiles(reporter, params.projects);
     return { report, status };
   }
 
   async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
     const { reporter, report } = await this._collectingReporter();
-    const { status } = await this._testRunner.listTests([reporter], params);
+    const { status } = await this._testRunner.listTests(reporter, params);
     return { report, status };
   }
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
-    const { status } = await this._testRunner.runTests([wireReporter], params);
+    const { status } = await this._testRunner.runTests(wireReporter, params);
     return { status };
   }
 
@@ -223,11 +223,11 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 
   async watch(params: { fileNames: string[]; }) {
-    await this._testRunner.watch(params);
+    await this._testRunner.watch(params.fileNames);
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
-    return this._testRunner.findRelatedTestFiles(params);
+    return this._testRunner.findRelatedTestFiles(params.files);
   }
 
   async stopTests() {
