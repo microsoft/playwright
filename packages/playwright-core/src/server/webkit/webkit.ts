@@ -44,7 +44,7 @@ export class WebKit extends BrowserType {
     return {
       ...env,
       CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
-      WEBKIT_EXECUTABLE: options.channel === 'webkit-wsl' ? registry.findExecutable('webkit-wsl')!._wslExecutablePath! : undefined
+      WEBKIT_EXECUTABLE: registry.findExecutable('webkit-wsl')!._wslExecutablePath
     };
   }
 
@@ -70,12 +70,10 @@ export class WebKit extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
 
-    if (options.channel === 'webkit-wsl') {
-      webkitArguments.unshift(
-          path.join(__dirname, '../../../bin/webkit-wsl-transport-server.mjs'),
-          '/home/pwuser/webkit-wsl-transport-client.mjs',
-      );
-    }
+    webkitArguments.unshift(
+        path.join(__dirname, '../../../bin/webkit-wsl-transport-server.js'),
+        '/home/pwuser/webkit-wsl-transport-client.mjs',
+    );
 
     if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
       webkitArguments.push('--disable-accelerated-compositing');

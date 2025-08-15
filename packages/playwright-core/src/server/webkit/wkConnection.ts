@@ -159,6 +159,7 @@ export class WKSession extends EventEmitter {
     for (const callback of this._callbacks.values()) {
       callback.error.type = this._crashed ? 'crashed' : 'closed';
       callback.error.logs = this.connection._browserDisconnectedLogs;
+      console.trace('dispose')
       callback.reject(callback.error);
     }
     this._callbacks.clear();
@@ -171,6 +172,7 @@ export class WKSession extends EventEmitter {
       this._callbacks.delete(object.id);
       if (object.error) {
         callback.error.setMessage(object.error.message);
+        console.trace('dispatchMessage')
         callback.reject(callback.error);
       } else {
         callback.resolve(object.result);

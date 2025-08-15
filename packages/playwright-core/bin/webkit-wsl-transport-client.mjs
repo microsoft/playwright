@@ -1,6 +1,5 @@
 // @ts-check
 import net from 'net';
-import fs from 'fs';
 import { execSync, spawn } from 'child_process';
 
 const socketPort = process.env.PW_WKWSL_PORT;

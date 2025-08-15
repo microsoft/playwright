@@ -133,6 +133,9 @@ function removeProcessHandlersIfNeeded() {
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
   options.log(`<launching> ${options.command} ${options.args ? options.args.join(' ') : ''}`);
+  options.env ??= {};
+  options.env.NODE_OPTIONS = '--trace-exit';
+  options.env.NODE_DEBUG = 'child_process,net,stream,timers';
   const spawnOptions: childProcess.SpawnOptions = {
     // On non-windows platforms, `detached: true` makes child process a leader of a new
     // process group, making it possible to kill child process tree with `.kill(-pid)` command.
