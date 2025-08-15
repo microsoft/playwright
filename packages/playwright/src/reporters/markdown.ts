@@ -136,7 +136,7 @@ function formatTestTitle(rootDir: string, test: TestCase): string {
   const [, projectName, , ...titles] = test.titlePath();
   const relativeTestPath = path.relative(rootDir, test.location.file);
   // intentionally add a zero-width space to prevent creating markdown icons on GitHub
-  const location = `${relativeTestPath}:​${test.location.line}:${test.location.column}`;
+  const location = `${relativeTestPath}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
