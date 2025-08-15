@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
+import { expect, playwrightCtConfigText, test } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -348,6 +348,55 @@ test('should grow cache', async ({ runInlineTest }, testInfo) => {
     expect(result.passed).toBe(1);
     const output = result.output;
     expect(output).not.toContain('modules transformed');
+  });
+});
+
+test('should not crash when cached component test file is deleted', async ({ runInlineTest }, testInfo) => {
+  const exampleTestEnvironment = {
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.tsx';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  };
+
+  await test.step('run first test to build the cache', async () => {
+    const result = await runInlineTest(exampleTestEnvironment, { workers: 1 });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+
+  const metainfoPath = testInfo.outputPath('playwright/.cache/metainfo.json');
+  const metainfo = JSON.parse(fs.readFileSync(metainfoPath, 'utf-8'));
+
+  await test.step('add a "leftover" (no longer existing component and its test file) to the cache and run the test', async () => {
+
+    metainfo.components.push({
+      id: 'stale_component_StaleComponent',
+      remoteName: 'StaleComponent',
+      importSource: './stale.tsx',
+      filename: testInfo.outputPath('src/stale.test.tsx')
+    });
+
+    fs.writeFileSync(metainfoPath, JSON.stringify(metainfo, undefined, 2));
+    const result2 = await runInlineTest(exampleTestEnvironment, { workers: 1 });
+    expect(result2.exitCode).toBe(0);
+    expect(result2.passed).toBe(1);
+  });
+
+  await test.step('verify that the stale component was filtered out', async () => {
+    const finalMetainfo = JSON.parse(fs.readFileSync(metainfoPath, 'utf-8'));
+    expect(finalMetainfo.components.some(c => c.remoteName === 'StaleComponent')).toBe(false);
   });
 });
 
