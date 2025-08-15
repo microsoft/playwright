@@ -310,7 +310,7 @@ test('should report error in aria template', async ({ backend }) => {
 });
 
 test('should work with browser._launchServer', async ({ browser }) => {
-  const server = await (browser as any)._launchServer({ debugController: true });
+  const server = await (browser as any)._launchServer({ _debugController: true });
 
   const backend = new Backend();
   const connectionString = new URL(server.wsEndpoint());
@@ -326,8 +326,8 @@ test('should work with browser._launchServer', async ({ browser }) => {
   expect(pageCounts).toEqual([1, 0]);
 });
 
-test('should not work with browser._launchServer(debugController: false)', async ({ browser }) => {
-  const server = await (browser as any)._launchServer({ debugController: false });
+test('should not work with browser._launchServer(_debugController: false)', async ({ browser }) => {
+  const server = await (browser as any)._launchServer({ _debugController: false });
 
   const backend = new Backend();
   const connectionString = new URL(server.wsEndpoint());

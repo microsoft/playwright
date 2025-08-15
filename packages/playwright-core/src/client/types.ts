@@ -109,7 +109,7 @@ export type LaunchServerOptions = {
   host?: string,
   port?: number,
   wsPath?: string,
-  debugController?: boolean;
+  _debugController?: boolean;
   _sharedBrowser?: boolean;
 };
 
