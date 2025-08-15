@@ -17,14 +17,17 @@
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import type { z } from 'zod';
-import type * as mcpServer from './server.js';
+import type * as mcpServer from './server';
 
-export type ToolSchema<Input extends z.Schema> = {
+export type ToolSchemaBase = {
   name: string;
   title: string;
   description: string;
-  inputSchema: Input;
   type: 'readOnly' | 'destructive';
+};
+
+export type ToolSchema<Input extends z.Schema> = ToolSchemaBase & {
+  inputSchema: Input;
 };
 
 export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {

@@ -21,6 +21,7 @@
     "./package.json": "./package.json",
     "./lib/common/configLoader": "./lib/common/configLoader.js",
     "./lib/fsWatcher": "./lib/fsWatcher.js",
+    "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/program": "./lib/program.js",
     "./lib/reporters/base": "./lib/reporters/base.js",
     "./lib/reporters/list": "./lib/reporters/list.js",

@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
+import assert from 'assert';
 import http from 'http';
+import net from 'net';
 import crypto from 'crypto';
 import debug from 'debug';
 
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { httpAddressToString, startHttpServer } from '../utils/httpServer.js';
-import * as mcpServer from './server.js';
+
+import * as mcpServer from './server';
 
 import type { ServerBackendFactory } from './server.js';
 
@@ -134,4 +136,28 @@ function startHttpTransport(httpServer: http.Server, serverBackendFactory: Serve
   ].join('\n');
     // eslint-disable-next-line no-console
   console.error(message);
+}
+
+async function startHttpServer(config: { host?: string, port?: number }): Promise<http.Server> {
+  const { host, port } = config;
+  const httpServer = http.createServer();
+  await new Promise<void>((resolve, reject) => {
+    httpServer.on('error', reject);
+    httpServer.listen(port, host, () => {
+      resolve();
+      httpServer.removeListener('error', reject);
+    });
+  });
+  return httpServer;
+}
+
+function httpAddressToString(address: string | net.AddressInfo | null): string {
+  assert(address, 'Could not bind server socket');
+  if (typeof address === 'string')
+    return address;
+  const resolvedPort = address.port;
+  let resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+  if (resolvedHost === '0.0.0.0' || resolvedHost === '[::]')
+    resolvedHost = 'localhost';
+  return `http://${resolvedHost}:${resolvedPort}`;
 }

@@ -31,18 +31,8 @@
   },
   "scripts": {},
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.16.0",
     "commander": "^13.1.0",
-    "debug": "^4.4.1",
-    "dotenv": "^17.2.0",
-    "mime": "^4.0.7",
     "playwright": "1.55.0-next",
-    "playwright-core": "1.55.0-next",
-    "ws": "^8.18.1",
-    "zod": "^3.24.1",
-    "zod-to-json-schema": "^3.24.6"
-  },
-  "devDependencies": {
-    "@types/debug": "^4.1.12"
+    "playwright-core": "1.55.0-next"
   }
 }

@@ -15,18 +15,16 @@
  */
 
 import { z } from 'zod';
-
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ListRootsRequestSchema, PingRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { logUnhandledError } from '../utils/log.js';
-import { packageJSON } from '../utils/package.js';
 
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import type { ServerBackend } from './server.js';
+import { logUnhandledError } from './debug';
+
+import type { ServerBackend, ClientVersion, Root } from './server.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { Root, Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 
 export type MCPProvider = {
   name: string;
@@ -35,27 +33,23 @@ export type MCPProvider = {
 };
 
 export class ProxyBackend implements ServerBackend {
-  name = 'Playwright MCP Client Switcher';
-  version = packageJSON.version;
+  readonly name: string;
+  readonly version: string;
 
   private _mcpProviders: MCPProvider[];
   private _currentClient: Client | undefined;
   private _contextSwitchTool: Tool;
   private _roots: Root[] = [];
 
-  constructor(mcpProviders: MCPProvider[]) {
+  constructor(name: string, version: string, mcpProviders: MCPProvider[]) {
+    this.name = name;
+    this.version = version;
     this._mcpProviders = mcpProviders;
     this._contextSwitchTool = this._defineContextSwitchTool();
   }
 
-  async initialize(server: Server): Promise<void> {
-    const version = server.getClientVersion();
-    const capabilities = server.getClientCapabilities();
-    if (capabilities?.roots && version && clientsWithRoots.includes(version.name)) {
-      const { roots } = await server.listRoots();
-      this._roots = roots;
-    }
-
+  async initialize(clientVersion: ClientVersion, roots: Root[]): Promise<void> {
+    this._roots = roots;
     await this._setCurrentClient(this._mcpProviders[0]);
   }
 
@@ -122,7 +116,7 @@ export class ProxyBackend implements ServerBackend {
     await this._currentClient?.close();
     this._currentClient = undefined;
 
-    const client = new Client({ name: 'Playwright MCP Proxy', version: packageJSON.version });
+    const client = new Client({ name: this.name, version: this.version });
     client.registerCapabilities({
       roots: {
         listRoots: true,
@@ -136,5 +130,3 @@ export class ProxyBackend implements ServerBackend {
     this._currentClient = client;
   }
 }
-
-const clientsWithRoots = ['Visual Studio Code', 'Visual Studio Code - Insiders'];

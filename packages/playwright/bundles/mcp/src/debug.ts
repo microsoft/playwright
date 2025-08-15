@@ -16,7 +16,7 @@
 
 import debug from 'debug';
 
-const errorsDebug = debug('pw-test:mcp:errors');
+const errorsDebug = debug('pw:mcp:errors');
 
 export function logUnhandledError(error: unknown) {
   errorsDebug(error);

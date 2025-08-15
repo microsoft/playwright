@@ -18,13 +18,12 @@ import path from 'path';
 import { program } from 'commander';
 import { resolveConfigLocation } from 'playwright/lib/common/configLoader';
 
-import { packageJSON } from './utils/package.js';
-import * as mcpTransport from './mcp/transport.js';
+import * as mcp from 'playwright/lib/mcpBundle';
 import { TestServerBackend } from './testServerBackend.js';
 
 program
-    .version('Version ' + packageJSON.version)
-    .name(packageJSON.name)
+    .version('Version 0.0.1')
+    .name('playwright-test-mcp')
     .option('--config <file>', 'Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"')
     .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
     .option('--port <port>', 'port to listen on for SSE transport.')
@@ -33,7 +32,7 @@ program
       // eslint-disable-next-line no-console
       console.error('Test config: ', path.relative(process.cwd(), resolvedLocation.resolvedConfigFile ?? resolvedLocation.configDir));
       const serverBackendFactory = () => new TestServerBackend(resolvedLocation);
-      await mcpTransport.start(serverBackendFactory, options);
+      await mcp.start(serverBackendFactory, options);
     });
 
 export { program };

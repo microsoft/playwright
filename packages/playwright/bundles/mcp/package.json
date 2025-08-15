@@ -1,0 +1,12 @@
+{
+  "name": "mcp-bundle",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.3",
+    "zod-to-json-schema": "^3.24.6"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12"
+  }
+}
