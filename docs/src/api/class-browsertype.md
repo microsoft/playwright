@@ -333,6 +333,10 @@ More details for
 
 Note that browsers do not allow launching multiple instances with the same User Data Directory.
 
+:::warning
+Chromium/Chrome: Due to recent Chrome policy changes, automating the default Chrome user profile is not supported. Pointing `userDataDir` to Chrome's main "User Data" directory (the profile used for your regular browsing) may result in pages not loading or the browser exiting. Create and use a separate directory (for example, an empty folder) as your automation profile instead. See https://developer.chrome.com/blog/remote-debugging-port for details.
+:::
+
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-browser-options-list-v1.8-%%
 * since: v1.8
 
