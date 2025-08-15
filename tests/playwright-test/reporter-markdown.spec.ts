@@ -66,13 +66,13 @@ test('simple report', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
   expect(reportFile.toString()).toContain(`**2 failed**
-:x: dir1${path.sep}a.test.js:6:11 › failing 1
-:x: dir2${path.sep}b.test.js:6:11 › failing 2
+:x: dir1${path.sep}a.test.js:6 › failing 1
+:x: dir2${path.sep}b.test.js:6 › failing 2
 
 <details>
 <summary><b>2 flaky</b></summary>
-:warning: c.test.js:6:11 › flaky 2 <br/>
-:warning: dir1${path.sep}a.test.js:9:11 › flaky 1 <br/>
+:warning: c.test.js:6 › flaky 2 <br/>
+:warning: dir1${path.sep}a.test.js:9 › flaky 1 <br/>
 
 </details>
 
@@ -123,7 +123,7 @@ test('report error without snippet', async ({ runInlineTest }) => {
   await runInlineTest(files);
   const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
   expect(reportFile.toString()).toContain(`**1 failed**
-:x: a.test.js:3:11 › math 1
+:x: a.test.js:3 › math 1
 
 **0 passed**
 `);
@@ -195,7 +195,7 @@ test('report with annotations', async ({ runInlineTest }) => {
 
   // Check that failed tests are reported with tags
   expect(reportContent).toContain(`**1 failed**
-:x: a.test.js:14:11 › failing test with annotation \`@slow\``);
+:x: a.test.js:14 › failing test with annotation \`@slow\``);
 
   // Check that passed tests are reported (but without individual titles)
   expect(reportContent).toContain(`**1 passed**`);
