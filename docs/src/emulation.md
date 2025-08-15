@@ -270,7 +270,7 @@ BrowserContext context = browser.newContext(new Browser.NewContextOptions()
 
 ```python async
 context = await browser.new_context(
-  is_mobile=false
+  is_mobile=False
 )
 ```
 
