@@ -1057,6 +1057,7 @@ test.describe('launchServer only', () => {
     const secondPage = secondBrowser.contexts()[0].pages()[0];
     expect(await secondPage.content()).toContain('hello world');
     await server.close();
+    await browser.close();
   });
 });
 
