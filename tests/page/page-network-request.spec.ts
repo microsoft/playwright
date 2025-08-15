@@ -88,9 +88,9 @@ it('should return headers', async ({ page, server, browserName }) => {
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 
-it('should get the same headers as the server', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
+it('should get the same headers as the server', async ({ page, server, browserName, platform, isElectron, browserMajorVersion, channel }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
-  it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl', 'Curl does not show accept-encoding and accept-language');
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {
     serverRequest = request;
@@ -101,9 +101,9 @@ it('should get the same headers as the server', async ({ page, server, browserNa
   expect(headers).toEqual(adjustServerHeaders(serverRequest.headers, browserName));
 });
 
-it('should not return allHeaders() until they are available', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
+it('should not return allHeaders() until they are available', async ({ page, server, browserName, platform, isElectron, browserMajorVersion, channel }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
-  it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl', 'Curl does not show accept-encoding and accept-language');
 
   let requestHeadersPromise;
   page.on('request', request => requestHeadersPromise = request.allHeaders());
@@ -126,9 +126,9 @@ it('should not return allHeaders() until they are available', async ({ page, ser
   expect(responseHeaders['foo']).toBe('bar');
 });
 
-it('should get the same headers as the server CORS', async ({ page, server, browserName, platform, isElectron, browserMajorVersion,  }) => {
+it('should get the same headers as the server CORS', async ({ page, server, browserName, platform, isElectron, browserMajorVersion, channel }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
-  it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl', 'Curl does not show accept-encoding and accept-language');
 
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;
@@ -392,7 +392,7 @@ it('should report raw headers', async ({ page, server, browserName, platform, is
     expectedHeaders = [];
     for (let i = 0; i < req.rawHeaders.length; i += 2)
       expectedHeaders.push({ name: req.rawHeaders[i], value: req.rawHeaders[i + 1] });
-    if (browserName === 'webkit' && platform === 'win32') {
+    if (browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl') {
       expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding');
       // Convert "value": "en-US, en-US" => "en-US"
       expectedHeaders = expectedHeaders.map(e => {
