@@ -263,7 +263,7 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(options: { stepId: string, parentId?: string, title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[], visibility?: 'hidden' }) {
+  appendBeforeActionForStep(options: { stepId: string, parentId?: string, title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[], group?: string }) {
     this._appendTraceEvent({
       type: 'before',
       callId: options.stepId,
@@ -275,7 +275,7 @@ export class TestTracing {
       title: options.title,
       params: Object.fromEntries(Object.entries(options.params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack: options.stack,
-      visibility: options.visibility,
+      group: options.group,
     });
   }
 

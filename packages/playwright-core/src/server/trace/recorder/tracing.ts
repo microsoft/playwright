@@ -20,7 +20,6 @@ import path from 'path';
 
 import { Snapshotter } from './snapshotter';
 import { methodMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
-import { getActionGroup } from '../../../utils/isomorphic/protocolFormatter';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
@@ -669,7 +668,6 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     params: metadata.params,
     stepId: metadata.stepId,
     pageId: metadata.pageId,
-    visibility: getActionGroup(metadata) ? 'hidden' : undefined,
   };
   if (parentId)
     event.parentId = parentId;

@@ -911,8 +911,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     });
   }
 
-  await traceViewer.showSettings();
-  await traceViewer.showAllActionsSetting.click();
+  await traceViewer.showAllActions();
 
   const framePageClick = await traceViewer.snapshotFrame('Click');
   await expect.poll(() => highlightedDivs(framePageClick)).toEqual(['t1']);
@@ -1483,8 +1482,7 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
 
 test('should show similar actions from legacy library-only trace', async ({ showTraceViewer, asset }) => {
   const traceViewer = await showTraceViewer([asset('trace-library-1.46.zip')]);
-  await traceViewer.showSettings();
-  await traceViewer.showAllActionsSetting.click();
+  await traceViewer.showAllActions();
   await expect(traceViewer.actionTitles).toHaveText([
     /page\.setContent/,
     /locator\.getAttribute/,
@@ -1971,9 +1969,7 @@ test('should show all actions', async ({ runAndTrace, page }) => {
     /Expect "toBeChecked"/,
   ]);
 
-  await traceViewer.showSettings();
-  await expect(traceViewer.showAllActionsSetting).not.toBeChecked();
-  await traceViewer.showAllActionsSetting.click();
+  await traceViewer.showAllActions();
 
   await expect(traceViewer.actionTitles).toHaveText([
     /Route requests/,

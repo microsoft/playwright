@@ -34,7 +34,6 @@ import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 import type { RecoverFromStepErrorResult } from '@testIsomorphic/testServerInterface';
 
-export type TestStepVisibility = 'internal' | 'hidden';
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
 
 interface TestStepData {
@@ -45,7 +44,9 @@ interface TestStepData {
   params?: Record<string, any>;
   infectParentStepsWithError?: boolean;
   box?: boolean;
-  visibility?: TestStepVisibility;
+  // steps with any defined group are hidden from the report
+  // 'internal' steps are hidden from the trace
+  group?: string;
 }
 
 export interface TestStepInternal extends TestStepData {
@@ -293,13 +294,11 @@ export class TestInfoImpl implements TestInfo {
       location = location || boxedStack[0];
     }
     location = location || filteredStack[0];
-    const visibility = (parentStep?.visibility === 'internal' || data.visibility === 'internal') ? 'internal' :
-      (parentStep?.visibility === 'hidden' || data.visibility === 'hidden' ? 'hidden' : undefined);
 
     const step: TestStepInternal = {
       ...data,
       stepId,
-      visibility,
+      group: parentStep?.group ?? data.group,
       boxedStack,
       location,
       steps: [],
@@ -348,7 +347,7 @@ export class TestInfoImpl implements TestInfo {
           }
         }
 
-        if (!step.visibility) {
+        if (!step.group) {
           const payload: StepEndPayload = {
             testId: this.testId,
             stepId,
@@ -359,7 +358,7 @@ export class TestInfoImpl implements TestInfo {
           };
           this._onStepEnd(payload);
         }
-        if (step.visibility !== 'internal') {
+        if (step.group !== 'internal') {
           const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
           const attachments = step.attachmentIndices.map(i => this.attachments[i]);
           this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.info.annotations);
@@ -370,7 +369,7 @@ export class TestInfoImpl implements TestInfo {
     parentStepList.push(step);
     this._stepMap.set(stepId, step);
 
-    if (!step.visibility) {
+    if (!step.group) {
       const payload: StepBeginPayload = {
         testId: this.testId,
         stepId,
@@ -382,7 +381,7 @@ export class TestInfoImpl implements TestInfo {
       };
       this._onStepBegin(payload);
     }
-    if (step.visibility !== 'internal') {
+    if (step.group !== 'internal') {
       this._tracing.appendBeforeActionForStep({
         stepId,
         parentId: parentStep?.stepId,
@@ -390,7 +389,7 @@ export class TestInfoImpl implements TestInfo {
         category: step.category,
         params: step.params,
         stack: step.location ? [step.location] : [],
-        visibility: step.visibility,
+        group: step.group,
       });
     }
 
@@ -423,7 +422,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, visibility?: TestStepVisibility }, cb: () => Promise<any>) {
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
     const step = this._addStep(stepInfo);
     try {
       await cb();

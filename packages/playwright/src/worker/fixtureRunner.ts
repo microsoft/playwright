@@ -19,7 +19,7 @@ import { escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
 import { fixtureParameterNames } from '../common/fixtures';
 import { filterStackFile, formatLocation } from '../util';
 
-import type { TestInfoImpl, TestStepVisibility } from './testInfo';
+import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, RunnableDescription } from './timeoutManager';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -35,7 +35,7 @@ class Fixture {
   private _selfTeardownComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
-  private _stepInfo: { title: string, category: 'fixture', location?: Location, visibility?: TestStepVisibility };
+  private _stepInfo: { title: string, category: 'fixture', location?: Location, group?: string };
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -48,7 +48,7 @@ class Fixture {
     const location = isUserFixture ? this.registration.location : undefined;
     this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', location };
     if (this.registration.box)
-      this._stepInfo.visibility = isUserFixture ? 'hidden' : 'internal';
+      this._stepInfo.group = isUserFixture ? 'configuration' : 'internal';
     this._setupDescription = {
       title,
       phase: 'setup',
