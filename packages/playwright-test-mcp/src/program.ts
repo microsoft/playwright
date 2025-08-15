@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { program } from 'commander';
+import { resolveConfigLocation } from 'playwright/lib/common/configLoader';
+
 import { packageJSON } from './utils/package.js';
 import * as mcpTransport from './mcp/transport.js';
 import { TestServerBackend } from './testServerBackend.js';
@@ -26,7 +29,10 @@ program
     .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
     .option('--port <port>', 'port to listen on for SSE transport.')
     .action(async options => {
-      const serverBackendFactory = () => new TestServerBackend(options.config);
+      const resolvedLocation = resolveConfigLocation(options.config);
+      // eslint-disable-next-line no-console
+      console.error('Test config: ', path.relative(process.cwd(), resolvedLocation.resolvedConfigFile ?? resolvedLocation.configDir));
+      const serverBackendFactory = () => new TestServerBackend(resolvedLocation);
       await mcpTransport.start(serverBackendFactory, options);
     });
 

@@ -17,19 +17,21 @@
 import { packageJSON } from './utils/package';
 import { Context } from './context';
 import { toMcpTool } from './mcp/tool';
-import tools from './tools';
+import { listTests } from './tools/listTests';
+import { runTests } from './tools/runTests';
 
 import type { Tool } from './tool';
 import type * as mcpServer from './mcp/server';
+import type { ConfigLocation } from 'playwright/lib/common/config';
 
 export class TestServerBackend implements mcpServer.ServerBackend {
   readonly name = 'Playwright';
   readonly version = packageJSON.version;
-  private _tools: Tool<any>[] = tools;
+  private _tools: Tool<any>[] = [listTests, runTests];
   private _context: Context;
 
-  constructor(configFile: string | undefined) {
-    this._context = new Context(configFile);
+  constructor(resolvedLocation: ConfigLocation) {
+    this._context = new Context(resolvedLocation);
   }
 
   async initialize() {
