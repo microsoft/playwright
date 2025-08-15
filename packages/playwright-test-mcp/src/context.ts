@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-import json5Library from 'json5';
-export const json5 = json5Library;
+import { TestRunner } from 'playwright/lib/runner/testRunner';
+import { resolveConfigLocation } from 'playwright/lib/common/configLoader';
 
-import sourceMapSupportLibrary from 'source-map-support';
-export const sourceMapSupport = sourceMapSupportLibrary;
+export class Context {
+  readonly testRunner: TestRunner;
 
-import stoppableLibrary from 'stoppable';
-export const stoppable = stoppableLibrary;
+  constructor(configFile: string | undefined) {
+    this.testRunner = new TestRunner(resolveConfigLocation(configFile), {});
+  }
 
-import enquirerLibrary from 'enquirer';
-export const enquirer = enquirerLibrary;
-
-import chokidarLibrary from 'chokidar';
-export const chokidar = chokidarLibrary;
-
-import * as getEastAsianWidthLibrary from 'get-east-asian-width';
-export const getEastAsianWidth = getEastAsianWidthLibrary;
+  async close() {
+  }
+}

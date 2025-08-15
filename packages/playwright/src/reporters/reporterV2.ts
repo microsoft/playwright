@@ -32,6 +32,8 @@ export interface ReporterV2 {
   version(): 'v2';
 }
 
+export type AnyReporter = ReporterV2 | Reporter;
+
 type StdIOChunk = {
   chunk: string | Buffer;
   test?: TestCase;

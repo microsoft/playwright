@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-import json5Library from 'json5';
-export const json5 = json5Library;
+import type { z } from 'zod';
+import type * as mcpServer from './mcp/server.js';
+import type { Context } from './context.js';
+import type { ToolSchema } from './mcp/tool.js';
 
-import sourceMapSupportLibrary from 'source-map-support';
-export const sourceMapSupport = sourceMapSupportLibrary;
+export type Tool<Input extends z.Schema = z.Schema> = {
+  schema: ToolSchema<Input>;
+  handle: (context: Context, params: z.output<Input>) => Promise<mcpServer.CallToolResult>;
+};
 
-import stoppableLibrary from 'stoppable';
-export const stoppable = stoppableLibrary;
-
-import enquirerLibrary from 'enquirer';
-export const enquirer = enquirerLibrary;
-
-import chokidarLibrary from 'chokidar';
-export const chokidar = chokidarLibrary;
-
-import * as getEastAsianWidthLibrary from 'get-east-asian-width';
-export const getEastAsianWidth = getEastAsianWidthLibrary;
+export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Input> {
+  return tool;
+}

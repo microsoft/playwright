@@ -1,0 +1,1 @@
+- Generic MCP utils, no dependencies on Playwright here.

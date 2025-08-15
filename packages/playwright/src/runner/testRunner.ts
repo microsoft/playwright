@@ -38,7 +38,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { ReporterV2 } from '../reporters/reporterV2';
+import type { AnyReporter } from '../reporters/reporterV2';
 
 export type RecoverFromStepErrorResult = {
   stepId: string;
@@ -147,7 +147,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await registry.install(executables, false);
   }
 
-  async runGlobalSetup(userReporters: ReporterV2[]): Promise<{ status: FullResultStatus }> {
+  async runGlobalSetup(userReporters: AnyReporter[]): Promise<{ status: FullResultStatus }> {
     await this.runGlobalTeardown();
 
     const reporter = new InternalReporter(userReporters);
@@ -172,7 +172,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async startDevServer(userReporter: ReporterV2, mode: 'in-process' | 'out-of-process'): Promise<{ status: FullResultStatus }> {
+  async startDevServer(userReporter: AnyReporter, mode: 'in-process' | 'out-of-process'): Promise<{ status: FullResultStatus }> {
     await this.stopDevServer();
 
     const reporter = new InternalReporter([userReporter]);
@@ -199,7 +199,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async clearCache(userReporter?: ReporterV2): Promise<{ status: FullResultStatus }> {
+  async clearCache(userReporter?: AnyReporter): Promise<{ status: FullResultStatus }> {
     const reporter = new InternalReporter(userReporter ? [userReporter] : []);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
@@ -211,7 +211,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async listFiles(userReporter: ReporterV2, projects?: string[]): Promise<{ status: FullResultStatus }> {
+  async listFiles(userReporter: AnyReporter, projects?: string[]): Promise<{ status: FullResultStatus }> {
     const reporter = new InternalReporter([userReporter]);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
@@ -225,7 +225,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status };
   }
 
-  async listTests(userReporter: ReporterV2, params: ListTestsParams): Promise<{ status: FullResultStatus }> {
+  async listTests(userReporter: AnyReporter, params: ListTestsParams): Promise<{ status: FullResultStatus }> {
     let result: { status: FullResultStatus } | undefined;
     this._queue = this._queue.then(async () => {
       const { config, status } = await this._innerListTests(userReporter, params);
@@ -237,7 +237,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return result!;
   }
 
-  private async _innerListTests(userReporter: ReporterV2, params: ListTestsParams): Promise<{
+  private async _innerListTests(userReporter: AnyReporter, params: ListTestsParams): Promise<{
     status: reporterTypes.FullResult['status'],
     config?: FullConfigInternal,
   }> {
@@ -286,7 +286,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
   }
 
-  async runTests(userReporter: ReporterV2, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
+  async runTests(userReporter: AnyReporter, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
     let result: { status: FullResultStatus } = { status: 'passed' };
     this._queue = this._queue.then(async () => {
       result = await this._innerRunTests(userReporter, params).catch(e => { printInternalError(e); return { status: 'failed' }; });
@@ -295,7 +295,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return result;
   }
 
-  private async _innerRunTests(userReporter: ReporterV2, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
+  private async _innerRunTests(userReporter: AnyReporter, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
     await this.stopTests();
     const overrides: ConfigCLIOverrides = {
       ...this._configCLIOverrides,
@@ -384,7 +384,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await this._updateWatcher(true);
   }
 
-  async findRelatedTestFiles(files: string[], userReporter?: ReporterV2): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }> {
+  async findRelatedTestFiles(files: string[], userReporter?: AnyReporter): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }> {
     const errorReporter = createErrorCollectingReporter(internalScreen);
     const reporter = new InternalReporter(userReporter ? [userReporter, errorReporter] : [errorReporter]);
     const config = await this._loadConfigOrReportError(reporter);

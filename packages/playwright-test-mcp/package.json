@@ -1,0 +1,48 @@
+{
+  "name": "@playwright/test-runner-mcp",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Experimental MCP server for Playwright Test",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./cli": "./cli.js",
+    "./package.json": "./package.json",
+    "./reporter": "./reporter.js"
+  },
+  "bin": {
+    "mcp-server-playwright-test": "cli.js"
+  },
+  "scripts": {},
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.16.0",
+    "commander": "^13.1.0",
+    "debug": "^4.4.1",
+    "dotenv": "^17.2.0",
+    "mime": "^4.0.7",
+    "playwright": "1.55.0-next",
+    "playwright-core": "1.55.0-next",
+    "ws": "^8.18.1",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.6"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12"
+  }
+}
