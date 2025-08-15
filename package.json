@@ -56,6 +56,7 @@
     "@eslint/compat": "^1.2.6",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.19.0",
+    "@modelcontextprotocol/sdk": "^1.17.3",
     "@octokit/graphql-schema": "^15.26.0",
     "@stylistic/eslint-plugin": "^3.0.1",
     "@types/codemirror": "^5.60.7",
