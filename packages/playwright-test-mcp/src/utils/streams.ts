@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { TestRunner } from 'playwright/lib/runner/testRunner';
+import { Writable } from 'stream';
 
-import type { ConfigLocation } from 'playwright/lib/common/config';
+export class StringWriteStream extends Writable {
+  private _chunks: string[] = [];
 
-export class Context {
-  readonly testRunner: TestRunner;
-
-  constructor(configLocation: ConfigLocation) {
-    this.testRunner = new TestRunner(configLocation, {});
+  override _write(chunk: any, encoding: any, callback: any) {
+    this._chunks.push(chunk.toString());
+    callback();
   }
 
-  async close() {
+  content() {
+    return this._chunks.join('');
   }
 }
