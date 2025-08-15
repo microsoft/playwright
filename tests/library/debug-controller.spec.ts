@@ -360,3 +360,32 @@ test('should report error in aria template', async ({ backend }) => {
   const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
   expect(error.message).toContain('Unterminated string:');
 });
+
+test('should work with browser._launchServer', async ({ browser }) => {
+  const server = await (browser as any)._launchServer({ _debugController: true });
+
+  const backend = new Backend();
+  const connectionString = new URL(server.wsEndpoint());
+  connectionString.searchParams.set('debug-controller', '');
+  await backend.connect(connectionString.toString());
+  await backend.initialize();
+  await backend.channel.setReportStateChanged({ enabled: true });
+  const pageCounts: number[] = [];
+  backend.channel.on('stateChanged', event => pageCounts.push(event.pageCount));
+
+  const page = await browser.newPage();
+  await page.close();
+  expect(pageCounts).toEqual([1, 0]);
+});
+
+test('should not work with browser._launchServer(_debugController: false)', async ({ browser }) => {
+  const server = await (browser as any)._launchServer({ _debugController: false });
+
+  const backend = new Backend();
+  const connectionString = new URL(server.wsEndpoint());
+  connectionString.searchParams.set('debug-controller', '');
+  await expect(async () => {
+    await backend.connect(connectionString.toString());
+    await backend.initialize();
+  }).rejects.toThrow();
+});
