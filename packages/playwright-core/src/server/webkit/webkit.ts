@@ -71,14 +71,11 @@ export class WebKit extends BrowserType {
     const webkitArguments = ['--inspector-pipe'];
 
     if (options.channel === 'webkit-wsl') {
-      const executablePath = registry.findExecutable('webkit-wsl')!._wslExecutablePath!;
       webkitArguments.unshift(
           path.join(__dirname, '../../../bin/webkit-wsl-transport-server.mjs'),
           '/home/pwuser/webkit-wsl-transport-client.mjs',
-          executablePath,
       );
     }
-
 
     if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
       webkitArguments.push('--disable-accelerated-compositing');

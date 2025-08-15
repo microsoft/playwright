@@ -28,32 +28,37 @@ async function main() {
 	let parentRead; // data coming from parent (we read this and forward to socket)
 	let parentWrite; // data going to parent (we write into this from socket)
 	try {
-		parentRead = fs.createReadStream(null, { fd: 3 });
-		parentWrite = fs.createWriteStream(null, { fd: 4 });
+		parentRead = fs.createReadStream('', { fd: 3 });
+		parentWrite = fs.createWriteStream('', { fd: 4 });
 	} catch (e) {
 		console.error('Failed to open pipe fds 3/4:', e);
 		process.exit(1);
 	}
 
+	console.log('parentRead is paused', parentRead.isPaused())
+
 	const server = net.createServer({
-		highWaterMark: 128 * 1024,
+		// highWaterMark: 128 * 1024,
 	});
 
-	let socketAccepted = false;
+	const sockets = new Set();
 	server.on('connection', socket => {
-		if (socketAccepted) {
+		if (sockets.size > 0) {
 			log('Extra connection received, destroying.');
 			socket.destroy();
 			return;
 		}
-		socketAccepted = true;
-		socket.setNoDelay(true);
+		sockets.add(socket);
 		log('Client connected, wiring pipes.');
-		// Parent writes (fd3 data) go to the socket.
-		parentRead.pipe(socket);
-		// Data from socket goes back to parent through fd4.
-		socket.pipe(parentWrite);
-		socket.on('close', () => log('Socket closed'));
+		parentRead.on('data', data => socket.write(data));
+		socket.on('data', data => parentWrite.write(data));
+
+		socket.on('close', () => {
+			log('Socket closed');
+			console.log('parentRead is paused', parentRead.isPaused())
+			parentRead.removeAllListeners('data');
+			sockets.delete(socket);
+		});
 	});
 
 	await new Promise((resolve, reject) => {
@@ -68,9 +73,6 @@ async function main() {
 	const port = address.port;
 	log('Server listening on', port);
 
-  if (!process.env.WEBKIT_EXECUTABLE)
-    throw new Error('WEBKIT_EXECUTABLE env var is not set');
-
 	// Spawn child process with augmented env (propagate port + mark for WSL env forwarding when needed).
 	const env = {
 		...process.env,
@@ -79,23 +81,19 @@ async function main() {
     WEBKIT_EXECUTABLE: undefined,
 	};
 
-	const child = spawn('wsl.exe', [
-     '-d',
-    'playwright',
-    '--cd',
-    '/home/pwuser',
-    '/home/pwuser/node/bin/node',
-    '/home/pwuser/webkit-wsl-transport-client.mjs',
-    process.env.WEBKIT_EXECUTABLE,
+	const child = spawn('node.exe', [
+    'packages\\playwright-core\\bin\\webkit-wsl-transport-client.mjs',
+    'C:\\Users\\maxschmitt\\AppData\\Local\\ms-playwright\\webkit-2198\\Playwright.exe',
     ...argv,
-  ], { env });
+  ], { env, stdio: ['ignore', 'inherit', 'inherit'],
+	 });
 
 	log('Spawned child pid', child.pid);
 
 	// If the spawned process exposes its own inspector protocol via fd3/4 we could bridge it here.
 	// For now, we only provide the TCP server + env for it to connect back.
 
-	child.on('exit', (code, signal) => {
+	child.on('close', (code, signal) => {
 		log('Child exit', { code, signal });
 		shutdown(code ?? (signal ? 0 : 0));
 	});
@@ -104,37 +102,37 @@ async function main() {
 		shutdown(1);
 	});
 
-	const signals = [ 'SIGINT', 'SIGTERM', 'SIGHUP' ];
-	for (const sig of signals) {
-		process.on(sig, () => {
-			log('Received', sig);
-			shutdown(130);
-		});
-	}
-
 	let shuttingDown = false;
-	function shutdown(code = 0) {
-		if (shuttingDown) return;
+	async function shutdown(code = 0) {
+		console.trace('shutdown')
+		if (shuttingDown)
+			return;
 		shuttingDown = true;
-		try { server.close(); } catch {}
-		try { parentRead.destroy(); } catch {}
-		try { parentWrite.end(); } catch {}
-		if (child && child.exitCode == null) {
-			try { child.kill('SIGTERM'); } catch {}
-			// Fallback hard kill after grace period.
-			setTimeout(() => { if (child.exitCode == null) { try { child.kill('SIGKILL'); } catch {} } }, 3000).unref();
-		}
-		// Give a short grace period for streams to flush.
-		setTimeout(() => process.exit(code), 50).unref();
-	}
 
-	// If parent stdio closes unexpectedly, perform shutdown.
-	parentRead.on('close', () => { log('Parent read pipe closed'); shutdown(0); });
-	parentWrite.on('error', () => { log('Parent write pipe error'); shutdown(1); });
+		await new Promise((resolve, reject) => {
+			server.close(err => {
+				if (err)
+					reject(err);
+				else
+					resolve(null);
+			});
+		});
+		for (const socket of sockets)
+			socket.destroy();
+
+		console.log(process.listeners('exit'));
+console.log(process.stdin.listeners('data'));
+process.reallyExit(code);
+	}
 }
+
+// process.on('exit', () => {
+//	  console.error('handles:', process._getActiveHandles().map(h => h?.constructor?.name));
+// })
 
 main().catch(e => {
 	console.error('Fatal wrapper error:', e);
 	process.exit(1);
+}).then(() => {
+	console.log('Wrapper exited cleanly');
 });
-

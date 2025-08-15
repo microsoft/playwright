@@ -10,21 +10,13 @@ if (!socketPort)
 
 const [executable, ...args] = process.argv.slice(2);
 
-if (!(await fs.promises.stat(executable)).isFile())
-    throw new Error(`Executable does not exist. Did you update Playwright recently? Make sure to run npx playwright install webkit-wsl`);
 
 const address = (() => {
-    if (execSync('wslinfo --networking-mode', { encoding: 'utf8' }).trim() === 'nat') {
-        const ip = execSync('ip route show', { encoding: 'utf8' }).trim().split('\n').find(line => line.includes('default'))?.split(' ')[2];
-        if (!ip)
-            throw new Error('Could not determine WSL IP address (NAT mode).');
-        return ip;
-    }
     return '127.0.0.1';
 })();
 
 const socket = net.createConnection(parseInt(socketPort), address);
-socket.setNoDelay(true);
+// socket.setNoDelay(true);
 
 await new Promise((resolve, reject) => {
     socket.on('connect', resolve);
