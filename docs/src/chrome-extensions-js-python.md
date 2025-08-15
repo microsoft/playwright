@@ -13,7 +13,7 @@ Google Chrome and Microsoft Edge [removed the command-line flags needed to side-
 
 The snippet below retrieves the [service worker](https://developer.chrome.com/docs/extensions/develop/concepts/service-workers) of a [Manifest v3](https://developer.chrome.com/docs/extensions/develop/migrate) extension whose source is located in `./my-extension`.
 
-Note the use of the `chromium` channel — Chrome/Edge no longer support these flags, while Chromium does, and it also allows running extensions in headless mode. Alternatively, you can launch the browser in headed mode.
+Note the use of the `chromium` channel that allows to run extensions in headless mode. Alternatively, you can launch the browser in headed mode.
 
 ```js
 const { chromium } = require('playwright');
@@ -105,7 +105,7 @@ with sync_playwright() as playwright:
 
 To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it to load and test the popup page for example.
 
-Note the use of the `chromium` channel — Chrome/Edge no longer allow the flags required to load extensions, so tests must run against Playwright's Chromium. It also allows running extensions in headless mode. Alternatively, you can launch the browser in headed mode.
+Note the use of the `chromium` channel that allows to run extensions in headless mode. Alternatively, you can launch the browser in headed mode.
 
 First, add fixtures that will load the extension:
 
