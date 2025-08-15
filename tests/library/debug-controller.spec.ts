@@ -107,7 +107,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toHaveLength(2);
 });
 
-test('should report pages', async ({ backend, connectedBrowser }) => {
+test('should report pages', async ({ backend, connectedBrowser, browserName, channel }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
   await backend.setReportStateChanged({ enabled: true });
@@ -116,6 +116,7 @@ test('should report pages', async ({ backend, connectedBrowser }) => {
   const page1 = await context.newPage();
   const page2 = await context.newPage();
   await page1.close();
+  await page2.goto('data:text/html,Foo');
   await page2.close();
 
   await backend.setReportStateChanged({ enabled: false });
@@ -125,12 +126,63 @@ test('should report pages', async ({ backend, connectedBrowser }) => {
   expect(events).toEqual([
     {
       pageCount: 1,
+      browsers: [{
+        id: expect.any(String),
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'about:blank' }
+          ]
+        }]
+      }]
     }, {
       pageCount: 2,
+      browsers: [{
+        id: expect.any(String),
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'about:blank' },
+            { url: 'about:blank' }
+          ]
+        }]
+      }]
     }, {
       pageCount: 1,
+      browsers: [{
+        id: expect.any(String),
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'about:blank' }
+          ]
+        }]
+      }]
+    }, {
+      pageCount: 1,
+      browsers: [{
+        id: expect.any(String),
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: [
+            { url: 'data:text/html,Foo' }
+          ]
+        }]
+      }]
     }, {
       pageCount: 0,
+      browsers: [{
+        id: expect.any(String),
+        name: browserName,
+        channel,
+        contexts: [{
+          pages: []
+        }]
+      }]
     }
   ]);
 });
