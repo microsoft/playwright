@@ -361,7 +361,8 @@ test('should report error in aria template', async ({ backend }) => {
   expect(error.message).toContain('Unterminated string:');
 });
 
-test('should work with browser._launchServer', async ({ browser }) => {
+test('should work with browser._launchServer', async ({ browserType }) => {
+  const browser = await browserType.launch();
   const server = await (browser as any)._launchServer({ _debugController: true });
 
   const backend = new Backend();
@@ -376,9 +377,13 @@ test('should work with browser._launchServer', async ({ browser }) => {
   const page = await browser.newPage();
   await page.close();
   expect(pageCounts).toEqual([1, 0]);
+
+  await server.close();
+  await browser.close();
 });
 
-test('should not work with browser._launchServer(_debugController: false)', async ({ browser }) => {
+test('should not work with browser._launchServer(_debugController: false)', async ({ browserType }) => {
+  const browser = await browserType.launch();
   const server = await (browser as any)._launchServer({ _debugController: false });
 
   const backend = new Backend();
@@ -388,4 +393,7 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
     await backend.connect(connectionString.toString());
     await backend.initialize();
   }).rejects.toThrow();
+
+  await server.close();
+  await browser.close();
 });
