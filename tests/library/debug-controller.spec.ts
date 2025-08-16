@@ -18,7 +18,7 @@ import { expect, playwrightTest as baseTest } from '../config/browserTest';
 import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/playwrightServer';
 import { createGuid } from '../../packages/playwright-core/lib/server/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
-import type { Browser, BrowserContext } from '@playwright/test';
+import type { Browser, BrowserContext, LaunchOptions } from '@playwright/test';
 import type * as channels from '@protocol/channels';
 import { roundBox } from '../page/pageTest';
 
@@ -26,7 +26,7 @@ type BrowserWithReuse = Browser & { newContextForReuse: () => Promise<BrowserCon
 type Fixtures = {
   wsEndpoint: string;
   backend: channels.DebugControllerChannel;
-  connectedBrowserFactory: () => Promise<BrowserWithReuse>;
+  connectedBrowserFactory: (launchOptions?: LaunchOptions) => Promise<BrowserWithReuse>;
   connectedBrowser: BrowserWithReuse;
 };
 
@@ -34,7 +34,7 @@ const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ headless }, use) => {
     if (headless)
       process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
-    const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
+    const server = new PlaywrightServer({ mode: 'default', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false, debugController: true });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
     await server.close();
@@ -48,10 +48,11 @@ const test = baseTest.extend<Fixtures>({
   },
   connectedBrowserFactory: async ({ wsEndpoint, browserType }, use) => {
     const browsers: BrowserWithReuse [] = [];
-    await use(async () => {
+    await use(async launchOptions => {
+      launchOptions ??= (browserType as any)._playwright._defaultLaunchOptions;
       const browser = await browserType.connect(wsEndpoint, {
         headers: {
-          'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions),
+          'x-playwright-launch-options': JSON.stringify(launchOptions),
         },
       }) as BrowserWithReuse;
       browsers.push(browser);
@@ -104,6 +105,30 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   // No events after mode disabled
   await backend.setRecorderMode({ mode: 'none' });
   await page.locator('body').click();
+  expect(events).toHaveLength(2);
+});
+
+test('should allow setting recorder mode only for specific browser', async ({ backend, connectedBrowserFactory }) => {
+  const events = [];
+  backend.on('inspectRequested', event => events.push(event));
+
+  const browser1 = await connectedBrowserFactory();
+  const browser2 = await connectedBrowserFactory();
+  expect((browser1 as any)._guid).not.toBe((browser2 as any)._guid);
+  const page1 = await browser1.newPage();
+  await page1.setContent('<button>Submit</button>');
+  const page2 = await browser2.newPage();
+  await page2.setContent('<button>Submit</button>');
+
+  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser1 as any)._guid });
+  await page1.getByRole('button').click();
+  expect(events).toHaveLength(1);
+
+  await page2.getByRole('button').click();
+  expect(events).toHaveLength(1);
+
+  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser2 as any)._guid });
+  await page2.getByRole('button').click();
   expect(events).toHaveLength(2);
 });
 
@@ -388,4 +413,9 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
     await backend.connect(connectionString.toString());
     await backend.initialize();
   }).rejects.toThrow();
+});
+
+test('should support closing browsers', async ({ backend, connectedBrowser }) => {
+  await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
+  expect(connectedBrowser.isConnected()).toBe(false);
 });
