@@ -21,6 +21,7 @@ export type ActionName =
   'click' |
   'closePage' |
   'fill' |
+  'hover' |
   'navigate' |
   'openPage' |
   'press' |
@@ -43,6 +44,10 @@ export type ActionBase = {
 export type ActionWithSelector = ActionBase & {
   selector: string,
   ref?: string,
+};
+
+export type HoverAction = ActionWithSelector & {
+  name: 'hover',
 };
 
 export type ClickAction = ActionWithSelector & {
@@ -121,9 +126,9 @@ export type AssertSnapshotAction = ActionWithSelector & {
   ariaSnapshot: string,
 };
 
-export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
+export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction | HoverAction;
 export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction | AssertVisibleAction | AssertSnapshotAction;
-export type PerformOnRecordAction = ClickAction | CheckAction | UncheckAction | PressAction | SelectAction;
+export type PerformOnRecordAction = ClickAction | CheckAction | UncheckAction | PressAction | SelectAction | HoverAction;
 
 // Signals.
 

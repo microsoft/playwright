@@ -146,6 +146,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.GotoAsync(${quote(action.url)});`;
       case 'select':
         return `await ${subject}.${this._asLocator(action.selector)}.SelectOptionAsync(${formatObject(action.options)});`;
+      case 'hover':
+        return `await ${subject}.${this._asLocator(action.selector)}.HoverAsync();`;
       case 'assertText':
         return `await Expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'ToContainTextAsync' : 'ToHaveTextAsync'}(${quote(action.text)});`;
       case 'assertChecked':

@@ -65,6 +65,7 @@ const iconNames = [
   'close',
   'pass',
   'gist',
+  'activate-breakpoints',
 ];
 
 (async () => {
