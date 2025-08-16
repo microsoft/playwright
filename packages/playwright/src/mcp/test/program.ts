@@ -15,11 +15,12 @@
  */
 
 import path from 'path';
-import { program } from 'commander';
-import { resolveConfigLocation } from 'playwright/lib/common/configLoader';
+import { program } from 'playwright-core/lib/utilsBundle';
 
-import * as mcp from 'playwright/src/mcp/exports.js';
-import { TestServerBackend } from './testServerBackend.js';
+import { resolveConfigLocation } from '../../common/configLoader';
+
+import * as mcp from '../sdk/exports.js';
+import { TestServerBackend } from './backend.js';
 
 program
     .version('Version 0.0.1')
@@ -31,8 +32,13 @@ program
       const resolvedLocation = resolveConfigLocation(options.config);
       // eslint-disable-next-line no-console
       console.error('Test config: ', path.relative(process.cwd(), resolvedLocation.resolvedConfigFile ?? resolvedLocation.configDir));
-      const serverBackendFactory = () => new TestServerBackend(resolvedLocation);
+      const serverBackendFactory = {
+        name: 'Playwright Test',
+        nameInConfig: 'playwright-test-mcp',
+        version: '0.0.1',
+        create: () => new TestServerBackend(resolvedLocation),
+      };
       await mcp.start(serverBackendFactory, options);
     });
 
-export { program };
+void program.parseAsync(process.argv);

@@ -19,7 +19,7 @@ import type { TestResult, TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
 
-export type RecoverFromStepErrorHandler = (stepId: string, error: TestError) => Promise<RecoverFromStepErrorResult>;
+export type RecoverFromStepErrorHandler = (stepId: string, error: TestError, userData: Record<string, any>) => Promise<RecoverFromStepErrorResult>;
 
 export class FailureTracker {
   private _failureCount = 0;
@@ -48,12 +48,12 @@ export class FailureTracker {
       ++this._failureCount;
   }
 
-  recoverFromStepError(stepId: string, error: TestError, resumeAfterStepError: (result: RecoverFromStepErrorResult) => void) {
+  recoverFromStepError(stepId: string, error: TestError, userData: Record<string, any>, resumeAfterStepError: (result: RecoverFromStepErrorResult) => void) {
     if (!this._recoverFromStepErrorHandler) {
       resumeAfterStepError({ stepId, status: 'failed' });
       return;
     }
-    void this._recoverFromStepErrorHandler(stepId, error).then(resumeAfterStepError).catch(() => {});
+    void this._recoverFromStepErrorHandler(stepId, error, userData).then(resumeAfterStepError).catch(() => {});
   }
 
   onWorkerError() {

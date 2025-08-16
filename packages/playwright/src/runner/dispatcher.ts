@@ -415,7 +415,7 @@ class JobDispatcher {
       ...params.error,
       location: step.location,
     };
-    this._failureTracker.recoverFromStepError(params.stepId, testError, resumeAfterStepError);
+    this._failureTracker.recoverFromStepError(params.stepId, testError, params.userData, resumeAfterStepError);
   }
 
   private _onAttach(params: AttachmentPayload) {

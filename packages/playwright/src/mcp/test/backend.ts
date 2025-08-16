@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-import * as mcp from 'playwright/src/mcp/exports';
+import * as mcp from '../sdk/exports.js';
 import { Context } from './context';
-import { listTests } from './tools/listTests';
-import { runTests } from './tools/runTests';
+import { listTests } from './listTests';
+import { runTests } from './runTests';
+import { snapshot, pickLocator, evaluate } from './remote';
 
-import type { ConfigLocation } from 'playwright/lib/common/config';
+import type { ConfigLocation } from '../../common/config';
 import type { Tool } from './tool';
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
-  private _tools: Tool<any>[] = [listTests, runTests];
+  private _tools: Tool<any>[] = [listTests, runTests, snapshot, pickLocator, evaluate];
   private _context: Context;
 
   constructor(resolvedLocation: ConfigLocation) {
     this._context = new Context(resolvedLocation);
-  }
-
-  async initialize() {
   }
 
   async listTools(): Promise<mcp.Tool[]> {

@@ -388,7 +388,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
         // Recoverable async failure.
         return (async () => {
-          const recoveryResult = await step.recoverFromStepError(expectError);
+          const recoveryResult = await step.recoverFromStepError(expectError, {});
           if (recoveryResult.status === 'recovered')
             return recoveryResult.value as any;
           if (this._info.isSoft)

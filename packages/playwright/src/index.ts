@@ -22,6 +22,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
+import { startMcpServer } from './mcp/browser/backend';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -236,7 +237,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = actionTimeout || 0;
+    playwright._defaultContextTimeout = (testInfo as TestInfoImpl)._canRecoverFromError() ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;
@@ -287,9 +288,22 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           tracingGroupSteps.push(step);
       },
       onApiCallRecovery: (data, error, recoveryHandlers) => {
+        if (!(testInfo as TestInfoImpl)._canRecoverFromError())
+          return;
+
         const step = data.userData as TestStepInternal;
-        if (step)
-          recoveryHandlers.push(() => step.recoverFromStepError(error));
+        if (step) {
+          recoveryHandlers.push(async () => {
+            const [context] = playwright._allContexts();
+            const abortController = new AbortController();
+            let mcpUrl: string | undefined;
+            if (context)
+              mcpUrl = await startMcpServer(context, abortController.signal);
+            const result = await step.recoverFromStepError(error, { mcpUrl });
+            abortController.abort();
+            return result;
+          });
+        }
       },
       onApiCallEnd: data => {
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
@@ -640,7 +654,7 @@ class ArtifactsRecorder {
 
     this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
       await page._wrapApiCall(async () => {
-        await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
+        await page.screenshot({ ...screenshotOptions, path, caret: 'initial' });
       }, { internal: true });
     });
   }

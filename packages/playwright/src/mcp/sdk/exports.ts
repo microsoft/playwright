@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-export * from './inProcessTransport.js';
-export * from './proxyBackend.js';
-export * from './server.js';
-export * from './tool.js';
-export * from './transport.js';
+export * from './inProcessTransport';
+export * from './proxyBackend';
+export * from './server';
+export * from './tool';
+export * from './http';

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-const bundle = require('./mcpBundleImpl');
-const zodToJsonSchema: typeof import('zod-to-json-schema').zodToJsonSchema = require('./mcpBundleImpl').zodToJsonSchema;
+const bundle = require('../../mcpBundleImpl');
+const zodToJsonSchema: typeof import('zod-to-json-schema').zodToJsonSchema = bundle.zodToJsonSchema;
 const Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client = bundle.Client;
 const Server: typeof import('@modelcontextprotocol/sdk/server/index.js').Server = bundle.Server;
 const SSEServerTransport: typeof import('@modelcontextprotocol/sdk/server/sse.js').SSEServerTransport = bundle.SSEServerTransport;
 const StdioServerTransport: typeof import('@modelcontextprotocol/sdk/server/stdio.js').StdioServerTransport = bundle.StdioServerTransport;
 const StreamableHTTPServerTransport: typeof import('@modelcontextprotocol/sdk/server/streamableHttp.js').StreamableHTTPServerTransport = bundle.StreamableHTTPServerTransport;
+const StreamableHTTPClientTransport: typeof import('@modelcontextprotocol/sdk/client/streamableHttp.js').StreamableHTTPClientTransport = bundle.StreamableHTTPClientTransport;
 const CallToolRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').CallToolRequestSchema = bundle.CallToolRequestSchema;
 const ListRootsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListRootsRequestSchema = bundle.ListRootsRequestSchema;
 const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListToolsRequestSchema = bundle.ListToolsRequestSchema;
@@ -35,6 +36,7 @@ export {
   Server,
   SSEServerTransport,
   StdioServerTransport,
+  StreamableHTTPClientTransport,
   StreamableHTTPServerTransport,
   CallToolRequestSchema,
   ListRootsRequestSchema,

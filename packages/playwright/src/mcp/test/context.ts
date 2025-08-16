@@ -14,15 +14,32 @@
  * limitations under the License.
  */
 
-import { TestRunner } from 'playwright/lib/runner/testRunner';
+import { TestRunner } from '../../runner/testRunner';
 
-import type { ConfigLocation } from 'playwright/lib/common/config';
+import type { ConfigLocation } from '../../common/config';
 
 export class Context {
-  readonly testRunner: TestRunner;
+  private _testRunner: TestRunner | undefined;
+  readonly configLocation: ConfigLocation;
+  mcpUrl: string | undefined;
 
   constructor(configLocation: ConfigLocation) {
-    this.testRunner = new TestRunner(configLocation, {});
+    this.configLocation = configLocation;
+  }
+
+  async createTestRunner(): Promise<TestRunner> {
+    if (this._testRunner)
+      await this._testRunner.stopTests();
+    const testRunner = new TestRunner(this.configLocation, {});
+    await testRunner.initialize({
+      recoverFromStepErrors: true,
+    });
+    this._testRunner = testRunner;
+    return testRunner;
+  }
+
+  connectTo(mcpUrl: string) {
+    this.mcpUrl = mcpUrl;
   }
 
   async close() {

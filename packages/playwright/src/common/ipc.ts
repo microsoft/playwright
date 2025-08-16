@@ -111,6 +111,7 @@ export type StepRecoverFromErrorPayload = {
   testId: string;
   stepId: string;
   error: TestInfoErrorImpl;
+  userData: Record<string, any>;
 };
 
 export type ResumeAfterStepErrorPayload = RecoverFromStepErrorResult;

@@ -10,6 +10,7 @@ common/
 @testIsomorphic/**
 ./prompt.ts
 ./worker/testTracing.ts
+./mcp/browser/backend.ts
 
 [internalsForTest.ts]
 **

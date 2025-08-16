@@ -50,7 +50,7 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
-  recoverFromStepError(error: Error): Promise<RecoverFromStepErrorResult>;
+  recoverFromStepError(error: Error, userData: Record<string, any>): Promise<RecoverFromStepErrorResult>;
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
@@ -233,6 +233,10 @@ export class TestInfoImpl implements TestInfo {
     this.slow = wrapFunctionWithLocation((location, ...args) => this._modifier('slow', location, args));
   }
 
+  _canRecoverFromError(): boolean {
+    return !!this._recoverFromStepErrorResults;
+  }
+
   _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, modifierArgs: [arg?: any, description?: string]) {
     if (typeof modifierArgs[1] === 'function') {
       throw new Error([
@@ -304,13 +308,14 @@ export class TestInfoImpl implements TestInfo {
       steps: [],
       attachmentIndices: [],
       info: new TestStepInfoImpl(this, stepId, data.title, parentStep?.info),
-      recoverFromStepError: async (error: Error) => {
+      recoverFromStepError: async (error: Error, userData: Record<string, any>) => {
         if (!this._recoverFromStepErrorResults)
           return { stepId, status: 'failed' };
         const payload: StepRecoverFromErrorPayload = {
           testId: this.testId,
           stepId,
           error: serializeError(error),
+          userData,
         };
         this._onStepRecoverFromError(payload);
         const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();

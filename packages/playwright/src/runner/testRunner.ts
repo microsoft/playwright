@@ -53,7 +53,7 @@ export const TestRunnerEvent = {
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-  [TestRunnerEvent.RecoverFromStepError]: [stepId: string, message: string, location: reporterTypes.Location];
+  [TestRunnerEvent.RecoverFromStepError]: [stepId: string, message: string, location: reporterTypes.Location, userData: Record<string, any>];
 };
 
 export type ListTestsParams = {
@@ -64,6 +64,7 @@ export type ListTestsParams = {
 };
 
 export type RunTestsParams = {
+  timeout?: number;
   locations?: string[];
   grep?: string;
   grepInvert?: string;
@@ -301,6 +302,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
+      timeout: params.timeout,
       preserveOutputDir: true,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
@@ -355,14 +357,14 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status: await run };
   }
 
-  private async _recoverFromStepError(stepId: string, error: reporterTypes.TestError): Promise<RecoverFromStepErrorResult> {
+  private async _recoverFromStepError(stepId: string, error: reporterTypes.TestError, userData: Record<string, any>): Promise<RecoverFromStepErrorResult> {
     if (!this._recoverFromStepErrors)
       return { stepId, status: 'failed' };
     const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();
     this._resumeAfterStepErrors.set(stepId, recoveryPromise);
     if (!error?.message || !error?.location)
       return { stepId, status: 'failed' };
-    this.emit(TestRunnerEvent.RecoverFromStepError, stepId, error.message, error.location);
+    this.emit(TestRunnerEvent.RecoverFromStepError, stepId, error.message, error.location, userData);
     const recoveredResult = await recoveryPromise;
     if (recoveredResult.stepId !== stepId)
       return { stepId, status: 'failed' };
