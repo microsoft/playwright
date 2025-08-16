@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-import { z } from 'zod';
+import { debug } from 'playwright-core/lib/utilsBundle';
 
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import * as mcpBundle from './bundle';
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { ListRootsRequestSchema, PingRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { logUnhandledError } from '../utils/log.js';
-import { packageJSON } from '../utils/package.js';
-
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import type { ServerBackend } from './server.js';
+import type { ServerBackend, ClientVersion, Root } from './server.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { Root, Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+
+const errorsDebug = debug('pw:mcp:errors');
 
 export type MCPProvider = {
   name: string;
@@ -35,27 +32,23 @@ export type MCPProvider = {
 };
 
 export class ProxyBackend implements ServerBackend {
-  name = 'Playwright MCP Client Switcher';
-  version = packageJSON.version;
+  readonly name: string;
+  readonly version: string;
 
   private _mcpProviders: MCPProvider[];
   private _currentClient: Client | undefined;
   private _contextSwitchTool: Tool;
   private _roots: Root[] = [];
 
-  constructor(mcpProviders: MCPProvider[]) {
+  constructor(name: string, version: string, mcpProviders: MCPProvider[]) {
+    this.name = name;
+    this.version = version;
     this._mcpProviders = mcpProviders;
     this._contextSwitchTool = this._defineContextSwitchTool();
   }
 
-  async initialize(server: Server): Promise<void> {
-    const version = server.getClientVersion();
-    const capabilities = server.getClientCapabilities();
-    if (capabilities?.roots && version && clientsWithRoots.includes(version.name)) {
-      const { roots } = await server.listRoots();
-      this._roots = roots;
-    }
-
+  async initialize(clientVersion: ClientVersion, roots: Root[]): Promise<void> {
+    this._roots = roots;
     await this._setCurrentClient(this._mcpProviders[0]);
   }
 
@@ -79,7 +72,7 @@ export class ProxyBackend implements ServerBackend {
   }
 
   serverClosed?(): void {
-    void this._currentClient?.close().catch(logUnhandledError);
+    void this._currentClient?.close().catch(errorsDebug);
   }
 
   private async _callContextSwitchTool(params: any): Promise<CallToolResult> {
@@ -107,8 +100,8 @@ export class ProxyBackend implements ServerBackend {
         'Connect to a browser using one of the available methods:',
         ...this._mcpProviders.map(factory => `- "${factory.name}": ${factory.description}`),
       ].join('\n'),
-      inputSchema: zodToJsonSchema(z.object({
-        name: z.enum(this._mcpProviders.map(factory => factory.name) as [string, ...string[]]).default(this._mcpProviders[0].name).describe('The method to use to connect to the browser'),
+      inputSchema: mcpBundle.zodToJsonSchema(mcpBundle.z.object({
+        name: mcpBundle.z.enum(this._mcpProviders.map(factory => factory.name) as [string, ...string[]]).default(this._mcpProviders[0].name).describe('The method to use to connect to the browser'),
       }), { strictUnions: true }) as Tool['inputSchema'],
       annotations: {
         title: 'Connect to a browser context',
@@ -122,19 +115,17 @@ export class ProxyBackend implements ServerBackend {
     await this._currentClient?.close();
     this._currentClient = undefined;
 
-    const client = new Client({ name: 'Playwright MCP Proxy', version: packageJSON.version });
+    const client = new mcpBundle.Client({ name: this.name, version: this.version });
     client.registerCapabilities({
       roots: {
         listRoots: true,
       },
     });
-    client.setRequestHandler(ListRootsRequestSchema, () => ({ roots: this._roots }));
-    client.setRequestHandler(PingRequestSchema, () => ({}));
+    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._roots }));
+    client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
 
     const transport = await factory.connect();
     await client.connect(transport);
     this._currentClient = client;
   }
 }
-
-const clientsWithRoots = ['Visual Studio Code', 'Visual Studio Code - Insiders'];

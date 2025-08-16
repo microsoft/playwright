@@ -20,7 +20,7 @@ import { terminalScreen } from 'playwright/lib/reporters/base';
 import ListReporter from 'playwright/lib/reporters/list';
 
 import { defineTool } from '../tool';
-import { StringWriteStream } from '../utils/streams';
+import { StringWriteStream } from '../streams';
 
 export const runTests = defineTool({
   schema: {

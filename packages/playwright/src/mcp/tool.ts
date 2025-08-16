@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { zodToJsonSchema } from './bundle';
 
 import type { z } from 'zod';
-import type * as mcpServer from './server.js';
+import type * as mcpServer from './server';
 
 export type ToolSchema<Input extends z.Schema> = {
   name: string;
   title: string;
   description: string;
-  inputSchema: Input;
   type: 'readOnly' | 'destructive';
+  inputSchema: Input;
 };
 
 export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
