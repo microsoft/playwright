@@ -175,9 +175,9 @@ export abstract class BrowserType extends SdkObject {
     if (ignoreAllDefaultArgs)
       browserArguments.push(...args);
     else if (ignoreDefaultArgs)
-      browserArguments.push(...this.defaultArgs(options, isPersistent, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      browserArguments.push(...(await this.defaultArgs(options, isPersistent, userDataDir)).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
-      browserArguments.push(...this.defaultArgs(options, isPersistent, userDataDir));
+      browserArguments.push(...await this.defaultArgs(options, isPersistent, userDataDir));
 
     let executable: string;
     if (executablePath) {
@@ -213,7 +213,7 @@ export abstract class BrowserType extends SdkObject {
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
-      env: this.amendEnvironment(env, prepared.userDataDir, isPersistent),
+      env: this.amendEnvironment(env, prepared.userDataDir, isPersistent, options),
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -339,9 +339,9 @@ export abstract class BrowserType extends SdkObject {
     return options.channel || this._name;
   }
 
-  abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
+  abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env;
+  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean, options: types.LaunchOptions): Env;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }

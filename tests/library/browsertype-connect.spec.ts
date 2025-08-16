@@ -73,6 +73,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
 
 test.slow(true, 'All connect tests are slow');
 test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(({ channel }) => channel === 'webkit-wsl');
 
 for (const kind of ['launchServer', 'run-server'] as const) {
   test.describe(kind, () => {

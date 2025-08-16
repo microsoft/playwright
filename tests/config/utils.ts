@@ -53,13 +53,13 @@ export async function verifyViewport(page: Page, width: number, height: number) 
   expect(await page.evaluate('window.innerHeight')).toBe(height);
 }
 
-export function expectedSSLError(browserName: string, platform: string): RegExp {
+export function expectedSSLError(browserName: string, platform: string, channel: string): RegExp {
   if (browserName === 'chromium')
     return /net::(ERR_CERT_AUTHORITY_INVALID|ERR_CERT_INVALID)/;
   if (browserName === 'webkit') {
     if (platform === 'darwin')
       return /The certificate for this server is invalid/;
-    else if (platform === 'win32')
+    else if (platform === 'win32' && channel !== 'webkit-wsl')
       return /SSL peer certificate or SSH remote key was not OK/;
     else
       return /Unacceptable TLS certificate|Operation was cancelled/;

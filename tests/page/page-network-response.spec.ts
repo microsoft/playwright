@@ -230,10 +230,11 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
   expect(allHeaders['name-b']).toEqual('v4');
 });
 
-it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, mode }) => {
+it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
   it.skip(browserName === 'firefox', 'Firefox does return null for file:// URLs');
   it.skip(mode.startsWith('service'));
+  it.skip(channel === 'webkit-wsl');
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   const response = await page.goto(fileurl);
@@ -282,8 +283,9 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fromServiceWorker', async ({ page, server, isAndroid, isElectron }) => {
+it('should report if request was fromServiceWorker', async ({ page, server, isAndroid, isElectron, channel }) => {
   it.skip(isAndroid || isElectron);
+  it.skip(channel === 'webkit-wsl');
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
     expect(res.fromServiceWorker()).toBe(false);

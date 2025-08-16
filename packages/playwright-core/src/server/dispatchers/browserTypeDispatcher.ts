@@ -38,8 +38,13 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     if (this._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
 
-    const browser = await this._object.launch(progress, params);
-    return { browser: new BrowserDispatcher(this, browser) };
+    try {
+      const browser = await this._object.launch(progress, params);
+      return { browser: new BrowserDispatcher(this, browser) };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 
   async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams, progress: Progress): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
