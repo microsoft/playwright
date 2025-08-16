@@ -223,6 +223,7 @@ SetNetworkCookie:
       - Strict
       - Lax
       - None
+      - Default
     partitionKey: string?
     _crHasCrossSiteAncestor: boolean?
 
@@ -243,6 +244,7 @@ NetworkCookie:
       - Strict
       - Lax
       - None
+      - Default
     partitionKey: string?
     _crHasCrossSiteAncestor: boolean?
 
