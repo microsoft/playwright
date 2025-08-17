@@ -63,7 +63,7 @@ test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk 
 
 test('install command should work with proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36650' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
-  const proxy = await TestProxy.create(8947 + test.info().workerIndex * 4);
+  const proxy = await TestProxy.create(8947 + test.info().workerIndex * 4, 'localhost');
   proxy.forwardTo(443, { preserveHostname: true });
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium', {

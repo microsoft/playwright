@@ -42,6 +42,8 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
   };
 }
 
+it.fixme(({ channel }) => channel === 'webkit-wsl');
+
 it('should have version and creator', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
