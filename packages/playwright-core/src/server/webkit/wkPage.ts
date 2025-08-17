@@ -104,6 +104,8 @@ export class WKPage implements PageDelegate {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
     });
+    // Avoid unhandled rejection on disconnect in the middle of initialization.
+    this._firstNonInitialNavigationCommittedPromise.catch(() => {});
     if (opener && !browserContext._options.noDefaultViewport && opener._nextWindowOpenPopupFeatures) {
       const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
       opener._nextWindowOpenPopupFeatures = undefined;
@@ -321,6 +323,7 @@ export class WKPage implements PageDelegate {
       } catch (e) {
         pageOrError = e;
       }
+
       if (targetInfo.isPaused)
         this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
       if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
@@ -332,9 +335,6 @@ export class WKPage implements PageDelegate {
         } catch (e) {
           pageOrError = e;
         }
-      } else {
-        // Avoid rejection on disconnect.
-        this._firstNonInitialNavigationCommittedPromise.catch(() => {});
       }
       this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
     } else {

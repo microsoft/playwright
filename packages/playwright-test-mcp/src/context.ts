@@ -15,13 +15,14 @@
  */
 
 import { TestRunner } from 'playwright/lib/runner/testRunner';
-import { resolveConfigLocation } from 'playwright/lib/common/configLoader';
+
+import type { ConfigLocation } from 'playwright/lib/common/config';
 
 export class Context {
   readonly testRunner: TestRunner;
 
-  constructor(configFile: string | undefined) {
-    this.testRunner = new TestRunner(resolveConfigLocation(configFile), {});
+  constructor(configLocation: ConfigLocation) {
+    this.testRunner = new TestRunner(configLocation, {});
   }
 
   async close() {

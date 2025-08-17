@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-import { packageJSON } from './utils/package';
+import * as mcp from 'playwright/src/mcp/exports';
 import { Context } from './context';
-import { toMcpTool } from './mcp/tool';
-import tools from './tools';
+import { listTests } from './tools/listTests';
+import { runTests } from './tools/runTests';
 
+import type { ConfigLocation } from 'playwright/lib/common/config';
 import type { Tool } from './tool';
-import type * as mcpServer from './mcp/server';
 
-export class TestServerBackend implements mcpServer.ServerBackend {
+export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
-  readonly version = packageJSON.version;
-  private _tools: Tool<any>[] = tools;
+  readonly version = '0.0.1';
+  private _tools: Tool<any>[] = [listTests, runTests];
   private _context: Context;
 
-  constructor(configFile: string | undefined) {
-    this._context = new Context(configFile);
+  constructor(resolvedLocation: ConfigLocation) {
+    this._context = new Context(resolvedLocation);
   }
 
   async initialize() {
   }
 
-  async listTools(): Promise<mcpServer.Tool[]> {
-    return this._tools.map(tool => toMcpTool(tool.schema));
+  async listTools(): Promise<mcp.Tool[]> {
+    return this._tools.map(tool => mcp.toMcpTool(tool.schema));
   }
 
-  async callTool(name: string, args: mcpServer.CallToolRequest['params']['arguments']): Promise<mcpServer.CallToolResult> {
+  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
     const tool = this._tools.find(tool => tool.schema.name === name)!;
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
     return await tool.handle(this._context!, parsedArguments);

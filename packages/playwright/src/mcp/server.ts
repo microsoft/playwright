@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import { debug } from 'playwright-core/lib/utilsBundle';
+import * as mcpBundle from './bundle';
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-
-import { ManualPromise } from '../utils/manualPromise.js';
-import { logUnhandledError } from '../utils/log.js';
-
-import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-export type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
 
 const serverDebug = debug('pw:mcp:server');
+const errorsDebug = debug('pw:mcp:errors');
 
+export type ClientVersion = { name: string, version: string };
 export interface ServerBackend {
   name: string;
   version: string;
-  initialize?(server: Server): Promise<void>;
+  initialize?(clientVersion: ClientVersion, roots: Root[]): Promise<void>;
   listTools(): Promise<Tool[]>;
   callTool(name: string, args: CallToolRequest['params']['arguments']): Promise<CallToolResult>;
   serverClosed?(): void;
@@ -47,14 +45,15 @@ export async function connect(serverBackendFactory: ServerBackendFactory, transp
 }
 
 export function createServer(backend: ServerBackend, runHeartbeat: boolean): Server {
-  const initializedPromise = new ManualPromise<void>();
-  const server = new Server({ name: backend.name, version: backend.version }, {
+  let initializedCallback = () => {};
+  const initializedPromise = new Promise<void>(resolve => initializedCallback = resolve);
+  const server = new mcpBundle.Server({ name: backend.name, version: backend.version }, {
     capabilities: {
       tools: {},
     }
   });
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
+  server.setRequestHandler(mcpBundle.ListToolsRequestSchema, async () => {
     serverDebug('listTools');
     await initializedPromise;
     const tools = await backend.listTools();
@@ -62,7 +61,7 @@ export function createServer(backend: ServerBackend, runHeartbeat: boolean): Ser
   });
 
   let heartbeatRunning = false;
-  server.setRequestHandler(CallToolRequestSchema, async request => {
+  server.setRequestHandler(mcpBundle.CallToolRequestSchema, async request => {
     serverDebug('callTool', request);
     await initializedPromise;
 
@@ -80,8 +79,20 @@ export function createServer(backend: ServerBackend, runHeartbeat: boolean): Ser
       };
     }
   });
-  addServerListener(server, 'initialized', () => {
-    backend.initialize?.(server).then(() => initializedPromise.resolve()).catch(logUnhandledError);
+  addServerListener(server, 'initialized', async () => {
+    try {
+      const capabilities = server.getClientCapabilities();
+      let clientRoots: Root[] = [];
+      if (capabilities?.roots) {
+        const { roots } = await server.listRoots(undefined, { timeout: 2_000 }).catch(() => ({ roots: [] }));
+        clientRoots = roots;
+      }
+      const clientVersion = server.getClientVersion() ?? { name: 'unknown', version: 'unknown' };
+      await backend.initialize?.(clientVersion, clientRoots);
+      initializedCallback();
+    } catch (e) {
+      errorsDebug(e);
+    }
   });
   addServerListener(server, 'close', () => backend.serverClosed?.());
   return server;

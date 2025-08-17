@@ -256,6 +256,13 @@ bundles.push({
 });
 
 bundles.push({
+  modulePath: 'packages/playwright/bundles/mcp',
+  outdir: 'packages/playwright/lib',
+  entryPoints: ['src/mcpBundleImpl.ts'],
+  external: ['express'],
+});
+
+bundles.push({
   modulePath: 'packages/playwright/bundles/utils',
   outdir: 'packages/playwright/lib',
   entryPoints: ['src/utilsBundleImpl.ts'],
@@ -452,6 +459,39 @@ function copyXdgOpen() {
 // Copy xdg-open after bundles 'npm ci' has finished.
 steps.push(new CustomCallbackStep(copyXdgOpen));
 
+function pkgNameFromPath(p) {
+  const i = p.split(path.sep);
+  const nm = i.lastIndexOf('node_modules');
+  if (nm === -1 || nm + 1 >= i.length) return null;
+  const first = i[nm + 1];
+  if (first.startsWith('@')) return nm + 2 < i.length ? `${first}/${i[nm + 2]}` : null;
+  return first;
+}
+
+const pkgSizePlugin = {
+  name: 'pkg-size',
+  setup(build) {
+    build.onEnd(async (result) => {
+      if (!result.metafile) return;
+      const totals = new Map();
+      for (const out of Object.values(result.metafile.outputs)) {
+        for (const [inFile, meta] of Object.entries(out.inputs)) {
+          const pkg = pkgNameFromPath(inFile);
+          if (!pkg) continue;
+          totals.set(pkg, (totals.get(pkg) || 0) + (meta.bytesInOutput || 0));
+        }
+      }
+      const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+      const sum = sorted.reduce((s, [, v]) => s + v, 0) || 1;
+      console.log('\nPackage contribution to bundle:');
+      for (const [pkg, bytes] of sorted.slice(0, 30)) {
+        const pct = ((bytes / sum) * 100).toFixed(2);
+        console.log(`${pkg.padEnd(30)} ${(bytes / 1024).toFixed(1)} KB  ${pct}%`);
+      }
+    });
+  },
+};
+
 // Build/watch bundles.
 for (const bundle of bundles) {
   /** @type {import('esbuild').BuildOptions} */
@@ -468,6 +508,8 @@ for (const bundle of bundles) {
     ...(bundle.outfile ? { outfile: filePath(bundle.outfile) } : {}),
     ...(bundle.external ? { external: bundle.external } : {}),
     ...(bundle.minify !== undefined ? { minify: bundle.minify } : {}),
+    metafile: true,
+    plugins: [pkgSizePlugin],
   };
   steps.push(new EsbuildStep(options));
 }
@@ -659,5 +701,6 @@ process.on('SIGINT', () => {
   cleanup();
   process.exit(0);
 });
+
 
 watchMode ? runWatch() : runBuild();

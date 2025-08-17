@@ -83,7 +83,7 @@ export type RunTestsParams = {
 type FullResultStatus = reporterTypes.FullResult['status'];
 
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
-  private _configLocation: ConfigLocation;
+  readonly configLocation: ConfigLocation;
   private _configCLIOverrides: ConfigCLIOverrides;
 
   private _watcher: Watcher;
@@ -103,7 +103,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     super();
-    this._configLocation = configLocation;
+    this.configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
     this._watcher = new Watcher(events => {
       const collector = new Set<string>();
@@ -411,7 +411,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   private async _loadConfig(overrides?: ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
     try {
-      const config = await loadConfig(this._configLocation, overrides);
+      const config = await loadConfig(this.configLocation, overrides);
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
         webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
