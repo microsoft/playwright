@@ -1,7 +1,7 @@
 // @ts-check
 import net from 'net';
 import fs from 'fs';
-import { execSync, spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 
 const socketPort = process.env.PW_WKWSL_PORT;
 delete process.env.PW_WKWSL_PORT;
@@ -14,8 +14,14 @@ if (!(await fs.promises.stat(executable)).isFile())
     throw new Error(`Executable does not exist. Did you update Playwright recently? Make sure to run npx playwright install webkit-wsl`);
 
 const address = (() => {
-    if (execSync('wslinfo --networking-mode', { encoding: 'utf8' }).trim() === 'nat') {
-        const ip = execSync('ip route show', { encoding: 'utf8' }).trim().split('\n').find(line => line.includes('default'))?.split(' ')[2];
+    const res = spawnSync('/usr/bin/wslinfo', ['--networking-mode'], { encoding: 'utf8'});
+    if (res.error || res.status !== 0)
+        throw new Error(`Failed to run /usr/bin/wslinfo --networking-mode: ${res.error?.message || res.stderr || res.status}`);
+    if (res.stdout.trim() === 'nat') {
+        const ipRes = spawnSync('/usr/sbin/ip', ['route', 'show'], { encoding: 'utf8' });
+        if (ipRes.error || ipRes.status !== 0)
+            throw new Error(`Failed to run ip route show: ${ipRes.error?.message || ipRes.stderr || ipRes.status}`);
+        const ip = ipRes.stdout.trim().split('\n').find(line => line.includes('default'))?.split(' ')[2];
         if (!ip)
             throw new Error('Could not determine WSL IP address (NAT mode).');
         return ip;

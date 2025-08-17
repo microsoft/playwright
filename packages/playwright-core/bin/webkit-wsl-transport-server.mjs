@@ -9,14 +9,11 @@
 //    remaining args, and performs robust cleanup on exit / signals.
 // @ts-check
 import net from 'net'
-import fs from 'fs'
-import {spawn} from "child_process"
-import path from 'path'
+import { spawn } from "child_process"
 
 function log(...args) {
   console.error(new Date(), '[webkit-wsl-host-wrapper]', ...args);
 }
-
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -32,6 +29,7 @@ async function main() {
 
   const sockets = new Set();
   server.on('connection', socket => {
+    socket.setNoDelay(true)
     if (sockets.size > 0) {
       log('Extra connection received, destroying.');
       socket.destroy();
@@ -40,11 +38,8 @@ async function main() {
     sockets.add(socket);
     log('Client connected, wiring pipes.');
 
-    // socket -> parentOut (normal pipe, no end)
-    socket.pipe(parentOut, { end: false });
-
-    // parentIn -> socket (manual pump so we can cancel cleanly)
-    parentIn.pipe(socket, { end: false });
+    socket.pipe(parentOut);
+    parentIn.pipe(socket);
 
     socket.on('close', () => {
       log('Socket closed');

@@ -73,7 +73,6 @@ export class WebKit extends BrowserType {
     if (options.channel === 'webkit-wsl') {
       webkitArguments.unshift(
           path.join(__dirname, '../../../bin/webkit-wsl-transport-server.mjs'),
-          '/home/pwuser/webkit-wsl-transport-client.mjs',
       );
     }
 
