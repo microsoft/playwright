@@ -41,12 +41,12 @@ it('should use proxy @smoke', async ({ browserType, server, mode }) => {
   await browser.close();
 });
 
-it('should use proxy for second page', async ({ browserType, server }) => {
+it('should use proxy for second page', async ({ browserType, loopback, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${server.PORT}` }
+    proxy: { server: `${loopback}:${server.PORT}` }
   });
 
   const page = await browser.newPage();
@@ -60,7 +60,8 @@ it('should use proxy for second page', async ({ browserType, server }) => {
   await browser.close();
 });
 
-it('should work with IP:PORT notion', async ({ browserType, server }) => {
+it('should work with IP:PORT notion', async ({ browserType, server, channel }) => {
+  it.skip(channel === 'webkit-wsl');
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -90,7 +91,8 @@ it.describe('should proxy local network requests', () => {
           description: 'link-local'
         }
       ]) {
-        it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer }) => {
+        it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer, channel }) => {
+          it.skip(channel === 'webkit-wsl');
           it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target) && additionalBypass, 'Mac webkit does not proxy localhost when bypass rules are set.');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
@@ -225,9 +227,9 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
   await browser.close();
 });
 
-it('should use socks proxy', async ({ browserType, socksPort }) => {
+it('should use socks proxy', async ({ browserType, socksPort, loopback }) => {
   const browser = await browserType.launch({
-    proxy: { server: `socks5://localhost:${socksPort}` }
+    proxy: { server: `socks5://${loopback}:${socksPort}` }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.com');
@@ -235,9 +237,9 @@ it('should use socks proxy', async ({ browserType, socksPort }) => {
   await browser.close();
 });
 
-it('should use socks proxy in second page', async ({ browserType, socksPort }) => {
+it('should use socks proxy in second page', async ({ browserType, socksPort, loopback }) => {
   const browser = await browserType.launch({
-    proxy: { server: `socks5://localhost:${socksPort}` }
+    proxy: { server: `socks5://${loopback}:${socksPort}` }
   });
 
   const page = await browser.newPage();
@@ -288,11 +290,12 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
 });
 
 
-it('should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
+it('should use SOCKS proxy for websocket requests', async ({ browserType, server, loopback }) => {
   const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer({
     port: it.info().workerIndex + 2048 + 2,
     forwardPort: server.PORT,
     allowedTargetPort: 1337,
+    loopback,
   });
   const browser = await browserType.launch({
     proxy: {
@@ -323,12 +326,12 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
   await closeProxyServer();
 });
 
-it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion }) => {
+it('should use http proxy for websocket requests', async ({ browserName, browserType, loopback, server, proxyServer, isWindows, isMac, macVersion, channel }) => {
   it.skip(isMac && macVersion === 13, 'Times out on Mac 13');
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const browser = await browserType.launch({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
+    proxy: { server: `${loopback}:${proxyServer.PORT}` }
   });
 
   server.sendOnWebSocketConnection('incoming');
@@ -352,7 +355,7 @@ it('should use http proxy for websocket requests', async ({ browserName, browser
 
   // WebKit does not use CONNECT for websockets, but other browsers do.
   if (browserName === 'webkit')
-    expect(proxyServer.wsUrls).toContain(isWindows ? '/ws' : 'ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
+    expect(proxyServer.wsUrls).toContain((isWindows && channel !== 'webkit-wsl') ? '/ws' : 'ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
   else
     expect(proxyServer.connectHosts).toContain('fake-localhost-127-0-0-1.nip.io:1337');
 

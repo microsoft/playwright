@@ -193,13 +193,16 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset }) => {
+  test('pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset, loopback, channel }) => {
+    test.skip(channel === 'webkit-wsl', 'webkit-wsl does not support client certificates (Browser cant connect to Socks proxy)');
+
     const serverURL = await startCCServer();
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
       forwardPort: serverPort,
       allowedTargetPort: serverPort,
+      loopback,
     });
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -272,6 +275,8 @@ test.describe('fetch', () => {
 
 
 test.describe('browser', () => {
+  test.skip(({ channel }) => channel === 'webkit-wsl', 'webkit-wsl does not support client certificates (Browser cant connect to Socks proxy)');
+
   test('validate input', async ({ browser }) => {
     for (const [contextOptions, expected] of kValidationSubTests)
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
@@ -415,13 +420,14 @@ test.describe('browser', () => {
     delete process.env.HTTPS_PROXY;
   });
 
-  test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac, loopback }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
       forwardPort: serverPort,
       allowedTargetPort: serverPort,
+      loopback,
     });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
