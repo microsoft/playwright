@@ -34,7 +34,12 @@ export const DefaultSettingsView: React.FC<{}> = () => {
   return (
     <SettingsView
       settings={[
-        { type: 'check', value: darkMode, set: setDarkMode, name: 'Dark mode' },
+        {
+          type: 'check',
+          value: darkMode,
+          set: setDarkMode,
+          name: 'Dark mode'
+        },
         {
           type: 'check',
           value: shouldPopulateCanvasFromScreenshot,
@@ -43,16 +48,19 @@ export const DefaultSettingsView: React.FC<{}> = () => {
           title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.',
         },
         {
+          type: 'check',
           value: actionsFilter.includes('getter'),
           set: value => setActionsFilter(value ? [...actionsFilter, 'getter'] : actionsFilter.filter(a => a !== 'getter')),
           name: 'Show getter actions',
         },
         {
+          type: 'check',
           value: actionsFilter.includes('route'),
           set: value => setActionsFilter(value ? [...actionsFilter, 'route'] : actionsFilter.filter(a => a !== 'route')),
           name: 'Show route actions',
         },
         {
+          type: 'check',
           value: actionsFilter.includes('configuration'),
           set: value => setActionsFilter(value ? [...actionsFilter, 'configuration'] : actionsFilter.filter(a => a !== 'configuration')),
           name: 'Show configuration actions',
