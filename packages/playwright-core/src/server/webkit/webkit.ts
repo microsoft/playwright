@@ -72,7 +72,7 @@ export class WebKit extends BrowserType {
 
     if (options.channel === 'webkit-wsl') {
       webkitArguments.unshift(
-          path.join(__dirname, '../../../bin/webkit-wsl-transport-server.mjs'),
+          path.join(__dirname, 'wsl/webkit-wsl-transport-server.js'),
       );
     }
 
@@ -90,7 +90,7 @@ export class WebKit extends BrowserType {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
-      } else if (process.platform === 'linux' || process.platform === 'win32' && options.channel === 'webkit-wsl') {
+      } else if (process.platform === 'linux' || (process.platform === 'win32' && options.channel === 'webkit-wsl')) {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));

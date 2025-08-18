@@ -23,7 +23,7 @@ if [ ! -f "/home/$Username/node/bin/node" ]; then
   tar -xJf /home/$Username/node/node-v22.17.0-linux-x64.tar.xz -C /home/$Username/node --strip-components=1
 fi
 /home/$Username/node/bin/node cli.js install-deps
-cp bin/webkit-wsl-transport-client.mjs /home/$Username/
+cp packages/playwright-core/lib/server/webkit/wsl/webkit-wsl-transport-client.js /home/$Username/
 sudo -u $Username PLAYWRIGHT_SKIP_BROWSER_GC=1 /home/$Username/node/bin/node cli.js install webkit
 "@ -replace "\r\n", "`n"
 
