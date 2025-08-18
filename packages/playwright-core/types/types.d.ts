@@ -3599,8 +3599,8 @@ export interface Page {
   opener(): Promise<null|Page>;
 
   /**
-   * Pauses script execution. Playwright will stop executing the script and wait for the user to either press 'Resume'
-   * button in the page overlay or to call `playwright.resume()` in the DevTools console.
+   * Pauses script execution. Playwright will stop executing the script and wait for the user to either press the
+   * 'Resume' button in the page overlay or to call `playwright.resume()` in the DevTools console.
    *
    * User can inspect selectors or perform manual steps while paused. Resume will continue running the original script
    * from the place it was paused.
@@ -9274,64 +9274,6 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
-   * Resets storage state in the context by clearing cookies, cache and storage, and then applying the new storage
-   * state.
-   * @param storageState Learn more about [storage state and auth](https://playwright.dev/docs/auth).
-   *
-   * Populates context with given storage state. This option can be used to initialize context with logged-in
-   * information obtained via
-   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-   */
-  setStorageState(storageState: string|{
-    /**
-     * Cookies to set for context
-     */
-    cookies: Array<{
-      name: string;
-
-      value: string;
-
-      /**
-       * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
-       * this: ".example.com"
-       */
-      domain: string;
-
-      /**
-       * Domain and path are required
-       */
-      path: string;
-
-      /**
-       * Unix time in seconds.
-       */
-      expires: number;
-
-      httpOnly: boolean;
-
-      secure: boolean;
-
-      /**
-       * sameSite flag
-       */
-      sameSite: "Strict"|"Lax"|"None";
-    }>;
-
-    origins: Array<{
-      origin: string;
-
-      /**
-       * localStorage to set for context
-       */
-      localStorage: Array<{
-        name: string;
-
-        value: string;
-      }>;
-    }>;
-  }): Promise<void>;
-
-  /**
    * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
    * snapshot.
    * @param options
@@ -14819,6 +14761,13 @@ export interface BrowserType<Unused = {}> {
    * **parent** directory of the "Profile Path" seen at `chrome://version`.
    *
    * Note that browsers do not allow launching multiple instances with the same User Data Directory.
+   *
+   * **NOTE** Chromium/Chrome: Due to recent Chrome policy changes, automating the default Chrome user profile is not
+   * supported. Pointing `userDataDir` to Chrome's main "User Data" directory (the profile used for your regular
+   * browsing) may result in pages not loading or the browser exiting. Create and use a separate directory (for example,
+   * an empty folder) as your automation profile instead. See https://developer.chrome.com/blog/remote-debugging-port
+   * for details.
+   *
    * @param options
    */
   launchPersistentContext(userDataDir: string, options?: {
@@ -18856,12 +18805,6 @@ export interface Clock {
    * @param time Time to be set in milliseconds.
    */
   setSystemTime(time: number|string|Date): Promise<void>;
-
-  /**
-   * Uninstall fake clock. Note that any currently open page will be still affected by the fake clock, until it
-   * navigates away to a new document.
-   */
-  uninstall(): Promise<void>;
 }
 
 /**

@@ -22,7 +22,6 @@ import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../server/utils/userAgent';
 import { debugLogger, isUnderTest } from '../utils';
-import { serverSideCallMetadata } from '../server';
 import { SocksProxy } from '../server/utils/socksProxy';
 import { Browser } from '../server/browser';
 import { ProgressController } from '../server/progress';
@@ -40,6 +39,7 @@ type ServerOptions = {
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
+  debugController?: boolean;
 };
 
 export class PlaywrightServer {
@@ -107,6 +107,19 @@ export class PlaywrightServer {
         const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
 
+        if (url.searchParams.has('debug-controller')) {
+          if (!(this._options.debugController || isExtension))
+            throw new Error('Debug controller is not enabled');
+          return new PlaywrightConnection(
+              controllerSemaphore,
+              ws,
+              true,
+              this._playwright,
+              async () => { throw new Error('shouldnt be used'); },
+              id,
+          );
+        }
+
         if (isExtension) {
           const connectFilter = url.searchParams.get('connect');
           if (connectFilter) {
@@ -122,16 +135,6 @@ export class PlaywrightServer {
             );
           }
 
-          if (url.searchParams.has('debug-controller')) {
-            return new PlaywrightConnection(
-                controllerSemaphore,
-                ws,
-                true,
-                this._playwright,
-                async () => { throw new Error('shouldnt be used'); },
-                id,
-            );
-          }
           return new PlaywrightConnection(
               reuseBrowserSemaphore,
               ws,
@@ -204,7 +207,7 @@ export class PlaywrightServer {
 
     if (!browser) {
       const browserType = this._playwright[(browserName || 'chromium') as 'chromium'];
-      const controller = new ProgressController(serverSideCallMetadata(), browserType);
+      const controller = new ProgressController();
       browser = await controller.run(progress => browserType.launch(progress, {
         ...launchOptions,
         headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
@@ -234,7 +237,7 @@ export class PlaywrightServer {
     let browser = this._playwright.allBrowsers().find(b => b.options.name === browserName);
     if (!browser) {
       const browserType = this._playwright[browserName as 'chromium'];
-      const controller = new ProgressController(serverSideCallMetadata(), browserType);
+      const controller = new ProgressController();
       browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
       this._dontReuse(browser);
     }
@@ -286,7 +289,7 @@ export class PlaywrightServer {
       launchOptions.socksProxyPort = undefined;
     }
     const browserType = this._playwright[browserName as 'chromium'];
-    const controller = new ProgressController(serverSideCallMetadata(), browserType);
+    const controller = new ProgressController();
     const browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
     this._dontReuseBrowsers.add(browser);
     return {

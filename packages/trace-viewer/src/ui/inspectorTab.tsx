@@ -15,7 +15,7 @@
  */
 
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { Language, SourceHighlight } from '@web/components/codeMirrorWrapper';
+import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { copy } from '@web/uiUtils';
 import * as React from 'react';
@@ -23,6 +23,7 @@ import type { HighlightedElement } from './snapshotTab';
 import './sourceTab.css';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 import yaml from 'yaml';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 export const InspectorTab: React.FunctionComponent<{
   sdkLanguage: Language,
@@ -55,7 +56,7 @@ export const InspectorTab: React.FunctionComponent<{
       }}></ToolbarButton>
     </div>
     <div style={{ height: 50 }}>
-      <CodeMirrorWrapper text={highlightedElement.locator || ''} language={sdkLanguage} isFocused={true} wrapLines={true} onChange={text => {
+      <CodeMirrorWrapper text={highlightedElement.locator || ''} highlighter={sdkLanguage} isFocused={true} wrapLines={true} onChange={text => {
         // Updating text needs to go first - react can squeeze a render between the state updates.
         setHighlightedElement({ ...highlightedElement, locator: text, lastEdited: 'locator' });
         setIsInspecting(false);
@@ -71,7 +72,7 @@ export const InspectorTab: React.FunctionComponent<{
     <div style={{ height: 150 }}>
       <CodeMirrorWrapper
         text={highlightedElement.ariaSnapshot || ''}
-        language='yaml'
+        highlighter='yaml'
         wrapLines={false}
         highlight={ariaSnapshotErrors}
         onChange={onAriaEditorChange} />

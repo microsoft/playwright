@@ -33,7 +33,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { DonePayload, ResumeAfterStepErrorPayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
 import type { TestAnnotation } from '../../types/test';
 
@@ -78,6 +78,7 @@ export class WorkerMain extends ProcessRunner {
 
     process.on('unhandledRejection', reason => this.unhandledError(reason));
     process.on('uncaughtException', error => this.unhandledError(error));
+    // eslint-disable-next-line no-restricted-properties
     process.stdout.write = (chunk: string | Buffer, cb?: any) => {
       this.dispatchEvent('stdOut', stdioChunkToParams(chunk));
       this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
@@ -87,6 +88,7 @@ export class WorkerMain extends ProcessRunner {
     };
 
     if (!process.env.PW_RUNNER_DEBUG) {
+      // eslint-disable-next-line no-restricted-properties
       process.stderr.write = (chunk: string | Buffer, cb?: any) => {
         this.dispatchEvent('stdErr', stdioChunkToParams(chunk));
         this._currentTest?._tracing.appendStdioToTrace('stderr', chunk);
@@ -113,7 +115,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
       // Ignore top-level errors, they are already inside TestInfo.errors.
-      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => {});
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
       await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});
@@ -259,9 +261,14 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
+  resumeAfterStepError(params: ResumeAfterStepErrorPayload): void {
+    this._currentTest?.resumeAfterStepError(params);
+  }
+
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
+        stepRecoverFromErrorPayload => this.dispatchEvent('stepRecoverFromError', stepRecoverFromErrorPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment));
 

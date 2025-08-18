@@ -53,8 +53,6 @@ function renderSourceOptions(sources: Source[]): React.ReactNode {
 export function emptySource(): Source {
   return {
     id: 'default',
-    timestamp: 0,
-    isPrimary: false,
     isRecorded: false,
     text: '',
     language: 'javascript',

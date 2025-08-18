@@ -480,7 +480,7 @@ var import_test = __toModule(require("@playwright/test"));
 onBegin: 1 tests total
 onTestBegin:  > a.spec.js > test; retry #0
 onStepEnd: [hook] Before Hooks
-onStepEnd: [expect] toBe
+onStepEnd: [expect] Expect "toBe"
   error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
   ======
     3 |           test('test', async () => {
@@ -801,7 +801,7 @@ test('attachments are reported in onStepEnd', { annotation: { type: 'issue', des
   expect(result.outputLines).toEqual([
     '[hook] Before Hooks: 0 attachments in result',
     '[test.step] step: 1 attachments in result',
-    '[test.attach] 4: 2 attachments in result',
+    '[test.attach] Attach "4": 2 attachments in result',
     '[hook] After Hooks: 2 attachments in result',
   ]);
 });

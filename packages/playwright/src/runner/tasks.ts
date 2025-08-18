@@ -34,7 +34,6 @@ import { cacheDir } from '../transform/compilationCache';
 import { removeDirAndLogToConsole } from '../util';
 
 import type { TestGroup } from '../runner/testGroups';
-import type { Matcher } from '../util';
 import type { EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Task } from './taskRunner';
@@ -265,13 +264,12 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
           await plugin.instance?.populateDependencies?.();
       }
 
-      let cliOnlyChangedMatcher: Matcher | undefined = undefined;
       if (testRun.config.cliOnlyChanged) {
         const changedFiles = await detectChangedTestFiles(testRun.config.cliOnlyChanged, testRun.config.configDir);
-        cliOnlyChangedMatcher = file => changedFiles.has(file);
+        testRun.config.preOnlyTestFilters.push(test => changedFiles.has(test.location.file));
       }
 
-      testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly, cliOnlyChangedMatcher);
+      testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
       if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard && !testRun.config.cliOnlyChanged) {

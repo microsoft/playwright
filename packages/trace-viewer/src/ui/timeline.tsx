@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx, msToString, useMeasure } from '@web/uiUtils';
+import { useSetting, clsx, msToString, useMeasure } from '@web/uiUtils';
 import { GlassPane } from '@web/shared/glassPane';
 import * as React from 'react';
 import type { Boundaries } from './geometry';
@@ -25,6 +25,7 @@ import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Entry } from '@trace/har';
 import type { ConsoleEntry } from './consoleTab';
+import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
@@ -53,6 +54,7 @@ export const Timeline: React.FunctionComponent<{
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
+  const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   const { offsets, curtainLeft, curtainRight } = React.useMemo(() => {
     let activeWindow = selectedTime || boundaries;
@@ -67,9 +69,11 @@ export const Timeline: React.FunctionComponent<{
     return { offsets: calculateDividerOffsets(measure.width, boundaries), curtainLeft, curtainRight };
   }, [selectedTime, boundaries, dragWindow, measure]);
 
+  const actions = React.useMemo(() => model?.filteredActions(actionsFilter), [model, actionsFilter]);
+
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
-    for (const entry of model?.actions || []) {
+    for (const entry of actions || []) {
       if (entry.class === 'Test')
         continue;
       bars.push({
@@ -110,7 +114,7 @@ export const Timeline: React.FunctionComponent<{
     }
 
     return bars;
-  }, [model, consoleEntries, boundaries, measure]);
+  }, [model, actions, consoleEntries, boundaries, measure]);
 
   React.useMemo(() => {
     for (const bar of bars) {
@@ -154,7 +158,7 @@ export const Timeline: React.FunctionComponent<{
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
     const time = positionToTime(measure.width, boundaries, x);
-    const action = model?.actions.findLast(action => action.startTime <= time);
+    const action = actions?.findLast(action => action.startTime <= time);
 
     if (!event.buttons) {
       setDragWindow(undefined);
@@ -192,7 +196,7 @@ export const Timeline: React.FunctionComponent<{
     const time2 = positionToTime(measure.width, boundaries, newDragWindow.endX);
     if (time1 !== time2)
       setSelectedTime({ minimum: Math.min(time1, time2), maximum: Math.max(time1, time2) });
-  }, [boundaries, dragWindow, measure, model, onSelected, ref, setSelectedTime]);
+  }, [boundaries, dragWindow, measure, actions, onSelected, ref, setSelectedTime]);
 
   const onGlassPaneMouseUp = React.useCallback(() => {
     setPreviewPoint(undefined);
@@ -204,22 +208,22 @@ export const Timeline: React.FunctionComponent<{
       setSelectedTime({ minimum: Math.min(time1, time2), maximum: Math.max(time1, time2) });
     } else {
       const time = positionToTime(measure.width, boundaries, dragWindow.startX);
-      const action = model?.actions.findLast(action => action.startTime <= time);
+      const action = actions?.findLast(action => action.startTime <= time);
       if (action)
         onSelected(action);
       setSelectedTime(undefined);
     }
     setDragWindow(undefined);
-  }, [boundaries, dragWindow, measure, model, setSelectedTime, onSelected]);
+  }, [boundaries, dragWindow, measure, actions, setSelectedTime, onSelected]);
 
   const onMouseMove = React.useCallback((event: React.MouseEvent) => {
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
     const time = positionToTime(measure.width, boundaries, x);
-    const action = model?.actions.findLast(action => action.startTime <= time);
+    const action = actions?.findLast(action => action.startTime <= time);
     setPreviewPoint({ x, clientY: event.clientY, action, sdkLanguage });
-  }, [boundaries, measure, model, ref, sdkLanguage]);
+  }, [boundaries, measure, actions, ref, sdkLanguage]);
 
   const onMouseLeave = React.useCallback(() => {
     setPreviewPoint(undefined);

@@ -19,6 +19,6 @@
     "sirv-cli": "^2.0.0"
   },
   "dependencies": {
-    "svelte": "^4.2.8"
+    "svelte": "^5.37.3"
   }
 }

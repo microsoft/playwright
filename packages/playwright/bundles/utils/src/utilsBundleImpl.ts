@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable import/order */
-
 import json5Library from 'json5';
 export const json5 = json5Library;
 

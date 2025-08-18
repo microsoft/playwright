@@ -23,7 +23,7 @@ import path from 'path';
 import * as playwright from '../..';
 import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
 import { registry, writeDockerVersion } from '../server';
-import { gracefullyProcessExitDoNotHang, isLikelyNpxGlobal } from '../utils';
+import { gracefullyProcessExitDoNotHang, isLikelyNpxGlobal, ManualPromise } from '../utils';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
@@ -70,15 +70,8 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
-    ]).action(function(url, options) {
-  codegen(options, url).catch(error => {
-    if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
-      // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
-      // in a stray navigation aborted error. We should ignore it.
-    } else {
-      throw error;
-    }
-  });
+    ]).action(async function(url, options) {
+  await codegen(options, url);
 }).addHelpText('afterAll', `
 Examples:
 
@@ -440,7 +433,7 @@ type CaptureOptions = {
   paperFormat?: string;
 };
 
-async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext }> {
+async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext, closeBrowser: () => Promise<void> }> {
   validateOptions(options);
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = extraOptions;
@@ -555,31 +548,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     context = await browser.newContext(contextOptions);
   }
 
-  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
-    (process as any)._didSetSourcesForTest = (text: string) => {
-      process.stdout.write('\n-------------8<-------------\n');
-      process.stdout.write(text);
-      process.stdout.write('\n-------------8<-------------\n');
-      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
-        closeBrowser();
-    };
-    // Make sure we exit abnormally when browser crashes.
-    const logs: string[] = [];
-    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
-      const line = require('util').format(...args) + '\n';
-      logs.push(line);
-      process.stderr.write(line);
-    };
-    browser.on('disconnected', () => {
-      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
-      if (hasCrashLine) {
-        process.stderr.write('Detected browser crash.\n');
-        gracefullyProcessExitDoNotHang(1);
-      }
-    });
-  }
-
   let closingBrowser = false;
   async function closeBrowser() {
     // We can come here multiple times. For example, saving storage creates
@@ -618,7 +586,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   delete launchOptions.executablePath;
   delete launchOptions.handleSIGINT;
   delete contextOptions.deviceScaleFactor;
-  return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
+  return { browser, browserName: browserType.name(), context, contextOptions, launchOptions, closeBrowser };
 }
 
 async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
@@ -643,11 +611,13 @@ async function open(options: Options, url: string | undefined) {
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
   const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
   const tracesDir = path.join(os.tmpdir(), `playwright-recorder-trace-${Date.now()}`);
-  const { context, launchOptions, contextOptions } = await launchContext(options, {
+  const { context, browser, launchOptions, contextOptions, closeBrowser } = await launchContext(options, {
     headless: !!process.env.PWTEST_CLI_HEADLESS,
     executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH,
     tracesDir,
   });
+  const donePromise = new ManualPromise<void>();
+  maybeSetupTestHooks(browser, closeBrowser, donePromise);
   dotenv.config({ path: 'playwright.env' });
   await context._enableRecorder({
     language,
@@ -661,6 +631,49 @@ async function codegen(options: Options & { target: string, output?: string, tes
     handleSIGINT: false,
   });
   await openPage(context, url);
+  donePromise.resolve();
+}
+
+async function maybeSetupTestHooks(browser: Browser, closeBrowser: () => Promise<void>, donePromise: Promise<void>) {
+  if (!process.env.PWTEST_CLI_IS_UNDER_TEST)
+    return;
+
+  // Make sure we exit abnormally when browser crashes.
+  const logs: string[] = [];
+  require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+    const line = require('util').format(...args) + '\n';
+    logs.push(line);
+    // eslint-disable-next-line no-restricted-properties
+    process.stderr.write(line);
+  };
+  browser.on('disconnected', () => {
+    const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
+    if (hasCrashLine) {
+      // eslint-disable-next-line no-restricted-properties
+      process.stderr.write('Detected browser crash.\n');
+      gracefullyProcessExitDoNotHang(1);
+    }
+  });
+
+  const close = async () => {
+    await donePromise;
+    await closeBrowser();
+  };
+
+  if (process.env.PWTEST_CLI_EXIT_AFTER_TIMEOUT) {
+    setTimeout(close, +process.env.PWTEST_CLI_EXIT_AFTER_TIMEOUT);
+    return;
+  }
+
+  // Note: we cannot use SIGINT, as it is not available on Windows.
+  let stdin = '';
+  process.stdin.on('data', data => {
+    stdin += data.toString();
+    if (stdin.startsWith('exit')) {
+      process.stdin.destroy();
+      close();
+    }
+  });
 }
 
 async function waitForPage(page: Page, captureOptions: CaptureOptions) {

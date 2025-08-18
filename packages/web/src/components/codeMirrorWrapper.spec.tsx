@@ -69,27 +69,27 @@ class Program
 `;
 
 test('highlight JavaScript', async ({ mount }) => {
-  const component = await mount(<CodeMirrorWrapper text={javascriptSnippet} language='javascript' />);
+  const component = await mount(<CodeMirrorWrapper text={javascriptSnippet} highlighter='javascript' />);
   await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Python', async ({ mount }) => {
-  const component = await mount(<CodeMirrorWrapper text={pythonSnippet} language='python' />);
+  const component = await mount(<CodeMirrorWrapper text={pythonSnippet} highlighter='python' />);
   await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Java', async ({ mount }) => {
-  const component = await mount(<CodeMirrorWrapper text={javaSnippet} language='java' />);
+  const component = await mount(<CodeMirrorWrapper text={javaSnippet} highlighter='java' />);
   await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight C#', async ({ mount }) => {
-  const component = await mount(<CodeMirrorWrapper text={csharpSnippet} language='csharp' />);
+  const component = await mount(<CodeMirrorWrapper text={csharpSnippet} highlighter='csharp' />);
   await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight lines', async ({ mount }) => {
-  const component = await mount(<CodeMirrorWrapper text={javascriptSnippet} language='javascript' highlight={[
+  const component = await mount(<CodeMirrorWrapper text={javascriptSnippet} highlighter='javascript' highlight={[
     { line: 4, type: 'running' },
     { line: 5, type: 'paused' },
     { line: 6, type: 'error' },

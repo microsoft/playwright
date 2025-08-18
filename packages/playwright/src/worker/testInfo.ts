@@ -17,10 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, serializeError, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
@@ -29,27 +29,36 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, ResumeAfterStepErrorPayload, StepBeginPayload, StepEndPayload, StepRecoverFromErrorPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
-import type { TestStepCategory } from '../util';
+import type { RecoverFromStepErrorResult } from '@testIsomorphic/testServerInterface';
 
-export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
-  info: TestStepInfoImpl
-  attachmentIndices: number[];
-  stepId: string;
+export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
+
+interface TestStepData {
   title: string;
   category: TestStepCategory;
   location?: Location;
+  apiName?: string;
+  params?: Record<string, any>;
+  infectParentStepsWithError?: boolean;
+  box?: boolean;
+  // steps with any defined group are hidden from the report
+  // 'internal' steps are hidden from the trace
+  group?: string;
+}
+
+export interface TestStepInternal extends TestStepData {
+  recoverFromStepError(error: Error): Promise<RecoverFromStepErrorResult>;
+  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  info: TestStepInfoImpl;
+  attachmentIndices: number[];
+  stepId: string;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
   endWallTime?: number;
-  apiName?: string;
-  params?: Record<string, any>;
   error?: TestInfoErrorImpl;
-  infectParentStepsWithError?: boolean;
-  box?: boolean;
 }
 
 type SnapshotNames = {
@@ -59,6 +68,7 @@ type SnapshotNames = {
 
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
+  private _onStepRecoverFromError: (payload: StepRecoverFromErrorPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -112,6 +122,7 @@ export class TestInfoImpl implements TestInfo {
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
+  private _recoverFromStepErrorResults: Map<string, ManualPromise<ResumeAfterStepErrorPayload>> | undefined;
 
   get error(): TestInfoErrorImpl | undefined {
     return this.errors[0];
@@ -151,11 +162,13 @@ export class TestInfoImpl implements TestInfo {
     test: TestCase | undefined,
     retry: number,
     onStepBegin: (payload: StepBeginPayload) => void,
+    onStepRecoverFromError: (payload: StepRecoverFromErrorPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
+    this._onStepRecoverFromError = onStepRecoverFromError;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
     this._startTime = monotonicTime();
@@ -179,6 +192,7 @@ export class TestInfoImpl implements TestInfo {
     this.tags = test?.tags ?? [];
     this.fn = test?.fn ?? (() => {});
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
+    this._recoverFromStepErrorResults = workerParams.recoverFromStepErrors ? new Map() : undefined;
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
     if (configInternal.configCLIOverrides.debug)
@@ -261,7 +275,7 @@ export class TestInfoImpl implements TestInfo {
     return currentZone().data<TestStepInternal>('stepZone') ?? this._findLastPredefinedStep(this._steps);
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices' | 'info'>, parentStep?: TestStepInternal): TestStepInternal {
+  _addStep(data: Readonly<TestStepData>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
     if (data.category === 'hook' || data.category === 'fixture') {
@@ -273,20 +287,39 @@ export class TestInfoImpl implements TestInfo {
     }
 
     const filteredStack = filteredStackTrace(captureRawStack());
-    data.boxedStack = parentStep?.boxedStack;
-    if (!data.boxedStack && data.box) {
-      data.boxedStack = filteredStack.slice(1);
-      data.location = data.location || data.boxedStack[0];
+    let boxedStack = parentStep?.boxedStack;
+    let location = data.location;
+    if (!boxedStack && data.box) {
+      boxedStack = filteredStack.slice(1);
+      location = location || boxedStack[0];
     }
-    data.location = data.location || filteredStack[0];
+    location = location || filteredStack[0];
 
-    const attachmentIndices: number[] = [];
     const step: TestStepInternal = {
-      stepId,
       ...data,
+      stepId,
+      group: parentStep?.group ?? data.group,
+      boxedStack,
+      location,
       steps: [],
-      attachmentIndices,
+      attachmentIndices: [],
       info: new TestStepInfoImpl(this, stepId, data.title, parentStep?.info),
+      recoverFromStepError: async (error: Error) => {
+        if (!this._recoverFromStepErrorResults)
+          return { stepId, status: 'failed' };
+        const payload: StepRecoverFromErrorPayload = {
+          testId: this.testId,
+          stepId,
+          error: serializeError(error),
+        };
+        this._onStepRecoverFromError(payload);
+        const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();
+        this._recoverFromStepErrorResults.set(stepId, recoveryPromise);
+        const recoveryResult = await recoveryPromise;
+        if (recoveryResult.stepId !== stepId)
+          return { stepId, status: 'failed' };
+        return recoveryResult;
+      },
       complete: result => {
         if (step.endWallTime)
           return;
@@ -296,8 +329,8 @@ export class TestInfoImpl implements TestInfo {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
           const error = testInfoError(result.error);
-          if (data.boxedStack)
-            error.stack = `${error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
+          if (step.boxedStack)
+            error.stack = `${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
           step.error = error;
         }
 
@@ -314,40 +347,59 @@ export class TestInfoImpl implements TestInfo {
           }
         }
 
-        const payload: StepEndPayload = {
-          testId: this.testId,
-          stepId,
-          wallTime: step.endWallTime,
-          error: step.error,
-          suggestedRebaseline: result.suggestedRebaseline,
-          annotations: step.info.annotations,
-        };
-        this._onStepEnd(payload);
-        const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
-        const attachments = attachmentIndices.map(i => this.attachments[i]);
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.info.annotations);
+        if (!step.group) {
+          const payload: StepEndPayload = {
+            testId: this.testId,
+            stepId,
+            wallTime: step.endWallTime,
+            error: step.error,
+            suggestedRebaseline: result.suggestedRebaseline,
+            annotations: step.info.annotations,
+          };
+          this._onStepEnd(payload);
+        }
+        if (step.group !== 'internal') {
+          const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
+          const attachments = step.attachmentIndices.map(i => this.attachments[i]);
+          this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.info.annotations);
+        }
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
     parentStepList.push(step);
     this._stepMap.set(stepId, step);
-    const payload: StepBeginPayload = {
-      testId: this.testId,
-      stepId,
-      parentStepId: parentStep ? parentStep.stepId : undefined,
-      title: data.title,
-      category: data.category,
-      wallTime: Date.now(),
-      location: data.location,
-    };
-    this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, {
-      title: data.title,
-      category: data.category,
-      params: data.params,
-      stack: data.location ? [data.location] : []
-    });
+
+    if (!step.group) {
+      const payload: StepBeginPayload = {
+        testId: this.testId,
+        stepId,
+        parentStepId: parentStep ? parentStep.stepId : undefined,
+        title: step.title,
+        category: step.category,
+        wallTime: Date.now(),
+        location: step.location,
+      };
+      this._onStepBegin(payload);
+    }
+    if (step.group !== 'internal') {
+      this._tracing.appendBeforeActionForStep({
+        stepId,
+        parentId: parentStep?.stepId,
+        title: step.title,
+        category: step.category,
+        params: step.params,
+        stack: step.location ? [step.location] : [],
+        group: step.group,
+      });
+    }
+
     return step;
+  }
+
+  resumeAfterStepError(result: ResumeAfterStepErrorPayload) {
+    const recoveryPromise = this._recoverFromStepErrorResults?.get(result.stepId);
+    if (recoveryPromise)
+      recoveryPromise.resolve(result);
   }
 
   _interrupt() {
@@ -370,7 +422,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location }, cb: () => Promise<any>) {
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
     const step = this._addStep(stepInfo);
     try {
       await cb();
@@ -429,7 +481,7 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: name,
+      title: `Attach ${escapeWithQuotes(name, '"')}`,
       category: 'test.attach',
     });
     this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
@@ -441,9 +493,9 @@ export class TestInfoImpl implements TestInfo {
     if (stepId) {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
     } else {
-      const callId = `attach@${createGuid()}`;
-      this._tracing.appendBeforeActionForStep(callId, undefined, { title: attachment.name, category: 'test.attach', stack: [] });
-      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
+      const stepId = `attach@${createGuid()}`;
+      this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
+      this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 
     this._onAttach({

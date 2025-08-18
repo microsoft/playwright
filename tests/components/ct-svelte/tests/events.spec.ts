@@ -6,9 +6,7 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit',
-    },
-    on: {
-      submit: (data: string) => messages.push(data),
+      onsubmit: (data: string) => messages.push(data),
     },
   });
   await component.click();

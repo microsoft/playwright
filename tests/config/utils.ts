@@ -163,7 +163,8 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   const traceModel = new TraceModel();
   await traceModel.load(backend, () => {});
   const model = new MultiTraceModel(traceModel.contextEntries);
-  const { rootItem } = buildActionTree(model.actions);
+  const actions = model.filteredActions([]);
+  const { rootItem } = buildActionTree(actions);
   const actionTree: string[] = [];
   const visit = (actionItem: ActionTreeItem, indent: string) => {
     const title = renderTitleForCall({ ...actionItem.action, type: actionItem.action.class });
@@ -173,9 +174,9 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   };
   rootItem.children.forEach(a => visit(a, ''));
   return {
-    titles: model.actions.map(a => renderTitleForCall({ ...a, type: a.class })),
+    titles: actions.map(a => renderTitleForCall({ ...a, type: a.class })),
     resources: backend.entries,
-    actions: model.actions,
+    actions,
     events: model.events,
     errors: model.errors.map(e => e.message),
     model,

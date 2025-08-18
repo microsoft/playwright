@@ -19,7 +19,6 @@ import path from 'path';
 
 import { isUnderTest } from '../utils/debug';
 import { mime } from '../../utilsBundle';
-import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { ProgressController } from '../progress';
@@ -28,7 +27,6 @@ import { languageSet } from '../codegen/languages';
 import { collapseActions, shouldMergeAction } from './recorderUtils';
 import { generateCode } from '../codegen/language';
 import { Recorder, RecorderEvent } from '../recorder';
-import { monotonicTime } from '../../utils/isomorphic/time';
 import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
@@ -54,7 +52,8 @@ export class RecorderApp {
   private _actions: actions.ActionInContext[] = [];
   private _userSources: Source[] = [];
   private _recorderSources: Source[] = [];
-  private _primaryLanguage: string;
+  private _primaryGeneratorId: string;
+  private _selectedGeneratorId: string;
 
   private constructor(recorder: Recorder, params: RecorderAppParams, page: Page, wsEndpointForTest: string | undefined) {
     this._page = page;
@@ -71,13 +70,14 @@ export class RecorderApp {
     };
 
     this._throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
-    this._primaryLanguage = process.env.TEST_INSPECTOR_LANGUAGE || params.language || params.sdkLanguage;
+    this._primaryGeneratorId = process.env.TEST_INSPECTOR_LANGUAGE || params.language || determinePrimaryGeneratorId(params.sdkLanguage);
+    this._selectedGeneratorId = this._primaryGeneratorId;
   }
 
   private async _init(inspectedContext: BrowserContext) {
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
-    const controller = new ProgressController(serverSideCallMetadata(), this._page);
+    const controller = new ProgressController();
     await controller.run(async progress => {
       await this._page.addRequestInterceptor(progress, route => {
         if (!route.request().url().startsWith('https://playwright/')) {
@@ -115,24 +115,32 @@ export class RecorderApp {
       this._onPageNavigated(url);
     this._onModeChanged(this._recorder.mode());
     this._onPausedStateChanged(this._recorder.paused());
-    this._onUserSourcesChanged(this._recorder.userSources());
+    this._updateActions('reveal');
+    // Update paused sources *after* generated ones, to reveal the currently paused source if any.
+    this._onUserSourcesChanged(this._recorder.userSources(), this._recorder.pausedSourceId());
     this._onCallLogsUpdated(this._recorder.callLog());
     this._wireListeners(this._recorder);
-
-    this._updateActions(true);
   }
 
   private _handleUIEvent(data: any) {
     if (data.event === 'clear') {
       this._actions = [];
-      this._updateActions();
+      this._updateActions('reveal');
       this._recorder.clear();
       return;
     }
     if (data.event === 'fileChanged') {
       const source = [...this._recorderSources, ...this._userSources].find(s => s.id === data.params.fileId);
-      if (source)
+      if (source) {
+        if (source.isRecorded)
+          this._selectedGeneratorId = source.id;
         this._recorder.setLanguage(source.language);
+      }
+      return;
+    }
+    if (data.event === 'setAutoExpect') {
+      this._languageGeneratorOptions.generateAutoExpect = data.params.autoExpect;
+      this._updateActions();
       return;
     }
     if (data.event === 'setMode') {
@@ -204,7 +212,7 @@ export class RecorderApp {
         channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
       }
     });
-    const controller = new ProgressController(serverSideCallMetadata(), appContext._browser);
+    const controller = new ProgressController();
     await controller.run(async progress => {
       await appContext._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
@@ -249,8 +257,8 @@ export class RecorderApp {
       this._onPausedStateChanged(paused);
     });
 
-    recorder.on(RecorderEvent.UserSourcesChanged, (sources: Source[]) => {
-      this._onUserSourcesChanged(sources);
+    recorder.on(RecorderEvent.UserSourcesChanged, (sources: Source[], pausedSourceId?: string) => {
+      this._onUserSourcesChanged(sources, pausedSourceId);
     });
 
     recorder.on(RecorderEvent.ElementPicked, (elementInfo: ElementInfo, userGesture?: boolean) => {
@@ -264,7 +272,7 @@ export class RecorderApp {
 
   private _onActionAdded(action: actions.ActionInContext) {
     this._actions.push(action);
-    this._updateActions();
+    this._updateActions('reveal');
   }
 
   private _onSignalAdded(signal: actions.SignalInContext) {
@@ -297,11 +305,12 @@ export class RecorderApp {
     }).toString(), { isFunction: true }, paused).catch(() => {});
   }
 
-  private _onUserSourcesChanged(sources: Source[]) {
+  private _onUserSourcesChanged(sources: Source[], pausedSourceId: string | undefined) {
     if (!sources.length && !this._userSources.length)
       return;
     this._userSources = sources;
     this._pushAllSources();
+    this._revealSource(pausedSourceId);
   }
 
   private _onElementPicked(elementInfo: ElementInfo, userGesture?: boolean) {
@@ -318,30 +327,29 @@ export class RecorderApp {
     }).toString(), { isFunction: true }, callLogs).catch(() => {});
   }
 
-  private async _pushAllSources() {
+  private _pushAllSources() {
     const sources = [...this._userSources, ...this._recorderSources];
     this._page.mainFrame().evaluateExpression((({ sources }: { sources: Source[] }) => {
       window.playwrightSetSources(sources);
     }).toString(), { isFunction: true }, { sources }).catch(() => {});
-
-    // Testing harness for runCLI mode.
-    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
-      const primarySource = sources.find(s => s.isPrimary);
-      if ((process as any)._didSetSourcesForTest(primarySource?.text ?? ''))
-        this._page.close().catch(() => {});
-    }
   }
 
-  private _updateActions(initial: boolean = false) {
-    const timestamp = initial ? 0 : monotonicTime();
+  private _revealSource(sourceId: string | undefined) {
+    if (!sourceId)
+      return;
+    this._page.mainFrame().evaluateExpression((({ sourceId }: { sourceId: string }) => {
+      window.playwrightSelectSource(sourceId);
+    }).toString(), { isFunction: true }, { sourceId }).catch(() => {});
+  }
+
+  private _updateActions(reveal?: 'reveal') {
     const recorderSources = [];
     const actions = collapseActions(this._actions);
 
+    let revealSourceId: string | undefined;
     for (const languageGenerator of languageSet()) {
       const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
       const source: Source = {
-        isPrimary: languageGenerator.id === this._primaryLanguage,
-        timestamp,
         isRecorded: true,
         label: languageGenerator.name,
         group: languageGenerator.groupName,
@@ -355,13 +363,25 @@ export class RecorderApp {
       };
       source.revealLine = text.split('\n').length - 1;
       recorderSources.push(source);
-      if (languageGenerator.id === this._primaryLanguage)
+      if (languageGenerator.id === this._primaryGeneratorId)
         this._throttledOutputFile?.setContent(source.text);
+      if (reveal === 'reveal' && source.id === this._selectedGeneratorId)
+        revealSourceId = source.id;
     }
 
     this._recorderSources = recorderSources;
     this._pushAllSources();
+    this._revealSource(revealSourceId);
   }
+}
+
+// For example, if the SDK language is 'javascript', this returns 'playwright-test'.
+function determinePrimaryGeneratorId(sdkLanguage: Language): string {
+  for (const language of languageSet()) {
+    if (language.highlighter === sdkLanguage)
+      return language.id;
+  }
+  return sdkLanguage;
 }
 
 export class ProgrammaticRecorderApp {

@@ -44,6 +44,7 @@ import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
 import type { TestAnnotation } from '@playwright/test';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
+import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -71,15 +72,18 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
     setRevealedError(undefined);
   }, []);
 
+  const actions = React.useMemo(() => model?.filteredActions(actionsFilter), [model, actionsFilter]);
+
   const highlightedAction = React.useMemo(() => {
-    return model?.actions.find(a => a.callId === highlightedCallId);
-  }, [model, highlightedCallId]);
+    return actions?.find(a => a.callId === highlightedCallId);
+  }, [actions, highlightedCallId]);
 
   const setHighlightedAction = React.useCallback((highlightedAction: modelUtil.ActionTraceEventInContext | undefined) => {
     setHighlightedCallId(highlightedAction?.callId);
@@ -94,7 +98,7 @@ export const Workbench: React.FunctionComponent<{
 
   const selectedAction = React.useMemo(() => {
     if (selectedCallId) {
-      const action = model?.actions.find(a => a.callId === selectedCallId);
+      const action = actions?.find(a => a.callId === selectedCallId);
       if (action)
         return action;
     }
@@ -103,18 +107,18 @@ export const Workbench: React.FunctionComponent<{
     if (failedAction)
       return failedAction;
 
-    if (model?.actions.length) {
+    if (actions?.length) {
       // Select the last non-after hooks item.
-      let index = model.actions.length - 1;
-      for (let i = 0; i < model.actions.length; ++i) {
-        if (model.actions[i].title === 'After Hooks' && i) {
+      let index = actions.length - 1;
+      for (let i = 0; i < actions.length; ++i) {
+        if (actions[i].title === 'After Hooks' && i) {
           index = i - 1;
           break;
         }
       }
-      return model.actions[index];
+      return actions[index];
     }
-  }, [model, selectedCallId]);
+  }, [model, actions, selectedCallId]);
 
   const activeAction = React.useMemo(() => {
     return highlightedAction || selectedAction;
@@ -301,7 +305,7 @@ export const Workbench: React.FunctionComponent<{
       </div>}
       <ActionList
         sdkLanguage={sdkLanguage}
-        actions={model?.actions || []}
+        actions={actions || []}
         selectedAction={model ? selectedAction : undefined}
         selectedTime={selectedTime}
         setSelectedTime={setSelectedTime}

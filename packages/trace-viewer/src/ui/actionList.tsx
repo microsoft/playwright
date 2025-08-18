@@ -122,7 +122,7 @@ export const renderAction = (
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
-  const isSkipped = action.class === 'Test' && action.method === 'step' && action.annotations?.some(a => a.type === 'skip');
+  const isSkipped = action.class === 'Test' && action.method === 'test.step' && action.annotations?.some(a => a.type === 'skip');
   let time: string = '';
   if (action.endTime)
     time = msToString(action.endTime - action.startTime);
@@ -164,11 +164,16 @@ export function renderTitleForCall(action: ActionTraceEvent): { elements: React.
     title.push(chunk);
 
     const param = formatProtocolParam(action.params, quotedText);
-    if (match.index === 0)
+    if (param === undefined) {
+      elements.push(fullMatch);
+      title.push(fullMatch);
+    } else if (match.index === 0) {
       elements.push(param);
-    else
+      title.push(param);
+    } else {
       elements.push(<span className='action-title-param'>{param}</span>);
-    title.push(param);
+      title.push(param);
+    }
     currentIndex = match.index + fullMatch.length;
   }
 

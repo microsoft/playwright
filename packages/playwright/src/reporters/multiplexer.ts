@@ -101,6 +101,7 @@ async function wrapAsync<T>(callback: () => T | Promise<T>) {
   try {
     return await callback();
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Error in reporter', e);
   }
 }
@@ -109,6 +110,7 @@ function wrap(callback: () => void) {
   try {
     callback();
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Error in reporter', e);
   }
 }

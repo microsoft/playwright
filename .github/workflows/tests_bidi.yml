@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [bidi-chromium, moz-firefox]
+        channel: [bidi-chromium, moz-firefox-nightly]
     steps:
     - uses: actions/checkout@v4
       if: github.event_name != 'workflow_dispatch'
@@ -47,17 +47,13 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
       if: matrix.channel == 'bidi-chromium'
-    - if: matrix.channel == 'moz-firefox'
-      id: install_firefox
+    - if: matrix.channel == 'moz-firefox-nightly'
       run: |
-        npx -y @puppeteer/browsers install firefox@nightly |\
-          awk 'END { $1=""; sub(/^ /,""); print "bidi_ffpath="$0 }' |\
-          tee -a $GITHUB_OUTPUT
+        echo "BIDI_FFPATH=$(npx -y @puppeteer/browsers install firefox@nightly | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
     - name: Run tests
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: '1'
-        BIDI_FFPATH: ${{ steps.install_firefox.outputs.bidi_ffpath }}
     - name: Upload csv report to GitHub
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4

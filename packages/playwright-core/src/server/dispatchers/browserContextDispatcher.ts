@@ -330,10 +330,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return await progress.race(this._context.storageState(progress, params.indexedDB));
   }
 
-  async setStorageState(params: channels.BrowserContextSetStorageStateParams, progress: Progress): Promise<channels.BrowserContextSetStorageStateResult> {
-    await this._context.setStorageState(progress, params.storageState, 'update');
-  }
-
   async close(params: channels.BrowserContextCloseParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
     await this._context.close(params);
@@ -402,10 +398,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async clockSetSystemTime(params: channels.BrowserContextClockSetSystemTimeParams, progress: Progress): Promise<channels.BrowserContextClockSetSystemTimeResult> {
     await this._context.clock.setSystemTime(progress, params.timeString ?? params.timeNumber ?? 0);
-  }
-
-  async clockUninstall(params: channels.BrowserContextClockUninstallParams, progress: Progress): Promise<channels.BrowserContextClockUninstallResult> {
-    await this._context.clock.uninstall(progress);
   }
 
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {

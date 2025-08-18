@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
 
 import { fixtureParameterNames } from '../common/fixtures';
 import { filterStackFile, formatLocation } from '../util';
@@ -35,7 +35,7 @@ class Fixture {
   private _selfTeardownComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
-  private _stepInfo: { title: string, category: 'fixture', location?: Location } | undefined;
+  private _stepInfo: { title: string, category: 'fixture', location?: Location, group?: string };
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -43,11 +43,12 @@ class Fixture {
     this.runner = runner;
     this.registration = registration;
     this.value = null;
-    const shouldGenerateStep = !this.registration.box && !this.registration.option;
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = shouldGenerateStep ? { title, category: 'fixture', location } : undefined;
+    this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', location };
+    if (this.registration.box)
+      this._stepInfo.group = isUserFixture ? 'configuration' : 'internal';
     this._setupDescription = {
       title,
       phase: 'setup',
@@ -68,11 +69,9 @@ class Fixture {
       return;
     }
 
-    const run = () => testInfo._runWithTimeout({ ...runnable, fixture: this._setupDescription }, () => this._setupInternal(testInfo));
-    if (this._stepInfo)
-      await testInfo._runAsStep(this._stepInfo, run);
-    else
-      await run();
+    await testInfo._runAsStep(this._stepInfo, async () => {
+      await testInfo._runWithTimeout({ ...runnable, fixture: this._setupDescription }, () => this._setupInternal(testInfo));
+    });
   }
 
   private async _setupInternal(testInfo: TestInfoImpl) {
@@ -131,11 +130,9 @@ class Fixture {
       // Do not even start the teardown for a fixture that does not have any
       // time remaining in the time slot. This avoids cascading timeouts.
       if (!testInfo._timeoutManager.isTimeExhaustedFor(fixtureRunnable)) {
-        const run = () => testInfo._runWithTimeout(fixtureRunnable, () => this._teardownInternal());
-        if (this._stepInfo)
-          await testInfo._runAsStep(this._stepInfo, run);
-        else
-          await run();
+        await testInfo._runAsStep(this._stepInfo, async () => {
+          await testInfo._runWithTimeout(fixtureRunnable, () => this._teardownInternal());
+        });
       }
     } finally {
       // To preserve fixtures integrity, forcefully cleanup fixtures

@@ -21,7 +21,7 @@ import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 import { SettingsToolbarButton } from './settingsToolbarButton';
-import { Dialog } from './shared/dialog';
+import { Dialog } from '@web/components/dialog';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {

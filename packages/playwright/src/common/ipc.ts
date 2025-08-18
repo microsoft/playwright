@@ -21,6 +21,7 @@ import { serializeCompilationCache } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 import type { SerializedCompilationCache  } from '../transform/compilationCache';
+import type { RecoverFromStepErrorResult } from '@testIsomorphic/testServerInterface';
 
 export type ConfigCLIOverrides = {
   debug?: boolean;
@@ -66,6 +67,7 @@ export type WorkerInitParams = {
   projectId: string;
   config: SerializedConfig;
   artifactsDir: string;
+  recoverFromStepErrors: boolean;
 };
 
 export type TestBeginPayload = {
@@ -104,6 +106,14 @@ export type StepBeginPayload = {
   wallTime: number;  // milliseconds since unix epoch
   location?: { file: string, line: number, column: number };
 };
+
+export type StepRecoverFromErrorPayload = {
+  testId: string;
+  stepId: string;
+  error: TestInfoErrorImpl;
+};
+
+export type ResumeAfterStepErrorPayload = RecoverFromStepErrorResult;
 
 export type StepEndPayload = {
   testId: string;

@@ -31,9 +31,11 @@ import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, Lau
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
+import type { Browser as BrowserImpl } from '../server/browser';
 
 export interface BrowserServerLauncher {
-  launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
+  launchServer(options?: LaunchOptions & LaunchServerOptions): Promise<api.BrowserServer>;
+  launchServerOnExistingBrowser(browser: BrowserImpl, options?: LaunchServerOptions): Promise<api.BrowserServer>;
 }
 
 // This is here just for api generation and checking.
@@ -108,15 +110,16 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       userDataDir: (this._platform.path().isAbsolute(userDataDir) || !userDataDir) ? userDataDir : this._platform.path().resolve(userDataDir),
       timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
-    return await this._wrapApiCall(async () => {
+    const context = await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
       const browser = Browser.from(result.browser);
       browser._connectToBrowserType(this, options, logger);
       const context = BrowserContext.from(result.context);
       await context._initializeHarFromOptions(options.recordHar);
-      await this._instrumentation.runAfterCreateBrowserContext(context);
       return context;
     });
+    await this._instrumentation.runAfterCreateBrowserContext(context);
+    return context;
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<Browser>;

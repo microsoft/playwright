@@ -243,6 +243,7 @@ async function outputReport(report: JSONReport, resolvedOutputFile: string | und
     await fs.promises.mkdir(path.dirname(resolvedOutputFile), { recursive: true });
     await fs.promises.writeFile(resolvedOutputFile, reportString);
   } else {
+    // eslint-disable-next-line no-console
     console.log(reportString);
   }
 }

@@ -480,6 +480,55 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
   ]);
 });
 
+test('should hide boxed fixtures and contents, reveal upon show all actions setting', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+
+      const test = base.extend({
+        fixture: [async ({ page }, use) => {
+          await page.setContent('<div>hello</div>');
+          await use();
+        }, { auto: true, boxed: true }],
+      });
+
+      test('example', async ({ page }) => {
+        await expect(page.locator('body')).toBeVisible();
+      });
+    `,
+  });
+
+  await page.getByText('example').dblclick();
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /Before Hooks/
+      - treeitem /Expect "toBeVisible"/
+      - treeitem /After Hooks/
+  `);
+
+  await page.getByText('Settings').click();
+  await page.getByText('Show route actions').click();
+  await page.getByText('Show configuration actions').click();
+  await page.getByText('Show getter actions').click();
+
+  await page.getByTestId('actions-tree').getByRole('treeitem', { name: 'Before Hooks' }).locator('.codicon-chevron-right').click();
+  await page.getByTestId('actions-tree').getByRole('treeitem', { name: 'Fixture "fixture"' }).locator('.codicon-chevron-right').click();
+
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /Before Hooks/:
+        - group:
+          - treeitem /Fixture "browser"/
+          - treeitem /Fixture "context"/
+          - treeitem /Fixture "page"/
+          - treeitem /Fixture "fixture"/:
+            - group:
+              - treeitem /Set content/
+      - treeitem /Expect "toBeVisible"/
+      - treeitem /After Hooks/
+  `);
+});
+
 test('attachments tab shows all but top-level .push attachments', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `

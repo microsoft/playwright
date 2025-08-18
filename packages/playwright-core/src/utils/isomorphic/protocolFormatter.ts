@@ -16,44 +16,57 @@
 
 import { methodMetainfo } from './protocolMetainfo';
 
-export function formatProtocolParam(params: Record<string, string> | undefined, name: string): string {
+export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
   if (!params)
-    return '';
-  if (name === 'url') {
-    try {
-      const urlObject = new URL(params[name]);
-      if (urlObject.protocol === 'data:')
-        return urlObject.protocol;
-      if (urlObject.protocol === 'about:')
-        return params[name];
-      return urlObject.pathname + urlObject.search;
-    } catch (error) {
-      return params[name];
+    return undefined;
+
+  for (const name of alternatives.split('|')) {
+    if (name === 'url') {
+      try {
+        const urlObject = new URL(params[name]);
+        if (urlObject.protocol === 'data:')
+          return urlObject.protocol;
+        if (urlObject.protocol === 'about:')
+          return params[name];
+        return urlObject.pathname + urlObject.search;
+      } catch (error) {
+        if (params[name] !== undefined)
+          return params[name];
+      }
     }
+    if (name === 'timeNumber' && params[name] !== undefined) {
+      // eslint-disable-next-line no-restricted-globals
+      return new Date(params[name]).toString();
+    }
+
+    const value = deepParam(params, name);
+    if (value !== undefined)
+      return value;
   }
-  if (name === 'timeNumber') {
-    // eslint-disable-next-line no-restricted-globals
-    return new Date(params[name]).toString();
-  }
-  return deepParam(params, name);
 }
 
-function deepParam(params: Record<string, any>, name: string): string {
+function deepParam(params: Record<string, any>, name: string): string | undefined {
   const tokens = name.split('.');
   let current = params;
   for (const token of tokens) {
     if (typeof current !== 'object' || current === null)
-      return '';
+      return undefined;
     current = current[token];
   }
   if (current === undefined)
-    return '';
+    return undefined;
   return String(current);
 }
 
 export function renderTitleForCall(metadata: { title?: string, type: string, method: string, params: Record<string, string> | undefined }) {
   const titleFormat = metadata.title ?? methodMetainfo.get(metadata.type + '.' + metadata.method)?.title ?? metadata.method;
-  return titleFormat.replace(/\{([^}]+)\}/g, (_, p1) => {
-    return formatProtocolParam(metadata.params, p1);
+  return titleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
+    return formatProtocolParam(metadata.params, p1) ?? fullMatch;
   });
+}
+
+export type ActionGroup = 'configuration' | 'route' | 'getter';
+
+export function getActionGroup(metadata: { type: string, method: string }) {
+  return methodMetainfo.get(metadata.type + '.' + metadata.method)?.group as undefined | ActionGroup;
 }

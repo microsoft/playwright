@@ -22,6 +22,12 @@ import type * as reporterTypes from '../../types/testReporter';
 
 export type ReportEntry = JsonEvent;
 
+export type RecoverFromStepErrorResult = {
+  stepId: string;
+  status: 'recovered' | 'failed';
+  value?: string | number | boolean | undefined;
+};
+
 export interface TestServerInterface {
   initialize(params: {
     serializer?: string,
@@ -29,6 +35,7 @@ export interface TestServerInterface {
     interceptStdio?: boolean,
     watchTestDirs?: boolean,
     populateDependenciesOnList?: boolean,
+    recoverFromStepErrors?: boolean,
   }): Promise<void>;
 
   ping(params: {}): Promise<void>;
@@ -113,6 +120,8 @@ export interface TestServerInterface {
   stopTests(params: {}): Promise<void>;
 
   closeGracefully(params: {}): Promise<void>;
+
+  resumeAfterStepError(params: RecoverFromStepErrorResult): Promise<void>;
 }
 
 export interface TestServerInterfaceEvents {
@@ -127,4 +136,5 @@ export interface TestServerInterfaceEventEmitters {
   dispatchEvent(event: 'stdio', params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }): void;
   dispatchEvent(event: 'testFilesChanged', params: { testFiles: string[] }): void;
   dispatchEvent(event: 'loadTraceRequested', params: { traceUrl: string }): void;
+  dispatchEvent(event: 'recoverFromStepError', params: { stepId: string, message: string, location: reporterTypes.Location }): void;
 }

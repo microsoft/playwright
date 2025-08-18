@@ -35,20 +35,24 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean, _live?: boolean } = {}) {
-    this._includeSources = !!options.sources;
-    await this._channel.tracingStart({
-      name: options.name,
-      snapshots: options.snapshots,
-      screenshots: options.screenshots,
-      live: options._live,
+    await this._wrapApiCall(async () => {
+      this._includeSources = !!options.sources;
+      await this._channel.tracingStart({
+        name: options.name,
+        snapshots: options.snapshots,
+        screenshots: options.screenshots,
+        live: options._live,
+      });
+      const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
+      await this._startCollectingStacks(traceName);
     });
-    const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
-    await this._startCollectingStacks(traceName);
   }
 
   async startChunk(options: { name?: string, title?: string } = {}) {
-    const { traceName } = await this._channel.tracingStartChunk(options);
-    await this._startCollectingStacks(traceName);
+    await this._wrapApiCall(async () => {
+      const { traceName } = await this._channel.tracingStartChunk(options);
+      await this._startCollectingStacks(traceName);
+    });
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
@@ -69,12 +73,16 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async stopChunk(options: { path?: string } = {}) {
-    await this._doStopChunk(options.path);
+    await this._wrapApiCall(async () => {
+      await this._doStopChunk(options.path);
+    });
   }
 
   async stop(options: { path?: string } = {}) {
-    await this._doStopChunk(options.path);
-    await this._channel.tracingStop();
+    await this._wrapApiCall(async () => {
+      await this._doStopChunk(options.path);
+      await this._channel.tracingStop();
+    });
   }
 
   private async _doStopChunk(filePath: string | undefined) {

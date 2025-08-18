@@ -1046,6 +1046,19 @@ test.describe('launchServer only', () => {
     const browser = await connect(remoteServer.wsEndpoint()) as any;
     await expect(browser._parent.launch({ timeout: 0 })).rejects.toThrowError('Launching more browsers is not allowed.');
   });
+
+  test('should work with existing browser', async ({ connect, browserType }) => {
+    // can't use browser fixture because it's shared across the worker, launching a server on that would infect other tests
+    const browser = await browserType.launch();
+    const page = await browser.newPage();
+    await page.setContent('hello world');
+    const server = await (browser as any)._launchServer();
+    const secondBrowser = await connect(server.wsEndpoint());
+    const secondPage = secondBrowser.contexts()[0].pages()[0];
+    expect(await secondPage.content()).toContain('hello world');
+    await server.close();
+    await browser.close();
+  });
 });
 
 test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {

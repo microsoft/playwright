@@ -485,6 +485,7 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   tracingStarted(params: LocalUtilsTracingStartedParams, progress?: Progress): Promise<LocalUtilsTracingStartedResult>;
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress?: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress?: Progress): Promise<LocalUtilsTraceDiscardedResult>;
+  globToRegex(params: LocalUtilsGlobToRegexParams, progress?: Progress): Promise<LocalUtilsGlobToRegexResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -583,6 +584,18 @@ export type LocalUtilsTraceDiscardedOptions = {
 
 };
 export type LocalUtilsTraceDiscardedResult = void;
+export type LocalUtilsGlobToRegexParams = {
+  glob: string,
+  baseURL?: string,
+  webSocketUrl?: boolean,
+};
+export type LocalUtilsGlobToRegexOptions = {
+  baseURL?: string,
+  webSocketUrl?: boolean,
+};
+export type LocalUtilsGlobToRegexResult = {
+  regex: string,
+};
 
 export interface LocalUtilsEvents {
 }
@@ -742,6 +755,16 @@ export type DebugControllerSetModeRequestedEvent = {
 };
 export type DebugControllerStateChangedEvent = {
   pageCount: number,
+  browsers: {
+    id: string,
+    name: string,
+    channel?: string,
+    contexts: {
+      pages: {
+        url: string,
+      }[],
+    }[],
+  }[],
 };
 export type DebugControllerSourceChangedEvent = {
   text: string,
@@ -770,9 +793,11 @@ export type DebugControllerSetReportStateChangedResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
   testIdAttributeName?: string,
+  generateAutoExpect?: boolean,
 };
 export type DebugControllerSetRecorderModeOptions = {
   testIdAttributeName?: string,
+  generateAutoExpect?: boolean,
 };
 export type DebugControllerSetRecorderModeResult = void;
 export type DebugControllerHighlightParams = {
@@ -1612,7 +1637,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, progress?: Progress): Promise<BrowserContextSetOfflineResult>;
   storageState(params: BrowserContextStorageStateParams, progress?: Progress): Promise<BrowserContextStorageStateResult>;
-  setStorageState(params: BrowserContextSetStorageStateParams, progress?: Progress): Promise<BrowserContextSetStorageStateResult>;
   pause(params?: BrowserContextPauseParams, progress?: Progress): Promise<BrowserContextPauseResult>;
   enableRecorder(params: BrowserContextEnableRecorderParams, progress?: Progress): Promise<BrowserContextEnableRecorderResult>;
   disableRecorder(params?: BrowserContextDisableRecorderParams, progress?: Progress): Promise<BrowserContextDisableRecorderResult>;
@@ -1628,7 +1652,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   clockRunFor(params: BrowserContextClockRunForParams, progress?: Progress): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, progress?: Progress): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, progress?: Progress): Promise<BrowserContextClockSetSystemTimeResult>;
-  clockUninstall(params?: BrowserContextClockUninstallParams, progress?: Progress): Promise<BrowserContextClockUninstallResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1863,16 +1886,6 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
-export type BrowserContextSetStorageStateParams = {
-  storageState: {
-    cookies?: SetNetworkCookie[],
-    origins?: SetOriginStorage[],
-  },
-};
-export type BrowserContextSetStorageStateOptions = {
-
-};
-export type BrowserContextSetStorageStateResult = void;
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
@@ -2017,9 +2030,6 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
-export type BrowserContextClockUninstallParams = {};
-export type BrowserContextClockUninstallOptions = {};
-export type BrowserContextClockUninstallResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;

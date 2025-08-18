@@ -349,8 +349,12 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
-    if (overrides.headers)
-      overrides.headers = overrides.headers?.filter(header => header.name.toLowerCase() !== 'cookie');
+    if (overrides.headers) {
+      overrides.headers = overrides.headers?.filter(header => {
+        const headerName = header.name.toLowerCase();
+        return headerName !== 'cookie' && headerName !== 'host';
+      });
+    }
     overrides = this._request._applyOverrides(overrides);
 
     const nextHandler = this._futureHandlers.shift();

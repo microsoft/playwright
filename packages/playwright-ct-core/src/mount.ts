@@ -21,7 +21,7 @@ import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/
 import type { RouterFixture } from '../index';
 import type { ImportRef } from './injected/importRegistry';
 import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
-import type { BrowserContext, BrowserContextOptions, Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from 'playwright/test';
+import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from 'playwright/test';
 import type { Page as PageImpl } from 'playwright-core/lib/client/page';
 
 let boundCallbacksForMount: Function[] = [];
@@ -37,7 +37,6 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions;
 type BaseTestFixtures = {
-  _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>,
   _optionContextReuseMode: ContextReuseMode
 };
 

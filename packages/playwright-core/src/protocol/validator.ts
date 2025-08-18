@@ -358,6 +358,14 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
+scheme.LocalUtilsGlobToRegexParams = tObject({
+  glob: tString,
+  baseURL: tOptional(tString),
+  webSocketUrl: tOptional(tBoolean),
+});
+scheme.LocalUtilsGlobToRegexResult = tObject({
+  regex: tString,
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
@@ -437,6 +445,16 @@ scheme.DebugControllerSetModeRequestedEvent = tObject({
 });
 scheme.DebugControllerStateChangedEvent = tObject({
   pageCount: tInt,
+  browsers: tArray(tObject({
+    id: tString,
+    name: tString,
+    channel: tOptional(tString),
+    contexts: tArray(tObject({
+      pages: tArray(tObject({
+        url: tString,
+      })),
+    })),
+  })),
 });
 scheme.DebugControllerSourceChangedEvent = tObject({
   text: tString,
@@ -459,6 +477,7 @@ scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
   testIdAttributeName: tOptional(tString),
+  generateAutoExpect: tOptional(tBoolean),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({
@@ -1071,13 +1090,6 @@ scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),
 });
-scheme.BrowserContextSetStorageStateParams = tObject({
-  storageState: tObject({
-    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('SetOriginStorage'))),
-  }),
-});
-scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextEnableRecorderParams = tObject({
@@ -1165,8 +1177,6 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
-scheme.BrowserContextClockUninstallParams = tOptional(tObject({}));
-scheme.BrowserContextClockUninstallResult = tOptional(tObject({}));
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({

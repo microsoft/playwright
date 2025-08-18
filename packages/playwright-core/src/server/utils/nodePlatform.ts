@@ -91,7 +91,7 @@ export const nodePlatform: Platform = {
 
   inspectCustom: util.inspect.custom,
 
-  isDebugMode: () => !!debugMode(),
+  isDebugMode: () => debugMode() === 'inspector',
 
   isJSDebuggerAttached: () => !!require('inspector').url(),
 

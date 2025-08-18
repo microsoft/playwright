@@ -25,16 +25,15 @@ import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'p
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 export { program } from 'playwright-core/lib/cli/program';
-import { prepareErrorStack } from './reporters/base';
+import { terminalScreen } from './reporters/base';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { filterProjects } from './runner/projectUtils';
-import { Runner } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
-import { serializeError } from './util';
+import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
+import { createErrorCollectingReporter } from './runner/reporters';
 
-import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
 import type { ReporterDescription } from '../types/test';
@@ -74,34 +73,15 @@ Examples:
   $ npx playwright test --project=webkit`);
 }
 
-function addListFilesCommand(program: Command) {
-  const command = program.command('list-files [file-filter...]', { hidden: true });
-  command.description('List files with Playwright Test tests');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.option('--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: list all projects)`);
-  command.action(async (args, opts) => listTestFiles(opts));
-}
-
 function addClearCacheCommand(program: Command) {
   const command = program.command('clear-cache');
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const config = await loadConfigFromFile(opts.config);
-    const runner = new Runner(config);
-    const { status } = await runner.clearCache();
+    const runner = new TestRunner(resolveConfigLocation(opts.config), {});
+    const { status } = await runner.clearCache(createErrorCollectingReporter(terminalScreen));
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
-  });
-}
-
-function addFindRelatedTestFilesCommand(program: Command) {
-  const command = program.command('find-related-test-files [source-files...]', { hidden: true });
-  command.description('Returns the list of related tests to the given files');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.action(async (files, options) => {
-    const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles(resolvedFiles));
   });
 }
 
@@ -110,11 +90,8 @@ function addDevServerCommand(program: Command) {
   command.description('start dev server');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async options => {
-    const config = await loadConfigFromFile(options.config);
-    const runner = new Runner(config);
-    const { status } = await runner.runDevServer();
-    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
-    gracefullyProcessExitDoNotHang(exitCode);
+    const runner = new TestRunner(resolveConfigLocation(options.config), {});
+    await runner.startDevServer(createErrorCollectingReporter(terminalScreen), 'in-process');
   });
 }
 
@@ -217,8 +194,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
   }
 
-  const runner = new Runner(config);
-  const status = await runner.runAllTests();
+  const status = await runAllTestsWithConfig(config);
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
@@ -230,32 +206,6 @@ async function runTestServer(opts: { [key: string]: any }) {
   const status = await testServer.runTestServer(opts.config, { }, { host, port });
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
-}
-
-export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner) => Promise<any>) {
-  // Redefine process.stdout.write in case config decides to pollute stdio.
-  const stdoutWrite = process.stdout.write.bind(process.stdout);
-  process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
-  try {
-    const config = await loadConfigFromFile(configFile);
-    const runner = new Runner(config);
-    const result = await callback(runner);
-    stdoutWrite(JSON.stringify(result, undefined, 2), () => {
-      gracefullyProcessExitDoNotHang(0);
-    });
-  } catch (e) {
-    const error: TestError = serializeError(e);
-    error.location = prepareErrorStack(e.stack).location;
-    stdoutWrite(JSON.stringify({ error }, undefined, 2), () => {
-      gracefullyProcessExitDoNotHang(0);
-    });
-  }
-}
-
-async function listTestFiles(opts: { [key: string]: any }) {
-  await withRunnerAndMutedWrite(opts.config, async runner => {
-    return await runner.listTestFiles();
-  });
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
@@ -414,9 +364,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
 
 addTestCommand(program);
 addShowReportCommand(program);
-addListFilesCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
-addFindRelatedTestFilesCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);

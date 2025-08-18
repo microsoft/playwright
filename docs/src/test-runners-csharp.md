@@ -5,7 +5,7 @@ title: "Test Runners"
 
 ## Introduction
 
-While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for MSTest, NUnit, or xUnit. These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. 
+While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for MSTest, NUnit, xUnit, or xUnit v3. These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. 
 
 Playwright and Browser instances will be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
@@ -18,6 +18,7 @@ isolated between the tests.
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -35,6 +36,11 @@ Playwright provides base classes to write tests with MSTest via the [`Microsoft.
 Playwright provides base classes to write tests with xUnit via the [`Microsoft.Playwright.Xunit`](https://www.nuget.org/packages/Microsoft.Playwright.Xunit) package.
 
 </TabItem>
+<TabItem value="xunit-v3">
+
+Playwright provides base classes to write tests with xUnit v3 via the [`Microsoft.Playwright.Xunit.v3`](https://www.nuget.org/packages/Microsoft.Playwright.Xunit.v3) package.
+
+</TabItem>
 </Tabs>
 
 Check out the [installation guide](./intro.md) to get started.
@@ -48,6 +54,7 @@ Check out the [installation guide](./intro.md) to get started.
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -86,6 +93,20 @@ We recommend xUnit 2.8+ which uses the [`conservative` parallelism algorithm](ht
 :::
 
 </TabItem>
+<TabItem value="xunit-v3">
+
+By default xUnit v3 will run all classes in parallel, while running tests inside each class sequentially.
+It will create by default as many processes as there are cores on the system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+
+```bash
+dotnet test -- xUnit.MaxParallelThreads=5
+```
+
+:::note
+xUnit v3 uses the [`conservative` parallelism algorithm](https://xunit.net/docs/running-tests-in-parallel.html#algorithms) by default.
+:::
+
+</TabItem>
 </Tabs>
 
 
@@ -98,6 +119,7 @@ We recommend xUnit 2.8+ which uses the [`conservative` parallelism algorithm](ht
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -212,6 +234,41 @@ public class UnitTest1 : PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit-v3">
+
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.Xunit.v3.PageTest` or `Microsoft.Playwright.Xunit.v3.ContextTest`. See the following example:
+
+```csharp
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
+
+namespace PlaywrightTests;
+
+public class UnitTest1 : PageTest
+{
+    [Fact]
+    public async Task TestWithCustomContextOptions()
+    {
+        // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
+        await Page.GotoAsync("/login");
+    }
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions()
+        {
+            ColorScheme = ColorScheme.Light,
+            ViewportSize = new()
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            BaseURL = "https://github.com",
+        };
+    }
+}
+```
+
+</TabItem>
 </Tabs>
 
 
@@ -252,6 +309,7 @@ When running tests from Visual Studio, you can take advantage of the `.runsettin
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -348,6 +406,36 @@ For example, to specify the number of workers, you can use `xUnit.MaxParallelThr
 </RunSettings>
 ```
 </TabItem>
+<TabItem value="xunit-v3">
+
+For example, to specify the number of workers, you can use `xUnit.MaxParallelThreads`. You can also enable `DEBUG` logs using `RunConfiguration.EnvironmentVariables`.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- See https://xunit.net/docs/runsettings -->
+  <xUnit>
+    <MaxParallelThreads>1</MaxParallelThreads>
+  </xUnit>
+  <!-- General run configuration -->
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
+      <DEBUG>pw:api</DEBUG>
+    </EnvironmentVariables>
+  </RunConfiguration>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+</TabItem>
 </Tabs>
 
 ## Base classes for Playwright
@@ -359,6 +447,7 @@ For example, to specify the number of workers, you can use `xUnit.MaxParallelThr
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -374,6 +463,11 @@ There are a few base classes available to you in `Microsoft.Playwright.MSTest` n
 <TabItem value="xunit">
 
 There are a few base classes available to you in `Microsoft.Playwright.Xunit` namespace:
+
+</TabItem>
+<TabItem value="xunit-v3">
+
+There are a few base classes available to you in `Microsoft.Playwright.Xunit.v3` namespace:
 
 </TabItem>
 </Tabs>

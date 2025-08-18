@@ -10,7 +10,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 The Playwright VS Code extension brings the power of Playwright Test directly into your editor, allowing you to run, debug, and generate tests with a seamless UI-driven experience. This guide will walk you through setting up the extension and using its core features to supercharge your end-to-end testing workflow.
 
 <LiteYouTube
-    id="Xz6lhEzgI5I"
+    id="WvsLGZnHmzw"
     title="Getting Started with Playwright in VS Code"
 />
 

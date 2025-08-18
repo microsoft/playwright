@@ -272,3 +272,11 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.locator('div').getByRole('button')).toHaveCount(1);
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
+
+it('count() should not throw during navigation', async ({ page, mode }) => {
+  it.skip(mode !== 'default', 'No test hooks');
+  await page.setContent(`<div>A</div>`);
+  const __testHookBeforeQuery = () => page.goto('data:text/html,<div>A</div><div>B</div>');
+  // @ts-expect-error
+  expect(await page.locator('div').count({ __testHookBeforeQuery })).toBe(0);
+});

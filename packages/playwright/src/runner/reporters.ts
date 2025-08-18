@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import { calculateSha1 } from 'playwright-core/lib/utils';
 
 import { loadReporter } from './loadUtils';
-import { formatError, terminalScreen } from '../reporters/base';
+import { formatError } from '../reporters/base';
 import { BlobReporter } from '../reporters/blob';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -29,12 +27,12 @@ import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
-import {  wrapReporterAsV2 } from '../reporters/reporterV2';
+import ListModeReporter from '../reporters/listModeReporter';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { ReporterDescription } from '../../types/test';
-import type { FullConfig, TestError } from '../../types/testReporter';
+import type { TestError } from '../../types/testReporter';
 import type { BuiltInReporter, FullConfigInternal } from '../common/config';
-import type { Suite } from '../common/test';
 import type { CommonReporterOptions, Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
@@ -93,14 +91,13 @@ interface ErrorCollectingReporter extends ReporterV2 {
   errors(): TestError[];
 }
 
-export function createErrorCollectingReporter(screen: Screen, writeToConsole?: boolean): ErrorCollectingReporter {
+export function createErrorCollectingReporter(screen: Screen): ErrorCollectingReporter {
   const errors: TestError[] = [];
   return {
     version: () => 'v2',
     onError(error: TestError) {
       errors.push(error);
-      if (writeToConsole)
-        process.stdout.write(formatError(screen, error).message + '\n');
+      screen.stderr?.write(formatError(screen, error).message + '\n');
     },
     errors: () => errors,
   };
@@ -132,39 +129,4 @@ function computeCommandHash(config: FullConfigInternal) {
   if (Object.keys(command).length)
     parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
   return parts.join('-');
-}
-
-class ListModeReporter implements ReporterV2 {
-  private config!: FullConfig;
-
-  version(): 'v2' {
-    return 'v2';
-  }
-
-  onConfigure(config: FullConfig) {
-    this.config = config;
-  }
-
-  onBegin(suite: Suite): void {
-    // eslint-disable-next-line no-console
-    console.log(`Listing tests:`);
-    const tests = suite.allTests();
-    const files = new Set<string>();
-    for (const test of tests) {
-      // root, project, file, ...describes, test
-      const [, projectName, , ...titles] = test.titlePath();
-      const location = `${path.relative(this.config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
-      const projectTitle = projectName ? `[${projectName}] › ` : '';
-      // eslint-disable-next-line no-console
-      console.log(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
-      files.add(test.location.file);
-    }
-    // eslint-disable-next-line no-console
-    console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
-  }
-
-  onError(error: TestError) {
-    // eslint-disable-next-line no-console
-    console.error('\n' + formatError(terminalScreen, error).message);
-  }
 }

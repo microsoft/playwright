@@ -650,7 +650,7 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
   return object;
 }
 
-export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
+function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
   return !!metainfo?.snapshot;
 }

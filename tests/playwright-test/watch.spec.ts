@@ -710,7 +710,7 @@ test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
         await expect(component).toHaveText('hello');
       });
     `,
-  });
+  }, undefined, { PWTEST_RECOVERY_DISABLED: '1' });
   await testProcess.waitForOutput('Waiting for file changes.');
   await writeFiles({
     'src/button.tsx': `

@@ -113,6 +113,7 @@ npx playwright test --ui
 | `--update-source-method [mode]` | Update snapshots with actual results. Possible values are "patch" (default), "3way" and "overwrite". "Patch" creates a unified diff file that can be used to update the source code later. "3way" generates merge conflict markers in source code. "Overwrite" overwrites the source code with the new snapshot values.|
 | `-x` | Stop after the first failure. |
 
+
 ### Show Report
 
 Display HTML report from previous test run. [Read more about the HTML reporter](./test-reporters#html-reporter).

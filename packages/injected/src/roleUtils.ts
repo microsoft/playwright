@@ -284,10 +284,10 @@ export function isElementHiddenForAria(element: Element): boolean {
   const isOptionInsideSelect = element.nodeName === 'OPTION' && !!element.closest('select');
   if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element, style))
     return true;
-  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element);
+  return belongsToDisplayNoneOrAriaHiddenOrNonSlottedOrInert(element);
 }
 
-function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean {
+function belongsToDisplayNoneOrAriaHiddenOrNonSlottedOrInert(element: Element): boolean {
   let hidden = cacheIsHidden?.get(element);
   if (hidden === undefined) {
     hidden = false;
@@ -298,17 +298,17 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
     if (element.parentElement && element.parentElement.shadowRoot && !element.assignedSlot)
       hidden = true;
 
-    // display:none and aria-hidden=true are considered hidden for aria.
+    // display:none and aria-hidden=true and inert are considered hidden for aria.
     if (!hidden) {
       const style = getElementComputedStyle(element);
-      hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+      hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true || element.getAttribute('inert') !== null;
     }
 
     // Check recursively.
     if (!hidden) {
       const parent = parentElementOrShadowHost(element);
       if (parent)
-        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlotted(parent);
+        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlottedOrInert(parent);
     }
     cacheIsHidden?.set(element, hidden);
   }

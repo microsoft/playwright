@@ -112,6 +112,8 @@ class GHAMarkdownReporter extends MarkdownReporter {
       `### ${reportUrl ? `[Test results](${reportUrl})` : 'Test results'} for "${this._workflowRunName()}"`,
       report,
       '',
+      '---',
+      '',
       `Merge [workflow run](${mergeWorkflowUrl}).`
     ]);
 

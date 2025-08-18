@@ -216,6 +216,7 @@ Traces can be recorded using the [`property: BrowserContext.tracing`] API as fol
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -375,6 +376,70 @@ public class WithTestNameAttribute : BeforeAfterTestAttribute
 ```
 
 </TabItem>
+<TabItem value="xunit-v3">
+
+```csharp
+using System.Reflection;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
+using Xunit.Sdk;
+
+namespace PlaywrightTests;
+
+[WithTestName]
+public class UnitTest1 : PageTest
+{
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync().ConfigureAwait(false);
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    public override async Task DisposeAsync()
+    {
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+               $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}.zip"
+            )
+        });
+        await base.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        // ...
+        await Page.GotoAsync("https://playwright.dev/dotnet/docs/intro");
+    }
+}
+
+public class WithTestNameAttribute : BeforeAfterTestAttribute
+{
+    public static string CurrentTestName = string.Empty;
+    public static string CurrentClassName = string.Empty;
+
+    public override void Before(MethodInfo methodInfo)
+    {
+        CurrentTestName = methodInfo.Name;
+        CurrentClassName = methodInfo.DeclaringType!.Name;
+    }
+
+    public override void After(MethodInfo methodInfo)
+    {
+    }
+}
+```
+
+</TabItem>
 </Tabs>
 
 This will record the trace and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
@@ -392,6 +457,7 @@ Setup your tests to record a trace only when the test fails:
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -493,6 +559,70 @@ public class ExampleTest : PageTest
 using System.Reflection;
 using Microsoft.Playwright;
 using Microsoft.Playwright.Xunit;
+using Xunit.Sdk;
+
+namespace PlaywrightTests;
+
+[WithTestName]
+public class UnitTest1 : PageTest
+{
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync().ConfigureAwait(false);
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    public override async Task DisposeAsync()
+    {
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = !TestOk ? Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+               $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}.zip"
+            ) : null
+        });
+        await base.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        // ...
+        await Page.GotoAsync("https://playwright.dev/dotnet/docs/intro");
+    }
+}
+
+public class WithTestNameAttribute : BeforeAfterTestAttribute
+{
+    public static string CurrentTestName = string.Empty;
+    public static string CurrentClassName = string.Empty;
+
+    public override void Before(MethodInfo methodInfo)
+    {
+        CurrentTestName = methodInfo.Name;
+        CurrentClassName = methodInfo.DeclaringType!.Name;
+    }
+
+    public override void After(MethodInfo methodInfo)
+    {
+    }
+}
+```
+
+</TabItem>
+<TabItem value="xunit-v3">
+
+```csharp
+using System.Reflection;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
 using Xunit.Sdk;
 
 namespace PlaywrightTests;

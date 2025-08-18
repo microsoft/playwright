@@ -4606,9 +4606,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * description.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
    * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
-   * "should fail" when the return value is `true`.
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
+   * when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
@@ -4684,9 +4684,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * description.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
    * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
-   * "should fail" when the return value is `true`.
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
+   * when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
@@ -4762,9 +4762,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * description.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
    * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
-   * "should fail" when the return value is `true`.
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
+   * when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(): void;
@@ -4840,9 +4840,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * description.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
    * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
-   * "should fail" when the return value is `true`.
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
+   * when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(condition: boolean, description?: string): void;
@@ -4918,9 +4918,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * description.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
    * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
-   * "should fail" when the return value is `true`.
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
+   * when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;

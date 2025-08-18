@@ -14,16 +14,28 @@
  * limitations under the License.
  */
 
-import type { TestResult } from '../../types/testReporter';
+import type { RecoverFromStepErrorResult } from '@testIsomorphic/testServerInterface';
+import type { TestResult, TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
+
+export type RecoverFromStepErrorHandler = (stepId: string, error: TestError) => Promise<RecoverFromStepErrorResult>;
 
 export class FailureTracker {
   private _failureCount = 0;
   private _hasWorkerErrors = false;
   private _rootSuite: Suite | undefined;
+  private _recoverFromStepErrorHandler: RecoverFromStepErrorHandler | undefined;
 
   constructor(private _config: FullConfigInternal) {
+  }
+
+  canRecoverFromStepError(): boolean {
+    return !!this._recoverFromStepErrorHandler;
+  }
+
+  setRecoverFromStepErrorHandler(recoverFromStepErrorHandler: RecoverFromStepErrorHandler) {
+    this._recoverFromStepErrorHandler = recoverFromStepErrorHandler;
   }
 
   onRootSuite(rootSuite: Suite) {
@@ -34,6 +46,14 @@ export class FailureTracker {
     // Test is considered failing after the last retry.
     if (test.outcome() === 'unexpected' && test.results.length > test.retries)
       ++this._failureCount;
+  }
+
+  recoverFromStepError(stepId: string, error: TestError, resumeAfterStepError: (result: RecoverFromStepErrorResult) => void) {
+    if (!this._recoverFromStepErrorHandler) {
+      resumeAfterStepError({ stepId, status: 'failed' });
+      return;
+    }
+    void this._recoverFromStepErrorHandler(stepId, error).then(resumeAfterStepError).catch(() => {});
   }
 
   onWorkerError() {

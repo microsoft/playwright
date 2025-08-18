@@ -71,6 +71,15 @@ class TraceViewerPage {
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
   }
 
+  @step
+  async showAllActions() {
+    await this.page.getByRole('button', { name: 'Settings' }).click();
+    await this.page.locator('.setting').getByText('Show route actions').click();
+    await this.page.locator('.setting').getByText('Show getter actions').click();
+    await this.page.locator('.setting').getByText('Show configuration actions').click();
+    await this.page.getByRole('button', { name: 'Settings' }).click();
+  }
+
   stackFrames(options: { selected?: boolean } = {}) {
     const entry = this.page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
     if (options.selected)

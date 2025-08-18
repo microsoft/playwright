@@ -22,7 +22,7 @@ import { getPackageJsonPath, mergeObjects } from '../util';
 
 import type { Config, Fixtures, Metadata, Project, ReporterDescription } from '../../types/test';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { Matcher } from '../util';
+import type { TestCaseFilter } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { Location } from '../../types/testReporter';
 import type { FullConfig, FullProject } from '../../types/testReporter';
@@ -57,8 +57,8 @@ export class FullConfigInternal {
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
   cliLastFailed?: boolean;
-  testIdMatcher?: Matcher;
-  lastFailedTestIdMatcher?: Matcher;
+  preOnlyTestFilters: TestCaseFilter[] = [];
+  postShardTestFilters: TestCaseFilter[] = [];
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];

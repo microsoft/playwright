@@ -40,12 +40,13 @@ var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server }) => {
+test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
   const cli = runCLI([
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
     '--lang=es',
-    '--proxy-server=http://myproxy:3128',
+    '--proxy-server=' + proxyServer.HOST,
     '--timezone=Europe/Rome',
     '--user-agent=hardkodemium',
     '--viewport-size=1280,720',
@@ -58,7 +59,7 @@ await using var browser = await playwright.${capitalize(browserName)}.LaunchAsyn
     ${launchOptions(channel)}
     Proxy = new ProxySettings
     {
-        Server = "http://myproxy:3128",
+        Server = "${proxyServer.HOST}",
     },
 });
 var context = await browser.NewContextAsync(new BrowserNewContextOptions
@@ -96,15 +97,16 @@ var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server, proxyServer }) => {
   test.skip(browserName !== 'webkit');
 
+  proxyServer.forwardTo(server.PORT);
   const cli = runCLI([
     '--device=iPhone 11',
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
     '--lang=es',
-    '--proxy-server=http://myproxy:3128',
+    '--proxy-server=' + proxyServer.HOST,
     '--timezone=Europe/Rome',
     '--user-agent=hardkodemium',
     '--viewport-size=1280,720',
@@ -117,7 +119,7 @@ await using var browser = await playwright.${capitalize(browserName)}.LaunchAsyn
     ${launchOptions(channel)}
     Proxy = new ProxySettings
     {
-        Server = "http://myproxy:3128",
+        Server = "${proxyServer.HOST}",
     },
 });
 var context = await browser.NewContextAsync(new BrowserNewContextOptions(playwright.Devices["iPhone 11"])
@@ -169,10 +171,9 @@ await context.StorageStateAsync(new BrowserContextStorageStateOptions
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)});`;
-  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`]);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
@@ -183,10 +184,9 @@ test('should work with --save-har and --save-har-glob', async ({ runCLI }, testI
 {
     Url = "**/*.js",
 });`;
-  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
-    autoExitWhen: expectedResult,
-  });
-  await cli.waitForCleanExit();
+  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);
+  await cli.waitFor(expectedResult);
+  await cli.exit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
@@ -195,13 +195,13 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
   test(`should not print context options method override in ${testFramework} if no options were passed`, async ({ runCLI, server }) => {
     const cli = runCLI([`--target=csharp-${testFramework}`, server.EMPTY_PAGE]);
     await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
-    expect(cli.text()).not.toContain('public override BrowserNewContextOptions ContextOptions()');
+    expect(await cli.text()).not.toContain('public override BrowserNewContextOptions ContextOptions()');
   });
 
   test(`should print context options method override in ${testFramework} if options were passed`, async ({ runCLI, server }) => {
     const cli = runCLI([`--target=csharp-${testFramework}`, '--color-scheme=dark', server.EMPTY_PAGE]);
     await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
-    expect(cli.text()).toContain(`    public override BrowserNewContextOptions ContextOptions()
+    expect(await cli.text()).toContain(`    public override BrowserNewContextOptions ContextOptions()
     {
         return new BrowserNewContextOptions
         {
@@ -214,10 +214,9 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
   test(`should work with --save-har in ${testFramework}`, async ({ runCLI }, testInfo) => {
     const harFileName = testInfo.outputPath('har.har');
     const expectedResult = `await Context.RouteFromHARAsync(${JSON.stringify(harFileName)});`;
-    const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`], {
-      autoExitWhen: expectedResult,
-    });
-    await cli.waitForCleanExit();
+    const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`]);
+    await cli.waitFor(expectedResult);
+    await cli.exit();
     const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
     expect(json.log.creator.name).toBe('Playwright');
   });
@@ -228,10 +227,9 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
         {
             Url = "**/*.js",
         });`;
-    const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
-      autoExitWhen: expectedResult,
-    });
-    await cli.waitForCleanExit();
+    const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);
+    await cli.waitFor(expectedResult);
+    await cli.exit();
     const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
     expect(json.log.creator.name).toBe('Playwright');
   });
@@ -260,7 +258,7 @@ public class Tests : PageTest
         await Page.GotoAsync("${server.EMPTY_PAGE}");
     }
 }`;
-  expect(cli.text()).toContain(expected);
+  expect(await cli.text()).toContain(expected);
 });
 
 test(`should print a valid basic program in nunit`, async ({ runCLI, server }) => {
@@ -287,5 +285,5 @@ public class Tests : PageTest
         await Page.GotoAsync("${server.EMPTY_PAGE}");
     }
 }`;
-  expect(cli.text()).toContain(expected);
+  expect(await cli.text()).toContain(expected);
 });

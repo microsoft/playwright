@@ -27,13 +27,13 @@ export type SourceHighlight = {
   message?: string;
 };
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css' | 'markdown' | 'yaml';
+type CodeMirrorHighlighter = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css' | 'markdown' | 'yaml';
 
 export const lineHeight = 20;
 
 export interface SourceProps {
   text: string;
-  language?: Language;
+  highlighter?: CodeMirrorHighlighter;
   mimeType?: string;
   linkify?: boolean;
   readOnly?: boolean;
@@ -51,7 +51,7 @@ export interface SourceProps {
 
 export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   text,
-  language,
+  highlighter,
   mimeType,
   linkify,
   readOnly,
@@ -85,7 +85,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       if (!element)
         return;
 
-      const mode = languageToMode(language) || mimeTypeToMode(mimeType) || (linkify ? 'text/linkified' : '');
+      const mode = highlighterToMode(highlighter) || mimeTypeToMode(mimeType) || (linkify ? 'text/linkified' : '');
 
       if (codemirrorRef.current
         && mode === codemirrorRef.current.cm.getOption('mode')
@@ -113,7 +113,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       setCodemirror(cm);
       return cm;
     })();
-  }, [modulePromise, codemirror, codemirrorElement, language, mimeType, linkify, lineNumbers, wrapLines, readOnly, isFocused, placeholder]);
+  }, [modulePromise, codemirror, codemirrorElement, highlighter, mimeType, linkify, lineNumbers, wrapLines, readOnly, isFocused, placeholder]);
 
   React.useEffect(() => {
     if (codemirrorRef.current)
@@ -244,8 +244,8 @@ function mimeTypeToMode(mimeType: string | undefined): string | undefined {
     return 'css';
 }
 
-function languageToMode(language: Language | undefined): string | undefined {
-  if (!language)
+function highlighterToMode(highlighter: CodeMirrorHighlighter | undefined): string | undefined {
+  if (!highlighter)
     return;
   return {
     javascript: 'javascript',
@@ -257,5 +257,5 @@ function languageToMode(language: Language | undefined): string | undefined {
     html: 'htmlmixed',
     css: 'css',
     yaml: 'yaml',
-  }[language];
+  }[highlighter];
 }

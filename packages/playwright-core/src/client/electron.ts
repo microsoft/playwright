@@ -99,7 +99,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   process(): childProcess.ChildProcess {
-    return this._toImpl().process();
+    return this._connection.toImpl?.(this)?.process();
   }
 
   _onPage(page: Page) {

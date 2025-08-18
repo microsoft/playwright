@@ -16,7 +16,6 @@
 
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
-import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
 import { createGuid } from './server/utils/crypto';
 import { isUnderTest } from './server/utils/debug';
@@ -27,7 +26,7 @@ import * as validatorPrimitives from './protocol/validatorPrimitives';
 import { ProgressController } from './server/progress';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
-import type { LaunchServerOptions, Logger, Env } from './client/types';
+import type { LaunchOptions, LaunchServerOptions, Logger, Env } from './client/types';
 import type { ProtocolLogger } from './server/types';
 import type { WebSocketEventEmitter } from './utilsBundle';
 import type { Browser } from './server/browser';
@@ -39,10 +38,10 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     this._browserName = browserName;
   }
 
-  async launchServer(options: LaunchServerOptions & { _sharedBrowser?: boolean, _userDataDir?: string } = {}): Promise<BrowserServer> {
+  async launchServer(options: LaunchOptions & LaunchServerOptions & { _userDataDir?: string } = {}): Promise<BrowserServer> {
     const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
     // 1. Pre-launch the browser
-    const metadata = serverSideCallMetadata();
+    const metadata = { id: '', startTime: 0, endTime: 0, type: 'Internal', method: '', params: {}, log: [], internal: true };
     const validatorContext = {
       tChannelImpl: (names: '*' | string[], arg: any, path: string) => {
         throw new validatorPrimitives.ValidationError(`${path}: channels are not expected in launchServer`);
@@ -60,7 +59,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
     let browser: Browser;
     try {
-      const controller = new ProgressController(metadata, playwright[this._browserName]);
+      const controller = new ProgressController(metadata);
       browser = await controller.run(async progress => {
         if (options._userDataDir !== undefined) {
           const validator = validatorPrimitives.scheme['BrowserTypeLaunchPersistentContextParams'];
@@ -79,10 +78,14 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       throw e;
     }
 
+    return this.launchServerOnExistingBrowser(browser, options);
+  }
+
+  async launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions): Promise<BrowserServer> {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser });
+    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser, debugController: options._debugController });
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface

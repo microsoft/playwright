@@ -38,6 +38,7 @@ export function runDriver() {
     const playwright = createPlaywright({ sdkLanguage });
     return new PlaywrightDispatcher(rootScope, playwright);
   });
+  // eslint-disable-next-line no-restricted-properties
   const transport = new PipeTransport(process.stdout, process.stdin);
   transport.onmessage = (message: string) => dispatcherConnection.dispatch(JSON.parse(message));
   // Certain Language Binding JSON parsers (e.g. .NET) do not like strings with lone surrogates.

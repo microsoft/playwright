@@ -24,7 +24,7 @@ import { mkdirIfNeeded } from './fileUtils';
 
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
-import type { BrowserContextOptions, LaunchOptions, Logger } from './types';
+import type { BrowserContextOptions, LaunchOptions, LaunchServerOptions, Logger } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -60,20 +60,18 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async _newContextForReuse(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    return await this._wrapApiCall(() => this._innerNewContext(options, true), { internal: true });
+    return await this._innerNewContext(options, true);
   }
 
   async _disconnectFromReusedContext(reason: string) {
-    return await this._wrapApiCall(async () => {
-      const context = [...this._contexts].find(context => context._forReuse);
-      if (!context)
-        return;
-      await this._instrumentation.runBeforeCloseBrowserContext(context);
-      for (const page of context.pages())
-        page._onClose();
-      context._onClose();
-      await this._channel.disconnectFromReusedContext({ reason });
-    }, { internal: true });
+    const context = [...this._contexts].find(context => context._forReuse);
+    if (!context)
+      return;
+    await this._instrumentation.runBeforeCloseBrowserContext(context);
+    for (const page of context.pages())
+      page._onClose();
+    context._onClose();
+    await this._channel.disconnectFromReusedContext({ reason });
   }
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
@@ -146,6 +144,17 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async newBrowserCDPSession(): Promise<api.CDPSession> {
     return CDPSession.from((await this._channel.newBrowserCDPSession()).session);
+  }
+
+  async _launchServer(options: LaunchServerOptions = {}) {
+    const serverLauncher = this._browserType._serverLauncher;
+    const browserImpl = this._connection.toImpl?.(this);
+    if (!serverLauncher || !browserImpl)
+      throw new Error('Launching server is not supported');
+    return await serverLauncher.launchServerOnExistingBrowser(browserImpl, {
+      _sharedBrowser: true,
+      ...options,
+    });
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {

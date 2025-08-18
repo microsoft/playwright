@@ -402,7 +402,8 @@ APIRequestContext:
         response: APIResponse
 
     fetchResponseBody:
-      internal: true
+      title: Get response body
+      group: getter
       parameters:
         fetchUid: string
       returns:
@@ -418,7 +419,7 @@ APIRequestContext:
           items: string
 
     storageState:
-      internal: true
+      title: Get storage state
       parameters:
         indexedDB: boolean?
       returns:
@@ -765,6 +766,14 @@ LocalUtils:
       parameters:
         stacksId: string
 
+    globToRegex:
+      internal: true
+      parameters:
+        glob: string
+        baseURL: string?
+        webSocketUrl: boolean?
+      returns:
+        regex: string
 
 Root:
   type: interface
@@ -894,6 +903,7 @@ DebugController:
             - recording
             - none
         testIdAttributeName: string?
+        generateAutoExpect: boolean?
 
     highlight:
       internal: true
@@ -924,6 +934,25 @@ DebugController:
     stateChanged:
       parameters:
         pageCount: int
+        browsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id: string
+              name: string
+              channel: string?
+              contexts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pages:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          url: string
 
     sourceChanged:
       parameters:
@@ -1043,6 +1072,8 @@ Browser:
       title: Close browser
       parameters:
         reason: string?
+      flags:
+        pausesBeforeAction: true
 
     killForTests:
       internal: true
@@ -1105,12 +1136,13 @@ Browser:
 
     newBrowserCDPSession:
       title: Create CDP session
-      internal: true
+      group: configuration
       returns:
         session: CDPSession
 
     startTracing:
-      internal: true
+      title: Start browser tracing
+      group: configuration
       parameters:
         page: Page?
         screenshots: boolean?
@@ -1119,7 +1151,8 @@ Browser:
           items: string
 
     stopTracing:
-      internal: true
+      title: Stop browser tracing
+      group: configuration
       returns:
         artifact: Artifact
 
@@ -1188,6 +1221,7 @@ BrowserContext:
 
     addCookies:
       title: Add cookies
+      group: configuration
       parameters:
         cookies:
           type: array
@@ -1195,11 +1229,13 @@ BrowserContext:
 
     addInitScript:
       title: Add init script
+      group: configuration
       parameters:
         source: string
 
     clearCookies:
       title: Clear cookies
+      group: configuration
       parameters:
         name: string?
         nameRegexSource: string?
@@ -1213,14 +1249,18 @@ BrowserContext:
 
     clearPermissions:
       title: Clear permissions
+      group: configuration
 
     close:
       title: Close context
       parameters:
         reason: string?
+      flags:
+        pausesBeforeAction: true
 
     cookies:
       title: Get cookies
+      group: getter
       parameters:
         urls:
           type: array
@@ -1232,12 +1272,14 @@ BrowserContext:
 
     exposeBinding:
       title: Expose binding
+      group: configuration
       parameters:
         name: string
         needsHandle: boolean?
 
     grantPermissions:
       title: Grant permissions
+      group: configuration
       parameters:
         permissions:
           type: array
@@ -1261,6 +1303,7 @@ BrowserContext:
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
+      group: configuration
       parameters:
         headers:
           type: array
@@ -1268,6 +1311,7 @@ BrowserContext:
 
     setGeolocation:
       title: Set geolocation
+      group: configuration
       parameters:
         geolocation:
           type: object?
@@ -1278,6 +1322,7 @@ BrowserContext:
 
     setHTTPCredentials:
       title: Set HTTP credentials
+      group: configuration
       parameters:
         httpCredentials:
           type: object?
@@ -1287,7 +1332,8 @@ BrowserContext:
             origin: string?
 
     setNetworkInterceptionPatterns:
-      internal: true
+      title: Route requests
+      group: route
       parameters:
         patterns:
           type: array
@@ -1299,7 +1345,8 @@ BrowserContext:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
-      internal: true
+      title: Route WebSockets
+      group: route
       parameters:
         patterns:
           type: array
@@ -1326,19 +1373,6 @@ BrowserContext:
         origins:
           type: array
           items: OriginStorage
-
-    setStorageState:
-      title: Set storage state
-      parameters:
-        storageState:
-          type: object
-          properties:
-            cookies:
-              type: array?
-              items: SetNetworkCookie
-            origins:
-              type: array?
-              items: SetOriginStorage
 
     pause:
       title: Pause
@@ -1371,7 +1405,8 @@ BrowserContext:
       internal: true
 
     newCDPSession:
-      internal: true
+      title: Create CDP session
+      group: configuration
       parameters:
         page: Page?
         frame: Frame?
@@ -1425,19 +1460,19 @@ BrowserContext:
         enabled: boolean
 
     clockFastForward:
-      title: Fast forward clock "{ticksNumber}{ticksString}"
+      title: Fast forward clock "{ticksNumber|ticksString}"
       parameters:
         ticksNumber: float?
         ticksString: string?
 
     clockInstall:
-      title: Install clock "{timeNumber}{timeString}"
+      title: Install clock "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
 
     clockPauseAt:
-      title: Pause clock "{timeNumber}{timeString}"
+      title: Pause clock "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
@@ -1446,25 +1481,22 @@ BrowserContext:
       title: Resume clock
 
     clockRunFor:
-      title: Run clock "{ticksNumber}{ticksString}"
+      title: Run clock "{ticksNumber|ticksString}"
       parameters:
         ticksNumber: float?
         ticksString: string?
 
     clockSetFixedTime:
-      title: Set fixed time "{timeNumber}{timeString}"
+      title: Set fixed time "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
 
     clockSetSystemTime:
-      title: Set system time "{timeNumber}{timeString}"
+      title: Set system time "{timeNumber|timeString}"
       parameters:
         timeNumber: float?
         timeString: string?
-
-    clockUninstall:
-      title: Uninstall clock
 
   events:
 
@@ -1566,6 +1598,8 @@ Page:
   commands:
 
     addInitScript:
+      title: Add init script
+      group: configuration
       parameters:
         source: string
 
@@ -1574,6 +1608,8 @@ Page:
       parameters:
         runBeforeUnload: boolean?
         reason: string?
+      flags:
+        pausesBeforeAction: true
 
     emulateMedia:
       title: Emulate media
@@ -1611,9 +1647,11 @@ Page:
           - no-override
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     exposeBinding:
       title: Expose binding
+      group: configuration
       parameters:
         name: string
         needsHandle: boolean?
@@ -1628,6 +1666,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     goForward:
       title: Go forward
@@ -1639,9 +1678,11 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     requestGC:
       title: Request garbage collection
+      group: configuration
 
     registerLocatorHandler:
       title: Register locator handler
@@ -1672,6 +1713,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     expectScreenshot:
       title: Expect screenshot
@@ -1702,6 +1744,7 @@ Page:
           items: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     screenshot:
       title: Screenshot
@@ -1720,16 +1763,19 @@ Page:
         binary: binary
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
+      group: configuration
       parameters:
         headers:
           type: array
           items: NameValue
 
     setNetworkInterceptionPatterns:
-      internal: true
+      title: Route requests
+      group: route
       parameters:
         patterns:
           type: array
@@ -1741,7 +1787,8 @@ Page:
               regexFlags: string?
 
     setWebSocketInterceptionPatterns:
-      internal: true
+      title: Route WebSockets
+      group: route
       parameters:
         patterns:
           type: array
@@ -1762,6 +1809,7 @@ Page:
             height: int
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardDown:
       title: Key down "{key}"
@@ -1770,6 +1818,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardUp:
       title: Key up "{key}"
@@ -1778,6 +1827,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardInsertText:
       title: Insert "{text}"
@@ -1786,6 +1836,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardType:
       title: Type "{text}"
@@ -1795,6 +1846,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     keyboardPress:
       title: Press "{key}"
@@ -1804,6 +1856,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseMove:
       title: Mouse move
@@ -1814,6 +1867,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseDown:
       title: Mouse down
@@ -1828,6 +1882,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseUp:
       title: Mouse up
@@ -1842,6 +1897,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseClick:
       title: Click
@@ -1859,6 +1915,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     mouseWheel:
       title: Mouse wheel
@@ -1868,6 +1925,7 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     touchscreenTap:
       title: Tap
@@ -1877,16 +1935,16 @@ Page:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     accessibilitySnapshot:
-      internal: true
+      title: Accessibility snapshot
+      group: getter
       parameters:
         interestingOnly: boolean?
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
-      flags:
-        snapshot: true
 
     pdf:
       title: PDF
@@ -1920,17 +1978,17 @@ Page:
         timeout: float
       returns:
         snapshot: string
-      flags:
-        snapshot: true
 
     startJSCoverage:
-      internal: true
+      title: Start JS coverage
+      group: configuration
       parameters:
         resetOnNavigation: boolean?
         reportAnonymousScripts: boolean?
 
     stopJSCoverage:
-      internal: true
+      title: Stop JS coverage
+      group: configuration
       returns:
         entries:
           type: array
@@ -1957,12 +2015,14 @@ Page:
                           count: int
 
     startCSSCoverage:
-      internal: true
+      title: Start CSS coverage
+      group: configuration
       parameters:
         resetOnNavigation: boolean?
 
     stopCSSCoverage:
-      internal: true
+      title: Stop CSS coverage
+      group: configuration
       returns:
         entries:
           type: array
@@ -2085,6 +2145,7 @@ Frame:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evalOnSelectorAll:
       title: Evaluate
@@ -2097,6 +2158,7 @@ Frame:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     addScriptTag:
       title: Add script tag
@@ -2108,6 +2170,7 @@ Frame:
         element: ElementHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     addStyleTag:
       title: Add style tag
@@ -2118,6 +2181,7 @@ Frame:
         element: ElementHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     ariaSnapshot:
       title: Aria snapshot
@@ -2128,6 +2192,7 @@ Frame:
         snapshot: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     blur:
       title: Blur
@@ -2138,6 +2203,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     check:
       title: Check
@@ -2192,6 +2258,7 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     dragAndDrop:
       title: Drag and drop
@@ -2251,6 +2318,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     evaluateExpression:
       title: Evaluate
@@ -2262,6 +2330,7 @@ Frame:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evaluateExpressionHandle:
       title: Evaluate
@@ -2273,6 +2342,7 @@ Frame:
         handle: JSHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     fill:
       title: Fill "{value}"
@@ -2296,9 +2366,11 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     frameElement:
-      internal: true
+      title: Get frame element
+      group: getter
       returns:
         element: ElementHandle
 
@@ -2310,12 +2382,14 @@ Frame:
         resolvedSelector: string
 
     highlight:
-      internal: true
+      title: Highlight element
+      group: configuration
       parameters:
         selector: string
 
     getAttribute:
-      internal: true
+      title: Get attribute "{name}"
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2325,6 +2399,7 @@ Frame:
         value: string?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     goto:
       title: Navigate to "{url}"
@@ -2338,6 +2413,7 @@ Frame:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     hover:
       title: Hover
@@ -2365,6 +2441,7 @@ Frame:
 
     innerHTML:
       title: Get HTML
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2373,9 +2450,11 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     innerText:
       title: Get inner text
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2384,9 +2463,11 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     inputValue:
       title: Get input value
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2395,9 +2476,11 @@ Frame:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isChecked:
       title: Is checked
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2406,9 +2489,11 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isDisabled:
       title: Is disabled
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2417,9 +2502,11 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEnabled:
       title: Is enabled
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2428,9 +2515,11 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isHidden:
       title: Is hidden
+      group: getter
       parameters:
         # Note: compared to other isFoo methods, isHidden is a one-shot operation without a timeout.
         selector: string
@@ -2439,9 +2528,11 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isVisible:
       title: Is visible
+      group: getter
       parameters:
         # Note: compared to other isFoo methods, isVisible is a one-shot operation without a timeout.
         selector: string
@@ -2450,9 +2541,11 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEditable:
       title: Is editable
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2461,6 +2554,7 @@ Frame:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     press:
       title: Press "{key}"
@@ -2505,6 +2599,7 @@ Frame:
         value: int
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     selectOption:
       title: Select option
@@ -2542,6 +2637,7 @@ Frame:
         waitUntil: LifecycleEvent?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     setInputFiles:
       title: Set input files
@@ -2597,6 +2693,7 @@ Frame:
 
     textContent:
       title: Get text content
+      group: getter
       parameters:
         selector: string
         strict: boolean?
@@ -2605,14 +2702,16 @@ Frame:
         value: string?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     title:
-      internal: true
+      title: Get page title
+      group: getter
       returns:
         value: string
 
     type:
-      title: Type
+      title: Type "{text}"
       parameters:
         selector: string
         strict: boolean?
@@ -2658,6 +2757,7 @@ Frame:
         handle: JSHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     waitForSelector:
       title: Wait for selector
@@ -2701,6 +2801,7 @@ Frame:
           items: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
   events:
 
@@ -2761,6 +2862,7 @@ JSHandle:
   commands:
 
     dispose:
+      internal: true
 
     evaluateExpression:
       title: Evaluate
@@ -2772,6 +2874,7 @@ JSHandle:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evaluateExpressionHandle:
       title: Evaluate
@@ -2783,9 +2886,11 @@ JSHandle:
         handle: JSHandle
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     getPropertyList:
-      internal: true
+      title: Get property list
+      group: getter
       returns:
         properties:
           type: array
@@ -2796,14 +2901,16 @@ JSHandle:
               value: JSHandle
 
     getProperty:
-      internal: true
+      title: Get JS property
+      group: getter
       parameters:
         name: string
       returns:
         handle: JSHandle
 
     jsonValue:
-      internal: true
+      title: Get JSON value
+      group: getter
       returns:
         value: SerializedValue
 
@@ -2834,6 +2941,7 @@ ElementHandle:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     evalOnSelectorAll:
       title: Evaluate
@@ -2846,6 +2954,7 @@ ElementHandle:
         value: SerializedValue
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     boundingBox:
       title: Get bounding box
@@ -2853,6 +2962,7 @@ ElementHandle:
         value: Rect?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     check:
       title: Check
@@ -2898,11 +3008,10 @@ ElementHandle:
         pausesBeforeInput: true
 
     contentFrame:
-      internal: true
+      title: Get content frame
+      group: getter
       returns:
         frame: Frame?
-      flags:
-        snapshot: true
 
     dblclick:
       title: Double click
@@ -2941,6 +3050,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     fill:
       title: Fill "{value}"
@@ -2958,13 +3068,18 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     getAttribute:
-      internal: true
+      title: Get attribute
+      group: getter
       parameters:
         name: string
       returns:
         value: string?
+      flags:
+        snapshot: true
+        pausesBeforeAction: true
 
     hover:
       title: Hover
@@ -2990,69 +3105,88 @@ ElementHandle:
 
     innerHTML:
       title: Get HTML
+      group: getter
       returns:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     innerText:
       title: Get inner text
+      group: getter
       returns:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     inputValue:
       title: Get input value
+      group: getter
       returns:
         value: string
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isChecked:
       title: Is checked
+      group: getter
       returns:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isDisabled:
       title: Is disabled
+      group: getter
       returns:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEditable:
       title: Is editable
+      group: getter
       returns:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isEnabled:
       title: Is enabled
+      group: getter
       returns:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isHidden:
       title: Is hidden
+      group: getter
       returns:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     isVisible:
       title: Is visible
+      group: getter
       returns:
         value: boolean
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     ownerFrame:
       title: Get owner frame
+      group: getter
       returns:
         frame: Frame?
 
@@ -3104,6 +3238,7 @@ ElementHandle:
         binary: binary
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     scrollIntoViewIfNeeded:
       title: Scroll into view
@@ -3112,6 +3247,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     selectOption:
       title: Select option
@@ -3147,6 +3283,7 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+        pausesBeforeAction: true
 
     setInputFiles:
       title: Set input files
@@ -3198,10 +3335,12 @@ ElementHandle:
 
     textContent:
       title: Get text content
+      group: getter
       returns:
         value: string?
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     type:
       title: Type
@@ -3241,6 +3380,7 @@ ElementHandle:
         timeout: float
       flags:
         snapshot: true
+        pausesBeforeAction: true
 
     waitForSelector:
       title: Wait for selector
@@ -3306,11 +3446,14 @@ Route:
         url: string
 
     abort:
+      title: Abort request
+      group: route
       parameters:
         errorCode: string?
 
     continue:
-      internal: true
+      title: Continue request
+      group: route
       parameters:
         url: string?
         method: string?
@@ -3321,7 +3464,8 @@ Route:
         isFallback: boolean
 
     fulfill:
-      internal: true
+      title: Fulfill request
+      group: route
       parameters:
         # default is 200
         status: int?
@@ -3342,19 +3486,22 @@ WebSocketRoute:
   commands:
 
     connect:
-      internal: true
+      title: Connect WebSocket to server
+      group: route
 
     ensureOpened:
       internal: true
 
     sendToPage:
-      internal: true
+      title: Send WebSocket message
+      group: route
       parameters:
         message: string
         isBase64: boolean
 
     sendToServer:
-      internal: true
+      title: Send WebSocket message
+      group: route
       parameters:
         message: string
         isBase64: boolean
@@ -3428,7 +3575,8 @@ Response:
   commands:
 
     body:
-      internal: true
+      title: Get response body
+      group: getter
       returns:
         binary: binary
 
@@ -3558,7 +3706,8 @@ Tracing:
   commands:
 
     tracingStart:
-      internal: true
+      title: Start tracing
+      group: configuration
       parameters:
         name: string?
         snapshots: boolean?
@@ -3566,7 +3715,8 @@ Tracing:
         live: boolean?
 
     tracingStartChunk:
-      internal: true
+      title: Start tracing
+      group: configuration
       parameters:
         name: string?
         title: string?
@@ -3588,7 +3738,8 @@ Tracing:
       title: Group end
 
     tracingStopChunk:
-      internal: true
+      title: Stop tracing
+      group: configuration
       parameters:
         mode:
           type: enum
@@ -3606,7 +3757,8 @@ Tracing:
           items: NameValue
 
     tracingStop:
-      internal: true
+      title: Stop tracing
+      group: configuration
 
 
 Artifact:
@@ -3687,7 +3839,8 @@ CDPSession:
   commands:
 
     send:
-      internal: true
+      title: Send CDP command
+      group: configuration
       parameters:
         method: string
         params: json?
@@ -3695,7 +3848,8 @@ CDPSession:
         result: json
 
     detach:
-      internal: true
+      title: Detach CDP session
+      group: configuration
 
   events:
 
@@ -3870,7 +4024,7 @@ AndroidDevice:
 
   commands:
     wait:
-      hidden: Wait
+      title: Wait
       parameters:
         androidSelector: AndroidSelector
         state:
@@ -4036,7 +4190,8 @@ AndroidDevice:
         socket: AndroidSocket
 
     shell:
-      internal: true
+      title: Execute shell command
+      group: configuration
       parameters:
         command: string
       returns:
@@ -4058,7 +4213,7 @@ AndroidDevice:
         mode: int?
 
     connectToWebView:
-      internal: true
+      title: Connect to Web View
       parameters:
         socketName: string
       returns:

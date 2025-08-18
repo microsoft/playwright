@@ -344,6 +344,7 @@ async function sortedShardFiles(dir: string) {
 }
 
 function printStatusToStdout(message: string) {
+  // eslint-disable-next-line no-restricted-properties
   process.stdout.write(`${message}\n`);
 }
 

@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { isUnderTest, rewriteErrorMessage, wrapInASCIIBox } from '../utils';
-import { serverSideCallMetadata } from './instrumentation';
 import { buildPlaywrightCLICommand, findChromiumChannelBestEffort } from './registry';
 import { registryDirectory } from './registry';
 import { ProgressController } from './progress';
@@ -49,7 +48,7 @@ export async function launchApp(browserType: BrowserType, options: {
       channel = findChromiumChannelBestEffort(options.sdkLanguage);
   }
 
-  const controller = new ProgressController(serverSideCallMetadata(), browserType);
+  const controller = new ProgressController();
   let context;
   try {
     context = await controller.run(progress => browserType.launchPersistentContext(progress, '', {
@@ -101,7 +100,7 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
     return;
   const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
 
-  const controller = new ProgressController(serverSideCallMetadata(), page);
+  const controller = new ProgressController();
   await controller.run(async progress => {
     await page.exposeBinding(progress, '_saveSerializedSettings', false, (_, settings) => {
       fs.mkdirSync(path.dirname(settingsFile), { recursive: true });

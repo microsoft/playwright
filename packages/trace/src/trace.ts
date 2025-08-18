@@ -70,6 +70,7 @@ export type BeforeActionTraceEvent = {
   stack?: StackFrame[];
   pageId?: string;
   parentId?: string;
+  group?: string;
 };
 
 export type InputActionTraceEvent = {

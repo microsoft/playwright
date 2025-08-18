@@ -20,7 +20,7 @@ import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { createFileFiltersFromArguments, createFileMatcherFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
-import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { Suite } from '../common/test';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';
@@ -32,7 +32,7 @@ import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import type { FullProjectInternal } from '../common/config';
 import type { FullConfigInternal } from '../common/config';
 import type { TestCase } from '../common/test';
-import type { Matcher, TestFileFilter } from '../util';
+import type { Matcher, TestCaseFilter, TestFileFilter } from '../util';
 import type { RawSourceMap } from '../utilsBundle';
 
 
@@ -120,7 +120,7 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 }
 
-export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, additionalFileMatcher?: Matcher): Promise<Suite> {
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
@@ -140,7 +140,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
 
-      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher, additionalFileMatcher });
+      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testFilters: config.preOnlyTestFilters });
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -197,9 +197,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
-  // Explicitly apply --last-failed filter after sharding.
-  if (config.lastFailedTestIdMatcher)
-    filterByTestIds(rootSuite, config.lastFailedTestIdMatcher);
+  if (config.postShardTestFilters.length)
+    filterTestsRemoveEmptySuites(rootSuite, test => config.postShardTestFilters.every(filter => filter(test)));
 
   // Now prepend dependency projects without filtration.
   {
@@ -233,20 +232,18 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
   return projectSuite;
 }
 
-function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher, additionalFileMatcher?: Matcher }): Suite {
+function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testFilters: TestCaseFilter[] }): Suite {
   // Fast path.
-  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher && !options.additionalFileMatcher)
+  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testFilters.length)
     return projectSuite;
 
   const result = projectSuite._deepClone();
   if (options.cliFileFilters.length)
     filterByFocusedLine(result, options.cliFileFilters);
-  if (options.testIdMatcher)
-    filterByTestIds(result, options.testIdMatcher);
   filterTestsRemoveEmptySuites(result, (test: TestCase) => {
-    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitleWithTags()))
+    if (!options.testFilters.every(filter => filter(test)))
       return false;
-    if (options.additionalFileMatcher && !options.additionalFileMatcher(test.location.file))
+    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitleWithTags()))
       return false;
     return true;
   });

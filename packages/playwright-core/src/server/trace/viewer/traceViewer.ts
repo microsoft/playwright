@@ -21,7 +21,6 @@ import { gracefullyProcessExitDoNotHang } from '../../../utils';
 import { isUnderTest } from '../../../utils';
 import { HttpServer } from '../../utils/httpServer';
 import { open } from '../../../utilsBundle';
-import { serverSideCallMetadata } from '../../instrumentation';
 import { syncLocalStorageWithSettings } from '../../launchApp';
 import { launchApp } from '../../launchApp';
 import { createPlaywright } from '../../playwright';
@@ -179,12 +178,14 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     },
   });
 
-  const controller = new ProgressController(serverSideCallMetadata(), context._browser);
+  const controller = new ProgressController();
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
 
-    if (process.env.PWTEST_PRINT_WS_ENDPOINT)
+    if (process.env.PWTEST_PRINT_WS_ENDPOINT) {
+      // eslint-disable-next-line no-restricted-properties
       process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
+    }
 
     if (!isUnderTest())
       await syncLocalStorageWithSettings(page, 'traceviewer');

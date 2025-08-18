@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import { getActionGroup } from '@isomorphic/protocolFormatter';
+
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
+import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('nextInContext');
@@ -118,6 +121,14 @@ export class MultiTraceModel {
   failedAction() {
     // This find innermost action for nested ones.
     return this.actions.findLast(a => a.error);
+  }
+
+  filteredActions(actionsFilter: ActionGroup[]) {
+    const filter = new Set<string>(actionsFilter);
+    return this.actions.filter(action => {
+      const group = action.group ?? getActionGroup({ type: action.class, method: action.method });
+      return !group || filter.has(group);
+    });
   }
 
   private _errorDescriptorsFromActions(): ErrorDescription[] {
@@ -268,6 +279,8 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
           existing.annotations = action.annotations;
         if (action.parentId)
           existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
+        if (action.group)
+          existing.group = action.group;
         // For the events that are present in the test runner context, always take
         // their time from the test runner context to preserve client side order.
         existing.startTime = action.startTime;
@@ -414,29 +427,4 @@ function collectSources(actions: trace.ActionTraceEvent[], errorDescriptors: Err
     });
   }
   return result;
-}
-
-const kRouteMethods = new Set([
-  'page.route',
-  'page.routefromhar',
-  'page.unroute',
-  'page.unrouteall',
-  'browsercontext.route',
-  'browsercontext.routefromhar',
-  'browsercontext.unroute',
-  'browsercontext.unrouteall',
-]);
-
-{
-  // .NET adds async suffix.
-  for (const method of [...kRouteMethods])
-    kRouteMethods.add(method + 'async');
-  // Python methods which contain underscores.
-  for (const method of [
-    'page.route_from_har',
-    'page.unroute_all',
-    'context.route_from_har',
-    'context.unroute_all',
-  ])
-    kRouteMethods.add(method);
 }

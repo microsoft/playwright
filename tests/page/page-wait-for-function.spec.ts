@@ -105,10 +105,10 @@ it('should work with strict CSP policy', async ({ page, server }) => {
   server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
   await page.goto(server.EMPTY_PAGE);
   let error = null;
-  await Promise.all([
-    page.waitForFunction(() => window['__FOO'] === 'hit', {}, { polling: 'raf' }).catch(e => error = e),
-    page.evaluate(() => window['__FOO'] = 'hit')
-  ]);
+  const p = page.waitForFunction(() => window['__FOO'] === 'hit', {}, { polling: 'raf' }).catch(e => error = e);
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => window['__FOO'] = 'hit');
+  await p;
   expect(error).toBe(null);
 });
 

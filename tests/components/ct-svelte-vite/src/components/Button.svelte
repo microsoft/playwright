@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-  export let title: string;
-  const dispatch = createEventDispatcher();
+  const { title, onsubmit } = $props();
 </script>
  
-<button on:click={() => dispatch('submit', 'hello')}>{title}</button>
+<button onclick={() => onsubmit('hello')}>{title}</button>

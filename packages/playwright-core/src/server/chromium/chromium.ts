@@ -57,7 +57,7 @@ export class Chromium extends BrowserType {
   constructor(parent: SdkObject) {
     super(parent, 'chromium');
 
-    if (debugMode())
+    if (debugMode() === 'inspector')
       this._devtools = this._createDevTools();
   }
 

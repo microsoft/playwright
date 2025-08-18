@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import { EventEmitter } from 'stream';
@@ -27,11 +28,14 @@ import { enquirer } from '../utilsBundle';
 import { TestServerDispatcher } from './testServer';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerConnection  } from '../isomorphic/testServerConnection';
+import { stripAnsiEscapes } from '../util';
+import { codeFrameColumns } from '../transform/babelBundle';
 
-import type { FullResult } from '../../types/testReporter';
+import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common/config';
 import type { TestServerTransport } from '../isomorphic/testServerConnection';
 
+/* eslint-disable no-restricted-properties */
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
   public readonly _send: (data: string) => void;
@@ -72,7 +76,7 @@ interface WatchModeOptions {
   grep?: string;
 }
 
-export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status']> {
+export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<reporterTypes.FullResult['status']> {
   const options: WatchModeOptions = { ...initialOptions };
   let bufferMode = false;
 
@@ -127,8 +131,28 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     });
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
+  testServerConnection.onRecoverFromStepError(({ stepId, message, location }) => {
+    process.stdout.write(`\nTest error occurred.\n`);
+    process.stdout.write('\n' + createErrorCodeframe(message, location) + '\n');
+    process.stdout.write(`\n${colors.dim('Try recovering from the error. Press')} ${colors.bold('c')} ${colors.dim('to continue or')} ${colors.bold('t')} ${colors.dim('to throw the error')}\n`);
+    readKeyPress(text => {
+      if (text === 'c') {
+        process.stdout.write(`\n${colors.dim('Continuing after recovery...')}\n`);
+        testServerConnection.resumeAfterStepError({ stepId, status: 'recovered', value: undefined }).catch(() => {});
+      } else if (text === 't') {
+        process.stdout.write(`\n${colors.dim('Throwing error...')}\n`);
+        testServerConnection.resumeAfterStepError({ stepId, status: 'failed' }).catch(() => {});
+      }
+      return text;
+    });
+  });
 
-  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true, populateDependenciesOnList: true });
+  await testServerConnection.initialize({
+    interceptStdio: false,
+    watchTestDirs: true,
+    populateDependenciesOnList: true,
+    recoverFromStepErrors: !process.env.PWTEST_RECOVERY_DISABLED,
+  });
   await testServerConnection.runGlobalSetup({});
 
   const { report } = await testServerConnection.listTests({});
@@ -137,7 +161,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const projectNames = teleSuiteUpdater.rootSuite!.suites.map(s => s.title);
 
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestIds?: string[] } = { type: 'regular' };
-  let result: FullResult['status'] = 'passed';
+  let result: reporterTypes.FullResult['status'] = 'passed';
 
   while (true) {
     if (bufferMode)
@@ -426,3 +450,28 @@ async function toggleShowBrowser() {
 }
 
 type Command = 'run' | 'failed' | 'repeat' | 'changed' | 'project' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser' | 'toggle-buffer-mode';
+
+function createErrorCodeframe(message: string, location: reporterTypes.Location) {
+  let source: string;
+  try {
+    source = fs.readFileSync(location.file, 'utf-8') + '\n//';
+  } catch (e) {
+    return;
+  }
+
+  return codeFrameColumns(
+      source,
+      {
+        start: {
+          line: location.line,
+          column: location.column,
+        },
+      },
+      {
+        highlightCode: true,
+        linesAbove: 5,
+        linesBelow: 5,
+        message: stripAnsiEscapes(message).split('\n')[0] || undefined,
+      }
+  );
+}

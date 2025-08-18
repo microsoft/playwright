@@ -26,7 +26,7 @@ import { yazl } from 'playwright-core/lib/zipBundle';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
-import { resolveReporterOutputPath, stripAnsiEscapes, stepTitle } from '../util';
+import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
@@ -34,7 +34,6 @@ import type * as api from '../../types/testReporter';
 import type { HTMLReport, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
-import type { TestStepCategory } from '../util';
 
 type TestEntry = {
   testCase: TestCase;
@@ -90,12 +89,12 @@ class HtmlReporter implements ReporterV2 {
         if (reportedWarnings.has(key))
           continue;
         reportedWarnings.add(key);
-        console.log(colors.red(`Configuration Error: HTML reporter output folder clashes with the tests output folder:`));
-        console.log(`
+        writeLine(colors.red(`Configuration Error: HTML reporter output folder clashes with the tests output folder:`));
+        writeLine(`
     html reporter folder: ${colors.bold(outputFolder)}
     test results folder: ${colors.bold(project.outputDir)}`);
-        console.log('');
-        console.log(`HTML reporter will clear its output directory prior to being generated, which will lead to the artifact loss.
+        writeLine('');
+        writeLine(`HTML reporter will clear its output directory prior to being generated, which will lead to the artifact loss.
 `);
       }
     }
@@ -148,9 +147,9 @@ class HtmlReporter implements ReporterV2 {
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._host ? ` --host ${this._host}` : '';
       const portArg = this._port ? ` --port ${this._port}` : '';
-      console.log('');
-      console.log('To open last HTML report run:');
-      console.log(colors.cyan(`
+      writeLine('');
+      writeLine('To open last HTML report run:');
+      writeLine(colors.cyan(`
   ${packageManagerCommand} playwright show-report${relativeReportPath}${hostArg}${portArg}
 `));
     }
@@ -169,7 +168,7 @@ function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
   if (!htmlOpenEnv)
     return undefined;
   if (!isHtmlReportOption(htmlOpenEnv)) {
-    console.log(colors.red(`Configuration Error: HTML reporter Invalid value for PLAYWRIGHT_HTML_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
+    writeLine(colors.red(`Configuration Error: HTML reporter Invalid value for PLAYWRIGHT_HTML_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
     return undefined;
   }
   return htmlOpenEnv;
@@ -184,15 +183,15 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   try {
     assert(fs.statSync(folder).isDirectory());
   } catch (e) {
-    console.log(colors.red(`No report found at "${folder}"`));
+    writeLine(colors.red(`No report found at "${folder}"`));
     gracefullyProcessExitDoNotHang(1);
     return;
   }
   const server = startHtmlReportServer(folder);
   await server.start({ port, host, preferredPort: port ? undefined : 9323 });
   let url = server.urlPrefix('human-readable');
-  console.log('');
-  console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
+  writeLine('');
+  writeLine(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)
     url += `#?testId=${testId}`;
   url = url.replace('0.0.0.0', 'localhost');
@@ -545,7 +544,7 @@ class HtmlBuilder {
   private _createTestStep(dedupedStep: DedupedStep, result: api.TestResult): TestStep {
     const { step, duration, count } = dedupedStep;
     const skipped = dedupedStep.step.annotations?.find(a => a.type === 'skip');
-    let title = stepTitle(step.category as TestStepCategory, step.title);
+    let title = step.title;
     if (skipped)
       title = `${title} (skipped${skipped.description ? ': ' + skipped.description : ''})`;
     const testStep: TestStep = {
@@ -719,6 +718,11 @@ function createErrorCodeframe(message: string, location: Location) {
         message: stripAnsiEscapes(message).split('\n')[0] || undefined,
       }
   );
+}
+
+function writeLine(line: string) {
+  // eslint-disable-next-line no-restricted-properties
+  process.stdout.write(line + '\n');
 }
 
 export default HtmlReporter;

@@ -259,16 +259,17 @@ test('should report toHaveScreenshot step with expectation name in title', async
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `end [pw:api] Launch browser`,
-    `end [fixture] browser`,
+    `end [fixture] Fixture "browser"`,
     `end [pw:api] Create context`,
-    `end [fixture] context`,
+    `end [fixture] Fixture "context"`,
     `end [pw:api] Create page`,
-    `end [fixture] page`,
+    `end [fixture] Fixture "page"`,
     `end [hook] Before Hooks`,
-    `end [expect] toHaveScreenshot(foo.png)`,
-    `end [expect] toHaveScreenshot(is-a-test-1.png)`,
-    `end [fixture] page`,
-    `end [fixture] context`,
+    `end [expect] Expect "toHaveScreenshot(foo.png)"`,
+    `end [expect] Expect "toHaveScreenshot(is-a-test-1.png)"`,
+    `end [fixture] Fixture "page"`,
+    `end [pw:api] Close context`,
+    `end [fixture] Fixture "context"`,
     `end [hook] After Hooks`,
   ]);
 });
@@ -702,7 +703,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
   }, { reporter: '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.outputLines).toEqual(['[expect] toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
+  expect(result.outputLines).toEqual(['[expect] Expect "toHaveScreenshot(snapshot.png)": snapshot-expected.png, snapshot-actual.png']);
 });
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {

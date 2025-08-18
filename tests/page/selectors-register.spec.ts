@@ -35,7 +35,7 @@ it('textContent should be atomic', async ({ playwright, page }) => {
     }
   });
   await playwright.selectors.register('textContent', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
+  await page.goto(`data:text/html,<div>Hello</div>`);
   const tc = await page.textContent('textContent=div');
   expect(tc).toBe('Hello');
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
@@ -57,7 +57,7 @@ it('innerText should be atomic', async ({ playwright, page }) => {
     }
   });
   await playwright.selectors.register('innerText', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
+  await page.goto(`data:text/html,<div>Hello</div>`);
   const tc = await page.innerText('innerText=div');
   expect(tc).toBe('Hello');
   expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
@@ -79,7 +79,7 @@ it('innerHTML should be atomic', async ({ playwright, page }) => {
     }
   });
   await playwright.selectors.register('innerHTML', createDummySelector);
-  await page.setContent(`<div>Hello<span>world</span></div>`);
+  await page.goto(`data:text/html,<div>Hello<span>world</span></div>`);
   const tc = await page.innerHTML('innerHTML=div');
   expect(tc).toBe('Hello<span>world</span>');
   expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
@@ -101,7 +101,7 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
     }
   });
   await playwright.selectors.register('getAttribute', createDummySelector);
-  await page.setContent(`<div foo=hello></div>`);
+  await page.goto(`data:text/html,<div foo=hello></div>`);
   const tc = await page.getAttribute('getAttribute=div', 'foo');
   expect(tc).toBe('hello');
   expect(await page.evaluate(() => document.querySelector('div').getAttribute('foo'))).toBe('modified');
@@ -123,7 +123,7 @@ it('isVisible should be atomic', async ({ playwright, page }) => {
     }
   });
   await playwright.selectors.register('isVisible', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
+  await page.goto(`data:text/html,<div>Hello</div>`);
   const result = await page.isVisible('isVisible=div');
   expect(result).toBe(true);
   expect(await page.evaluate(() => document.querySelector('div').style.display)).toBe('none');
@@ -139,6 +139,6 @@ it('should take java-style string', async ({ playwright, page }) => {
     }
   }`;
   await playwright.selectors.register('objectLiteral', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
+  await page.goto(`data:text/html,<div>Hello</div>`);
   await page.textContent('objectLiteral=div');
 });

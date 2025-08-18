@@ -374,3 +374,21 @@ it('return empty snapshot when iframe is not loaded', { annotation: { type: 'iss
       - iframe [ref=e3]
   `);
 });
+
+it('should support many properties on iframes', async ({ page }) => {
+  await page.setContent(`
+    <input id="regular-input" placeholder="Regular input">
+    <iframe style='cursor: pointer' src="data:text/html,<input id='iframe-input' placeholder='Input in iframe'/>" tabindex="0"></iframe>
+  `);
+
+  // Test 1: Focus the input inside the iframe
+  await page.frameLocator('iframe').locator('#iframe-input').focus();
+  const inputInIframeFocusedSnapshot = await snapshotForAI(page);
+
+  expect(inputInIframeFocusedSnapshot).toContainYaml(`
+    - generic [ref=e1]:
+      - textbox "Regular input" [ref=e2]
+      - iframe [active] [ref=e3] [cursor=pointer]:
+        - textbox "Input in iframe" [active] [ref=f1e2]
+  `);
+});

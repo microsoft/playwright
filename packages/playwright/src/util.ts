@@ -19,13 +19,14 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames, escapeWithQuotes } from 'playwright-core/lib/utils';
+import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
 import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
 import type { RawStack } from 'playwright-core/lib/utils';
+import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -81,6 +82,8 @@ export type TestFileFilter = {
   line: number | null;
   column: number | null;
 };
+
+export type TestCaseFilter = (test: TestCase) => boolean;
 
 export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
   return args.map(arg => {
@@ -418,24 +421,4 @@ export async function removeDirAndLogToConsole(dir: string) {
 export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
 export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
-}
-
-export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
-
-export function stepTitle(category: TestStepCategory, title: string): string {
-  switch (category) {
-    case 'fixture':
-      return `Fixture ${escapeWithQuotes(title, '"')}`;
-    case 'expect':
-      return `Expect ${escapeWithQuotes(title, '"')}`;
-    case 'test.step':
-      return title;
-    case 'test.attach':
-      return `Attach ${escapeWithQuotes(title, '"')}`;
-    case 'hook':
-    case 'pw:api':
-      return title;
-    default:
-      return `[${category}] ${title}`;
-  }
 }

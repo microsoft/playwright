@@ -84,6 +84,7 @@ expect.set_options(timeout=10_000)
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
     {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -136,6 +137,24 @@ public class UnitTest1 : PageTest
 ```csharp title="UnitTest1.cs"
 using Microsoft.Playwright;
 using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    UnitTest1()
+    {
+        SetDefaultExpectTimeout(10_000);
+    }
+    // ...
+}
+```
+</TabItem>
+<TabItem value="xunit-v3">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
 
 namespace PlaywrightTests;
 

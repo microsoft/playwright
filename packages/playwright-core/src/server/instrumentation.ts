@@ -111,15 +111,3 @@ export function createInstrumentation(): Instrumentation {
     },
   });
 }
-
-export function serverSideCallMetadata(): CallMetadata {
-  return {
-    id: '',
-    startTime: 0,
-    endTime: 0,
-    type: 'Internal',
-    method: '',
-    params: {},
-    log: [],
-  };
-}

@@ -48,9 +48,9 @@ type TestSummary = {
 
 export type CommonReporterOptions = {
   configDir: string,
-  _mode: 'list' | 'test' | 'merge',
-  _isTestServer: boolean,
-  _commandHash: string,
+  _mode?: 'list' | 'test' | 'merge',
+  _isTestServer?: boolean,
+  _commandHash?: string,
 };
 
 export type Screen = {
@@ -59,24 +59,36 @@ export type Screen = {
   isTTY: boolean;
   ttyWidth: number;
   ttyHeight: number;
+  stdout?: NodeJS.WriteStream;
+  stderr?: NodeJS.WriteStream;
+};
+
+export type TerminalScreen = Screen & {
+  stdout: NodeJS.WriteStream;
+  stderr: NodeJS.WriteStream;
 };
 
 const DEFAULT_TTY_WIDTH = 100;
 const DEFAULT_TTY_HEIGHT = 40;
 
+// eslint-disable-next-line no-restricted-properties
+const originalProcessStdout = process.stdout;
+// eslint-disable-next-line no-restricted-properties
+const originalProcessStderr = process.stderr;
+
 // Output goes to terminal.
-export const terminalScreen: Screen = (() => {
-  let isTTY = !!process.stdout.isTTY;
-  let ttyWidth = process.stdout.columns || 0;
-  let ttyHeight = process.stdout.rows || 0;
+export const terminalScreen: TerminalScreen = (() => {
+  let isTTY = !!originalProcessStdout.isTTY;
+  let ttyWidth = originalProcessStdout.columns || 0;
+  let ttyHeight = originalProcessStdout.rows || 0;
   if (process.env.PLAYWRIGHT_FORCE_TTY === 'false' || process.env.PLAYWRIGHT_FORCE_TTY === '0') {
     isTTY = false;
     ttyWidth = 0;
     ttyHeight = 0;
   } else if (process.env.PLAYWRIGHT_FORCE_TTY === 'true' || process.env.PLAYWRIGHT_FORCE_TTY === '1') {
     isTTY = true;
-    ttyWidth = process.stdout.columns || DEFAULT_TTY_WIDTH;
-    ttyHeight = process.stdout.rows || DEFAULT_TTY_HEIGHT;
+    ttyWidth = originalProcessStdout.columns || DEFAULT_TTY_WIDTH;
+    ttyHeight = originalProcessStdout.rows || DEFAULT_TTY_HEIGHT;
   } else if (process.env.PLAYWRIGHT_FORCE_TTY) {
     isTTY = true;
     const sizeMatch = process.env.PLAYWRIGHT_FORCE_TTY.match(/^(\d+)x(\d+)$/);
@@ -106,7 +118,9 @@ export const terminalScreen: Screen = (() => {
     isTTY,
     ttyWidth,
     ttyHeight,
-    colors
+    colors,
+    stdout: originalProcessStdout,
+    stderr: originalProcessStderr,
   };
 })();
 
@@ -128,8 +142,13 @@ export const internalScreen: Screen = {
   resolveFiles: 'rootDir',
 };
 
+export type TerminalReporterOptions = {
+  screen?: TerminalScreen;
+  omitFailures?: boolean;
+};
+
 export class TerminalReporter implements ReporterV2 {
-  screen: Screen = terminalScreen;
+  screen: TerminalScreen;
   config!: FullConfig;
   suite!: Suite;
   totalTestCount = 0;
@@ -139,7 +158,8 @@ export class TerminalReporter implements ReporterV2 {
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
 
-  constructor(options: { omitFailures?: boolean } = {}) {
+  constructor(options: TerminalReporterOptions = {}) {
+    this.screen = options.screen ?? terminalScreen;
     this._omitFailures = options.omitFailures || false;
   }
 
@@ -299,24 +319,24 @@ export class TerminalReporter implements ReporterV2 {
   }
 
   private _printFailures(failures: TestCase[]) {
-    console.log('');
+    this.writeLine('');
     failures.forEach((test, index) => {
-      console.log(this.formatFailure(test, index + 1));
+      this.writeLine(this.formatFailure(test, index + 1));
     });
   }
 
   private _printSlowTests() {
     const slowTests = this.getSlowTests();
     slowTests.forEach(([file, duration]) => {
-      console.log(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${milliseconds(duration)})`));
+      this.writeLine(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${milliseconds(duration)})`));
     });
     if (slowTests.length)
-      console.log(this.screen.colors.yellow('  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel'));
+      this.writeLine(this.screen.colors.yellow('  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel'));
   }
 
   private _printSummary(summary: string) {
     if (summary.trim())
-      console.log(summary);
+      this.writeLine(summary);
   }
 
   willRetry(test: TestCase): boolean {
@@ -337,6 +357,10 @@ export class TerminalReporter implements ReporterV2 {
 
   formatError(error: TestError): ErrorDetails {
     return formatError(this.screen, error);
+  }
+
+  writeLine(line?: string) {
+    this.screen.stdout?.write(line ? line + '\n' : '\n');
   }
 }
 

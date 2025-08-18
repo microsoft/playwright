@@ -296,7 +296,7 @@ export abstract class BrowserType extends SdkObject {
   private _validateLaunchOptions(options: types.LaunchOptions): types.LaunchOptions {
     const { devtools = false } = options;
     let { headless = !devtools, downloadsPath, proxy } = options;
-    if (debugMode())
+    if (debugMode() === 'inspector')
       headless = false;
     if (downloadsPath && !path.isAbsolute(downloadsPath))
       downloadsPath = path.join(process.cwd(), downloadsPath);

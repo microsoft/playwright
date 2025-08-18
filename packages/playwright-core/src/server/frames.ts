@@ -21,7 +21,7 @@ import { TimeoutError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
-import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -603,7 +603,7 @@ export class Frame extends SdkObject {
   }
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
-    const controller = new ProgressController(serverSideCallMetadata(), this);
+    const controller = new ProgressController();
     const data = {
       url,
       gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), 0),
@@ -841,8 +841,14 @@ export class Frame extends SdkObject {
     return this.selectors.queryAll(selector);
   }
 
-  async queryCount(selector: string): Promise<number> {
-    return await this.selectors.queryCount(selector);
+  async queryCount(selector: string, options: any): Promise<number> {
+    try {
+      return await this.selectors.queryCount(selector, options);
+    } catch (e) {
+      if (this.isNonRetriableError(e))
+        throw e;
+      return 0;
+    }
   }
 
   async content(): Promise<string> {
@@ -1449,19 +1455,23 @@ export class Frame extends SdkObject {
       const context = world === 'main' ? await progress.race(this._mainContext()) : await progress.race(this._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
       const handle = await progress.race(injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
+        let evaledExpression: any;
         const predicate = (): R => {
           // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
           // in firefox.
           // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
-          let result = globalThis.eval(expression);
+          let result = evaledExpression ?? globalThis.eval(expression);
           if (isFunction === true) {
+            evaledExpression = result;
             result = result(arg);
           } else if (isFunction === false) {
             result = result;
           } else {
             // auto detect.
-            if (typeof result === 'function')
+            if (typeof result === 'function') {
+              evaledExpression = result;
               result = result(arg);
+            }
           }
           return result;
         };
@@ -1628,11 +1638,11 @@ export class Frame extends SdkObject {
     this._firedNetworkIdleSelf = false;
   }
 
-  async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
+  async extendInjectedScript(source: string, arg?: any) {
     const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
-    return injectedScriptHandle.evaluateHandle((injectedScript, { source, arg }) => {
-      return injectedScript.extend(source, arg);
+    await injectedScriptHandle.evaluate((injectedScript, { source, arg }) => {
+      injectedScript.extend(source, arg);
     }, { source, arg });
   }
 

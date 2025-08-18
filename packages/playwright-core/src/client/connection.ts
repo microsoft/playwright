@@ -74,7 +74,7 @@ export class Connection extends EventEmitter {
   private _localUtils?: LocalUtils;
   private _rawBuffers = false;
   // Some connections allow resolving in-process dispatchers.
-  toImpl: ((client: ChannelOwner) => any) | undefined;
+  toImpl: ((client: ChannelOwner | Connection) => any) | undefined;
   private _tracingCount = 0;
   readonly _instrumentation: ClientInstrumentation;
   // Used from @playwright/test fixtures -> TODO remove?
