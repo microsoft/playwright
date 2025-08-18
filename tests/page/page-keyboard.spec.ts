@@ -714,3 +714,21 @@ Keydown: Escape Escape STANDARD []
 Keyup: Escape Escape STANDARD []
 `.trim());
 });
+
+it('should close dialog on Escape key press in contenteditable', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36727' } }, async ({ page }) => {
+  await page.setContent(`
+    <dialog>
+      <div contenteditable>Edit Me</div>
+    </dialog>
+  `);
+
+  const dialog = page.locator('dialog');
+  const widget = dialog.locator('[contenteditable]');
+  await dialog.evaluate((node: HTMLDialogElement) => node.showModal());
+  await expect(dialog).toHaveJSProperty('open', true);
+  await expect(widget).toBeVisible();
+
+  await widget.press('Escape');
+  await expect(dialog).toHaveJSProperty('open', false);
+  await expect(widget).not.toBeVisible();
+});

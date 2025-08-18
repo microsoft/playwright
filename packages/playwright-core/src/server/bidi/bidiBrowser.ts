@@ -50,8 +50,8 @@ export class BidiBrowser extends Browser {
     browser._bidiSessionInfo = await browser._browserSession.send('session.new', {
       capabilities: {
         alwaysMatch: {
-          acceptInsecureCerts: false,
-          proxy: getProxyConfiguration(options.proxy),
+          acceptInsecureCerts: options.persistent?.internalIgnoreHTTPSErrors || options.persistent?.ignoreHTTPSErrors,
+          proxy: getProxyConfiguration(options.originalLaunchOptions.proxyOverride ?? options.proxy),
           unhandledPromptBehavior: {
             default: bidi.Session.UserPromptHandlerType.Ignore,
           },
@@ -95,9 +95,10 @@ export class BidiBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+    const proxy = options.proxyOverride || options.proxy;
     const { userContext } = await this._browserSession.send('browser.createUserContext', {
-      acceptInsecureCerts: options.ignoreHTTPSErrors,
-      proxy: getProxyConfiguration(options.proxy),
+      acceptInsecureCerts: options.internalIgnoreHTTPSErrors || options.ignoreHTTPSErrors,
+      proxy: getProxyConfiguration(proxy),
     });
     const context = new BidiBrowserContext(this, userContext, options);
     await context._initialize();
@@ -458,8 +459,9 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
     default:
       throw new Error('Invalid proxy server protocol: ' + proxySettings.server);
   }
-  if (proxySettings.bypass)
-    proxy.noProxy = proxySettings.bypass.split(',');
+  const bypass = proxySettings.bypass ?? process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING;
+  if (bypass)
+    proxy.noProxy = bypass.split(',');
   // TODO: support authentication.
 
   return proxy;
