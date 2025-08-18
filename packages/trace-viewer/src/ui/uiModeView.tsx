@@ -100,7 +100,7 @@ export const UIModeView: React.FC<{}> = ({
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
-  const [updateSnapshots, setUpdateSnapshots] = React.useState<reporterTypes.FullConfig['updateSnapshots']>('missing');
+  const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
