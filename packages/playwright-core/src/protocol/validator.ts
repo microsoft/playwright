@@ -358,6 +358,14 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
+scheme.LocalUtilsGlobToRegexParams = tObject({
+  glob: tString,
+  baseURL: tOptional(tString),
+  webSocketUrl: tOptional(tBoolean),
+});
+scheme.LocalUtilsGlobToRegexResult = tObject({
+  regex: tString,
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
