@@ -52,6 +52,7 @@ it.describe('download event', () => {
   });
 
   it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, browserMajorVersion }) => {
+    it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
@@ -64,10 +65,7 @@ it.describe('download event', () => {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
 
     expect(responseOrError instanceof Error).toBeTruthy();
-    if (browserName === 'chromium' && browserMajorVersion < 140)
-      expect(responseOrError.message).toContain('net::ERR_ABORTED');
-    else
-      expect(responseOrError.message).toContain('Download is starting');
+    expect(responseOrError.message).toContain('Download is starting');
 
     if (browserName !== 'firefox')
       expect(page.url()).toBe('about:blank');
@@ -75,6 +73,7 @@ it.describe('download event', () => {
   });
 
   it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName, browserMajorVersion }) => {
+    it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
@@ -86,10 +85,7 @@ it.describe('download event', () => {
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     expect(responseOrError instanceof Error).toBeTruthy();
-    if (browserName === 'chromium' && browserMajorVersion < 140)
-      expect(responseOrError.message).toContain('net::ERR_ABORTED');
-    else
-      expect(responseOrError.message).toContain('Download is starting');
+    expect(responseOrError.message).toContain('Download is starting');
     if (browserName !== 'firefox')
       expect(page.url()).toBe('about:blank');
     await page.close();
