@@ -1056,7 +1056,7 @@ test.describe('launchServer only', () => {
     const secondBrowser = await connect(server.wsEndpoint());
     const secondPage = secondBrowser.contexts()[0].pages()[0];
     expect(await secondPage.content()).toContain('hello world');
-    await server.close();
+    // await server.close();
     await browser.close();
   });
 });
