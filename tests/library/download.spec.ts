@@ -52,7 +52,7 @@ it.describe('download event', () => {
   });
 
   it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, browserMajorVersion }) => {
-    it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED');
+    it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED, depends on https://chromium-review.googlesource.com/c/chromium/src/+/6696011');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
@@ -73,7 +73,7 @@ it.describe('download event', () => {
   });
 
   it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName, browserMajorVersion }) => {
-    it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED');
+    it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED, depends on https://chromium-review.googlesource.com/c/chromium/src/+/6696011');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
