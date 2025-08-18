@@ -51,7 +51,7 @@ it.describe('download event', () => {
     });
   });
 
-  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, mode }) => {
+  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, browserMajorVersion }) => {
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
@@ -62,22 +62,19 @@ it.describe('download event', () => {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    if (browserName === 'chromium') {
-      expect(responseOrError instanceof Error).toBeTruthy();
+
+    expect(responseOrError instanceof Error).toBeTruthy();
+    if (browserName === 'chromium' && browserMajorVersion < 140)
       expect(responseOrError.message).toContain('net::ERR_ABORTED');
-      expect(page.url()).toBe('about:blank');
-    } else if (browserName === 'webkit') {
-      expect(responseOrError instanceof Error).toBeTruthy();
+    else
       expect(responseOrError.message).toContain('Download is starting');
+
+    if (browserName !== 'firefox')
       expect(page.url()).toBe('about:blank');
-    } else {
-      expect(responseOrError instanceof Error).toBeTruthy();
-      expect(responseOrError.message).toContain('Download is starting');
-    }
     await page.close();
   });
 
-  it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName }) => {
+  it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName, browserMajorVersion }) => {
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
@@ -88,18 +85,13 @@ it.describe('download event', () => {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    if (browserName === 'chromium') {
-      expect(responseOrError instanceof Error).toBeTruthy();
+    expect(responseOrError instanceof Error).toBeTruthy();
+    if (browserName === 'chromium' && browserMajorVersion < 140)
       expect(responseOrError.message).toContain('net::ERR_ABORTED');
-      expect(page.url()).toBe('about:blank');
-    } else if (browserName === 'webkit') {
-      expect(responseOrError instanceof Error).toBeTruthy();
+    else
       expect(responseOrError.message).toContain('Download is starting');
+    if (browserName !== 'firefox')
       expect(page.url()).toBe('about:blank');
-    } else {
-      expect(responseOrError instanceof Error).toBeTruthy();
-      expect(responseOrError.message).toContain('Download is starting');
-    }
     await page.close();
   });
 
