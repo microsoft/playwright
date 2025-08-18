@@ -462,7 +462,6 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
   const bypass = proxySettings.bypass ?? process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING;
   if (bypass)
     proxy.noProxy = bypass.split(',');
-  proxy.noProxy = ['<-loopback>', ...proxySettings.bypass?.split(',') ?? []];
   // TODO: support authentication.
 
   return proxy;
