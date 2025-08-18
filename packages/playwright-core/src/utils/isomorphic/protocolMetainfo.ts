@@ -32,6 +32,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['LocalUtils.tracingStarted', { internal: true, }],
   ['LocalUtils.addStackToTracingNoReply', { internal: true, }],
   ['LocalUtils.traceDiscarded', { internal: true, }],
+  ['LocalUtils.globToRegex', { internal: true, }],
   ['Root.initialize', { internal: true, }],
   ['Playwright.newRequest', { title: 'Create request context', }],
   ['DebugController.initialize', { internal: true, }],
