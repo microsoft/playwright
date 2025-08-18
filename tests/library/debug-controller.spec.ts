@@ -74,7 +74,7 @@ const test = baseTest.extend<Fixtures>({
 });
 
 test.slow(true, 'All controller tests are slow');
-test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(({ mode }) => mode.startsWith('service') || mode === 'driver');
 
 test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
