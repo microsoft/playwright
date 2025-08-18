@@ -32,8 +32,9 @@ export const DefaultSettingsView: React.FC<{}> = () => {
   return (
     <SettingsView
       settings={[
-        { value: darkMode, set: setDarkMode, name: 'Dark mode' },
+        { type: 'check', value: darkMode, set: setDarkMode, name: 'Dark mode' },
         {
+          type: 'check',
           value: shouldPopulateCanvasFromScreenshot,
           set: setShouldPopulateCanvasFromScreenshot,
           name: 'Display canvas content',

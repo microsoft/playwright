@@ -17,33 +17,66 @@
 import * as React from 'react';
 import './settingsView.css';
 
-export type Setting<T> = {
-  value: T;
-  set: (value: T) => void;
+export type Setting = {
   name: string;
   title?: string;
-};
+} & ({
+  type: 'check',
+  value: boolean;
+  set: (value: boolean) => void;
+} | {
+  type: 'select',
+  options: Array<{ label: string, value: string }>;
+  value: string;
+  set: (value: string) => void;
+});
 
 export const SettingsView: React.FunctionComponent<{
-  settings: Setting<boolean>[];
+  settings: Setting[];
 }> = ({ settings }) => {
   return (
     <div className='vbox settings-view'>
-      {settings.map(({ value, set, name, title }) => {
-        const labelId = `setting-${name}`;
+      {settings.map(setting => {
+        const labelId = `setting-${setting.name}`;
 
         return (
-          <div key={name} className='setting' title={title}>
-            <input
-              type='checkbox'
-              id={labelId}
-              checked={value}
-              onChange={() => set(!value)}
-            />
-            <label htmlFor={labelId}>{name}</label>
+          <div key={setting.name} className='setting' title={setting.title}>
+            {renderSetting(setting, labelId)}
           </div>
         );
       })}
     </div>
   );
+};
+
+const renderSetting = (setting: Setting, labelId: string) => {
+  switch (setting.type) {
+    case 'check':
+      return (
+        <>
+          <input
+            type='checkbox'
+            id={labelId}
+            checked={setting.value}
+            onChange={() => setting.set(!setting.value)}
+          />
+          <label htmlFor={labelId}>{setting.name}</label>
+        </>
+      );
+    case 'select':
+      return (
+        <>
+          <label htmlFor={labelId}>{setting.name}</label>
+          <select id={labelId} value={setting.value} onChange={e => setting.set(e.target.value)}>
+            {setting.options.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </>
+      );
+    default:
+      return null;
+  }
 };
