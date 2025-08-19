@@ -11,7 +11,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### New APIs
 
 - [`method: TestStepInfo.titlePath`] Returns the full title path starting from the test file, including test and step titles.
-- Added support for Debian 13 "Trixie".
 
 ### Codegen
 
@@ -20,7 +19,10 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### Breaking Changes
 
 - ⚠️ Dropped support for Chromium extension manifest v2.
-- ⚠️ Updated Svelte component testing to Svelte 5, dropping support for Svelte 4. If you're using Svelte 4, pin Playwright to a previous version.
+
+### Miscellaneous
+
+- Added support for Debian 13 "Trixie".
 
 ### Browser Versions
 
