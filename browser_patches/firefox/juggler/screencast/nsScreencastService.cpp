@@ -4,6 +4,7 @@
 
 #include "nsScreencastService.h"
 
+#include "gfxPlatform.h"
 #include "ScreencastEncoder.h"
 #include "HeadlessWidget.h"
 #include "HeadlessWindowCapturer.h"

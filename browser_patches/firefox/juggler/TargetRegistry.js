@@ -1023,9 +1023,9 @@ class BrowserContext {
     if (ignoreHTTPSErrors) {
       Preferences.set("network.stricttransportsecurity.preloadlist", false);
       Preferences.set("security.cert_pinning.enforcement_level", 0);
-      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(true, this.userContextId);
+      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyDataForUserContext(this.userContextId, true);
     } else {
-      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(false, this.userContextId);
+      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyDataForUserContext(this.userContextId, false);
     }
   }
 
@@ -1167,6 +1167,7 @@ class BrowserContext {
   getCookies() {
     const result = [];
     const sameSiteToProtocol = {
+      [Ci.nsICookie.SAMESITE_UNSET]: 'None',
       [Ci.nsICookie.SAMESITE_NONE]: 'None',
       [Ci.nsICookie.SAMESITE_LAX]: 'Lax',
       [Ci.nsICookie.SAMESITE_STRICT]: 'Strict',

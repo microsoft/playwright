@@ -12,13 +12,13 @@ index 1bcd464d3bd6b8465f78c62b074b0d57dbc6a082..f878ac9db2d800542dabcc2f48e8ae47
    virtual ~NotificationController();
  
 diff --git a/accessible/interfaces/nsIAccessibleDocument.idl b/accessible/interfaces/nsIAccessibleDocument.idl
-index 1886621c373fe1fd5ff54092afc4c64e9ca9a8fd..a0febf72885410b45227171c63e823eca118cb37 100644
+index 6c932c14a03e9cbf70723171dc9a1006bd2c017d..6312131c94c6d7e994a4a49dd64b2b4c5777251f 100644
 --- a/accessible/interfaces/nsIAccessibleDocument.idl
 +++ b/accessible/interfaces/nsIAccessibleDocument.idl
-@@ -67,4 +67,9 @@ interface nsIAccessibleDocument : nsISupports
-    * Return the child document accessible at the given index.
+@@ -73,4 +73,9 @@ interface nsIAccessibleDocument : nsISupports
+    * The BrowsingContext of this document.
     */
-   nsIAccessibleDocument getChildDocumentAt(in unsigned long index);
+   readonly attribute BrowsingContext browsingContext;
 +
 +  /**
 +   * Return whether it is updating.
@@ -26,11 +26,11 @@ index 1886621c373fe1fd5ff54092afc4c64e9ca9a8fd..a0febf72885410b45227171c63e823ec
 +  readonly attribute boolean isUpdatePendingForJugglerAccessibility;
  };
 diff --git a/accessible/xpcom/xpcAccessibleDocument.cpp b/accessible/xpcom/xpcAccessibleDocument.cpp
-index d616e476b2149de5703077563680905e40db0459..7a8a48d5e7303a298a3e2e9fdf64558b3cdbe654 100644
+index 3229ee415b93b9a47d7d40605ed7b509744c94ad..24a0837c508f7bc2709538fc28fdafe83ed524f8 100644
 --- a/accessible/xpcom/xpcAccessibleDocument.cpp
 +++ b/accessible/xpcom/xpcAccessibleDocument.cpp
-@@ -131,6 +131,13 @@ xpcAccessibleDocument::GetChildDocumentAt(uint32_t aIndex,
-   return *aDocument ? NS_OK : NS_ERROR_INVALID_ARG;
+@@ -151,6 +151,13 @@ xpcAccessibleDocument::GetBrowsingContext(
+   return NS_OK;
  }
  
 +NS_IMETHODIMP
@@ -44,12 +44,12 @@ index d616e476b2149de5703077563680905e40db0459..7a8a48d5e7303a298a3e2e9fdf64558b
  // xpcAccessibleDocument
  
 diff --git a/accessible/xpcom/xpcAccessibleDocument.h b/accessible/xpcom/xpcAccessibleDocument.h
-index 8e9bf2b413585b5a3db9370eee5d57fb6c6716ed..5a3b194b54e3813c89989f13a214c989a409f0f6 100644
+index 9b6effc38fbecb50897a93b49c41d4453b10fb7f..939ff9615bd422eec186d8164e2ac7e643f39beb 100644
 --- a/accessible/xpcom/xpcAccessibleDocument.h
 +++ b/accessible/xpcom/xpcAccessibleDocument.h
-@@ -47,6 +47,8 @@ class xpcAccessibleDocument : public xpcAccessibleHyperText,
-   NS_IMETHOD GetChildDocumentAt(uint32_t aIndex,
+@@ -48,6 +48,8 @@ class xpcAccessibleDocument : public xpcAccessibleHyperText,
                                  nsIAccessibleDocument** aDocument) final;
+   NS_IMETHOD GetBrowsingContext(dom::BrowsingContext** aBrowsingContext) final;
  
 +  NS_IMETHOD GetIsUpdatePendingForJugglerAccessibility(bool* aUpdating) final;
 +
@@ -89,10 +89,10 @@ index 8167d2b81c918e02ce757f7f448f22e07c29d140..3ae798880acfd8aa965ae08051f2f818
    DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
  
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
-index a097c2c56a665204ff7b5593c7faf836366801cf..235a4e224e08c22870c6913e335f0b6020b3e7da 100644
+index a315ebcb8b60875b4eddbb5d654764603e0e7bec..fa67db1ff5a331dda4eaff4457418c306869d011 100644
 --- a/browser/installer/allowed-dupes.mn
 +++ b/browser/installer/allowed-dupes.mn
-@@ -67,6 +67,12 @@ browser/features/webcompat@mozilla.org/shims/empty-shim.txt
+@@ -59,6 +59,12 @@ browser/chrome/browser/builtin-addons/webcompat/shims/empty-shim.txt
  removed-files
  #endif
  
@@ -106,10 +106,10 @@ index a097c2c56a665204ff7b5593c7faf836366801cf..235a4e224e08c22870c6913e335f0b60
  browser/chrome/browser/content/activity-stream/data/content/tippytop/favicons/allegro-pl.ico
  browser/defaults/settings/main/search-config-icons/96327a73-c433-5eb4-a16d-b090cadfb80b
 diff --git a/browser/installer/package-manifest.in b/browser/installer/package-manifest.in
-index 89cff6b562a82bd3a9a5d268abd4373199b31fac..e58dbf0ab0b06e84f6dac64698d11c6268091204 100644
+index 6ebf2f62c47757f16841d04c164d2d86447fcbd0..cae3f3ac6f6ced0b59fe850643bbb90d619750d0 100644
 --- a/browser/installer/package-manifest.in
 +++ b/browser/installer/package-manifest.in
-@@ -196,6 +196,9 @@
+@@ -192,6 +192,9 @@
  @RESPATH@/chrome/remote.manifest
  #endif
  
@@ -118,7 +118,7 @@ index 89cff6b562a82bd3a9a5d268abd4373199b31fac..e58dbf0ab0b06e84f6dac64698d11c62
 +
  ; [Extensions]
  @RESPATH@/components/extensions-toolkit.manifest
- @RESPATH@/browser/components/extensions-browser.manifest
+ 
 diff --git a/devtools/server/socket/websocket-server.js b/devtools/server/socket/websocket-server.js
 index d49c6fbf1bf83b832795fa674f6b41f223eef812..7ea3540947ff5f61b15f27fbf4b955649f8e9ff9 100644
 --- a/devtools/server/socket/websocket-server.js
@@ -167,10 +167,10 @@ index d49c6fbf1bf83b832795fa674f6b41f223eef812..7ea3540947ff5f61b15f27fbf4b95564
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index 2425779a7767e9350ee2afc4aea111a090c7f909..393eb86bf2d9a8f778bfce560a9fb3bf528ba558 100644
+index 1a33afa481826b1a53c507d5ea596bcb629d8ac4..8f4f13ff1325b104af80e319cf092be9fd2baab0 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
-@@ -108,8 +108,15 @@ struct ParamTraits<mozilla::dom::DisplayMode>
+@@ -109,8 +109,15 @@ struct ParamTraits<mozilla::dom::DisplayMode>
  
  template <>
  struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
@@ -188,7 +188,7 @@ index 2425779a7767e9350ee2afc4aea111a090c7f909..393eb86bf2d9a8f778bfce560a9fb3bf
  
  template <>
  struct ParamTraits<mozilla::dom::ForcedColorsOverride>
-@@ -2891,6 +2898,32 @@ void BrowsingContext::DidSet(FieldIndex<IDX_ForcedColorsOverride>,
+@@ -2915,6 +2922,32 @@ void BrowsingContext::DidSet(FieldIndex<IDX_ForcedColorsOverride>,
    PresContextAffectingFieldChanged();
  }
  
@@ -222,10 +222,10 @@ index 2425779a7767e9350ee2afc4aea111a090c7f909..393eb86bf2d9a8f778bfce560a9fb3bf
                               nsString&& aOldValue) {
    MOZ_ASSERT(IsTop());
 diff --git a/docshell/base/BrowsingContext.h b/docshell/base/BrowsingContext.h
-index eb183cb5c0751e43ea674f9e52441a5a82f186e0..79c5d8110faa89779dd0c16ba00620e7e65d06f5 100644
+index 0bd3efa16dcae42ff02f42bddce378a7f0c7b621..c8cc1bce7d9901aced6032d0e2e2285cf9eb394b 100644
 --- a/docshell/base/BrowsingContext.h
 +++ b/docshell/base/BrowsingContext.h
-@@ -203,10 +203,10 @@ struct EmbedderColorSchemes {
+@@ -205,10 +205,10 @@ struct EmbedderColorSchemes {
    FIELD(GVInaudibleAutoplayRequestStatus, GVAutoplayRequestStatus)            \
    /* ScreenOrientation-related APIs */                                        \
    FIELD(CurrentOrientationAngle, float)                                       \
@@ -238,7 +238,7 @@ index eb183cb5c0751e43ea674f9e52441a5a82f186e0..79c5d8110faa89779dd0c16ba00620e7
    FIELD(EmbedderElementType, Maybe<nsString>)                                 \
    FIELD(MessageManagerGroup, nsString)                                        \
    FIELD(MaxTouchPointsOverride, uint8_t)                                      \
-@@ -246,6 +246,9 @@ struct EmbedderColorSchemes {
+@@ -245,6 +245,9 @@ struct EmbedderColorSchemes {
     * <browser> embedder element. */                                           \
    FIELD(EmbedderColorSchemes, EmbedderColorSchemes)                           \
    FIELD(DisplayMode, dom::DisplayMode)                                        \
@@ -248,7 +248,7 @@ index eb183cb5c0751e43ea674f9e52441a5a82f186e0..79c5d8110faa89779dd0c16ba00620e7
    /* The number of entries added to the session history because of this       \
     * browsing context. */                                                     \
    FIELD(HistoryEntryCount, uint32_t)                                          \
-@@ -950,6 +953,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -967,6 +970,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
      return GetForcedColorsOverride();
    }
  
@@ -263,7 +263,7 @@ index eb183cb5c0751e43ea674f9e52441a5a82f186e0..79c5d8110faa89779dd0c16ba00620e7
    bool IsInBFCache() const;
  
    bool AllowJavascript() const { return GetAllowJavascript(); }
-@@ -1112,6 +1123,11 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -1131,6 +1142,11 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
      return IsTop();
    }
  
@@ -275,7 +275,7 @@ index eb183cb5c0751e43ea674f9e52441a5a82f186e0..79c5d8110faa89779dd0c16ba00620e7
    bool CanSet(FieldIndex<IDX_ForcedColorsOverride>, dom::ForcedColorsOverride,
                ContentParent*) {
      return IsTop();
-@@ -1130,10 +1146,22 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -1149,10 +1165,22 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
    void DidSet(FieldIndex<IDX_ForcedColorsOverride>,
                dom::ForcedColorsOverride aOldValue);
  
@@ -299,13 +299,13 @@ index eb183cb5c0751e43ea674f9e52441a5a82f186e0..79c5d8110faa89779dd0c16ba00620e7
  
    bool CanSet(FieldIndex<IDX_SuspendMediaWhenInactive>, bool, ContentParent*) {
 diff --git a/docshell/base/CanonicalBrowsingContext.cpp b/docshell/base/CanonicalBrowsingContext.cpp
-index bef42c91d6f88922c8c101f3675325d828872aaf..8eb68c441fbef8ecbe5e90c118ccc00813564577 100644
+index 1c5c421d6ec153ab61d3aae29200f8abb02b1a33..68751ec0190f308c20aae6b6c58687dcf0fa225d 100644
 --- a/docshell/base/CanonicalBrowsingContext.cpp
 +++ b/docshell/base/CanonicalBrowsingContext.cpp
-@@ -324,6 +324,8 @@ void CanonicalBrowsingContext::ReplacedBy(
-   txn.SetShouldDelayMediaFromStart(GetShouldDelayMediaFromStart());
+@@ -325,6 +325,8 @@ void CanonicalBrowsingContext::ReplacedBy(
    txn.SetForceOffline(GetForceOffline());
    txn.SetTopInnerSizeForRFP(GetTopInnerSizeForRFP());
+   txn.SetIPAddressSpace(GetIPAddressSpace());
 +  txn.SetPrefersReducedMotionOverride(GetPrefersReducedMotionOverride());
 +  txn.SetForcedColorsOverride(GetForcedColorsOverride());
  
@@ -325,10 +325,10 @@ index bef42c91d6f88922c8c101f3675325d828872aaf..8eb68c441fbef8ecbe5e90c118ccc008
  }
  
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0d41c43cb 100644
+index 5bcbbfbcb522adb9988ba421a4f590ee2105e1d3..cb9bc09a7901334b6ba73834971498f4472cce2d 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -15,6 +15,12 @@
+@@ -16,6 +16,12 @@
  #  include <unistd.h>  // for getpid()
  #endif
  
@@ -341,7 +341,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  #include "mozilla/ArrayUtils.h"
  #include "mozilla/Attributes.h"
  #include "mozilla/AutoRestore.h"
-@@ -66,6 +72,7 @@
+@@ -67,6 +73,7 @@
  #include "mozilla/dom/DocGroup.h"
  #include "mozilla/dom/Element.h"
  #include "mozilla/dom/FragmentDirective.h"
@@ -349,7 +349,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  #include "mozilla/dom/HTMLAnchorElement.h"
  #include "mozilla/dom/HTMLIFrameElement.h"
  #include "mozilla/dom/Navigation.h"
-@@ -94,6 +101,7 @@
+@@ -95,6 +102,7 @@
  #include "mozilla/dom/DocumentBinding.h"
  #include "mozilla/glean/DocshellMetrics.h"
  #include "mozilla/ipc/ProtocolUtils.h"
@@ -357,7 +357,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  #include "mozilla/net/DocumentChannel.h"
  #include "mozilla/net/DocumentChannelChild.h"
  #include "mozilla/net/ParentChannelWrapper.h"
-@@ -117,6 +125,7 @@
+@@ -118,6 +126,7 @@
  #include "nsIDocumentViewer.h"
  #include "mozilla/dom/Document.h"
  #include "nsHTMLDocument.h"
@@ -365,7 +365,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  #include "nsIDocumentLoaderFactory.h"
  #include "nsIDOMWindow.h"
  #include "nsIEditingSession.h"
-@@ -211,6 +220,7 @@
+@@ -212,6 +221,7 @@
  #include "nsGlobalWindowInner.h"
  #include "nsGlobalWindowOuter.h"
  #include "nsJSEnvironment.h"
@@ -373,7 +373,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -352,6 +362,14 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -353,6 +363,14 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
@@ -388,7 +388,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mDisableMetaRefreshWhenInactive(false),
-@@ -3024,6 +3042,232 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3025,6 +3043,232 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -621,7 +621,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4731,7 +4975,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
+@@ -4790,7 +5034,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -630,7 +630,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->ActivenessMaybeChanged();
    }
-@@ -6658,6 +6902,10 @@ bool nsDocShell::CanSavePresentation(uint32_t aLoadType,
+@@ -6723,6 +6967,10 @@ bool nsDocShell::CanSavePresentation(uint32_t aLoadType,
      return false;  // no entry to save into
    }
  
@@ -641,7 +641,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
    MOZ_ASSERT(!mozilla::SessionHistoryInParent(),
               "mOSHE cannot be non-null with SHIP");
    nsCOMPtr<nsIDocumentViewer> viewer = mOSHE->GetDocumentViewer();
-@@ -8399,6 +8647,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8464,6 +8712,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -654,7 +654,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
        return rv;
      }
  
-@@ -9572,6 +9826,16 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
+@@ -9754,6 +10008,16 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
                     nsINetworkPredictor::PREDICT_LOAD, attrs, nullptr);
  
    nsCOMPtr<nsIRequest> req;
@@ -671,7 +671,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
    rv = DoURILoad(aLoadState, aCacheKey, getter_AddRefs(req));
  
    if (NS_SUCCEEDED(rv)) {
-@@ -12791,6 +13055,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12970,6 +13234,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -681,7 +681,7 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
      return NS_OK;
    }
  
-@@ -12877,6 +13144,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -13083,6 +13350,8 @@ nsresult nsDocShell::OnLinkClick(
  
    nsCOMPtr<nsIRunnable> ev = new OnLinkClickEvent(
        this, aContent, loadState, noOpenerImplied, aTriggeringPrincipal);
@@ -691,18 +691,18 @@ index 32c537d6be90247af8d778048c6d27f3800d4b02..b72196b0694828489f8ad27c209f49f0
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index f22a333733322ad17f097d7edd46af21a687906c..6bcf8ca9f9cd64dc9f5695d00e0a3e6a97978f02 100644
+index 32d1673ea09a2c9f6bb14f6dcd8a9c1c8f9831c4..a301ecd30fcad4d79d370ab316fa0d8e5e509795 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
-@@ -15,6 +15,7 @@
- #include "mozilla/UniquePtr.h"
+@@ -16,6 +16,7 @@
  #include "mozilla/WeakPtr.h"
  #include "mozilla/dom/BrowsingContext.h"
+ #include "mozilla/dom/NavigationBinding.h"
 +#include "mozilla/dom/Element.h"
  #include "mozilla/dom/WindowProxyHolder.h"
  #include "nsCOMPtr.h"
  #include "nsCharsetSource.h"
-@@ -77,6 +78,7 @@ class nsCommandManager;
+@@ -78,6 +79,7 @@ class nsCommandManager;
  class nsDocShellEditorData;
  class nsDOMNavigationTiming;
  class nsDSURIContentListener;
@@ -710,7 +710,7 @@ index f22a333733322ad17f097d7edd46af21a687906c..6bcf8ca9f9cd64dc9f5695d00e0a3e6a
  class nsGlobalWindowOuter;
  
  class FramingChecker;
-@@ -403,6 +405,15 @@ class nsDocShell final : public nsDocLoader,
+@@ -408,6 +410,15 @@ class nsDocShell final : public nsDocLoader,
    void SetWillChangeProcess() { mWillChangeProcess = true; }
    bool WillChangeProcess() { return mWillChangeProcess; }
  
@@ -726,7 +726,7 @@ index f22a333733322ad17f097d7edd46af21a687906c..6bcf8ca9f9cd64dc9f5695d00e0a3e6a
    // Create a content viewer within this nsDocShell for the given
    // `WindowGlobalChild` actor.
    nsresult CreateDocumentViewerForActor(
-@@ -1006,6 +1017,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1013,6 +1024,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -735,7 +735,7 @@ index f22a333733322ad17f097d7edd46af21a687906c..6bcf8ca9f9cd64dc9f5695d00e0a3e6a
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1285,6 +1298,17 @@ class nsDocShell final : public nsDocLoader,
+@@ -1301,6 +1314,17 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -754,7 +754,7 @@ index f22a333733322ad17f097d7edd46af21a687906c..6bcf8ca9f9cd64dc9f5695d00e0a3e6a
    bool mAllowKeywordFixup : 1;
    bool mDisableMetaRefreshWhenInactive : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index 84e821e33e8164829dfee4f05340784e189b90ee..aa690eb747cb73bc6bff40a62546037c2e64c485 100644
+index 159daa1dd936e84f1bf3ce413643382e4d37f592..607224a5270995abccf439992ec577f11178e522 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -812,10 +812,10 @@ index 84e821e33e8164829dfee4f05340784e189b90ee..aa690eb747cb73bc6bff40a62546037c
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index fd2d0be5f7755e64fc134515ea138c4ed0d28daf..ae48159ddbfb98d03e538d077a33260c639a74ac 100644
+index a16bef739fcde0f14ba7e53e0acfa3aa2ee1dd3a..c4747478156c973307b7866f84c65520e4bff9d1 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
-@@ -3752,6 +3752,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
+@@ -3818,6 +3818,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
  }
  
  void Document::ApplySettingsFromCSP(bool aSpeculative) {
@@ -825,7 +825,7 @@ index fd2d0be5f7755e64fc134515ea138c4ed0d28daf..ae48159ddbfb98d03e538d077a33260c
    nsresult rv = NS_OK;
    if (!aSpeculative) {
      // 1) apply settings from regular CSP
-@@ -3809,6 +3812,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
+@@ -3875,6 +3878,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
    MOZ_ASSERT(!mScriptGlobalObject,
               "CSP must be initialized before mScriptGlobalObject is set!");
  
@@ -837,7 +837,7 @@ index fd2d0be5f7755e64fc134515ea138c4ed0d28daf..ae48159ddbfb98d03e538d077a33260c
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
-@@ -4617,6 +4625,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+@@ -4699,6 +4707,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
      return false;
    }
  
@@ -848,7 +848,7 @@ index fd2d0be5f7755e64fc134515ea138c4ed0d28daf..ae48159ddbfb98d03e538d077a33260c
    if (!fm->IsInActiveWindow(bc)) {
      return false;
    }
-@@ -19688,6 +19700,35 @@ ColorScheme Document::PreferredColorScheme(IgnoreRFP aIgnoreRFP) const {
+@@ -20107,6 +20119,35 @@ ColorScheme Document::PreferredColorScheme(IgnoreRFP aIgnoreRFP) const {
    return PreferenceSheet::PrefsFor(*this).mColorScheme;
  }
  
@@ -885,10 +885,10 @@ index fd2d0be5f7755e64fc134515ea138c4ed0d28daf..ae48159ddbfb98d03e538d077a33260c
    if (!sLoadingForegroundTopLevelContentDocument) {
      return false;
 diff --git a/dom/base/Document.h b/dom/base/Document.h
-index 622f54e369d324a4cc2800dd4b331bd628339bed..2ef6ed20cf35febeff75b22dfa5bb2fbb4e295fe 100644
+index f9f8089ad484330a9d863fac7559b94aa34d80fd..75b6f3b03a6fe11511cc1e9ebdc6aa16936bbbcb 100644
 --- a/dom/base/Document.h
 +++ b/dom/base/Document.h
-@@ -4140,6 +4140,8 @@ class Document : public nsINode,
+@@ -4224,6 +4224,8 @@ class Document : public nsINode,
    // color-scheme meta tag.
    ColorScheme DefaultColorScheme() const;
  
@@ -898,10 +898,10 @@ index 622f54e369d324a4cc2800dd4b331bd628339bed..2ef6ed20cf35febeff75b22dfa5bb2fb
  
    static bool AutomaticStorageAccessPermissionCanBeGranted(
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
-index a13cae5b990fb2f750e62f5117ad63aa981d787f..bc0f2d674aadd8eba867f56e873595a8885d1798 100644
+index fac275953573368e91e99bc8a72a885fb1c75521..7c1bcfdba325f8310239fc69921aaa0f14255f33 100644
 --- a/dom/base/Navigator.cpp
 +++ b/dom/base/Navigator.cpp
-@@ -344,14 +344,18 @@ void Navigator::GetAppName(nsAString& aAppName) const {
+@@ -347,14 +347,18 @@ void Navigator::GetAppName(nsAString& aAppName) const {
   * for more detail.
   */
  /* static */
@@ -922,7 +922,7 @@ index a13cae5b990fb2f750e62f5117ad63aa981d787f..bc0f2d674aadd8eba867f56e873595a8
  
    // Split values on commas.
    for (nsDependentSubstring lang :
-@@ -403,7 +407,13 @@ void Navigator::GetLanguage(nsAString& aLanguage) {
+@@ -406,7 +410,13 @@ void Navigator::GetLanguage(nsAString& aLanguage) {
  }
  
  void Navigator::GetLanguages(nsTArray<nsString>& aLanguages) {
@@ -937,7 +937,7 @@ index a13cae5b990fb2f750e62f5117ad63aa981d787f..bc0f2d674aadd8eba867f56e873595a8
  
    // The returned value is cached by the binding code. The window listens to the
    // accept languages change and will clear the cache when needed. It has to
-@@ -2298,7 +2308,8 @@ bool Navigator::Webdriver() {
+@@ -2309,7 +2319,8 @@ bool Navigator::Webdriver() {
    }
  #endif
  
@@ -948,10 +948,10 @@ index a13cae5b990fb2f750e62f5117ad63aa981d787f..bc0f2d674aadd8eba867f56e873595a8
  
  AutoplayPolicy Navigator::GetAutoplayPolicy(AutoplayPolicyMediaType aType) {
 diff --git a/dom/base/Navigator.h b/dom/base/Navigator.h
-index 6abf6cef230c97815f17f6b7abf9f1b1de274a6f..46ead1f32e0d710b5b32e61dff72a4f772d5421e 100644
+index 893947475fbb8688becb1c1495385e4048d4927d..dfb50acf689223fdab7ef6f42afbbd53341e1b0b 100644
 --- a/dom/base/Navigator.h
 +++ b/dom/base/Navigator.h
-@@ -218,7 +218,7 @@ class Navigator final : public nsISupports, public nsWrapperCache {
+@@ -220,7 +220,7 @@ class Navigator final : public nsISupports, public nsWrapperCache {
  
    StorageManager* Storage();
  
@@ -961,10 +961,10 @@ index 6abf6cef230c97815f17f6b7abf9f1b1de274a6f..46ead1f32e0d710b5b32e61dff72a4f7
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/base/nsContentUtils.cpp b/dom/base/nsContentUtils.cpp
-index f362a444a0f5ed247582646754dffd54d0b4540a..bbd72dab7ff4fbac8c247961e530764cb5c68d11 100644
+index 787d4c4e22715a72197e5d06831bd6d284129c2c..75fc73ce2863f994ce703b0f822acb924bee4f3d 100644
 --- a/dom/base/nsContentUtils.cpp
 +++ b/dom/base/nsContentUtils.cpp
-@@ -9151,11 +9151,13 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -9432,11 +9432,13 @@ nsresult nsContentUtils::SendMouseEvent(
      int32_t aClickCount, int32_t aModifiers, bool aIgnoreRootScrollFrame,
      float aPressure, unsigned short aInputSourceArg, uint32_t aIdentifier,
      bool aToWindow, bool* aPreventDefault, bool aIsDOMEventSynthesized,
@@ -979,7 +979,7 @@ index f362a444a0f5ed247582646754dffd54d0b4540a..bbd72dab7ff4fbac8c247961e530764c
    if (aType.EqualsLiteral("mousedown")) {
      msg = eMouseDown;
    } else if (aType.EqualsLiteral("mouseup")) {
-@@ -9181,6 +9183,12 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -9462,6 +9464,12 @@ nsresult nsContentUtils::SendMouseEvent(
      msg = eMouseHitTest;
    } else if (aType.EqualsLiteral("MozMouseExploreByTouch")) {
      msg = eMouseExploreByTouch;
@@ -992,7 +992,7 @@ index f362a444a0f5ed247582646754dffd54d0b4540a..bbd72dab7ff4fbac8c247961e530764c
    } else {
      return NS_ERROR_FAILURE;
    }
-@@ -9191,7 +9199,14 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -9472,7 +9480,14 @@ nsresult nsContentUtils::SendMouseEvent(
  
    Maybe<WidgetPointerEvent> pointerEvent;
    Maybe<WidgetMouseEvent> mouseEvent;
@@ -1008,7 +1008,7 @@ index f362a444a0f5ed247582646754dffd54d0b4540a..bbd72dab7ff4fbac8c247961e530764c
      MOZ_ASSERT(!aIsWidgetEventSynthesized,
                 "The event shouldn't be dispatched as a synthesized event");
      if (MOZ_UNLIKELY(aIsWidgetEventSynthesized)) {
-@@ -9210,8 +9225,11 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -9491,8 +9506,11 @@ nsresult nsContentUtils::SendMouseEvent(
                         contextMenuKey ? WidgetMouseEvent::eContextMenuKey
                                        : WidgetMouseEvent::eNormal);
    }
@@ -1020,7 +1020,7 @@ index f362a444a0f5ed247582646754dffd54d0b4540a..bbd72dab7ff4fbac8c247961e530764c
    mouseOrPointerEvent.pointerId = aIdentifier;
    mouseOrPointerEvent.mModifiers = GetWidgetModifiers(aModifiers);
    mouseOrPointerEvent.mButton = aButton;
-@@ -9224,6 +9242,8 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -9505,6 +9523,8 @@ nsresult nsContentUtils::SendMouseEvent(
    mouseOrPointerEvent.mClickCount = aClickCount;
    mouseOrPointerEvent.mFlags.mIsSynthesizedForTests = aIsDOMEventSynthesized;
    mouseOrPointerEvent.mExitFrom = exitFrom;
@@ -1030,10 +1030,10 @@ index f362a444a0f5ed247582646754dffd54d0b4540a..bbd72dab7ff4fbac8c247961e530764c
    nsPresContext* presContext = aPresShell->GetPresContext();
    if (!presContext) return NS_ERROR_FAILURE;
 diff --git a/dom/base/nsContentUtils.h b/dom/base/nsContentUtils.h
-index 779cd9e544bfb2d135f12c3558c0ca8164b37029..041eba4bcbf40f51fc40ce7609ea81408e6a788d 100644
+index 7d89626774660fb9e0f564808270e3059e4d7b3c..c7f748e6f33cbcd72b0c97d437b2abbcbe4242be 100644
 --- a/dom/base/nsContentUtils.h
 +++ b/dom/base/nsContentUtils.h
-@@ -3015,8 +3015,9 @@ class nsContentUtils {
+@@ -3078,8 +3078,9 @@ class nsContentUtils {
        int32_t aButton, int32_t aButtons, int32_t aClickCount,
        int32_t aModifiers, bool aIgnoreRootScrollFrame, float aPressure,
        unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
@@ -1046,10 +1046,10 @@ index 779cd9e544bfb2d135f12c3558c0ca8164b37029..041eba4bcbf40f51fc40ce7609ea8140
    static void FirePageShowEventForFrameLoaderSwap(
        nsIDocShellTreeItem* aItem,
 diff --git a/dom/base/nsDOMWindowUtils.cpp b/dom/base/nsDOMWindowUtils.cpp
-index 15fe1db8a28ed2592b61aaf2006ddaa656f12389..2642c18bebcdfdd467be557171ba4ee204fcabde 100644
+index e85140d5afebf57cf56bf16ef0c43c425c8d50c7..3062737c3319e35cdc4786c06750a1ac2a99565f 100644
 --- a/dom/base/nsDOMWindowUtils.cpp
 +++ b/dom/base/nsDOMWindowUtils.cpp
-@@ -710,6 +710,26 @@ nsDOMWindowUtils::GetPresShellId(uint32_t* aPresShellId) {
+@@ -707,6 +707,26 @@ nsDOMWindowUtils::GetPresShellId(uint32_t* aPresShellId) {
    return NS_ERROR_FAILURE;
  }
  
@@ -1076,7 +1076,7 @@ index 15fe1db8a28ed2592b61aaf2006ddaa656f12389..2642c18bebcdfdd467be557171ba4ee2
  NS_IMETHODIMP
  nsDOMWindowUtils::SendMouseEvent(
      const nsAString& aType, float aX, float aY, int32_t aButton,
-@@ -724,7 +744,7 @@ nsDOMWindowUtils::SendMouseEvent(
+@@ -721,7 +741,7 @@ nsDOMWindowUtils::SendMouseEvent(
        aOptionalArgCount >= 7 ? aIdentifier : DEFAULT_MOUSE_POINTER_ID, false,
        aPreventDefault, aOptionalArgCount >= 4 ? aIsDOMEventSynthesized : true,
        aOptionalArgCount >= 5 ? aIsWidgetEventSynthesized : false,
@@ -1085,7 +1085,7 @@ index 15fe1db8a28ed2592b61aaf2006ddaa656f12389..2642c18bebcdfdd467be557171ba4ee2
  }
  
  NS_IMETHODIMP
-@@ -742,7 +762,7 @@ nsDOMWindowUtils::SendMouseEventToWindow(
+@@ -739,7 +759,7 @@ nsDOMWindowUtils::SendMouseEventToWindow(
        aOptionalArgCount >= 7 ? aIdentifier : DEFAULT_MOUSE_POINTER_ID, true,
        nullptr, aOptionalArgCount >= 4 ? aIsDOMEventSynthesized : true,
        aOptionalArgCount >= 5 ? aIsWidgetEventSynthesized : false,
@@ -1094,7 +1094,7 @@ index 15fe1db8a28ed2592b61aaf2006ddaa656f12389..2642c18bebcdfdd467be557171ba4ee2
  }
  
  NS_IMETHODIMP
-@@ -751,7 +771,7 @@ nsDOMWindowUtils::SendMouseEventCommon(
+@@ -748,7 +768,7 @@ nsDOMWindowUtils::SendMouseEventCommon(
      int32_t aClickCount, int32_t aModifiers, bool aIgnoreRootScrollFrame,
      float aPressure, unsigned short aInputSourceArg, uint32_t aPointerId,
      bool aToWindow, bool* aPreventDefault, bool aIsDOMEventSynthesized,
@@ -1103,7 +1103,7 @@ index 15fe1db8a28ed2592b61aaf2006ddaa656f12389..2642c18bebcdfdd467be557171ba4ee2
    RefPtr<PresShell> presShell = GetPresShell();
    if (!presShell) {
      return NS_ERROR_FAILURE;
-@@ -768,7 +788,7 @@ nsDOMWindowUtils::SendMouseEventCommon(
+@@ -765,7 +785,7 @@ nsDOMWindowUtils::SendMouseEventCommon(
        presShell, widget, aType, refPoint, aButton, aButtons, aClickCount,
        aModifiers, aIgnoreRootScrollFrame, aPressure, aInputSourceArg,
        aPointerId, aToWindow, aPreventDefault, aIsDOMEventSynthesized,
@@ -1126,10 +1126,10 @@ index a8a48d28fc4ef612f8234bc2490a41672f1704f5..f702b0c9a0783ec547a41bbefd68e18a
    MOZ_CAN_RUN_SCRIPT
    nsresult SendTouchEventCommon(
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
-index 555a08b4b3fcd0d0c7986014d2e3516c6e5991c0..74a39e000b0e68042f1f51f6fafbc39ac9b42e51 100644
+index be89a1c984982ea005e9bf7f440f5c8a2e8bab55..f8154882b9af02c5e9d7181e7a15b78824be8df9 100644
 --- a/dom/base/nsFocusManager.cpp
 +++ b/dom/base/nsFocusManager.cpp
-@@ -1720,6 +1720,10 @@ Maybe<uint64_t> nsFocusManager::SetFocusInner(Element* aNewContent,
+@@ -1719,6 +1719,10 @@ Maybe<uint64_t> nsFocusManager::SetFocusInner(Element* aNewContent,
          (GetActiveBrowsingContext() == newRootBrowsingContext);
    }
  
@@ -1140,7 +1140,7 @@ index 555a08b4b3fcd0d0c7986014d2e3516c6e5991c0..74a39e000b0e68042f1f51f6fafbc39a
    // Exit fullscreen if a website focuses another window
    if (StaticPrefs::full_screen_api_exit_on_windowRaise() &&
        !isElementInActiveWindow && (aFlags & FLAG_RAISE)) {
-@@ -2306,6 +2310,7 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
+@@ -2305,6 +2309,7 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
                                bool aIsLeavingDocument, bool aAdjustWidget,
                                bool aRemainActive, Element* aElementToFocus,
                                uint64_t aActionId) {
@@ -1148,7 +1148,7 @@ index 555a08b4b3fcd0d0c7986014d2e3516c6e5991c0..74a39e000b0e68042f1f51f6fafbc39a
    LOGFOCUS(("<<Blur begin actionid: %" PRIu64 ">>", aActionId));
  
    // hold a reference to the focused content, which may be null
-@@ -2352,6 +2357,11 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
+@@ -2351,6 +2356,11 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
      return true;
    }
  
@@ -1160,7 +1160,7 @@ index 555a08b4b3fcd0d0c7986014d2e3516c6e5991c0..74a39e000b0e68042f1f51f6fafbc39a
    // Keep a ref to presShell since dispatching the DOM event may cause
    // the document to be destroyed.
    RefPtr<PresShell> presShell = docShell->GetPresShell();
-@@ -3066,7 +3076,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+@@ -3061,7 +3071,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
      }
    }
  
@@ -1172,10 +1172,10 @@ index 555a08b4b3fcd0d0c7986014d2e3516c6e5991c0..74a39e000b0e68042f1f51f6fafbc39a
      // care of lowering the present active window. This happens in
      // a separate runnable to avoid touching multiple windows in
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index 99a5049a3aff2efb208895d60622fd9c8d7f337a..9a9b039a46f1294a8b4af0613fb4f4173ac6a8a0 100644
+index 42ee50b53a666c05c6540a1ddcf3745694aaed2d..b15150f7d2e293c2e338f8cd3ada927c052b30b2 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
-@@ -2512,10 +2512,16 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
+@@ -2511,10 +2511,16 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
      }();
  
      if (!isContentAboutBlankInChromeDocshell) {
@@ -1196,7 +1196,7 @@ index 99a5049a3aff2efb208895d60622fd9c8d7f337a..9a9b039a46f1294a8b4af0613fb4f417
      }
    }
  
-@@ -2635,6 +2641,19 @@ void nsGlobalWindowOuter::DispatchDOMWindowCreated() {
+@@ -2634,6 +2640,19 @@ void nsGlobalWindowOuter::DispatchDOMWindowCreated() {
    }
  }
  
@@ -1217,7 +1217,7 @@ index 99a5049a3aff2efb208895d60622fd9c8d7f337a..9a9b039a46f1294a8b4af0613fb4f417
  
  void nsGlobalWindowOuter::SetDocShell(nsDocShell* aDocShell) {
 diff --git a/dom/base/nsGlobalWindowOuter.h b/dom/base/nsGlobalWindowOuter.h
-index 0453a18ec10c1434d1692f10b1b4acee754e6b7e..ee7bad691515bb51f6b4345e88944b02ad173180 100644
+index a846e57a8786e77e055d17474c5d910a6844cd5f..02815da6a94e98d452e8b4781a998fc0d5ed1124 100644
 --- a/dom/base/nsGlobalWindowOuter.h
 +++ b/dom/base/nsGlobalWindowOuter.h
 @@ -320,6 +320,7 @@ class nsGlobalWindowOuter final : public mozilla::dom::EventTarget,
@@ -1229,10 +1229,10 @@ index 0453a18ec10c1434d1692f10b1b4acee754e6b7e..ee7bad691515bb51f6b4345e88944b02
    // Outer windows only.
    virtual void EnsureSizeAndPositionUpToDate() override;
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
-index 8e2bbed21c13f23745e2eaad4ded831106ebd930..a17b0c7b9730737f178c05703b08d0f5f6d9ecd1 100644
+index 7d5e58f27b2ae07f8e8ac23c6d12bf90d2fdd8b7..2510572d9bfe8ea2909c48d9c3e86aa02c69e28e 100644
 --- a/dom/base/nsINode.cpp
 +++ b/dom/base/nsINode.cpp
-@@ -1449,6 +1449,61 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
+@@ -1498,6 +1498,61 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
    mozilla::GetBoxQuadsFromWindowOrigin(this, aOptions, aResult, aRv);
  }
  
@@ -1295,10 +1295,10 @@ index 8e2bbed21c13f23745e2eaad4ded831106ebd930..a17b0c7b9730737f178c05703b08d0f5
      DOMQuad& aQuad, const GeometryNode& aFrom,
      const ConvertCoordinateOptions& aOptions, CallerType aCallerType,
 diff --git a/dom/base/nsINode.h b/dom/base/nsINode.h
-index eb75f281630f8ca1b901686207c9fc97336d675f..e607f0ae454d52fc2bfe19046b492352a84b4ebd 100644
+index 6a982b3f278bf810dd582b3d5ebc33967323047e..4e991ef317c572c4a79c053d468f14df6c8880b5 100644
 --- a/dom/base/nsINode.h
 +++ b/dom/base/nsINode.h
-@@ -2397,6 +2397,10 @@ class nsINode : public mozilla::dom::EventTarget {
+@@ -2417,6 +2417,10 @@ class nsINode : public mozilla::dom::EventTarget {
                                     nsTArray<RefPtr<DOMQuad>>& aResult,
                                     ErrorResult& aRv);
  
@@ -1338,10 +1338,10 @@ index f32e21752d5013bf143eb45391ab9218debab08e..83763d2354dade2f8d2b7930ba18ae91
  
    static bool DumpEnabled();
 diff --git a/dom/chrome-webidl/BrowsingContext.webidl b/dom/chrome-webidl/BrowsingContext.webidl
-index 6ec88536141126c97c9b599e3237bb5670d42ce8..41c6cc56738bdaf711adf2cf5b00c7fad5d71ba8 100644
+index 7923fcfb3e70aabddf343ab3ec2f25313bbd227e..cf02ce032d11d85a13bcf91e93e98882eaa9f7c7 100644
 --- a/dom/chrome-webidl/BrowsingContext.webidl
 +++ b/dom/chrome-webidl/BrowsingContext.webidl
-@@ -61,6 +61,26 @@ enum ForcedColorsOverride {
+@@ -62,6 +62,26 @@ enum ForcedColorsOverride {
    "active",
  };
  
@@ -1368,7 +1368,7 @@ index 6ec88536141126c97c9b599e3237bb5670d42ce8..41c6cc56738bdaf711adf2cf5b00c7fa
  /**
   * Allowed overrides of platform/pref default behaviour for touch events.
   */
-@@ -220,6 +240,12 @@ interface BrowsingContext {
+@@ -226,6 +246,12 @@ interface BrowsingContext {
    // Forced-colors simulation, for DevTools
    [SetterThrows] attribute ForcedColorsOverride forcedColorsOverride;
  
@@ -1382,10 +1382,10 @@ index 6ec88536141126c97c9b599e3237bb5670d42ce8..41c6cc56738bdaf711adf2cf5b00c7fa
     * A unique identifier for the browser element that is hosting this
     * BrowsingContext tree. Every BrowsingContext in the element's tree will
 diff --git a/dom/fetch/Fetch.cpp b/dom/fetch/Fetch.cpp
-index 0bd219694282347309680fc9b53b945e1fd0ad92..c5c2e2d32a380ec72379b05a8b84f187431f7309 100644
+index 2a29279a6d74770a2ec5cee80891bff9eadf1d13..bce59065615a33cf020aae4b20750ce8b1be66ce 100644
 --- a/dom/fetch/Fetch.cpp
 +++ b/dom/fetch/Fetch.cpp
-@@ -701,6 +701,12 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
+@@ -702,6 +702,12 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
      ipcArgs.hasCSPEventListener() = false;
      ipcArgs.isWorkerRequest() = false;
  
@@ -1399,7 +1399,7 @@ index 0bd219694282347309680fc9b53b945e1fd0ad92..c5c2e2d32a380ec72379b05a8b84f187
  
      mozilla::glean::networking::fetch_keepalive_request_count.Get("main"_ns)
 diff --git a/dom/fetch/FetchService.cpp b/dom/fetch/FetchService.cpp
-index b5e60bbd27fbb2f033d233e9ae2ebc728f442512..0adc568ece34d2c0f35eeacd81e2db9125b7c327 100644
+index fcdddf2f772af305c68cc169ba891386a1dba982..d8b19d35719fff3f9c55c199718f4dc1d15cdfe9 100644
 --- a/dom/fetch/FetchService.cpp
 +++ b/dom/fetch/FetchService.cpp
 @@ -268,6 +268,14 @@ RefPtr<FetchServicePromises> FetchService::FetchInstance::Fetch() {
@@ -1417,110 +1417,11 @@ index b5e60bbd27fbb2f033d233e9ae2ebc728f442512..0adc568ece34d2c0f35eeacd81e2db91
    if (mArgsType == FetchArgsType::WorkerFetch) {
      auto& args = mArgs.as<WorkerFetchArgs>();
      mFetchDriver->SetWorkerScript(args.mWorkerScript);
-diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
-index 7c653fe131dc34d35ffdc030950071adb31a9fc9..b23442a42ba8ee270e8e38930e59ae15c2a29039 100644
---- a/dom/geolocation/Geolocation.cpp
-+++ b/dom/geolocation/Geolocation.cpp
-@@ -28,6 +28,7 @@
- #include "nsComponentManagerUtils.h"
- #include "nsContentPermissionHelper.h"
- #include "nsContentUtils.h"
-+#include "nsDocShell.h"
- #include "nsGlobalWindowInner.h"
- #include "mozilla/dom/Document.h"
- #include "nsINamed.h"
-@@ -428,10 +429,8 @@ nsGeolocationRequest::Allow(JS::Handle<JS::Value> aChoices) {
-     return NS_OK;
-   }
- 
--  RefPtr<nsGeolocationService> gs =
--      nsGeolocationService::GetGeolocationService();
--
--  bool canUseCache = false;
-+  nsGeolocationService* gs = mLocator->GetGeolocationService();
-+  bool canUseCache = gs != nsGeolocationService::sService.get();
-   CachedPositionAndAccuracy lastPosition = gs->GetCachedPosition();
-   if (lastPosition.position) {
-     EpochTimeStamp cachedPositionTime_ms;
-@@ -639,8 +638,7 @@ void nsGeolocationRequest::Shutdown() {
-   // If there are no other high accuracy requests, the geolocation service will
-   // notify the provider to switch to the default accuracy.
-   if (mOptions && mOptions->mEnableHighAccuracy) {
--    RefPtr<nsGeolocationService> gs =
--        nsGeolocationService::GetGeolocationService();
-+    nsGeolocationService* gs = mLocator ? mLocator->GetGeolocationService() : nullptr;
-     if (gs) {
-       gs->UpdateAccuracy();
-     }
-@@ -957,8 +955,14 @@ void nsGeolocationService::StopDevice() {
- StaticRefPtr<nsGeolocationService> nsGeolocationService::sService;
- 
- already_AddRefed<nsGeolocationService>
--nsGeolocationService::GetGeolocationService() {
-+nsGeolocationService::GetGeolocationService(nsDocShell* docShell) {
-   RefPtr<nsGeolocationService> result;
-+  if (docShell) {
-+    result = docShell->GetGeolocationServiceOverride();
-+    if (result)
-+      return result.forget();
-+  }
-+
-   if (nsGeolocationService::sService) {
-     result = nsGeolocationService::sService;
- 
-@@ -1050,7 +1054,9 @@ nsresult Geolocation::Init(nsPIDOMWindowInner* aContentDom) {
-   // If no aContentDom was passed into us, we are being used
-   // by chrome/c++ and have no mOwner, no mPrincipal, and no need
-   // to prompt.
--  mService = nsGeolocationService::GetGeolocationService();
-+  nsCOMPtr<Document> doc = aContentDom ? aContentDom->GetDoc() : nullptr;
-+  mService = nsGeolocationService::GetGeolocationService(
-+      doc ? static_cast<nsDocShell*>(doc->GetDocShell()) : nullptr);
-   if (mService) {
-     mService->AddLocator(this);
-   }
-diff --git a/dom/geolocation/Geolocation.h b/dom/geolocation/Geolocation.h
-index 992de29b5d2d09c19e55ebb2502215ec9d05a171..cdc20567b693283b0fd5a5923f7ea54210bd1712 100644
---- a/dom/geolocation/Geolocation.h
-+++ b/dom/geolocation/Geolocation.h
-@@ -31,6 +31,7 @@
- 
- #include "nsIGeolocationProvider.h"
- #include "mozilla/Attributes.h"
-+#include "nsDocShell.h"
- 
- class nsGeolocationService;
- class nsGeolocationRequest;
-@@ -51,13 +52,14 @@ struct CachedPositionAndAccuracy {
-   bool isHighAccuracy;
- };
- 
-+
- /**
-  * Singleton that manages the geolocation provider
-  */
- class nsGeolocationService final : public nsIGeolocationUpdate,
-                                    public nsIObserver {
-  public:
--  static already_AddRefed<nsGeolocationService> GetGeolocationService();
-+  static already_AddRefed<nsGeolocationService> GetGeolocationService(nsDocShell* docShell = nullptr);
-   static mozilla::StaticRefPtr<nsGeolocationService> sService;
- 
-   NS_DECL_THREADSAFE_ISUPPORTS
-@@ -189,6 +191,8 @@ class Geolocation final : public nsIGeolocationUpdate, public nsWrapperCache {
-       BrowsingContext* aBrowsingContext,
-       geolocation::ParentRequestResolver&& aResolver);
- 
-+  nsGeolocationService* GetGeolocationService() { return mService; };
-+
-  private:
-   ~Geolocation();
- 
 diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
-index c3e7de8f41e06e11155620b75c4d8a830d908b37..39eb9d31258693dce3a26c3227f28d92bccdb019 100644
+index 9382c73dc527f3fb676e8ea3457a30eee2d9415f..f1785121db1de071ce5aa1a0ad38d3d603c486f7 100644
 --- a/dom/html/HTMLInputElement.cpp
 +++ b/dom/html/HTMLInputElement.cpp
-@@ -64,6 +64,7 @@
+@@ -63,6 +63,7 @@
  #include "mozilla/dom/Document.h"
  #include "mozilla/dom/HTMLDataListElement.h"
  #include "mozilla/dom/HTMLOptionElement.h"
@@ -1528,7 +1429,7 @@ index c3e7de8f41e06e11155620b75c4d8a830d908b37..39eb9d31258693dce3a26c3227f28d92
  #include "nsIFrame.h"
  #include "nsRangeFrame.h"
  #include "nsError.h"
-@@ -790,6 +791,13 @@ nsresult HTMLInputElement::InitFilePicker(FilePickerType aType) {
+@@ -816,6 +817,13 @@ nsresult HTMLInputElement::InitFilePicker(FilePickerType aType) {
      return NS_ERROR_FAILURE;
    }
  
@@ -1543,7 +1444,7 @@ index c3e7de8f41e06e11155620b75c4d8a830d908b37..39eb9d31258693dce3a26c3227f28d92
      return NS_OK;
    }
 diff --git a/dom/interfaces/base/nsIDOMWindowUtils.idl b/dom/interfaces/base/nsIDOMWindowUtils.idl
-index 5e417145c4f21d8f2aa65088611477b681c9c327..bc84c509659c7556077e69c652e5b19639eb88bb 100644
+index 4cdfcaafa779ed402d02411f69c02ab0eb5b4e09..e69c837f7ec340a11e8ae9485cd5b714a3ea9a88 100644
 --- a/dom/interfaces/base/nsIDOMWindowUtils.idl
 +++ b/dom/interfaces/base/nsIDOMWindowUtils.idl
 @@ -374,6 +374,26 @@ interface nsIDOMWindowUtils : nsISupports {
@@ -1574,10 +1475,10 @@ index 5e417145c4f21d8f2aa65088611477b681c9c327..bc84c509659c7556077e69c652e5b196
     *    touchstart, touchend, touchmove, and touchcancel
     *
 diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
-index 93f20a36acef74947d5377df5ff916546218d8b8..22b706b985d22a8c0c278a12ab4944e26ded51a4 100644
+index 310e22a130612c055f7642d813b2bc06538c8797..8528cd75252c6cf0bebe42ffbf83c0220551ba28 100644
 --- a/dom/ipc/BrowserChild.cpp
 +++ b/dom/ipc/BrowserChild.cpp
-@@ -1676,6 +1676,21 @@ void BrowserChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
+@@ -1760,6 +1760,21 @@ void BrowserChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
    if (postLayerization) {
      postLayerization->Register();
    }
@@ -1600,24 +1501,24 @@ index 93f20a36acef74947d5377df5ff916546218d8b8..22b706b985d22a8c0c278a12ab4944e2
  
  mozilla::ipc::IPCResult BrowserChild::RecvNormalPriorityRealMouseButtonEvent(
 diff --git a/dom/ipc/CoalescedMouseData.cpp b/dom/ipc/CoalescedMouseData.cpp
-index 5aa445d2e0a6169e57c44569974d557b3baf7064..671f71979b407f0ca17c66f13805e851ba30479e 100644
+index 31d56e5d4ea1f21b4b827c763d6e4b34432eeb7d..8537ae198faeec5fd5cced71995bbce9dccf90c4 100644
 --- a/dom/ipc/CoalescedMouseData.cpp
 +++ b/dom/ipc/CoalescedMouseData.cpp
-@@ -67,6 +67,9 @@ bool CoalescedMouseData::CanCoalesce(const WidgetMouseEvent& aEvent,
-           mCoalescedInputEvent->pointerId == aEvent.pointerId &&
-           mCoalescedInputEvent->mButton == aEvent.mButton &&
-           mCoalescedInputEvent->mButtons == aEvent.mButtons && mGuid == aGuid &&
-+          // `mJugglerEventId` is 0 for non-juggler events and a unique number for
-+          // juggler-emitted events.
-+          mCoalescedInputEvent->mJugglerEventId == aEvent.mJugglerEventId &&
-           mInputBlockId == aInputBlockId);
- }
- 
+@@ -71,6 +71,9 @@ bool CoalescedMouseData::CanCoalesce(const WidgetMouseEvent& aEvent,
+       mCoalescedInputEvent->pointerId != aEvent.pointerId ||
+       mCoalescedInputEvent->mButton != aEvent.mButton ||
+       mCoalescedInputEvent->mButtons != aEvent.mButtons || mGuid != aGuid ||
++      // `mJugglerEventId` is 0 for non-juggler events and a unique number for
++      // juggler-emitted events.
++      mCoalescedInputEvent->mJugglerEventId != aEvent.mJugglerEventId ||
+       mInputBlockId != aInputBlockId) {
+     return false;
+   }
 diff --git a/dom/media/systemservices/video_engine/desktop_capture_impl.cc b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
-index c43a1b3b245101c974742c5e50f54857e538bbfb..c07a568da3342cbf2af07471fa6959cb242b9a4e 100644
+index db777994b583efc2a3533e7d4534fff894c733bb..eb317c19b2422bd983d5e132c9ee4dac31687428 100644
 --- a/dom/media/systemservices/video_engine/desktop_capture_impl.cc
 +++ b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
-@@ -52,9 +52,10 @@ namespace webrtc {
+@@ -53,9 +53,10 @@ namespace webrtc {
  
  DesktopCaptureImpl* DesktopCaptureImpl::Create(const int32_t aModuleId,
                                                 const char* aUniqueId,
@@ -1630,7 +1531,7 @@ index c43a1b3b245101c974742c5e50f54857e538bbfb..c07a568da3342cbf2af07471fa6959cb
  }
  
  static DesktopCaptureOptions CreateDesktopCaptureOptions() {
-@@ -155,8 +156,10 @@ static std::unique_ptr<DesktopCapturer> CreateTabCapturer(
+@@ -156,8 +157,10 @@ static std::unique_ptr<DesktopCapturer> CreateTabCapturer(
  
  static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
      CaptureDeviceType aDeviceType, DesktopCapturer::SourceId aSourceId,
@@ -1642,7 +1543,7 @@ index c43a1b3b245101c974742c5e50f54857e538bbfb..c07a568da3342cbf2af07471fa6959cb
    auto ensureThread = [&]() {
      if (*aOutThread) {
        return *aOutThread;
-@@ -253,7 +256,8 @@ static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
+@@ -254,7 +257,8 @@ static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
  }
  
  DesktopCaptureImpl::DesktopCaptureImpl(const int32_t aId, const char* aUniqueId,
@@ -1652,7 +1553,7 @@ index c43a1b3b245101c974742c5e50f54857e538bbfb..c07a568da3342cbf2af07471fa6959cb
      : mModuleId(aId),
        mTrackingId(mozilla::TrackingId(CaptureEngineToTrackingSourceStr([&] {
                                          switch (aType) {
-@@ -270,6 +274,7 @@ DesktopCaptureImpl::DesktopCaptureImpl(const int32_t aId, const char* aUniqueId,
+@@ -271,6 +275,7 @@ DesktopCaptureImpl::DesktopCaptureImpl(const int32_t aId, const char* aUniqueId,
                                        aId)),
        mDeviceUniqueId(aUniqueId),
        mDeviceType(aType),
@@ -1660,7 +1561,7 @@ index c43a1b3b245101c974742c5e50f54857e538bbfb..c07a568da3342cbf2af07471fa6959cb
        mControlThread(mozilla::GetCurrentSerialEventTarget()),
        mNextFrameMinimumTime(Timestamp::Zero()),
        mCallbacks("DesktopCaptureImpl::mCallbacks") {}
-@@ -294,6 +299,19 @@ void DesktopCaptureImpl::DeRegisterCaptureDataCallback(
+@@ -295,6 +300,19 @@ void DesktopCaptureImpl::DeRegisterCaptureDataCallback(
    }
  }
  
@@ -1680,16 +1581,16 @@ index c43a1b3b245101c974742c5e50f54857e538bbfb..c07a568da3342cbf2af07471fa6959cb
  int32_t DesktopCaptureImpl::StopCaptureIfAllClientsClose() {
    {
      auto callbacks = mCallbacks.Lock();
-@@ -333,7 +351,7 @@ int32_t DesktopCaptureImpl::StartCapture(
- 
-   DesktopCapturer::SourceId sourceId = std::stoi(mDeviceUniqueId);
+@@ -350,7 +368,7 @@ int32_t DesktopCaptureImpl::StartCapture(
+     return -1;
+   }
    std::unique_ptr capturer = CreateDesktopCapturerAndThread(
 -      mDeviceType, sourceId, getter_AddRefs(mCaptureThread));
 +      mDeviceType, sourceId, getter_AddRefs(mCaptureThread), capture_cursor_);
  
    MOZ_ASSERT(!capturer == !mCaptureThread);
    if (!capturer) {
-@@ -441,6 +459,15 @@ void DesktopCaptureImpl::OnCaptureResult(DesktopCapturer::Result aResult,
+@@ -458,6 +476,15 @@ void DesktopCaptureImpl::OnCaptureResult(DesktopCapturer::Result aResult,
    frameInfo.height = aFrame->size().height();
    frameInfo.videoType = VideoType::kARGB;
  
@@ -1803,7 +1704,7 @@ index a76b7de569db1cb42728a5514fb80e5c46e0344e..3d61ad8d3aa4a7eaf96957dcd680e1e1
    const nsCOMPtr<nsISerialEventTarget> mControlThread;
    // Set in StartCapture.
 diff --git a/dom/script/ScriptSettings.cpp b/dom/script/ScriptSettings.cpp
-index 3b39538e51840cd9b1685b2efd2ff2e9ec83608a..c7bf4f2d53b58bbacb22b3ebebf6f3fc9b5e445f 100644
+index d5964b27e9c99af76fe3f4076322592a9370c2d0..da217e2c1fbd9ca02e50ff74dde028189a216a6d 100644
 --- a/dom/script/ScriptSettings.cpp
 +++ b/dom/script/ScriptSettings.cpp
 @@ -150,6 +150,30 @@ ScriptSettingsStackEntry::~ScriptSettingsStackEntry() {
@@ -1847,10 +1748,10 @@ index 3b39538e51840cd9b1685b2efd2ff2e9ec83608a..c7bf4f2d53b58bbacb22b3ebebf6f3fc
  
    return aGlobalOrNull;
 diff --git a/dom/security/nsCSPUtils.cpp b/dom/security/nsCSPUtils.cpp
-index 5ec21c1c7f975a372399748e8bab2b21ce347f20..ed16831e549afa3d6623398d35eb61e26ab5f2b0 100644
+index 40844c900fc64415e39f4d2dead4c490d5ec301b..f63d0fd6a6df7ea932ca4d4bb70dfbd7562b2fa0 100644
 --- a/dom/security/nsCSPUtils.cpp
 +++ b/dom/security/nsCSPUtils.cpp
-@@ -23,6 +23,7 @@
+@@ -24,6 +24,7 @@
  #include "nsSandboxFlags.h"
  #include "nsServiceManagerUtils.h"
  #include "nsWhitespaceTokenizer.h"
@@ -1894,10 +1795,10 @@ index aee376e971ae01ac1e512c3920b115bfaf06afa8..1701311534bf77e6cd9bafc0e3a28361
     * returned quads are further translated relative to the window
     * origin -- which is not the layout origin. Further translation
 diff --git a/dom/workers/RuntimeService.cpp b/dom/workers/RuntimeService.cpp
-index a23637c4a887b66a1b4c709a648762b84151bf01..d8da9063261482f1da3257e3f95a8a49d94325f8 100644
+index 76035deec8f20933800284211a07ff23e124c1b9..d46c22728c82c15ed6b5c9d3c57f8b8e2229212b 100644
 --- a/dom/workers/RuntimeService.cpp
 +++ b/dom/workers/RuntimeService.cpp
-@@ -1026,7 +1026,7 @@ void PrefLanguagesChanged(const char* /* aPrefName */, void* /* aClosure */) {
+@@ -1079,7 +1079,7 @@ void PrefLanguagesChanged(const char* /* aPrefName */, void* /* aClosure */) {
    AssertIsOnMainThread();
  
    nsTArray<nsString> languages;
@@ -1906,7 +1807,7 @@ index a23637c4a887b66a1b4c709a648762b84151bf01..d8da9063261482f1da3257e3f95a8a49
  
    RuntimeService* runtime = RuntimeService::GetService();
    if (runtime) {
-@@ -1214,8 +1214,7 @@ bool RuntimeService::RegisterWorker(WorkerPrivate& aWorkerPrivate) {
+@@ -1269,8 +1269,7 @@ bool RuntimeService::RegisterWorker(WorkerPrivate& aWorkerPrivate) {
        }
  
        // The navigator overridden properties should have already been read.
@@ -1916,7 +1817,7 @@ index a23637c4a887b66a1b4c709a648762b84151bf01..d8da9063261482f1da3257e3f95a8a49
        mNavigatorPropertiesLoaded = true;
      }
  
-@@ -1836,6 +1835,13 @@ void RuntimeService::PropagateStorageAccessPermissionGranted(
+@@ -1898,6 +1897,13 @@ void RuntimeService::PropagateStorageAccessPermissionGranted(
    }
  }
  
@@ -1930,7 +1831,7 @@ index a23637c4a887b66a1b4c709a648762b84151bf01..d8da9063261482f1da3257e3f95a8a49
  template <typename Func>
  void RuntimeService::BroadcastAllWorkers(const Func& aFunc) {
    AssertIsOnMainThread();
-@@ -2361,6 +2367,14 @@ void PropagateStorageAccessPermissionGrantedToWorkers(
+@@ -2438,6 +2444,14 @@ void PropagateStorageAccessPermissionGrantedToWorkers(
    }
  }
  
@@ -1946,7 +1847,7 @@ index a23637c4a887b66a1b4c709a648762b84151bf01..d8da9063261482f1da3257e3f95a8a49
    MOZ_ASSERT(!NS_IsMainThread());
    MOZ_ASSERT(aCx);
 diff --git a/dom/workers/RuntimeService.h b/dom/workers/RuntimeService.h
-index 534bbe9ec4f0261189eb3322c1229c1eb5d8802e..6aa99b64fdbbff3704602e944b129879fbdf8c15 100644
+index b17efeafac1df3653ed9659e506c3d582044e2d0..3dc739c3b72980daf8a99190123920d0096da00c 100644
 --- a/dom/workers/RuntimeService.h
 +++ b/dom/workers/RuntimeService.h
 @@ -112,6 +112,8 @@ class RuntimeService final : public nsIObserver {
@@ -1959,7 +1860,7 @@ index 534bbe9ec4f0261189eb3322c1229c1eb5d8802e..6aa99b64fdbbff3704602e944b129879
      return mNavigatorProperties;
    }
 diff --git a/dom/workers/WorkerCommon.h b/dom/workers/WorkerCommon.h
-index 58894a8361c7ef1dddd481ca5877a209a8b8ff5c..c481d40d79b6397b7f1d571bd9f6ae5c0a946217 100644
+index c928f8292a29ce7b53dd45aec4abc107263b1c8f..e11fdf6159623b2232e51160efbcbb6df5b6ed89 100644
 --- a/dom/workers/WorkerCommon.h
 +++ b/dom/workers/WorkerCommon.h
 @@ -47,6 +47,8 @@ void ResumeWorkersForWindow(const nsPIDOMWindowInner& aWindow);
@@ -1972,10 +1873,10 @@ index 58894a8361c7ef1dddd481ca5877a209a8b8ff5c..c481d40d79b6397b7f1d571bd9f6ae5c
  
  bool IsWorkerGlobal(JSObject* global);
 diff --git a/dom/workers/WorkerPrivate.cpp b/dom/workers/WorkerPrivate.cpp
-index 5d918a82708a26125f7322e43f6436d7eafaa812..b230baead02e05d87a211c276066ec7939ea8251 100644
+index e19f398e2672a6ffe07f53c820dd53c3210dd8b1..8dba789845e910986d3240f317a8749a37cd50b6 100644
 --- a/dom/workers/WorkerPrivate.cpp
 +++ b/dom/workers/WorkerPrivate.cpp
-@@ -736,6 +736,18 @@ class UpdateContextOptionsRunnable final : public WorkerControlRunnable {
+@@ -755,6 +755,18 @@ class UpdateContextOptionsRunnable final : public WorkerControlRunnable {
    }
  };
  
@@ -1994,7 +1895,7 @@ index 5d918a82708a26125f7322e43f6436d7eafaa812..b230baead02e05d87a211c276066ec79
  class UpdateLanguagesRunnable final : public WorkerThreadRunnable {
    nsTArray<nsString> mLanguages;
  
-@@ -2159,6 +2171,16 @@ void WorkerPrivate::UpdateContextOptions(
+@@ -2401,6 +2413,16 @@ void WorkerPrivate::UpdateContextOptions(
    }
  }
  
@@ -2011,7 +1912,7 @@ index 5d918a82708a26125f7322e43f6436d7eafaa812..b230baead02e05d87a211c276066ec79
  void WorkerPrivate::UpdateLanguages(const nsTArray<nsString>& aLanguages) {
    AssertIsOnParentThread();
  
-@@ -5946,6 +5968,15 @@ void WorkerPrivate::UpdateContextOptionsInternal(
+@@ -6374,6 +6396,15 @@ void WorkerPrivate::UpdateContextOptionsInternal(
    }
  }
  
@@ -2028,10 +1929,10 @@ index 5d918a82708a26125f7322e43f6436d7eafaa812..b230baead02e05d87a211c276066ec79
      const nsTArray<nsString>& aLanguages) {
    WorkerGlobalScope* globalScope = GlobalScope();
 diff --git a/dom/workers/WorkerPrivate.h b/dom/workers/WorkerPrivate.h
-index 7bccdc8c0c2cd53f7aa7a6d9a74435344dd27980..86bba2128a7c0f4e5efa4bfbc939937aec146695 100644
+index d887a9ca510730aef61d71c6f8b2e58c3762e5df..7ffe86c8ec792558e3d83e5b7ca8fccd39147385 100644
 --- a/dom/workers/WorkerPrivate.h
 +++ b/dom/workers/WorkerPrivate.h
-@@ -443,6 +443,8 @@ class WorkerPrivate final
+@@ -453,6 +453,8 @@ class WorkerPrivate final
    void UpdateContextOptionsInternal(JSContext* aCx,
                                      const JS::ContextOptions& aContextOptions);
  
@@ -2040,7 +1941,7 @@ index 7bccdc8c0c2cd53f7aa7a6d9a74435344dd27980..86bba2128a7c0f4e5efa4bfbc939937a
    void UpdateLanguagesInternal(const nsTArray<nsString>& aLanguages);
  
    void UpdateJSWorkerMemoryParameterInternal(JSContext* aCx, JSGCParamKey key,
-@@ -1091,6 +1093,8 @@ class WorkerPrivate final
+@@ -1099,6 +1101,8 @@ class WorkerPrivate final
  
    void UpdateContextOptions(const JS::ContextOptions& aContextOptions);
  
@@ -2102,10 +2003,10 @@ index 523e84c8c93f4221701f90f2e8ee146ec8e1adbd..98d5b1176e5378431b859a2dbd4d4e77
  inline ClippedTime TimeClip(double time);
  
 diff --git a/js/src/debugger/Object.cpp b/js/src/debugger/Object.cpp
-index b7ea4b6f66d14db0324397cdc1b0ed8c5ea167e2..1c59e328079e7e43b65f7cb7bc31636a48a93263 100644
+index 2d177b5aade6d158e9ae62d317d5155b72cdcf84..28af5d41eb06d4b33cd5f86484dc29c923308835 100644
 --- a/js/src/debugger/Object.cpp
 +++ b/js/src/debugger/Object.cpp
-@@ -2484,7 +2484,11 @@ Maybe<Completion> DebuggerObject::call(JSContext* cx,
+@@ -2516,7 +2516,11 @@ Maybe<Completion> DebuggerObject::call(JSContext* cx,
          invokeArgs[i].set(args2[i]);
        }
  
@@ -2273,10 +2174,10 @@ index 4bfd336ddcbee8004ac538ca7b7d8216d04a61c3..cd22351c4aeacea8afc9828972222aca
        // No boxes to return
        return;
 diff --git a/layout/base/PresShell.cpp b/layout/base/PresShell.cpp
-index e8fb3a8304b27814e6e84355f24410c820667f9d..211c86fe55b8b650e40275a427b30a1ee8a9a3d7 100644
+index 1922382f924e74dde81501540d38699dcf3d9e57..c05b9ed071a9a4c99e2afb28eef0dba376777976 100644
 --- a/layout/base/PresShell.cpp
 +++ b/layout/base/PresShell.cpp
-@@ -11512,7 +11512,9 @@ bool PresShell::ComputeActiveness() const {
+@@ -11881,7 +11881,9 @@ bool PresShell::ComputeActiveness() const {
      if (!browserChild->IsVisible()) {
        MOZ_LOG(gLog, LogLevel::Debug,
                (" > BrowserChild %p is not visible", browserChild));
@@ -2288,7 +2189,7 @@ index e8fb3a8304b27814e6e84355f24410c820667f9d..211c86fe55b8b650e40275a427b30a1e
  
      // If the browser is visible but just due to be preserving layers
 diff --git a/layout/base/nsLayoutUtils.cpp b/layout/base/nsLayoutUtils.cpp
-index 315d532eab56dab13b6c8bc2380a5cda2a17ffc1..7c4552137149e8c7fc9ac08a09bd4242952b53b6 100644
+index bc5b7ab177070178d1a3c49b563df0f04860e7d3..393f694c766bec5e5443d91922a8bc3524ade676 100644
 --- a/layout/base/nsLayoutUtils.cpp
 +++ b/layout/base/nsLayoutUtils.cpp
 @@ -708,6 +708,10 @@ bool nsLayoutUtils::AllowZoomingForDocument(
@@ -2302,7 +2203,7 @@ index 315d532eab56dab13b6c8bc2380a5cda2a17ffc1..7c4552137149e8c7fc9ac08a09bd4242
    // True if we allow zooming for all documents on this platform, or if we are
    // in RDM.
    BrowsingContext* bc = aDocument->GetBrowsingContext();
-@@ -9770,6 +9774,9 @@ void nsLayoutUtils::ComputeSystemFont(nsFont* aSystemFont,
+@@ -9773,6 +9777,9 @@ void nsLayoutUtils::ComputeSystemFont(nsFont* aSystemFont,
  
  /* static */
  bool nsLayoutUtils::ShouldHandleMetaViewport(const Document* aDocument) {
@@ -2313,10 +2214,10 @@ index 315d532eab56dab13b6c8bc2380a5cda2a17ffc1..7c4552137149e8c7fc9ac08a09bd4242
    return StaticPrefs::dom_meta_viewport_enabled() || (bc && bc->InRDMPane());
  }
 diff --git a/layout/style/GeckoBindings.h b/layout/style/GeckoBindings.h
-index c7cf59c2661c7e203384c9b82789879f756b44b7..21e32dab4e60112c073bdd5070a308da2b4e0373 100644
+index 4cdceba041ddc5af98982d27b6e622a0dd5d0e34..50f644a91923e529ff06a164256f5704e5c4d8ae 100644
 --- a/layout/style/GeckoBindings.h
 +++ b/layout/style/GeckoBindings.h
-@@ -596,6 +596,7 @@ float Gecko_MediaFeatures_GetResolution(const mozilla::dom::Document*);
+@@ -594,6 +594,7 @@ float Gecko_MediaFeatures_GetResolution(const mozilla::dom::Document*);
  bool Gecko_MediaFeatures_PrefersReducedMotion(const mozilla::dom::Document*);
  bool Gecko_MediaFeatures_PrefersReducedTransparency(
      const mozilla::dom::Document*);
@@ -2325,10 +2226,10 @@ index c7cf59c2661c7e203384c9b82789879f756b44b7..21e32dab4e60112c073bdd5070a308da
      const mozilla::dom::Document*);
  mozilla::StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
 diff --git a/layout/style/nsMediaFeatures.cpp b/layout/style/nsMediaFeatures.cpp
-index ca382a3cfba8ce5839890d6e4cb3cf9789287e3b..5800fc23dc77ee5764beddd6fa48a7fd701d2939 100644
+index d843c5952e273c64703af6e9f2528798e3ada307..50dcfd6839777dd0ed9f806dfac3e1a4b0102efa 100644
 --- a/layout/style/nsMediaFeatures.cpp
 +++ b/layout/style/nsMediaFeatures.cpp
-@@ -264,11 +264,7 @@ bool Gecko_MediaFeatures_MatchesPlatform(StylePlatform aPlatform) {
+@@ -268,11 +268,7 @@ bool Gecko_MediaFeatures_MatchesPlatform(StylePlatform aPlatform) {
  }
  
  bool Gecko_MediaFeatures_PrefersReducedMotion(const Document* aDocument) {
@@ -2341,7 +2242,7 @@ index ca382a3cfba8ce5839890d6e4cb3cf9789287e3b..5800fc23dc77ee5764beddd6fa48a7fd
  }
  
  bool Gecko_MediaFeatures_PrefersReducedTransparency(const Document* aDocument) {
-@@ -293,6 +289,20 @@ StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
+@@ -297,6 +293,20 @@ StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
  // as a signal.
  StylePrefersContrast Gecko_MediaFeatures_PrefersContrast(
      const Document* aDocument) {
@@ -2363,10 +2264,10 @@ index ca382a3cfba8ce5839890d6e4cb3cf9789287e3b..5800fc23dc77ee5764beddd6fa48a7fd
      return StylePrefersContrast::NoPreference;
    }
 diff --git a/netwerk/base/LoadInfo.cpp b/netwerk/base/LoadInfo.cpp
-index 1ec2c64193206d31702e22e5c4783f084b1cff31..fb463eb12ee39cd1e448369f3b47fbcfbb2473b9 100644
+index c9d6cace8de545779ae9c4630973c5a920cd52c6..032a42b732179a951181f390199c2520fecd742b 100644
 --- a/netwerk/base/LoadInfo.cpp
 +++ b/netwerk/base/LoadInfo.cpp
-@@ -696,7 +696,8 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
+@@ -792,7 +792,8 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
            rhs.mHasInjectedCookieForCookieBannerHandling),
        mSchemelessInput(rhs.mSchemelessInput),
        mHttpsUpgradeTelemetry(rhs.mHttpsUpgradeTelemetry),
@@ -2376,8 +2277,8 @@ index 1ec2c64193206d31702e22e5c4783f084b1cff31..fb463eb12ee39cd1e448369f3b47fbcf
  }
  
  LoadInfo::LoadInfo(
-@@ -2534,4 +2535,16 @@ LoadInfo::SetSkipHTTPSUpgrade(bool aSkipHTTPSUpgrade) {
-   return NS_OK;
+@@ -2705,4 +2706,16 @@ void LoadInfo::UpdateParentAddressSpaceInfo() {
+   }
  }
  
 +NS_IMETHODIMP
@@ -2394,23 +2295,23 @@ index 1ec2c64193206d31702e22e5c4783f084b1cff31..fb463eb12ee39cd1e448369f3b47fbcf
 +
  }  // namespace mozilla::net
 diff --git a/netwerk/base/LoadInfo.h b/netwerk/base/LoadInfo.h
-index 93cc8d3630f7029303240555ae72d41b68047375..8a09863af399e25ba3f01caff2f6b3af1260e8b8 100644
+index 7946dacf862aa13da58c65aba3c72deef575dbba..eb307b58b5fda79fa44e5df94f1bcb4dfaa0a8b6 100644
 --- a/netwerk/base/LoadInfo.h
 +++ b/netwerk/base/LoadInfo.h
-@@ -426,6 +426,8 @@ class LoadInfo final : public nsILoadInfo {
+@@ -448,6 +448,8 @@ class LoadInfo final : public nsILoadInfo {
  
    bool mIsNewWindowTarget = false;
    bool mSkipHTTPSUpgrade = false;
 +
 +  uint64_t mJugglerLoadIdentifier = 0;
  };
- 
  // This is exposed solely for testing purposes and should not be used outside of
+ // LoadInfo
 diff --git a/netwerk/base/TRRLoadInfo.cpp b/netwerk/base/TRRLoadInfo.cpp
-index d1650595f8cf28a704f94a99c1f6bfe1deb9cc77..2072a3990ff6f4496626dcebb277291ad845cac3 100644
+index dd8cc849fb3dd56d6e979cc3cbff96727f702d90..dd2d543977cd9543494c52e862552831d955fdb2 100644
 --- a/netwerk/base/TRRLoadInfo.cpp
 +++ b/netwerk/base/TRRLoadInfo.cpp
-@@ -950,5 +950,15 @@ TRRLoadInfo::GetFetchDestination(nsACString& aDestination) {
+@@ -973,5 +973,15 @@ TRRLoadInfo::GetFetchDestination(nsACString& aDestination) {
    return NS_ERROR_NOT_IMPLEMENTED;
  }
  
@@ -2427,10 +2328,10 @@ index d1650595f8cf28a704f94a99c1f6bfe1deb9cc77..2072a3990ff6f4496626dcebb277291a
  }  // namespace net
  }  // namespace mozilla
 diff --git a/netwerk/base/nsILoadInfo.idl b/netwerk/base/nsILoadInfo.idl
-index 774ec045c0b18310e8cb86e8a9d6b1788d028435..cbf303a0ed872c27d580b4b6615f3dd9c76a8a19 100644
+index 1cfda408c33c16c75a74ea839ae3bde6142ac92b..b3951bc2df4d448e6c3b7e51bef2c0050e97a35d 100644
 --- a/netwerk/base/nsILoadInfo.idl
 +++ b/netwerk/base/nsILoadInfo.idl
-@@ -1626,4 +1626,6 @@ interface nsILoadInfo : nsISupports
+@@ -1650,4 +1650,6 @@ interface nsILoadInfo : nsISupports
        return static_cast<mozilla::dom::UserNavigationInvolvement>(userNavigationInvolvement);
      }
  %}
@@ -2459,10 +2360,10 @@ index 7f91d2df6f8bb4020c75c132dc8f6bf26625fa1e..aaa5541a17039d6b13ad83ab176fdaaf
       * Set the status and reason for the forthcoming synthesized response.
       * Multiple calls overwrite existing values.
 diff --git a/netwerk/ipc/DocumentLoadListener.cpp b/netwerk/ipc/DocumentLoadListener.cpp
-index 771ae1fbe3d54aa25443eea675cf3abd26a21ce9..a916cb49c16dc6c7809ccbb7c8d4172446a5ac07 100644
+index c486793f79e2c8c248e25f7963ba4e2c08f553d2..f1e625c59ec79c1104fe9594dbf86d39f3293438 100644
 --- a/netwerk/ipc/DocumentLoadListener.cpp
 +++ b/netwerk/ipc/DocumentLoadListener.cpp
-@@ -177,6 +177,7 @@ static auto CreateDocumentLoadInfo(CanonicalBrowsingContext* aBrowsingContext,
+@@ -178,6 +178,7 @@ static auto CreateDocumentLoadInfo(CanonicalBrowsingContext* aBrowsingContext,
    loadInfo->SetTextDirectiveUserActivation(
        aLoadState->GetTextDirectiveUserActivation());
    loadInfo->SetIsMetaRefresh(aLoadState->IsMetaRefresh());
@@ -2516,7 +2417,7 @@ index fbf4bdf1e24d1102df113984be6c8dc3a7d0d810..787bf014d3bf0b8537f99bf5eb4074e1
 +  // As they are intercepted by Playwright, they don't have
 +  // serviceWorkerTainting as well.
 +  // Thus these asserts are wrong for Playwright world.
-+  // Note: these checks were added in https://github.com/mozilla/gecko-dev/commit/92e2cdde79c11510c3e4192e1b6264d00398ed95
++  // Note: these checks were added in https://github.com/mozilla-firefox/firefox/commit/bb16ca6496682c3b0ddd452d0dd4c1dd46ff71f8
 +  /*
    MOZ_ASSERT_IF(!mLoadInfo->GetServiceWorkerTaintingSynthesized(),
                  mLoadInfo->GetLoadingPrincipal());
@@ -2544,7 +2445,7 @@ index 704404c9f094640ad63b685d64bd5a396e733e4b..92bdc21b4d6a015cc2f2bb22781ec675
     *  InterceptionTimeStamps is used to record the time stamps of the
     *  interception.
 diff --git a/netwerk/protocol/http/nsHttpChannel.cpp b/netwerk/protocol/http/nsHttpChannel.cpp
-index e4479400a4c574f652befbee7d83bd664aa2b840..2761dce9477f7f1622a82fe1da6472597ae82534 100644
+index af4c6482ad41ad67f41b93183c94d6f341fb4989..0a18827e53760b4132381fd0aff286ee69c460e7 100644
 --- a/netwerk/protocol/http/nsHttpChannel.cpp
 +++ b/netwerk/protocol/http/nsHttpChannel.cpp
 @@ -688,11 +688,9 @@ nsresult nsHttpChannel::OnBeforeConnect() {
@@ -2612,7 +2513,7 @@ index e4479400a4c574f652befbee7d83bd664aa2b840..2761dce9477f7f1622a82fe1da647259
      return;
    }
  
-@@ -4214,9 +4206,6 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(bool isHttps) {
+@@ -4198,9 +4190,6 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(bool isHttps) {
    uint32_t cacheEntryOpenFlags;
    bool offline = gIOService->IsOffline();
  
@@ -2622,7 +2523,7 @@ index e4479400a4c574f652befbee7d83bd664aa2b840..2761dce9477f7f1622a82fe1da647259
    bool maybeRCWN = false;
  
    nsAutoCString cacheControlRequestHeader;
-@@ -4227,7 +4216,7 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(bool isHttps) {
+@@ -4211,7 +4200,7 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(bool isHttps) {
      return NS_OK;
    }
  
@@ -2631,7 +2532,7 @@ index e4479400a4c574f652befbee7d83bd664aa2b840..2761dce9477f7f1622a82fe1da647259
    if (offline || (mLoadFlags & INHIBIT_CACHING) || forceOffline) {
      if (BYPASS_LOCAL_CACHE(mLoadFlags, LoadPreferCacheLoadOverBypass()) &&
          !offline && !forceOffline) {
-@@ -7300,6 +7289,20 @@ void nsHttpChannel::MaybeStartDNSPrefetch() {
+@@ -7315,6 +7304,20 @@ void nsHttpChannel::MaybeStartDNSPrefetch() {
    }
  }
  
@@ -2653,10 +2554,10 @@ index e4479400a4c574f652befbee7d83bd664aa2b840..2761dce9477f7f1622a82fe1da647259
  nsHttpChannel::GetEncodedBodySize(uint64_t* aEncodedBodySize) {
    if (mCacheEntry && !LoadCacheEntryIsWriteOnly()) {
 diff --git a/netwerk/protocol/http/nsHttpChannel.h b/netwerk/protocol/http/nsHttpChannel.h
-index cb8b8b7406411edceb30aa53c9b9007a38058f84..ebdc5384ca20feda399b70532a3036174f1a7431 100644
+index fb16e050efea8d49cd315203bfc6a0779f34bb02..c7b5a9894cb993bd420a5407c1aefb4aacd35595 100644
 --- a/netwerk/protocol/http/nsHttpChannel.h
 +++ b/netwerk/protocol/http/nsHttpChannel.h
-@@ -307,6 +307,10 @@ class nsHttpChannel final : public HttpBaseChannel,
+@@ -303,6 +303,10 @@ class nsHttpChannel final : public HttpBaseChannel,
    void MaybeResolveProxyAndBeginConnect();
    void MaybeStartDNSPrefetch();
  
@@ -2668,10 +2569,10 @@ index cb8b8b7406411edceb30aa53c9b9007a38058f84..ebdc5384ca20feda399b70532a303617
    // end server host name.
    ProxyDNSStrategy GetProxyDNSStrategy();
 diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
-index d3b44cc62d3df49bbf842356cbdb153c82c3163c..23cf9bc83fb1faaf1c7406331b78e522b307cbf0 100644
+index 324d71a1567ef2acbd5e9a008961e39a11445419..e76d57612f318b7ad325196684e2e57660008a94 100644
 --- a/parser/html/nsHtml5TreeOpExecutor.cpp
 +++ b/parser/html/nsHtml5TreeOpExecutor.cpp
-@@ -1349,6 +1349,10 @@ void nsHtml5TreeOpExecutor::UpdateReferrerInfoFromMeta(
+@@ -1359,6 +1359,10 @@ void nsHtml5TreeOpExecutor::UpdateReferrerInfoFromMeta(
  void nsHtml5TreeOpExecutor::AddSpeculationCSP(const nsAString& aCSP) {
    NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
  
@@ -2683,80 +2584,20 @@ index d3b44cc62d3df49bbf842356cbdb153c82c3163c..23cf9bc83fb1faaf1c7406331b78e522
    nsCOMPtr<nsIContentSecurityPolicy> preloadCsp = mDocument->GetPreloadCsp();
    if (!preloadCsp) {
 diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
-index 8413eb5916f1f857e18972a14292d14f32684aee..66a3c7b01fdc56c29d789ff786aa91d8b0f02cd6 100644
+index 0ecf2c0df3aad52e004a69b4c7a22fea7532b4d8..f5982c2cf1d6ea0522ac7f7e1fb5b4ab8fa07cb4 100644
 --- a/security/manager/ssl/nsCertOverrideService.cpp
 +++ b/security/manager/ssl/nsCertOverrideService.cpp
-@@ -433,7 +433,12 @@ nsCertOverrideService::HasMatchingOverride(
-   bool disableAllSecurityCheck = false;
-   {
-     MutexAutoLock lock(mMutex);
--    disableAllSecurityCheck = mDisableAllSecurityCheck;
-+    if (aOriginAttributes.mUserContextId) {
-+      disableAllSecurityCheck = mUserContextIdsWithDisabledSecurityChecks.has(
-+          aOriginAttributes.mUserContextId);
-+    } else {
-+      disableAllSecurityCheck = mDisableAllSecurityCheck;
-+    }
-   }
-   if (disableAllSecurityCheck) {
-     *aIsTemporary = false;
-@@ -645,14 +650,24 @@ static bool IsDebugger() {
+@@ -627,6 +627,8 @@ void nsCertOverrideService::CountPermanentOverrideTelemetry(
+ }
  
- NS_IMETHODIMP
- nsCertOverrideService::
--    SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
--  if (!(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
-+    SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(
-+      bool aDisable, uint32_t aUserContextId) {
-+  if (false /* juggler hacks */ && !(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
-     return NS_ERROR_NOT_AVAILABLE;
-   }
- 
-   {
-     MutexAutoLock lock(mMutex);
--    mDisableAllSecurityCheck = aDisable;
-+    if (aUserContextId) {
-+      if (aDisable) {
-+        mozilla::Unused << mUserContextIdsWithDisabledSecurityChecks.put(aUserContextId);
-+      } else {
-+        mUserContextIdsWithDisabledSecurityChecks.remove(aUserContextId);
-+      }
-+      return NS_OK;
-+    } else {
-+      mDisableAllSecurityCheck = aDisable;
-+    }
-   }
- 
-   nsCOMPtr<nsINSSComponent> nss(do_GetService(PSM_COMPONENT_CONTRACTID));
-diff --git a/security/manager/ssl/nsCertOverrideService.h b/security/manager/ssl/nsCertOverrideService.h
-index 21cff56300db6490cf9649aa62099cb5525749b3..ce9a7fc16c2d5980be166e0f4ab9a25df300ca2f 100644
---- a/security/manager/ssl/nsCertOverrideService.h
-+++ b/security/manager/ssl/nsCertOverrideService.h
-@@ -118,6 +118,7 @@ class nsCertOverrideService final : public nsICertOverrideService,
- 
-   mozilla::Mutex mMutex;
-   bool mDisableAllSecurityCheck MOZ_GUARDED_BY(mMutex);
-+  mozilla::HashSet<uint32_t> mUserContextIdsWithDisabledSecurityChecks MOZ_GUARDED_BY(mMutex);
-   nsCOMPtr<nsIFile> mSettingsFile MOZ_GUARDED_BY(mMutex);
-   nsTHashtable<nsCertOverrideEntry> mSettingsTable MOZ_GUARDED_BY(mMutex);
- 
-diff --git a/security/manager/ssl/nsICertOverrideService.idl b/security/manager/ssl/nsICertOverrideService.idl
-index 6dfd07d6b676a99993408921de8dea9d561f201d..e3c6794363cd6336effbeac83a179f3796dd71b0 100644
---- a/security/manager/ssl/nsICertOverrideService.idl
-+++ b/security/manager/ssl/nsICertOverrideService.idl
-@@ -137,7 +137,9 @@ interface nsICertOverrideService : nsISupports {
-    *  @param aDisable If true, disable all security check and make
-    *                  hasMatchingOverride always return true.
-    */
--  void setDisableAllSecurityChecksAndLetAttackersInterceptMyData(in boolean aDisable);
-+  void setDisableAllSecurityChecksAndLetAttackersInterceptMyData(
-+      in boolean aDisable,
-+      [optional] in uint32_t aUserContextId);
- 
-   readonly attribute boolean securityCheckDisabled;
- };
+ static bool IsDebugger() {
++  // In playwright world, this is always enabled.
++  if (1 == 1) return true;
+ #ifdef ENABLE_WEBDRIVER
+   nsCOMPtr<nsIMarionette> marionette = do_GetService(NS_MARIONETTE_CONTRACTID);
+   if (marionette) {
 diff --git a/services/settings/Utils.sys.mjs b/services/settings/Utils.sys.mjs
-index d3643aedf21a26594268a47bc0f6ac53e3977f75..795c6f3b28278b9f65a596799d4e424880fcffa7 100644
+index cbdf07bcdae11de6f59e6c6c279833aca430dc70..6840c78350ccb52e99f23446b010abc2a1d92a55 100644
 --- a/services/settings/Utils.sys.mjs
 +++ b/services/settings/Utils.sys.mjs
 @@ -97,7 +97,7 @@ const _cdnURLs = {};
@@ -2793,10 +2634,10 @@ index 75555352b8a15a50e4a21e34fc8ede4e9246c7cc..72855a404effa42b6c55cd0c2fcb8bdd
      // ignored for Linux.
      const unsigned long CHROME_SUPPRESS_ANIMATION     = 1 << 24;
 diff --git a/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs b/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs
-index 76fb919603e8d2b7864d351eb47be2a38e40e31e..9f1e880fe9027d1a2540ffeaa11fc0c4e1a36133 100644
+index 3d8837cdb38fb5b25abfb9e3e369ad6fe688706e..867ce2efaa10eaea87ffeeb2669cc5a7be0045b3 100644
 --- a/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs
 +++ b/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.sys.mjs
-@@ -108,7 +108,9 @@ EnterprisePoliciesManager.prototype = {
+@@ -106,7 +106,9 @@ EnterprisePoliciesManager.prototype = {
        Services.prefs.clearUserPref(PREF_POLICIES_APPLIED);
      }
  
@@ -2807,7 +2648,7 @@ index 76fb919603e8d2b7864d351eb47be2a38e40e31e..9f1e880fe9027d1a2540ffeaa11fc0c4
  
      if (provider.failed) {
        this.status = Ci.nsIEnterprisePolicies.FAILED;
-@@ -631,6 +633,19 @@ class JSONPoliciesProvider {
+@@ -606,6 +608,19 @@ class JSONPoliciesProvider {
    }
  }
  
@@ -2828,10 +2669,10 @@ index 76fb919603e8d2b7864d351eb47be2a38e40e31e..9f1e880fe9027d1a2540ffeaa11fc0c4
    constructor() {
      this._policies = null;
 diff --git a/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp b/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp
-index 253171bed4dea54fc28bb4ddc9920823dbd9351c..6dc0e620b399ed9ee6b53f97bc080ec17ee4e1b5 100644
+index 7dc1cee243017e1647521b021424781532552d8c..47908d73a7a39a7f95ae8ea28362b4f29505508f 100644
 --- a/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp
 +++ b/toolkit/components/resistfingerprinting/nsUserCharacteristics.cpp
-@@ -490,7 +490,7 @@ void PopulateLanguages() {
+@@ -587,7 +587,7 @@ void PopulateLanguages() {
    // sufficient to only collect this information as the other properties are
    // just reformats of Navigator::GetAcceptLanguages.
    nsTArray<nsString> languages;
@@ -2841,7 +2682,7 @@ index 253171bed4dea54fc28bb4ddc9920823dbd9351c..6dc0e620b399ed9ee6b53f97bc080ec1
  
    for (const auto& language : languages) {
 diff --git a/toolkit/components/startup/nsAppStartup.cpp b/toolkit/components/startup/nsAppStartup.cpp
-index dc0826f72134b91482e30d183ddf52e95146e12f..119a324e162b6965ddd3d6b2d53bd2856a174452 100644
+index 316a86d5fcadba99918254ba132f363fb462cc3f..9dcd1b208ffd2d42db6c8ff52476a22791149eb4 100644
 --- a/toolkit/components/startup/nsAppStartup.cpp
 +++ b/toolkit/components/startup/nsAppStartup.cpp
 @@ -361,7 +361,7 @@ nsAppStartup::Quit(uint32_t aMode, int aExitCode, bool* aUserAllowedQuit) {
@@ -2854,7 +2695,7 @@ index dc0826f72134b91482e30d183ddf52e95146e12f..119a324e162b6965ddd3d6b2d53bd285
        if (windowEnumerator) {
          bool more;
 diff --git a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
-index 654903fadb709be976b72f36f155e23bc0622152..815b3dc24c9fda6b1db6c4666ac68904c87ac0ab 100644
+index 89f7233835b4d03e7a140ca2c75ed8db097d482d..ed7c92d30b3cd77c102467eb0f12c9f482a08fde 100644
 --- a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
 +++ b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
 @@ -174,8 +174,8 @@ nsBrowserStatusFilter::OnStateChange(nsIWebProgress* aWebProgress,
@@ -2886,10 +2727,10 @@ index 811fb16410e8cf900ad873797269e5fe715579a5..821f5b0c2af8e1dc8754cd023571d1d0
  
  /**
 diff --git a/toolkit/mozapps/update/UpdateService.sys.mjs b/toolkit/mozapps/update/UpdateService.sys.mjs
-index 40f04aeace0efd701e9454bb8dc6260dec90807e..5b70f65f3e78fc0889b15651ff203bb82e79d202 100644
+index 26d633f4f4fe9125df557ee7367809c8591d7211..6c558e8297114ac3f94ae3836c25e9edd51cc4d4 100644
 --- a/toolkit/mozapps/update/UpdateService.sys.mjs
 +++ b/toolkit/mozapps/update/UpdateService.sys.mjs
-@@ -3814,6 +3814,8 @@ export class UpdateService {
+@@ -3873,6 +3873,8 @@ export class UpdateService {
    }
  
    get disabledForTesting() {
@@ -2899,10 +2740,10 @@ index 40f04aeace0efd701e9454bb8dc6260dec90807e..5b70f65f3e78fc0889b15651ff203bb8
    }
  
 diff --git a/toolkit/toolkit.mozbuild b/toolkit/toolkit.mozbuild
-index c50b7f3932e18da9fad4b673e353974a001e78c4..708e0d75594ddcd62276d4e08c4bd5c64d7f0698 100644
+index 304c39a11bd88e0b8cf681a3c3bc5dc11ed929ec..71e57ce2164e5436fac68d696b632d120a85d6f2 100644
 --- a/toolkit/toolkit.mozbuild
 +++ b/toolkit/toolkit.mozbuild
-@@ -152,6 +152,7 @@ if CONFIG["ENABLE_WEBDRIVER"]:
+@@ -151,6 +151,7 @@ if CONFIG["ENABLE_WEBDRIVER"]:
          "/remote",
          "/testing/firefox-ui",
          "/testing/marionette",
@@ -2946,10 +2787,10 @@ index 7eb9e1104682d4eb47060654f43a1efa8b2a6bb2..a8315d6decf654b5302bea5beeea3414
    // Only run this code if LauncherProcessWin.h was included beforehand, thus
    // signalling that the hosting process should support launcher mode.
 diff --git a/uriloader/base/nsDocLoader.cpp b/uriloader/base/nsDocLoader.cpp
-index e5cc386651e192710b61858ab5625c97a02b92da..e560ad4fef232a26ce1e1b244f4ccea05f4aea71 100644
+index 444116840b68443c31d8df66699d47a582ce4622..9ae13a8462301a8a3024bffb10d9a20f9accff1d 100644
 --- a/uriloader/base/nsDocLoader.cpp
 +++ b/uriloader/base/nsDocLoader.cpp
-@@ -812,6 +812,12 @@ void nsDocLoader::DocLoaderIsEmpty(bool aFlushLayout,
+@@ -861,6 +861,12 @@ void nsDocLoader::DocLoaderIsEmpty(bool aFlushLayout,
                        ("DocLoader:%p: Firing load event for document.open\n",
                         this));
  
@@ -2963,7 +2804,7 @@ index e5cc386651e192710b61858ab5625c97a02b92da..e560ad4fef232a26ce1e1b244f4ccea0
                // nsDocumentViewer::LoadComplete that doesn't do various things
                // that are not relevant here because this wasn't an actual
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
-index e23df8e6f982ea71eb1f07dd677ed13109d2831b..d98f49d34a346113fd0ed5c242d5ef228ea0e0cd 100644
+index 7cd8c24d871465bc96fe7249eb9a41c999057eb5..02b3ce1fbaa8056219a139a3bc3f107343f9bb89 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
 @@ -112,6 +112,7 @@
@@ -3000,7 +2841,7 @@ index e23df8e6f982ea71eb1f07dd677ed13109d2831b..d98f49d34a346113fd0ed5c242d5ef22
    mSaver =
        do_CreateInstance(NS_BACKGROUNDFILESAVERSTREAMLISTENER_CONTRACTID, &rv);
    NS_ENSURE_SUCCESS(rv, rv);
-@@ -1672,7 +1684,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1671,7 +1683,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
      return NS_OK;
    }
  
@@ -3038,7 +2879,7 @@ index e23df8e6f982ea71eb1f07dd677ed13109d2831b..d98f49d34a346113fd0ed5c242d5ef22
    if (NS_FAILED(rv)) {
      nsresult transferError = rv;
  
-@@ -1733,6 +1774,9 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1732,6 +1773,9 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
  
    bool alwaysAsk = true;
    mMimeInfo->GetAlwaysAskBeforeHandling(&alwaysAsk);
@@ -3048,7 +2889,7 @@ index e23df8e6f982ea71eb1f07dd677ed13109d2831b..d98f49d34a346113fd0ed5c242d5ef22
    if (alwaysAsk) {
      // But we *don't* ask if this mimeInfo didn't come from
      // our user configuration datastore and the user has said
-@@ -2249,6 +2293,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
+@@ -2248,6 +2292,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
      NotifyTransfer(aStatus);
    }
  
@@ -3065,7 +2906,7 @@ index e23df8e6f982ea71eb1f07dd677ed13109d2831b..d98f49d34a346113fd0ed5c242d5ef22
    return NS_OK;
  }
  
-@@ -2732,6 +2786,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
+@@ -2731,6 +2785,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
      }
    }
  
@@ -3082,10 +2923,10 @@ index e23df8e6f982ea71eb1f07dd677ed13109d2831b..d98f49d34a346113fd0ed5c242d5ef22
    // OnStartRequest)
    mDialog = nullptr;
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.h b/uriloader/exthandler/nsExternalHelperAppService.h
-index 2dd4ff87bda3e0ba395cca168c42b37db1713ddf..83e8a3d328e325b3f50f593c9ea71692f9c7d401 100644
+index 68f240c9f9280c498900561e6cdb3bc4c4d45a38..395f54e8c47d56b0892c75a513e5828de7e4fceb 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.h
 +++ b/uriloader/exthandler/nsExternalHelperAppService.h
-@@ -258,6 +258,8 @@ class nsExternalHelperAppService : public nsIExternalHelperAppService,
+@@ -254,6 +254,8 @@ class nsExternalHelperAppService : public nsIExternalHelperAppService,
        mozilla::dom::BrowsingContext* aContentContext, bool aForceSave,
        nsIInterfaceRequestor* aWindowContext,
        nsIStreamListener** aStreamListener);
@@ -3094,7 +2935,7 @@ index 2dd4ff87bda3e0ba395cca168c42b37db1713ddf..83e8a3d328e325b3f50f593c9ea71692
  };
  
  /**
-@@ -455,6 +457,9 @@ class nsExternalAppHandler final : public nsIStreamListener,
+@@ -451,6 +453,9 @@ class nsExternalAppHandler final : public nsIStreamListener,
     * Upon successful return, both mTempFile and mSaver will be valid.
     */
    nsresult SetUpTempFile(nsIChannel* aChannel);
@@ -3148,7 +2989,7 @@ index 53ea934dd4876e4b491b724385c8fbf7d00ee6cd..0b7b88c853b21ce778d8e87fea0a2bfe
  
  /**
 diff --git a/widget/InProcessCompositorWidget.cpp b/widget/InProcessCompositorWidget.cpp
-index 1c25e9d9a101233f71e92288a0f93125b81ac1c5..22cf67b0f6e3ddd2b3ed725a314ba6a9896abd1c 100644
+index 7098db301770ecb5b9a506d7caec89d5cf63384b..aff8d7562f8a3e595a077ce8e591008762479587 100644
 --- a/widget/InProcessCompositorWidget.cpp
 +++ b/widget/InProcessCompositorWidget.cpp
 @@ -4,7 +4,10 @@
@@ -3176,10 +3017,10 @@ index 1c25e9d9a101233f71e92288a0f93125b81ac1c5..22cf67b0f6e3ddd2b3ed725a314ba6a9
  }
  #endif
 diff --git a/widget/MouseEvents.h b/widget/MouseEvents.h
-index 5ca1a6fa13233b1bd00ee0467732c5875c51d343..0d3b8ebe127e59516802e8819f4bbed961f0992b 100644
+index 8004d6fe2130246252e57198f2ea731f84d1968a..7a0774b8320741108dc209c3b7069f524b1360ca 100644
 --- a/widget/MouseEvents.h
 +++ b/widget/MouseEvents.h
-@@ -368,6 +368,9 @@ class WidgetMouseEvent : public WidgetMouseEventBase,
+@@ -375,6 +375,9 @@ class WidgetMouseEvent : public WidgetMouseEventBase,
    // Otherwise, this must be 0.
    uint32_t mClickCount = 0;
  
@@ -3189,7 +3030,7 @@ index 5ca1a6fa13233b1bd00ee0467732c5875c51d343..0d3b8ebe127e59516802e8819f4bbed9
    // Whether the event should ignore scroll frame bounds during dispatch.
    bool mIgnoreRootScrollFrame = false;
  
-@@ -391,6 +394,7 @@ class WidgetMouseEvent : public WidgetMouseEventBase,
+@@ -398,6 +401,7 @@ class WidgetMouseEvent : public WidgetMouseEventBase,
      mContextMenuTrigger = aEvent.mContextMenuTrigger;
      mExitFrom = aEvent.mExitFrom;
      mClickCount = aEvent.mClickCount;
@@ -3261,7 +3102,7 @@ index 24b70173c2e8bb9be9fd6255984a70efe3b14099..75ac367a1c4bb44d4b68b5f4ecc6adf5
        }
        if (aEvent.IsMeta()) {
 diff --git a/widget/gtk/nsFilePicker.cpp b/widget/gtk/nsFilePicker.cpp
-index f4bded345e95674c66e4d4ad56b50844fce0871b..321e22d334a8bbc6057ee78e77e139a2804b2403 100644
+index 02b7b185caf4a2352522c0ed4185d89b514c1738..912a270b6d87e1154d844bde2ffe6a3c2b8f3061 100644
 --- a/widget/gtk/nsFilePicker.cpp
 +++ b/widget/gtk/nsFilePicker.cpp
 @@ -21,6 +21,7 @@
@@ -3273,7 +3114,7 @@ index f4bded345e95674c66e4d4ad56b50844fce0871b..321e22d334a8bbc6057ee78e77e139a2
  #include "nsArrayEnumerator.h"
  #include "nsEnumeratorUtils.h"
 diff --git a/widget/headless/HeadlessCompositorWidget.cpp b/widget/headless/HeadlessCompositorWidget.cpp
-index bb4ee9175e66dc40de1871a7f91368fe309494a3..747625e3869882300bfbc18b184db5151dd90c1a 100644
+index bb4ee9175e66dc40de1871a7f91368fe309494a3..6814ae85038d31f1a3b1f87ba341219ffbc1e6b3 100644
 --- a/widget/headless/HeadlessCompositorWidget.cpp
 +++ b/widget/headless/HeadlessCompositorWidget.cpp
 @@ -3,6 +3,7 @@
@@ -3284,7 +3125,7 @@ index bb4ee9175e66dc40de1871a7f91368fe309494a3..747625e3869882300bfbc18b184db515
  #include "mozilla/widget/PlatformWidgetTypes.h"
  #include "HeadlessCompositorWidget.h"
  #include "VsyncDispatcher.h"
-@@ -15,9 +16,32 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
+@@ -15,9 +16,30 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
      const layers::CompositorOptions& aOptions, HeadlessWidget* aWindow)
      : CompositorWidget(aOptions),
        mWidget(aWindow),
@@ -3304,12 +3145,10 @@ index bb4ee9175e66dc40de1871a7f91368fe309494a3..747625e3869882300bfbc18b184db515
 +}
 +
 +already_AddRefed<gfx::DrawTarget> HeadlessCompositorWidget::StartRemoteDrawingInRegion(
-+    const LayoutDeviceIntRegion& aInvalidRegion,
-+    layers::BufferMode* aBufferMode) {
++    const LayoutDeviceIntRegion& aInvalidRegion) {
 +  if (!mDrawTarget)
 +    return nullptr;
 +
-+  *aBufferMode = layers::BufferMode::BUFFER_NONE;
 +  RefPtr<gfx::DrawTarget> result = mDrawTarget;
 +  return result.forget();
 +}
@@ -3317,7 +3156,7 @@ index bb4ee9175e66dc40de1871a7f91368fe309494a3..747625e3869882300bfbc18b184db515
  void HeadlessCompositorWidget::ObserveVsync(VsyncObserver* aObserver) {
    if (RefPtr<CompositorVsyncDispatcher> cvd =
            mWidget->GetCompositorVsyncDispatcher()) {
-@@ -31,6 +55,59 @@ void HeadlessCompositorWidget::NotifyClientSizeChanged(
+@@ -31,6 +53,59 @@ void HeadlessCompositorWidget::NotifyClientSizeChanged(
      const LayoutDeviceIntSize& aClientSize) {
    auto size = mClientSize.Lock();
    *size = aClientSize;
@@ -3378,7 +3217,7 @@ index bb4ee9175e66dc40de1871a7f91368fe309494a3..747625e3869882300bfbc18b184db515
  
  LayoutDeviceIntSize HeadlessCompositorWidget::GetClientSize() {
 diff --git a/widget/headless/HeadlessCompositorWidget.h b/widget/headless/HeadlessCompositorWidget.h
-index facd2bc65afab8ec1aa322faa20a67464964dfb9..d6dea95472bec6006411753c3dfdab2e3659171f 100644
+index facd2bc65afab8ec1aa322faa20a67464964dfb9..3c5751ad1b7f042bc7cd9a63895cebcd2942ccd3 100644
 --- a/widget/headless/HeadlessCompositorWidget.h
 +++ b/widget/headless/HeadlessCompositorWidget.h
 @@ -6,6 +6,7 @@
@@ -3389,7 +3228,7 @@ index facd2bc65afab8ec1aa322faa20a67464964dfb9..d6dea95472bec6006411753c3dfdab2e
  #include "mozilla/widget/CompositorWidget.h"
  
  #include "HeadlessWidget.h"
-@@ -23,8 +24,12 @@ class HeadlessCompositorWidget final : public CompositorWidget,
+@@ -23,8 +24,11 @@ class HeadlessCompositorWidget final : public CompositorWidget,
                             HeadlessWidget* aWindow);
  
    void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize);
@@ -3397,12 +3236,11 @@ index facd2bc65afab8ec1aa322faa20a67464964dfb9..d6dea95472bec6006411753c3dfdab2e
  
    // CompositorWidget Overrides
 +  already_AddRefed<gfx::DrawTarget> StartRemoteDrawingInRegion(
-+      const LayoutDeviceIntRegion& aInvalidRegion,
-+      layers::BufferMode* aBufferMode) override;
++      const LayoutDeviceIntRegion& aInvalidRegion) override;
  
    uintptr_t GetWidgetKey() override;
  
-@@ -42,10 +47,18 @@ class HeadlessCompositorWidget final : public CompositorWidget,
+@@ -42,10 +46,18 @@ class HeadlessCompositorWidget final : public CompositorWidget,
    }
  
   private:

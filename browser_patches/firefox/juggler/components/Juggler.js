@@ -65,7 +65,7 @@ export class Juggler {
   }
 
   // This flow is taken from Remote agent and Marionette.
-  // See https://github.com/mozilla/gecko-dev/blob/0c1b4921830e6af8bc951da01d7772de2fe60a08/remote/components/RemoteAgent.jsm#L302
+  // See https://github.com/mozilla-firefox/firefox/blob/35e22180b0b61413dd8eccf6c00b1c6fac073eee/remote/components/RemoteAgent.sys.mjs#L417
   async observe(subject, topic) {
     switch (topic) {
       case "profile-after-change":
