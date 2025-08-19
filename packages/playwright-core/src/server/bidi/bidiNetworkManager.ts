@@ -34,6 +34,7 @@ export class BidiNetworkManager {
   private _userRequestInterceptionEnabled: boolean = false;
   private _protocolRequestInterceptionEnabled: boolean = false;
   private _credentials: types.Credentials | undefined;
+  private _attemptedAuthentications = new Set<string>();
   private _intercepId: bidi.Network.Intercept | undefined;
 
   constructor(bidiSession: BidiSession, page: Page) {
@@ -61,7 +62,7 @@ export class BidiNetworkManager {
     if (!frame)
       return;
     if (redirectedFrom)
-      this._requests.delete(redirectedFrom._id);
+      this._deleteRequest(redirectedFrom._id);
     let route;
     if (param.intercepts) {
       // We do not support intercepting redirects.
@@ -131,7 +132,7 @@ export class BidiNetworkManager {
     if (isRedirected) {
       response._requestFinished(responseEndTime);
     } else {
-      this._requests.delete(request._id);
+      this._deleteRequest(request._id);
       response._requestFinished(responseEndTime);
     }
     response._setHttpVersion(params.response.protocol);
@@ -143,7 +144,7 @@ export class BidiNetworkManager {
     const request = this._requests.get(params.request.request);
     if (!request)
       return;
-    this._requests.delete(request._id);
+    this._deleteRequest(request._id);
     const response = request.request._existingResponse();
     if (response) {
       response.setTransferSize(null);
@@ -159,21 +160,34 @@ export class BidiNetworkManager {
     const isBasic = params.response.authChallenges?.some(challenge => challenge.scheme.startsWith('Basic'));
     const credentials = this._page.browserContext._options.httpCredentials;
     if (isBasic && credentials) {
-      this._session.sendMayFail('network.continueWithAuth', {
-        request: params.request.request,
-        action: 'provideCredentials',
-        credentials: {
-          type: 'password',
-          username: credentials.username,
-          password: credentials.password,
-        }
-      });
+      if (this._attemptedAuthentications.has(params.request.request)) {
+        this._session.sendMayFail('network.continueWithAuth', {
+          request: params.request.request,
+          action: 'cancel',
+        });
+      } else {
+        this._attemptedAuthentications.add(params.request.request);
+        this._session.sendMayFail('network.continueWithAuth', {
+          request: params.request.request,
+          action: 'provideCredentials',
+          credentials: {
+            type: 'password',
+            username: credentials.username,
+            password: credentials.password,
+          }
+        });
+      }
     } else {
       this._session.sendMayFail('network.continueWithAuth', {
         request: params.request.request,
         action: 'default',
       });
     }
+  }
+
+  _deleteRequest(requestId: string) {
+    this._requests.delete(requestId);
+    this._attemptedAuthentications.delete(requestId);
   }
 
   async setRequestInterception(value: boolean) {
