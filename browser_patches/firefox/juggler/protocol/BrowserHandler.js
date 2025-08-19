@@ -5,6 +5,7 @@
 "use strict";
 
 const {AddonManager} = ChromeUtils.importESModule("resource://gre/modules/AddonManager.sys.mjs");
+const {XPIProvider} = ChromeUtils.importESModule("resource://gre/modules/addons/XPIProvider.sys.mjs");
 const {TargetRegistry} = ChromeUtils.importESModule("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.importESModule('chrome://juggler/content/Helper.js');
 const {PageHandler} = ChromeUtils.importESModule("chrome://juggler/content/protocol/PageHandler.js");
@@ -147,6 +148,10 @@ export class BrowserHandler {
       ]);
     }
     await this._startCompletePromise;
+    await Promise.all([
+      ...XPIProvider.startupPromises,
+      ...XPIProvider.enabledAddonsStartupPromises,
+    ]);
     this._onclose();
     Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
   }
@@ -166,7 +171,9 @@ export class BrowserHandler {
   ['Browser.clearCache']() {
     // Clearing only the context cache does not work: https://bugzilla.mozilla.org/show_bug.cgi?id=1819147
     Services.cache2.clear();
-    ChromeUtils.clearStyleSheetCache();
+    ChromeUtils.clearResourceCache({
+      types: ["stylesheet"],
+    });
   }
 
   ['Browser.setHTTPCredentials']({browserContextId, credentials}) {

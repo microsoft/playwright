@@ -236,16 +236,18 @@ const NSActivityOptions ActivityOptions =
         configuration.preferences._mediaDevicesEnabled = YES;
         configuration.preferences._mockCaptureDevicesEnabled = YES;
         // Enable WebM support.
-        configuration.preferences._alternateWebMPlayerEnabled = YES;
         configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
         configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
         configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
         configuration.preferences._domTimersThrottlingEnabled = NO;
         // Do not auto play audio and video with sound.
         configuration.defaultWebpagePreferences._autoplayPolicy = _WKWebsiteAutoplayPolicyAllowWithoutSound;
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
         processConfiguration.forceOverlayScrollbars = YES;
         configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
+        #pragma clang diagnostic pop
     }
     return configuration;
 }
@@ -288,7 +290,10 @@ const NSActivityOptions ActivityOptions =
             continue;
         WKWebViewConfiguration *configuration = [[[self defaultConfiguration] copy] autorelease];
         configuration.websiteDataStore = [browserContext dataStore];
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         configuration.processPool = [browserContext processPool];
+        #pragma clang diagnostic pop
         return configuration;
     }
     return [self defaultConfiguration];
@@ -347,8 +352,11 @@ const NSActivityOptions ActivityOptions =
 - (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer WithBypassList:(NSString *) proxyBypassList
 {
     _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
     processConfiguration.forceOverlayScrollbars = YES;
+    #pragma clang diagnostic pop
     _WKWebsiteDataStoreConfiguration *dataStoreConfiguration = [[[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration] autorelease];
     if (!proxyServer || ![proxyServer length])
         proxyServer = _proxyServer;
@@ -356,7 +364,10 @@ const NSActivityOptions ActivityOptions =
         proxyBypassList = _proxyBypassList;
     [dataStoreConfiguration setProxyConfiguration:[self proxyConfiguration:proxyServer WithBypassList:proxyBypassList]];
     browserContext.dataStore = [[[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration] autorelease];
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
+    #pragma clang diagnostic pop
     [_browserContexts addObject:browserContext];
     return browserContext;
 }
