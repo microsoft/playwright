@@ -30,6 +30,6 @@
     "watch": "npm run esbuild -- --watch"
   },
   "dependencies": {
-    "playwright-core": "1.55.0-next"
+    "playwright-core": "1.56.0-next"
   }
 }
