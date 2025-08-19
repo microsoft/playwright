@@ -28,7 +28,7 @@ async function start() {
 
   let browserServer;
   if (existingBrowser) {
-    const browser = await playwright[browserTypeName].launch();
+    const browser = await playwright[browserTypeName].launch(launchOptions);
     const page = await browser.newPage();
     await page.setContent(existingBrowser.content);
     browserServer = await browser._launchServer();
