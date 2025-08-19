@@ -82,14 +82,14 @@ it('should work with clicking on anchor links', async ({ page, server }) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#foobar');
 });
 
-it('should work with clicking on links which do not commit navigation', async ({ page, server, httpsServer, browserName, platform }) => {
+it('should work with clicking on links which do not commit navigation', async ({ page, server, httpsServer, browserName, platform, channel }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
   const [error] = await Promise.all([
     page.waitForNavigation().catch(e => e),
     page.click('a'),
   ]);
-  expect(error.message).toMatch(expectedSSLError(browserName, platform));
+  expect(error.message).toMatch(expectedSSLError(browserName, platform, channel));
 });
 
 it('should work with history.pushState()', async ({ page, server }) => {
