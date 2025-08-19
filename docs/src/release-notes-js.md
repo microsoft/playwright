@@ -15,7 +15,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### Codegen
 
-- Automatic `toBeVisible()` statements: Codegen now generates automatic `toBeVisible()` assertions for common UI interactions. This feature can be enabled in the Codegen settings UI.
+- Automatic `toBeVisible()` assertions: Codegen can now generate automatic `toBeVisible()` assertions for common UI interactions. This feature can be enabled in the Codegen settings UI.
 
 ### Breaking Changes
 
