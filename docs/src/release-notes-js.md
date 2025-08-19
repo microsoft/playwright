@@ -19,7 +19,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### Breaking Changes
 
-- ⚠️ Dropped special support for Chromium extension manifest v2.
+- ⚠️ Dropped support for Chromium extension manifest v2.
 - ⚠️ Updated built-in Svelte support to Svelte 5 for component testing. If you're using Svelte 4, pin Playwright to a previous version.
 
 ### Browser Versions
