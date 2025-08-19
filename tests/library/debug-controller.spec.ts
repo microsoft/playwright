@@ -80,10 +80,10 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('inspectRequested', event => events.push(event));
 
-  await backend.setRecorderMode({ mode: 'inspecting' });
-
   const context = await connectedBrowser.newContextForReuse();
-  const [page] = context.pages();
+  const page = await context.newPage();
+
+  await backend.setRecorderMode({ mode: 'inspecting' });
 
   await page.setContent('<button>Submit</button>');
   await page.getByRole('button').click();
