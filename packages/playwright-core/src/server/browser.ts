@@ -170,6 +170,8 @@ export abstract class Browser extends SdkObject {
   }
 
   _didClose() {
+    console.trace('Browser.didClose (server)')
+    
     for (const context of this.contexts())
       context._browserClosed();
     if (this._defaultContext)
@@ -179,6 +181,7 @@ export abstract class Browser extends SdkObject {
   }
 
   async close(options: { reason?: string }) {
+    console.trace('Browser.close (server)')
     if (!this._startedClosing) {
       if (options.reason)
         this._closeReason = options.reason;

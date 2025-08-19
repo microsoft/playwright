@@ -179,6 +179,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
+    console.trace('Browser.close (client)')
+
     this._closeReason = options.reason;
     try {
       if (this._shouldCloseConnectionOnClose)

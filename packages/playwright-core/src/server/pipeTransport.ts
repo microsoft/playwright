@@ -35,6 +35,7 @@ export class PipeTransport implements ConnectionTransport {
     this._pipeWrite = pipeWrite;
     pipeRead.on('data', buffer => this._dispatch(buffer));
     pipeRead.on('close', () => {
+      console.trace('PipeTransport.onClose');
       this._closed = true;
       if (this._onclose)
         this._onclose.call(null);
@@ -62,6 +63,7 @@ export class PipeTransport implements ConnectionTransport {
   }
 
   close() {
+    console.trace('PipeTransport.close');
     throw new Error('unimplemented');
   }
 

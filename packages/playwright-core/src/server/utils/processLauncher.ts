@@ -207,6 +207,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   let gracefullyClosing = false;
   async function gracefullyClose(): Promise<void> {
+    console.trace('gracefullyClose')
     // We keep listeners until we are done, to handle 'exit' and 'SIGINT' while
     // asynchronously closing to prevent zombie processes. This might introduce
     // reentrancy to this function, for example user sends SIGINT second time.

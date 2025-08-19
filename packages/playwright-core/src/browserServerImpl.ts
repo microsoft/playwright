@@ -78,10 +78,13 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       throw e;
     }
 
-    return this.launchServerOnExistingBrowser(browser, options);
+    return this.launchServerOnExistingBrowser(browser, {
+      ...options,
+      _doNotCloseBrowser: true,
+    });
   }
 
-  async launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions): Promise<BrowserServer> {
+  async launchServerOnExistingBrowser(browser: Browser, options: LaunchServerOptions & { _doNotCloseBrowser: boolean }): Promise<BrowserServer> {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server

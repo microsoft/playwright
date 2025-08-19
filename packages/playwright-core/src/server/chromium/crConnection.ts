@@ -79,6 +79,7 @@ export class CRConnection extends SdkObject {
   }
 
   _onClose(reason?: string) {
+    console.trace('crConnection.onClose (server)')
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
@@ -88,6 +89,7 @@ export class CRConnection extends SdkObject {
   }
 
   close() {
+    console.trace('crConnection.close (server)')
     if (!this._closed)
       this._transport.close();
   }
