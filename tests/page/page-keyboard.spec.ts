@@ -17,6 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
+import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 
 it.skip(({ isAndroid }) => isAndroid);
 
@@ -715,7 +716,10 @@ Keyup: Escape Escape STANDARD []
 `.trim());
 });
 
-it('should close dialog on Escape key press in contenteditable', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36727' } }, async ({ page }) => {
+it('should close dialog on Escape key press in contenteditable', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36727' }
+}, async ({ page, browserName }) => {
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
   await page.setContent(`
     <dialog>
       <div contenteditable>Edit Me</div>
