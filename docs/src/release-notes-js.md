@@ -6,6 +6,35 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.55
+
+### New APIs
+
+- New Property [`property: TestStepInfo.titlePath`] Returns the full title path starting from the test file, including test and step titles.
+
+### Codegen
+
+- Automatic `toBeVisible()` assertions: Codegen can now generate automatic `toBeVisible()` assertions for common UI interactions. This feature can be enabled in the Codegen settings UI.
+
+### Breaking Changes
+
+- ⚠️ Dropped support for Chromium extension manifest v2.
+
+### Miscellaneous
+
+- Added support for Debian 13 "Trixie".
+
+### Browser Versions
+
+- Chromium 140.0.7339.16
+- Mozilla Firefox 141.0
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 139
+- Microsoft Edge 139
+
 ## Version 1.54
 
 ### Highlights
