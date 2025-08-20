@@ -57,7 +57,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   }, [action]);
   const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
-    return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
+    return (snapshot && extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot)) ?? { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
   }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot]);
 
   const snapshotUrls = React.useMemo((): SnapshotUrls | undefined => snapshotInfoUrl !== undefined ? { snapshotInfoUrl, snapshotUrl, popoutUrl } : undefined, [snapshotInfoUrl, snapshotUrl, popoutUrl]);
@@ -377,7 +377,10 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
 const serverParam = new URLSearchParams(window.location.search).get('server');
 
-export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
+export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls | undefined {
+  if (!snapshot.action.pageId)
+    return undefined;
+
   const params = new URLSearchParams();
   params.set('trace', context(snapshot.action).traceUrl);
   params.set('name', snapshot.snapshotName);
