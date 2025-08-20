@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { z } from 'zod';
 import { noColors } from 'playwright-core/lib/utils';
-import { terminalScreen } from 'playwright/lib/reporters/base';
-import ListReporter from 'playwright/lib/reporters/list';
 
-import { defineTool } from '../tool';
-import { StringWriteStream } from '../streams';
+import { z } from '../sdk/bundle';
+import { terminalScreen } from '../../reporters/base';
+import ListReporter from '../../reporters/list';
+
+import { defineTool } from './tool';
+import { StringWriteStream } from './streams';
 
 export const runTests = defineTool({
   schema: {
@@ -45,13 +46,16 @@ export const runTests = defineTool({
       stdout: stream as unknown as NodeJS.WriteStream,
       stderr: stream as unknown as NodeJS.WriteStream,
     };
-    const configDir = context.testRunner.configLocation.configDir;
+    const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
-    const result = await context.testRunner.runTests(reporter, {
+    const testRunner = await context.createTestRunner();
+    const result = await testRunner.runTests(reporter, {
       testIds: params.tests?.map(test => test.id),
+      // For automatic recovery
+      timeout: 0,
     });
-    const text = stream.content();
 
+    const text = stream.content();
     return {
       content: [
         { type: 'text', text },

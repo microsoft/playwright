@@ -64,6 +64,7 @@ export type ListTestsParams = {
 };
 
 export type RunTestsParams = {
+  timeout?: number;
   locations?: string[];
   grep?: string;
   grepInvert?: string;
@@ -301,6 +302,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
+      timeout: params.timeout,
       preserveOutputDir: true,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {

@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-export * from './inProcessTransport.js';
-export * from './proxyBackend.js';
-export * from './server.js';
-export * from './tool.js';
-export * from './transport.js';
+import type { z } from 'zod';
+import type { Context } from './context.js';
+import type * as mcp from '../sdk/exports.js';
+
+export type Tool<Input extends z.Schema = z.Schema> = {
+  schema: mcp.ToolSchema<Input>;
+  handle: (context: Context, params: z.output<Input>) => Promise<mcp.CallToolResult>;
+};
+
+export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Input> {
+  return tool;
+}
