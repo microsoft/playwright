@@ -365,7 +365,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const step = testInfo._addStep(stepInfo);
 
-      const reportStepError = (isAsync: boolean, e: Error | unknown) => {
+      const reportStepError = (e: Error | unknown) => {
         const jestError = isJestError(e) ? e : null;
         const expectError = jestError ? new ExpectError(jestError, customMessage, stackFrames) : undefined;
         if (jestError?.matcherResult.suggestedRebaseline) {
@@ -378,24 +378,10 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const error = expectError ?? e;
         step.complete({ error });
 
-        if (!isAsync || !expectError) {
-          if (this._info.isSoft)
-            testInfo._failWithError(error);
-          else
-            throw error;
-          return;
-        }
-
-        // Recoverable async failure.
-        return (async () => {
-          const recoveryResult = await step.recoverFromStepError(expectError);
-          if (recoveryResult.status === 'recovered')
-            return recoveryResult.value as any;
-          if (this._info.isSoft)
-            testInfo._failWithError(expectError);
-          else
-            throw expectError;
-        })();
+        if (this._info.isSoft)
+          testInfo._failWithError(error);
+        else
+          throw error;
       };
 
       const finalizer = () => {
@@ -407,11 +393,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const callback = () => matcher.call(target, ...args);
         const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise)
-          return result.then(finalizer).catch(reportStepError.bind(null, true));
+          return result.then(finalizer).catch(reportStepError);
         finalizer();
         return result;
       } catch (e) {
-        void reportStepError(false, e);
+        void reportStepError(e);
       }
     };
   }

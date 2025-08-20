@@ -35,11 +35,7 @@ export const snapshot = defineTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const [page] = context.pages();
-    if (!page)
-      throw new Error('No open pages available');
-
+  handle: async (page, params) => {
     const snapshot = await (page as PageEx)._snapshotForAI();
     return {
       content: [
@@ -66,11 +62,7 @@ export const pickLocator = defineTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const [page] = context.pages();
-    if (!page)
-      throw new Error('No open pages available');
-
+  handle: async (page, params) => {
     const locator = await refLocator(page, params);
     const locatorString = await generateLocator(locator);
     return {
@@ -100,11 +92,7 @@ export const evaluate = defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    const [page] = context.pages();
-    if (!page)
-      throw new Error('No open pages available');
-
+  handle: async (page, params) => {
     if (params.ref && params.element) {
       const locator = await refLocator(page, { ref: params.ref, element: params.element });
       const result = await locator.evaluate(params.function);

@@ -201,12 +201,9 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       if (!options?.internal) {
         const recoveryHandlers: RecoverFromApiErrorHandler[] = [];
         apiZone.error = e;
-        this._instrumentation.onApiCallRecovery(apiZone, e, recoveryHandlers);
-        for (const handler of recoveryHandlers) {
-          const recoverResult = await handler();
-          if (recoverResult.status === 'recovered')
-            return recoverResult.value as R;
-        }
+        this._instrumentation.onApiCallRecovery(apiZone, e, this, recoveryHandlers);
+        for (const handler of recoveryHandlers)
+          await handler();
         logApiCall(this._platform, logger, `<= ${apiZone.apiName} failed`);
         this._instrumentation.onApiCallEnd(apiZone);
       }

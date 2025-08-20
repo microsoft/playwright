@@ -31,7 +31,7 @@ import type { HttpServer, Transport } from 'playwright-core/lib/utils';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';
-import type { RecoverFromStepErrorResult, ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
+import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 const originalDebugLog = debug.log;
@@ -63,12 +63,10 @@ class TestServer {
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
-  RecoverFromStepError: 'recoverFromStepError',
 } as const;
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-  [TestRunnerEvent.RecoverFromStepError]: [stepId: string, message: string, location: reporterTypes.Location];
 };
 
 export type ListTestsParams = {
@@ -117,7 +115,6 @@ export class TestServerDispatcher implements TestServerInterface {
 
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
     this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
-    this._testRunner.on(TestRunnerEvent.RecoverFromStepError, (stepId, message, location) => this._dispatchEvent('recoverFromStepError', { stepId, message, location }));
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
@@ -140,7 +137,6 @@ export class TestServerDispatcher implements TestServerInterface {
     await this._testRunner.initialize({
       watchTestDirs: !!params.watchTestDirs,
       populateDependenciesOnList: !!params.populateDependenciesOnList,
-      recoverFromStepErrors: !!params.recoverFromStepErrors,
     });
   }
 
@@ -216,10 +212,6 @@ export class TestServerDispatcher implements TestServerInterface {
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
     const { status } = await this._testRunner.runTests(wireReporter, params);
     return { status };
-  }
-
-  async resumeAfterStepError(params: RecoverFromStepErrorResult): Promise<void> {
-    await this._testRunner.resumeAfterStepError(params);
   }
 
   async watch(params: { fileNames: string[]; }) {

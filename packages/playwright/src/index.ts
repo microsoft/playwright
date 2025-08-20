@@ -22,8 +22,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { BrowserBackend } from './mcp/browser/backend';
-import { runOnPauseBackendLoop } from './mcp/sdk/mdb';
+import { runBrowserBackendOnError } from './mcp/browser/backend';
 import { codeFrameColumns } from './transform/babelBundle';
 import { stripAnsiEscapes } from './util';
 
@@ -37,6 +36,7 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
+import type { Frame as FrameImpl } from '../../playwright-core/src/client/frame';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -290,24 +290,21 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
-      onApiCallRecovery: (data, error, recoveryHandlers) => {
-        if (!process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP)
-          return;
-
+      onApiCallRecovery: (data, error, channelOwner, recoveryHandlers) => {
         const step = data.userData;
         if (!step)
           return;
-
-        const code = createErrorCodeframe(error.message, step.location);
-
+        const page = channelToPage(channelOwner);
+        if (!page)
+          return;
         recoveryHandlers.push(async () => {
-          const [context] = playwright._allContexts();
-          const introMessage = `Paused on error:\n\n${stripAnsiEscapes(code)}\n\nTry recovering from the error prior to continuing.`;
-          await runOnPauseBackendLoop(process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP!, new BrowserBackend(context), introMessage);
-          return { status: 'recovered' };
+          await runBrowserBackendOnError(page, () => {
+            return stripAnsiEscapes(createErrorCodeframe(error.message, step.location));
+          });
         });
       },
       onApiCallEnd: data => {
+
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
         if (data.apiName === 'tracing.group')
           return;
@@ -802,6 +799,13 @@ export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
 
+function channelToPage(channelOwner: ChannelOwner): Page | undefined {
+  if (channelOwner._type === 'Page')
+    return channelOwner as PageImpl;
+  if (channelOwner._type === 'Frame')
+    return (channelOwner as FrameImpl).page();
+  return undefined;
+}
 
 function createErrorCodeframe(message: string, location: Location) {
   let source: string;

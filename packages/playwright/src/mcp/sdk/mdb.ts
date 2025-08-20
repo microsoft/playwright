@@ -121,7 +121,7 @@ export type ServerBackendOnPause = mcpServer.ServerBackend & {
   requestSelfDestruct?: () => void;
 };
 
-export async function runToolsBackend(backendFactories: mcpServer.ServerBackendFactory[], options: { port: number }): Promise<string> {
+export async function runToolsBackend(backendFactory: mcpServer.ServerBackendFactory, options: { port: number }): Promise<string> {
   const mdbBackend = new MDBBackend();
   const mdbBackendFactory = {
     name: 'Playwright MDB',
@@ -132,12 +132,10 @@ export async function runToolsBackend(backendFactories: mcpServer.ServerBackendF
 
   const mdbUrl = await startAsHttp(mdbBackendFactory, options);
 
-  for (const backendFactory of backendFactories) {
-    const backendUrl = await startAsHttp(backendFactory, { port: 0 });
-    const result = await callTool(mdbUrl, pushToolsSchema.name, { mcpUrl: backendUrl });
-    if (result.isError)
-      errorsDebug('Failed to push tools', result.content);
-  }
+  const backendUrl = await startAsHttp(backendFactory, { port: 0 });
+  const result = await callTool(mdbUrl, pushToolsSchema.name, { mcpUrl: backendUrl });
+  if (result.isError)
+    errorsDebug('Failed to push tools', result.content);
   return mdbUrl;
 }
 

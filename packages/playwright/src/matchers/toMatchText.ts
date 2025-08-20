@@ -24,6 +24,7 @@ import {
 } from './expect';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';
+import { runBrowserBackendOnError } from '../mcp/browser/backend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
@@ -111,6 +112,9 @@ export async function toMatchText(
     const hints = matcherHint(this, receiverType === 'Locator' ? receiver as Locator : undefined, matcherName, options.receiverLabel ?? 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, resultDetails, true);
     return hints + callLogText(log);
   };
+
+  if (receiverType === 'Locator')
+    await runBrowserBackendOnError((receiver as Locator).page(), message);
 
   return {
     name: matcherName,
