@@ -10,7 +10,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### New APIs
 
-- [`method: TestStepInfo.titlePath`] Returns the full title path starting from the test file, including test and step titles.
+- New Property [`property: TestStepInfo.titlePath`] Returns the full title path starting from the test file, including test and step titles.
 
 ### Codegen
 
