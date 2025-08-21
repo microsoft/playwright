@@ -20,7 +20,7 @@ import type * as playwright from '../../../index';
 
 export type Tool<Input extends z.Schema = z.Schema> = {
   schema: mcp.ToolSchema<Input>;
-  handle: (context: playwright.BrowserContext, params: z.output<Input>) => Promise<mcp.CallToolResult>;
+  handle: (page: playwright.Page, params: z.output<Input>) => Promise<mcp.CallToolResult>;
 };
 
 export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Input> {

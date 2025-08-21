@@ -18,6 +18,7 @@ import { isRegExp } from 'playwright-core/lib/utils';
 
 import { callLogText, expectTypes } from '../util';
 import { matcherHint } from './matcherHint';
+import { runBrowserBackendOnError } from '../mcp/browser/backend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
@@ -92,6 +93,9 @@ export async function toEqual<T>(
     const header = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, details, messagePreventExtraStatIndent);
     return `${header}${callLogText(log)}`;
   };
+
+  await runBrowserBackendOnError(receiver.page(), message);
+
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,
   // or create a different error message

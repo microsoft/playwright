@@ -40,20 +40,12 @@ import type { ConfigCLIOverrides } from '../common/ipc';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
 
-export type RecoverFromStepErrorResult = {
-  stepId: string;
-  status: 'recovered' | 'failed';
-  value?: string | number | boolean | undefined;
-};
-
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
-  RecoverFromStepError: 'recoverFromStepError',
 } as const;
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-  [TestRunnerEvent.RecoverFromStepError]: [stepId: string, message: string, location: reporterTypes.Location];
 };
 
 export type ListTestsParams = {
@@ -99,8 +91,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _watchTestDirs = false;
   private _populateDependenciesOnList = false;
-  private _recoverFromStepErrors = false;
-  private _resumeAfterStepErrors: Map<string, ManualPromise<RecoverFromStepErrorResult>> = new Map();
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     super();
@@ -116,11 +106,9 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   async initialize(params: {
     watchTestDirs?: boolean;
     populateDependenciesOnList?: boolean;
-    recoverFromStepErrors?: boolean;
   }) {
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
-    this._recoverFromStepErrors = !!params.recoverFromStepErrors;
   }
 
   resizeTerminal(params: { cols: number, rows: number }) {
@@ -348,33 +336,12 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...createRunTestsTasks(config),
     ];
     const testRun = new TestRun(config, reporter);
-    testRun.failureTracker.setRecoverFromStepErrorHandler(this._recoverFromStepError.bind(this));
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;
     });
     this._testRun = { run, stop };
     return { status: await run };
-  }
-
-  private async _recoverFromStepError(stepId: string, error: reporterTypes.TestError): Promise<RecoverFromStepErrorResult> {
-    if (!this._recoverFromStepErrors)
-      return { stepId, status: 'failed' };
-    const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();
-    this._resumeAfterStepErrors.set(stepId, recoveryPromise);
-    if (!error?.message || !error?.location)
-      return { stepId, status: 'failed' };
-    this.emit(TestRunnerEvent.RecoverFromStepError, stepId, error.message, error.location);
-    const recoveredResult = await recoveryPromise;
-    if (recoveredResult.stepId !== stepId)
-      return { stepId, status: 'failed' };
-    return recoveredResult;
-  }
-
-  async resumeAfterStepError(params: RecoverFromStepErrorResult): Promise<void> {
-    const recoveryPromise = this._resumeAfterStepErrors.get(params.stepId);
-    if (recoveryPromise)
-      recoveryPromise.resolve(params);
   }
 
   async watch(fileNames: string[]) {
@@ -404,7 +371,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   async stopTests() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
-    this._resumeAfterStepErrors.clear();
   }
 
   async closeGracefully() {

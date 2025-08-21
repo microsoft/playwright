@@ -18,6 +18,8 @@ import * as mcp from '../sdk/exports';
 import * as mcpBundle from '../sdk/bundle';
 import { snapshot, pickLocator, evaluate } from './tools';
 import { defineToolSchema } from '../sdk/exports';
+import { runOnPauseBackendLoop } from '../sdk/mdb';
+import { stripAnsiEscapes } from '../../util';
 
 import type { Tool } from './tool';
 import type * as playwright from '../../../index';
@@ -27,10 +29,10 @@ export class BrowserBackend implements ServerBackendOnPause {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
   private _tools: Tool<any>[] = [snapshot, pickLocator, evaluate];
-  private _context: playwright.BrowserContext;
+  private _page: playwright.Page;
 
-  constructor(context: playwright.BrowserContext) {
-    this._context = context;
+  constructor(page: playwright.Page) {
+    this._page = page;
   }
 
   async initialize() {
@@ -52,7 +54,7 @@ export class BrowserBackend implements ServerBackendOnPause {
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    return await tool.handle(this._context, parsedArguments);
+    return await tool.handle(this._page, parsedArguments);
   }
 }
 
@@ -63,3 +65,10 @@ const doneToolSchema = defineToolSchema({
   inputSchema: mcpBundle.z.object({}),
   type: 'destructive',
 });
+
+export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
+  if (!process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP)
+    return;
+  const introMessage = `Paused on error:\n\n${stripAnsiEscapes(message())}\n\nTry recovering from the error prior to continuing.`;
+  await runOnPauseBackendLoop(process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP!, new BrowserBackend(page), introMessage);
+}

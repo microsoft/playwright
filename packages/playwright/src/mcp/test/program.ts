@@ -37,7 +37,7 @@ program
         version: '0.0.0',
         create: () => new TestServerBackend(resolvedLocation),
       };
-      const mdbUrl = await runToolsBackend([backendFactory], { port: 9224 });
+      const mdbUrl = await runToolsBackend(backendFactory, { port: 9224 });
       process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP = mdbUrl;
       // eslint-disable-next-line no-console
       console.error('MCP Listening on: ', mdbUrl);
