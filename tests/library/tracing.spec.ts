@@ -862,6 +862,27 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
   expect(call2after).toBe(call2before);
 });
 
+test('should only include snapshot if one actually exists', async ({ browserType, server }, testInfo) => {
+  const tracesDir = testInfo.outputPath('traces');
+
+  const browser = await browserType.launch({ tracesDir });
+  const context = await browser.newContext();
+
+  await context.tracing.start({ snapshots: true });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/empty.html');
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+
+  const gotoEvent = actionObjects.find(a => a.method === 'goto');
+  expect(gotoEvent.beforeSnapshot).toBeTruthy();
+  expect(gotoEvent.afterSnapshot).toBeTruthy();
+
+  const newPageEvent = actionObjects.find(a => a.method === 'newPage');
+  expect(newPageEvent.beforeSnapshot).toBeUndefined();
+  expect(newPageEvent.afterSnapshot).toBeUndefined();
+});
+
 function expectRed(pixels: Buffer, offset: number) {
   const r = pixels.readUInt8(offset);
   const g = pixels.readUInt8(offset + 1);
