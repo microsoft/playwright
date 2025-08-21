@@ -15,8 +15,9 @@
  */
 
 import path from 'path';
-import { z } from 'zod';
-import { defineTool } from '../tool.js';
+
+import { z } from '../sdk/bundle';
+import { defineTool } from './tool.js';
 
 import type * as reporterTypes from 'playwright/types/testReporter';
 
@@ -31,7 +32,8 @@ export const listTests = defineTool({
 
   handle: async (context, params) => {
     const reporter = new ListModeReporter();
-    await context.testRunner.listTests(reporter, {});
+    const testRunner = await context.createTestRunner();
+    await testRunner.listTests(reporter, {});
 
     if (reporter.hasErrors())
       throw new Error(reporter.content());

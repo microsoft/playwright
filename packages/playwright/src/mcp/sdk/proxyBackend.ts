@@ -15,15 +15,12 @@
  */
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import * as mcp from './bundle';
 
-import * as mcpBundle from './bundle';
-
-import type { ServerBackend, ClientVersion, Root } from './server.js';
+import type { ServerBackend, ClientVersion, Root, Server } from './server.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-
-const errorsDebug = debug('pw:mcp:errors');
 
 export type MCPProvider = {
   name: string;
@@ -31,23 +28,20 @@ export type MCPProvider = {
   connect(): Promise<Transport>;
 };
 
-export class ProxyBackend implements ServerBackend {
-  readonly name: string;
-  readonly version: string;
+const errorsDebug = debug('pw:mcp:errors');
 
+export class ProxyBackend implements ServerBackend {
   private _mcpProviders: MCPProvider[];
   private _currentClient: Client | undefined;
   private _contextSwitchTool: Tool;
   private _roots: Root[] = [];
 
-  constructor(name: string, version: string, mcpProviders: MCPProvider[]) {
-    this.name = name;
-    this.version = version;
+  constructor(mcpProviders: MCPProvider[]) {
     this._mcpProviders = mcpProviders;
     this._contextSwitchTool = this._defineContextSwitchTool();
   }
 
-  async initialize(clientVersion: ClientVersion, roots: Root[]): Promise<void> {
+  async initialize(server: Server, clientVersion: ClientVersion, roots: Root[]): Promise<void> {
     this._roots = roots;
     await this._setCurrentClient(this._mcpProviders[0]);
   }
@@ -100,8 +94,8 @@ export class ProxyBackend implements ServerBackend {
         'Connect to a browser using one of the available methods:',
         ...this._mcpProviders.map(factory => `- "${factory.name}": ${factory.description}`),
       ].join('\n'),
-      inputSchema: mcpBundle.zodToJsonSchema(mcpBundle.z.object({
-        name: mcpBundle.z.enum(this._mcpProviders.map(factory => factory.name) as [string, ...string[]]).default(this._mcpProviders[0].name).describe('The method to use to connect to the browser'),
+      inputSchema: mcp.zodToJsonSchema(mcp.z.object({
+        name: mcp.z.enum(this._mcpProviders.map(factory => factory.name) as [string, ...string[]]).default(this._mcpProviders[0].name).describe('The method to use to connect to the browser'),
       }), { strictUnions: true }) as Tool['inputSchema'],
       annotations: {
         title: 'Connect to a browser context',
@@ -115,14 +109,14 @@ export class ProxyBackend implements ServerBackend {
     await this._currentClient?.close();
     this._currentClient = undefined;
 
-    const client = new mcpBundle.Client({ name: this.name, version: this.version });
+    const client = new mcp.Client({ name: 'Playwright MCP Proxy', version: '0.0.0' });
     client.registerCapabilities({
       roots: {
         listRoots: true,
       },
     });
-    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._roots }));
-    client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
+    client.setRequestHandler(mcp.ListRootsRequestSchema, () => ({ roots: this._roots }));
+    client.setRequestHandler(mcp.PingRequestSchema, () => ({}));
 
     const transport = await factory.connect();
     await client.connect(transport);

@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import * as mcp from 'playwright/src/mcp/exports';
+import * as mcp from '../sdk/exports.js';
 import { Context } from './context';
-import { listTests } from './tools/listTests';
-import { runTests } from './tools/runTests';
+import { listTests } from './listTests';
+import { runTests } from './runTests';
+import { snapshot, pickLocator, evaluate } from '../browser/tools';
 
-import type { ConfigLocation } from 'playwright/lib/common/config';
+import type { ConfigLocation } from '../../common/config';
 import type { Tool } from './tool';
+
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
@@ -32,15 +34,19 @@ export class TestServerBackend implements mcp.ServerBackend {
     this._context = new Context(resolvedLocation);
   }
 
-  async initialize() {
-  }
-
   async listTools(): Promise<mcp.Tool[]> {
-    return this._tools.map(tool => mcp.toMcpTool(tool.schema));
+    return [
+      ...this._tools.map(tool => mcp.toMcpTool(tool.schema)),
+      mcp.toMcpTool(snapshot.schema),
+      mcp.toMcpTool(pickLocator.schema),
+      mcp.toMcpTool(evaluate.schema),
+    ];
   }
 
   async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
-    const tool = this._tools.find(tool => tool.schema.name === name)!;
+    const tool = this._tools.find(tool => tool.schema.name === name);
+    if (!tool)
+      throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
     return await tool.handle(this._context!, parsedArguments);
   }

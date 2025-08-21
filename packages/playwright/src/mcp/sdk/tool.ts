@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from './bundle';
+import { zodToJsonSchema } from './bundle.js';
 
 import type { z } from 'zod';
-import type * as mcpServer from './server';
+import type * as mcpServer from './server.js';
 
 export type ToolSchema<Input extends z.Schema> = {
   name: string;
   title: string;
   description: string;
-  type: 'readOnly' | 'destructive';
   inputSchema: Input;
+  type: 'readOnly' | 'destructive';
 };
 
 export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
@@ -39,4 +39,8 @@ export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
       openWorldHint: true,
     },
   };
+}
+
+export function defineToolSchema<Input extends z.Schema>(tool: ToolSchema<Input>): ToolSchema<Input> {
+  return tool;
 }

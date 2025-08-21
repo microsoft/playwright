@@ -22,8 +22,12 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
+import { BrowserBackend } from './mcp/browser/backend';
+import { runOnPauseBackendLoop } from './mcp/sdk/mdb';
+import { codeFrameColumns } from './transform/babelBundle';
+import { stripAnsiEscapes } from './util';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode, Location } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -236,7 +240,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = actionTimeout || 0;
+    playwright._defaultContextTimeout = process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;
@@ -287,9 +291,21 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           tracingGroupSteps.push(step);
       },
       onApiCallRecovery: (data, error, recoveryHandlers) => {
-        const step = data.userData as TestStepInternal;
-        if (step)
-          recoveryHandlers.push(() => step.recoverFromStepError(error));
+        if (!process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP)
+          return;
+
+        const step = data.userData;
+        if (!step)
+          return;
+
+        const code = createErrorCodeframe(error.message, step.location);
+
+        recoveryHandlers.push(async () => {
+          const [context] = playwright._allContexts();
+          const introMessage = `Paused on error:\n\n${stripAnsiEscapes(code)}\n\nTry recovering from the error prior to continuing.`;
+          await runOnPauseBackendLoop(process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP!, new BrowserBackend(context), introMessage);
+          return { status: 'recovered' };
+        });
       },
       onApiCallEnd: data => {
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
@@ -785,3 +801,29 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFix
 export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
+
+
+function createErrorCodeframe(message: string, location: Location) {
+  let source: string;
+  try {
+    source = fs.readFileSync(location.file, 'utf-8') + '\n//';
+  } catch (e) {
+    return '';
+  }
+
+  return codeFrameColumns(
+      source,
+      {
+        start: {
+          line: location.line,
+          column: location.column,
+        },
+      },
+      {
+        highlightCode: true,
+        linesAbove: 5,
+        linesBelow: 5,
+        message: message.split('\n')[0] || undefined,
+      }
+  );
+}

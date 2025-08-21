@@ -10,6 +10,9 @@ common/
 @testIsomorphic/**
 ./prompt.ts
 ./worker/testTracing.ts
+./mcp/browser/
+./mcp/sdk/
+./transform/babelBundle.ts
 
 [internalsForTest.ts]
 **
