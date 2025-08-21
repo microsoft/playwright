@@ -53,6 +53,7 @@ export const runTests = defineTool({
       testIds: params.tests?.map(test => test.id),
       // For automatic recovery
       timeout: 0,
+      workers: 1,
     });
 
     const text = stream.content();

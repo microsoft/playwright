@@ -17,7 +17,9 @@
 import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
+import { debug } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
@@ -42,10 +44,12 @@ import type { AnyReporter } from '../reporters/reporterV2';
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
+  StdioChunk: 'stdioChunk',
 } as const;
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
+  [TestRunnerEvent.StdioChunk]: [chunk: string | Buffer, stdio: 'stdout' | 'stderr'];
 };
 
 export type ListTestsParams = {
@@ -74,6 +78,12 @@ export type RunTestsParams = {
 };
 
 type FullResultStatus = reporterTypes.FullResult['status'];
+
+const originalDebugLog = debug.log;
+// eslint-disable-next-line no-restricted-properties
+const originalStdoutWrite = process.stdout.write;
+// eslint-disable-next-line no-restricted-properties
+const originalStderrWrite = process.stderr.write;
 
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   readonly configLocation: ConfigLocation;
@@ -106,9 +116,15 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   async initialize(params: {
     watchTestDirs?: boolean;
     populateDependenciesOnList?: boolean;
+    sendStdioEvents?: boolean;
+    muteConsole?: boolean;
   }) {
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
+    this._setInterceptStdio({
+      sendStdioEvents: !!params.sendStdioEvents,
+      muteConsole: !!params.muteConsole,
+    });
   }
 
   resizeTerminal(params: { cols: number, rows: number }) {
@@ -377,6 +393,11 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     gracefullyProcessExitDoNotHang(0);
   }
 
+  async stop() {
+    this._setInterceptStdio({ sendStdioEvents: false, muteConsole: false });
+    await this.runGlobalTeardown();
+  }
+
   private async _loadConfig(overrides?: ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
     try {
       const config = await loadConfig(this.configLocation, overrides);
@@ -404,6 +425,42 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await reporter.onEnd({ status: 'failed' });
     await reporter.onExit();
     return null;
+  }
+
+  _setInterceptStdio(options: { sendStdioEvents: boolean, muteConsole: boolean }) {
+    /* eslint-disable no-restricted-properties */
+    if (process.env.PWTEST_DEBUG)
+      return;
+    if (options.sendStdioEvents || options.muteConsole) {
+      if (debug.log === originalDebugLog) {
+        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
+        debug.log = (...args) => {
+          const string = util.format(...args) + '\n';
+          return (originalStderrWrite as any).apply(process.stderr, [string]);
+        };
+      }
+      const stdoutWrite = (chunk: string | Buffer) => {
+        if (options.sendStdioEvents)
+          this.emit(TestRunnerEvent.StdioChunk, chunk, 'stdout');
+        if (!options.muteConsole)
+          originalStdoutWrite.apply(process.stdout, [chunk]);
+        return true;
+      };
+      const stderrWrite = (chunk: string | Buffer) => {
+        if (options.sendStdioEvents)
+          this.emit(TestRunnerEvent.StdioChunk, chunk, 'stderr');
+        if (!options.muteConsole)
+          originalStderrWrite.apply(process.stderr, [chunk]);
+        return true;
+      };
+      process.stdout.write = stdoutWrite;
+      process.stderr.write = stderrWrite;
+    } else {
+      debug.log = originalDebugLog;
+      process.stdout.write = originalStdoutWrite;
+      process.stderr.write = originalStderrWrite;
+    }
+    /* eslint-enable no-restricted-properties */
   }
 }
 

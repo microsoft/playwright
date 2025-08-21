@@ -28,9 +28,9 @@ type PageEx = playwright.Page & {
 
 export const snapshot = defineTool({
   schema: {
-    name: 'browser_snapshot',
-    title: 'Page snapshot',
-    description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
+    name: 'playwright_test_browser_snapshot',
+    title: 'Capture page snapshot',
+    description: 'Capture page snapshot for debugging',
     inputSchema: mcp.z.object({}),
     type: 'readOnly',
   },
@@ -55,27 +55,25 @@ export const elementSchema = mcp.z.object({
 
 export const pickLocator = defineTool({
   schema: {
-    name: 'browser_pick_locator',
-    title: 'Pick locator',
-    description: 'Pick a locator for the given element',
+    name: 'playwright_test_generate_locator',
+    title: 'Create locator for element',
+    description: 'Generate locator for the given element to use in tests',
     inputSchema: elementSchema,
     type: 'readOnly',
   },
 
   handle: async (page, params) => {
     const locator = await refLocator(page, params);
-    const locatorString = await generateLocator(locator);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: locatorString,
-        },
-      ],
-    };
+
+    try {
+      const { resolvedSelector } = await (locator as any)._resolveSelector();
+      const locatorString = asLocator('javascript', resolvedSelector);
+      return { content: [{ type: 'text', text: locatorString }] };
+    } catch (e) {
+      throw new Error(`Ref not found, likely because element was removed. Use ${snapshot.schema.name} to see what elements are currently on the page.`);
+    }
   },
 });
-
 
 const evaluateSchema = mcp.z.object({
   function: mcp.z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
@@ -85,8 +83,8 @@ const evaluateSchema = mcp.z.object({
 
 export const evaluate = defineTool({
   schema: {
-    name: 'browser_evaluate',
-    title: 'Evaluate JavaScript',
+    name: 'playwright_test_evaluate_on_pause',
+    title: 'Evaluate in page',
     description: 'Evaluate JavaScript expression on page or element',
     inputSchema: evaluateSchema,
     type: 'destructive',
@@ -113,13 +111,4 @@ async function refLocator(page: playwright.Page, elementRef: z.output<typeof ele
   if (!snapshot.includes(`[ref=${elementRef.ref}]`))
     throw new Error(`Ref ${elementRef.ref} not found in the current page snapshot. Try capturing new snapshot.`);
   return page.locator(`aria-ref=${elementRef.ref}`).describe(elementRef.element);
-}
-
-async function generateLocator(locator: playwright.Locator): Promise<string> {
-  try {
-    const { resolvedSelector } = await (locator as any)._resolveSelector();
-    return asLocator('javascript', resolvedSelector);
-  } catch (e) {
-    throw new Error('Ref not found, likely because element was removed. Use browser_snapshot to see what elements are currently on the page.');
-  }
 }

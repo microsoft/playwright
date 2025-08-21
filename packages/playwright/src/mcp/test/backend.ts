@@ -30,8 +30,8 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _tools: Tool<any>[] = [listTests, runTests];
   private _context: Context;
 
-  constructor(resolvedLocation: ConfigLocation) {
-    this._context = new Context(resolvedLocation);
+  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean }) {
+    this._context = new Context(resolvedLocation, options);
   }
 
   async listTools(): Promise<mcp.Tool[]> {
@@ -48,7 +48,11 @@ export class TestServerBackend implements mcp.ServerBackend {
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    return await tool.handle(this._context!, parsedArguments);
+    const result = await tool.handle(this._context!, parsedArguments);
+    const stdio = this._context.takeStdio();
+    if (stdio.trim())
+      result.content.push({ type: 'text', text: stdio });
+    return result;
   }
 
   serverClosed() {

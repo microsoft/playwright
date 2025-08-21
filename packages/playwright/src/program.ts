@@ -33,6 +33,9 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
+import { ServerBackendFactory } from './mcp/sdk/server';
+import { TestServerBackend } from './mcp/test/backend';
+import { runMainBackend } from './mcp/sdk/mdb';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -138,6 +141,26 @@ Arguments [dir]:
 
 Examples:
   $ npx playwright merge-reports playwright-report`);
+}
+
+function addMCPServerCommand(program: Command) {
+  const command = program.command('run-mcp-server', { hidden: true });
+  command.description('Interact with the test runner over MCP');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
+  command.option('--port <port>', 'port to listen on for SSE transport.');
+  command.action(async options => {
+    const resolvedLocation = resolveConfigLocation(options.config);
+    const backendFactory: ServerBackendFactory = {
+      name: 'Playwright Test Runner',
+      nameInConfig: 'playwright-test-runner',
+      version: '0.0.0',
+      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined }),
+    };
+    const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
+    if (mdbUrl)
+      console.error('MCP Listening on: ', mdbUrl);
+  });
 }
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
@@ -366,5 +389,6 @@ addTestCommand(program);
 addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
+addMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);

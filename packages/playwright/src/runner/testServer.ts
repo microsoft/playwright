@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import util from 'util';
-
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
-import { debug, open } from 'playwright-core/lib/utilsBundle';
+import { open } from 'playwright-core/lib/utilsBundle';
 
 import { loadConfig, resolveConfigLocation } from '../common/configLoader';
 import ListReporter from '../reporters/list';
 import { createReporterForTestServer } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
-import { TestRunner } from './testRunner';
+import { TestRunner, TestRunnerEvent } from './testRunner';
 
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
@@ -33,12 +31,6 @@ import type { ConfigLocation } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';
 import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
 import type { ReporterV2 } from '../reporters/reporterV2';
-
-const originalDebugLog = debug.log;
-// eslint-disable-next-line no-restricted-properties
-const originalStdoutWrite = process.stdout.write;
-// eslint-disable-next-line no-restricted-properties
-const originalStderrWrite = process.stderr.write;
 
 class TestServer {
   private _configLocation: ConfigLocation;
@@ -56,18 +48,9 @@ class TestServer {
   }
 
   async stop() {
-    await this._dispatcher?._setInterceptStdio(false);
-    await this._dispatcher?.runGlobalTeardown();
+    await this._dispatcher?.stop();
   }
 }
-
-export const TestRunnerEvent = {
-  TestFilesChanged: 'testFilesChanged',
-} as const;
-
-export type TestRunnerEventMap = {
-  [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-};
 
 export type ListTestsParams = {
   projects?: string[];
@@ -115,6 +98,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
     this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
+    this._testRunner.on(TestRunnerEvent.StdioChunk, (chunk, stdio) => this._dispatchEvent('stdio', chunkToPayload(stdio, chunk)));
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
@@ -133,10 +117,10 @@ export class TestServerDispatcher implements TestServerInterface {
     // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
     this._serializer = params.serializer || require.resolve('./uiModeReporter');
     this._closeOnDisconnect = !!params.closeOnDisconnect;
-    await this._setInterceptStdio(!!params.interceptStdio);
     await this._testRunner.initialize({
-      watchTestDirs: !!params.watchTestDirs,
-      populateDependenciesOnList: !!params.populateDependenciesOnList,
+      ...params,
+      sendStdioEvents: !!params.interceptStdio,
+      muteConsole: !!params.interceptStdio,
     });
   }
 
@@ -226,34 +210,8 @@ export class TestServerDispatcher implements TestServerInterface {
     await this._testRunner.stopTests();
   }
 
-  async _setInterceptStdio(intercept: boolean) {
-    /* eslint-disable no-restricted-properties */
-    if (process.env.PWTEST_DEBUG)
-      return;
-    if (intercept) {
-      if (debug.log === originalDebugLog) {
-        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
-        debug.log = (...args) => {
-          const string = util.format(...args) + '\n';
-          return (originalStderrWrite as any).apply(process.stderr, [string]);
-        };
-      }
-      const stdoutWrite = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
-        return true;
-      };
-      const stderrWrite = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
-        return true;
-      };
-      process.stdout.write = stdoutWrite;
-      process.stderr.write = stderrWrite;
-    } else {
-      debug.log = originalDebugLog;
-      process.stdout.write = originalStdoutWrite;
-      process.stderr.write = originalStderrWrite;
-    }
-    /* eslint-enable no-restricted-properties */
+  async stop() {
+    await this._testRunner.stop();
   }
 
   async closeGracefully() {
