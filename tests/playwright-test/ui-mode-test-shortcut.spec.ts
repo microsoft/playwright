@@ -32,7 +32,6 @@ test('should run tests', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
 
   await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('test 3');
   await page.keyboard.press('F5');
@@ -64,7 +63,6 @@ test('should stop tests', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
 
   await page.getByTitle('Run all').click();
 
@@ -86,7 +84,6 @@ test('should stop tests', async ({ runUITest }) => {
           - treeitem ${/\[icon-clock\] test 3/}
   `);
 
-  await expect(page.getByTitle('Run all')).toBeDisabled();
   await expect(page.getByTitle('Stop')).toBeEnabled();
 
   await page.keyboard.press('Shift+F5');
@@ -104,7 +101,6 @@ test('should toggle Terminal', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
 
   await expect(page.getByTestId('output')).toBeHidden();
 

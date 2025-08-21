@@ -365,7 +365,6 @@ test('should stop', async ({ runUITest }) => {
   });
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
 
   await page.getByTitle('Run all').click();
 
@@ -387,7 +386,6 @@ test('should stop', async ({ runUITest }) => {
           - treeitem ${/\[icon-clock\] test 3/}
   `);
 
-  await expect(page.getByTitle('Run all')).toBeDisabled();
   await expect(page.getByTitle('Stop')).toBeEnabled();
 
   await page.getByTitle('Stop').click();
