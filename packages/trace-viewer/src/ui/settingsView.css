@@ -39,3 +39,8 @@
   margin-right: 5px;
   flex-shrink: 0;
 }
+
+.settings-view .setting select {
+  margin-left: 8px;
+  flex-shrink: 0;
+}

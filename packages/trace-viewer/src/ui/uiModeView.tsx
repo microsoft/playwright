@@ -57,11 +57,11 @@ const queryParams = {
   projects: searchParams.getAll('project'),
   workers: searchParams.get('workers') || undefined,
   headed: searchParams.has('headed'),
-  updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
+  updateSnapshots: (searchParams.get('updateSnapshots') as reporterTypes.FullConfig['updateSnapshots'] | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
 };
-if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
+if (queryParams.updateSnapshots && !['all', 'changed', 'none', 'missing'].includes(queryParams.updateSnapshots))
   queryParams.updateSnapshots = undefined;
 
 const isMac = navigator.platform === 'MacIntel';
@@ -100,10 +100,7 @@ export const UIModeView: React.FC<{}> = ({
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
-  const showTestingOptions = false;
-  const [singleWorker, setSingleWorker] = React.useState(false);
-  const [showBrowser, setShowBrowser] = React.useState(false);
-  const [updateSnapshots, setUpdateSnapshots] = React.useState(false);
+  const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -288,9 +285,7 @@ export const UIModeView: React.FC<{}> = ({
         grepInvert: queryParams.grepInvert,
         testIds: [...testIds],
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
-        ...(singleWorker ? { workers: '1' } : {}),
-        ...(showBrowser ? { headed: true } : {}),
-        ...(updateSnapshots ? { updateSnapshots: 'all' } : {}),
+        updateSnapshots,
         reporters: queryParams.reporters,
         trace: 'on',
       });
@@ -302,7 +297,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, isRunningTest, testModel, testServerConnection, singleWorker, showBrowser, updateSnapshots]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -497,21 +492,22 @@ export const UIModeView: React.FC<{}> = ({
           setFilterText={setFilterText}
           onRevealSource={onRevealSource}
         />
-        {showTestingOptions && <>
-          <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
-            <span
-              className={`codicon codicon-${testingOptionsVisible ? 'chevron-down' : 'chevron-right'}`}
-              style={{ marginLeft: 5 }}
-              title={testingOptionsVisible ? 'Hide Testing Options' : 'Show Testing Options'}
-            />
-            <div className='section-title'>Testing Options</div>
-          </Toolbar>
-          {testingOptionsVisible && <SettingsView settings={[
-            { value: singleWorker, set: setSingleWorker, name: 'Single worker' },
-            { value: showBrowser, set: setShowBrowser, name: 'Show browser' },
-            { value: updateSnapshots, set: setUpdateSnapshots, name: 'Update snapshots' },
-          ]} />}
-        </>}
+        <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
+          <span
+            className={`codicon codicon-${testingOptionsVisible ? 'chevron-down' : 'chevron-right'}`}
+            style={{ marginLeft: 5 }}
+            title={testingOptionsVisible ? 'Hide Testing Options' : 'Show Testing Options'}
+          />
+          <div className='section-title'>Testing Options</div>
+        </Toolbar>
+        {testingOptionsVisible && <SettingsView settings={[
+          { type: 'select', options: [
+            { label: 'All', value: 'all' },
+            { label: 'Changed', value: 'changed' },
+            { label: 'Missing', value: 'missing' },
+            { label: 'None', value: 'none' },
+          ], value: updateSnapshots, set: setUpdateSnapshots as (value: string) => void, name: 'Update snapshots' },
+        ]} />}
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
           <span
             className={`codicon codicon-${settingsVisible ? 'chevron-down' : 'chevron-right'}`}
