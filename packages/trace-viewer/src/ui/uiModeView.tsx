@@ -454,7 +454,7 @@ export const UIModeView: React.FC<{}> = ({
           setProjectFilters={setProjectFilters}
           testModel={testModel}
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
-        <Toolbar noMinHeight={true}>
+        <Toolbar className='section-toolbar' noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
           {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
             <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>

@@ -14,12 +14,17 @@
   limitations under the License.
 */
 
+.timeline-view-container {
+  flex: none;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
 .timeline-view {
   flex: none;
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 20px 0 5px;
+  padding: 20px 0 4px;
   cursor: text;
   user-select: none;
   margin-left: 10px;
