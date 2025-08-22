@@ -34,7 +34,7 @@ export interface ServerBackend {
   initialize?(server: Server, clientVersion: ClientVersion, roots: Root[]): Promise<void>;
   listTools(): Promise<Tool[]>;
   callTool(name: string, args: CallToolRequest['params']['arguments']): Promise<CallToolResult>;
-  serverClosed?(): void;
+  serverClosed?(server: Server): void;
 }
 
 export type ServerBackendFactory = {
@@ -104,7 +104,7 @@ export function createServer(name: string, version: string, backend: ServerBacke
       errorsDebug(e);
     }
   });
-  addServerListener(server, 'close', () => backend.serverClosed?.());
+  addServerListener(server, 'close', () => backend.serverClosed?.(server));
   return server;
 }
 

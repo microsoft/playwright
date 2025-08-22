@@ -25,10 +25,16 @@ import type { Tool } from './tool';
 import type * as playwright from '../../../index';
 import type { ServerBackendOnPause } from '../sdk/mdb';
 
+type PageEx = playwright.Page & {
+  _snapshotForAI: () => Promise<string>;
+};
+
+const tools = [snapshot, pickLocator, evaluate];
+
 export class BrowserBackend implements ServerBackendOnPause {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
-  private _tools: Tool<any>[] = [snapshot, pickLocator, evaluate];
+  private _tools: Tool<any>[] = tools;
   private _page: playwright.Page;
 
   constructor(page: playwright.Page) {
@@ -67,8 +73,16 @@ const doneToolSchema = defineToolSchema({
 });
 
 export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
-  if (!process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP)
+  if (!process.env.PLAYWRIGHT_DEBUGGER_MCP)
     return;
-  const introMessage = `Paused on error:\n\n${stripAnsiEscapes(message())}\n\nTry recovering from the error prior to continuing.`;
-  await runOnPauseBackendLoop(process.env.PLAYWRIGHT_TEST_DEBUGGER_MCP!, new BrowserBackend(page), introMessage);
+  const snapshot = await (page as PageEx)._snapshotForAI();
+  const introMessage = `### Paused on error:
+${stripAnsiEscapes(message())}
+
+### Current page snapshot:
+${snapshot}
+
+### Task
+Try recovering from the error prior to continuing, use following tools to recover: ${tools.map(tool => tool.schema.name).join(', ')}`;
+  await runOnPauseBackendLoop(process.env.PLAYWRIGHT_DEBUGGER_MCP!, new BrowserBackend(page), introMessage);
 }

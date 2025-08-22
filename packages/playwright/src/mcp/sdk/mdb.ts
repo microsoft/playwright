@@ -24,19 +24,30 @@ import * as mcpBundle from './bundle.js';
 import { defineToolSchema } from './tool.js';
 import * as mcpServer from './server.js';
 import * as mcpHttp from './http.js';
-import { callTool } from './call.js';
+import { wrapInProcess } from './server.js';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
+const mdbDebug = debug('pw:mcp:mdb');
 const errorsDebug = debug('pw:mcp:errors');
 
 export class MDBBackend implements mcpServer.ServerBackend {
   private _stack: { client: Client, toolNames: string[], resultPromise: ManualPromise<mcpServer.CallToolResult> | undefined }[] = [];
   private _interruptPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
-  private _server!: mcpServer.Server;
+  private _topLevelBackend: mcpServer.ServerBackend;
+  private _initialized = false;
+
+  constructor(topLevelBackend: mcpServer.ServerBackend) {
+    this._topLevelBackend = topLevelBackend;
+  }
 
   async initialize(server: mcpServer.Server): Promise<void> {
-    this._server = server;
+    if (this._initialized)
+      return;
+    this._initialized = true;
+    const transport = await wrapInProcess(this._topLevelBackend);
+    await this._pushClient(transport);
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {
@@ -48,11 +59,13 @@ export class MDBBackend implements mcpServer.ServerBackend {
     if (name === pushToolsSchema.name)
       return await this._pushTools(pushToolsSchema.inputSchema.parse(args || {}));
 
-    this._interruptPromise = new ManualPromise<mcpServer.CallToolResult>();
+    const interruptPromise = new ManualPromise<mcpServer.CallToolResult>();
+    this._interruptPromise = interruptPromise;
     let [entry] = this._stack;
 
     // Pop the client while the tool is not found.
     while (entry && !entry.toolNames.includes(name)) {
+      mdbDebug('popping client from stack for ', name);
       this._stack.shift();
       await entry.client.close();
       entry = this._stack[0];
@@ -67,13 +80,19 @@ export class MDBBackend implements mcpServer.ServerBackend {
     }).then(result => {
       resultPromise.resolve(result as mcpServer.CallToolResult);
     }).catch(e => {
+      mdbDebug('error in client call', e);
       if (this._stack.length < 2)
         throw e;
       this._stack.shift();
       const prevEntry = this._stack[0];
       void prevEntry.resultPromise!.then(result => resultPromise.resolve(result));
     });
-    return await Promise.race([this._interruptPromise, resultPromise]);
+    const result = await Promise.race([interruptPromise, resultPromise]);
+    if (interruptPromise.isDone())
+      mdbDebug('client call intercepted', result);
+    else
+      mdbDebug('client call result', result);
+    return result;
   }
 
   private _client(): Client {
@@ -84,24 +103,29 @@ export class MDBBackend implements mcpServer.ServerBackend {
   }
 
   private async _pushTools(params: { mcpUrl: string, introMessage?: string }): Promise<mcpServer.CallToolResult> {
+    mdbDebug('pushing tools to the stack', params.mcpUrl);
+    const transport = new StreamableHTTPClientTransport(new URL(params.mcpUrl));
+    await this._pushClient(transport, params.introMessage);
+    return { content: [{ type: 'text', text: 'Tools pushed' }] };
+  }
+
+  private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
+    mdbDebug('pushing client to the stack');
     const client = new mcpBundle.Client({ name: 'Internal client', version: '0.0.0' });
     client.setRequestHandler(PingRequestSchema, () => ({}));
-    const transport = new StreamableHTTPClientTransport(new URL(params.mcpUrl));
     await client.connect(transport);
-
+    mdbDebug('connected to the new client');
+    const { tools } = await client.listTools();
+    this._stack.unshift({ client, toolNames: tools.map(tool => tool.name), resultPromise: undefined });
+    mdbDebug('new tools added to the stack:', tools.map(tool => tool.name));
+    mdbDebug('interrupting current call:', !!this._interruptPromise);
     this._interruptPromise?.resolve({
       content: [{
         type: 'text',
-        text: params.introMessage || '',
+        text: introMessage || '',
       }],
     });
     this._interruptPromise = undefined;
-
-    const { tools } = await client.listTools();
-    this._stack.unshift({ client, toolNames: tools.map(tool => tool.name), resultPromise: undefined });
-    await this._server.notification({
-      method: 'notifications/tools/list_changed',
-    });
     return { content: [{ type: 'text', text: 'Tools pushed' }] };
   }
 }
@@ -121,22 +145,21 @@ export type ServerBackendOnPause = mcpServer.ServerBackend & {
   requestSelfDestruct?: () => void;
 };
 
-export async function runToolsBackend(backendFactory: mcpServer.ServerBackendFactory, options: { port: number }): Promise<string> {
-  const mdbBackend = new MDBBackend();
-  const mdbBackendFactory = {
-    name: 'Playwright MDB',
-    nameInConfig: 'playwright-mdb',
-    version: '0.0.0',
+export async function runMainBackend(backendFactory: mcpServer.ServerBackendFactory, options?: { port?: number }): Promise<string | undefined> {
+  const mdbBackend = new MDBBackend(backendFactory.create());
+  // Start HTTP unconditionally.
+  const factory: mcpServer.ServerBackendFactory = {
+    ...backendFactory,
     create: () => mdbBackend
   };
+  const url = await startAsHttp(factory, { port: options?.port || 0 });
+  process.env.PLAYWRIGHT_DEBUGGER_MCP = url;
 
-  const mdbUrl = await startAsHttp(mdbBackendFactory, options);
+  if (options?.port !== undefined)
+    return url;
 
-  const backendUrl = await startAsHttp(backendFactory, { port: 0 });
-  const result = await callTool(mdbUrl, pushToolsSchema.name, { mcpUrl: backendUrl });
-  if (result.isError)
-    errorsDebug('Failed to push tools', result.content);
-  return mdbUrl;
+  // Start stdio conditionally.
+  await mcpServer.connect(factory, new mcpBundle.StdioServerTransport(), false);
 }
 
 export async function runOnPauseBackendLoop(mdbUrl: string, backend: ServerBackendOnPause, introMessage: string) {
@@ -202,8 +225,8 @@ class OnceTimeServerBackendWrapper implements mcpServer.ServerBackend {
     return this._backend.callTool(name, args);
   }
 
-  serverClosed() {
-    this._backend.serverClosed?.();
+  serverClosed(server: mcpServer.Server) {
+    this._backend.serverClosed?.(server);
     this._selfDestructPromise.resolve();
   }
 
