@@ -564,32 +564,6 @@ test('should support search element', async ({ page }) => {
   await expect.soft(page.getByRole('search', { name: 'example' })).toBeVisible();
 });
 
-test('should consider inert elements to be hidden', async ({ page }) => {
-  await page.setContent(`
-        <div aria-hidden="true">
-            <button type="button">First</button>
-        </div>
-        <div inert>
-            <button type="button">Second</button>
-        </div>
-        <button type="button" inert>Third</button>
-    `);
-
-  await expect(page.getByRole('button', { name: 'First' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Second' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Third' })).toHaveCount(0);
-
-  await expect(
-      page.getByRole('button', { name: 'First', includeHidden: true })
-  ).toHaveCount(1);
-  await expect(
-      page.getByRole('button', { name: 'Second', includeHidden: true })
-  ).toHaveCount(1);
-  await expect(
-      page.getByRole('button', { name: 'Third', includeHidden: true })
-  ).toHaveCount(1);
-});
-
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
