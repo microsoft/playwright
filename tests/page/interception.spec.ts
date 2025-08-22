@@ -123,6 +123,10 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'https://playwright.dev/foobar', 'https://playwright.dev/fooBAR')).toBeFalsy();
   expect(urlMatches(undefined, 'https://playwright.dev/foobar?a=b', 'https://playwright.dev/foobar?A=B')).toBeFalsy();
 
+  expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**/?a=b')).toBeTruthy();
+  expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**?a=b')).toBeTruthy();
+  expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**=b')).toBeTruthy();
+
   // This is not supported, we treat ? as a query separator.
   expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeFalsy();
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.?ev')).toBeFalsy();
