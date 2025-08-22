@@ -264,7 +264,7 @@ export function isElementIgnoredForAria(element: Element) {
 // Not implemented:
 //   `Any descendants of elements that have the characteristic "Children Presentational: True"`
 // https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
-export function isElementHiddenForAria(element: Element): boolean {
+export function isElementHiddenForAria(element: Element, snapshotOnlyChecks = false): boolean {
   if (isElementIgnoredForAria(element))
     return true;
   const style = getElementComputedStyle(element);
@@ -284,10 +284,10 @@ export function isElementHiddenForAria(element: Element): boolean {
   const isOptionInsideSelect = element.nodeName === 'OPTION' && !!element.closest('select');
   if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element, style))
     return true;
-  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element);
+  return belongsToDisplayNoneOrAriaHiddenOrNonSlottedOrInert(element, snapshotOnlyChecks);
 }
 
-function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean {
+function belongsToDisplayNoneOrAriaHiddenOrNonSlottedOrInert(element: Element, snapshotOnlyChecks: boolean): boolean {
   let hidden = cacheIsHidden?.get(element);
   if (hidden === undefined) {
     hidden = false;
@@ -299,16 +299,20 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
       hidden = true;
 
     // display:none and aria-hidden=true are considered hidden for aria.
+    // inert is considered hidden only in aria snapshots, but not for general visibility
     if (!hidden) {
       const style = getElementComputedStyle(element);
-      hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+      hidden = !style
+        || style.display === 'none'
+        || getAriaBoolean(element.getAttribute('aria-hidden')) === true
+        || (snapshotOnlyChecks && element.getAttribute('inert') !== null);
     }
 
     // Check recursively.
     if (!hidden) {
       const parent = parentElementOrShadowHost(element);
       if (parent)
-        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlotted(parent);
+        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlottedOrInert(parent, snapshotOnlyChecks);
     }
     cacheIsHidden?.set(element, hidden);
   }

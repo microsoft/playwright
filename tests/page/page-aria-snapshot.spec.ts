@@ -669,3 +669,20 @@ it('should not show unhidden children of aria-hidden elements', { annotation: { 
 
   expect(await page.locator('body').ariaSnapshot()).toBe('');
 });
+
+it('should consider inert elements as hidden', async ({ page }) => {
+  await page.setContent(`
+    <button type="button">Not hidden</button>
+    <div aria-hidden="true">
+      <button type="button">First</button>
+    </div>
+    <div inert>
+      <button type="button">Second</button>
+    </div>
+    <button type="button" inert>Third</button>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "Not hidden"
+  `);
+});
