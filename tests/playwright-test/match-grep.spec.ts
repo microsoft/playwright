@@ -59,6 +59,24 @@ const files = {
       expect(1 + 1).toBe(2);
     });
   `,
+  'special-chars.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('test with (parentheses)', () => {
+      expect(1 + 1).toBe(2);
+    });
+    test('test with [brackets]', () => {
+      expect(1 + 1).toBe(2);
+    });
+    test('test with dots...', () => {
+      expect(1 + 1).toBe(2);
+    });
+    test('test with plus+', () => {
+      expect(1 + 1).toBe(2);
+    });
+    test('regular test', () => {
+      expect(1 + 1).toBe(2);
+    });
+  `,
 };
 
 test('should grep test name', async ({ runInlineTest }) => {
@@ -83,7 +101,7 @@ test('should grep test name with regular expression and a space', async ({ runIn
 
 test('should grep invert test name', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep-invert': 'BB' });
-  expect(result.passed).toBe(6);
+  expect(result.passed).toBe(11);
   expect(result.skipped).toBe(0);
   expect(result.exitCode).toBe(0);
 });
@@ -106,26 +124,7 @@ test('excluded tests should not be shown in UI', async ({ runInlineTest, runTSC 
 });
 
 test('should handle test titles with parentheses and other special characters', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'special-chars.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test with (parentheses)', () => {
-        expect(1 + 1).toBe(2);
-      });
-      test('test with [brackets]', () => {
-        expect(1 + 1).toBe(2);
-      });
-      test('test with dots...', () => {
-        expect(1 + 1).toBe(2);
-      });
-      test('test with plus+', () => {
-        expect(1 + 1).toBe(2);
-      });
-      test('regular test', () => {
-        expect(1 + 1).toBe(2);
-      });
-    `,
-  }, { 'grep': 'test with (parentheses)' });
+  const result = await runInlineTest(files, { 'grep': 'test with (parentheses)' });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });

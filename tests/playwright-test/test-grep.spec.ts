@@ -113,7 +113,6 @@ test('should match test titles with parentheses when using -g option', async ({ 
       });
     `,
   }, { 'grep': 'an example title (something)' });
-  
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('%% test with parentheses');
