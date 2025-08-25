@@ -117,7 +117,7 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
       return;
 
     const element = node as Element;
-    const isElementVisibleForAria = !roleUtils.isElementHiddenForAria(element);
+    const isElementVisibleForAria = !roleUtils.isElementHiddenForAria(element, true);
     let visible = isElementVisibleForAria;
     if (options.visibility === 'ariaOrVisible')
       visible = isElementVisibleForAria || isElementVisible(element);
