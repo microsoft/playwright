@@ -41,6 +41,10 @@
   padding: 0 8px 8px;
 }
 
+.selected .test-case-run-duration {
+  -webkit-text-stroke: 0;
+}
+
 .test-case-run-duration {
   color: var(--color-fg-muted);
   padding-left: 8px;
