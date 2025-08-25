@@ -73,10 +73,6 @@ type RecordingState = {
   groupStack: string[];
 };
 
-type SnapshotFields<T> = {
-  [K in keyof T]: K extends `${infer Base}Snapshot` ? Base : never
-}[keyof T];
-
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
 export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
@@ -437,15 +433,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._snapshotter.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
   }
 
-  _insertActionWithSnapshot<T extends trace.TraceEvent>(event: T, field: SnapshotFields<T>, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    const snapshotName = `${field}@${metadata.id}`;
-    const snapshotPromise = this._captureSnapshot(snapshotName, sdkObject, metadata);
-    if (snapshotPromise !== undefined)
-      (event[`${field}Snapshot` as keyof T] as string) = snapshotName;
-    this._appendTraceEvent(event);
-    return snapshotPromise ?? Promise.resolve();
-  }
-
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     // IMPORTANT: no awaits before this._appendTraceEvent in this method.
     const event = createBeforeActionTraceEvent(metadata, this._currentGroupId());
@@ -453,7 +440,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return Promise.resolve();
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     this._state?.callIds.add(metadata.id);
-    return this._insertActionWithSnapshot(event, 'before', sdkObject, metadata);
+
+    const snapshotName = `before@${metadata.id}`;
+    const snapshotPromise = this._captureSnapshot(snapshotName, sdkObject, metadata);
+    if (snapshotPromise !== undefined)
+      event.beforeSnapshot = snapshotName;
+    this._appendTraceEvent(event);
+    return snapshotPromise ?? Promise.resolve();
   }
 
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -463,7 +456,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createInputActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    return this._insertActionWithSnapshot(event, 'input', sdkObject, metadata);
+
+    const snapshotName = `input@${metadata.id}`;
+    const snapshotPromise = this._captureSnapshot(snapshotName, sdkObject, metadata);
+    if (snapshotPromise !== undefined)
+      event.inputSnapshot = snapshotName;
+    this._appendTraceEvent(event);
+    return snapshotPromise ?? Promise.resolve();
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
@@ -486,7 +485,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return;
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
-    return this._insertActionWithSnapshot(event, 'after', sdkObject, metadata);
+
+    const snapshotName = `after@${metadata.id}`;
+    const snapshotPromise = this._captureSnapshot(snapshotName, sdkObject, metadata);
+    if (snapshotPromise !== undefined)
+      event.afterSnapshot = snapshotName;
+    this._appendTraceEvent(event);
+    return snapshotPromise ?? Promise.resolve();
   }
 
   onEntryStarted(entry: har.Entry) {
