@@ -420,6 +420,7 @@ function fromBidiSameSite(sameSite: bidi.Network.SameSite): channels.NetworkCook
     case 'strict': return 'Strict';
     case 'lax': return 'Lax';
     case 'none': return 'None';
+    case 'default': return 'Lax';
   }
   return 'None';
 }
