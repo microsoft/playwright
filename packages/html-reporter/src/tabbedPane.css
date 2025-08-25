@@ -53,17 +53,11 @@
   height: 100%;
 }
 
-.tabbed-pane-tab-element.selected {
-  border-bottom-color: #666;
-  -webkit-text-stroke: 0.5px currentColor;
-}
-
 .tabbed-pane-tab-label {
   max-width: 250px;
   white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
   display: inline-block;
   height: 30px;
   padding: 0 8px;
@@ -72,4 +66,9 @@
 
 .tabbed-pane-tab-label:hover {
   background-color: var(--color-control-transparent-bg-hover);
+}
+
+.tabbed-pane-tab-element.selected {
+  border-bottom-color: #666;
+  -webkit-text-stroke: 0.5px currentColor;
 }
