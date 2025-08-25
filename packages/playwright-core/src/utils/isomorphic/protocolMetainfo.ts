@@ -41,6 +41,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['DebugController.highlight', { internal: true, }],
   ['DebugController.hideHighlight', { internal: true, }],
   ['DebugController.resume', { internal: true, }],
+  ['DebugController.closeBrowser', { internal: true, }],
   ['DebugController.kill', { internal: true, }],
   ['SocksSupport.socksConnected', { internal: true, }],
   ['SocksSupport.socksFailed', { internal: true, }],

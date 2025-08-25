@@ -89,12 +89,12 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean }) {
+  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean, browserId?: string }) {
     await progress.race(this._closeBrowsersWithoutPages());
     this._generateAutoExpect = !!params.generateAutoExpect;
 
     if (params.mode === 'none') {
-      for (const recorder of await progress.race(this._allRecorders())) {
+      for (const recorder of await progress.race(this._allRecorders(params.browserId))) {
         recorder.hideHighlightedSelector();
         recorder.setMode('none');
       }
@@ -112,11 +112,14 @@ export class DebugController extends SdkObject {
     }
     // Update test id attribute.
     if (params.testIdAttributeName) {
-      for (const page of this._playwright.allPages())
+      for (const page of this._playwright.allPages()) {
+        if (params.browserId && page.browserContext._browser.guid !== params.browserId)
+          continue;
         page.browserContext.selectors().setTestIdAttributeName(params.testIdAttributeName);
+      }
     }
     // Toggle the mode.
-    for (const recorder of await progress.race(this._allRecorders())) {
+    for (const recorder of await progress.race(this._allRecorders(params.browserId))) {
       recorder.hideHighlightedSelector();
       recorder.setMode(params.mode);
     }
@@ -148,6 +151,13 @@ export class DebugController extends SdkObject {
       recorder.resume();
   }
 
+  async closeBrowser(progress: Progress, id: string, reason?: string) {
+    const browser = this._playwright.allBrowsers().find(b => b.guid === id);
+    if (!browser)
+      return;
+    await progress.race(browser.close({ reason }));
+  }
+
   kill() {
     gracefullyProcessExitDoNotHang(0);
   }
@@ -171,10 +181,13 @@ export class DebugController extends SdkObject {
     });
   }
 
-  private async _allRecorders(): Promise<Recorder[]> {
+  private async _allRecorders(browserId?: string): Promise<Recorder[]> {
     const contexts = new Set<BrowserContext>();
-    for (const page of this._playwright.allPages())
+    for (const page of this._playwright.allPages()) {
+      if (browserId && page.browserContext._browser.guid !== browserId)
+        continue;
       contexts.add(page.browserContext);
+    }
     const recorders = await Promise.all([...contexts].map(c => Recorder.forContext(c, { omitCallTracking: true })));
     const nonNullRecorders = recorders.filter(Boolean) as Recorder[];
     for (const recorder of recorders)
