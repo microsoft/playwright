@@ -426,6 +426,7 @@ test(`should support self signed certificate`, async ({ runInlineTest, httpsServ
     'playwright.config.js': `
       module.exports = {
         webServer: {
+          command: 'unused',
           url: '${httpsServer.EMPTY_PAGE}',
           ignoreHTTPSErrors: true,
           reuseExistingServer: true,
@@ -863,4 +864,25 @@ test.describe('name option', () => {
     expect(result.exitCode).toBe(0);
     expect(result.output).toContain(`[${defaultPrefix}]`);
   });
+});
+
+test('should throw helpful error when command is empty', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+    module.exports = {
+      webServer: [
+        {
+          command: '',
+          url: 'http://localhost:3000',
+        }
+      ],
+    };
+  `,
+  }, undefined);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('config.webServer.command cannot be empty');
 });

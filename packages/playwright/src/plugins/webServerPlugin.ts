@@ -210,6 +210,9 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
     if (webServerConfig.port && webServerConfig.url)
       throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
 
+    if (!webServerConfig.command)
+      throw new Error('config.webServer.command cannot be empty');
+
     let url: string | undefined;
     if (webServerConfig.port || webServerConfig.url) {
       url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
