@@ -104,3 +104,28 @@ test('excluded tests should not be shown in UI', async ({ runInlineTest, runTSC 
   const result = await runInlineTest(files, { 'grep': 'Test AA' });
   expect(result.passed).toBe(3);
 });
+
+test('should handle test titles with parentheses and other special characters', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'special-chars.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test with (parentheses)', () => {
+        expect(1 + 1).toBe(2);
+      });
+      test('test with [brackets]', () => {
+        expect(1 + 1).toBe(2);
+      });
+      test('test with dots...', () => {
+        expect(1 + 1).toBe(2);
+      });
+      test('test with plus+', () => {
+        expect(1 + 1).toBe(2);
+      });
+      test('regular test', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  }, { 'grep': 'test with (parentheses)' });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});

@@ -97,3 +97,26 @@ test('config.grep should intersect with --grep and --grepInvert', async ({ runIn
   expect(result.passed).toBe(1);
   expect(result.output).toContain('%% test2');
 });
+
+test('should match test titles with parentheses when using -g option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('an example title (something)', async () => { 
+        console.log('\\n%% test with parentheses'); 
+      });
+      test('an example title - something', async () => { 
+        console.log('\\n%% test with dash'); 
+      });
+      test('another test without parentheses', async () => { 
+        console.log('\\n%% test without parentheses'); 
+      });
+    `,
+  }, { 'grep': 'an example title (something)' });
+  
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('%% test with parentheses');
+  expect(result.output).not.toContain('%% test with dash');
+  expect(result.output).not.toContain('%% test without parentheses');
+});

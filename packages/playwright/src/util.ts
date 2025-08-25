@@ -165,7 +165,10 @@ export function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
   if (match)
     return new RegExp(match[1], match[2]);
-  return new RegExp(pattern, 'gi');
+  // Escape commonly problematic regex special characters that users are unlikely to use intentionally
+  // Parentheses () and braces {} are escaped, but brackets [], dots, stars, etc. are preserved for basic regex functionality
+  const escapedPattern = pattern.replace(/[(){}]/g, '\\$&');
+  return new RegExp(escapedPattern, 'gi');
 }
 
 export function relativeFilePath(file: string): string {
