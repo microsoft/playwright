@@ -1043,6 +1043,83 @@ class TextAssertionTool implements RecorderTool {
   }
 }
 
+class HoverTool implements RecorderTool {
+  private _recorder: Recorder;
+  private _hoveredModel: HighlightModel | null = null;
+  private _hoveredElement: HTMLElement | null = null;
+
+  constructor(recorder: Recorder) {
+    this._recorder = recorder;
+  }
+
+  cursor() {
+    return 'pointer';
+  }
+
+  install() { }
+
+  uninstall() {
+    this._recorder.clearHighlight();
+  }
+
+  onMouseMove(event: MouseEvent) {
+    consumeEvent(event);
+    const target = this._recorder.deepEventTarget(event);
+    if (this._hoveredElement === target)
+      return;
+    this._hoveredElement = target;
+    this._updateModelForHoveredElement();
+  }
+
+  onMouseLeave(event: MouseEvent) {
+    consumeEvent(event);
+    this._hoveredElement = null;
+    this._recorder.updateHighlight(null, true);
+  }
+
+  onClick(event: MouseEvent) {
+    consumeEvent(event);
+    if (!this._hoveredElement)
+      return;
+
+    const { ariaSnapshot, selector, ref } = this._getElementInfo(this._hoveredElement);
+    void this._recorder.performAction({
+      name: 'hover',
+      selector,
+      ref,
+      signals: [],
+      ariaSnapshot,
+    });
+    this._recorder.setMode('recording');
+    this._recorder.overlay?.flashToolSucceeded('hovering');
+  }
+
+  private _getElementInfo(element: HTMLElement): { ariaSnapshot: string, selector: string, ref?: string } {
+    const { ariaSnapshot, refs } = this._recorder.injectedScript.ariaSnapshotForRecorder();
+    const ref = refs.get(element);
+    const elementInfo = this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+    return { ariaSnapshot, selector: elementInfo.selector, ref };
+  }
+
+  private _updateModelForHoveredElement() {
+    let model: HighlightModel | null = null;
+    if (this._hoveredElement) {
+      const generated = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, multiple: false });
+      model = {
+        selector: generated.selector,
+        elements: generated.elements,
+        tooltipText: this._recorder.injectedScript.utils.asLocator(this._recorder.state.language, generated.selector),
+        color: HighlightColors.single,
+      };
+    }
+
+    if (this._hoveredModel?.selector === model?.selector)
+      return;
+    this._hoveredModel = model;
+    this._recorder.updateHighlight(model, true);
+  }
+}
+
 class Overlay {
   private _recorder: Recorder;
   private _listeners: (() => void)[] = [];
@@ -1050,6 +1127,7 @@ class Overlay {
   private _dragHandle: HTMLElement;
   private _recordToggle: HTMLElement;
   private _pickLocatorToggle: HTMLElement;
+  private _hoverLocatorToggle: HTMLElement;
   private _assertVisibilityToggle: HTMLElement;
   private _assertTextToggle: HTMLElement;
   private _assertValuesToggle: HTMLElement;
@@ -1080,6 +1158,12 @@ class Overlay {
     this._pickLocatorToggle.classList.add('pick-locator');
     this._pickLocatorToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._pickLocatorToggle);
+
+    this._hoverLocatorToggle = this._recorder.document.createElement('x-pw-tool-item');
+    this._hoverLocatorToggle.title = 'Add hover action';
+    this._hoverLocatorToggle.classList.add('hover-locator');
+    this._hoverLocatorToggle.appendChild(this._recorder.document.createElement('x-div'));
+    toolsListElement.appendChild(this._hoverLocatorToggle);
 
     this._assertVisibilityToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._assertVisibilityToggle.title = 'Assert visibility';
@@ -1133,8 +1217,13 @@ class Overlay {
           'assertingVisibility': 'recording-inspecting',
           'assertingValue': 'recording-inspecting',
           'assertingSnapshot': 'recording-inspecting',
+          'hovering': 'recording-inspecting',
         };
         this._recorder.setMode(newMode[this._recorder.state.mode]);
+      }),
+      addEventListener(this._hoverLocatorToggle, 'click', () => {
+        if (!this._hoverLocatorToggle.classList.contains('disabled'))
+          this._recorder.setMode(this._recorder.state.mode === 'hovering' ? 'recording' : 'hovering');
       }),
       addEventListener(this._assertVisibilityToggle, 'click', () => {
         if (!this._assertVisibilityToggle.classList.contains('disabled'))
@@ -1168,6 +1257,8 @@ class Overlay {
   setUIState(state: UIState) {
     this._recordToggle.classList.toggle('toggled', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting');
     this._pickLocatorToggle.classList.toggle('toggled', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
+    this._hoverLocatorToggle.classList.toggle('toggled', state.mode === 'hovering');
+    this._hoverLocatorToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertVisibilityToggle.classList.toggle('toggled', state.mode === 'assertingVisibility');
     this._assertVisibilityToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertTextToggle.classList.toggle('toggled', state.mode === 'assertingText');
@@ -1186,12 +1277,14 @@ class Overlay {
       this._showOverlay();
   }
 
-  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingSnapshot' | 'assertingValue') {
+  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingSnapshot' | 'assertingValue' | 'hovering') {
     let element: Element;
     if (tool === 'assertingVisibility')
       element = this._assertVisibilityToggle;
     else if (tool === 'assertingSnapshot')
       element = this._assertSnapshotToggle;
+    else if (tool === 'hovering')
+      element = this._hoverLocatorToggle;
     else
       element = this._assertValuesToggle;
     element.classList.add('succeeded');
@@ -1287,6 +1380,7 @@ export class Recorder {
       'assertingVisibility': new InspectTool(this, true),
       'assertingValue': new TextAssertionTool(this, 'value'),
       'assertingSnapshot': new TextAssertionTool(this, 'snapshot'),
+      'hovering': new HoverTool(this),
     };
     this._currentTool = this._tools.none;
     this._currentTool.install?.();
