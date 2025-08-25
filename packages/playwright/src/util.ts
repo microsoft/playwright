@@ -164,7 +164,7 @@ export function mergeObjects<A extends object, B extends object, C extends objec
 export function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
   if (match)
-  return new RegExp(match[1], match[2]);
+    return new RegExp(match[1], match[2]);
   const escapedPattern = pattern.replace(/[(){}]/g, '\\$&');
   return new RegExp(escapedPattern, 'gi');
 }
