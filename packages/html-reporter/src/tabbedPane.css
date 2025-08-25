@@ -39,7 +39,7 @@
   outline: none;
 }
 
-.tabbed-pane-tab-wrapper {
+.tabbed-pane-tab-element {
   padding: 4px 8px 0 8px;
   margin-right: 4px;
   cursor: pointer;
@@ -53,18 +53,9 @@
   height: 100%;
 }
 
-.tabbed-pane-tab-element {
-  height: 30px;
-  padding: 0 8px;
-  border-radius: 0.375rem;
-}
-
-.tabbed-pane-tab-element:hover {
-  background-color: var(--color-control-transparent-bg-hover);
-}
-
 .tabbed-pane-tab-element.selected {
-  font-weight: 600;
+  border-bottom-color: #666;
+  -webkit-text-stroke: 0.5px currentColor;
 }
 
 .tabbed-pane-tab-label {
@@ -74,8 +65,11 @@
   text-overflow: ellipsis;
   text-align: center;
   display: inline-block;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
 }
 
-.tabbed-pane-tab-wrapper.selected {
-  border-bottom-color: #666;
+.tabbed-pane-tab-label:hover {
+  background-color: var(--color-control-transparent-bg-hover);
 }
