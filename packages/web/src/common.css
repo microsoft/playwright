@@ -18,6 +18,11 @@
   color-scheme: light dark;
 }
 
+html.controlled-theme {
+  /* Override default color-scheme. Prevent conflicts with system color scheme since we have manual controls to change the page theme */
+  color-scheme: auto;
+}
+
 body {
   --transparent-blue: #2196F355;
   --light-pink: #ff69b460;
