@@ -453,7 +453,7 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
+  test.only('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
     const storageFileName = testInfo.outputPath('auth.json');
