@@ -164,9 +164,7 @@ export function mergeObjects<A extends object, B extends object, C extends objec
 export function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
   if (match)
-    return new RegExp(match[1], match[2]);
-  // Escape commonly problematic regex special characters that users are unlikely to use intentionally
-  // Parentheses () and braces {} are escaped, but brackets [], dots, stars, etc. are preserved for basic regex functionality
+  return new RegExp(match[1], match[2]);
   const escapedPattern = pattern.replace(/[(){}]/g, '\\$&');
   return new RegExp(escapedPattern, 'gi');
 }
