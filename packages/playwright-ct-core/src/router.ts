@@ -105,7 +105,7 @@ export class Router {
         headers.append(name, value);
 
       const buffer = request.postDataBuffer();
-      const body = buffer?.byteLength ? new Int8Array(buffer.buffer, buffer.byteOffset, buffer.length) : undefined;
+      const body = buffer?.byteLength ? new Int8Array(buffer.buffer as ArrayBuffer, buffer.byteOffset, buffer.length) : undefined;
 
       const newRequest = new Request(request.url(), {
         body: body,
