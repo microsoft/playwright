@@ -91,15 +91,12 @@ export const evaluate = defineTool({
   },
 
   handle: async (page, params) => {
-    if (params.ref && params.element) {
-      const locator = await refLocator(page, { ref: params.ref, element: params.element });
-      const result = await locator.evaluate(params.function);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) || 'undefined' }],
-      };
-    }
+    let locator: playwright.Locator | undefined;
+    if (params.ref && params.element)
+      locator = await refLocator(page, { ref: params.ref, element: params.element });
 
-    const result = await page.evaluate(params.function);
+    const receiver = locator ?? page as any;
+    const result = await receiver._evaluateFunction(params.function);
     return {
       content: [{ type: 'text', text: JSON.stringify(result, null, 2) || 'undefined' }],
     };
