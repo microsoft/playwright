@@ -155,7 +155,7 @@ it('should throw if page argument is passed', async ({ browserType, server, crea
 });
 
 it('should have passed URL when launching with ignoreDefaultArgs: true', async ({ browserType, server, createUserDataDir, toImpl, mode, browserName, channel }) => {
-  it.fixme(channel === 'webkit-wsl');
+  it.skip(channel === 'webkit-wsl');
   it.skip(mode !== 'default');
 
   const userDataDir = await createUserDataDir();

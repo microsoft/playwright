@@ -519,7 +519,7 @@ export interface Executable {
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
-  _wslExecutablePath?: string
+  wslExecutablePath?: string
 }
 
 interface ExecutableImpl extends Executable {
@@ -824,9 +824,9 @@ export class Registry {
       directory: webkit.dir,
       executablePath: () => path.resolve(__dirname, '../../../bin/webkit-wsl-host-wrapper.mjs'),
       executablePathOrDie: (sdkLanguage: string) => process.execPath,
-      _wslExecutablePath: `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
+      wslExecutablePath: `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
       installType: 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
+      _validateHostRequirements: (sdkLanguage: string) => Promise.resolve(),
       _isHermeticInstallation: true,
       _install: async () => {
         if (process.platform !== 'win32')

@@ -136,7 +136,7 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
   await page.goto(urls.set_origin2_origin1);
   await page.goto(urls.read_origin2_origin1);
   const expectedThirdParty = browserName === 'webkit' && isMac ?
-    'Received cookie: undefined' : browserName === 'webkit' && isLinux || channel === 'webkit-wsl' ?
+    'Received cookie: undefined' : browserName === 'webkit' && (isLinux || channel === 'webkit-wsl') ?
       'Received cookie: top-level=value' :
       'Received cookie: frame=value; top-level=value';
   await expect(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });

@@ -60,9 +60,9 @@ import { spawn, spawnSync } from 'child_process';
     env: childEnv,
   });
 
-  const [readPipe, writePipe] = [child.stdio[3] as NodeJS.ReadableStream, child.stdio[4] as NodeJS.WritableStream];
-  socket.pipe(writePipe);
-  readPipe.pipe(socket);
+  const [childOutput, childInput] = [child.stdio[3] as NodeJS.WritableStream, child.stdio[4] as NodeJS.ReadableStream];
+  socket.pipe(childOutput);
+  childInput.pipe(socket);
 
   socket.on('end', () => child.kill());
 

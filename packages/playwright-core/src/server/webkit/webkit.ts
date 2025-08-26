@@ -44,7 +44,7 @@ export class WebKit extends BrowserType {
     return {
       ...env,
       CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
-      WEBKIT_EXECUTABLE: options.channel === 'webkit-wsl' ? registry.findExecutable('webkit-wsl')!._wslExecutablePath! : undefined
+      WEBKIT_EXECUTABLE: options.channel === 'webkit-wsl' ? registry.findExecutable('webkit-wsl')!.wslExecutablePath! : undefined
     };
   }
 

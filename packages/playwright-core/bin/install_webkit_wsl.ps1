@@ -22,8 +22,8 @@ if [ ! -f "/home/$Username/node/bin/node" ]; then
   curl -fsSL https://nodejs.org/dist/v22.17.0/node-v22.17.0-linux-x64.tar.xz -o /home/$Username/node/node-v22.17.0-linux-x64.tar.xz
   tar -xJf /home/$Username/node/node-v22.17.0-linux-x64.tar.xz -C /home/$Username/node --strip-components=1
 fi
-/home/$Username/node/bin/node cli.js install-deps
-cp packages/playwright-core/lib/server/webkit/wsl/webkit-wsl-transport-client.js /home/$Username/
+/home/$Username/node/bin/node cli.js install-deps webkit
+cp lib/server/webkit/wsl/webkit-wsl-transport-client.js /home/$Username/
 sudo -u $Username PLAYWRIGHT_SKIP_BROWSER_GC=1 /home/$Username/node/bin/node cli.js install webkit
 "@ -replace "\r\n", "`n"
 

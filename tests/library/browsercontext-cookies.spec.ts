@@ -346,7 +346,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
       expect(serverRequest.headers.cookie).toBe('name=value');
     }
   } else {
-    if (isLinux && browserName === 'webkit' || channel === 'webkit-wsl')
+    if (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl'))
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
     else
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
@@ -367,7 +367,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isLinux && browserName === 'webkit' || channel === 'webkit-wsl')
+      if (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl'))
         expect(serverRequest.headers.cookie).toBe(undefined);
       else
         expect(serverRequest.headers.cookie).toBe('name=value');

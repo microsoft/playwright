@@ -1334,7 +1334,7 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
       const [cookie] = await page.context().cookies();
       if (browserName === 'chromium' && value === 'None')
         expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isLinux && value === 'None' || (channel === 'webkit-wsl' && value === 'None'))
+      else if (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl') && value === 'None')
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
         expect(cookie.sameSite).toBe('None');

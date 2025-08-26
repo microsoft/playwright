@@ -101,7 +101,7 @@ it('should set cookies with SameSite attribute and no secure attribute', async (
     httpOnly: false,
     secure: false,
     sameSite: defaultSameSiteCookieValue,
-  }, ...(browserName === 'chromium' || (browserName === 'webkit' && isLinux || channel === 'webkit-wsl') ? [] : [{
+  }, ...(browserName === 'chromium' || (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl')) ? [] : [{
     name: 'same-site-none',
     value: '1',
     domain: 'foo.com',
