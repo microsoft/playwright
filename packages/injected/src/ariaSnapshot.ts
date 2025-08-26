@@ -188,6 +188,11 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
       const href = element.getAttribute('href')!;
       ariaNode.props['url'] = href;
     }
+
+    if (ariaNode.role === 'textbox' && element.hasAttribute('placeholder') && element.getAttribute('placeholder') !== ariaNode.name) {
+      const placeholder = element.getAttribute('placeholder')!;
+      ariaNode.props['placeholder'] = placeholder;
+    }
   }
 
   roleUtils.beginAriaCaches();
