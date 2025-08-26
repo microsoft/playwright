@@ -73,11 +73,11 @@ class TraceViewerPage {
 
   @step
   async showAllActions() {
-    await this.page.getByRole('button', { name: 'Settings' }).click();
-    await this.page.locator('.setting').getByText('Show route actions').click();
-    await this.page.locator('.setting').getByText('Show getter actions').click();
-    await this.page.locator('.setting').getByText('Show configuration actions').click();
-    await this.page.getByRole('button', { name: 'Settings' }).click();
+    await this.page.getByRole('button', { name: 'Filter actions' }).click();
+    await this.page.locator('.setting').getByText('Network routes').click();
+    await this.page.locator('.setting').getByText('Getters').click();
+    await this.page.locator('.setting').getByText('Configuration').click();
+    await this.page.getByRole('button', { name: 'Filter actions' }).click();
   }
 
   stackFrames(options: { selected?: boolean } = {}) {

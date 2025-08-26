@@ -506,10 +506,11 @@ test('should hide boxed fixtures and contents, reveal upon show all actions sett
       - treeitem /After Hooks/
   `);
 
-  await page.getByText('Settings').click();
-  await page.getByText('Show route actions').click();
-  await page.getByText('Show configuration actions').click();
-  await page.getByText('Show getter actions').click();
+  await page.getByRole('button', { name: 'Filter actions' }).click();
+  await page.locator('.setting').getByText('Network routes').click();
+  await page.locator('.setting').getByText('Getters').click();
+  await page.locator('.setting').getByText('Configuration').click();
+  await page.getByRole('button', { name: 'Filter actions' }).click();
 
   await page.getByTestId('actions-tree').getByRole('treeitem', { name: 'Before Hooks' }).locator('.codicon-chevron-right').click();
   await page.getByTestId('actions-tree').getByRole('treeitem', { name: 'Fixture "fixture"' }).locator('.codicon-chevron-right').click();
