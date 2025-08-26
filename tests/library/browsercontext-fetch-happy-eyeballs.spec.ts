@@ -58,8 +58,10 @@ it('get should work on request fixture', async ({ request, server }) => {
 });
 
 it('https post should work with ignoreHTTPSErrors option', async ({ context, httpsServer }) => {
-  const response = await context.request.post(httpsServer.EMPTY_PAGE,
-    { ignoreHTTPSErrors: true, __testHookLookup } as any);
+  const response = await context.request.post(httpsServer.EMPTY_PAGE, {
+    ignoreHTTPSErrors: true,
+    __testHookLookup
+  } as any);
   expect(response.status()).toBe(200);
   expect(interceptedHostnameLookup).toBe('localhost');
 });

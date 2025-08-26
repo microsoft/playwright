@@ -238,9 +238,9 @@ class CSSCoverage {
 }
 
 function convertToDisjointRanges(nestedRanges: {
-    startOffset: number;
-    endOffset: number;
-    count: number; }[]): { start: number; end: number; }[] {
+  startOffset: number;
+  endOffset: number;
+  count: number; }[]): { start: number; end: number; }[] {
   const points = [];
   for (const range of nestedRanges) {
     points.push({ offset: range.startOffset, type: 0, range });

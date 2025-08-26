@@ -20,22 +20,22 @@ import { playwrightTest as base, expect } from '../../config/browserTest';
 
 const it = base.extend<{
   launchPersistentContext: (extensionPath: string, options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<BrowserContext>;
-      }>({
-        launchPersistentContext: async ({ browserType }, use) => {
-          const browsers: BrowserContext[] = [];
-          await use(async (extensionPath, options = {}) => {
-            const extensionOptions = {
-              ...options,
-              args: [
-                `--disable-extensions-except=${extensionPath}`,
-                `--load-extension=${extensionPath}`,
-              ],
-            };
-            return await browserType.launchPersistentContext('', extensionOptions);
-          });
-          await Promise.all(browsers.map(browser => browser.close()));
-        }
-      });
+}>({
+  launchPersistentContext: async ({ browserType }, use) => {
+    const browsers: BrowserContext[] = [];
+    await use(async (extensionPath, options = {}) => {
+      const extensionOptions = {
+        ...options,
+        args: [
+          `--disable-extensions-except=${extensionPath}`,
+          `--load-extension=${extensionPath}`,
+        ],
+      };
+      return await browserType.launchPersistentContext('', extensionOptions);
+    });
+    await Promise.all(browsers.map(browser => browser.close()));
+  }
+});
 
 it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support for extensions');
 

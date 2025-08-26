@@ -33,18 +33,18 @@ const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x ' : '✘ ';
 
 const test = baseTest.extend<{
   showReport: (reportFolder?: string) => Promise<void>
-      }>({
-        showReport: async ({ page }, use) => {
-          let server: HttpServer | undefined;
-          await use(async (reportFolder?: string) => {
-            reportFolder ??= test.info().outputPath('playwright-report');
-            server = startHtmlReportServer(reportFolder) as HttpServer;
-            await server.start();
-            await page.goto(server.urlPrefix('precise'));
-          });
-          await server?.stop();
-        }
-      });
+}>({
+  showReport: async ({ page }, use) => {
+    let server: HttpServer | undefined;
+    await use(async (reportFolder?: string) => {
+      reportFolder ??= test.info().outputPath('playwright-report');
+      server = startHtmlReportServer(reportFolder) as HttpServer;
+      await server.start();
+      await page.goto(server.urlPrefix('precise'));
+    });
+    await server?.stop();
+  }
+});
 
 test.use({ channel: 'chrome' });
 test.slow(!!process.env.CI);

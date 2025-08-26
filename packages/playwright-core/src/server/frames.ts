@@ -918,10 +918,10 @@ export class Frame extends SdkObject {
   }
 
   async addScriptTag(params: {
-      url?: string,
-      content?: string,
-      type?: string,
-    }): Promise<dom.ElementHandle> {
+    url?: string,
+    content?: string,
+    type?: string,
+  }): Promise<dom.ElementHandle> {
     const {
       url = null,
       content = null,

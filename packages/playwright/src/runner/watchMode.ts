@@ -301,9 +301,9 @@ function readKeyPress<T extends string>(handler: (text: string, key: any) => T |
 const isInterrupt = (text: string, key: any) => text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c');
 
 async function runTests(watchOptions: WatchModeOptions, testServerConnection: TestServerConnection, options?: {
-    title?: string,
-    testIds?: string[],
-  }) {
+  title?: string,
+  testIds?: string[],
+}) {
   printConfiguration(watchOptions, options?.title);
 
   const waitForDone = readKeyPress((text: string, key: any) => {

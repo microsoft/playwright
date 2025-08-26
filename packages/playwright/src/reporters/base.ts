@@ -653,15 +653,15 @@ function resolveFromEnv(name: string): string | undefined {
 // In addition to `outputFile` the function returns `outputDir` which should
 // be cleaned up if present by some reporters contract.
 export function resolveOutputFile(reporterName: string, options: {
-    configDir: string,
-    outputDir?: string,
-    fileName?: string,
-    outputFile?: string,
-    default?: {
-      fileName: string,
-      outputDir: string,
-    }
-  }): { outputFile: string, outputDir?: string } | undefined {
+  configDir: string,
+  outputDir?: string,
+  fileName?: string,
+  outputFile?: string,
+  default?: {
+    fileName: string,
+    outputDir: string,
+  }
+}): { outputFile: string, outputDir?: string } | undefined {
   const name = reporterName.toUpperCase();
   let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
   if (!outputFile && options.outputFile)
