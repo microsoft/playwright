@@ -455,7 +455,10 @@ export class TestInfoImpl implements TestInfo {
       title: `Attach ${escapeWithQuotes(name, '"')}`,
       category: 'test.attach',
     });
-    this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
+    this._attach(
+        await normalizeAndSaveAttachment(this.outputPath(), name, options),
+        step.group ? undefined : step.stepId
+    );
     step.complete({});
   }
 
