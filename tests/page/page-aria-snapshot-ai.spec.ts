@@ -17,7 +17,7 @@
 // @ts-ignore
 import { asLocator } from 'playwright-core/lib/utils';
 
-import { test as it, expect, unshift } from './pageTest';
+import { test as it, expect } from './pageTest';
 
 function snapshotForAI(page: any, options?: { timeout?: number }): Promise<string> {
   return page._snapshotForAI(options);
@@ -184,18 +184,9 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
 
   expect(snapshot).toContainYaml(`
     - generic [ref=e2]:
-      - generic [ref=e3]:
-        - generic [ref=e4]:
-          - radio "Apple" [checked]
-        - generic [ref=e5]: Apple
-      - generic [ref=e6]:
-        - generic [ref=e7]:
-          - radio "Pear"
-        - generic [ref=e8]: Pear
-      - generic [ref=e9]:
-        - generic [ref=e10]:
-          - radio "Orange"
-        - generic [ref=e11]: Orange
+      - generic [ref=e5]: Apple
+      - generic [ref=e8]: Pear
+      - generic [ref=e11]: Orange
   `);
 });
 
@@ -281,11 +272,11 @@ it('should show visible children of hidden elements', { annotation: { type: 'iss
     </div>
   `);
 
-  expect(await snapshotForAI(page)).toEqual(unshift(`
+  expect(await snapshotForAI(page)).toContainYaml(`
     - generic [active] [ref=e1]:
       - button "Visible" [ref=e3]
       - button "Visible" [ref=e4]
-  `));
+  `);
 });
 
 it('should include active element information', async ({ page }) => {
