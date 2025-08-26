@@ -184,7 +184,7 @@ export const baseRules = {
   "no-mixed-spaces-and-tabs": 2,
   "no-trailing-spaces": 2,
   "linebreak-style": [process.platform === "win32" ? 0 : 2, "unix"],
-  indent: [
+  "@stylistic/indent": [
     2,
     2,
     { SwitchCase: 1, CallExpression: { arguments: 2 }, MemberExpression: 2 },

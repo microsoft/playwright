@@ -32,14 +32,14 @@ interface TaggedAsElementHandle<T> {
 type NoHandles<Arg> = Arg extends TaggedAsJSHandle<any> ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =
   Arg extends TaggedAsElementHandle<infer T> ? T :
-  Arg extends TaggedAsJSHandle<infer T> ? T :
-  Arg extends NoHandles<Arg> ? Arg :
-  Arg extends [infer A0] ? [Unboxed<A0>] :
-  Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
-  Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
-  Arg extends Array<infer T> ? Array<Unboxed<T>> :
-  Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
-  Arg;
+    Arg extends TaggedAsJSHandle<infer T> ? T :
+      Arg extends NoHandles<Arg> ? Arg :
+        Arg extends [infer A0] ? [Unboxed<A0>] :
+          Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
+            Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
+              Arg extends Array<infer T> ? Array<Unboxed<T>> :
+                Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
+                  Arg;
 export type Func0<R> = string | (() => R | Promise<R>);
 export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);

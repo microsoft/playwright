@@ -164,8 +164,8 @@ export namespace Session {
     httpProxy?: string;
     sslProxy?: string;
   } & ({} | Session.SocksProxyConfiguration) & {
-      noProxy?: [...string[]];
-    } & Extensible;
+    noProxy?: [...string[]];
+  } & Extensible;
 }
 export namespace Session {
   export type SocksProxyConfiguration = {
@@ -1013,11 +1013,11 @@ export namespace Emulation {
 export namespace Emulation {
   export type SetGeolocationOverrideParameters = (
     | {
-        coordinates: Emulation.GeolocationCoordinates | null;
-      }
+      coordinates: Emulation.GeolocationCoordinates | null;
+    }
     | {
-        error: Emulation.GeolocationPositionError;
-      }
+      error: Emulation.GeolocationPositionError;
+    }
   ) & {
     contexts?: [
       BrowsingContext.BrowsingContext,

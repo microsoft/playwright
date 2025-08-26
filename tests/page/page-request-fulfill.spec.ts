@@ -25,15 +25,15 @@ const it = base.extend<{
   // which is actually forwarded to the desktop localhost.
   // To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
   rewriteAndroidLoopbackURL(url: string): string
-      }>({
-        rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
-          if (!isAndroid)
-            return givenURL;
-          const requestURL = new URL(givenURL);
-          requestURL.hostname = 'localhost';
-          return requestURL.toString();
-        })
-      });
+}>({
+  rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
+    if (!isAndroid)
+      return givenURL;
+    const requestURL = new URL(givenURL);
+    requestURL.hostname = 'localhost';
+    return requestURL.toString();
+  })
+});
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => {
