@@ -87,7 +87,6 @@ export class InjectedScript {
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
   private _markedElements?: { callId: string, elements: Set<Element> };
-  // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
@@ -120,7 +119,6 @@ export class InjectedScript {
   private _mouseHitTargetInterceptorEvents: Set<string>;
   private _allHitTargetInterceptorEvents: Set<string>;
 
-  // eslint-disable-next-line no-restricted-globals
   constructor(window: Window & typeof globalThis, options: InjectedScriptOptions) {
     this.window = window;
     this.document = window.document;

@@ -32,12 +32,10 @@ type BindingData = {
 };
 
 export class BindingsController {
-  // eslint-disable-next-line no-restricted-globals
   private _global: typeof globalThis;
   private _globalBindingName: string;
   private _bindings = new Map<string, BindingData>();
 
-  // eslint-disable-next-line no-restricted-globals
   constructor(global: typeof globalThis, globalBindingName: string) {
     this._global = global;
     this._globalBindingName = globalBindingName;

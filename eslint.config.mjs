@@ -176,7 +176,7 @@ export const baseRules = {
       before: true,
     },
   ],
-  "@stylistic/func-call-spacing": 2,
+  "@stylistic/function-call-spacing": 2,
   "@stylistic/type-annotation-spacing": 2,
 
   // file whitespace

@@ -33,7 +33,6 @@ export type ClosePageRequest = { type: 'closePage', id: string, code: number | u
 export type CloseServerRequest = { type: 'closeServer', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
 export type APIRequest = ConnectRequest | PassthroughRequest | EnsureOpenedRequest | SendToPageRequest | SendToServerRequest | ClosePageRequest | CloseServerRequest;
 
-// eslint-disable-next-line no-restricted-globals
 type GlobalThis = typeof globalThis;
 
 export function inject(globalThis: GlobalThis) {

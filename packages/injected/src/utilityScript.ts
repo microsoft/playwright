@@ -27,20 +27,16 @@ export type Builtins = {
   requestIdleCallback: Window['requestIdleCallback'],
   cancelIdleCallback: Window['cancelIdleCallback'],
   performance: Window['performance'],
-  // eslint-disable-next-line no-restricted-globals
   Intl: typeof window['Intl'],
-  // eslint-disable-next-line no-restricted-globals
   Date: typeof window['Date'],
 };
 
 export class UtilityScript {
-  // eslint-disable-next-line no-restricted-globals
   readonly global: typeof globalThis;
   // Builtins protect injected code from clock emulation.
   readonly builtins: Builtins;
   readonly isUnderTest: boolean;
 
-  // eslint-disable-next-line no-restricted-globals
   constructor(global: typeof globalThis, isUnderTest: boolean) {
     this.global = global;
     this.isUnderTest = isUnderTest;

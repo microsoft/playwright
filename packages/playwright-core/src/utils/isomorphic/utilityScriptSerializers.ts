@@ -45,7 +45,6 @@ function isRegExp(obj: any): obj is RegExp {
   }
 }
 
-// eslint-disable-next-line no-restricted-globals
 function isDate(obj: any): obj is Date {
   try {
     // eslint-disable-next-line no-restricted-globals
