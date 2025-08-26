@@ -426,7 +426,6 @@ test(`should support self signed certificate`, async ({ runInlineTest, httpsServ
     'playwright.config.js': `
       module.exports = {
         webServer: {
-          command: 'unused',
           url: '${httpsServer.EMPTY_PAGE}',
           ignoreHTTPSErrors: true,
           reuseExistingServer: true,
