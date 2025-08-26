@@ -215,6 +215,7 @@ SOFTWARE. */
   --color-header-search-border: #57606a;
   --color-sidenav-selected-bg: #ffffff;
   --color-menu-bg-active: rgba(0,0,0,0);
+  --color-control-transparent-bg-hover: #818b981a;
   --color-input-disabled-bg: rgba(175,184,193,0.2);
   --color-timeline-badge-bg: #eaeef2;
   --color-ansi-black: #24292f;
@@ -649,6 +650,7 @@ SOFTWARE. */
     --color-header-search-border: #30363d;
     --color-sidenav-selected-bg: #21262d;
     --color-menu-bg-active: #161b22;
+    --color-control-transparent-bg-hover: #656c7633;
     --color-input-disabled-bg: rgba(110,118,129,0);
     --color-timeline-badge-bg: #21262d;
     --color-ansi-black: #484f58;

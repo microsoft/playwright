@@ -15,6 +15,7 @@
  */
 
 import { clsx } from '@web/uiUtils';
+import './colors.css';
 import './tabbedPane.css';
 import * as React from 'react';
 
