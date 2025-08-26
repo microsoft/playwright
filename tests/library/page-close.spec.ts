@@ -153,7 +153,7 @@ test('interrupt request.response() and request.allHeaders() on page.close', asyn
   await page.close();
   expect((await respPromise).message).toContain(kTargetClosedErrorMessage);
   // All headers are the same as "provisional" headers in Firefox.
-  if (browserName === 'firefox')
+  if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
     expect((await headersPromise)['user-agent']).toBeTruthy();
   else
     expect((await headersPromise).message).toContain(kTargetClosedErrorMessage);

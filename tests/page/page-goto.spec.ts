@@ -295,6 +295,8 @@ it('should fail when navigating to bad url', async ({ mode, page, browserName })
   await page.goto('asdfasdf').catch(e => error = e);
   if (browserName === 'chromium' || browserName === 'webkit')
     expect(error.message).toContain('Cannot navigate to invalid URL');
+  else if (browserName === '_bidiFirefox')
+    expect(error.message).toContain('NS_ERROR_MALFORMED_URI');
   else
     expect(error.message).toContain('Invalid url');
 });
