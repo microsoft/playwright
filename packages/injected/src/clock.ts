@@ -430,7 +430,6 @@ function mirrorDateProperties(target: any, source: Builtins['Date']): Builtins['
 }
 
 function createDate(clock: ClockController, NativeDate: Builtins['Date']): Builtins['Date'] {
-  // eslint-disable-next-line no-restricted-globals
   function ClockDate(this: typeof ClockDate, year: number, month: number, date: number, hour: number, minute: number, second: number, ms: number): Date | string {
     // the Date constructor called as a function, ref Ecma-262 Edition 5.1, section 15.9.2.
     // This remains so in the 10th edition of 2019 as well.
@@ -497,7 +496,6 @@ function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Built
 
   ClockIntl.DateTimeFormat = function(...args: any[]) {
     const realFormatter = new NativeIntl.DateTimeFormat(...args);
-    // eslint-disable-next-line no-restricted-globals
     const formatter: Intl.DateTimeFormat = {
       formatRange: realFormatter.formatRange.bind(realFormatter),
       formatRangeToParts: realFormatter.formatRangeToParts.bind(realFormatter),
