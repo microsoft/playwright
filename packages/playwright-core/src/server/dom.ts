@@ -743,12 +743,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._markAsTargetElement(progress);
     if (await isChecked() === state)
       return 'done';
-
-    // Radio buttons cannot be unchecked by clicking - only by selecting another radio in the same group
+    
     if (!state && await isRadio()) {
       throw new NonRecoverableDOMError('Cannot uncheck radio button. Radio buttons can only be unchecked by selecting another radio button in the same group.');
     }
-
+    
     const result = await this._click(progress, { ...options, waitAfter: 'disabled' });
     if (result !== 'done')
       return result;
