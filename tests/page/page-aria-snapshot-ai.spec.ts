@@ -218,6 +218,23 @@ it('should include cursor pointer hint', async ({ page }) => {
   `);
 });
 
+it('should not nest cursor pointer hints', async ({ page }) => {
+  await page.setContent(`
+    <a style="cursor: pointer" href="about:blank">
+      Link with a button
+      <button style="cursor: pointer">Button</button>
+    </a>
+  `);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - link \"Link with a button Button\" [ref=e2] [cursor=pointer]:
+      - /url: about:blank
+      - text: Link with a button
+      - button "Button" [ref=e3]
+  `);
+});
+
 it('should gracefully fallback when child frame cant be captured', async ({ page, server }) => {
   await page.setContent(`
     <p>Test</p>

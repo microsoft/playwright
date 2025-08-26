@@ -469,7 +469,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
   const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
   const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
-  const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string) => {
+  const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string, renderCursorPointer: boolean) => {
     if (typeof ariaNode === 'string') {
       if (parentAriaNode && !includeText(parentAriaNode, ariaNode))
         return;
@@ -507,10 +507,13 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     if (ariaNode.selected === true)
       key += ` [selected]`;
 
+    let inCursorPointer = false;
     if (ariaNode.ref) {
       key += ` [ref=${ariaNode.ref}]`;
-      if (options.renderCursorPointer && hasPointerCursor(ariaNode))
+      if (renderCursorPointer && hasPointerCursor(ariaNode)) {
+        inCursorPointer = true;
         key += ' [cursor=pointer]';
+      }
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
@@ -528,7 +531,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
       for (const [name, value] of Object.entries(ariaNode.props))
         lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
       for (const child of ariaNode.children || [])
-        visit(child, ariaNode, indent + '  ');
+        visit(child, ariaNode, indent + '  ', renderCursorPointer && !inCursorPointer);
     }
   };
 
@@ -536,9 +539,9 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
   if (ariaNode.role === 'fragment') {
     // Render fragment.
     for (const child of ariaNode.children || [])
-      visit(child, ariaNode, '');
+      visit(child, ariaNode, '', !!options.renderCursorPointer);
   } else {
-    visit(ariaNode, null, '');
+    visit(ariaNode, null, '', !!options.renderCursorPointer);
   }
   return lines.join('\n');
 }
