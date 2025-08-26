@@ -697,6 +697,13 @@ export class InjectedScript {
     return { queryAll };
   }
 
+  isRadioButton(node: Node): boolean {
+    const element = this.retarget(node, 'follow-label');
+    if (!element || element.nodeName !== 'INPUT')
+      return false;
+    return (element as HTMLInputElement).type === 'radio';
+  }
+
   elementState(node: Node, state: ElementStateWithoutStable): ElementStateQueryResult {
     const element = this.retarget(node, ['visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
