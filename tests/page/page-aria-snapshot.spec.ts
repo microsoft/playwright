@@ -669,3 +669,20 @@ it('should not show unhidden children of aria-hidden elements', { annotation: { 
 
   expect(await page.locator('body').ariaSnapshot()).toBe('');
 });
+
+it('should snapshot placeholder when different from the name', async ({ page }) => {
+  await page.setContent(`
+    <input placeholder="Placeholder">
+  `);
+  expect(await page.locator('body').ariaSnapshot()).toContainYaml(`
+    - textbox "Placeholder"
+  `);
+
+  await page.setContent(`
+    <input placeholder="Placeholder" aria-label="Label">
+  `);
+  expect(await page.locator('body').ariaSnapshot()).toContainYaml(`
+    - textbox "Label":
+      - /placeholder: Placeholder
+  `);
+});
