@@ -307,6 +307,7 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
 export type Snapshot = {
   action: ActionTraceEvent;
   snapshotName: string;
+  pageId: string;
   point?: { x: number, y: number };
   hasInputTarget?: boolean;
 };
@@ -334,18 +335,18 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   if (!action)
     return {};
 
-  let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
+  let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot && action.pageId ? { action, snapshotName: action.beforeSnapshot, pageId: action.pageId } : undefined;
   if (!beforeSnapshot) {
     // If the action has no beforeSnapshot, use the last available afterSnapshot.
     for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
-      if (a.endTime <= action.startTime && a.afterSnapshot) {
-        beforeSnapshot = { action: a, snapshotName: a.afterSnapshot };
+      if (a.endTime <= action.startTime && a.afterSnapshot && a.pageId) {
+        beforeSnapshot = { action: a, snapshotName: a.afterSnapshot, pageId: a.pageId };
         break;
       }
     }
   }
 
-  let afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : undefined;
+  let afterSnapshot: Snapshot | undefined = action.afterSnapshot && action.pageId ? { action, snapshotName: action.afterSnapshot, pageId: action.pageId } : undefined;
   if (!afterSnapshot) {
     let last: ActionTraceEvent | undefined;
     // - For test.step, we want to use the snapshot of the last nested action.
@@ -356,19 +357,19 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
     //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
     //   and we calculated it above from a previous action.
     for (let a = nextActionByStartTime(action); a && a.startTime <= action.endTime; a = nextActionByStartTime(a)) {
-      if (a.endTime > action.endTime || !a.afterSnapshot)
+      if (a.endTime > action.endTime || !a.afterSnapshot || !a.pageId)
         continue;
       if (last && last.endTime > a.endTime)
         continue;
       last = a;
     }
     if (last)
-      afterSnapshot = { action: last, snapshotName: last.afterSnapshot! };
+      afterSnapshot = { action: last, snapshotName: last.afterSnapshot!, pageId: last.pageId! };
     else
       afterSnapshot = beforeSnapshot;
   }
 
-  const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
+  const actionSnapshot: Snapshot | undefined = action.inputSnapshot && action.pageId ? { action, snapshotName: action.inputSnapshot, pageId: action.pageId, hasInputTarget: true } : afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
@@ -392,8 +393,8 @@ export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScree
   if (shouldPopulateCanvasFromScreenshot)
     params.set('shouldPopulateCanvasFromScreenshot', '1');
 
-  const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
-  const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
+  const snapshotUrl = new URL(`snapshot/${snapshot.pageId}?${params.toString()}`, window.location.href).toString();
+  const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.pageId}?${params.toString()}`, window.location.href).toString();
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
