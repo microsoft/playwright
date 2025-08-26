@@ -45,6 +45,8 @@ import type { HighlightedElement } from './snapshotTab';
 import type { TestAnnotation } from '@playwright/test';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
+import { DialogToolbarButton } from '@web/components/dialog';
+import { SettingsView } from './settingsView';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -358,6 +360,7 @@ export const Workbench: React.FunctionComponent<{
             tabs={[actionsTab, metadataTab]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
+            rightToolbar={[<ActionsFilterButton key='filter'/>]}
           />
         }
       />}
@@ -378,4 +381,32 @@ export const Workbench: React.FunctionComponent<{
       />}
     />
   </div>;
+};
+
+const ActionsFilterButton: React.FC<{}> = () => {
+  const [actionsFilter, setActionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
+  return <DialogToolbarButton icon='filter' title='Filter actions'>
+    <SettingsView
+      settings={[
+        {
+          type: 'check',
+          value: actionsFilter.includes('getter'),
+          set: value => setActionsFilter(value ? [...actionsFilter, 'getter'] : actionsFilter.filter(a => a !== 'getter')),
+          name: 'Getters',
+        },
+        {
+          type: 'check',
+          value: actionsFilter.includes('route'),
+          set: value => setActionsFilter(value ? [...actionsFilter, 'route'] : actionsFilter.filter(a => a !== 'route')),
+          name: 'Network routes',
+        },
+        {
+          type: 'check',
+          value: actionsFilter.includes('configuration'),
+          set: value => setActionsFilter(value ? [...actionsFilter, 'configuration'] : actionsFilter.filter(a => a !== 'configuration')),
+          name: 'Configuration',
+        },
+      ]}
+    />
+  </DialogToolbarButton>;
 };

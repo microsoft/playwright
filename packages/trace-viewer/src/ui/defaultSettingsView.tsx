@@ -18,7 +18,6 @@ import * as React from 'react';
 import { SettingsView } from './settingsView';
 import { useDarkModeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
-import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 /**
  * A view of the collection of standard settings used between various applications
@@ -28,7 +27,6 @@ export const DefaultSettingsView: React.FC<{}> = () => {
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
-  const [actionsFilter, setActionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
   const [darkMode, setDarkMode] = useDarkModeSetting();
 
   return (
@@ -46,24 +44,6 @@ export const DefaultSettingsView: React.FC<{}> = () => {
           set: setShouldPopulateCanvasFromScreenshot,
           name: 'Display canvas content',
           title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.',
-        },
-        {
-          type: 'check',
-          value: actionsFilter.includes('getter'),
-          set: value => setActionsFilter(value ? [...actionsFilter, 'getter'] : actionsFilter.filter(a => a !== 'getter')),
-          name: 'Show getter actions',
-        },
-        {
-          type: 'check',
-          value: actionsFilter.includes('route'),
-          set: value => setActionsFilter(value ? [...actionsFilter, 'route'] : actionsFilter.filter(a => a !== 'route')),
-          name: 'Show route actions',
-        },
-        {
-          type: 'check',
-          value: actionsFilter.includes('configuration'),
-          set: value => setActionsFilter(value ? [...actionsFilter, 'configuration'] : actionsFilter.filter(a => a !== 'configuration')),
-          name: 'Show configuration actions',
         },
       ]}
     />
