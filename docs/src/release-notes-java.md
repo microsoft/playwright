@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 ### Codegen
 
-- Automatic `toBeVisible()` assertions: Codegen can now generate automatic `toBeVisible()` assertions for common UI interactions. This feature can be enabled in the Codegen settings UI.
+- Automatic `isVisible()` assertions: Codegen can now generate automatic `isVisible()` assertions for common UI interactions. This feature can be enabled in the Codegen settings UI.
 
 ### Breaking Changes
 
