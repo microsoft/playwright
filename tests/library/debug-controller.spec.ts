@@ -76,14 +76,18 @@ const test = baseTest.extend<Fixtures>({
 test.slow(true, 'All controller tests are slow');
 test.skip(({ mode }) => mode.startsWith('service') || mode === 'driver');
 
+// Force a separate worker to avoid registered selector engines from other tests.
+// See https://github.com/microsoft/playwright/pull/37103.
+test.use({ launchOptions: {} });
+
 test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('inspectRequested', event => events.push(event));
 
-  const context = await connectedBrowser.newContextForReuse();
-  const page = await context.newPage();
-
   await backend.setRecorderMode({ mode: 'inspecting' });
+
+  const context = await connectedBrowser.newContextForReuse();
+  const [page] = context.pages();
 
   await page.setContent('<button>Submit</button>');
   await page.getByRole('button').click();
