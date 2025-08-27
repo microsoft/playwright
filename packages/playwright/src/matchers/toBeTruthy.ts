@@ -40,7 +40,13 @@ export async function toBeTruthy(
   };
 
   const timeout = options.timeout ?? this.timeout;
-  const { matches: pass, log, timedOut, received } = await query(!!this.isNot, timeout);
+
+  const { matches: pass, log, timedOut, received } = await query(!!this.isNot, timeout).catch(async error => {
+    // FIXME: query should not throw, but it does for strict mode violations for example.
+    await runBrowserBackendOnError(receiver.page(), () => error.message);
+    throw error;
+  });
+
   if (pass === !this.isNot) {
     return {
       name: matcherName,
