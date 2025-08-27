@@ -74,7 +74,8 @@ export const Timeline: React.FunctionComponent<{
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
     for (const entry of actions || []) {
-      if (entry.class === 'Test')
+      // Specifically display steps in timeline
+      if (entry.class === 'Test' && entry.method !== 'test.step')
         continue;
       bars.push({
         action: entry,
