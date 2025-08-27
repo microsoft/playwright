@@ -58,7 +58,7 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   '--disable-dev-shm-usage',
   '--disable-extensions',
   '--disable-features=' + disabledFeatures(assistantMode).join(','),
-  channel === 'chromium-tip-of-tree' ? '--enable-features=CDPScreenshotNewSurface' : '',
+  '--enable-features=CDPScreenshotNewSurface',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
