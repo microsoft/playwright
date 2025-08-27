@@ -48,7 +48,12 @@ export async function toEqual<T>(
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
+  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout).catch(async error => {
+    // FIXME: query should not throw, but it does for strict mode violations for example.
+    await runBrowserBackendOnError(receiver.page(), () => error.message);
+    throw error;
+  });
+
   if (pass === !this.isNot) {
     return {
       name: matcherName,
