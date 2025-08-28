@@ -170,6 +170,8 @@ export class TeleReporterEmitter implements ReporterV2 {
       rootDir: config.rootDir,
       version: config.version,
       workers: config.workers,
+      globalSetup: config.globalSetup,
+      globalTeardown: config.globalTeardown,
     };
   }
 
