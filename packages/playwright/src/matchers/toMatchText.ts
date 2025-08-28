@@ -60,7 +60,13 @@ export async function toMatchText(
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
+  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout).catch(async error => {
+    // FIXME: query should not throw, but it does for strict mode violations for example.
+    if (receiverType === 'Locator')
+      await runBrowserBackendOnError((receiver as Locator).page(), () => error.message);
+    throw error;
+  });
+
   if (pass === !this.isNot) {
     return {
       name: matcherName,
