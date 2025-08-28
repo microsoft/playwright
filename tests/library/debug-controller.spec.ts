@@ -78,7 +78,7 @@ test.skip(({ mode }) => mode.startsWith('service') || mode === 'driver');
 
 // Force a separate worker to avoid registered selector engines from other tests.
 // See https://github.com/microsoft/playwright/pull/37103.
-test.use({ launchOptions: {} });
+test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
 
 test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
