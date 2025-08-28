@@ -429,5 +429,5 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
 
 test('should support closing browsers', async ({ backend, connectedBrowser }) => {
   await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
-  expect(connectedBrowser.isConnected()).toBe(false);
+  await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
 });
