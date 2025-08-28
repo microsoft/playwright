@@ -18,7 +18,7 @@ import net from 'net';
 import { androidTest as test, expect } from './androidTest';
 
 // Force a separate worker to avoid messing up with `androidDevice` fixture.
-test.use({ launchOptions: {} });
+test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
 
 test('androidDevice.close', async function({ playwright }) {
   const devices = await playwright._android.devices();

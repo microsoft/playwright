@@ -19,7 +19,7 @@ import { androidTest as test, expect } from './androidTest';
 import { kTargetClosedErrorMessage } from '../config/errors';
 
 // Force a separate worker to avoid messing up with `androidDevice` fixture.
-test.use({ launchOptions: {} });
+test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
 
 test('android.launchServer should connect to a device', async ({ playwright }) => {
   const browserServer = await playwright._android.launchServer();
