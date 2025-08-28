@@ -787,8 +787,10 @@ export class Page extends SdkObject {
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
     const origin = frame.origin();
-    if (origin)
-      this.browserContext.addVisitedOrigin(origin);
+    const firstPartyOrigin = frame._page.mainFrame().origin();
+    const hasCrossOriginAncestor = frame.hasCrossOriginAncestor();
+    if (firstPartyOrigin && origin)
+      this.browserContext.addVisitedOrigin(origin, firstPartyOrigin, hasCrossOriginAncestor);
   }
 
   allInitScripts() {
