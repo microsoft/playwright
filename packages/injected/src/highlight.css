@@ -212,6 +212,11 @@ x-pw-tool-item.pick-locator > x-div {
   clip-path: url(#icon-inspect);
 }
 
+x-pw-tool-item.hover-locator > x-div {
+  /* codicon: activate-breakpoints */
+  clip-path: url(#icon-activate-breakpoints);
+}
+
 x-pw-tool-item.text > x-div {
   /* codicon: whole-word */
   clip-path: url(#icon-whole-word);

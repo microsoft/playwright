@@ -28,7 +28,8 @@ export type Mode =
   | 'standby'
   | 'assertingVisibility'
   | 'assertingValue'
-  | 'assertingSnapshot';
+  | 'assertingSnapshot'
+  | 'hovering';
 
 export type ElementInfo = {
   selector: string;
