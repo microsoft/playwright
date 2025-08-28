@@ -105,33 +105,34 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
 
 export type Box = {
   visible: boolean;
+  inline: boolean;
   rect?: DOMRect;
   style?: CSSStyleDeclaration;
 };
 
-export function box(element: Element): Box {
+export function computeBox(element: Element): Box {
   // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
   const style = getElementComputedStyle(element);
   if (!style)
-    return { visible: true };
+    return { visible: true, inline: false };
   if (style.display === 'contents') {
     // display:contents is not rendered itself, but its child nodes are.
     for (let child = element.firstChild; child; child = child.nextSibling) {
       if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && isElementVisible(child as Element))
-        return { visible: true, style };
+        return { visible: true, inline: false, style };
       if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
-        return { visible: true, style };
+        return { visible: true, inline: true, style };
     }
-    return { visible: false, style };
+    return { visible: false, inline: false, style };
   }
   if (!isElementStyleVisibilityVisible(element, style))
-    return { style, visible: false };
+    return { style, visible: false, inline: false };
   const rect = element.getBoundingClientRect();
-  return { rect, style, visible: rect.width > 0 && rect.height > 0 };
+  return { rect, style, visible: rect.width > 0 && rect.height > 0, inline: style.display === 'inline' };
 }
 
 export function isElementVisible(element: Element): boolean {
-  return box(element).visible;
+  return computeBox(element).visible;
 }
 
 export function isVisibleTextNode(node: Text) {
