@@ -74,8 +74,6 @@ export const Timeline: React.FunctionComponent<{
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
     for (const entry of actions || []) {
-      if (entry.class === 'Test')
-        continue;
       bars.push({
         action: entry,
         leftTime: entry.startTime,
