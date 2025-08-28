@@ -18,7 +18,7 @@ import { expect, playwrightTest as baseTest } from '../config/browserTest';
 import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/playwrightServer';
 import { createGuid } from '../../packages/playwright-core/lib/server/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
-import type { Browser, BrowserContext, LaunchOptions } from '@playwright/test';
+import type { Browser, BrowserContext } from '@playwright/test';
 import type * as channels from '@protocol/channels';
 import { roundBox } from '../page/pageTest';
 
@@ -26,7 +26,7 @@ type BrowserWithReuse = Browser & { newContextForReuse: () => Promise<BrowserCon
 type Fixtures = {
   wsEndpoint: string;
   backend: channels.DebugControllerChannel;
-  connectedBrowserFactory: (launchOptions?: LaunchOptions) => Promise<BrowserWithReuse>;
+  connectedBrowserFactory: () => Promise<BrowserWithReuse>;
   connectedBrowser: BrowserWithReuse;
 };
 
@@ -48,11 +48,10 @@ const test = baseTest.extend<Fixtures>({
   },
   connectedBrowserFactory: async ({ wsEndpoint, browserType }, use) => {
     const browsers: BrowserWithReuse [] = [];
-    await use(async launchOptions => {
-      launchOptions ??= (browserType as any)._playwright._defaultLaunchOptions;
+    await use(async () => {
       const browser = await browserType.connect(wsEndpoint, {
         headers: {
-          'x-playwright-launch-options': JSON.stringify(launchOptions),
+          'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions),
         },
       }) as BrowserWithReuse;
       browsers.push(browser);
