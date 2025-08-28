@@ -233,7 +233,7 @@ export const Timeline: React.FunctionComponent<{
     setSelectedTime(undefined);
   }, [setSelectedTime]);
 
-  return <div style={{ flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+  return <div className='timeline-view-container'>
     {!!dragWindow && <GlassPane
       cursor={dragWindow?.type === 'resize' ? 'ew-resize' : 'grab'}
       onPaneMouseUp={onGlassPaneMouseUp}

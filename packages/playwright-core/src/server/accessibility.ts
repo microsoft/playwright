@@ -19,11 +19,11 @@ import type * as dom from './dom';
 import type * as channels from '@protocol/channels';
 
 export interface AXNode {
-    isInteresting(insideControl: boolean): boolean;
-    isLeafNode(): boolean;
-    isControl(): boolean;
-    serialize(): channels.AXNode;
-    children(): Iterable<AXNode>;
+  isInteresting(insideControl: boolean): boolean;
+  isLeafNode(): boolean;
+  isControl(): boolean;
+  serialize(): channels.AXNode;
+  children(): Iterable<AXNode>;
 }
 
 export class Accessibility {
@@ -33,9 +33,9 @@ export class Accessibility {
   }
 
   async snapshot(options: {
-      interestingOnly?: boolean;
-      root?: dom.ElementHandle;
-    } = {}): Promise<channels.AXNode | null> {
+    interestingOnly?: boolean;
+    root?: dom.ElementHandle;
+  } = {}): Promise<channels.AXNode | null> {
     const {
       interestingOnly = true,
       root = null,

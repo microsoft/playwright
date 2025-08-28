@@ -75,7 +75,11 @@ const test = baseTest.extend<Fixtures>({
 });
 
 test.slow(true, 'All controller tests are slow');
-test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(({ mode }) => mode.startsWith('service') || mode === 'driver');
+
+// Force a separate worker to avoid registered selector engines from other tests.
+// See https://github.com/microsoft/playwright/pull/37103.
+test.use({ launchOptions: {} });
 
 test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
@@ -386,7 +390,8 @@ test('should report error in aria template', async ({ backend }) => {
   expect(error.message).toContain('Unterminated string:');
 });
 
-test('should work with browser._launchServer', async ({ browser }) => {
+test('should work with browser._launchServer', async ({ browserType }) => {
+  const browser = await browserType.launch();
   const server = await (browser as any)._launchServer({ _debugController: true });
 
   const backend = new Backend();
@@ -400,10 +405,15 @@ test('should work with browser._launchServer', async ({ browser }) => {
 
   const page = await browser.newPage();
   await page.close();
-  expect(pageCounts).toEqual([1, 0]);
+  // this test shares an instance of Playwright with other tests, so we can't assert on the precise number of pages
+  expect(pageCounts.length).toBeGreaterThanOrEqual(2);
+
+  await server.close();
+  await browser.close();
 });
 
-test('should not work with browser._launchServer(_debugController: false)', async ({ browser }) => {
+test('should not work with browser._launchServer(_debugController: false)', async ({ browserType }) => {
+  const browser = await browserType.launch();
   const server = await (browser as any)._launchServer({ _debugController: false });
 
   const backend = new Backend();
@@ -413,6 +423,9 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
     await backend.connect(connectionString.toString());
     await backend.initialize();
   }).rejects.toThrow();
+
+  await server.close();
+  await browser.close();
 });
 
 test('should support closing browsers', async ({ backend, connectedBrowser }) => {

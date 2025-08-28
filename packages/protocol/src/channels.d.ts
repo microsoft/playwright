@@ -485,6 +485,7 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   tracingStarted(params: LocalUtilsTracingStartedParams, progress?: Progress): Promise<LocalUtilsTracingStartedResult>;
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress?: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress?: Progress): Promise<LocalUtilsTraceDiscardedResult>;
+  globToRegex(params: LocalUtilsGlobToRegexParams, progress?: Progress): Promise<LocalUtilsGlobToRegexResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -583,6 +584,18 @@ export type LocalUtilsTraceDiscardedOptions = {
 
 };
 export type LocalUtilsTraceDiscardedResult = void;
+export type LocalUtilsGlobToRegexParams = {
+  glob: string,
+  baseURL?: string,
+  webSocketUrl?: boolean,
+};
+export type LocalUtilsGlobToRegexOptions = {
+  baseURL?: string,
+  webSocketUrl?: boolean,
+};
+export type LocalUtilsGlobToRegexResult = {
+  regex: string,
+};
 
 export interface LocalUtilsEvents {
 }

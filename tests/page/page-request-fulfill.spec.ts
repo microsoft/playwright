@@ -25,15 +25,15 @@ const it = base.extend<{
   // which is actually forwarded to the desktop localhost.
   // To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
   rewriteAndroidLoopbackURL(url: string): string
-      }>({
-        rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
-          if (!isAndroid)
-            return givenURL;
-          const requestURL = new URL(givenURL);
-          requestURL.hostname = 'localhost';
-          return requestURL.toString();
-        })
-      });
+}>({
+  rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
+    if (!isAndroid)
+      return givenURL;
+    const requestURL = new URL(givenURL);
+    requestURL.hostname = 'localhost';
+    return requestURL.toString();
+  })
+});
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => {
@@ -462,7 +462,7 @@ it('should fulfill with gzip and readback', {
 
 it('should not go to the network for fulfilled requests body', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30760' },
-}, async ({ page, server, browserName }) => {
+}, async ({ page, server }) => {
   await page.route('**/one-style.css', async route => {
     return route.fulfill({
       status: 404,
@@ -482,6 +482,30 @@ it('should not go to the network for fulfilled requests body', {
   await page.goto(server.PREFIX + '/one-style.html');
   const response = await responsePromise;
   const body = await response.body();
-  expect(body).toBeTruthy();
+  expect(body.toString()).toBe('Not Found! (mocked)');
   expect(serverHit).toBe(false);
+});
+
+it('should return body for fulfilled responses', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-java/issues/1792' },
+}, async ({ page, server }) => {
+  for (const status of [100, 200, 404, 500]) {
+    await it.step(`status ${status}`, async () => {
+      const bodyOverride = `Custom body ${status}`;
+      await page.route('**/one-style.css', async route => {
+        return route.fulfill({
+          status,
+          contentType: 'text/plain',
+          body: bodyOverride,
+        });
+      });
+
+      const responsePromise = page.waitForResponse('**/one-style.css');
+      await page.goto(server.PREFIX + '/one-style.html');
+      const response = await responsePromise;
+      const body = await response.body();
+      expect(body.toString()).toBe(bodyOverride);
+    });
+    await page.unrouteAll();
+  }
 });

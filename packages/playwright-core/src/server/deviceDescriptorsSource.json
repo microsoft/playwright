@@ -178,10 +178,10 @@
   "Galaxy S24": {
     "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.16 Mobile Safari/537.36",
     "viewport": {
-      "width": 480,
-      "height": 1040
+      "width": 360,
+      "height": 780
     },
-    "deviceScaleFactor": 2.25,
+    "deviceScaleFactor": 3,
     "isMobile": true,
     "hasTouch": true,
     "defaultBrowserType": "chromium"
@@ -189,10 +189,10 @@
   "Galaxy S24 landscape": {
     "userAgent": "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.16 Mobile Safari/537.36",
     "viewport": {
-      "width": 1040,
-      "height": 480
+      "width": 780,
+      "height": 360
     },
-    "deviceScaleFactor": 2.25,
+    "deviceScaleFactor": 3,
     "isMobile": true,
     "hasTouch": true,
     "defaultBrowserType": "chromium"

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-
-export const packageJSON = JSON.parse(fs.readFileSync(path.join(path.dirname(__filename), '..', '..', 'package.json'), 'utf8'));
+export * from './inProcessTransport';
+export * from './proxyBackend';
+export * from './server';
+export * from './tool';
+export * from './http';
+export * from './call';

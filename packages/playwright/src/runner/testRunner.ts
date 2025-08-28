@@ -17,7 +17,9 @@
 import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
+import { debug } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
@@ -40,20 +42,14 @@ import type { ConfigCLIOverrides } from '../common/ipc';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
 
-export type RecoverFromStepErrorResult = {
-  stepId: string;
-  status: 'recovered' | 'failed';
-  value?: string | number | boolean | undefined;
-};
-
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
-  RecoverFromStepError: 'recoverFromStepError',
+  StdioChunk: 'stdioChunk',
 } as const;
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-  [TestRunnerEvent.RecoverFromStepError]: [stepId: string, message: string, location: reporterTypes.Location];
+  [TestRunnerEvent.StdioChunk]: [chunk: string | Buffer, stdio: 'stdout' | 'stderr'];
 };
 
 export type ListTestsParams = {
@@ -64,6 +60,7 @@ export type ListTestsParams = {
 };
 
 export type RunTestsParams = {
+  timeout?: number;
   locations?: string[];
   grep?: string;
   grepInvert?: string;
@@ -82,8 +79,14 @@ export type RunTestsParams = {
 
 type FullResultStatus = reporterTypes.FullResult['status'];
 
+const originalDebugLog = debug.log;
+// eslint-disable-next-line no-restricted-properties
+const originalStdoutWrite = process.stdout.write;
+// eslint-disable-next-line no-restricted-properties
+const originalStderrWrite = process.stderr.write;
+
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
-  private _configLocation: ConfigLocation;
+  readonly configLocation: ConfigLocation;
   private _configCLIOverrides: ConfigCLIOverrides;
 
   private _watcher: Watcher;
@@ -98,12 +101,10 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _watchTestDirs = false;
   private _populateDependenciesOnList = false;
-  private _recoverFromStepErrors = false;
-  private _resumeAfterStepErrors: Map<string, ManualPromise<RecoverFromStepErrorResult>> = new Map();
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     super();
-    this._configLocation = configLocation;
+    this.configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
     this._watcher = new Watcher(events => {
       const collector = new Set<string>();
@@ -115,11 +116,15 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   async initialize(params: {
     watchTestDirs?: boolean;
     populateDependenciesOnList?: boolean;
-    recoverFromStepErrors?: boolean;
+    sendStdioEvents?: boolean;
+    muteConsole?: boolean;
   }) {
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
-    this._recoverFromStepErrors = !!params.recoverFromStepErrors;
+    this._setInterceptStdio({
+      sendStdioEvents: !!params.sendStdioEvents,
+      muteConsole: !!params.muteConsole,
+    });
   }
 
   resizeTerminal(params: { cols: number, rows: number }) {
@@ -301,6 +306,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
+      timeout: params.timeout,
       preserveOutputDir: true,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
@@ -346,33 +352,12 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...createRunTestsTasks(config),
     ];
     const testRun = new TestRun(config, reporter);
-    testRun.failureTracker.setRecoverFromStepErrorHandler(this._recoverFromStepError.bind(this));
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;
     });
     this._testRun = { run, stop };
     return { status: await run };
-  }
-
-  private async _recoverFromStepError(stepId: string, error: reporterTypes.TestError): Promise<RecoverFromStepErrorResult> {
-    if (!this._recoverFromStepErrors)
-      return { stepId, status: 'failed' };
-    const recoveryPromise = new ManualPromise<RecoverFromStepErrorResult>();
-    this._resumeAfterStepErrors.set(stepId, recoveryPromise);
-    if (!error?.message || !error?.location)
-      return { stepId, status: 'failed' };
-    this.emit(TestRunnerEvent.RecoverFromStepError, stepId, error.message, error.location);
-    const recoveredResult = await recoveryPromise;
-    if (recoveredResult.stepId !== stepId)
-      return { stepId, status: 'failed' };
-    return recoveredResult;
-  }
-
-  async resumeAfterStepError(params: RecoverFromStepErrorResult): Promise<void> {
-    const recoveryPromise = this._resumeAfterStepErrors.get(params.stepId);
-    if (recoveryPromise)
-      recoveryPromise.resolve(params);
   }
 
   async watch(fileNames: string[]) {
@@ -402,16 +387,20 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   async stopTests() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
-    this._resumeAfterStepErrors.clear();
   }
 
   async closeGracefully() {
     gracefullyProcessExitDoNotHang(0);
   }
 
+  async stop() {
+    this._setInterceptStdio({ sendStdioEvents: false, muteConsole: false });
+    await this.runGlobalTeardown();
+  }
+
   private async _loadConfig(overrides?: ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
     try {
-      const config = await loadConfig(this._configLocation, overrides);
+      const config = await loadConfig(this.configLocation, overrides);
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
         webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
@@ -436,6 +425,42 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await reporter.onEnd({ status: 'failed' });
     await reporter.onExit();
     return null;
+  }
+
+  _setInterceptStdio(options: { sendStdioEvents: boolean, muteConsole: boolean }) {
+    /* eslint-disable no-restricted-properties */
+    if (process.env.PWTEST_DEBUG)
+      return;
+    if (options.sendStdioEvents || options.muteConsole) {
+      if (debug.log === originalDebugLog) {
+        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
+        debug.log = (...args) => {
+          const string = util.format(...args) + '\n';
+          return (originalStderrWrite as any).apply(process.stderr, [string]);
+        };
+      }
+      const stdoutWrite = (chunk: string | Buffer) => {
+        if (options.sendStdioEvents)
+          this.emit(TestRunnerEvent.StdioChunk, chunk, 'stdout');
+        if (!options.muteConsole)
+          originalStdoutWrite.apply(process.stdout, [chunk]);
+        return true;
+      };
+      const stderrWrite = (chunk: string | Buffer) => {
+        if (options.sendStdioEvents)
+          this.emit(TestRunnerEvent.StdioChunk, chunk, 'stderr');
+        if (!options.muteConsole)
+          originalStderrWrite.apply(process.stderr, [chunk]);
+        return true;
+      };
+      process.stdout.write = stdoutWrite;
+      process.stderr.write = stderrWrite;
+    } else {
+      debug.log = originalDebugLog;
+      process.stdout.write = originalStdoutWrite;
+      process.stderr.write = originalStderrWrite;
+    }
+    /* eslint-enable no-restricted-properties */
   }
 }
 

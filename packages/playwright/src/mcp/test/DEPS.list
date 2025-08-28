@@ -1,0 +1,12 @@
+[*]
+../sdk/
+../../reporters
+../../runner
+../../transform
+../../util
+../../common
+../../util.ts
+
+
+[backend.ts]
+../browser/tools.ts

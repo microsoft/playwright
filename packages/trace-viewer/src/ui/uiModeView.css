@@ -39,6 +39,10 @@
   color: var(--vscode-debugIcon-stopForeground);
 }
 
+.ui-mode .section-toolbar {
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
 .ui-mode .section-title {
   display: flex;
   flex: auto;

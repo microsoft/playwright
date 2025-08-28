@@ -16,6 +16,7 @@
 
 import { callLogText, expectTypes } from '../util';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
+import { runBrowserBackendOnError } from '../mcp/browser/backend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
@@ -64,6 +65,9 @@ export async function toBeTruthy(
     const logText = callLogText(log);
     return `${header}${logText}`;
   };
+
+  await runBrowserBackendOnError(receiver.page(), message);
+
   return {
     message,
     pass,

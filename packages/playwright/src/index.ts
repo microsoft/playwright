@@ -22,8 +22,11 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
+import { runBrowserBackendOnError } from './mcp/browser/backend';
+import { codeFrameColumns } from './transform/babelBundle';
+import { stripAnsiEscapes } from './util';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode, Location } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -33,6 +36,7 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
+import type { Frame as FrameImpl } from '../../playwright-core/src/client/frame';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -236,7 +240,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = actionTimeout || 0;
+    playwright._defaultContextTimeout = process.env.PLAYWRIGHT_DEBUGGER_MCP ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;
@@ -286,12 +290,21 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
-      onApiCallRecovery: (data, error, recoveryHandlers) => {
-        const step = data.userData as TestStepInternal;
-        if (step)
-          recoveryHandlers.push(() => step.recoverFromStepError(error));
+      onApiCallRecovery: (data, error, channelOwner, recoveryHandlers) => {
+        const step = data.userData;
+        if (!step)
+          return;
+        const page = channelToPage(channelOwner);
+        if (!page)
+          return;
+        recoveryHandlers.push(async () => {
+          await runBrowserBackendOnError(page, () => {
+            return stripAnsiEscapes(createErrorCodeframe(error.message, step.location));
+          });
+        });
       },
       onApiCallEnd: data => {
+
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
         if (data.apiName === 'tracing.group')
           return;
@@ -785,3 +798,36 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFix
 export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
+
+function channelToPage(channelOwner: ChannelOwner): Page | undefined {
+  if (channelOwner._type === 'Page')
+    return channelOwner as PageImpl;
+  if (channelOwner._type === 'Frame')
+    return (channelOwner as FrameImpl).page();
+  return undefined;
+}
+
+function createErrorCodeframe(message: string, location: Location) {
+  let source: string;
+  try {
+    source = fs.readFileSync(location.file, 'utf-8') + '\n//';
+  } catch (e) {
+    return '';
+  }
+
+  return codeFrameColumns(
+      source,
+      {
+        start: {
+          line: location.line,
+          column: location.column,
+        },
+      },
+      {
+        highlightCode: true,
+        linesAbove: 5,
+        linesBelow: 5,
+        message: message.split('\n')[0] || undefined,
+      }
+  );
+}

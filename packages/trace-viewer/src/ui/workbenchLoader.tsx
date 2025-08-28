@@ -20,8 +20,8 @@ import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
-import { SettingsToolbarButton } from './settingsToolbarButton';
-import { Dialog } from '@web/components/dialog';
+import { Dialog, DialogToolbarButton } from '@web/components/dialog';
+import { DefaultSettingsView } from './defaultSettingsView';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -193,7 +193,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='product'>Playwright</div>
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
-      <SettingsToolbarButton />
+      <DialogToolbarButton icon='settings-gear' title='Settings' dialogDataTestId='settings-toolbar-dialog'>
+        <DefaultSettingsView />
+      </DialogToolbarButton>
     </div>
     <Workbench model={model} inert={showFileUploadDropArea} />
     {fileForLocalModeError && <div className='drop-target'>

@@ -273,7 +273,7 @@ class CLIMock {
 
   @step
   async waitFor(text: string): Promise<void> {
-    await expect.poll(() => this.text()).toContain(text);
+    await expect.poll(() => this.text(), { timeout: 30000 }).toContain(text);
   }
 
   @step

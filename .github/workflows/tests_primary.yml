@@ -50,7 +50,7 @@ jobs:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: ./.github/actions/run-test
       with:
         node-version: ${{ matrix.node-version }}
@@ -73,7 +73,7 @@ jobs:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium-tip-of-tree
@@ -125,7 +125,7 @@ jobs:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: ./.github/actions/run-test
       with:
         node-version: ${{matrix.node-version}}
@@ -141,7 +141,7 @@ jobs:
     name: Web Components
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: actions/setup-node@v4
       with:
         node-version: 18
@@ -177,7 +177,7 @@ jobs:
       PWTEST_BOT_NAME: "vscode-extension"
       DEBUG_GIT_COMMIT_INFO: ""
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: actions/setup-node@v4
       with:
         node-version: 18
@@ -223,7 +223,7 @@ jobs:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - name: Setup Ubuntu Binary Installation # TODO: Remove when https://github.com/electron/electron/issues/42510 is fixed

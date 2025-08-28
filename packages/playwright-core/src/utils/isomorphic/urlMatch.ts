@@ -30,22 +30,15 @@ export function globToRegexPattern(glob: string): string {
       continue;
     }
     if (c === '*') {
-      const beforeDeep = glob[i - 1];
       let starCount = 1;
       while (glob[i + 1] === '*') {
         starCount++;
         i++;
       }
-      const afterDeep = glob[i + 1];
-      const isDeep = starCount > 1 &&
-          (beforeDeep === '/' || beforeDeep === undefined) &&
-          (afterDeep === '/' || afterDeep === undefined);
-      if (isDeep) {
-        tokens.push('((?:[^/]*(?:\/|$))*)');
-        i++;
-      } else {
+      if (starCount > 1)
+        tokens.push('(.*)');
+      else
         tokens.push('([^/]*)');
-      }
       continue;
     }
 
@@ -102,7 +95,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   return match(url);
 }
 
-function resolveGlobToRegexPattern(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): string {
+export function resolveGlobToRegexPattern(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): string {
   if (webSocketUrl)
     baseURL = toWebSocketBaseUrl(baseURL);
   glob = resolveGlobBase(baseURL, glob);

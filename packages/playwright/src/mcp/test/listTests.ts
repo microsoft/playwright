@@ -15,12 +15,13 @@
  */
 
 import path from 'path';
-import { z } from 'zod';
+
+import { z } from '../sdk/bundle';
 import { defineTool } from './tool.js';
 
 import type * as reporterTypes from 'playwright/types/testReporter';
 
-const listTests = defineTool({
+export const listTests = defineTool({
   schema: {
     name: 'playwright_test_list_tests',
     title: 'List tests',
@@ -31,7 +32,8 @@ const listTests = defineTool({
 
   handle: async (context, params) => {
     const reporter = new ListModeReporter();
-    await context.testRunner.listTests(reporter, {});
+    const testRunner = await context.createTestRunner();
+    await testRunner.listTests(reporter, {});
 
     if (reporter.hasErrors())
       throw new Error(reporter.content());
@@ -55,7 +57,7 @@ class ListModeReporter implements reporterTypes.Reporter {
       const [, projectName, , ...titles] = test.titlePath();
       const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
-      this._lines.push(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
+      this._lines.push(`  [id=${test.id}] ${projectTitle}${location} › ${titles.join(' › ')}`);
       files.add(test.location.file);
     }
     this._lines.push(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
@@ -74,5 +76,3 @@ class ListModeReporter implements reporterTypes.Reporter {
     return this._lines.join('\n');
   }
 }
-
-export default [listTests];

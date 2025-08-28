@@ -121,7 +121,14 @@ export class WKBrowser extends Browser {
     // TODO: this is racy, because download might be unrelated any navigation, and we will
     // abort navigation that is still running. We should be able to fix this by
     // instrumenting policy decision start/proceed/cancel.
-    page._page.frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
+    //
+    // Since https://commits.webkit.org/298732@main, WebKit doesn't provide frame id for
+    // navigations converted into downloads and the download has a fake frameId. We map it
+    // to the main frame.
+    let frameId = payload.frameId;
+    if (!page._page.frameManager.frame(frameId))
+      frameId = page._page.mainFrame()._id;
+    page._page.frameManager.frameAbortedNavigation(frameId, 'Download is starting');
     let originPage = page._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage) {

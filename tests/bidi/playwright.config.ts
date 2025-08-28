@@ -36,6 +36,7 @@ function firefoxUserPrefs() {
     return defaultPrefs;
   return { ...defaultPrefs, ...JSON.parse(prefsString) };
 }
+process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING = '<-loopback>';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');

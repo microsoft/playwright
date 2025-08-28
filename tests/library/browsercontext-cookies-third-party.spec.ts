@@ -523,16 +523,16 @@ test('should be able to send third party cookies via an iframe', async ({ browse
   }
 });
 
-test('should(not) block third party cookies - persistent context', async ({ httpsServer, launchPersistent, allowsThirdParty }) => {
+test('should(not) block third party cookies - persistent context', async ({ httpsServer, launchPersistent, allowsThirdParty, defaultSameSiteCookieValue }) => {
   const { page, context } = await launchPersistent();
-  await testThirdPartyCookiesAreBlocked(page, context, httpsServer, allowsThirdParty);
+  await testThirdPartyCookiesAreBlocked(page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue);
 });
 
-test('should(not) block third party cookies - ephemeral context', async ({ page, context, httpsServer, allowsThirdParty }) => {
-  await testThirdPartyCookiesAreBlocked(page, context, httpsServer, allowsThirdParty);
+test('should(not) block third party cookies - ephemeral context', async ({ page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue }) => {
+  await testThirdPartyCookiesAreBlocked(page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue);
 });
 
-async function testThirdPartyCookiesAreBlocked(page: Page, context: BrowserContext, server: TestServer, allowsThirdParty: boolean) {
+async function testThirdPartyCookiesAreBlocked(page: Page, context: BrowserContext, server: TestServer, allowsThirdParty: boolean, defaultSameSiteCookieValue: string) {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -558,7 +558,7 @@ async function testThirdPartyCookiesAreBlocked(page: Page, context: BrowserConte
         'httpOnly': false,
         'name': 'username',
         'path': '/',
-        'sameSite': 'None',
+        'sameSite': defaultSameSiteCookieValue,
         'secure': false,
         'value': 'John Doe'
       }

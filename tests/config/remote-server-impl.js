@@ -2,7 +2,8 @@ const fs = require('fs');
 const cluster = require('cluster');
 
 async function start() {
-  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP, exitOnFile, exitOnWarning, startStopAndRunHttp } = JSON.parse(process.argv[2]);
+  /** @type {import("./remoteServer").RemoteServerOptions} */
+  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP, exitOnFile, exitOnWarning, startStopAndRunHttp, existingBrowser } = JSON.parse(process.argv[2]);
   if (stallOnClose) {
     launchOptions.__testHookGracefullyClose = () => {
       console.log(`(stalled=>true)`);
@@ -25,7 +26,15 @@ async function start() {
     return;
   }
 
-  const browserServer = await playwright[browserTypeName].launchServer(launchOptions);
+  let browserServer;
+  if (existingBrowser) {
+    const browser = await playwright[browserTypeName].launch(launchOptions);
+    const page = await browser.newPage();
+    await page.setContent(existingBrowser.content);
+    browserServer = await browser._launchServer();
+  } else {
+    browserServer = await playwright[browserTypeName].launchServer(launchOptions);
+  }
   if (disconnectOnSIGHUP)
     process.on('SIGHUP', () => browserServer._disconnectForTest());
 

@@ -48,9 +48,9 @@ type TestSummary = {
 
 export type CommonReporterOptions = {
   configDir: string,
-  _mode: 'list' | 'test' | 'merge',
-  _isTestServer: boolean,
-  _commandHash: string,
+  _mode?: 'list' | 'test' | 'merge',
+  _isTestServer?: boolean,
+  _commandHash?: string,
 };
 
 export type Screen = {
@@ -142,8 +142,13 @@ export const internalScreen: Screen = {
   resolveFiles: 'rootDir',
 };
 
+export type TerminalReporterOptions = {
+  screen?: TerminalScreen;
+  omitFailures?: boolean;
+};
+
 export class TerminalReporter implements ReporterV2 {
-  screen: TerminalScreen = terminalScreen;
+  screen: TerminalScreen;
   config!: FullConfig;
   suite!: Suite;
   totalTestCount = 0;
@@ -153,7 +158,8 @@ export class TerminalReporter implements ReporterV2 {
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
 
-  constructor(options: { omitFailures?: boolean } = {}) {
+  constructor(options: TerminalReporterOptions = {}) {
+    this.screen = options.screen ?? terminalScreen;
     this._omitFailures = options.omitFailures || false;
   }
 
@@ -647,15 +653,15 @@ function resolveFromEnv(name: string): string | undefined {
 // In addition to `outputFile` the function returns `outputDir` which should
 // be cleaned up if present by some reporters contract.
 export function resolveOutputFile(reporterName: string, options: {
-    configDir: string,
-    outputDir?: string,
-    fileName?: string,
-    outputFile?: string,
-    default?: {
-      fileName: string,
-      outputDir: string,
-    }
-  }): { outputFile: string, outputDir?: string } | undefined {
+  configDir: string,
+  outputDir?: string,
+  fileName?: string,
+  outputFile?: string,
+  default?: {
+    fileName: string,
+    outputDir: string,
+  }
+}): { outputFile: string, outputDir?: string } | undefined {
   const name = reporterName.toUpperCase();
   let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
   if (!outputFile && options.outputFile)

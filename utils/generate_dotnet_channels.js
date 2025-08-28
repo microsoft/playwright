@@ -145,7 +145,7 @@ function properties(properties, indent, onlyOptional, parentName, level) {
       ts.push('');
       ts.push(`${indent}[JsonPropertyName("${name}")]`);
       let suffix = ''
-      if (!['bool', 'int', 'System.Text.Json.JsonElement'].includes(inner.ts))
+      if (!['bool', 'int', 'float', 'System.Text.Json.JsonElement'].includes(inner.ts))
         suffix = ' = null!;'
       ts.push(`${indent}public ${inner.ts}${nullableSuffix(inner)} ${toTitleCase(name)} { get; set; }${suffix}`);
       const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;

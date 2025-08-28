@@ -94,6 +94,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
       throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
+    if (!this._options.command)
+      throw new Error('config.webServer.command cannot be empty');
+
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
