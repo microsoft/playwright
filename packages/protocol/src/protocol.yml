@@ -896,6 +896,7 @@ DebugController:
     setRecorderMode:
       internal: true
       parameters:
+        browserId: string?
         mode:
           type: enum
           literals:
@@ -916,6 +917,12 @@ DebugController:
 
     resume:
       internal: true
+
+    closeBrowser:
+      internal: true
+      parameters:
+        id: string
+        reason: string?
 
     kill:
       internal: true
