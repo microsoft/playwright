@@ -19,6 +19,7 @@ const zodToJsonSchema: typeof import('zod-to-json-schema').zodToJsonSchema = bun
 const Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client = bundle.Client;
 const Server: typeof import('@modelcontextprotocol/sdk/server/index.js').Server = bundle.Server;
 const SSEServerTransport: typeof import('@modelcontextprotocol/sdk/server/sse.js').SSEServerTransport = bundle.SSEServerTransport;
+const StdioClientTransport: typeof import('@modelcontextprotocol/sdk/client/stdio.js').StdioClientTransport = bundle.StdioClientTransport;
 const StdioServerTransport: typeof import('@modelcontextprotocol/sdk/server/stdio.js').StdioServerTransport = bundle.StdioServerTransport;
 const StreamableHTTPServerTransport: typeof import('@modelcontextprotocol/sdk/server/streamableHttp.js').StreamableHTTPServerTransport = bundle.StreamableHTTPServerTransport;
 const StreamableHTTPClientTransport: typeof import('@modelcontextprotocol/sdk/client/streamableHttp.js').StreamableHTTPClientTransport = bundle.StreamableHTTPClientTransport;
@@ -28,13 +29,12 @@ const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js'
 const PingRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').PingRequestSchema = bundle.PingRequestSchema;
 const z: typeof import('zod') = bundle.z;
 
-type ToolSchema<Input extends import('zod').Schema> = import('./tool').ToolSchema<Input>;
-
 export {
   zodToJsonSchema,
   Client,
   Server,
   SSEServerTransport,
+  StdioClientTransport,
   StdioServerTransport,
   StreamableHTTPClientTransport,
   StreamableHTTPServerTransport,
@@ -44,5 +44,3 @@ export {
   PingRequestSchema,
   z,
 };
-
-export type { ToolSchema };
