@@ -155,7 +155,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -167,7 +167,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 2,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -180,7 +180,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -192,7 +192,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -204,7 +204,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 0,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -428,6 +428,16 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
 });
 
 test('should support closing browsers', async ({ backend, connectedBrowser }) => {
-  await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
+  const [browserId] = await Promise.all([
+    new Promise<string>(resolve => {
+      backend.on('stateChanged', event => {
+        if (event.browsers.length)
+          resolve(event.browsers[0].id);
+      });
+    }),
+    backend.setReportStateChanged({ enabled: true }),
+    connectedBrowser.newPage(),
+  ]);
+  await backend.closeBrowser({ id: browserId, reason: 'some reason' });
   await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
 });
