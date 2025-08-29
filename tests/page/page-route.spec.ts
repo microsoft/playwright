@@ -353,6 +353,8 @@ it('should fail navigation when aborting main resource', async ({ page, server, 
     expect(error.message).toContain(isMac && macVersion < 11 ? 'Request intercepted' : 'Blocked by Web Inspector');
   else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');
+  else if (browserName === '_bidiFirefox')
+    expect(error.message).toContain('NS_ERROR_ABORT');
   else
     expect(error.message).toContain('net::ERR_FAILED');
 });
