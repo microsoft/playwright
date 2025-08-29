@@ -31,6 +31,7 @@ export class TestProxy {
   readonly HOST: string;
   readonly PORT: number;
   readonly URL: string;
+  readonly HOSTNAME: string;
 
   connectHosts: string[] = [];
   requestUrls: string[] = [];
@@ -40,13 +41,13 @@ export class TestProxy {
   private readonly _sockets = new Set<net.Socket>();
   private _handlers: { event: string, handler: (...args: any[]) => void }[] = [];
 
-  static async create(port: number): Promise<TestProxy> {
-    const proxy = new TestProxy(port);
+  static async create(port: number, loopback: string): Promise<TestProxy> {
+    const proxy = new TestProxy(port, loopback);
     await new Promise<void>(f => proxy._server.listen(port, f));
     return proxy;
   }
 
-  private constructor(port: number) {
+  private constructor(port: number, loopback: string) {
     this.PORT = port;
     this.URL = `http://localhost:${port}`;
     this.HOST = new URL(this.URL).host;
@@ -136,9 +137,9 @@ export class TestProxy {
 }
 
 export async function setupSocksForwardingServer({
-  port, forwardPort, allowedTargetPort
+  port, forwardPort, allowedTargetPort, loopback
 }: {
-  port: number, forwardPort: number, allowedTargetPort: number
+  port: number, forwardPort: number, allowedTargetPort: number, loopback: string
 }) {
   const connectHosts = [];
   const connections = new Map<string, net.Socket>();
@@ -154,7 +155,7 @@ export async function setupSocksForwardingServer({
     target.on('end', () => socksProxy.sendSocketEnd({ uid: payload.uid }));
     target.on('data', data => socksProxy.sendSocketData({ uid: payload.uid, data }));
     target.setKeepAlive(false);
-    target.connect(forwardPort, '127.0.0.1');
+    target.connect(forwardPort, loopback);
     target.on('connect', () => {
       connections.set(payload.uid, target);
       if (!connectHosts.includes(`${payload.host}:${payload.port}`))
@@ -169,10 +170,10 @@ export async function setupSocksForwardingServer({
     connections.get(payload.uid)?.destroy();
     connections.delete(payload.uid);
   });
-  await socksProxy.listen(port, '127.0.0.1');
+  await socksProxy.listen(port, loopback);
   return {
     closeProxyServer: () => socksProxy.close(),
-    proxyServerAddr: `socks5://127.0.0.1:${port}`,
+    proxyServerAddr: `socks5://${loopback}:${port}`,
     connectHosts,
   };
 }
