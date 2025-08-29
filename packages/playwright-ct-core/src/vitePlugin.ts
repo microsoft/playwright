@@ -244,6 +244,7 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
 function vitePlugin(registerSource: string, templateDir: string, buildInfo: BuildInfo, importInfos: Map<string, ImportInfo>, depsCollector: Map<string, string[]>): Plugin {
   buildInfo.sources = {};
   let moduleResolver: ResolveFn;
+  console.log('Starting vite plugin', JSON.stringify([...importInfos.entries()]));
   return {
     name: 'playwright:component-index',
 
@@ -262,6 +263,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
           // Silent if can't read the file.
         }
       }
+      console.log('Transforming', JSON.stringify([...importInfos.entries()]));
       return transformIndexFile(id, content, templateDir, registerSource, importInfos);
     },
 
