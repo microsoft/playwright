@@ -428,6 +428,13 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
 });
 
 test('should support closing browsers', async ({ backend, connectedBrowser }) => {
+  const events: channels.DebugControllerStateChangedEvent[] = [];
+  backend.on('stateChanged', event => events.push(event));
+  await backend.setReportStateChanged({ enabled: true });
+  await connectedBrowser.newPage();
+
   await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
   await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
+
+  await expect.poll(() => events[events.length - 1]?.browsers).toEqual([]);
 });

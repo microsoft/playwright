@@ -78,6 +78,9 @@ export class DebugController extends SdkObject {
           page.on(Page.Events.Close, () => this._disposeListeners.delete(dispose));
         },
         onPageClose: () => this._emitSnapshot(false),
+        onBrowserClose: () => {
+          this._emitSnapshot(false);
+        },
       };
       this._playwright.instrumentation.addListener(listener, null);
       this._disposeListeners.add(() => this._playwright.instrumentation.removeListener(listener));
