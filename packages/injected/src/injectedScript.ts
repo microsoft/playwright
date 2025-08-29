@@ -697,8 +697,6 @@ export class InjectedScript {
     return { queryAll };
   }
 
-
-
   elementState(node: Node, state: ElementStateWithoutStable): ElementStateQueryResult {
     const element = this.retarget(node, ['visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
