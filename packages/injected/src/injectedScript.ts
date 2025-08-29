@@ -51,7 +51,7 @@ export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'
 
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
-export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected' };
+export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected', isRadio?: boolean };
 
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
@@ -735,9 +735,11 @@ export class InjectedScript {
       const checked = getCheckedWithoutMixed(element);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
+      const isRadio = element.nodeName === 'INPUT' && (element as HTMLInputElement).type === 'radio';
       return {
         matches: need === checked,
         received: checked ? 'checked' : 'unchecked',
+        isRadio,
       };
     }
 

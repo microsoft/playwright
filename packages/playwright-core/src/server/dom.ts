@@ -730,17 +730,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const result = await progress.race(this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {}));
       if (result === 'error:notconnected' || result.received === 'error:notconnected')
         throwElementIsNotAttached();
-      return result.matches;
+      return { matches: result.matches, isRadio: result.isRadio };
     };
     await this._markAsTargetElement(progress);
-    if (await isChecked() === state)
+    const checkedState = await isChecked();
+    if (checkedState.matches === state)
       return 'done';
+    if (!state && checkedState.isRadio)
+      throw new NonRecoverableDOMError('Cannot uncheck radio button. Radio buttons can only be unchecked by selecting another radio button in the same group.');
     const result = await this._click(progress, { ...options, waitAfter: 'disabled' });
     if (result !== 'done')
       return result;
     if (options.trial)
       return 'done';
-    if (await isChecked() !== state)
+    const finalState = await isChecked();
+    if (finalState.matches !== state)
       throw new NonRecoverableDOMError('Clicking the checkbox did not change its state');
     return 'done';
   }

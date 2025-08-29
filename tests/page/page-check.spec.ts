@@ -145,3 +145,9 @@ it('should check the box using setChecked', async ({ page }) => {
   await page.setChecked('input', false);
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
+
+it('should throw when trying to uncheck radio button', async ({ page }) => {
+  await page.setContent(`<input type='radio' name='test' checked id='radio'>`);
+  const error = await page.uncheck('#radio').catch(e => e);
+  expect(error.message).toContain('Cannot uncheck radio button');
+});
