@@ -236,6 +236,7 @@ function copyFile(file, from, to) {
  *   outdir?: string,
  *   outfile?: string,
  *   minify?: boolean,
+ *   alias?: Record<string, string>,
  * }} BundleOptions
  */
 
@@ -260,6 +261,9 @@ bundles.push({
   outdir: 'packages/playwright/lib',
   entryPoints: ['src/mcpBundleImpl.ts'],
   external: ['express'],
+  alias: {
+    'raw-body': 'raw-body.ts',
+  },
 });
 
 bundles.push({
@@ -508,6 +512,7 @@ for (const bundle of bundles) {
     ...(bundle.outfile ? { outfile: filePath(bundle.outfile) } : {}),
     ...(bundle.external ? { external: bundle.external } : {}),
     ...(bundle.minify !== undefined ? { minify: bundle.minify } : {}),
+    alias: bundle.alias ? Object.fromEntries(Object.entries(bundle.alias).map(([k, v]) => [k, path.join(filePath(bundle.modulePath), v)])) : undefined,
     metafile: true,
     plugins: [pkgSizePlugin],
   };
