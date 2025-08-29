@@ -54,7 +54,7 @@ export type AriaTreeOptions = {
 };
 
 type InternalOptions = {
-  visibility: 'aria' | 'visible' | 'ariaAndVisible',
+  visibility: 'aria' | 'ariaOrVisible' | 'ariaAndVisible',
   refs: 'all' | 'interactable' | 'none',
   refPrefix?: string,
   includeGenericRole?: boolean,
@@ -67,7 +67,7 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
   if (options.mode === 'ai') {
     // For AI consumption.
     return {
-      visibility: 'visible',
+      visibility: 'ariaOrVisible',
       refs: 'interactable',
       refPrefix: options.refPrefix,
       includeGenericRole: true,
@@ -119,8 +119,8 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     const element = node as Element;
     const isElementVisibleForAria = !roleUtils.isElementHiddenForAria(element);
     let visible = isElementVisibleForAria;
-    if (options.visibility === 'visible')
-      visible = isElementVisible(element);
+    if (options.visibility === 'ariaOrVisible')
+      visible = isElementVisibleForAria || isElementVisible(element);
     if (options.visibility === 'ariaAndVisible')
       visible = isElementVisibleForAria && isElementVisible(element);
 
