@@ -155,7 +155,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -167,7 +167,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 2,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -180,7 +180,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -192,7 +192,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -204,7 +204,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 0,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
