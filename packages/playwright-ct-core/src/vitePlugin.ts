@@ -263,7 +263,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
           // Silent if can't read the file.
         }
       }
-      console.log('Transforming', JSON.stringify([...importInfos.entries()]));
+      // console.log('Transforming', JSON.stringify([...importInfos.entries()]));
       return transformIndexFile(id, content, templateDir, registerSource, importInfos);
     },
 
