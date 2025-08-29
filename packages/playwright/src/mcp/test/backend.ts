@@ -48,11 +48,7 @@ export class TestServerBackend implements mcp.ServerBackend {
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    const result = await tool.handle(this._context!, parsedArguments);
-    const stdio = this._context.takeStdio();
-    if (stdio.trim())
-      result.content.push({ type: 'text', text: stdio });
-    return result;
+    return await tool.handle(this._context!, parsedArguments);
   }
 
   serverClosed() {

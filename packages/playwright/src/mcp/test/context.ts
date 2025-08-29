@@ -22,7 +22,6 @@ export class Context {
   private _testRunner: TestRunner | undefined;
   readonly configLocation: ConfigLocation;
   readonly options?: { muteConsole?: boolean };
-  private _stdio: { chunk: string | Buffer, stdio: 'stdout' | 'stderr' }[] = [];
 
   constructor(configLocation: ConfigLocation, options?: { muteConsole?: boolean }) {
     this.configLocation = configLocation;
@@ -33,13 +32,7 @@ export class Context {
     if (this._testRunner)
       await this._testRunner.stopTests();
     const testRunner = new TestRunner(this.configLocation, {});
-    await testRunner.initialize({
-      sendStdioEvents: true,
-      muteConsole: this.options?.muteConsole,
-    });
-    testRunner.on(TestRunnerEvent.StdioChunk, (chunk, stdio) => {
-      this._stdio.push({ chunk, stdio });
-    });
+    await testRunner.initialize({});
     this._testRunner = testRunner;
     testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => {
       this._testRunner?.emit(TestRunnerEvent.TestFilesChanged, testFiles);
@@ -48,18 +41,6 @@ export class Context {
     return testRunner;
   }
 
-  takeStdio(): string {
-    const text =  this._stdio.map(entry => chunkToPayload(entry.stdio, entry.chunk)).join('\n');
-    this._stdio = [];
-    return text;
-  }
-
   async close() {
   }
-}
-
-function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): string {
-  if (chunk instanceof Uint8Array)
-    return '<binary>';
-  return `[${type}] ${chunk}`;
 }
