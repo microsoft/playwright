@@ -92,6 +92,7 @@ export class BidiPage implements PageDelegate {
     await Promise.all([
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
+      this.updateNetworkDataCollection(),
       // If the page is created by the Playwright client's call, some initialization
       // may be pending. Wait for it to complete before reporting the page as new.
     ]);
@@ -280,6 +281,10 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateFileChooserInterception() {
+  }
+
+  async updateNetworkDataCollection() {
+    await this._networkManager.setDataCollection(true);
   }
 
   async reload(): Promise<void> {
