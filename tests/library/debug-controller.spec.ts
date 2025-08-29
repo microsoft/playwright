@@ -428,16 +428,6 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
 });
 
 test('should support closing browsers', async ({ backend, connectedBrowser }) => {
-  const [browserId] = await Promise.all([
-    new Promise<string>(resolve => {
-      backend.on('stateChanged', event => {
-        if (event.browsers.length)
-          resolve(event.browsers[0].id);
-      });
-    }),
-    backend.setReportStateChanged({ enabled: true }),
-    connectedBrowser.newPage(),
-  ]);
-  await backend.closeBrowser({ id: browserId, reason: 'some reason' });
+  await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
   await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
 });
