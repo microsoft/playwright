@@ -146,14 +146,14 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
 
 export async function populateComponentsFromTests(componentRegistry: ComponentRegistry, componentsByImportingFile?: Map<string, string[]>) {
   const importInfos: Map<string, ImportInfo[]> = await getUserData('playwright-ct-core');
-  console.log('Cached importInfo', JSON.stringify([...importInfos.entries()]), importInfos.size);
+  // console.log('Cached importInfo', JSON.stringify([...importInfos.entries()]), importInfos.size);
   for (const [file, importList] of importInfos) {
     for (const importInfo of importList)
       componentRegistry.set(importInfo.id, importInfo);
     if (componentsByImportingFile)
       componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
   }
-  console.log('Final importInfo', JSON.stringify([...componentRegistry.entries()]));
+  // console.log('Final importInfo', JSON.stringify([...componentRegistry.entries()]));
 }
 
 export function hasJSComponents(components: ImportInfo[]): boolean {
