@@ -89,7 +89,9 @@ export class BidiNetworkManager {
     if (!request)
       return;
     const getResponseBody = async () => {
-      throw new Error(`Response body is not available for requests in Bidi`);
+      const { bytes } = await this._session.send('network.getData', { request: params.request.request, dataType: bidi.Network.DataType.Response });
+      const encoding = bytes.type === 'base64' ? 'base64' : 'utf8';
+      return Buffer.from(bytes.value, encoding);
     };
     const timings = params.request.timings;
     const startTime = timings.requestTime;

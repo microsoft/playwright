@@ -170,6 +170,19 @@ export interface Commands {
     returnType: Bidi.Storage.SetCookieParameters;
   };
 
+  'network.addDataCollector': {
+    params: Bidi.Network.AddDataCollectorParameters;
+    returnType: Bidi.Network.AddDataCollectorResult;
+  };
+  'network.removeDataCollector': {
+    params: Bidi.Network.RemoveDataCollectorParameters;
+    returnType: Bidi.Network.RemoveDataCollectorResult;
+  };
+  'network.getData': {
+    params: Bidi.Network.GetDataParameters;
+    returnType: Bidi.Network.GetDataResult;
+  };
+
   'network.addIntercept': {
     params: Bidi.Network.AddInterceptParameters;
     returnType: Bidi.Network.AddInterceptResult;
