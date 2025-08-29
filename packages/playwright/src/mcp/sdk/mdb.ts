@@ -153,7 +153,7 @@ export async function runMainBackend(backendFactory: mcpServer.ServerBackendFact
     create: () => mdbBackend
   };
   const url = await startAsHttp(factory, { port: options?.port || 0 });
-  process.env.PLAYWRIGHT_DEBUGGER_MCP = url;
+  process.env.PLAYWRIGHT_MDB_URL = url;
 
   if (options?.port !== undefined)
     return url;

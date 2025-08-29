@@ -16,8 +16,7 @@
 
 import * as mcp from '../sdk/exports.js';
 import { Context } from './context';
-import { listTests } from './listTests';
-import { runTests } from './runTests';
+import { listTests, runTests, debugTest } from './tools.js';
 import { snapshot, pickLocator, evaluate } from '../browser/tools';
 
 import type { ConfigLocation } from '../../common/config';
@@ -27,7 +26,7 @@ import type { Tool } from './tool';
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
-  private _tools: Tool<any>[] = [listTests, runTests];
+  private _tools: Tool<any>[] = [listTests, runTests, debugTest];
   private _context: Context;
 
   constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean }) {

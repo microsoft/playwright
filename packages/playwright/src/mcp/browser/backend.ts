@@ -73,7 +73,7 @@ const doneToolSchema = defineToolSchema({
 });
 
 export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
-  if (!process.env.PLAYWRIGHT_DEBUGGER_MCP)
+  if (!process.env.PLAYWRIGHT_DEBUGGER_ENABLED)
     return;
   const snapshot = await (page as PageEx)._snapshotForAI();
   const introMessage = `### Paused on error:
@@ -84,5 +84,5 @@ ${snapshot}
 
 ### Task
 Try recovering from the error prior to continuing, use following tools to recover: ${tools.map(tool => tool.schema.name).join(', ')}`;
-  await runOnPauseBackendLoop(process.env.PLAYWRIGHT_DEBUGGER_MCP!, new BrowserBackend(page), introMessage);
+  await runOnPauseBackendLoop(process.env.PLAYWRIGHT_MDB_URL!, new BrowserBackend(page), introMessage);
 }
