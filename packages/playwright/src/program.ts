@@ -176,6 +176,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliLastFailed = !!opts.lastFailed;
+  config.cliLastRunFile = opts.lastRunFile ? path.resolve(process.cwd(), opts.lastRunFile) : undefined;
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   filterProjects(config.projects, config.cliProjectFilter);
@@ -361,6 +362,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--headed', { description: `Run tests in headed browsers (default: headless)` }],
   ['--ignore-snapshots', { description: `Ignore screenshot and snapshot expectations` }],
   ['--last-failed', { description: `Only re-run the failures` }],
+  ['--last-run-file <file>', { description: `Path to the last-run file (default: "test-results/.last-run.json")` }],
   ['--list', { description: `Collect all the tests and report them, but do not run` }],
   ['--max-failures <N>', { description: `Stop after the first N failures` }],
   ['--no-deps', { description: `Do not run project dependencies` }],
