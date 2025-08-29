@@ -240,7 +240,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = process.env.PLAYWRIGHT_DEBUGGER_MCP ? 5000 : actionTimeout || 0;
+    playwright._defaultContextTimeout = process.env.PLAYWRIGHT_DEBUGGER_ENABLED ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;

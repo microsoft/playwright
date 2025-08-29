@@ -26,8 +26,10 @@ import type { ReporterV2 } from './reporterV2';
 class ListModeReporter implements ReporterV2 {
   private config!: FullConfig;
   private screen: TerminalScreen;
+  private _options: { screen?: TerminalScreen, includeTestId?: boolean };
 
-  constructor(options?: { screen?: TerminalScreen }) {
+  constructor(options: { screen?: TerminalScreen, includeTestId?: boolean } = {}) {
+    this._options = options;
     this.screen = options?.screen ?? terminalScreen;
   }
 
@@ -47,8 +49,10 @@ class ListModeReporter implements ReporterV2 {
       // root, project, file, ...describes, test
       const [, projectName, , ...titles] = test.titlePath();
       const location = `${path.relative(this.config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
-      const projectTitle = projectName ? `[${projectName}] › ` : '';
-      this._writeLine(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
+      const testId = this._options.includeTestId ? `[id=${test.id}] ` : '';
+      const projectLabel = this._options.includeTestId ? `project=` : '';
+      const projectTitle = projectName ? `[${projectLabel}${projectName}] › ` : '';
+      this._writeLine(`  ${testId}${projectTitle}${location} › ${titles.join(' › ')}`);
       files.add(test.location.file);
     }
     this._writeLine(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);

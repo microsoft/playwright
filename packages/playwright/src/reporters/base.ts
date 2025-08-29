@@ -145,6 +145,7 @@ export const internalScreen: Screen = {
 export type TerminalReporterOptions = {
   screen?: TerminalScreen;
   omitFailures?: boolean;
+  includeTestId?: boolean;
 };
 
 export class TerminalReporter implements ReporterV2 {
@@ -154,13 +155,13 @@ export class TerminalReporter implements ReporterV2 {
   totalTestCount = 0;
   result!: FullResult;
   private fileDurations = new Map<string, { duration: number, workers: Set<number> }>();
-  private _omitFailures: boolean;
+  private _options: TerminalReporterOptions;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
 
   constructor(options: TerminalReporterOptions = {}) {
     this.screen = options.screen ?? terminalScreen;
-    this._omitFailures = options.omitFailures || false;
+    this._options = options;
   }
 
   version(): 'v2' {
@@ -312,7 +313,7 @@ export class TerminalReporter implements ReporterV2 {
   epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (full && summary.failuresToPrint.length && !this._omitFailures)
+    if (full && summary.failuresToPrint.length && !this._options.omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
     this._printSummary(summaryMessage);
@@ -343,16 +344,16 @@ export class TerminalReporter implements ReporterV2 {
     return test.outcome() === 'unexpected' && test.results.length <= test.retries;
   }
 
-  formatTestTitle(test: TestCase, step?: TestStep, omitLocation: boolean = false): string {
-    return formatTestTitle(this.screen, this.config, test, step, omitLocation);
+  formatTestTitle(test: TestCase, step?: TestStep): string {
+    return formatTestTitle(this.screen, this.config, test, step, this._options);
   }
 
   formatTestHeader(test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
-    return formatTestHeader(this.screen, this.config, test, options);
+    return formatTestHeader(this.screen, this.config, test, { ...options, includeTestId: this._options.includeTestId });
   }
 
   formatFailure(test: TestCase, index?: number): string {
-    return formatFailure(this.screen, this.config, test, index);
+    return formatFailure(this.screen, this.config, test, index, this._options);
   }
 
   formatError(error: TestError): ErrorDetails {
@@ -364,9 +365,9 @@ export class TerminalReporter implements ReporterV2 {
   }
 }
 
-export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number): string {
+export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number, options?: TerminalReporterOptions): string {
   const lines: string[] = [];
-  const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error' });
+  const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error', includeTestId: options?.includeTestId });
   lines.push(screen.colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
@@ -494,22 +495,20 @@ export function stepSuffix(step: TestStep | undefined) {
   return stepTitles.map(t => t.split('\n')[0]).map(t => ' › ' + t).join('');
 }
 
-function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false): string {
+function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, step?: TestStep, options: { includeTestId?: boolean } = {}): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
-  let location;
-  if (omitLocation)
-    location = `${relativeTestPath(screen, config, test)}`;
-  else
-    location = `${relativeTestPath(screen, config, test)}:${test.location.line}:${test.location.column}`;
-  const projectTitle = projectName ? `[${projectName}] › ` : '';
-  const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
+  const location = `${relativeTestPath(screen, config, test)}:${test.location.line}:${test.location.column}`;
+  const testId = options.includeTestId ? `[id=${test.id}] ` : '';
+  const projectLabel = options.includeTestId ? `project=` : '';
+  const projectTitle = projectName ? `[${projectLabel}${projectName}] › ` : '';
+  const testTitle = `${testId}${projectTitle}${location} › ${titles.join(' › ')}`;
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
   return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
 
-function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
-  const title = formatTestTitle(screen, config, test);
+function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error', includeTestId?: boolean } = {}): string {
+  const title = formatTestTitle(screen, config, test, undefined, options);
   const header = `${options.indent || ''}${options.index ? options.index + ') ' : ''}${title}`;
   let fullHeader = header;
 
