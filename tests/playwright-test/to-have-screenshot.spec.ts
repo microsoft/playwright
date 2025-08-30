@@ -1350,8 +1350,26 @@ test('should throw pretty error if expected PNG file is not a PNG', async ({ run
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('could not decode image as PNG.');
-  expect(result.output).toContain('could not decode image as JPEG.');
+  expect(result.output).toContain('Could not decode expected image as PNG.');
+  expect(result.output).toContain('Could not decode expected image as JPEG.');
+});
+
+test('should throw pretty error if expected PNG file is not a PNG while rebasing', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/snapshot.png': 'not a png',
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('png', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `,
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Failed to re-generate expected.');
+  expect(result.output).toContain('Could not decode expected image as PNG.');
 });
 
 test('should support maskColor option', async ({ runInlineTest }) => {

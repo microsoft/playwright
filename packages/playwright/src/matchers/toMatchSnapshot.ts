@@ -398,9 +398,9 @@ export async function toHaveScreenshot(
   expectScreenshotOptions.expected = helper.updateSnapshots === 'all' ? undefined : expected;
 
   const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
-  const writeFiles = () => {
-    writeFileSync(helper.expectedPath, actual!);
-    writeFileSync(helper.actualPath, actual!);
+  const writeFiles = (actualBuffer: Buffer) => {
+    writeFileSync(helper.expectedPath, actualBuffer);
+    writeFileSync(helper.actualPath, actualBuffer);
     /* eslint-disable no-console */
     console.log(helper.expectedPath + ' is re-generated, writing actual.');
     return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
@@ -410,13 +410,18 @@ export async function toHaveScreenshot(
     // Screenshot is matching, but is not necessarily the same as the expected.
     if (helper.updateSnapshots === 'all' && actual && compareBuffersOrStrings(actual, expected)) {
       console.log(helper.expectedPath + ' is re-generated, writing actual.');
-      return writeFiles();
+      return writeFiles(actual);
     }
     return helper.handleMatching();
   }
 
-  if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all')
-    return writeFiles();
+  if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
+    if (actual)
+      return writeFiles(actual);
+    let header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
+    header += '  Failed to re-generate expected.\n';
+    return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
+  }
 
   const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
   return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);

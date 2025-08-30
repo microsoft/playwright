@@ -98,11 +98,11 @@ function validateBuffer(buffer: Buffer, mimeType: string): void {
   if (mimeType === 'image/png') {
     const pngMagicNumber = [137, 80, 78, 71, 13, 10, 26, 10];
     if (buffer.length < pngMagicNumber.length || !pngMagicNumber.every((byte, index) => buffer[index] === byte))
-      throw new Error('could not decode image as PNG.');
+      throw new Error('Could not decode expected image as PNG.');
   } else if (mimeType === 'image/jpeg') {
     const jpegMagicNumber = [255, 216];
     if (buffer.length < jpegMagicNumber.length || !jpegMagicNumber.every((byte, index) => buffer[index] === byte))
-      throw new Error('could not decode image as JPEG.');
+      throw new Error('Could not decode expected image as JPEG.');
   }
 }
 
