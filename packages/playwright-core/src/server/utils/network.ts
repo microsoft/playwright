@@ -69,6 +69,8 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     }
   }
 
+  options.headers = options.headers || {};
+  options.headers['Host'] = parsedUrl.host;
   let cancelRequest: (e: Error | undefined) => void;
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
