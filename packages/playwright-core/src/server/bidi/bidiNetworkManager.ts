@@ -36,6 +36,7 @@ export class BidiNetworkManager {
   private _credentials: types.Credentials | undefined;
   private _attemptedAuthentications = new Set<string>();
   private _intercepId: bidi.Network.Intercept | undefined;
+  private _dataCollectorId: bidi.Network.Collector | undefined;
 
   constructor(bidiSession: BidiSession, page: Page) {
     this._session = bidiSession;
@@ -89,7 +90,9 @@ export class BidiNetworkManager {
     if (!request)
       return;
     const getResponseBody = async () => {
-      throw new Error(`Response body is not available for requests in Bidi`);
+      const { bytes } = await this._session.send('network.getData', { request: params.request.request, dataType: bidi.Network.DataType.Response });
+      const encoding = bytes.type === 'base64' ? 'base64' : 'utf8';
+      return Buffer.from(bytes.value, encoding);
     };
     const timings = params.request.timings;
     const startTime = timings.requestTime;
@@ -193,6 +196,23 @@ export class BidiNetworkManager {
   async setRequestInterception(value: boolean) {
     this._userRequestInterceptionEnabled = value;
     await this._updateProtocolRequestInterception();
+  }
+
+  async setDataCollection(enable: boolean, maxSize?: number) {
+    if (enable) {
+      if (!this._dataCollectorId) {
+        const dataTypes: [bidi.Network.DataType] = [bidi.Network.DataType.Response];
+        const maxEncodedDataSize = maxSize ?? 10_000_000;
+        const contexts: [string] = [this._session.sessionId];
+        const { collector } = await this._session.send('network.addDataCollector', { dataTypes, maxEncodedDataSize, contexts });
+        this._dataCollectorId = collector;
+      }
+    } else {
+      if (this._dataCollectorId) {
+        await this._session.send('network.removeDataCollector', { collector: this._dataCollectorId });
+        this._dataCollectorId = undefined;
+      }
+    }
   }
 
   async setCredentials(credentials: types.Credentials | undefined) {
