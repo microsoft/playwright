@@ -24,7 +24,8 @@ import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUti
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
 import style from 'ansi-styles';
-import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
