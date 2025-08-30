@@ -54,7 +54,7 @@ it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platf
   expect(failedRequests[0].url()).toContain('one-style.css');
   expect(await failedRequests[0].response()).toBe(null);
   expect(failedRequests[0].resourceType()).toBe('stylesheet');
-  if (browserName === 'chromium') {
+  if (browserName === 'chromium' || browserName === '_bidiChromium') {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
   } else if (browserName === 'webkit') {
     if (platform === 'linux')
