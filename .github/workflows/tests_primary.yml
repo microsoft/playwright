@@ -185,7 +185,7 @@ jobs:
       env:
         DEBUG: pw:install
     - run: npm run build
-    - run: npx playwright install chromium
+    - run: npx playwright install chromium firefox
     - name: Checkout extension
       run: git clone https://github.com/microsoft/playwright-vscode.git
     - name: Print extension revision
