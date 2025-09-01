@@ -318,9 +318,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       }
     }
 
-    captureSnapshot(): SnapshotData | undefined {
+    captureSnapshot(needsReset: boolean): SnapshotData | undefined {
       const timestamp = performance.now();
       const snapshotNumber = ++this._lastSnapshotNumber;
+      if (needsReset)
+        this.reset();
       let nodeCounter = 0;
       let shadowDomNesting = 0;
       let headNesting = 0;
