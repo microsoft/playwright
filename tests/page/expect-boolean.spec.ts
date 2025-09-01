@@ -125,7 +125,7 @@ Timeout:  1000ms`);
 
 Locator:  locator('input2')
 Expected: not checked
-Received: <element(s) not found>
+Error: element(s) not found
 Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "not toBeChecked" with timeout 1000ms`);
     expect(stripAnsi(error.message)).toContain(`- waiting for locator(\'input2\')`);
@@ -468,7 +468,7 @@ test.describe('toBeHidden', () => {
 
 Locator:  locator('button')
 Expected: not hidden
-Received: <element(s) not found>
+Error: element(s) not found
 Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "not toBeHidden" with timeout 1000ms`);
   });

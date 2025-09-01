@@ -24,7 +24,7 @@ test('should print timed out error message', async ({ page }) => {
 
 Locator: locator('no-such-thing')
 Expected string: "hey"
-Received: <element(s) not found>
+Error: element(s) not found
 Timeout: 1000ms`);
 });
 
@@ -46,7 +46,7 @@ test('should print timed out error message with impossible timeout', async ({ pa
 
 Locator: locator('no-such-thing')
 Expected string: "hey"
-Received: <element(s) not found>
+Error: element(s) not found
 Timeout: 1ms`);
 });
 

@@ -33,7 +33,7 @@ export async function toEqual<T>(
   matcherName: string,
   receiver: Locator,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }>,
   expected: T,
   options: { timeout?: number, contains?: boolean } = {},
   messagePreventExtraStatIndent?: boolean
@@ -48,11 +48,7 @@ export async function toEqual<T>(
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout).catch(async error => {
-    // FIXME: query should not throw, but it does for strict mode violations for example.
-    await runBrowserBackendOnError(receiver.page(), () => error.message);
-    throw error;
-  });
+  const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout);
 
   if (pass === !this.isNot) {
     return {
@@ -68,7 +64,10 @@ export async function toEqual<T>(
   let printedDiff: string | undefined;
   if (pass) {
     printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
-    printedReceived = `Received: ${this.utils.printReceived(received)}`;
+    printedReceived = errorMessage ?? `Received: ${this.utils.printReceived(received)}`;
+  } else if (errorMessage) {
+    printedExpected = `Expected: ${this.utils.printExpected(expected)}`;
+    printedReceived = errorMessage;
   } else if (Array.isArray(expected) && Array.isArray(received)) {
     const normalizedExpected = expected.map((exp, index) => {
       const rec = received[index];

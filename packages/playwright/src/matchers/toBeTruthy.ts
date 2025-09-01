@@ -15,7 +15,7 @@
  */
 
 import { callLogText, expectTypes } from '../util';
-import { kNoElementsFoundError, matcherHint } from './matcherHint';
+import { matcherHint } from './matcherHint';
 import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
 import type { MatcherResult } from './matcherHint';
@@ -29,7 +29,7 @@ export async function toBeTruthy(
   receiverType: string,
   expected: string,
   arg: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean, errorMessage?: string }>,
   options: { timeout?: number } = {},
 ): Promise<MatcherResult<any, any>> {
   expectTypes(receiver, [receiverType], matcherName);
@@ -41,11 +41,7 @@ export async function toBeTruthy(
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, log, timedOut, received } = await query(!!this.isNot, timeout).catch(async error => {
-    // FIXME: query should not throw, but it does for strict mode violations for example.
-    await runBrowserBackendOnError(receiver.page(), () => error.message);
-    throw error;
-  });
+  const { matches: pass, log, timedOut, received, errorMessage } = await query(!!this.isNot, timeout);
 
   if (pass === !this.isNot) {
     return {
@@ -56,15 +52,14 @@ export async function toBeTruthy(
     };
   }
 
-  const notFound = received === kNoElementsFoundError ? received : undefined;
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
   if (pass) {
     printedExpected = `Expected: not ${expected}`;
-    printedReceived = `Received: ${notFound ? kNoElementsFoundError : expected}`;
+    printedReceived = errorMessage ?? `Received: ${expected}`;
   } else {
     printedExpected = `Expected: ${expected}`;
-    printedReceived = `Received: ${notFound ? kNoElementsFoundError : received}`;
+    printedReceived = errorMessage ?? `Received: ${received}`;
   }
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined, `${printedExpected}\n${printedReceived}`);

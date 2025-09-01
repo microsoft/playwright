@@ -519,7 +519,7 @@ test('should not update snapshots when locator did not match', async ({ runInlin
   expect(fs.existsSync(patchPath)).toBe(false);
   expect(result.output).not.toContain('New baselines created');
   expect(result.output).toContain('Expected: "- heading"');
-  expect(result.output).toContain('Received: <element not found>');
+  expect(result.output).toContain('Error: element(s) not found');
 });
 
 test.describe('update-snapshots none', () => {
