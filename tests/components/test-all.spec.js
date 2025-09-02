@@ -31,7 +31,10 @@ async function run(command, args, folder) {
     cwd: folder,
     stdio: 'pipe',
     shell: true,
-    env: process.env
+    env: {
+      ...process.env,
+      "DEBUG": "pw:vite"
+    }
   });
   child.stdout.on('data', data => process.stdout.write(data));
   child.stderr.on('data', data => process.stdout.write(data));

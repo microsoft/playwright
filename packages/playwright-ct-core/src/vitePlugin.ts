@@ -51,11 +51,13 @@ export function createPlugin(): TestRunnerPlugin {
     name: 'playwright-vite-plugin',
 
     setup: async (configObject: FullConfig, configDirectory: string) => {
+      console.log('Vite setup');
       config = configObject;
       configDir = configDirectory;
     },
 
     begin: async (suite: Suite) => {
+      console.log('begin');
       const result = await buildBundle(config, configDir);
       if (!result)
         return;
@@ -73,11 +75,13 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     end: async () => {
+      console.log('end');
       if (stoppableServer)
         await new Promise(f => stoppableServer.stop(f));
     },
 
     populateDependencies: async () => {
+      console.log('populateDependencies');
       await buildBundle(config, configDir);
     },
 
@@ -110,6 +114,7 @@ type BuildInfo = {
 };
 
 export async function buildBundle(config: FullConfig, configDir: string): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+  console.log('Building bundle');
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
   {
     // Detect a running dev server and use it if available.
@@ -249,6 +254,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
     name: 'playwright:component-index',
 
     configResolved(config: ResolvedConfig) {
+      console.log('Vite config resolved');
       moduleResolver = config.createResolver();
     },
 
