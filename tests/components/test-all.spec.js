@@ -19,8 +19,8 @@ for (const dir of fs.readdirSync(__dirname)) {
     });
 
     for (const project of ['chromium', 'firefox', 'webkit']) {
-      process.stdout.write(`Running ${folder} in ${project}`);
       test(project, async () => {
+        process.stdout.write(`Running ${folder} in ${project}`);
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
     }
