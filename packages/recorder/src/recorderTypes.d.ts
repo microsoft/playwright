@@ -29,6 +29,7 @@ export type Mode =
   | 'assertingVisibility'
   | 'assertingValue'
   | 'assertingSnapshot';
+  | 'screenshot';
 
 export type ElementInfo = {
   selector: string;
@@ -43,7 +44,8 @@ export type EventData = {
     | 'pause'
     | 'setMode'
     | 'highlightRequested'
-    | 'languageChanged';
+    | 'languageChanged'
+    | 'recordScreenshot';
   params: any;
 };
 

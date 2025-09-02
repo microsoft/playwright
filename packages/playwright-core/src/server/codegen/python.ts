@@ -64,7 +64,10 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (signals.dialog)
       formatter.add(`  ${pageAlias}.once("dialog", lambda dialog: dialog.dismiss())`);
 
-    let code = `${this._awaitPrefix}${this._generateActionCall(subject, actionInContext)}`;
+    const call = this._generateActionCall(subject, actionInContext);
+    if (!call)
+      return formatter.format();
+    let code = `${this._awaitPrefix}${call}`;
 
     if (signals.popup) {
       code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${signals.popup.popupAlias}_info {

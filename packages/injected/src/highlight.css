@@ -232,6 +232,11 @@ x-pw-tool-item.snapshot > x-div {
   clip-path: url(#icon-gist);
 }
 
+x-pw-tool-item.screenshot > x-div {
+  /* use inspect glyph as placeholder camera */
+  clip-path: url(#icon-screenshot);
+}
+
 x-pw-tool-item.accept > x-div {
   clip-path: url(#icon-check);
 }

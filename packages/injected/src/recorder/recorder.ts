@@ -1054,6 +1054,7 @@ class Overlay {
   private _assertTextToggle: HTMLElement;
   private _assertValuesToggle: HTMLElement;
   private _assertSnapshotToggle: HTMLElement;
+  private _screenshotToggle: HTMLElement;
   private _offsetX = 0;
   private _dragState: { offsetX: number, dragStart: { x: number, y: number } } | undefined;
   private _measure: { width: number, height: number } = { width: 0, height: 0 };
@@ -1080,6 +1081,13 @@ class Overlay {
     this._pickLocatorToggle.classList.add('pick-locator');
     this._pickLocatorToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._pickLocatorToggle);
+
+    // Screenshot element tool (placed near pick locator for consistency with Inspector)
+    this._screenshotToggle = this._recorder.document.createElement('x-pw-tool-item');
+    this._screenshotToggle.title = 'Screenshot element';
+    this._screenshotToggle.classList.add('screenshot');
+    this._screenshotToggle.appendChild(this._recorder.document.createElement('x-div'));
+    toolsListElement.appendChild(this._screenshotToggle);
 
     this._assertVisibilityToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._assertVisibilityToggle.title = 'Assert visibility';
@@ -1152,6 +1160,11 @@ class Overlay {
         if (!this._assertSnapshotToggle.classList.contains('disabled'))
           this._recorder.setMode(this._recorder.state.mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot');
       }),
+      addEventListener(this._screenshotToggle, 'click', () => {
+        // Toggle dedicated screenshot mode
+        const isScreenshot = this._recorder.state.mode === 'screenshot';
+        this._recorder.setMode(isScreenshot ? 'recording' : 'screenshot');
+      }),
     ];
   }
 
@@ -1167,7 +1180,9 @@ class Overlay {
 
   setUIState(state: UIState) {
     this._recordToggle.classList.toggle('toggled', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting');
-    this._pickLocatorToggle.classList.toggle('toggled', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
+    // Do not show pick-locator as toggled in screenshot mode.
+    this._pickLocatorToggle.classList.toggle('toggled', (state.mode === 'inspecting' || state.mode === 'recording-inspecting') && state.mode !== 'screenshot');
+    this._screenshotToggle.classList.toggle('toggled', state.mode === 'screenshot');
     this._assertVisibilityToggle.classList.toggle('toggled', state.mode === 'assertingVisibility');
     this._assertVisibilityToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertTextToggle.classList.toggle('toggled', state.mode === 'assertingText');
@@ -1283,6 +1298,7 @@ export class Recorder {
       'inspecting': new InspectTool(this, false),
       'recording': options?.recorderMode === 'api' ? new JsonRecordActionTool(this) : new RecordActionTool(this),
       'recording-inspecting': new InspectTool(this, false),
+      'screenshot': new InspectTool(this, false),
       'assertingText': new TextAssertionTool(this, 'text'),
       'assertingVisibility': new InspectTool(this, true),
       'assertingValue': new TextAssertionTool(this, 'value'),
@@ -1607,6 +1623,12 @@ export class Recorder {
 
   elementPicked(selector: string, model: HighlightModel) {
     const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0], { mode: 'expect' });
+    // In screenshot mode, generate screenshot action, then return to recording
+    if (this.state.mode === 'screenshot') {
+      this.recordAction({ name: 'screenshotElement', selector, signals: [] } as any);
+      this.setMode('recording');
+      return;
+    }
     void this._delegate.elementPicked?.({ selector, ariaSnapshot });
   }
 }

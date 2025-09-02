@@ -134,6 +134,19 @@ export class RecorderApp {
       this._recorder.clear();
       return;
     }
+    if (data.event === 'recordScreenshot') {
+      const selector: string = data.params.selector;
+      const last = this._actions[this._actions.length - 1];
+      const frame = last ? last.frame : { pageGuid: '', pageAlias: 'page', framePath: [] };
+      const action: actions.ActionInContext = {
+        frame,
+        action: { name: 'screenshotElement', selector, signals: [] } as any,
+        startTime: Date.now(),
+      };
+      this._actions.push(action);
+      this._updateActions('reveal');
+      return;
+    }
     if (data.event === 'fileChanged') {
       const source = [...this._recorderSources, ...this._userSources].find(s => s.id === data.params.fileId);
       if (source) {

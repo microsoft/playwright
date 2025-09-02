@@ -34,6 +34,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   private _conf: any | undefined;
   private _iterateOverField: string | undefined;
   private _iterateFooterSuffix: string | undefined;
+  private _screenshotOrdinal = 0;
+  private _includeConfPath: string | undefined;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'playwright-test' : 'javascript';
@@ -144,6 +146,11 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const commentIfNeeded = this._isTest ? '' : '// ';
         return `${commentIfNeeded}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.ariaSnapshot, `${commentIfNeeded}  `)});`;
       }
+      case 'screenshotElement': {
+        const n = ++this._screenshotOrdinal;
+        const locator = `${subject}.${this._asLocator((action as any).selector)}`;
+        return `await (async () => {\n  const box = await ${locator}.boundingBox();\n  const padding = 30;\n  await ${subject}.screenshot({ path: 'screenshot-${n}.png', clip: { x: Math.max(0, box.x - padding), y: Math.max(0, box.y - padding), width: box.width + padding * 2, height: box.height + padding * 2 } });\n})();`;
+      }
     }
   }
 
@@ -210,10 +217,23 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       if (canonical)
         this._baseURLPrefix = canonical;
     }
-    // Load conf once if provided.
-    if (options.includeConfPath)
-      this._conf = this._loadConf(options.includeConfPath);
+    // Resolve CLI fallbacks for include-conf / iterate-over if not passed through options.
+    this._includeConfPath = options.includeConfPath;
     this._iterateOverField = options.iterateOver;
+    if (!this._includeConfPath || !this._iterateOverField) {
+      const argv = process.argv || [];
+      for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (!this._includeConfPath && (a === '--include-conf' || a === '--include-conf=' || a.startsWith('--include-conf='))) {
+          this._includeConfPath = a.includes('=') ? a.split('=')[1] : argv[i + 1];
+        }
+        if (!this._iterateOverField && (a === '--iterate-over' || a === '--iterate-over=' || a.startsWith('--iterate-over='))) {
+          this._iterateOverField = a.includes('=') ? a.split('=')[1] : argv[i + 1];
+        }
+      }
+    }
+    if (this._includeConfPath)
+      this._conf = this._loadConf(this._includeConfPath);
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
@@ -228,12 +248,13 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   generateTestHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     const useText = formatContextOptions(options.contextOptions, options.deviceName, this._isTest);
-    const confLine = options.includeConfPath ? `\n      const conf = JSON.parse(require('fs').readFileSync(${quote(options.includeConfPath)}));\n` : '';
+    const confPath = this._includeConfPath;
+    const confLine = confPath ? `\n      const conf = JSON.parse(require('fs').readFileSync(${quote(confPath)}));\n` : '';
     let iteratePrefix = '';
     let testNameExpr = `'test'`;
     this._iterateFooterSuffix = '';
     const field = this._iterateOverField;
-    if (options.includeConfPath && field) {
+    if (confPath && field) {
       const confField = this._conf ? this._conf[field] : undefined;
       const qField = quote(field);
       if (confField && typeof confField === 'object' && !Array.isArray(confField)) {

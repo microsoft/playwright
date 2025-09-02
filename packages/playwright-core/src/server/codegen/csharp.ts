@@ -83,7 +83,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     const lines: string[] = [];
-    lines.push(this._generateActionCall(subject, actionInContext));
+    const line = this._generateActionCall(subject, actionInContext);
+    if (line)
+      lines.push(line);
 
     if (signals.download) {
       lines.unshift(`var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForDownloadAsync(async () =>\n{`);
