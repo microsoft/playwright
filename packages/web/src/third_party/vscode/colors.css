@@ -544,7 +544,13 @@ body {
   --vscode-gitDecoration-submoduleResourceForeground: #1258a7;
 }
 
+body.light-mode {
+  color-scheme: light;
+}
+
 body.dark-mode {
+  color-scheme: dark;
+
   --vscode-font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
   --vscode-font-weight: normal;
   --vscode-font-size: 13px;
