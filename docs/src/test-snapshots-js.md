@@ -65,7 +65,7 @@ npx playwright test --update-snapshots
 
 ### maxDiffPixels
 
-Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./api/class-pageassertions.md#page-assertions-to-have-screenshot-1) to modify its behavior:
+Playwright Test uses the [blazediff](https://github.com/teimurjan/blazediff) library. You can [pass various options](./api/class-pageassertions.md#page-assertions-to-have-screenshot-1) to modify its behavior:
 
 ```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';

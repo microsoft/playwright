@@ -766,7 +766,7 @@ test('should respect comparator name', async ({ runInlineTest }) => {
       test('should fail', ({}) => {
         expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           threshold: 0,
-          _comparator: 'pixelmatch',
+          _comparator: 'blazediff',
         });
       });
     `
@@ -799,7 +799,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
             name: 'should-fail',
             expect: {
               toMatchSnapshot: {
-                _comparator: 'pixelmatch',
+                _comparator: 'blazediff',
               }
             },
           },

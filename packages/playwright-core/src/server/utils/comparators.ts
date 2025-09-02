@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
+import blazediff from '@blazediff/core';
 import { compare } from './image_tools/compare';
-// @ts-ignore
-import pixelmatch from '../../third_party/pixelmatch';
 import { jpegjs } from '../../utilsBundle';
 import { colors, diff } from '../../utilsBundle';
 import { PNG } from '../../utilsBundle';
@@ -72,8 +71,8 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
       // See https://en.wikipedia.org/wiki/Color_difference#CIELAB_%CE%94E*
       maxColorDeltaE94: 1.0,
     });
-  } else if ((options.comparator ?? 'pixelmatch') === 'pixelmatch') {
-    count = pixelmatch(expected.data, actual.data, diff.data, size.width, size.height, {
+  } else if ((options.comparator ?? 'blazediff') === 'blazediff') {
+    count = blazediff(expected.data, actual.data, diff.data, size.width, size.height, {
       threshold: options.threshold ?? 0.2,
     });
   } else {

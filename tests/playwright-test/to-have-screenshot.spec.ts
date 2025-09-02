@@ -1279,7 +1279,7 @@ test('should respect comparator name', async ({ runInlineTest }) => {
         await page.goto('${actualURL}');
         await expect(page.locator('img')).toHaveScreenshot('snapshot.png', {
           threshold: 0,
-          _comparator: 'pixelmatch',
+          _comparator: 'blazediff',
         });
       });
     `
@@ -1310,7 +1310,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
           name: 'should-fail',
           expect: {
             toHaveScreenshot: {
-              _comparator: 'pixelmatch',
+              _comparator: 'blazediff',
             }
           },
         },

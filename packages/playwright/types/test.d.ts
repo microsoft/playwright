@@ -181,7 +181,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
     toHaveScreenshot?: {
       /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * `1` (lax). `"blazediff"` comparator computes color difference in
        * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
@@ -251,7 +251,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
     toMatchSnapshot?: {
       /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * `1` (lax). `"blazediff"` comparator computes color difference in
        * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
@@ -1115,7 +1115,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
       /**
        * An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * `1` (lax). `"blazediff"` comparator computes color difference in
        * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
@@ -1161,7 +1161,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
       /**
        * An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * `1` (lax). `"blazediff"` comparator computes color difference in
        * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
