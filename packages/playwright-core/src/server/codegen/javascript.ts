@@ -31,8 +31,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   highlighter = 'javascript' as Language;
   private _isTest: boolean;
   private _baseURLPrefix: string | undefined;
-  private _confUsername: string | undefined;
-  private _confPassword: string | undefined;
+  private _conf: any | undefined;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'playwright-test' : 'javascript';
@@ -103,14 +102,19 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       case 'uncheck':
         return `await ${subject}.${this._asLocator(action.selector)}.uncheck();`;
       case 'fill': {
-        const selector = (action.selector || '').toLowerCase();
-        const isUsername = selector.includes('username');
-        const isPassword = selector.includes('password');
-        this._ensureLoadConfCredentials();
-        if (isUsername && this._confUsername !== undefined && action.text === this._confUsername)
-          return `await ${subject}.${this._asLocator(action.selector)}.fill(conf.username);`;
-        if (isPassword && this._confPassword !== undefined && action.text === this._confPassword)
-          return `await ${subject}.${this._asLocator(action.selector)}.fill(conf.password);`;
+        const selectorLower = (action.selector || '').toLowerCase();
+        if (this._conf && typeof action.text === 'string') {
+          for (const [key, value] of Object.entries(this._conf)) {
+            if (typeof value !== 'string')
+              continue;
+            const keyLower = String(key).toLowerCase();
+            if (selectorLower.includes(keyLower) && action.text === value) {
+              const isValidIdent = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(String(key));
+              const confExpr = isValidIdent ? `conf.${key}` : `conf[${quote(String(key))}]`;
+              return `await ${subject}.${this._asLocator(action.selector)}.fill(${confExpr});`;
+            }
+          }
+        }
         return `await ${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)});`;
       }
       case 'setInputFiles':
@@ -169,7 +173,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
   // Convert URLs starting with baseURLPrefix to conf.baseurl + '/path'.
   private _formatURL(url: string): string {
-    if (!this._baseURLPrefix)
+    // Only rewrite to conf.baseurl when includeConf was provided (conf present)
+    if (!this._baseURLPrefix || !this._conf)
       return quote(url);
     try {
       const u = new URL(url);
@@ -186,19 +191,13 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return quote(url);
   }
 
-  private _ensureLoadConfCredentials() {
-    if (this._confUsername !== undefined || this._confPassword !== undefined)
-      return;
+  private _loadConf(confPath: string): any | undefined {
     try {
-      const confPath = path.resolve(process.cwd(), 'test/conf.json');
-      const raw = fs.readFileSync(confPath, 'utf-8');
-      const json = JSON.parse(raw);
-      if (typeof json.username === 'string')
-        this._confUsername = json.username;
-      if (typeof json.password === 'string')
-        this._confPassword = json.password;
+      const resolved = path.resolve(process.cwd(), confPath);
+      const raw = fs.readFileSync(resolved, 'utf-8');
+      return JSON.parse(raw);
     } catch {
-      // Ignore if not present or unreadable.
+      return undefined;
     }
   }
 
@@ -209,8 +208,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       if (canonical)
         this._baseURLPrefix = canonical;
     }
-    // Load conf credentials once, if available.
-    this._ensureLoadConfCredentials();
+    // Load conf once if provided.
+    if (options.includeConfPath)
+      this._conf = this._loadConf(options.includeConfPath);
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
@@ -225,10 +225,11 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   generateTestHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     const useText = formatContextOptions(options.contextOptions, options.deviceName, this._isTest);
+    const confLine = options.includeConfPath ? `\n      const conf = JSON.parse(require('fs').readFileSync(${quote(options.includeConfPath)}));\n` : '';
     formatter.add(`
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 
-      const conf = JSON.parse(require('fs').readFileSync('test/conf.json'));
+${confLine}
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       test('test', async ({ page }) => {`);
     if (options.contextOptions.recordHar) {

@@ -70,6 +70,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
+      ['--include-conf <file>', 'inject conf loader from this JSON and enable conf-based replacements'],
     ]).action(async function(url, options) {
   await codegen(options, url);
 }).addHelpText('afterAll', `
@@ -629,6 +630,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
+    includeConf: options.includeConf,
   });
   await openPage(context, url);
   donePromise.resolve();

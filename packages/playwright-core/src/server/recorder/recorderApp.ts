@@ -67,6 +67,7 @@ export class RecorderApp {
       contextOptions: { ...params.contextOptions },
       deviceName: params.device,
       saveStorage: params.saveStorage,
+      includeConfPath: params.includeConf,
     };
 
     this._throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
