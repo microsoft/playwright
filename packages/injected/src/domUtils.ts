@@ -142,6 +142,7 @@ export function isMetadataElement(element: Element): boolean {
     || localName === 'link'
     || localName === 'meta'
     || localName === 'script'
+    || localName === 'source'
     || localName === 'style'
     || localName === 'title'
   );

@@ -64,12 +64,14 @@ it('should consider visible if metadata', async ({ page }) => {
     + `<script></script>`
     + `<template>Not visible</template>`
     + `<title>test</title>`
+    + `<video controls><source src="foo.webm"></video>`
   );
   await page.waitForSelector('base');
   await page.waitForSelector('link[rel="icon"]');
   await page.waitForSelector('meta[name="viewport"]');
-  await page.waitForSelector('style');
   await page.waitForSelector('script');
+  await page.waitForSelector('source');
+  await page.waitForSelector('style');
   await expect(page.waitForSelector('template', { timeout: 1000 })).rejects.toThrow('page.waitForSelector: Timeout 1000ms exceeded');
   await page.waitForSelector('title');
 });
