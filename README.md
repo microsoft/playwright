@@ -16,6 +16,13 @@ Headless execution is supported for all browsers on all platforms. Check out [sy
 
 Looking for Playwright for [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
 
+## About this fork
+
+This fork supports some additional tools like:
+ - handling of a test config with baseurl/username/password for more enhanced test management
+ - making screenshots of buttons or elements
+ - writing manuals alongside testing
+
 ## Installation
 
 Playwright has its own test runner for end-to-end tests, we call it Playwright Test.

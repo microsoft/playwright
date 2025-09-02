@@ -16,6 +16,8 @@
 
 import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { asLocator, escapeWithQuotes } from '../../utils';
+import fs from 'fs';
+import path from 'path';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
@@ -29,6 +31,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   highlighter = 'javascript' as Language;
   private _isTest: boolean;
   private _baseURLPrefix: string | undefined;
+  private _confUsername: string | undefined;
+  private _confPassword: string | undefined;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'playwright-test' : 'javascript';
@@ -102,9 +106,10 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const selector = (action.selector || '').toLowerCase();
         const isUsername = selector.includes('username');
         const isPassword = selector.includes('password');
-        if (isUsername)
+        this._ensureLoadConfCredentials();
+        if (isUsername && this._confUsername !== undefined && action.text === this._confUsername)
           return `await ${subject}.${this._asLocator(action.selector)}.fill(conf.username);`;
-        if (isPassword)
+        if (isPassword && this._confPassword !== undefined && action.text === this._confPassword)
           return `await ${subject}.${this._asLocator(action.selector)}.fill(conf.password);`;
         return `await ${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)});`;
       }
@@ -181,6 +186,22 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return quote(url);
   }
 
+  private _ensureLoadConfCredentials() {
+    if (this._confUsername !== undefined || this._confPassword !== undefined)
+      return;
+    try {
+      const confPath = path.resolve(process.cwd(), 'test/conf.json');
+      const raw = fs.readFileSync(confPath, 'utf-8');
+      const json = JSON.parse(raw);
+      if (typeof json.username === 'string')
+        this._confUsername = json.username;
+      if (typeof json.password === 'string')
+        this._confPassword = json.password;
+    } catch {
+      // Ignore if not present or unreadable.
+    }
+  }
+
   generateHeader(options: LanguageGeneratorOptions): string {
     // Initialize base URL prefix from options if provided.
     if (options.baseURL) {
@@ -188,6 +209,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       if (canonical)
         this._baseURLPrefix = canonical;
     }
+    // Load conf credentials once, if available.
+    this._ensureLoadConfCredentials();
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
