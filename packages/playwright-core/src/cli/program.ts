@@ -71,6 +71,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
       ['--include-conf <file>', 'inject conf loader from this JSON and enable conf-based replacements'],
+      ['--iterate-over <field>', 'wrap tests in a loop over conf[field]'],
     ]).action(async function(url, options) {
   await codegen(options, url);
 }).addHelpText('afterAll', `
@@ -609,7 +610,7 @@ async function open(options: Options, url: string | undefined) {
   await openPage(context, url);
 }
 
-async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string, includeConf?: string }, url: string | undefined) {
+async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string, includeConf?: string, iterateOver?: string }, url: string | undefined) {
   const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
   const tracesDir = path.join(os.tmpdir(), `playwright-recorder-trace-${Date.now()}`);
   const { context, browser, launchOptions, contextOptions, closeBrowser } = await launchContext(options, {
@@ -631,6 +632,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
     includeConfPath: options.includeConf,
+    iterateOver: options.iterateOver,
   });
   await openPage(context, url);
   donePromise.resolve();

@@ -32,6 +32,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   private _isTest: boolean;
   private _baseURLPrefix: string | undefined;
   private _conf: any | undefined;
+  private _iterateOverField: string | undefined;
+  private _iterateFooterSuffix: string | undefined;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'playwright-test' : 'javascript';
@@ -211,6 +213,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     // Load conf once if provided.
     if (options.includeConfPath)
       this._conf = this._loadConf(options.includeConfPath);
+    this._iterateOverField = options.iterateOver;
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
@@ -226,12 +229,35 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const formatter = new JavaScriptFormatter();
     const useText = formatContextOptions(options.contextOptions, options.deviceName, this._isTest);
     const confLine = options.includeConfPath ? `\n      const conf = JSON.parse(require('fs').readFileSync(${quote(options.includeConfPath)}));\n` : '';
+    let iteratePrefix = '';
+    let testNameExpr = `'test'`;
+    this._iterateFooterSuffix = '';
+    const field = this._iterateOverField;
+    if (options.includeConfPath && field) {
+      const confField = this._conf ? this._conf[field] : undefined;
+      const qField = quote(field);
+      if (confField && typeof confField === 'object' && !Array.isArray(confField)) {
+        iteratePrefix = `\n      for (const key of Object.keys(conf[${qField}])) {\n        const ${field} = conf[${qField}][key];\n`;
+        testNameExpr = `'test-' + key`;
+        this._iterateFooterSuffix = `\n      }`;
+      } else if (Array.isArray(confField)) {
+        if (confField.length > 0 && typeof confField[0] === 'string') {
+          iteratePrefix = `\n      for (const ${field} of conf[${qField}]) {\n`;
+          testNameExpr = `'test-' + ${field}`;
+          this._iterateFooterSuffix = `\n      }`;
+        } else {
+          iteratePrefix = `\n      for (let i = 0; i < (conf[${qField}] || []).length; i++) {\n        const ${field} = conf[${qField}][i];\n`;
+          testNameExpr = `'test-' + i`;
+          this._iterateFooterSuffix = `\n      }`;
+        }
+      }
+    }
     formatter.add(`
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 
 ${confLine}
-${useText ? '\ntest.use(' + useText + ');\n' : ''}
-      test('test', async ({ page }) => {`);
+${useText ? '\ntest.use(' + useText + ');\n' : ''}${iteratePrefix}
+      test(${testNameExpr}, async ({ page }) => {`);
     if (options.contextOptions.recordHar) {
       const url = options.contextOptions.recordHar.urlFilter;
       formatter.add(`  await page.routeFromHAR(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatOptions({ url }, false)}` : ''});`);
@@ -240,7 +266,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   }
 
   generateTestFooter(saveStorage: string | undefined): string {
-    return `});`;
+    return `});${this._iterateFooterSuffix || ''}`;
   }
 
   generateStandaloneHeader(options: LanguageGeneratorOptions): string {

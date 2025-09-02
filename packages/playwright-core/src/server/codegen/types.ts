@@ -30,6 +30,8 @@ export type LanguageGeneratorOptions = {
   baseURL?: string;
   // Optional path to JSON config injected into generated tests.
   includeConfPath?: string;
+  // Optional conf field to iterate over when generating tests.
+  iterateOver?: string;
 };
 
 export interface LanguageGenerator {
