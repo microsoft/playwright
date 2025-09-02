@@ -768,7 +768,14 @@ export class Frame extends SdkObject {
           throw injected.createStacklessError('Element is not attached to the DOM');
         const elements = injected.querySelectorAll(info.parsed, root || document);
         const element: Element | undefined  = elements[0];
-        const visible = element ? injected.utils.isElementVisible(element) : false;
+        const visible = element
+          ?
+          injected.utils.isMetadataElement(element)
+            // For e.g. `<title>`, there won't be a bounding box but it's safe to
+            // assume `waitForSelector('title')` is supposed to resolve if the element is attached.
+            ? true
+            : injected.utils.isElementVisible(element)
+          : false;
         let log = '';
         if (elements.length > 1) {
           if (info.strict)

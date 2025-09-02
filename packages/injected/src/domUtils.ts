@@ -131,6 +131,22 @@ export function computeBox(element: Element): Box {
   return { rect, style, visible: rect.width > 0 && rect.height > 0, inline: style.display === 'inline' };
 }
 
+/**
+ * Elements that don't directly contribute to the visible content of the document.
+ * Generally these are elements for which you don't care about their visibility implicitly.
+ */
+export function isMetadataElement(element: Element): boolean {
+  const localName = element.localName;
+  return (
+    localName === 'base'
+    || localName === 'link'
+    || localName === 'meta'
+    || localName === 'script'
+    || localName === 'style'
+    || localName === 'title'
+  );
+}
+
 export function isElementVisible(element: Element): boolean {
   return computeBox(element).visible;
 }

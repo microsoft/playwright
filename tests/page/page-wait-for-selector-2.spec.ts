@@ -55,6 +55,25 @@ it('should not consider visible when zero-sized', async ({ page, server }) => {
   expect(await page.waitForSelector('div', { timeout: 1000 })).toBeTruthy();
 });
 
+it('should consider visible if metadata', async ({ page }) => {
+  await page.setContent(
+      `<base>`
+    + `<meta name="viewport" content="width=device-width, initial-scale=1">`
+    + `<link rel="icon" type="image/x-icon" href="/static/favicon.ico">`
+    + `<style></style>`
+    + `<script></script>`
+    + `<template>Not visible</template>`
+    + `<title>test</title>`
+  );
+  await page.waitForSelector('base');
+  await page.waitForSelector('link[rel="icon"]');
+  await page.waitForSelector('meta[name="viewport"]');
+  await page.waitForSelector('style');
+  await page.waitForSelector('script');
+  await expect(page.waitForSelector('template', { timeout: 1000 })).rejects.toThrow('page.waitForSelector: Timeout 1000ms exceeded');
+  await page.waitForSelector('title');
+});
+
 it('should wait for visible recursively', async ({ page, server }) => {
   let divVisible = false;
   const waitForSelector = page.waitForSelector('div#inner').then(() => divVisible = true);
