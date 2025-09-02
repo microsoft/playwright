@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
-import { asLocator, escapeWithQuotes } from '../../utils';
 import fs from 'fs';
 import path from 'path';
+import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { asLocator, escapeWithQuotes } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
