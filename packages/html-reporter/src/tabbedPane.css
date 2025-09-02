@@ -59,12 +59,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+.tabbed-pane-tab-label:hover {
+  background-color: var(--color-control-transparent-bg-hover);
 }
 
 .tabbed-pane-tab-element.selected {
   border-bottom-color: #666;
-}
-
-.tabbed-pane-tab-element:hover {
-  color: #333;
+  -webkit-text-stroke: 0.5px currentColor;
 }
