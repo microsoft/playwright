@@ -26,6 +26,8 @@ export type LanguageGeneratorOptions = {
   deviceName?: string;
   saveStorage?: string;
   generateAutoExpect?: boolean;
+  // Base application URL to de-hardcode (from CLI or first navigation).
+  baseURL?: string;
 };
 
 export interface LanguageGenerator {

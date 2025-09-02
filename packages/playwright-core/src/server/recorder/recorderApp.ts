@@ -111,8 +111,11 @@ export class RecorderApp {
     });
 
     const url = this._recorder.url();
-    if (url)
+    if (url) {
       this._onPageNavigated(url);
+      // Seed baseURL once from the initial inspected page.
+      this._languageGeneratorOptions.baseURL = canonicalBaseURL(url);
+    }
     this._onModeChanged(this._recorder.mode());
     this._onPausedStateChanged(this._recorder.paused());
     this._updateActions('reveal');
@@ -283,6 +286,12 @@ export class RecorderApp {
   }
 
   private _onPageNavigated(url: string) {
+    // Seed baseURL from the first real navigation if not set yet.
+    if (!this._languageGeneratorOptions.baseURL) {
+      const base = canonicalBaseURL(url);
+      if (base)
+        this._languageGeneratorOptions.baseURL = base;
+    }
     this._page.mainFrame().evaluateExpression((({ url }: { url: string }) => {
       window.playwrightSetPageURL(url);
     }).toString(), { isFunction: true }, { url }).catch(() => {});
@@ -395,6 +404,7 @@ export class ProgrammaticRecorderApp {
       contextOptions: { ...params.contextOptions },
       deviceName: params.device,
       saveStorage: params.saveStorage,
+      baseURL: canonicalBaseURL(inspectedContext.pages()[0]?.mainFrame().url() || ''),
     };
     const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
 
@@ -421,3 +431,21 @@ function findPageByGuid(context: BrowserContext, guid: string) {
 }
 
 const recorderAppSymbol = Symbol('recorderApp');
+
+function canonicalBaseURL(url: string | undefined): string | undefined {
+  if (!url)
+    return undefined;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:')
+      return undefined;
+    // Keep origin + path prefix as provided; normalize trailing slash off.
+    let base = u.origin + u.pathname;
+    // Remove trailing slash for consistent prefix checks.
+    if (base.endsWith('/') && base.length > u.origin.length)
+      base = base.slice(0, -1);
+    return base;
+  } catch {
+    return undefined;
+  }
+}

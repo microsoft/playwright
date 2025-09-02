@@ -28,6 +28,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'javascript' as Language;
   private _isTest: boolean;
+  private _baseURLPrefix: string | undefined;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'playwright-test' : 'javascript';
@@ -45,8 +46,10 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
+      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
+        this._maybeSeedBaseFrom(action.url);
+        formatter.add(`await ${pageAlias}.goto(${this._formatURL(action.url)});`);
+      }
       return formatter.format();
     }
 
@@ -95,8 +98,16 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.${this._asLocator(action.selector)}.check();`;
       case 'uncheck':
         return `await ${subject}.${this._asLocator(action.selector)}.uncheck();`;
-      case 'fill':
+      case 'fill': {
+        const selector = (action.selector || '').toLowerCase();
+        const isUsername = selector.includes('username');
+        const isPassword = selector.includes('password');
+        if (isUsername)
+          return `await ${subject}.${this._asLocator(action.selector)}.fill(conf.username);`;
+        if (isPassword)
+          return `await ${subject}.${this._asLocator(action.selector)}.fill(conf.password);`;
         return `await ${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)});`;
+      }
       case 'setInputFiles':
         return `await ${subject}.${this._asLocator(action.selector)}.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)});`;
       case 'press': {
@@ -105,7 +116,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)});`;
       }
       case 'navigate':
-        return `await ${subject}.goto(${quote(action.url)});`;
+        return `await ${subject}.goto(${this._formatURL(action.url)});`;
       case 'select':
         return `await ${subject}.${this._asLocator(action.selector)}.selectOption(${formatObject(action.options.length === 1 ? action.options[0] : action.options)});`;
       case 'assertText':
@@ -129,7 +140,54 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return asLocator('javascript', selector);
   }
 
+  private _canonicalBase(input: string): string | undefined {
+    try {
+      const u = new URL(input);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:')
+        return undefined;
+      let base = u.origin + u.pathname;
+      if (base.endsWith('/') && base.length > u.origin.length)
+        base = base.slice(0, -1);
+      return base;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private _maybeSeedBaseFrom(url: string) {
+    if (this._baseURLPrefix)
+      return;
+    const canonical = this._canonicalBase(url);
+    if (canonical)
+      this._baseURLPrefix = canonical;
+  }
+
+  // Convert URLs starting with baseURLPrefix to conf.baseurl + '/path'.
+  private _formatURL(url: string): string {
+    if (!this._baseURLPrefix)
+      return quote(url);
+    try {
+      const u = new URL(url);
+      const abs = u.toString();
+      const prefix = this._baseURLPrefix;
+      if (abs.startsWith(prefix + '/') || abs === prefix) {
+        const rest = abs.substring(prefix.length);
+        const normalizedRest = rest.startsWith('/') ? rest : ('/' + rest);
+        return `conf.baseurl + ${quote(normalizedRest)}`;
+      }
+    } catch (e) {
+      // Not an absolute URL
+    }
+    return quote(url);
+  }
+
   generateHeader(options: LanguageGeneratorOptions): string {
+    // Initialize base URL prefix from options if provided.
+    if (options.baseURL) {
+      const canonical = this._canonicalBase(options.baseURL);
+      if (canonical)
+        this._baseURLPrefix = canonical;
+    }
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
@@ -146,6 +204,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const useText = formatContextOptions(options.contextOptions, options.deviceName, this._isTest);
     formatter.add(`
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
+
+      const conf = JSON.parse(require('fs').readFileSync('test/conf.json'));
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       test('test', async ({ page }) => {`);
     if (options.contextOptions.recordHar) {
