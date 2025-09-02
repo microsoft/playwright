@@ -312,6 +312,30 @@ export type Snapshot = {
   hasInputTarget?: boolean;
 };
 
+const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: keyof ActionTraceEvent, hasInputTarget: boolean = false): Snapshot | undefined => {
+  if (!action)
+    return undefined;
+
+  const snapshotName = action[snapshotNameKey];
+
+  if (!snapshotName)
+    return undefined;
+
+  if (!action.pageId) {
+    // eslint-disable-next-line no-console
+    console.error('snapshot action must have a pageId');
+    return undefined;
+  }
+
+  return {
+    action,
+    snapshotName,
+    pageId: action.pageId,
+    point: action.point,
+    hasInputTarget,
+  };
+};
+
 export type SnapshotInfo = {
   url: string;
   viewport: { width: number, height: number };
@@ -335,18 +359,18 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   if (!action)
     return {};
 
-  let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot && action.pageId ? { action, snapshotName: action.beforeSnapshot, pageId: action.pageId } : undefined;
+  let beforeSnapshot = createSnapshot(action, 'beforeSnapshot');
   if (!beforeSnapshot) {
     // If the action has no beforeSnapshot, use the last available afterSnapshot.
     for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
-      if (a.endTime <= action.startTime && a.afterSnapshot && a.pageId) {
-        beforeSnapshot = { action: a, snapshotName: a.afterSnapshot, pageId: a.pageId };
+      if (a.endTime <= action.startTime && a.afterSnapshot) {
+        beforeSnapshot = createSnapshot(a, 'afterSnapshot');
         break;
       }
     }
   }
 
-  let afterSnapshot: Snapshot | undefined = action.afterSnapshot && action.pageId ? { action, snapshotName: action.afterSnapshot, pageId: action.pageId } : undefined;
+  let afterSnapshot = createSnapshot(action, 'afterSnapshot');
   if (!afterSnapshot) {
     let last: ActionTraceEvent | undefined;
     // - For test.step, we want to use the snapshot of the last nested action.
@@ -357,14 +381,14 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
     //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
     //   and we calculated it above from a previous action.
     for (let a = nextActionByStartTime(action); a && a.startTime <= action.endTime; a = nextActionByStartTime(a)) {
-      if (a.endTime > action.endTime || !a.afterSnapshot || !a.pageId)
+      if (a.endTime > action.endTime || !a.afterSnapshot)
         continue;
       if (last && last.endTime > a.endTime)
         continue;
       last = a;
     }
     if (last)
-      afterSnapshot = { action: last, snapshotName: last.afterSnapshot!, pageId: last.pageId! };
+      afterSnapshot = createSnapshot(last, 'afterSnapshot');
     else
       afterSnapshot = beforeSnapshot;
   }
