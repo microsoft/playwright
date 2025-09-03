@@ -33,9 +33,8 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
-import { ServerBackendFactory } from './mcp/sdk/server';
-import { TestServerBackend } from './mcp/test/backend';
-import { runMainBackend } from './mcp/sdk/mdb';
+import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
+import { TestServerBackend } from './mcp/test/testBackend';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';

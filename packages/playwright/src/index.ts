@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { runBrowserBackendOnError } from './mcp/browser/backend';
+import { runBrowserBackendOnError } from './mcp/test/browserBackend';
 import { codeFrameColumns } from './transform/babelBundle';
 import { stripAnsiEscapes } from './util';
 

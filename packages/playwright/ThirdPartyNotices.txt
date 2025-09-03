@@ -62,7 +62,7 @@ This project incorporates components from the projects listed below. The origina
 -	@jridgewell/resolve-uri@3.1.1 (https://github.com/jridgewell/resolve-uri)
 -	@jridgewell/sourcemap-codec@1.5.4 (https://github.com/jridgewell/sourcemaps)
 -	@jridgewell/trace-mapping@0.3.29 (https://github.com/jridgewell/sourcemaps)
--	@modelcontextprotocol/sdk@1.17.3 (https://github.com/modelcontextprotocol/typescript-sdk)
+-	@modelcontextprotocol/sdk@1.17.5 (https://github.com/modelcontextprotocol/typescript-sdk)
 -	@sinclair/typebox@0.27.8 (https://github.com/sinclairzx81/typebox)
 -	@types/istanbul-lib-coverage@2.0.6 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/istanbul-lib-report@3.0.3 (https://github.com/DefinitelyTyped/DefinitelyTyped)
@@ -1955,7 +1955,7 @@ SOFTWARE.
 =========================================
 END OF @jridgewell/trace-mapping@0.3.29 AND INFORMATION
 
-%% @modelcontextprotocol/sdk@1.17.3 NOTICES AND INFORMATION BEGIN HERE
+%% @modelcontextprotocol/sdk@1.17.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1979,7 +1979,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @modelcontextprotocol/sdk@1.17.3 AND INFORMATION
+END OF @modelcontextprotocol/sdk@1.17.5 AND INFORMATION
 
 %% @sinclair/typebox@0.27.8 NOTICES AND INFORMATION BEGIN HERE
 =========================================

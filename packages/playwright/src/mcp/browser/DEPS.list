@@ -1,3 +1,5 @@
 [*]
+./tools/
 ../sdk/
-../../util.ts
+../log.ts
+../package.ts

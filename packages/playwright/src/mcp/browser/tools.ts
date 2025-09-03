@@ -14,98 +14,47 @@
  * limitations under the License.
  */
 
-import { asLocator } from 'playwright-core/lib/utils';
+import common from './tools/common';
+import console from './tools/console';
+import dialogs from './tools/dialogs';
+import evaluate from './tools/evaluate';
+import files from './tools/files';
+import form from './tools/form';
+import install from './tools/install';
+import keyboard from './tools/keyboard';
+import mouse from './tools/mouse';
+import navigate from './tools/navigate';
+import network from './tools/network';
+import pdf from './tools/pdf';
+import snapshot from './tools/snapshot';
+import tabs from './tools/tabs';
+import screenshot from './tools/screenshot';
+import wait from './tools/wait';
+import verify from './tools/verify';
 
-import { defineTool } from './tool.js';
-import * as mcp from '../sdk/bundle';
+import type { Tool } from './tools/tool';
+import type { FullConfig } from './config';
 
-import type * as playwright from '../../../index';
-import type z from 'zod';
+export const allTools: Tool<any>[] = [
+  ...common,
+  ...console,
+  ...dialogs,
+  ...evaluate,
+  ...files,
+  ...form,
+  ...install,
+  ...keyboard,
+  ...navigate,
+  ...network,
+  ...mouse,
+  ...pdf,
+  ...screenshot,
+  ...snapshot,
+  ...tabs,
+  ...wait,
+  ...verify,
+];
 
-type PageEx = playwright.Page & {
-  _snapshotForAI: () => Promise<string>;
-};
-
-export const snapshot = defineTool({
-  schema: {
-    name: 'playwright_test_browser_snapshot',
-    title: 'Capture page snapshot',
-    description: 'Capture page snapshot for debugging',
-    inputSchema: mcp.z.object({}),
-    type: 'readOnly',
-  },
-
-  handle: async (page, params) => {
-    const snapshot = await (page as PageEx)._snapshotForAI();
-    return {
-      content: [
-        {
-          type: 'text',
-          text: snapshot,
-        },
-      ],
-    };
-  },
-});
-
-export const elementSchema = mcp.z.object({
-  element: mcp.z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: mcp.z.string().describe('Exact target element reference from the page snapshot'),
-});
-
-export const pickLocator = defineTool({
-  schema: {
-    name: 'playwright_test_generate_locator',
-    title: 'Create locator for element',
-    description: 'Generate locator for the given element to use in tests',
-    inputSchema: elementSchema,
-    type: 'readOnly',
-  },
-
-  handle: async (page, params) => {
-    const locator = await refLocator(page, params);
-
-    try {
-      const { resolvedSelector } = await (locator as any)._resolveSelector();
-      const locatorString = asLocator('javascript', resolvedSelector);
-      return { content: [{ type: 'text', text: locatorString }] };
-    } catch (e) {
-      throw new Error(`Ref not found, likely because element was removed. Use ${snapshot.schema.name} to see what elements are currently on the page.`);
-    }
-  },
-});
-
-const evaluateSchema = mcp.z.object({
-  function: mcp.z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
-  element: mcp.z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: mcp.z.string().optional().describe('Exact target element reference from the page snapshot'),
-});
-
-export const evaluate = defineTool({
-  schema: {
-    name: 'playwright_test_evaluate_on_pause',
-    title: 'Evaluate in page',
-    description: 'Evaluate JavaScript expression on page or element',
-    inputSchema: evaluateSchema,
-    type: 'destructive',
-  },
-
-  handle: async (page, params) => {
-    let locator: playwright.Locator | undefined;
-    if (params.ref && params.element)
-      locator = await refLocator(page, { ref: params.ref, element: params.element });
-
-    const receiver = locator ?? page as any;
-    const result = await receiver._evaluateFunction(params.function);
-    return {
-      content: [{ type: 'text', text: JSON.stringify(result, null, 2) || 'undefined' }],
-    };
-  },
-});
-
-async function refLocator(page: playwright.Page, elementRef: z.output<typeof elementSchema>): Promise<playwright.Locator> {
-  const snapshot = await (page as PageEx)._snapshotForAI();
-  if (!snapshot.includes(`[ref=${elementRef.ref}]`))
-    throw new Error(`Ref ${elementRef.ref} not found in the current page snapshot. Try capturing new snapshot.`);
-  return page.locator(`aria-ref=${elementRef.ref}`).describe(elementRef.element);
+export function filteredTools(config: FullConfig) {
+  return allTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability));
 }

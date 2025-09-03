@@ -1,0 +1,206 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Base styles */
+.app-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  background-color: #ffffff;
+  color: #1f2328;
+  margin: 0;
+  padding: 16px;
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+.content-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Status Banner */
+.status-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-right: 12px;
+}
+
+.status-banner {
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.status-banner.connected {
+  color: #1f2328;
+}
+
+.status-banner.connected::before {
+  content: "\2705";
+  margin-right: 8px;
+}
+
+.status-banner.error {
+  color: #1f2328;
+}
+
+.status-banner.error::before {
+  content: "\274C";
+  margin-right: 8px;
+}
+
+/* Buttons */
+.button-container {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 12px;
+}
+
+.button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-right: 8px;
+  min-width: 90px;
+}
+
+.button.primary {
+  background-color: #f8f9fa;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+}
+
+.button.primary:hover {
+  background-color: #f1f3f4;
+  border-color: #dadce0;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,.1);
+}
+
+.button.default {
+  background-color: #f6f8fa;
+  color: #24292f;
+}
+
+.button.default:hover {
+  background-color: #f3f4f6;
+}
+
+.button.reject {
+  background-color: #da3633;
+  color: #ffffff;
+  border: 1px solid #da3633;
+}
+
+.button.reject:hover {
+  background-color: #c73836;
+  border-color: #c73836;
+}
+
+/* Tab selection */
+.tab-section-title {
+  padding-left: 12px;
+  font-size: 12px;
+  font-weight: 400;
+  margin-bottom: 12px;
+  color: #656d76;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: #ffffff;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.tab-item:hover {
+  background-color: #f8f9fa;
+}
+
+.tab-item.selected {
+  background-color: #f6f8fa;
+}
+
+.tab-item.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tab-radio {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.tab-favicon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.tab-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.tab-title {
+  font-weight: 500;
+  color: #1f2328;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-url {
+  font-size: 12px;
+  color: #656d76;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Link-style button */
+.link-button {
+  background: none;
+  border: none;
+  color: #0066cc;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}

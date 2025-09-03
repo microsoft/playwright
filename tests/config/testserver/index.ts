@@ -56,6 +56,7 @@ export class TestServer {
   readonly EMPTY_PAGE: string;
   readonly HOST: string;
   readonly HOSTNAME: string;
+  readonly HELLO_WORLD: string;
 
   static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback);
@@ -122,6 +123,7 @@ export class TestServer {
     this.EMPTY_PAGE = `${protocol}://${same_origin}:${port}/empty.html`;
     this.HOST = new URL(this.EMPTY_PAGE).host;
     this.HOSTNAME = new URL(this.EMPTY_PAGE).hostname;
+    this.HELLO_WORLD = `${this.PREFIX}/hello-world`;
   }
 
   async waitUntilReady() {
@@ -163,6 +165,13 @@ export class TestServer {
   async stop() {
     this.reset();
     await new Promise(x => this._server.close(x));
+  }
+
+  setContent(path: string, content: string, mimeType: string) {
+    this.setRoute(path, (req, res) => {
+      res.writeHead(200, { 'Content-Type': mimeType });
+      res.end(mimeType === 'text/html' ? `<!DOCTYPE html>${content}` : content);
+    });
   }
 
   setRoute(path: string, handler: (arg0: http.IncomingMessage & { postBody: Promise<Buffer> }, arg1: http.ServerResponse) => any) {
