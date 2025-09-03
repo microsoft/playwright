@@ -1770,7 +1770,7 @@ pw:api    |    Close context
 `);
 });
 
-test('should box fixtures with everything inside them', async ({ runInlineTest }) => {
+test('should box fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
@@ -1784,6 +1784,7 @@ test('should box fixtures with everything inside them', async ({ runInlineTest }
             await page.goto('data:text/html,<div>here we go</div>');
           });
           await use(1);
+          await page.setContent('<div>here we go</div>');
         }, { box: true }],
         bar: [async ({ page }, use) => {
           await page.setContent('<div>here we go</div>');
@@ -1791,13 +1792,23 @@ test('should box fixtures with everything inside them', async ({ runInlineTest }
             await page.goto('data:text/html,<div>here we go</div>');
           });
           await use(2);
+          await page.setContent('<div>here we go</div>');
         }, { box: false }],
+        baz: [async ({ page }, use) => {
+          await page.setContent('<div>here we go</div>');
+          await test.step('inner step', async () => {
+            await page.goto('data:text/html,<div>here we go</div>');
+          });
+          await use(3);
+          await page.setContent('<div>here we go</div>');
+        }, { box: 'self' }],
       });
 
-      test('test', async ({ foo, bar, page }) => {
+      test('test', async ({ foo, bar, baz, page }) => {
         await expect(page.locator('body')).toBeVisible();
         expect(foo).toBe(1);
         expect(bar).toBe(2);
+        expect(baz).toBe(3);
       });
     `
   }, { reporter: '' });
@@ -1812,14 +1823,20 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 fixture   |  Fixture "bar" @ a.test.ts:4
-pw:api    |    Set content @ a.test.ts:13
-test.step |    inner step @ a.test.ts:14
-pw:api    |      Navigate to "data:" @ a.test.ts:15
-expect    |Expect "toBeVisible" @ a.test.ts:22
-expect    |Expect "toBe" @ a.test.ts:23
-expect    |Expect "toBe" @ a.test.ts:24
+pw:api    |    Set content @ a.test.ts:14
+test.step |    inner step @ a.test.ts:15
+pw:api    |      Navigate to "data:" @ a.test.ts:16
+pw:api    |  Set content @ a.test.ts:22
+test.step |  inner step @ a.test.ts:23
+pw:api    |    Navigate to "data:" @ a.test.ts:24
+expect    |Expect "toBeVisible" @ a.test.ts:32
+expect    |Expect "toBe" @ a.test.ts:33
+expect    |Expect "toBe" @ a.test.ts:34
+expect    |Expect "toBe" @ a.test.ts:35
 hook      |After Hooks
+pw:api    |  Set content @ a.test.ts:27
 fixture   |  Fixture "bar" @ a.test.ts:4
+pw:api    |    Set content @ a.test.ts:19
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context

@@ -25,7 +25,7 @@ import type { Location } from '../../types/testReporter';
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
 const kScopeOrder: FixtureScope[] = ['test', 'worker'];
-type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean };
+type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean | 'self' };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 export type FixtureRegistration = {
   // Fixture registration location.
@@ -52,7 +52,7 @@ export type FixtureRegistration = {
   // Whether this fixture is an option override value set from the config.
   optionOverride?: boolean;
   // Do not generate the step for this fixture, consider it internal.
-  box?: boolean;
+  box?: boolean | 'self';
 };
 export type LoadError = {
   message: string;
@@ -105,7 +105,7 @@ export class FixturePool {
     for (const entry of Object.entries(fixtures)) {
       const name = entry[0];
       let value = entry[1];
-      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle?: string, box?: boolean } | undefined;
+      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle?: string, box?: boolean | 'self' } | undefined;
       if (isFixtureTuple(value)) {
         options = {
           auto: value[1].auto ?? false,
