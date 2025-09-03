@@ -1989,23 +1989,23 @@ test.describe(() => {
     const traceViewer = await runAndTrace(async () => {
       await page.goto(httpsServer.EMPTY_PAGE);
       await page.setContent(`
-      <head>
-        <style>
-          button { color: red; }
-        </style>
-      </head>
-      <body>
-        <button>Click me</button>
-        <script>
-          const button = document.querySelector('button');
-          window.history.pushState({ page: 'stay' }, '', window.location.href);
-          window.addEventListener('popstate', () => {
-            if (window.confirm('ready?'))
-              button.textContent = 'Clicked';
-          });
-        </script>
-      </body>
-    `);
+        <head>
+          <style>
+            button { color: red; }
+          </style>
+        </head>
+        <body>
+          <button>Click me</button>
+          <script>
+            const button = document.querySelector('button');
+            window.history.pushState({ page: 'stay' }, '', window.location.href);
+            window.addEventListener('popstate', () => {
+              if (window.confirm('ready?'))
+                button.textContent = 'Clicked';
+            });
+          </script>
+        </body>
+      `);
       let dialogMessage = '';
       page.on('dialog', async dialog => {
         dialogMessage = dialog.message();
