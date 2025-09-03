@@ -1980,36 +1980,43 @@ test('should show all actions', async ({ runAndTrace, page }) => {
   ]);
 });
 
-test('should handle failed snapshots due to dialog', async ({ page, server, runAndTrace }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.setContent(`
-      <head>
-        <style>
-          button { color: red; }
-        </style>
-      </head>
-      <body>
-        <button>Click me</button>
-        <script>
-          const button = document.querySelector('button');
-          window.history.pushState({ page: 'stay' }, '', window.location.href);
-          window.addEventListener('popstate', () => {
-            if (window.confirm('ready?'))
-              button.textContent = 'Clicked';
-          });
-        </script>
-      </body>
-    `);
-    let dialogMessage = '';
-    page.on('dialog', async dialog => {
-      dialogMessage = dialog.message();
-      await dialog.accept();
-    });
-    await page.goBack();
-    await expect.poll(() => dialogMessage).toBe('ready?');
-    await expect(page.getByRole('button')).toHaveText('Clicked');
-  });
+test.describe(() => {
+  // NOTE: In Firefox/WebKit, history.pushState() requires a SecureContext.
+  // On http/about:blank it throws "The operation is insecure".
+  test.use({ ignoreHTTPSErrors: true });
 
-  const frame = await traceViewer.snapshotFrame('Expect');
-  await expect(frame.getByRole('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  test('should handle failed snapshots due to dialog', async ({ page, httpsServer, runAndTrace }) => {
+    const traceViewer = await runAndTrace(async () => {
+      await page.goto(httpsServer.EMPTY_PAGE);
+      await page.setContent(`
+        <head>
+          <style>
+            button { color: red; }
+          </style>
+        </head>
+        <body>
+          <button>Click me</button>
+          <script>
+            const button = document.querySelector('button');
+            window.history.pushState({ page: 'stay' }, '', window.location.href);
+            window.addEventListener('popstate', () => {
+              if (window.confirm('ready?'))
+                button.textContent = 'Clicked';
+            });
+          </script>
+        </body>
+      `);
+      let dialogMessage = '';
+      page.on('dialog', async dialog => {
+        dialogMessage = dialog.message();
+        await dialog.accept();
+      });
+      await page.goBack();
+      await expect.poll(() => dialogMessage).toBe('ready?');
+      await expect(page.getByRole('button')).toHaveText('Clicked');
+    });
+
+    const frame = await traceViewer.snapshotFrame('Expect');
+    await expect(frame.getByRole('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  });
 });
