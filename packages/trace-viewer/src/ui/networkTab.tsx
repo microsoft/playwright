@@ -84,12 +84,9 @@ export const NetworkTab: React.FunctionComponent<{
 
   const selectedEntry = React.useMemo(() => {
     // HAR entries don't have a concept of unique id. Attempt to treat index and frameref as the key
-    if (!selectedEntryKey)
+    if (!selectedEntryKey || renderedEntries.length <= selectedEntryKey.index)
       return undefined;
-    const index = renderedEntries.length > selectedEntryKey.index ? selectedEntryKey.index : undefined;
-    if (index === undefined)
-      return undefined;
-    const entry = renderedEntries[index];
+    const entry = renderedEntries[selectedEntryKey.index];
     return entry.frameref === selectedEntryKey.frameref ? entry : undefined;
   }, [selectedEntryKey, renderedEntries]);
 
