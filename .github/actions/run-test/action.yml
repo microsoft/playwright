@@ -51,6 +51,7 @@ runs:
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
       shell: bash
+    - uses: mxschmitt/action-tmate@v3
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |

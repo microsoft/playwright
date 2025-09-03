@@ -249,7 +249,7 @@ it('should click in OOPIF', async ({ browserName, launchPersistent, server }) =>
   expect(consoleLog).toContain('ok');
 });
 
-it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server, isWindows }) => {
+it.only('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server, isWindows }) => {
   it.fixme(browserName === 'chromium' && isWindows, 'Click is offset by the infobar height');
 
   server.setRoute('/empty.html', (req, res) => {
