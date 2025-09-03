@@ -963,3 +963,20 @@ test('init script should not observe playwright internals', async ({ server, run
   }, {}, { PWDEBUG: '0' });
   expect(result.exitCode).toBe(0);
 });
+
+test('PWDEBUG=console should disable test timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { timeout: 5000 };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        await page.waitForTimeout(2 * 5000);
+      });
+    `,
+  }, {}, { PWDEBUG: 'console' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
