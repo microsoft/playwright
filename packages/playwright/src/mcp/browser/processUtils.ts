@@ -20,7 +20,7 @@ import { registry } from 'playwright-core/lib/server/registry/index';
 
 // TODO: make browserType.executablePath() return it.
 export function getBrowserExecPath(channelOrName: string): string | undefined {
-  return registry.findExecutable(channelOrName)?.executablePath('');
+  return registry.findExecutable(channelOrName)?.executablePath('javascript');
 }
 
 export function findBrowserProcess(execPath: string, arg: string): string | null {
