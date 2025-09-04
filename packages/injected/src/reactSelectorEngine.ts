@@ -108,11 +108,7 @@ function getChildren(reactElement: ReactVNode): ReactVNode[] {
 }
 
 function getProps(reactElement: ReactVNode) {
-  const props =
-      // React 16+
-      reactElement.memoizedProps ||
-      // React 15
-      reactElement._currentElement?.props;
+  const props = /* React 16+ */ reactElement.memoizedProps || /* React 15 */ reactElement._currentElement?.props;
   if (!props || typeof props === 'string')
     return props;
   const result = { ...props };
@@ -130,12 +126,8 @@ function buildComponentsTree(reactElement: ReactVNode): ComponentNode {
     props: getProps(reactElement),
   };
 
-  const rootElement =
-      // React 16+
-      // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L29
-      reactElement.stateNode ||
-      // React 15
-      reactElement._hostNode || reactElement._renderedComponent?._hostNode;
+  // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L29
+  const rootElement = /* React 16+ */ reactElement.stateNode || /* React 15 */ reactElement._hostNode || /* React 15 */ reactElement._renderedComponent?._hostNode;
   if (rootElement instanceof Element) {
     treeNode.rootElements.push(rootElement);
   } else {
