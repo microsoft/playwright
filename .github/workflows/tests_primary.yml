@@ -9,6 +9,8 @@ on:
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
+      - 'packages/playwright/src/mcp/**'
+      - 'tests/mcp/**'
     branches:
       - main
       - release-*

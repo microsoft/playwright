@@ -46,6 +46,17 @@ test('config user data dir', async ({ startClient, server, mcpMode }, testInfo) 
   expect(files.length).toBeGreaterThan(0);
 });
 
+test('executable path', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({ args: ['--executable-path', testInfo.outputPath('missing-executable')] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    isError: true,
+    result: expect.stringMatching(/Failed to launch.*missing-executable/),
+  });
+});
+
 test.describe(() => {
   test.use({ mcpBrowser: '' });
   test('browserName', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/458' } }, async ({ startClient, mcpMode }, testInfo) => {
