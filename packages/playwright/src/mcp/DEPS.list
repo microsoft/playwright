@@ -1,0 +1,8 @@
+[program.ts]
+./sdk/
+./browser/
+./extension/
+
+[index.ts]
+./sdk/
+./browser/

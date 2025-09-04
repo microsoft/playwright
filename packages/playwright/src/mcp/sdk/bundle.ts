@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-const bundle = require('../../mcpBundleImpl');
+// @ts-ignore
+import * as bundle from '../../mcpBundleImpl';
+
 const zodToJsonSchema: typeof import('zod-to-json-schema').zodToJsonSchema = bundle.zodToJsonSchema;
 const Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client = bundle.Client;
 const Server: typeof import('@modelcontextprotocol/sdk/server/index.js').Server = bundle.Server;

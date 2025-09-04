@@ -1,0 +1,85 @@
+name: MCP
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+    branches:
+      - main
+      - release-*
+
+concurrency:
+  # For pull requests, cancel all currently-running jobs for this workflow
+  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+  DEBUG_GIT_COMMIT_INFO: 1
+
+jobs:
+  test_mcp:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: npm run mcp-test
+
+  test_mcp_extension:
+    name: Extension
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: "Extension: Install dependencies"
+      run: npm ci
+      working-directory: ./packages/mcp-extension
+    - name: "Extension: Build"
+      run: npm run build
+      working-directory: ./packages/mcp-extension
+    - name: "Extension: Upload artifact"
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension
+        path: ./packages/mcp-extension/dist
+        retention-days: 7
+
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install chromium
+
+    - name: Run tests
+      run: |
+        if [[ "$(uname)" == "Linux" ]]; then
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run mcp-etest
+        else
+          npm run mcp-etest
+        fi
+      shell: bash

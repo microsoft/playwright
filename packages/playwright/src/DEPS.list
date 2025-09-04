@@ -12,6 +12,7 @@ common/
 ./worker/testTracing.ts
 ./mcp/browser/
 ./mcp/sdk/
+./mcp/test/
 ./transform/babelBundle.ts
 
 [internalsForTest.ts]

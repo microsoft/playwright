@@ -21,10 +21,10 @@ import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import ListModeReporter from '../../reporters/listModeReporter';
 
-import { defineTool } from './tool';
+import { defineTestTool } from './testTool';
 import { StringWriteStream } from './streams';
 
-export const listTests = defineTool({
+export const listTests = defineTestTool({
   schema: {
     name: 'playwright_test_list_tests',
     title: 'List tests',
@@ -45,7 +45,7 @@ export const listTests = defineTool({
   },
 });
 
-export const runTests = defineTool({
+export const runTests = defineTestTool({
   schema: {
     name: 'playwright_test_run_tests',
     title: 'Run tests',
@@ -77,7 +77,7 @@ export const runTests = defineTool({
   },
 });
 
-export const debugTest = defineTool({
+export const debugTest = defineTestTool({
   schema: {
     name: 'playwright_test_debug_test',
     title: 'Debug single test',

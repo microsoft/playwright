@@ -24,7 +24,7 @@ import {
 } from './expect';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';
-import { runBrowserBackendOnError } from '../mcp/browser/backend';
+import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';

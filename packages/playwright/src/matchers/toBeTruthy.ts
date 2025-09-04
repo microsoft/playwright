@@ -16,7 +16,7 @@
 
 import { callLogText, expectTypes } from '../util';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
-import { runBrowserBackendOnError } from '../mcp/browser/backend';
+import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';

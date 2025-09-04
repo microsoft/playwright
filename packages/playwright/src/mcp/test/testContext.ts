@@ -18,7 +18,7 @@ import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 
 import type { ConfigLocation } from '../../common/config';
 
-export class Context {
+export class TestContext {
   private _testRunner: TestRunner | undefined;
   readonly configLocation: ConfigLocation;
   readonly options?: { muteConsole?: boolean };

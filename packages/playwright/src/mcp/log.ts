@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-import type { z } from 'zod';
-import type * as mcp from '../sdk/exports';
-import type * as playwright from '../../../index';
+import { debug } from 'playwright-core/lib/utilsBundle';
 
-export type Tool<Input extends z.Schema = z.Schema> = {
-  schema: mcp.ToolSchema<Input>;
-  handle: (page: playwright.Page, params: z.output<Input>) => Promise<mcp.CallToolResult>;
-};
+const errorsDebug = debug('pw:mcp:errors');
 
-export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Input> {
-  return tool;
+export function logUnhandledError(error: unknown) {
+  errorsDebug(error);
 }
+
+export const testDebug = debug('pw:mcp:test');
