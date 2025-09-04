@@ -555,6 +555,22 @@ if (watchMode) {
   }));
 }
 
+// Build/watch mcp extension service worker.
+steps.push(new ProgramStep({
+  command: 'npx',
+  args: [
+    'vite',
+    '--config',
+    'vite.sw.config.mts',
+    'build',
+    ...(watchMode ? ['--watch', '--minify=false'] : []),
+    ...(withSourceMaps ? ['--sourcemap=inline'] : []),
+  ],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'mcp-extension'),
+  concurrent: watchMode,
+}));
+
 // Build/watch web packages.
 for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
   steps.push(new ProgramStep({
@@ -678,7 +694,7 @@ if (watchMode) {
     shell: true,
     concurrent: true,
   }));
-  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
+  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'mcp-extension']) {
     steps.push(new ProgramStep({
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath(`packages/${webPackage}`))],

@@ -24,7 +24,7 @@ export default defineConfig({
       fileName: 'lib/background',
       formats: ['es']
     },
-    outDir: 'dist',
+    outDir: resolve(__dirname, 'dist/'),
     emptyOutDir: false,
     minify: false
   }

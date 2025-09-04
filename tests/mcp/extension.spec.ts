@@ -35,6 +35,9 @@ type TestFixtures = {
   overrideProtocolVersion: (version: number) => void
 };
 
+const kDefaultConnectionTimeout = '10000';
+process.env.PWMCP_TEST_CONNECTION_TIMEOUT = kDefaultConnectionTimeout;
+
 const test = base.extend<TestFixtures>({
   pathToExtension: async ({}, use) => {
     await use(path.resolve(__dirname, '../../packages/mcp-extension/dist'));
@@ -77,7 +80,7 @@ const test = base.extend<TestFixtures>({
     await use((timeoutMs: number) => {
       process.env.PWMCP_TEST_CONNECTION_TIMEOUT = timeoutMs.toString();
     });
-    process.env.PWMCP_TEST_CONNECTION_TIMEOUT = undefined;
+    process.env.PWMCP_TEST_CONNECTION_TIMEOUT = kDefaultConnectionTimeout;
   },
 
   overrideProtocolVersion: async ({}, use) => {

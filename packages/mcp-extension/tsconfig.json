@@ -6,7 +6,6 @@
     "strict": true,
     "module": "ESNext",
     "rootDir": "src",
-    "outDir": "./dist/lib",
     "resolveJsonModule": true,
     "types": ["chrome"],
     "jsx": "react-jsx",
@@ -16,7 +15,4 @@
   "include": [
     "src",
   ],
-  "exclude": [
-    "src/ui",
-  ]
 }

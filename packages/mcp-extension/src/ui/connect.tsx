@@ -200,7 +200,7 @@ const ConnectApp: React.FC = () => {
 };
 
 const VersionMismatchError: React.FC<{ extensionVersion: string }> = ({ extensionVersion }) => {
-  const readmeUrl = 'https://github.com/microsoft/playwright-mcp/blob/main/extension/README.md';
+  const readmeUrl = 'https://github.com/microsoft/playwright/blob/main/packages/mcp-extension/README.md';
   const latestReleaseUrl = 'https://github.com/microsoft/playwright-mcp/releases/latest';
   return (
     <div>
