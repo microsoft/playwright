@@ -227,3 +227,18 @@ test('clear cache', async ({ startTestServer, writeFiles }) => {
   await testServerConnection.clearCache({});
   expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
 });
+
+test('timeout override', async ({ startTestServer, writeFiles }) => {
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+        expect(test.info().timeout).toEqual(42);
+      });
+      `,
+  });
+
+  expect(await testServerConnection.runTests({ timeout: 42 })).toEqual({ status: 'passed' });
+});
