@@ -55,7 +55,6 @@ const ignores = [
   "packages/html-reporter/playwright.config.ts",
   "packages/html-reporter/playwright/*",
   "packages/html-reporter/vite.config.ts",
-  "packages/mcp-extension/",
   "test-results/",
   "tests/assets/",
   "tests/components/",
