@@ -480,6 +480,66 @@ test('should expand all', {
   `);
 });
 
+test('should allow expanding entire subtrees', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+
+  await page.getByTestId('test-tree').getByText('suite').click();
+  await page.getByTitle('Collapse all').click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ► ◯ a.test.ts
+    ► ◯ b.test.ts
+  `);
+
+  const firstTestClosedLocator = page.getByTitle('a.test.ts').locator('.codicon-chevron-right').first();
+  const firstTestOpenLocator = page.getByTitle('a.test.ts').locator('.codicon-chevron-down').first();
+
+  await firstTestClosedLocator.click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ► ◯ suite
+    ► ◯ b.test.ts
+  `);
+
+  await firstTestOpenLocator.click();
+  await firstTestClosedLocator.click({ modifiers: ['Alt'] });
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
+    ► ◯ b.test.ts
+  `);
+
+  await firstTestOpenLocator.click();
+  await firstTestClosedLocator.click();
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
+    ► ◯ b.test.ts
+  `);
+
+  await firstTestOpenLocator.click({ modifiers: ['Alt'] });
+  await firstTestClosedLocator.click();
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ► ◯ suite
+    ► ◯ b.test.ts
+  `);
+});
+
 test('should resolve title conflicts', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
