@@ -90,3 +90,20 @@ test('does not support --device', async () => {
   expect(result.status).toBe(1);
   expect(result.stderr.toString()).toContain('Device emulation is not supported with cdpEndpoint.');
 });
+
+test('cdp server with headers', async ({ startClient, server }) => {
+  let authHeader = '';
+  server.setRoute('/json/version/', (req, res) => {
+    authHeader = req.headers['authorization'];
+    res.end();
+  });
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${server.PREFIX}`, '--cdp-header', 'Authorization: Bearer 1234567890'] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    isError: true,
+  });
+  expect(authHeader).toBe('Bearer 1234567890');
+});

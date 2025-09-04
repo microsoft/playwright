@@ -30,6 +30,7 @@ export type CLIOptions = {
   browser?: string;
   caps?: string[];
   cdpEndpoint?: string;
+  cdpHeader?: Record<string, string>;
   config?: string;
   device?: string;
   executablePath?: string;
@@ -179,6 +180,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       launchOptions,
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
+      cdpHeaders: cliOptions.cdpHeader,
     },
     server: {
       port: cliOptions.port,
@@ -207,6 +209,7 @@ function configFromEnv(): Config {
   options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
+  options.cdpHeader = headerParser(process.env.PLAYWRIGHT_MCP_CDP_HEADERS, {});
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
   options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
@@ -308,6 +311,15 @@ export function dotenvFileLoader(value: string | undefined): Record<string, stri
   if (!value)
     return undefined;
   return dotenv.parse(fs.readFileSync(value, 'utf8'));
+}
+
+export function headerParser(arg: string | undefined, previous?: Record<string, string>): Record<string, string> {
+  if (!arg)
+    return previous || {};
+  const result: Record<string, string> = previous || {};
+  const [name, value] = arg.split(':').map(v => v.trim());
+  result[name] = value;
+  return result;
 }
 
 function envToNumber(value: string | undefined): number | undefined {

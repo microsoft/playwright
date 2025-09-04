@@ -16,7 +16,7 @@
 
 import { program, ProgramOption } from 'playwright-core/lib/utilsBundle';
 import * as mcpServer from './sdk/server';
-import { commaSeparatedList, dotenvFileLoader, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
+import { commaSeparatedList, dotenvFileLoader, headerParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { Context } from './browser/context';
 import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
@@ -36,6 +36,7 @@ program
     .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
     .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf.', commaSeparatedList)
     .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
+    .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
     .option('--config <path>', 'path to the configuration file.')
     .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
     .option('--executable-path <path>', 'path to the browser executable.')
