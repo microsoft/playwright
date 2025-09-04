@@ -20,7 +20,7 @@ import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelec
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
 import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree } from './ariaSnapshot';
-import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, isMetadataElement, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
 import { createReactEngine } from './reactSelectorEngine';
@@ -103,6 +103,7 @@ export class InjectedScript {
     getElementAccessibleDescription,
     getElementAccessibleName,
     isElementVisible,
+    isMetadataElement,
     isInsideScope,
     normalizeWhiteSpace,
     parseAriaSnapshot,
