@@ -60,6 +60,11 @@ export type Config = {
     cdpEndpoint?: string;
 
     /**
+     * CDP headers to send with the connect request.
+     */
+    cdpHeaders?: Record<string, string>;
+
+    /**
      * Remote endpoint to connect to an existing Playwright server.
      */
     remoteEndpoint?: string;
