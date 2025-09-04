@@ -72,7 +72,7 @@ export type Config = {
 
   server?: {
     /**
-     * The port to listen on for SSE or MCP transport.
+     * The port to listen on for SSE or Streaming HTTP transport.
      */
     port?: number;
 
@@ -80,6 +80,11 @@ export type Config = {
      * The host to bind the server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.
      */
     host?: string;
+
+    /**
+     * CORS settings for the MCP server when running as SSE or Streaming HTTP transport.
+     */
+    allowedOrigins?: string[];
   },
 
   /**

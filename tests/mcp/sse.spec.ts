@@ -25,13 +25,10 @@ import type { Config } from '../../packages/playwright/src/mcp/config';
 
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
-    let cp: ChildProcess | undefined;
+    const processes: ChildProcess[] = [];
     const userDataDir = testInfo.outputPath('user-data-dir');
     await use(async (options?: { args?: string[], noPort?: boolean }) => {
-      if (cp)
-        throw new Error('Process already running');
-
-      cp = spawn('node', [
+      const cp = spawn('node', [
         programPath,
         ...(options?.noPort ? [] : ['--port=0']),
         '--user-data-dir=' + userDataDir,
@@ -53,10 +50,11 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
         if (match)
           resolve(match[1]);
       }));
-
+      processes.push(cp);
       return { url: new URL(url), stderr: () => stderr };
     });
-    cp?.kill('SIGTERM');
+    for (const cp of processes)
+      cp.kill('SIGTERM');
   },
 });
 
@@ -228,4 +226,50 @@ test('sse transport browser lifecycle (persistent, multiclient)', async ({ serve
 
   await client1.close();
   await client2.close();
+});
+
+test('sse transport allowed origins', async ({ serverEndpoint, server }) => {
+  const { url } = await serverEndpoint();
+  const endpoint = new URL('/sse', url);
+  const preflight = await fetch(endpoint, {
+    method: 'OPTIONS',
+    headers: {
+      'Origin': 'https://example.com',
+      'Access-Control-Request-Method': 'GET',
+      'Access-Control-Request-Headers': 'content-type'
+    }
+  });
+
+  expect(preflight.headers.get('Access-Control-Allow-Origin')).toBe(null);
+  expect(preflight.headers.get('Access-Control-Allow-Methods')).toBe(null);
+  expect(preflight.headers.get('Access-Control-Allow-Headers')).toBe(null);
+  expect(preflight.status).toBe(204);
+  expect(preflight.statusText).toBe('No Content');
+  expect(preflight.body).toBeNull();
+
+  const config: Config = {
+    server: {
+      allowedOrigins: ['https://example.com']
+    }
+  };
+  const configFile = test.info().outputPath('config.json');  
+  await fs.promises.writeFile(configFile, JSON.stringify(config, null, 2));
+
+  const { url: url2 } = await serverEndpoint({ args: ['--config=' + configFile] });
+  const endpoint2 = new URL('/sse', url2);
+  const preflight2 = await fetch(endpoint2, {
+    method: 'OPTIONS',
+    headers: {
+      'Origin': 'https://example.com',
+      'Access-Control-Request-Method': 'GET',
+      'Access-Control-Request-Headers': 'content-type'
+    }
+  });
+
+  expect(preflight2.headers.get('Access-Control-Allow-Origin')).toBe('https://example.com');
+  expect(preflight2.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+  expect(preflight2.headers.get('Access-Control-Allow-Headers')).toContain('content-type, mcp-session-id');
+  expect(preflight2.status).toBe(204);
+  expect(preflight2.statusText).toBe('No Content');
+  expect(preflight2.body).toBeNull();
 });

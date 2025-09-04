@@ -30,7 +30,7 @@ import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/se
 
 const testDebug = debug('pw:mcp:test');
 
-export async function startHttpServer(config: { host?: string, port?: number }, abortSignal?: AbortSignal): Promise<http.Server> {
+export async function startHttpServer(config: { host?: string, port?: number, allowedOrigins?: string[] }, abortSignal?: AbortSignal): Promise<http.Server> {
   const { host, port } = config;
   const httpServer = http.createServer();
   decorateServer(httpServer);
@@ -59,10 +59,26 @@ export function httpAddressToString(address: string | net.AddressInfo | null): s
   return `http://${resolvedHost}:${resolvedPort}`;
 }
 
-export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory) {
+export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedOrigins?: string[]) {
   const sseSessions = new Map();
   const streamableSessions = new Map();
   httpServer.on('request', async (req, res) => {
+    if (allowedOrigins?.length) {
+      const origin = req.headers.origin;
+      if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'content-type, mcp-session-id');
+        res.setHeader('Access-Control-Max-Age', '86400');
+      }
+    }
+
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 204;
+      res.end();
+      return;
+    }
+
     const url = new URL(`http://localhost${req.url}`);
     if (url.pathname.startsWith('/sse'))
       await handleSSE(serverBackendFactory, req, res, url, sseSessions);
