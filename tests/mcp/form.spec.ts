@@ -97,7 +97,7 @@ test('browser_fill_form (textbox)', async ({ client, server }) => {
 await page.getByRole('textbox', { name: 'Email' }).fill('john.doe@example.com');
 await page.getByRole('slider', { name: 'Age' }).fill('25');
 await page.getByLabel('Choose a country United').selectOption('United States');
-await page.getByRole('checkbox', { name: 'Subscribe to newsletter' }).setChecked('true');`,
+await page.getByRole('checkbox', { name: 'Subscribe to newsletter' }).setChecked(true);`,
   });
 
   const response = await client.callTool({

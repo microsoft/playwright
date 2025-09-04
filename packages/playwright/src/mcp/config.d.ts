@@ -96,6 +96,13 @@ export type Config = {
   saveTrace?: boolean;
 
   /**
+   * Secrets are used to prevent LLM from getting sensitive data while
+   * automating scenarios such as authentication.
+   * Prefer the browser.contextOptions.storageState over secrets file as a more secure alternative.
+   */
+  secrets?: Record<string, string>;
+
+  /**
    * The directory to save output files.
    */
   outputDir?: string;

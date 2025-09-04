@@ -17,7 +17,7 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import { generateLocator } from './utils';
-import * as javascript from '../codegen';
+import * as codegen from '../codegen';
 
 const fillForm = defineTabTool({
   capability: 'core',
@@ -42,14 +42,15 @@ const fillForm = defineTabTool({
       const locator = await tab.refLocator({ element: field.name, ref: field.ref });
       const locatorSource = `await page.${await generateLocator(locator)}`;
       if (field.type === 'textbox' || field.type === 'slider') {
-        await locator.fill(field.value);
-        response.addCode(`${locatorSource}.fill(${javascript.quote(field.value)});`);
+        const secret = tab.context.lookupSecret(field.value);
+        await locator.fill(secret.value);
+        response.addCode(`${locatorSource}.fill(${secret.code});`);
       } else if (field.type === 'checkbox' || field.type === 'radio') {
         await locator.setChecked(field.value === 'true');
-        response.addCode(`${locatorSource}.setChecked(${javascript.quote(field.value)});`);
+        response.addCode(`${locatorSource}.setChecked(${field.value});`);
       } else if (field.type === 'combobox') {
         await locator.selectOption({ label: field.value });
-        response.addCode(`${locatorSource}.selectOption(${javascript.quote(field.value)});`);
+        response.addCode(`${locatorSource}.selectOption(${codegen.quote(field.value)});`);
       }
     }
   },

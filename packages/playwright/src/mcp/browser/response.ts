@@ -136,7 +136,20 @@ ${this._code.join('\n')}
         content.push({ type: 'image', data: image.data.toString('base64'), mimeType: image.contentType });
     }
 
+    this._redactSecrets(content);
     return { content, isError: this._isError };
+  }
+
+  private _redactSecrets(content: (TextContent | ImageContent)[]) {
+    if (!this._context.config.secrets)
+      return;
+
+    for (const item of content) {
+      if (item.type !== 'text')
+        continue;
+      for (const [secretName, secretValue] of Object.entries(this._context.config.secrets))
+        item.text = item.text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
+    }
   }
 }
 
