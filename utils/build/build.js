@@ -340,6 +340,15 @@ for (const bundle of bundles) {
   }));
 }
 
+// Update MCP extension.
+updateSteps.push(new ProgramStep({
+  command: 'npm',
+  args: ['ci', '--save=false', '--fund=false', '--audit=false', '--omit=optional'],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'mcp-extension'),
+  concurrent: true,
+}));
+
 steps.push(new GroupStep(updateSteps));
 
 // Generate third party licenses for bundles.

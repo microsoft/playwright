@@ -58,12 +58,9 @@ jobs:
         node-version: '20'
         cache: 'npm'
 
-    - name: "Extension: Install dependencies"
-      run: npm ci
-      working-directory: ./packages/mcp-extension
-    - name: "Extension: Build"
-      run: npm run build
-      working-directory: ./packages/mcp-extension
+    - run: npm ci
+    - run: npm run build
+
     - name: "Extension: Upload artifact"
       uses: actions/upload-artifact@v4
       with:
@@ -71,10 +68,7 @@ jobs:
         path: ./packages/mcp-extension/dist
         retention-days: 7
 
-    - run: npm ci
-    - run: npm run build
     - run: npx playwright install chromium
-
     - name: Run tests
       run: |
         if [[ "$(uname)" == "Linux" ]]; then
