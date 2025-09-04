@@ -35,7 +35,7 @@ export function quote(text: string) {
   return escapeWithQuotes(text, '\'');
 }
 
-export function formatObject(value: any, indent = '  '): string {
+export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'oneline' = 'multiline'): string {
   if (typeof value === 'string')
     return quote(value);
   if (Array.isArray(value))
@@ -47,7 +47,9 @@ export function formatObject(value: any, indent = '  '): string {
     const tokens: string[] = [];
     for (const key of keys)
       tokens.push(`${key}: ${formatObject(value[key])}`);
-    return `{\n${indent}${tokens.join(`,\n${indent}`)}\n}`;
+    if (mode === 'multiline')
+      return `{\n${tokens.join(`,\n${indent}`)}\n}`;
+    return `{ ${tokens.join(', ')} }`;
   }
   return String(value);
 }
