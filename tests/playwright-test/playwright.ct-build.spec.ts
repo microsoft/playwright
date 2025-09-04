@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
+import { expect, playwrightCtConfigText, test } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -349,6 +349,55 @@ test('should grow cache', async ({ runInlineTest }, testInfo) => {
     const output = result.output;
     expect(output).not.toContain('modules transformed');
   });
+});
+
+test('should not crash when cached component test file is deleted', async ({ runInlineTest }, testInfo) => {
+
+  await test.step('run first test to build the cache', async () => {
+    const result = await runInlineTest({
+      'playwright.config.ts': playwrightCtConfigText,
+      'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+      'playwright/index.ts': ``,
+      'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+      'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.tsx';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+      'src/button2.tsx': `
+      export const Button2 = () => <button>Button 2</button>;
+    `,
+      'src/button2.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button2 } from './button2.tsx';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button2></Button2>);
+        await expect(component).toHaveText('Button 2');
+      });
+    `,
+    }, { workers: 1 });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+
+  });
+
+  await test.step('remove the second test and component and run the tests again', async () => {
+
+    fs.unlinkSync(testInfo.outputPath('src/button2.tsx'));
+    fs.unlinkSync(testInfo.outputPath('src/button2.test.tsx'));
+
+    const result2 = await runInlineTest({}, { workers: 1 });
+
+    expect(result2.exitCode).toBe(0);
+    expect(result2.passed).toBe(1);
+  });
+
 });
 
 test('should not use global config for preview', async ({ runInlineTest }) => {
