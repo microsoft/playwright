@@ -192,6 +192,7 @@ export function transformIndexFile(id: string, content: string, templateDir: str
     lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 
+  console.log(`Pushed index file for ${[...importInfos.keys()].join(', ')}`);
   lines.push(`__pwRegistry.initialize({ ${[...importInfos.keys()].join(',\n  ')} });`);
   return {
     code: lines.join('\n'),
