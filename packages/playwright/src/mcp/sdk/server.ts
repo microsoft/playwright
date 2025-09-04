@@ -132,14 +132,14 @@ function addServerListener(server: Server, event: 'close' | 'initialized', liste
   };
 }
 
-export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number }) {
+export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedOrigins?: string[] }) {
   if (options.port === undefined) {
     await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false);
     return;
   }
 
   const httpServer = await startHttpServer(options);
-  await installHttpTransport(httpServer, serverBackendFactory);
+  await installHttpTransport(httpServer, serverBackendFactory, options.allowedOrigins);
   const url = httpAddressToString(httpServer.address());
 
   const mcpConfig: any = { mcpServers: { } };
