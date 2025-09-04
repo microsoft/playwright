@@ -447,7 +447,7 @@ for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
   // playwright-client is built as a bundle.
-  if (['@playwright/client'].includes(pkg.name))
+  if ('@playwright/client' === pkg.name)
     continue;
 
   steps.push(new EsbuildStep({
@@ -527,6 +527,18 @@ for (const bundle of bundles) {
   };
   steps.push(new EsbuildStep(options));
 }
+
+// Build/watch MCP extension.
+steps.push(new ProgramStep({
+  command: 'npm',
+  args: [
+    'run',
+    watchMode ? 'watch' : 'build',
+  ],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'mcp-extension'),
+  concurrent: true,
+}));
 
 // Build/watch trace viewer service worker.
 steps.push(new ProgramStep({
