@@ -43,6 +43,7 @@ export const elementSchema = z.object({
 const clickSchema = elementSchema.extend({
   doubleClick: z.boolean().optional().describe('Whether to perform a double click instead of a single click'),
   button: z.enum(['left', 'right', 'middle']).optional().describe('Button to click, defaults to left'),
+  modifiers: z.array(z.enum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])).optional().describe('Modifier keys to press'),
 });
 
 const click = defineTabTool({
@@ -59,20 +60,23 @@ const click = defineTabTool({
     response.setIncludeSnapshot();
 
     const locator = await tab.refLocator(params);
-    const button = params.button;
-    const buttonAttr = button ? `{ button: '${button}' }` : '';
+    const options = {
+      button: params.button,
+      modifiers: params.modifiers,
+    };
+    const formatted = javascript.formatObject(options, ' ', 'oneline');
+    const optionsAttr = formatted !== '{}' ? formatted : '';
 
     if (params.doubleClick)
-      response.addCode(`await page.${await generateLocator(locator)}.dblclick(${buttonAttr});`);
+      response.addCode(`await page.${await generateLocator(locator)}.dblclick(${optionsAttr});`);
     else
-      response.addCode(`await page.${await generateLocator(locator)}.click(${buttonAttr});`);
-
+      response.addCode(`await page.${await generateLocator(locator)}.click(${optionsAttr});`);
 
     await tab.waitForCompletion(async () => {
       if (params.doubleClick)
-        await locator.dblclick({ button });
+        await locator.dblclick(options);
       else
-        await locator.click({ button });
+        await locator.click(options);
     });
   },
 });

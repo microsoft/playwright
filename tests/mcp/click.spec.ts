@@ -97,3 +97,57 @@ test('browser_click (right)', async ({ client, server }) => {
     pageState: expect.stringContaining(`- button "Right clicked"`),
   });
 });
+
+test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
+  server.setContent('/', `
+    <title>Title</title>
+    <button>Submit</button>
+    <div id="div"></div>
+    <script>
+      document.addEventListener('click', event => {
+        document.querySelector('div').textContent = 'ctrlKey:' + event.ctrlKey + ' metaKey:' + event.metaKey + ' shiftKey:' + event.shiftKey + ' altKey:' + event.altKey;
+      });
+    </script>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+      modifiers: ['Control'],
+    },
+  })).toHaveResponse({
+    code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Control'] });`,
+    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+      modifiers: ['Shift'],
+    },
+  })).toHaveResponse({
+    code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift'] });`,
+    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:false`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+      modifiers: ['Shift', 'Alt'],
+    },
+  })).toHaveResponse({
+    code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift', 'Alt'] });`,
+    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
+  });
+});
