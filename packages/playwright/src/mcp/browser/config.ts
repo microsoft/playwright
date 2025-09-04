@@ -18,6 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { devices } from 'playwright-core';
+import { dotenv } from 'playwright-core/lib/utilsBundle';
 
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
@@ -44,6 +45,7 @@ export type CLIOptions = {
   proxyServer?: string;
   saveSession?: boolean;
   saveTrace?: boolean;
+  secrets?: Record<string, string>;
   storageState?: string;
   userAgent?: string;
   userDataDir?: string;
@@ -189,6 +191,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     },
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
+    secrets: cliOptions.secrets,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
   };
@@ -219,6 +222,7 @@ function configFromEnv(): Config {
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
   options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
+  options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
@@ -298,6 +302,12 @@ export function commaSeparatedList(value: string | undefined): string[] | undefi
   if (!value)
     return undefined;
   return value.split(',').map(v => v.trim());
+}
+
+export function dotenvFileLoader(value: string | undefined): Record<string, string> | undefined {
+  if (!value)
+    return undefined;
+  return dotenv.parse(fs.readFileSync(value, 'utf8'));
 }
 
 function envToNumber(value: string | undefined): number | undefined {

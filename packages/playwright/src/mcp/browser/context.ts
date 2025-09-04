@@ -19,6 +19,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
 import { outputFile  } from './config';
+import * as codegen from './codegen';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
@@ -219,6 +220,15 @@ export class Context {
       });
     }
     return result;
+  }
+
+  lookupSecret(secretName: string): { value: string, code: string } {
+    if (!this.config.secrets?.[secretName])
+      return { value: secretName, code: codegen.quote(secretName) };
+    return {
+      value: this.config.secrets[secretName]!,
+      code: `process.env['${secretName}']`,
+    };
   }
 }
 
