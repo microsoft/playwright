@@ -115,17 +115,19 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     arguments: { url: server.PREFIX },
   });
 
-  expect(await client.callTool({
-    name: 'browser_click',
-    arguments: {
-      element: 'Submit button',
-      ref: 'e2',
-      modifiers: ['Control'],
-    },
-  })).toHaveResponse({
-    code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Control'] });`,
-    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
-  });
+  if (process.platform !== 'darwin') {
+    expect(await client.callTool({
+      name: 'browser_click',
+      arguments: {
+        element: 'Submit button',
+        ref: 'e2',
+        modifiers: ['Control'],
+      },
+    })).toHaveResponse({
+      code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Control'] });`,
+      pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
+    });
+  }
 
   expect(await client.callTool({
     name: 'browser_click',

@@ -84,7 +84,7 @@ test('should throw connection error and allow re-connecting', async ({ cdpServer
 
 test('does not support --device', async () => {
   const result = spawnSync('node', [
-    programPath, '--device=Pixel 5', '--cdp-endpoint=http://localhost:1234',
+    ...programPath, '--device=Pixel 5', '--cdp-endpoint=http://localhost:1234',
   ]);
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(1);

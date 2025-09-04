@@ -32,7 +32,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
         throw new Error('Process already running');
 
       cp = spawn('node', [
-        programPath,
+        ...programPath,
         ...(options?.noPort ? [] : ['--port=0']),
         '--user-data-dir=' + userDataDir,
         ...(mcpHeadless ? ['--headless'] : []),
