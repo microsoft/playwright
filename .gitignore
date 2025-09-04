@@ -13,8 +13,6 @@ yarn.lock
 /packages/playwright-core/src/generated
 /packages/playwright-ct-core/src/generated
 packages/*/lib/
-packages/mcp-extension/dist/
-packages/mcp-extension/lib/
 drivers/
 .android-sdk/
 .gradle/

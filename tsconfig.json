@@ -36,6 +36,5 @@
   "exclude": [
     "packages/*/lib",
     "packages/html-reporter/",
-    "packages/mcp-extension/",
   ]
 }
