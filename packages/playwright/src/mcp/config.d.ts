@@ -124,6 +124,18 @@ export type Config = {
     blockedOrigins?: string[];
   };
 
+  timeouts?: {
+    /*
+     * Configures default action timeout: https://playwright.dev/docs/api/class-page#page-set-default-timeout. Defaults to 5000ms.
+     */
+    action?: number;
+
+    /*
+     * Configures default navigation timeout: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout. Defaults to 60000ms.
+     */
+    navigation?: number;
+  };
+
   /**
    * Whether to send image responses to the client. Can be "allow", "omit", or "auto". Defaults to "auto", which sends images if the client can display them.
    */
