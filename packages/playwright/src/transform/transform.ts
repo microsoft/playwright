@@ -221,9 +221,9 @@ export function setTransformData(pluginName: string, value: any) {
 
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
   const hasPreprocessor =
-      process.env.PW_TEST_SOURCE_TRANSFORM &&
-      process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
-      process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
+    process.env.PW_TEST_SOURCE_TRANSFORM &&
+    process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
+    process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
   const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
