@@ -20,8 +20,7 @@ import path from 'path';
 
 import { escapeTemplateString, isString } from 'playwright-core/lib/utils';
 
-import {  kNoElementsFoundError, matcherHint } from './matcherHint';
-import { EXPECTED_COLOR } from '../common/expectBundle';
+import { matcherHint } from './matcherHint';
 import { callLogText, fileExistsAsync } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
@@ -89,18 +88,17 @@ export async function toMatchAriaSnapshot(
   }
 
   expected = unshift(expected);
-  const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
-  const typedReceived = received as MatcherReceived | typeof kNoElementsFoundError;
+  const { matches: pass, received, log, timedOut, errorMessage } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
+  const typedReceived = received as MatcherReceived;
 
   const matcherHintWithExpect = (expectedReceivedString: string) => {
     return matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, expectedReceivedString);
   };
 
-  const notFound = typedReceived === kNoElementsFoundError;
-  if (notFound) {
+  if (errorMessage) {
     return {
       pass: this.isNot,
-      message: () => matcherHintWithExpect(`Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('<element not found>')}`) + callLogText(log),
+      message: () => matcherHintWithExpect(`Expected: ${this.utils.printExpected(expected)}\n${errorMessage}`) + callLogText(log),
       name: 'toMatchAriaSnapshot',
       expected,
     };
@@ -109,12 +107,12 @@ export async function toMatchAriaSnapshot(
   const receivedText = typedReceived.raw;
   const message = () => {
     if (pass) {
-      const receivedString = notFound ? receivedText : printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
+      const receivedString = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
       const expectedReceivedString = `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedString}`;
       return matcherHintWithExpect(expectedReceivedString) + callLogText(log);
     } else {
       const labelExpected = `Expected`;
-      const expectedReceivedString = notFound ? `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` : this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false);
+      const expectedReceivedString = this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false);
       return matcherHintWithExpect(expectedReceivedString) + callLogText(log);
     }
   };

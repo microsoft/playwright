@@ -22,7 +22,7 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from './expect';
-import { kNoElementsFoundError, matcherHint } from './matcherHint';
+import { matcherHint } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';
 import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
@@ -35,7 +35,7 @@ export async function toMatchText(
   matcherName: string,
   receiver: Locator | Page,
   receiverType: 'Locator' | 'Page',
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean, errorMessage?: string }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean, receiverLabel?: string } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
@@ -60,12 +60,7 @@ export async function toMatchText(
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout).catch(async error => {
-    // FIXME: query should not throw, but it does for strict mode violations for example.
-    if (receiverType === 'Locator')
-      await runBrowserBackendOnError((receiver as Locator).page(), () => error.message);
-    throw error;
-  });
+  const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout);
 
   if (pass === !this.isNot) {
     return {
@@ -78,36 +73,33 @@ export async function toMatchText(
 
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
-  const notFound = received === kNoElementsFoundError;
 
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
   let printedDiff: string | undefined;
   if (pass) {
     if (typeof expected === 'string') {
-      if (notFound) {
-        printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
-        printedReceived = `Received: ${received}`;
+      printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
+      if (errorMessage) {
+        printedReceived = errorMessage;
       } else {
-        printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
         const formattedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
         printedReceived = `Received string: ${formattedReceived}`;
       }
     } else {
-      if (notFound) {
-        printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
-        printedReceived = `Received: ${received}`;
+      printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
+      if (errorMessage) {
+        printedReceived = errorMessage;
       } else {
-        printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
         const formattedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
         printedReceived = `Received string: ${formattedReceived}`;
       }
     }
   } else {
     const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'}`;
-    if (notFound) {
+    if (errorMessage) {
       printedExpected = `${labelExpected}: ${this.utils.printExpected(expected)}`;
-      printedReceived = `Received: ${received}`;
+      printedReceived = errorMessage;
     } else {
       printedDiff = this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false);
     }

@@ -466,7 +466,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.title()).value;
   }
 
-  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {
     const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
     const result = (await this._channel.expect(params));

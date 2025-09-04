@@ -582,3 +582,17 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
   expect(error.message).not.toContain('locator resolved to');
   expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
 });
+
+test('strict mode violation error format', async ({ page }) => {
+  await page.setContent('<div>hello</div><div>hi</div>');
+  const error = await expect(page.locator('div')).toBeVisible().catch(e => e);
+  expect(error.message).toContain('Expected: visible');
+  expect(error.message).toContain(`Error: strict mode violation: locator('div') resolved to 2 elements:`);
+});
+
+test('invalid selector error format', async ({ page }) => {
+  await page.setContent('<div>hello</div><div>hi</div>');
+  const error = await expect(page.locator('##')).toBeVisible().catch(e => e);
+  expect(error.message).toContain('Expected: visible');
+  expect(error.message).toContain(`Error: Unexpected token "#" while parsing css selector "##".`);
+});
