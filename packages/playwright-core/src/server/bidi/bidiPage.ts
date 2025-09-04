@@ -75,6 +75,8 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.historyUpdated', this._onHistoryUpdated.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.domContentLoaded', this._onDomContentLoaded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.load', this._onLoad.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadWillBegin', this._onDownloadWillBegin.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadEnd', this._onDownloadEnded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptOpened', this._onUserPromptOpened.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'log.entryAdded', this._onLogEntryAdded.bind(this)),
     ];
@@ -215,6 +217,26 @@ export class BidiPage implements PageDelegate {
           await this._session.send('browsingContext.handleUserPrompt', { context: event.context, accept, userText });
         },
         event.defaultValue));
+  }
+
+  private _onDownloadWillBegin(event: bidi.BrowsingContext.DownloadWillBeginParams) {
+    if (!event.navigation)
+      return;
+
+    let originPage = this._page.initializedOrUndefined();
+    // If it's a new window download, report it on the opener page.
+    if (!originPage && this._opener)
+      originPage = this._opener._page.initializedOrUndefined();
+    if (!originPage)
+      return;
+
+    this._browserContext._browser._downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename);
+  }
+
+  private _onDownloadEnded(event: bidi.BrowsingContext.DownloadEndParams) {
+    if (!event.navigation)
+      return;
+    this._browserContext._browser._downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
   }
 
   private _onLogEntryAdded(params: bidi.Log.Entry) {
