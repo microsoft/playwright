@@ -20,9 +20,10 @@ for (const dir of fs.readdirSync(__dirname)) {
 
     for (const project of ['chromium', 'firefox', 'webkit']) {
       test(project, async () => {
+        process.stdout.write(`Running ${folder} in ${project}`);
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
-    } 
+    }
   });
 }
 
@@ -31,7 +32,10 @@ async function run(command, args, folder) {
     cwd: folder,
     stdio: 'pipe',
     shell: true,
-    env: process.env
+    env: {
+      ...process.env,
+      "DEBUG": "pw:vite"
+    }
   });
   child.stdout.on('data', data => process.stdout.write(data));
   child.stderr.on('data', data => process.stdout.write(data));

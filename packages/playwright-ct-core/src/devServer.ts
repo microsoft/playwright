@@ -32,6 +32,8 @@ export async function runDevServer(config: FullConfig): Promise<() => Promise<vo
   const componentRegistry: ComponentRegistry = new Map();
   await populateComponentsFromTests(componentRegistry);
 
+  console.log('ComponentRegistry', JSON.stringify([...componentRegistry.entries()]));
+
   const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
   const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
