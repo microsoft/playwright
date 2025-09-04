@@ -128,9 +128,9 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
 
   // WebKit does not support third-party cookies without a 'Partition' attribute.
   if (browserName === 'webkit' && isMac)
-    await expect(frameBody).toHaveText('Received cookie: undefined');
+    await expect.soft(frameBody).toHaveText('Received cookie: undefined');
   else
-    await expect(frameBody).toHaveText('Received cookie: top-level=value');
+    await expect.soft(frameBody).toHaveText('Received cookie: top-level=value');
 
   // Set cookie and do second navigation.
   await page.goto(urls.set_origin2_origin1);
@@ -139,14 +139,14 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
     'Received cookie: undefined' : browserName === 'webkit' && isLinux ?
       'Received cookie: top-level=value' :
       'Received cookie: frame=value; top-level=value';
-  await expect(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
+  await expect.soft(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
 
   // Check again the top-level cookie.
   await page.goto(urls.read_origin1);
   const expectedTopLevel = browserName === 'webkit' && (isMac || isLinux) ?
     'Received cookie: top-level=value' :
     'Received cookie: frame=value; top-level=value';
-  expect(await page.locator('body').textContent()).toBe(expectedTopLevel);
+  expect.soft(await page.locator('body').textContent()).toBe(expectedTopLevel);
 
   return {
     expectedTopLevel,
