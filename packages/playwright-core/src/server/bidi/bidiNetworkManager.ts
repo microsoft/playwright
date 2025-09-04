@@ -240,8 +240,8 @@ class BidiRequest {
       redirectedFrom._redirectedTo = this;
     // TODO: missing in the spec?
     const postDataBuffer = null;
-    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
-        payload.request.url, 'other', payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
+    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined, payload.request.url,
+        resourceTypeFromBidi(payload.request.destination, payload.request.initiatorType, payload.initiator?.type), payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);
     this.request._setBodySize(payload.request.bodySize || 0);
@@ -357,4 +357,34 @@ function toBidiSameSite(sameSite?: 'Strict' | 'Lax' | 'None'): bidi.Network.Same
   if (sameSite === 'Lax')
     return bidi.Network.SameSite.Lax;
   return bidi.Network.SameSite.None;
+}
+
+function resourceTypeFromBidi(requestDestination: string, requestInitiatorType: string | null, eventInitiatorType: string | undefined): string {
+  switch (requestDestination) {
+    case 'audio': return 'media';
+    case 'audioworklet': return 'script';
+    case 'document': return 'document';
+    case 'font': return 'font';
+    case 'frame': return 'document';
+    case 'iframe': return 'document';
+    case 'image': return 'image';
+    case 'object': return 'object';
+    case 'paintworklet': return 'script';
+    case 'script': return 'script';
+    case 'serviceworker': return 'script';
+    case 'sharedworker': return 'script';
+    case 'style': return 'stylesheet';
+    case 'track': return 'texttrack';
+    case 'video': return 'media';
+    case 'worker': return 'script';
+    case '':
+      switch (requestInitiatorType) {
+        case 'fetch': return 'fetch';
+        case 'font': return 'font';
+        case 'xmlhttprequest': return 'xhr';
+        case null: return eventInitiatorType === 'script' ? 'xhr' : 'document';
+        default: return 'other';
+      }
+    default: return 'other';
+  }
 }
