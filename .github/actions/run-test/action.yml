@@ -51,6 +51,20 @@ runs:
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
       shell: bash
+    # As per https://github.com/actions/runner-images/issues/12466
+    - name: Allow WSL network access for WSL2
+      if: contains(inputs.browsers-to-install, 'webkit-wsl')
+      shell: powershell
+      run: |
+        $wslAdapter = Get-NetAdapter | Where-Object {$_.Name -like "*WSL*"}
+        if ($wslAdapter) {
+            $wslIP = Get-NetIPAddress -InterfaceIndex $wslAdapter.InterfaceIndex | Where-Object {$_.AddressFamily -eq "IPv4"}
+            if ($wslIP) {
+                $networkRange = "$($wslIP.IPAddress)/$($wslIP.PrefixLength)"
+                Write-Host "Found WSL network: $networkRange"
+                netsh advfirewall firewall add rule name="WSL2-Auto" dir=in action=allow protocol=TCP remoteip=$networkRange
+            }
+        }
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |

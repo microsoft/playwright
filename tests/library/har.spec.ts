@@ -660,8 +660,8 @@ it('should return server address directly from response', async ({ page, server,
   }
 });
 
-it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform }) => {
-  it.fail(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/6759');
+it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, channel }) => {
+  it.fail(browserName === 'webkit' && (platform === 'linux' || channel === 'webkit-wsl'), 'https://github.com/microsoft/playwright/issues/6759');
 
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
