@@ -69,6 +69,12 @@ export class BidiBrowser extends Browser {
       ],
     });
 
+    await browser._browserSession.send('network.addDataCollector', {
+      // TODO: Add bidi.Network.DataType.Request once supported.
+      dataTypes: [bidi.Network.DataType.Response],
+      maxEncodedDataSize: 20_000_000, // 20 MB similar to CDP defaults.
+    });
+
     if (options.persistent) {
       const context = new BidiBrowserContext(browser, undefined, options.persistent);
       browser._defaultContext = context;
