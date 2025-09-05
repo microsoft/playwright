@@ -109,6 +109,7 @@ export async function toMatchAriaSnapshot(
       printedReceived,
       printedDiff,
       errorMessage,
+      log,
     });
   };
 
