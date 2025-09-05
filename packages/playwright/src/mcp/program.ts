@@ -16,7 +16,7 @@
 
 import { ProgramOption } from 'playwright-core/lib/utilsBundle';
 import * as mcpServer from './sdk/server';
-import { commaSeparatedList, dotenvFileLoader, headerParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
+import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { Context } from './browser/context';
 import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
@@ -52,6 +52,8 @@ export function decorateCommand(command: Command, version: string) {
       .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
       .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
+      .option('--timeout-action <timeout>', 'specify action timeout in milliseconds, defaults to 5000ms', numberParser)
+      .option('--timeout-navigation <timeout>', 'specify navigation timeout in milliseconds, defaults to 60000ms', numberParser)
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"')

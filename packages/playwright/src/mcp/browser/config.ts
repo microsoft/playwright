@@ -48,6 +48,8 @@ export type CLIOptions = {
   saveTrace?: boolean;
   secrets?: Record<string, string>;
   storageState?: string;
+  timeoutAction?: number;
+  timeoutNavigation?: number;
   userAgent?: string;
   userDataDir?: string;
   viewportSize?: string;
@@ -71,6 +73,10 @@ const defaultConfig: FullConfig = {
   },
   server: {},
   saveTrace: false,
+  timeouts: {
+    action: 5000,
+    navigation: 60000,
+  },
 };
 
 type BrowserUserConfig = NonNullable<Config['browser']>;
@@ -84,6 +90,10 @@ export type FullConfig = Config & {
   network: NonNullable<Config['network']>,
   saveTrace: boolean;
   server: NonNullable<Config['server']>,
+  timeouts: {
+    action: number;
+    navigation: number;
+  },
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -196,6 +206,10 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     secrets: cliOptions.secrets,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
+    timeouts: {
+      action: cliOptions.timeoutAction,
+      navigation: cliOptions.timeoutNavigation,
+    },
   };
 
   return result;
@@ -221,12 +235,14 @@ function configFromEnv(): Config {
     options.imageResponses = 'omit';
   options.sandbox = envToBoolean(process.env.PLAYWRIGHT_MCP_SANDBOX);
   options.outputDir = envToString(process.env.PLAYWRIGHT_MCP_OUTPUT_DIR);
-  options.port = envToNumber(process.env.PLAYWRIGHT_MCP_PORT);
+  options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
   options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
   options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
+  options.timeoutAction = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
+  options.timeoutNavigation = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = envToString(process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
@@ -292,6 +308,10 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
       ...pickDefined(base.server),
       ...pickDefined(overrides.server),
     },
+    timeouts: {
+      ...pickDefined(base.timeouts),
+      ...pickDefined(overrides.timeouts),
+    },
   } as FullConfig;
 }
 
@@ -313,6 +333,12 @@ export function dotenvFileLoader(value: string | undefined): Record<string, stri
   return dotenv.parse(fs.readFileSync(value, 'utf8'));
 }
 
+export function numberParser(value: string | undefined): number | undefined {
+  if (!value)
+    return undefined;
+  return +value;
+}
+
 export function headerParser(arg: string | undefined, previous?: Record<string, string>): Record<string, string> {
   if (!arg)
     return previous || {};
@@ -320,12 +346,6 @@ export function headerParser(arg: string | undefined, previous?: Record<string, 
   const [name, value] = arg.split(':').map(v => v.trim());
   result[name] = value;
   return result;
-}
-
-function envToNumber(value: string | undefined): number | undefined {
-  if (!value)
-    return undefined;
-  return +value;
 }
 
 function envToBoolean(value: string | undefined): boolean | undefined {
