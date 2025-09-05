@@ -16,7 +16,6 @@
 
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
 import { DIM_COLOR, RECEIVED_COLOR, EXPECTED_COLOR } from '../common/expectBundle';
-import { callLogText } from '../util';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
@@ -37,34 +36,40 @@ type MatcherMessageDetails = {
 
 export function formatMatcherMessage(state: ExpectMatcherState, details: MatcherMessageDetails) {
   const receiver = details.receiver ?? (details.locator ? 'locator' : 'page');
-  let header = DIM_COLOR('expect(') + RECEIVED_COLOR(receiver)
+  let message = DIM_COLOR('expect(') + RECEIVED_COLOR(receiver)
       + DIM_COLOR(')' + (state.promise ? '.' + state.promise : '') + (state.isNot ? '.not' : '') + '.')
       + details.matcherName
       + DIM_COLOR('(') + EXPECTED_COLOR(details.expectation) + DIM_COLOR(')')
       + ' failed\n\n';
-  const align = !details.errorMessage && (details.printedExpected?.startsWith('Expected:') || details.printedDiff?.startsWith('Expected:'));
-  const timeoutAfterDiff = !!details.printedDiff && details.printedDiff.split('\n').length === 2;
-  if (details.locator)
-    header += `Locator: ${align ? ' ' : ''}${String(details.locator)}\n`;
-  if (details.printedExpected)
-    header += details.printedExpected + '\n';
-  if (details.printedReceived)
-    header += details.printedReceived + '\n';
-  if (details.timeout && !timeoutAfterDiff)
-    header += `Timeout: ${align ? ' ' : ''}${details.timeout}ms\n`;
-  if (details.printedDiff)
-    header += details.printedDiff + '\n';
-  if (details.timeout && timeoutAfterDiff)
-    header += `Timeout: ${align ? ' ' : ''}${details.timeout}ms\n`;
-  if (details.errorMessage) {
-    header += details.errorMessage;
-    if (!details.errorMessage.endsWith('\n'))
-      header += '\n';
+
+  // Sometimes diff is actually expected + received. Turn it into two lines to
+  // simplify alignment logic.
+  const diffLines = details.printedDiff?.split('\n');
+  if (diffLines?.length === 2) {
+    details.printedExpected = diffLines[0];
+    details.printedReceived = diffLines[1];
+    details.printedDiff = undefined;
   }
-  //   const message = details.errorMessage.replace(/Error(:\s?)?/, '');
-  //   header += `Error: ${message}\n`;
-  // }
-  return header + callLogText(details.log);
+
+  const align = !details.errorMessage && details.printedExpected?.startsWith('Expected:')
+      && (!details.printedReceived || details.printedReceived.startsWith('Received:'));
+  if (details.locator)
+    message += `Locator: ${align ? ' ' : ''}${String(details.locator)}\n`;
+  if (details.printedExpected)
+    message += details.printedExpected + '\n';
+  if (details.printedReceived)
+    message += details.printedReceived + '\n';
+  if (details.timeout)
+    message += `Timeout: ${align ? ' ' : ''}${details.timeout}ms\n`;
+  if (details.printedDiff)
+    message += details.printedDiff + '\n';
+  if (details.errorMessage) {
+    message += details.errorMessage;
+    if (!details.errorMessage.endsWith('\n'))
+      message += '\n';
+  }
+  message += callLogText(details.log);
+  return message;
 }
 
 export type MatcherResult<E, A> = {
@@ -105,3 +110,12 @@ export class ExpectError extends Error {
 export function isJestError(e: unknown): e is JestError {
   return e instanceof Error && 'matcherResult' in e;
 }
+
+export const callLogText = (log: string[] | undefined) => {
+  if (!log || !log.some(l => !!l))
+    return '';
+  return `
+Call log:
+${DIM_COLOR(log.join('\n'))}
+`;
+};

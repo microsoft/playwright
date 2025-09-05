@@ -70,13 +70,13 @@ test.describe('toContainText with string', () => {
   test('pass', async ({ page }) => {
     await page.setContent('<div id=node>Text   content</div>');
     const locator = page.locator('#node');
-    await expect(locator).toContainText("content");
+    await expect(locator).toContainText('content');
   });
 
   test('fail', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     const locator = page.locator('#node');
-    const error = await expect(locator).toContainText("foo", { timeout: 1000 }).catch(e => e);
+    const error = await expect(locator).toContainText('foo', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toContainText(expected) failed
 
 Locator: locator('#node')

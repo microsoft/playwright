@@ -17,7 +17,7 @@
 import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
-import { callLogText, expectTypes } from '../util';
+import { expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toHaveURLWithPredicate } from './toHaveURL';
@@ -25,6 +25,7 @@ import { toMatchText } from './toMatchText';
 import { takeFirst } from '../common/config';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
+import { formatMatcherMessage } from './matcherHint';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
@@ -443,9 +444,12 @@ export async function toBeOK(
     isTextEncoding ? response.text() : null
   ]) : [];
 
-  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) +
-    callLogText(log) +
-    (text === null ? '' : `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`);
+  const message = () => formatMatcherMessage(this, {
+    matcherName,
+    receiver: 'response',
+    expectation: '',
+    log,
+  }) + (text === null ? '' : `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`);
 
   const pass = response.ok();
   return { message, pass };

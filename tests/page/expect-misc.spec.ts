@@ -617,8 +617,7 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
 test('strict mode violation error format', async ({ page }) => {
   await page.setContent('<div>a</div><div>b</div>');
   const error = await expect(page.locator('div')).toHaveText('foo').catch(e => e);
-  expect(stripAnsi(error.name + ': ' + error.message)).toContain(
-`Error: expect(locator).toHaveText(expected) failed
+  expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
 
 Locator: locator('div')
 Expected: "foo"
@@ -633,8 +632,7 @@ Call log:
 test('invalid selector error format', async ({ page }) => {
   await page.setContent('<div>a</div><div>b</div>');
   const error = await expect(page.locator('##')).toBeVisible().catch(e => e);
-  expect(stripAnsi(error.name + ': ' + error.message)).toContain(
-`Error: expect(locator).toBeVisible() failed
+  expect(stripAnsi(error.message)).toContain(`expect(locator).toBeVisible() failed
 
 Locator: ##
 Expected: visible

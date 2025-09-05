@@ -21,8 +21,8 @@ import { compareBuffersOrStrings, getComparator, isString } from 'playwright-cor
 import { colors } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 
-import { addSuffixToFilePath, callLogText, expectTypes } from '../util';
-import {  formatMatcherMessage } from './matcherHint';
+import { addSuffixToFilePath, expectTypes } from '../util';
+import { callLogText, formatMatcherMessage } from './matcherHint';
 import { currentTestInfo } from '../common/globals';
 
 import type { MatcherResult } from './matcherHint';

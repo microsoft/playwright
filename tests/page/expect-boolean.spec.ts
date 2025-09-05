@@ -574,9 +574,10 @@ test.describe(() => {
     test('text content type', async ({ page, server }) => {
       const res = await page.request.get(`${server.PREFIX}/text-content-type`);
       const error = await expect(res).toBeOK().catch(e => e);
+      expect(stripAnsi(error.message)).toContain(`expect(response).toBeOK() failed`);
       expect(error.message).toContain(`→ GET ${server.PREFIX}/text-content-type`);
       expect(error.message).toContain(`← 404 Not Found`);
-      expect(error.message).toContain(`Text error`);
+      expect(stripAnsi(error.message)).toContain(`Response text:\nText error`);
     });
 
     test('no content type', async ({ page, server }) => {

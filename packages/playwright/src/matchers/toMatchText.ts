@@ -15,8 +15,6 @@
  */
 
 
-import { colors } from 'playwright-core/lib/utils';
-
 import { expectTypes } from '../util';
 import {
   printReceivedStringContainExpectedResult,
@@ -63,31 +61,31 @@ export async function toMatchText(
     };
   }
 
-  const expectedPrefix = typeof expected === 'string' ? (options.matchSubstring ? ' substring' : '') : ' pattern';
-  const receivedPrefix = typeof expected === 'string' ? (options.matchSubstring ? ' string' : '') : ' string';
+  const expectedSuffix = typeof expected === 'string' ? (options.matchSubstring ? ' substring' : '') : ' pattern';
+  const receivedSuffix = typeof expected === 'string' ? (options.matchSubstring ? ' string' : '') : ' string';
   const receivedString = received || '';
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
   let printedDiff: string | undefined;
   if (pass) {
     if (typeof expected === 'string') {
-      printedExpected = `Expected${expectedPrefix}: not ${this.utils.printExpected(expected)}`;
+      printedExpected = `Expected${expectedSuffix}: not ${this.utils.printExpected(expected)}`;
       if (!errorMessage) {
         const formattedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
-        printedReceived = `Received${receivedPrefix}: ${formattedReceived}`;
+        printedReceived = `Received${receivedSuffix}: ${formattedReceived}`;
       }
     } else {
-      printedExpected = `Expected${expectedPrefix}: not ${this.utils.printExpected(expected)}`;
+      printedExpected = `Expected${expectedSuffix}: not ${this.utils.printExpected(expected)}`;
       if (!errorMessage) {
         const formattedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
-        printedReceived = `Received${receivedPrefix}: ${formattedReceived}`;
+        printedReceived = `Received${receivedSuffix}: ${formattedReceived}`;
       }
     }
   } else {
     if (errorMessage)
-      printedExpected = `Expected${expectedPrefix}: ${this.utils.printExpected(expected)}`;
+      printedExpected = `Expected${expectedSuffix}: ${this.utils.printExpected(expected)}`;
     else
-      printedDiff = this.utils.printDiffOrStringify(expected, receivedString, `Expected${expectedPrefix}`, `Received${receivedPrefix}`, false);
+      printedDiff = this.utils.printDiffOrStringify(expected, receivedString, `Expected${expectedSuffix}`, `Received${receivedSuffix}`, false);
   }
 
   const message = () => {

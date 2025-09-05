@@ -15,11 +15,10 @@
  */
 
 import { urlMatches } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
 
 import { printReceivedStringContainExpectedResult } from './expect';
 import { formatMatcherMessage } from './matcherHint';
-import { EXPECTED_COLOR, printReceived } from '../common/expectBundle';
+import { printReceived } from '../common/expectBundle';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
