@@ -27,6 +27,7 @@ import type { Tool } from './tools/tool';
 import type { BrowserContextFactory, ClientInfo } from './browserContextFactory';
 import type * as actions from './actions';
 import type { SessionLog } from './sessionLog';
+import type { Tracing } from '../../../../playwright-core/src/client/tracing';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -189,6 +190,11 @@ export class Context {
     }
   }
 
+  async ensureBrowserContext(): Promise<playwright.BrowserContext> {
+    const { browserContext } = await this._ensureBrowserContext();
+    return browserContext;
+  }
+
   private _ensureBrowserContext() {
     if (!this._browserContextPromise) {
       this._browserContextPromise = this._setupBrowserContext();
@@ -212,11 +218,11 @@ export class Context {
       this._onPageCreated(page);
     browserContext.on('page', page => this._onPageCreated(page));
     if (this.config.saveTrace) {
-      await browserContext.tracing.start({
-        name: 'trace',
-        screenshots: false,
+      await (browserContext.tracing as Tracing).start({
+        name: 'trace-' + Date.now(),
+        screenshots: true,
         snapshots: true,
-        sources: false,
+        _live: true,
       });
     }
     return result;

@@ -27,8 +27,9 @@ import navigate from './tools/navigate';
 import network from './tools/network';
 import pdf from './tools/pdf';
 import snapshot from './tools/snapshot';
-import tabs from './tools/tabs';
 import screenshot from './tools/screenshot';
+import tabs from './tools/tabs';
+import tracing from './tools/tracing';
 import wait from './tools/wait';
 import verify from './tools/verify';
 
@@ -51,6 +52,7 @@ export const allTools: Tool<any>[] = [
   ...screenshot,
   ...snapshot,
   ...tabs,
+  ...tracing,
   ...wait,
   ...verify,
 ];
