@@ -205,6 +205,12 @@ export class BidiBrowserContext extends BrowserContext {
         userContexts: [this._userContextId()],
       }));
     }
+    if (this._options.timezoneId) {
+      promises.push(this._browser._browserSession.send('emulation.setTimezoneOverride', {
+        timezone: this._options.timezoneId,
+        userContexts: [this._userContextId()],
+      }));
+    }
     await Promise.all(promises);
   }
 
