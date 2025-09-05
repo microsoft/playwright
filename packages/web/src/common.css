@@ -177,26 +177,6 @@ input[type=text], input[type=search] {
   outline: none;
 }
 
-body.dark-mode ::-webkit-scrollbar {
-  width: 10px;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb {
-  background-color: #555;
-}
-
-body.dark-mode ::-webkit-scrollbar-track {
-  background-color: #333;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb:hover {
-  background-color: #777;
-}
-
-body.dark-mode ::-webkit-scrollbar-track:hover {
-  background-color: #444;
-}
-
 .codicon-loading {
   animation: spin 1s infinite linear;
 }
