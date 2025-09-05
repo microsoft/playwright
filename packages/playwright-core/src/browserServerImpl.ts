@@ -26,7 +26,7 @@ import * as validatorPrimitives from './protocol/validatorPrimitives';
 import { ProgressController } from './server/progress';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
-import type { LaunchOptions, LaunchServerOptions, Logger, Env } from './client/types';
+import type { LaunchOptions, LaunchServerOptions, Logger } from './client/types';
 import type { ProtocolLogger } from './server/types';
 import type { WebSocketEventEmitter } from './utilsBundle';
 import type { Browser } from './server/browser';
@@ -112,7 +112,7 @@ function toProtocolLogger(logger: Logger | undefined): ProtocolLogger | undefine
   } : undefined;
 }
 
-function envObjectToArray(env: Env): { name: string, value: string }[] {
+function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
   for (const name in env) {
     if (!Object.is(env[name], undefined))

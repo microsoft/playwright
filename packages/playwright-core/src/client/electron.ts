@@ -25,7 +25,7 @@ import { Waiter } from './waiter';
 import { TimeoutSettings } from './timeoutSettings';
 
 import type { Page } from './page';
-import type { BrowserContextOptions, Env, Headers, WaitForEventOptions } from './types';
+import type { BrowserContextOptions, Headers, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -34,7 +34,7 @@ import type { BrowserWindow } from 'electron';
 import type { Playwright } from './playwright';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
-  env?: Env,
+  env?: NodeJS.ProcessEnv,
   extraHTTPHeaders?: Headers,
   recordHar?: BrowserContextOptions['recordHar'],
   colorScheme?: 'dark' | 'light' | 'no-preference' | null,
