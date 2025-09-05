@@ -15,22 +15,56 @@
  */
 
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
+import { DIM_COLOR, RECEIVED_COLOR, EXPECTED_COLOR } from '../common/expectBundle';
+import { callLogText } from '../util';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
 import type { Locator } from 'playwright-core';
 
-export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout: number | undefined, expectedReceivedString?: string, preventExtraStatIndent: boolean = false) {
-  let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + ' failed\n\n';
-  // Extra space added after locator and timeout to match Jest's received/expected output
-  const extraSpace = preventExtraStatIndent ? '' : ' ';
-  if (locator)
-    header += `Locator: ${extraSpace}${String(locator)}\n`;
-  if (expectedReceivedString)
-    header += `${expectedReceivedString}\n`;
-  if (timeout)
-    header += `Timeout: ${extraSpace}${timeout}ms\n`;
-  return header;
+type MatcherMessageDetails = {
+  receiver?: string; // Assuming 'locator' when locator is provided, 'page' otherwise.
+  matcherName: string;
+  expectation: string;
+  locator?: Locator;
+  printedExpected?: string;
+  printedReceived?: string;
+  printedDiff?: string;
+  timeout?: number;
+  errorMessage?: string;
+  log?: string[];
+};
+
+export function formatMatcherMessage(state: ExpectMatcherState, details: MatcherMessageDetails) {
+  const receiver = details.receiver ?? (details.locator ? 'locator' : 'page');
+  let header = DIM_COLOR('expect(') + RECEIVED_COLOR(receiver)
+      + DIM_COLOR(')' + (state.promise ? '.' + state.promise : '') + (state.isNot ? '.not' : '') + '.')
+      + details.matcherName
+      + DIM_COLOR('(') + EXPECTED_COLOR(details.expectation) + DIM_COLOR(')')
+      + ' failed\n\n';
+  const align = !details.errorMessage && (details.printedExpected?.startsWith('Expected:') || details.printedDiff?.startsWith('Expected:'));
+  const timeoutAfterDiff = !!details.printedDiff && details.printedDiff.split('\n').length === 2;
+  if (details.locator)
+    header += `Locator: ${align ? ' ' : ''}${String(details.locator)}\n`;
+  if (details.printedExpected)
+    header += details.printedExpected + '\n';
+  if (details.printedReceived)
+    header += details.printedReceived + '\n';
+  if (details.timeout && !timeoutAfterDiff)
+    header += `Timeout: ${align ? ' ' : ''}${details.timeout}ms\n`;
+  if (details.printedDiff)
+    header += details.printedDiff + '\n';
+  if (details.timeout && timeoutAfterDiff)
+    header += `Timeout: ${align ? ' ' : ''}${details.timeout}ms\n`;
+  if (details.errorMessage) {
+    header += details.errorMessage;
+    if (!details.errorMessage.endsWith('\n'))
+      header += '\n';
+  }
+  //   const message = details.errorMessage.replace(/Error(:\s?)?/, '');
+  //   header += `Error: ${message}\n`;
+  // }
+  return header + callLogText(details.log);
 }
 
 export type MatcherResult<E, A> = {

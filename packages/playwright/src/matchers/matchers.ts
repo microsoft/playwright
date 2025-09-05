@@ -187,7 +187,7 @@ export function toContainText(
     return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
-    }, expected, options);
+    }, expected, { ...options, matchSubstring: true });
   }
 }
 
@@ -262,7 +262,7 @@ export function toHaveClass(
     return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
-    }, expected, options, true);
+    }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
@@ -283,7 +283,7 @@ export function toContainClass(
     return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.contain.class.array', { expectedText, isNot, timeout });
-    }, expected, options, true);
+    }, expected, options);
   } else {
     if (isRegExp(expected))
       throw new Error(`"expected" argument in toContainClass cannot be a RegExp value`);
@@ -408,7 +408,7 @@ export function toHaveTitle(
   return toMatchText.call(this, 'toHaveTitle', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await (page.mainFrame() as FrameEx)._expect('to.have.title', { expectedText, isNot, timeout });
-  }, expected, { receiverLabel: 'page', ...options });
+  }, expected, options);
 }
 
 export function toHaveURL(
@@ -426,7 +426,7 @@ export function toHaveURL(
   return toMatchText.call(this, 'toHaveURL', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout });
-  }, expected, { receiverLabel: 'page', ...options });
+  }, expected, options);
 }
 
 export async function toBeOK(
