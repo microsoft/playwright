@@ -187,7 +187,7 @@ async function createTransport(args: string[], mcpMode: TestOptions['mcpMode'], 
 
   const transport = new StdioClientTransport({
     command: 'node',
-    args: [programPath, ...args],
+    args: [...programPath, ...args],
     cwd: path.dirname(test.info().config.configFile!),
     stderr: 'pipe',
     env: {
@@ -277,4 +277,4 @@ function parseSections(text: string): Map<string, string> {
   return sections;
 }
 
-export const programPath = path.join(__dirname, '../../packages/playwright/lib/mcp/program.js');
+export const programPath = [path.join(__dirname, '../../packages/playwright/cli.js'), 'run-mcp-server'];

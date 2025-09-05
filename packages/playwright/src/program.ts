@@ -35,11 +35,14 @@ import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
+import { decorateCommand } from './mcp/program';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
 import type { ReporterDescription } from '../types/test';
 import type { Command } from 'playwright-core/lib/utilsBundle';
+
+const packageJSON = require('../package.json');
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -142,8 +145,14 @@ Examples:
   $ npx playwright merge-reports playwright-report`);
 }
 
-function addMCPServerCommand(program: Command) {
+function addBrowserMCPServerCommand(program: Command) {
   const command = program.command('run-mcp-server', { hidden: true });
+  command.description('Interact with the browser over MCP');
+  decorateCommand(command, packageJSON.version);
+}
+
+function addTestMCPServerCommand(program: Command) {
+  const command = program.command('run-test-mcp-server', { hidden: true });
   command.description('Interact with the test runner over MCP');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
@@ -153,7 +162,7 @@ function addMCPServerCommand(program: Command) {
     const backendFactory: ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
-      version: '0.0.0',
+      version: packageJSON.version,
       create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined }),
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
@@ -390,6 +399,7 @@ addTestCommand(program);
 addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
-addMCPServerCommand(program);
+addBrowserMCPServerCommand(program);
+addTestMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);
