@@ -62,9 +62,8 @@ const requestDetails = defineTabTool({
       }
     }
 
-    if (!foundRequest) {
+    if (!foundRequest)
       response.addError(`No request found with URL: ${params.url}`);
-    }
   },
 });
 
@@ -86,9 +85,8 @@ async function renderRequestDetails(request: playwright.Request, response: playw
 
   details.push('\n=== REQUEST HEADERS ===');
   const reqHeaders = await request.allHeaders();
-  for (const [key, value] of Object.entries(reqHeaders)) {
+  for (const [key, value] of Object.entries(reqHeaders))
     details.push(`${key}: ${value}`);
-  }
 
   const postData = request.postData();
   if (postData) {
@@ -108,9 +106,8 @@ async function renderRequestDetails(request: playwright.Request, response: playw
 
     details.push('\n=== RESPONSE HEADERS ===');
     const resHeaders = await response.allHeaders();
-    for (const [key, value] of Object.entries(resHeaders)) {
+    for (const [key, value] of Object.entries(resHeaders))
       details.push(`${key}: ${value}`);
-    }
 
     try {
       const contentType = resHeaders['content-type'] || '';
