@@ -64,7 +64,7 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
-it('should send secure cookies to subdomain.localhost', async ({ contextFactory, browserName, server, isWindows, proxyServer }) => {
+it('should send secure cookies to subdomain.localhost', async ({ contextFactory, browserName, server, isWindows, proxyServer, channel }) => {
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: proxyServer.HOST },
@@ -88,7 +88,7 @@ it('should send secure cookies to subdomain.localhost', async ({ contextFactory,
       name: 'non-secure',
       domain: 'subdomain.localhost',
     },
-    ...((browserName === 'webkit') && !isWindows ? [] : [{
+    ...((browserName === 'webkit' && (!isWindows || channel === 'webkit-wsl')) ? [] : [{
       name: 'secure',
       domain: 'subdomain.localhost',
     }]),
@@ -102,8 +102,8 @@ it('should send secure cookies to subdomain.localhost', async ({ contextFactory,
 
 it('should set cookie for top-level domain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18362' }
-}, async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
-  it.fixme(browserName === 'webkit' && isLinux);
+}, async ({ contextFactory, server, proxyServer, browserName, isLinux, channel }) => {
+  it.fixme(browserName === 'webkit' && (isLinux || channel === 'webkit-wsl'));
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
