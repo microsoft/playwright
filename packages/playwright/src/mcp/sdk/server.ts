@@ -97,9 +97,9 @@ export function createServer(name: string, version: string, backend: ServerBacke
       if (capabilities?.roots) {
         for (let i = 0; i < 2; i++) {
           try {
-            // In Cursor in the streaming http mode, the SSE channel may not be ready yet,
-            // when initialized notification arrives, listRoots times out in that case and
-            // we retry once.
+            // In the @modelcontextprotocol TypeScript SDK (and Cursor) in the streaming http
+            // mode, the SSE channel is not ready yet, when `initialized` notification arrives,
+            // `listRoots` times out in that case and we retry once.
             const { roots } = await server.listRoots(undefined, { timeout: 2_000 });
             clientRoots = roots;
           } catch (e) {
