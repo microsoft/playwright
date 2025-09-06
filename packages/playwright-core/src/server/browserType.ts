@@ -36,7 +36,6 @@ import { RecentLogsCollector } from './utils/debugLogger';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
-import type { Env } from './utils/processLauncher';
 import type { Progress } from './progress';
 import type { ProtocolError } from './protocolError';
 import type { BrowserName } from './registry';
@@ -341,7 +340,7 @@ export abstract class BrowserType extends SdkObject {
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
-  abstract amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env;
+  abstract amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean): NodeJS.ProcessEnv;
   abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }

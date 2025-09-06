@@ -24,7 +24,6 @@ import { WKBrowser } from '../webkit/wkBrowser';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
@@ -38,7 +37,7 @@ export class WebKit extends BrowserType {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  override amendEnvironment(env: Env, userDataDir: string, isPersistent: boolean): Env {
+  override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean): NodeJS.ProcessEnv {
     return {
       ...env,
       CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,

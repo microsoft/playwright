@@ -22,12 +22,10 @@ import * as readline from 'readline';
 import { removeFolders } from './fileUtils';
 import { isUnderTest } from '../../utils';
 
-export type Env = {[key: string]: string | number | boolean | undefined};
-
 export type LaunchProcessOptions = {
   command: string,
   args?: string[],
-  env?: Env,
+  env?: NodeJS.ProcessEnv,
   shell?: boolean,
 
   handleSIGINT?: boolean,
@@ -138,7 +136,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     // process group, making it possible to kill child process tree with `.kill(-pid)` command.
     // @see https://nodejs.org/api/child_process.html#child_process_options_detached
     detached: process.platform !== 'win32',
-    env: (options.env as {[key: string]: string}),
+    env: options.env,
     cwd: options.cwd,
     shell: options.shell,
     stdio,
@@ -274,8 +272,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };
 }
 
-export function envArrayToObject(env: { name: string, value: string }[]): Env {
-  const result: Env = {};
+export function envArrayToObject(env: { name: string, value: string }[]): NodeJS.ProcessEnv {
+  const result: NodeJS.ProcessEnv = {};
   for (const { name, value } of env)
     result[name] = value;
   return result;

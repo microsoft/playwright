@@ -26,6 +26,7 @@ import { logUnhandledError, testDebug } from '../log';
 import { outputFile  } from './config';
 
 import type { FullConfig } from './config';
+import type { LaunchOptions } from '../../../../playwright-core/src/client/types';
 
 export function contextFactory(config: FullConfig): BrowserContextFactory {
   if (config.browser.remoteEndpoint)
@@ -179,14 +180,19 @@ class PersistentContextFactory implements BrowserContextFactory {
 
     const browserType = playwright[this.config.browser.browserName];
     for (let i = 0; i < 5; i++) {
+      const launchOptions: LaunchOptions = {
+        tracesDir,
+        ...this.config.browser.launchOptions,
+        ...this.config.browser.contextOptions,
+        handleSIGINT: false,
+        handleSIGTERM: false,
+        ignoreDefaultArgs: [
+          '--disable-extensions',
+        ],
+        assistantMode: true,
+      };
       try {
-        const browserContext = await browserType.launchPersistentContext(userDataDir, {
-          tracesDir,
-          ...this.config.browser.launchOptions,
-          ...this.config.browser.contextOptions,
-          handleSIGINT: false,
-          handleSIGTERM: false,
-        });
+        const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
