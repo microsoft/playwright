@@ -22,6 +22,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, programPath } from './fixtures';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
+import { ListRootsRequestSchema } from 'packages/playwright/lib/mcp/sdk/bundle';
 
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
@@ -251,4 +252,29 @@ test('http transport (default)', async ({ serverEndpoint }) => {
   await client.connect(transport);
   await client.ping();
   expect(transport.sessionId, 'has session support').toBeDefined();
+});
+
+test('client should receive list roots request', async ({ serverEndpoint }) => {
+  const { url } = await serverEndpoint();
+  const transport = new StreamableHTTPClientTransport(url);
+  const client = new Client({ name: 'test', version: '1.0.0' }, { capabilities: { roots: {} } });
+  let rootsListedCallback;
+  const rootsListedPromise = new Promise((resolve, reject) => {
+    rootsListedCallback = resolve;
+    setTimeout(() => reject(new Error('timeout waiting for ListRootsRequestSchema')), 5_000);
+  });
+  client.setRequestHandler(ListRootsRequestSchema, async request => {
+    rootsListedCallback('success');
+    return {
+      roots: [
+        {
+          name: 'test',
+          uri: 'file://tmp/',
+        }
+      ],
+    };
+  });
+  await client.connect(transport);
+  await client.ping();
+  expect(await rootsListedPromise).toBe('success');
 });
