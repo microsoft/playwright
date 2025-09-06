@@ -429,7 +429,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private _isRecording() {
-    return ['recording', 'assertingText', 'assertingVisibility', 'assertingValue', 'assertingSnapshot'].includes(this._mode);
+    // Treat screenshot mode similarly to recording for overlay/highlighting and listeners
+    return ['recording', 'assertingText', 'assertingVisibility', 'assertingValue', 'assertingSnapshot', 'screenshot'].includes(this._mode as any);
   }
 
   private _readSource(fileName: string): string {

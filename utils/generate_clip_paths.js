@@ -62,6 +62,7 @@ const iconNames = [
   'eye',
   'symbol-constant',
   'check',
+  'screenshot',
   'close',
   'pass',
   'gist',

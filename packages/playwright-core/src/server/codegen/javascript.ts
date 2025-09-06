@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { asLocator, escapeWithQuotes } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
@@ -28,6 +30,12 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'javascript' as Language;
   private _isTest: boolean;
+  private _baseURLPrefix: string | undefined;
+  private _conf: any | undefined;
+  private _iterateOverField: string | undefined;
+  private _iterateFooterSuffix: string | undefined;
+  private _screenshotOrdinal = 0;
+  private _includeConfPath: string | undefined;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'playwright-test' : 'javascript';
@@ -45,8 +53,10 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
+      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
+        this._maybeSeedBaseFrom(action.url);
+        formatter.add(`await ${pageAlias}.goto(${this._formatURL(action.url)});`);
+      }
       return formatter.format();
     }
 
@@ -95,8 +105,22 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.${this._asLocator(action.selector)}.check();`;
       case 'uncheck':
         return `await ${subject}.${this._asLocator(action.selector)}.uncheck();`;
-      case 'fill':
+      case 'fill': {
+        const selectorLower = (action.selector || '').toLowerCase();
+        if (this._conf && typeof action.text === 'string') {
+          for (const [key, value] of Object.entries(this._conf)) {
+            if (typeof value !== 'string')
+              continue;
+            const keyLower = String(key).toLowerCase();
+            if (selectorLower.includes(keyLower) && action.text === value) {
+              const isValidIdent = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(String(key));
+              const confExpr = isValidIdent ? `conf.${key}` : `conf[${quote(String(key))}]`;
+              return `await ${subject}.${this._asLocator(action.selector)}.fill(${confExpr});`;
+            }
+          }
+        }
         return `await ${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)});`;
+      }
       case 'setInputFiles':
         return `await ${subject}.${this._asLocator(action.selector)}.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)});`;
       case 'press': {
@@ -105,7 +129,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)});`;
       }
       case 'navigate':
-        return `await ${subject}.goto(${quote(action.url)});`;
+        return `await ${subject}.goto(${this._formatURL(action.url)});`;
       case 'select':
         return `await ${subject}.${this._asLocator(action.selector)}.selectOption(${formatObject(action.options.length === 1 ? action.options[0] : action.options)});`;
       case 'assertText':
@@ -122,6 +146,11 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const commentIfNeeded = this._isTest ? '' : '// ';
         return `${commentIfNeeded}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.ariaSnapshot, `${commentIfNeeded}  `)});`;
       }
+      case 'screenshotElement': {
+        const n = ++this._screenshotOrdinal;
+        const locator = `${subject}.${this._asLocator((action as any).selector)}`;
+        return `await (async () => {\n  const box = await ${locator}.boundingBox();\n  const padding = 30;\n  await ${subject}.screenshot({ path: 'screenshot-${n}.png', clip: { x: Math.max(0, box.x - padding), y: Math.max(0, box.y - padding), width: box.width + padding * 2, height: box.height + padding * 2 } });\n})();`;
+      }
     }
   }
 
@@ -129,7 +158,82 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return asLocator('javascript', selector);
   }
 
+  private _canonicalBase(input: string): string | undefined {
+    try {
+      const u = new URL(input);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:')
+        return undefined;
+      let base = u.origin + u.pathname;
+      if (base.endsWith('/') && base.length > u.origin.length)
+        base = base.slice(0, -1);
+      return base;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private _maybeSeedBaseFrom(url: string) {
+    if (this._baseURLPrefix)
+      return;
+    const canonical = this._canonicalBase(url);
+    if (canonical)
+      this._baseURLPrefix = canonical;
+  }
+
+  // Convert URLs starting with baseURLPrefix to conf.baseurl + '/path'.
+  private _formatURL(url: string): string {
+    // Only rewrite to conf.baseurl when includeConf was provided (conf present)
+    if (!this._baseURLPrefix || !this._conf)
+      return quote(url);
+    try {
+      const u = new URL(url);
+      const abs = u.toString();
+      const prefix = this._baseURLPrefix;
+      if (abs.startsWith(prefix + '/') || abs === prefix) {
+        const rest = abs.substring(prefix.length);
+        const normalizedRest = rest.startsWith('/') ? rest : ('/' + rest);
+        return `conf.baseurl + ${quote(normalizedRest)}`;
+      }
+    } catch (e) {
+      // Not an absolute URL
+    }
+    return quote(url);
+  }
+
+  private _loadConf(confPath: string): any | undefined {
+    try {
+      const resolved = path.resolve(process.cwd(), confPath);
+      const raw = fs.readFileSync(resolved, 'utf-8');
+      return JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+  }
+
   generateHeader(options: LanguageGeneratorOptions): string {
+    // Initialize base URL prefix from options if provided.
+    if (options.baseURL) {
+      const canonical = this._canonicalBase(options.baseURL);
+      if (canonical)
+        this._baseURLPrefix = canonical;
+    }
+    // Resolve CLI fallbacks for include-conf / iterate-over if not passed through options.
+    this._includeConfPath = options.includeConfPath;
+    this._iterateOverField = options.iterateOver;
+    if (!this._includeConfPath || !this._iterateOverField) {
+      const argv = process.argv || [];
+      for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (!this._includeConfPath && (a === '--include-conf' || a === '--include-conf=' || a.startsWith('--include-conf='))) {
+          this._includeConfPath = a.includes('=') ? a.split('=')[1] : argv[i + 1];
+        }
+        if (!this._iterateOverField && (a === '--iterate-over' || a === '--iterate-over=' || a.startsWith('--iterate-over='))) {
+          this._iterateOverField = a.includes('=') ? a.split('=')[1] : argv[i + 1];
+        }
+      }
+    }
+    if (this._includeConfPath)
+      this._conf = this._loadConf(this._includeConfPath);
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
@@ -144,10 +248,37 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   generateTestHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     const useText = formatContextOptions(options.contextOptions, options.deviceName, this._isTest);
+    const confPath = this._includeConfPath;
+    const confLine = confPath ? `\n      const conf = JSON.parse(require('fs').readFileSync(${quote(confPath)}));\n` : '';
+    let iteratePrefix = '';
+    let testNameExpr = `'test'`;
+    this._iterateFooterSuffix = '';
+    const field = this._iterateOverField;
+    if (confPath && field) {
+      const confField = this._conf ? this._conf[field] : undefined;
+      const qField = quote(field);
+      if (confField && typeof confField === 'object' && !Array.isArray(confField)) {
+        iteratePrefix = `\n      for (const key of Object.keys(conf[${qField}])) {\n        const ${field} = conf[${qField}][key];\n`;
+        testNameExpr = `'test-' + key`;
+        this._iterateFooterSuffix = `\n      }`;
+      } else if (Array.isArray(confField)) {
+        if (confField.length > 0 && typeof confField[0] === 'string') {
+          iteratePrefix = `\n      for (const ${field} of conf[${qField}]) {\n`;
+          testNameExpr = `'test-' + ${field}`;
+          this._iterateFooterSuffix = `\n      }`;
+        } else {
+          iteratePrefix = `\n      for (let i = 0; i < (conf[${qField}] || []).length; i++) {\n        const ${field} = conf[${qField}][i];\n`;
+          testNameExpr = `'test-' + i`;
+          this._iterateFooterSuffix = `\n      }`;
+        }
+      }
+    }
     formatter.add(`
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
-${useText ? '\ntest.use(' + useText + ');\n' : ''}
-      test('test', async ({ page }) => {`);
+
+${confLine}
+${useText ? '\ntest.use(' + useText + ');\n' : ''}${iteratePrefix}
+      test(${testNameExpr}, async ({ page }) => {`);
     if (options.contextOptions.recordHar) {
       const url = options.contextOptions.recordHar.urlFilter;
       formatter.add(`  await page.routeFromHAR(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatOptions({ url }, false)}` : ''});`);
@@ -156,7 +287,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   }
 
   generateTestFooter(saveStorage: string | undefined): string {
-    return `});`;
+    return `});${this._iterateFooterSuffix || ''}`;
   }
 
   generateStandaloneHeader(options: LanguageGeneratorOptions): string {

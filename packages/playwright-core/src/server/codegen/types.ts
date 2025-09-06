@@ -26,6 +26,12 @@ export type LanguageGeneratorOptions = {
   deviceName?: string;
   saveStorage?: string;
   generateAutoExpect?: boolean;
+  // Base application URL to de-hardcode (from CLI or first navigation).
+  baseURL?: string;
+  // Optional path to JSON config injected into generated tests.
+  includeConfPath?: string;
+  // Optional conf field to iterate over when generating tests.
+  iterateOver?: string;
 };
 
 export interface LanguageGenerator {

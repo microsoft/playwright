@@ -70,6 +70,11 @@ export const Recorder: React.FC<RecorderProps> = ({
     setLocator(asLocator(language, elementInfo.selector));
     setAriaSnapshot(elementInfo.ariaSnapshot);
     setAriaSnapshotErrors([]);
+    if (mode === 'screenshot') {
+      window.dispatch({ event: 'recordScreenshot', params: { selector: elementInfo.selector } });
+      window.dispatch({ event: 'setMode', params: { mode: 'recording' } }).catch(() => { });
+      return;
+    }
     if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria')
       setSelectedTab('locator');
 
@@ -139,7 +144,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby' } });
       }}>Record</ToolbarButton>
       <ToolbarSeparator />
-      <ToolbarButton icon='inspect' title='Pick locator' toggled={mode === 'inspecting' || mode === 'recording-inspecting'} onClick={() => {
+      <ToolbarButton icon='inspect' title='Pick locator' toggled={(mode === 'inspecting' || mode === 'recording-inspecting') && mode !== 'screenshot'} onClick={() => {
         const newMode = {
           'inspecting': 'standby',
           'none': 'inspecting',
@@ -152,6 +157,9 @@ export const Recorder: React.FC<RecorderProps> = ({
           'assertingSnapshot': 'recording-inspecting',
         }[mode];
         window.dispatch({ event: 'setMode', params: { mode: newMode } }).catch(() => { });
+      }}></ToolbarButton>
+      <ToolbarButton icon='device-camera' title='Screenshot element' toggled={mode === 'screenshot'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'screenshot' ? 'recording' : 'screenshot' } }).catch(() => { });
       }}></ToolbarButton>
       <ToolbarButton icon='eye' title='Assert visibility' toggled={mode === 'assertingVisibility'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility' } });

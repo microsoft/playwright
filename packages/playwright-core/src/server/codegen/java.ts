@@ -74,6 +74,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     }
 
     let code = this._generateActionCall(subject, actionInContext, !!actionInContext.frame.framePath.length);
+    if (!code)
+      return formatter.format();
 
     if (signals.popup) {
       code = `Page ${signals.popup.popupAlias} = ${pageAlias}.waitForPopup(() -> {
@@ -87,7 +89,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`;
     }
 
-    formatter.add(code);
+    if (code)
+      formatter.add(code);
 
     return formatter.format();
   }

@@ -31,7 +31,8 @@ export type ActionName =
   'assertValue' |
   'assertChecked' |
   'assertVisible' |
-  'assertSnapshot';
+  'assertSnapshot' |
+  'screenshotElement';
 
 export type ActionBase = {
   name: ActionName,
@@ -121,7 +122,11 @@ export type AssertSnapshotAction = ActionWithSelector & {
   ariaSnapshot: string,
 };
 
-export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
+export type ScreenshotElementAction = ActionWithSelector & {
+  name: 'screenshotElement',
+};
+
+export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction | ScreenshotElementAction;
 export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction | AssertVisibleAction | AssertSnapshotAction;
 export type PerformOnRecordAction = ClickAction | CheckAction | UncheckAction | PressAction | SelectAction;
 
