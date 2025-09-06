@@ -18,6 +18,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
+import { BidiBrowserContext } from './bidiBrowser';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
@@ -30,7 +31,6 @@ import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
-import type { BidiBrowserContext } from './bidiBrowser';
 import type { BidiSession } from './bidiConnection';
 import type * as channels from '@protocol/channels';
 
@@ -218,6 +218,25 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onLogEntryAdded(params: bidi.Log.Entry) {
+    if (params.type === 'javascript' && params.level === 'error') {
+      let errorName = '';
+      let errorMessage: string | undefined;
+      if (params.text?.includes(': ')) {
+        const index = params.text.indexOf(': ');
+        errorName = params.text.substring(0, index);
+        errorMessage = params.text.substring(index + 2);
+      } else {
+        errorMessage = params.text ?? undefined;
+      }
+      const error = new Error(errorMessage);
+      error.name = errorName;
+      error.stack = `${params.text}\n${params.stackTrace?.callFrames.map(f => {
+        const location = `${f.url}:${f.lineNumber + 1}:${f.columnNumber + 1}`;
+        return f.functionName ? `    at ${f.functionName} (${location})` : `    at ${location}`;
+      }).join('\n')}`;
+      this._page.emitOnContextOnceInitialized(BidiBrowserContext.Events.PageError, error, this._page);
+      return;
+    }
     if (params.type !== 'console')
       return;
     const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;

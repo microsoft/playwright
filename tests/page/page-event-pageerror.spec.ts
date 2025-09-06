@@ -25,7 +25,7 @@ it('should fire', async ({ page, server, browserName }) => {
   ]);
   expect(error.name).toBe('Error');
   expect(error.message).toBe('Fancy error!');
-  if (browserName === 'chromium') {
+  if (browserName === 'chromium' || browserName === '_bidiChromium' || browserName === '_bidiFirefox') {
     expect(error.stack).toBe(`Error: Fancy error!
     at c (myscript.js:14:11)
     at b (myscript.js:10:5)
