@@ -17,8 +17,8 @@
 import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import { Page } from '../page';
 import { BidiBrowserContext, getScreenOrientation } from './bidiBrowser';
+import { Page, Worker } from '../page';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
@@ -50,6 +50,7 @@ export class BidiPage implements PageDelegate {
   readonly _networkManager: BidiNetworkManager;
   private readonly _pdf: BidiPDF;
   private _initScriptIds = new Map<InitScript, string>();
+  private _realmToWorker = new Map<string, Worker>();
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -120,6 +121,14 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onRealmCreated(realmInfo: bidi.Script.RealmInfo) {
+    if (realmInfo.type === 'dedicated-worker') {
+      const delegate = new BidiExecutionContext(this._session, realmInfo);
+      const worker = new Worker(this._page, realmInfo.origin);
+      worker.createExecutionContext(delegate);
+      this._realmToWorker.set(realmInfo.realm, worker);
+      this._page.addWorker(realmInfo.realm, worker);
+      return;
+    }
     if (this._realmToContext.has(realmInfo.realm))
       return;
     if (realmInfo.type !== 'window')
@@ -161,11 +170,17 @@ export class BidiPage implements PageDelegate {
 
   _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters): boolean {
     const context = this._realmToContext.get(params.realm);
-    if (!context)
-      return false;
-    this._realmToContext.delete(params.realm);
-    context.frame._contextDestroyed(context);
-    return true;
+    if (context) {
+      this._realmToContext.delete(params.realm);
+      context.frame._contextDestroyed(context);
+      return true;
+    }
+    const worker = this._realmToWorker.get(params.realm);
+    if (worker) {
+      this._page.removeWorker(params.realm);
+      return true;
+    }
+    return false;
   }
 
   // TODO: route the message directly to the browser
@@ -263,11 +278,14 @@ export class BidiPage implements PageDelegate {
       return;
     const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;
     const context = this._realmToContext.get(params.source.realm);
-    if (!context)
+    const worker = this._realmToWorker.get(params.source.realm);
+    const executionContext = context ?? worker?.existingExecutionContext;
+    if (!executionContext)
       return;
+
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
-    this._page.addConsoleMessage(entry.method, entry.args.map(arg => createHandle(context, arg)), location, params.text || undefined);
+    this._page.addConsoleMessage(entry.method, entry.args.map(arg => createHandle(executionContext, arg)), location, params.text || undefined);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
