@@ -1392,6 +1392,25 @@ test('should support maskColor option', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should not create missing screenshot with update-snapshots=changed', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('missing.png');
+      });
+    `
+  }, { 'update-snapshots': 'changed' });
+
+  expect(result.exitCode).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/missing.png');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}.`);
+  expect(require('fs').existsSync(snapshotOutputPath)).toBe(false);
+});
+
 test('should support stylePath option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({

@@ -180,14 +180,15 @@ class SnapshotHelper {
   }
 
   handleMissing(actual: Buffer | string, step: TestStepInfoImpl | undefined): ImageMatcherResult {
-    const isWriteMissingMode = this.updateSnapshots !== 'none';
+    // Only create missing baselines when explicitly requested via 'missing' or when rebasing 'all'.
+    const isWriteMissingMode = this.updateSnapshots === 'missing' || this.updateSnapshots === 'all';
     if (isWriteMissingMode)
       writeFileSync(this.expectedPath, actual);
     step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     writeFileSync(this.actualPath, actual);
     step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
-    if (this.updateSnapshots === 'all' || this.updateSnapshots === 'changed') {
+    if (this.updateSnapshots === 'all') {
       /* eslint-disable no-console */
       console.log(message);
       return this.createMatcherResult(message, true);
@@ -197,6 +198,7 @@ class SnapshotHelper {
       this.testInfo._failWithError(new Error(message));
       return this.createMatcherResult('', true);
     }
+    // For 'changed' and 'none', do not create missing baselines and fail the assertion.
     return this.createMatcherResult(message, false);
   }
 

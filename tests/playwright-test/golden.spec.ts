@@ -823,6 +823,23 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[0].tests[1].status).toBe('unexpected');
 });
 
+test('should not create missing text snapshot with update-snapshots=changed', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('missing.txt');
+      });
+    `
+  }, { 'update-snapshots': 'changed' });
+
+  expect(result.exitCode).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/missing.txt');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}.`);
+  expect(require('fs').existsSync(snapshotOutputPath)).toBe(false);
+});
+
 test('should sanitize snapshot name when passed as string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
