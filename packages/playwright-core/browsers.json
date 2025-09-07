@@ -3,15 +3,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1189",
+      "revision": "1190",
       "installByDefault": true,
-      "browserVersion": "140.0.7339.41"
+      "browserVersion": "141.0.7390.7"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1189",
+      "revision": "1190",
       "installByDefault": true,
-      "browserVersion": "140.0.7339.41"
+      "browserVersion": "141.0.7390.7"
     },
     {
       "name": "chromium-tip-of-tree",
