@@ -34,16 +34,16 @@ import { spawn } from 'child_process';
 
   const server = net.createServer();
 
-  const sockets = new Set<net.Socket>();
-  server.on('connection', socket => {
-    // Disable Nagle's algorithm to reduce latency for small, frequent messages.
-    socket.setNoDelay(true);
-    if (sockets.size > 0) {
+  let socket: net.Socket | null = null;
+  server.on('connection', s => {
+    if (socket) {
       log('Extra connection received, destroying.');
       socket.destroy();
       return;
     }
-    sockets.add(socket);
+    socket = s;
+    // Disable Nagle's algorithm to reduce latency for small, frequent messages.
+    socket.setNoDelay(true);
     log('Client connected, wiring pipes.');
 
     socket.pipe(parentOut);
@@ -51,7 +51,7 @@ import { spawn } from 'child_process';
 
     socket.on('close', () => {
       log('Socket closed');
-      sockets.delete(socket);
+      socket = null;
     });
   });
 
@@ -116,8 +116,7 @@ import { spawn } from 'child_process';
 
     // Close listener and destroy any sockets
     await new Promise(resolve => server.close(() => resolve(null)));
-    for (const socket of sockets)
-      socket.destroy();
+    socket?.destroy();
   }
 
   function log(...args: any[]) {
