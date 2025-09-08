@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './fixtures';
+import { pathToFileURL } from 'node:url';
 
 test('browser_connect(vscode) works', async ({ startClient, playwright, browserName }) => {
   const { client } = await startClient({
@@ -27,7 +28,7 @@ test('browser_connect(vscode) works', async ({ startClient, playwright, browserN
     name: 'browser_connect',
     arguments: {
       connectionString: server.wsEndpoint(),
-      lib: require.resolve('playwright'),
+      lib: pathToFileURL(require.resolve('playwright')),
     }
   })).toHaveResponse({
     result: 'Successfully connected.'
