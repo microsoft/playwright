@@ -16,7 +16,7 @@
 
 import { test, expect } from './npmTest';
 import { spawn } from 'child_process';
- 
+
 
 test.use({ isolateBrowsers: true });
 
@@ -27,17 +27,17 @@ test('concurrent browser downloads should not clobber each other', async ({ exec
   // Start multiple concurrent install processes
   const processes = [];
   const numProcesses = 3;
-  
+
   for (let i = 0; i < numProcesses; i++) {
     const child = spawn('npx', ['playwright', 'install', 'chromium'], {
       cwd: tmpWorkspace,
       env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: _browsersPath },
       stdio: 'pipe'
     });
-    
+
     processes.push(child);
   }
-  
+
   // Wait for all processes to complete
   const results = await Promise.all(processes.map((child, index) => {
     return new Promise<{ index: number; code: number | null; stdout: string; stderr: string }>(resolve => {
@@ -57,14 +57,14 @@ test('concurrent browser downloads should not clobber each other', async ({ exec
       });
     });
   }));
- 
+
   // Check that all processes completed successfully
   for (const result of results) {
     expect(result.code).toBe(0);
     if (result.code !== 0)
       throw new Error(`Process ${result.index} failed with code ${result.code}. stdout: ${result.stdout}, stderr: ${result.stderr}`);
   }
- 
+
   // Verify that the browser was installed correctly
   // When installing chromium, it also installs chromium-headless-shell and ffmpeg as dependencies
   await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg']);

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
@@ -40,7 +40,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   // Create a unique temporary directory for this download to prevent concurrent downloads from clobbering each other
   const uniqueTempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-download-'));
   const zipPath = path.join(uniqueTempDir, downloadFileName);
-  
+
   try {
     const retryCount = 5;
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
