@@ -157,6 +157,10 @@ export interface Commands {
     params: BidiPermissions.Permissions.SetPermissionParameters;
     returnType: Bidi.EmptyResult;
   };
+  'emulation.setTimezoneOverride': {
+    params: Bidi.Emulation.SetTimezoneOverrideParameters;
+    returnType: Bidi.EmptyResult;
+  };
 
   'script.evaluate': {
     params: Bidi.Script.EvaluateParameters;

@@ -22,11 +22,11 @@ import path from 'path';
 import * as playwright from 'playwright-core';
 import { registryDirectory } from 'playwright-core/lib/server/registry/index';
 import { startTraceViewerServer } from 'playwright-core/lib/server';
-import { findBrowserProcess, getBrowserExecPath } from './processUtils';
 import { logUnhandledError, testDebug } from '../log';
 import { outputFile  } from './config';
 
 import type { FullConfig } from './config';
+import type { LaunchOptions } from '../../../../playwright-core/src/client/types';
 
 export function contextFactory(config: FullConfig): BrowserContextFactory {
   if (config.browser.remoteEndpoint)
@@ -104,8 +104,11 @@ class IsolatedContextFactory extends BaseContextFactory {
   protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
     await injectCdpPort(this.config.browser);
     const browserType = playwright[this.config.browser.browserName];
+    const tracesDir = await outputFile(this.config, clientInfo.rootPath, `traces`);
+    if (this.config.saveTrace)
+      await startTraceServer(this.config, tracesDir);
     return browserType.launch({
-      tracesDir: await startTraceServer(this.config, clientInfo.rootPath),
+      tracesDir,
       ...this.config.browser.launchOptions,
       handleSIGINT: false,
       handleSIGTERM: false,
@@ -168,35 +171,42 @@ class PersistentContextFactory implements BrowserContextFactory {
     await injectCdpPort(this.config.browser);
     testDebug('create browser context (persistent)');
     const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo.rootPath);
-    const tracesDir = await startTraceServer(this.config, clientInfo.rootPath);
+    const tracesDir = await outputFile(this.config, clientInfo.rootPath, `traces`);
+    if (this.config.saveTrace)
+      await startTraceServer(this.config, tracesDir);
 
     this._userDataDirs.add(userDataDir);
     testDebug('lock user data dir', userDataDir);
 
     const browserType = playwright[this.config.browser.browserName];
     for (let i = 0; i < 5; i++) {
-      if (!await alreadyRunning(this.config, browserType, userDataDir))
-        break;
-      // User data directory is already in use, wait for the previous browser instance to close.
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    try {
-      const browserContext = await browserType.launchPersistentContext(userDataDir, {
+      const launchOptions: LaunchOptions = {
         tracesDir,
         ...this.config.browser.launchOptions,
         ...this.config.browser.contextOptions,
         handleSIGINT: false,
         handleSIGTERM: false,
-      });
-      const close = () => this._closeBrowserContext(browserContext, userDataDir);
-      return { browserContext, close };
-    } catch (error: any) {
-      if (error.message.includes('Executable doesn\'t exist'))
-        throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
-      if (error.message.includes('ProcessSingleton') || error.message.includes('Invalid URL'))
-        throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
-      throw error;
+        ignoreDefaultArgs: [
+          '--disable-extensions',
+        ],
+        assistantMode: true,
+      };
+      try {
+        const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
+        const close = () => this._closeBrowserContext(browserContext, userDataDir);
+        return { browserContext, close };
+      } catch (error: any) {
+        if (error.message.includes('Executable doesn\'t exist'))
+          throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
+        if (error.message.includes('ProcessSingleton') || error.message.includes('Invalid URL')) {
+          // User data directory is already in use, try again.
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        throw error;
+      }
     }
+    throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
   }
 
   private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string) {
@@ -218,13 +228,6 @@ class PersistentContextFactory implements BrowserContextFactory {
   }
 }
 
-async function alreadyRunning(config: FullConfig, browserType: playwright.BrowserType, userDataDir: string) {
-  const execPath = config.browser.launchOptions.executablePath ?? getBrowserExecPath(config.browser.launchOptions.channel ?? browserType.name());
-  if (!execPath)
-    return false;
-  return !!findBrowserProcess(execPath, userDataDir);
-}
-
 async function injectCdpPort(browserConfig: FullConfig['browser']) {
   if (browserConfig.browserName === 'chromium')
     (browserConfig.launchOptions as any).cdpPort = await findFreePort();
@@ -241,17 +244,15 @@ async function findFreePort(): Promise<number> {
   });
 }
 
-async function startTraceServer(config: FullConfig, rootPath: string | undefined): Promise<string | undefined> {
+async function startTraceServer(config: FullConfig, tracesDir: string): Promise<string | undefined> {
   if (!config.saveTrace)
-    return undefined;
+    return;
 
-  const tracesDir = await outputFile(config, rootPath, `traces-${Date.now()}`);
   const server = await startTraceViewerServer();
   const urlPrefix = server.urlPrefix('human-readable');
   const url = urlPrefix + '/trace/index.html?trace=' + tracesDir + '/trace.json';
   // eslint-disable-next-line no-console
   console.error('\nTrace viewer listening on ' + url);
-  return tracesDir;
 }
 
 function createHash(data: string): string {

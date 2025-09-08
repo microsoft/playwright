@@ -76,7 +76,12 @@ export function closestCrossShadow(element: Element | undefined, css: string, sc
 }
 
 export function getElementComputedStyle(element: Element, pseudo?: string): CSSStyleDeclaration | undefined {
-  return element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element, pseudo) : undefined;
+  const cache = pseudo === '::before' ? cacheStyleBefore : pseudo === '::after' ? cacheStyleAfter : cacheStyle;
+  if (cache && cache.has(element))
+    return cache.get(element);
+  const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element, pseudo) : undefined;
+  cache?.set(element, style);
+  return style;
 }
 
 export function isElementStyleVisibilityVisible(element: Element, style?: CSSStyleDeclaration): boolean {
@@ -144,10 +149,33 @@ export function isVisibleTextNode(node: Text) {
 }
 
 export function elementSafeTagName(element: Element) {
+  const tagName = element.tagName;
+  if (typeof tagName === 'string')  // Fast path.
+    return tagName.toUpperCase();
   // Named inputs, e.g. <input name=tagName>, will be exposed as fields on the parent <form>
   // and override its properties.
   if (element instanceof HTMLFormElement)
     return 'FORM';
   // Elements from the svg namespace do not have uppercase tagName right away.
   return element.tagName.toUpperCase();
+}
+
+let cacheStyle: Map<Element, CSSStyleDeclaration | undefined> | undefined;
+let cacheStyleBefore: Map<Element, CSSStyleDeclaration | undefined> | undefined;
+let cacheStyleAfter: Map<Element, CSSStyleDeclaration | undefined> | undefined;
+let cachesCounter = 0;
+
+export function beginDOMCaches() {
+  ++cachesCounter;
+  cacheStyle ??= new Map();
+  cacheStyleBefore ??= new Map();
+  cacheStyleAfter ??= new Map();
+}
+
+export function endDOMCaches() {
+  if (!--cachesCounter) {
+    cacheStyle = undefined;
+    cacheStyleBefore = undefined;
+    cacheStyleAfter = undefined;
+  }
 }

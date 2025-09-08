@@ -128,6 +128,7 @@ export type DonePayload = {
   fatalErrors: TestInfoErrorImpl[];
   skipTestsDueToSetupFailure: string[];  // test ids
   fatalUnknownTestIds?: string[];
+  stoppedDueToUnhandledErrorInTestFail?: boolean;
 };
 
 export type TestOutputPayload = {

@@ -28,7 +28,6 @@ export interface Logger {
 export type TimeoutOptions = { timeout?: number };
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
-export type Env = { [key: string]: string | number | boolean | undefined };
 
 export type WaitForEventOptions = Function | TimeoutOptions & { predicate?: Function };
 export type WaitForFunctionOptions = TimeoutOptions & { polling?: 'raf' | number };
@@ -88,7 +87,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
 
 type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[];
-  env?: Env;
+  env?: NodeJS.ProcessEnv;
   logger?: Logger;
   firefoxUserPrefs?: { [key: string]: string | number | boolean };
 } & TimeoutOptions;

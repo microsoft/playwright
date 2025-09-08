@@ -235,14 +235,18 @@ Dangerous option; use with care. Defaults to `false`.
 
 Network proxy settings.
 
+## js-browser-option-env
+* langs: js
+- `env` <[Object]<[string], [string]|[undefined]>>
+
 ## csharp-java-browser-option-env
 * langs: csharp, java
 - `env` <[Object]<[string], [string]>>
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
 
-## js-python-browser-option-env
-* langs: js, python
+## python-browser-option-env
+* langs: python
 - `env` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
@@ -1122,7 +1126,8 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 - %%-browser-option-devtools-%%
 - %%-browser-option-downloadspath-%%
 - %%-csharp-java-browser-option-env-%%
-- %%-js-python-browser-option-env-%%
+- %%-js-browser-option-env-%%
+- %%-python-browser-option-env-%%
 - %%-browser-option-executablepath-%%
 - %%-browser-option-handlesigint-%%
 - %%-browser-option-handlesigterm-%%

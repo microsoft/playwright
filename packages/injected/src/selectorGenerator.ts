@@ -16,7 +16,7 @@
 
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
-import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
 
@@ -78,6 +78,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   injectedScript._evaluator.begin();
   const cache: Cache = { allowText: new Map(), disallowText: new Map() };
   beginAriaCaches();
+  beginDOMCaches();
   try {
     let selectors: string[] = [];
     if (options.forTextExpect) {
@@ -135,17 +136,13 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
       elements: injectedScript.querySelectorAll(parsedSelector, options.root ?? targetElement.ownerDocument)
     };
   } finally {
+    endDOMCaches();
     endAriaCaches();
     injectedScript._evaluator.end();
   }
 }
 
-function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][] {
-  // Filter out regex-based selectors for better performance.
-  return textCandidates.filter(c => c[0].selector[0] !== '/');
-}
-
-type InternalOptions = GenerateSelectorOptions & { noText?: boolean, noCSSId?: boolean };
+type InternalOptions = GenerateSelectorOptions & { noText?: boolean, noCSSId?: boolean, isRecursive?: boolean };
 
 function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targetElement: Element, options: InternalOptions): SelectorToken[] | null {
   if (options.root && !isInsideScope(options.root, targetElement))
@@ -156,77 +153,80 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
-  const calculate = (element: Element, allowText: boolean): SelectorToken[] | null => {
-    const allowNthMatch = element === targetElement;
+  let result: SelectorToken[] | null = null;
+  const updateResult = (candidate: SelectorToken[]) => {
+    if (!result || combineScores(candidate) < combineScores(result))
+      result = candidate;
+  };
 
-    let textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement) : [];
-    if (element !== targetElement) {
-      // Do not use regex for parent elements (for performance).
-      textCandidates = filterRegexTokens(textCandidates);
+  const candidates: { candidate: SelectorToken[], isTextCandidate: boolean }[] = [];
+  if (!options.noText) {
+    for (const candidate of buildTextCandidates(injectedScript, targetElement, !options.isRecursive))
+      candidates.push({ candidate, isTextCandidate: true });
+  }
+  for (const token of buildNoTextCandidates(injectedScript, targetElement, options)) {
+    if (options.omitInternalEngines && token.engine.startsWith('internal:'))
+      continue;
+    candidates.push({ candidate: [token], isTextCandidate: false });
+  }
+  candidates.sort((a, b) => combineScores(a.candidate) - combineScores(b.candidate));
+
+  for (const { candidate, isTextCandidate } of candidates) {
+    const elements = injectedScript.querySelectorAll(injectedScript.parseSelector(joinTokens(candidate)), options.root ?? targetElement.ownerDocument);
+    if (!elements.includes(targetElement)) {
+      // Somehow this selector just does not match the target. Oh well.
+      continue;
     }
-    const noTextCandidates = buildNoTextCandidates(injectedScript, element, options)
-        .filter(token => !options.omitInternalEngines || !token.engine.startsWith('internal:'))
-        .map(token => [token]);
 
-    // First check all text and non-text candidates for the element.
-    let result = chooseFirstSelector(injectedScript, options.root ?? targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);
+    if (elements.length === 1) {
+      // Perfect strict match. All other candidates are strictly worse because they are sorted by score.
+      updateResult(candidate);
+      break;
+    }
 
-    // Do not use regex for chained selectors (for performance).
-    textCandidates = filterRegexTokens(textCandidates);
+    const index = elements.indexOf(targetElement);
+    if (index > 5) {
+      // Do not generate locators with nth=6 or worse.
+      continue;
+    }
+    updateResult([...candidate, { engine: 'nth', selector: String(index), score: kNthScore }]);
 
-    const checkWithText = (textCandidatesToUse: SelectorToken[][]) => {
-      // Use the deepest possible text selector - works pretty good and saves on compute time.
-      const allowParentText = allowText && !textCandidatesToUse.length;
+    if (options.isRecursive) {
+      // Limit nesting to two levels: parent >>> target.
+      continue;
+    }
 
-      const candidates = [...textCandidatesToUse, ...noTextCandidates].filter(c => {
-        if (!result)
-          return true;
-        return combineScores(c) < combineScores(result);
-      });
-
-      // This is best theoretically possible candidate from the current parent.
-      // We use the fact that widening the scope to grand-parent makes any selector
-      // even less likely to match.
-      let bestPossibleInParent: SelectorToken[] | null = candidates[0];
-      if (!bestPossibleInParent)
-        return;
-
-      for (let parent = parentElementOrShadowHost(element); parent && parent !== options.root; parent = parentElementOrShadowHost(parent)) {
-        const parentTokens = calculateCached(parent, allowParentText);
-        if (!parentTokens)
-          continue;
-        // Even the best selector won't be too good - skip this parent.
-        if (result && combineScores([...parentTokens, ...bestPossibleInParent]) >= combineScores(result))
-          continue;
-        // Update the best candidate that finds "element" in the "parent".
-        bestPossibleInParent = chooseFirstSelector(injectedScript, parent, element, candidates, allowNthMatch);
-        if (!bestPossibleInParent)
-          return;
-        const combined = [...parentTokens, ...bestPossibleInParent];
-        if (!result || combineScores(combined) < combineScores(result))
-          result = combined;
+    // Now try nested selectors: (best selector for parent) >>> (this candidate selector).
+    for (let parent = parentElementOrShadowHost(targetElement); parent && parent !== options.root; parent = parentElementOrShadowHost(parent)) {
+      const filtered = elements.filter(e => isInsideScope(parent, e) && e !== parent);
+      const newIndex = filtered.indexOf(targetElement);
+      if (filtered.length > 5 || newIndex === -1 || (newIndex === index && filtered.length > 1)) {
+        // Filtering to this parent is not an improvement - do not generate selector for parent.
+        continue;
       }
-    };
 
-    checkWithText(textCandidates);
-    // Allow skipping text on the target element, and using text on one of the parents.
-    if (element === targetElement && textCandidates.length)
-      checkWithText([]);
+      const inParent = filtered.length === 1 ? candidate : [...candidate, { engine: 'nth', selector: String(newIndex), score: kNthScore }];
+      const idealSelectorForParent = { engine: '', selector: '', score: 1 }; // Best theoretical score we could achieve for the parent.
+      if (result && combineScores([idealSelectorForParent, ...inParent]) >= combineScores(result)) {
+        // It is impossible to generate a better scoring selector through this parent.
+        continue;
+      }
 
-    return result;
-  };
+      // Do not allow text in parent selector when using text in the target selector.
+      const noText = !!options.noText || isTextCandidate;
+      const cacheMap = noText ? cache.disallowText : cache.allowText;
+      let parentTokens = cacheMap.get(parent);
+      if (parentTokens === undefined) {
+        parentTokens = generateSelectorFor(cache, injectedScript, parent, { ...options, isRecursive: true, noText }) || cssFallback(injectedScript, parent, options);
+        cacheMap.set(parent, parentTokens);
+      }
+      if (!parentTokens)
+        continue;
 
-  const calculateCached = (element: Element, allowText: boolean): SelectorToken[] | null => {
-    const map = allowText ? cache.allowText : cache.disallowText;
-    let value = map.get(element);
-    if (value === undefined) {
-      value = calculate(element, allowText);
-      map.set(element, value);
+      updateResult([...parentTokens, ...inParent]);
     }
-    return value;
-  };
-
-  return calculate(targetElement, !options.noText);
+  }
+  return result;
 }
 
 function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: InternalOptions): SelectorToken[] {
@@ -333,7 +333,8 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     const cssToken: SelectorToken = { engine: 'css', selector: escapeNodeName(element), score: kCSSTagNameScore };
     for (const alternative of textAlternatives)
       candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
-    if (text.length <= 80) {
+    if (isTargetNode && text.length <= 80) {
+      // Do not use regex for parent elements (for performance).
       const re = new RegExp('^' + escapeRegExp(text) + '$');
       candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
     }
@@ -351,7 +352,8 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       const roleToken = { engine: 'internal:role', selector: `${ariaRole}`, score: kRoleWithoutNameScore };
       for (const alternative of textAlternatives)
         candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
-      if (text.length <= 80) {
+      if (isTargetNode && text.length <= 80) {
+        // Do not use regex for parent elements (for performance).
         const re = new RegExp('^' + escapeRegExp(text) + '$');
         candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
       }
@@ -471,30 +473,6 @@ function combineScores(tokens: SelectorToken[]): number {
   for (let i = 0; i < tokens.length; i++)
     score += tokens[i].score * (tokens.length - i);
   return score;
-}
-
-function chooseFirstSelector(injectedScript: InjectedScript, scope: Element | Document, targetElement: Element, selectors: SelectorToken[][], allowNthMatch: boolean): SelectorToken[] | null {
-  const joined = selectors.map(tokens => ({ tokens, score: combineScores(tokens) }));
-  joined.sort((a, b) => a.score - b.score);
-
-  let bestWithIndex: SelectorToken[] | null = null;
-  for (const { tokens } of joined) {
-    const parsedSelector = injectedScript.parseSelector(joinTokens(tokens));
-    const result = injectedScript.querySelectorAll(parsedSelector, scope);
-    if (result[0] === targetElement && result.length === 1) {
-      // We are the only match - found the best selector.
-      return tokens;
-    }
-
-    // Otherwise, perhaps we can use nth=?
-    const index = result.indexOf(targetElement);
-    if (!allowNthMatch || bestWithIndex || index === -1 || result.length > 5)
-      continue;
-
-    const nth: SelectorToken = { engine: 'nth', selector: String(index), score: kNthScore };
-    bestWithIndex = [...tokens, nth];
-  }
-  return bestWithIndex;
 }
 
 function isGuidLike(id: string): boolean {

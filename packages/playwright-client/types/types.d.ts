@@ -14918,10 +14918,7 @@ export interface BrowserType<Unused = {}> {
      */
     downloadsPath?: string;
 
-    /**
-     * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-     */
-    env?: { [key: string]: string|number|boolean; };
+    env?: { [key: string]: string|undefined; };
 
     /**
      * Path to a browser executable to run instead of the bundled one. If
@@ -15351,10 +15348,7 @@ export interface BrowserType<Unused = {}> {
      */
     downloadsPath?: string;
 
-    /**
-     * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-     */
-    env?: { [key: string]: string|number|boolean; };
+    env?: { [key: string]: string|undefined; };
 
     /**
      * Path to a browser executable to run instead of the bundled one. If
@@ -21766,10 +21760,7 @@ export interface LaunchOptions {
    */
   downloadsPath?: string;
 
-  /**
-   * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-   */
-  env?: { [key: string]: string|number|boolean; };
+  env?: { [key: string]: string|undefined; };
 
   /**
    * Path to a browser executable to run instead of the bundled one. If

@@ -751,9 +751,16 @@ test('slow double SIGINT should be respected in reporter.onExit', async ({ inter
 });
 
 test('unhandled exception in test.fail should restart worker and continue', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const files = {
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
+      import { test as baseTest, expect } from '@playwright/test';
+
+      const test = baseTest.extend({
+        worker: [async ({}, use, info) => {
+          await use();
+          console.log('\\n%%worker teardown=' + info.workerIndex);
+        }, { scope: 'worker', auto: true }],
+      });
 
       test('bad', async () => {
         test.fail();
@@ -767,12 +774,20 @@ test('unhandled exception in test.fail should restart worker and continue', asyn
       test('good', () => {
         console.log('\\n%%good running worker=' + test.info().workerIndex);
       });
-    `
-  }, { retries: 1, reporter: 'list' });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-  expect(result.failed).toBe(0);
-  expect(result.outputLines).toEqual(['bad running worker=0', 'good running worker=1']);
+    `,
+  };
+  for (const parallel of [true, false]) {
+    await test.step(`parallel=${parallel}`, async () => {
+      const options = { retries: 1, reporter: 'list', workers: 1 };
+      if (parallel)
+        options['fully-parallel'] = true;
+      const result = await runInlineTest(files, options);
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(2);
+      expect(result.failed).toBe(0);
+      expect(result.outputLines).toEqual(['bad running worker=0', 'worker teardown=0', 'good running worker=1', 'worker teardown=1']);
+    });
+  }
 });
 
 test('wait for workers to finish before reporter.onEnd', async ({ runInlineTest }) => {

@@ -459,7 +459,7 @@ class JobDispatcher {
     // - there are no remaining
     // - we are here not because something failed
     // - no unrecoverable worker error
-    if (!this._remainingByTestId.size && !this._failedTests.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError) {
+    if (!this._remainingByTestId.size && !this._failedTests.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError && !params.stoppedDueToUnhandledErrorInTestFail) {
       this._finished({ didFail: false });
       return;
     }
