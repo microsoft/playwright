@@ -381,7 +381,7 @@ export async function toHaveScreenshot(
     // We tried re-generating new snapshot but failed.
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
     if (errorMessage) {
-      const header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout: timedOut ? timeout : undefined });
+      const header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout, timedOut });
       return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log, this._stepInfo);
     }
 
@@ -416,12 +416,12 @@ export async function toHaveScreenshot(
   if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
     if (actual)
       return writeFiles(actual);
-    let header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout: timedOut ? timeout : undefined });
+    let header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout, timedOut });
     header += '  Failed to re-generate expected.\n';
     return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
   }
 
-  const header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout: timedOut ? timeout : undefined });
+  const header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout, timedOut });
   return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
 }
 

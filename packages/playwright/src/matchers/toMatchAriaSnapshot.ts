@@ -85,7 +85,6 @@ export async function toMatchAriaSnapshot(
   expected = unshift(expected);
   const { matches: pass, received, log, timedOut, errorMessage } = await locator._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
   const typedReceived = received as MatcherReceived;
-  const receivedText = typedReceived.raw;
 
   const message = () => {
     let printedExpected: string | undefined;
@@ -94,17 +93,18 @@ export async function toMatchAriaSnapshot(
     if (errorMessage) {
       printedExpected = `Expected: ${this.isNot ? 'not ' : ''}${this.utils.printExpected(expected)}`;
     } else if (pass) {
-      const receivedString = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
+      const receivedString = printReceivedStringContainExpectedSubstring(typedReceived.raw, typedReceived.raw.indexOf(expected), expected.length);
       printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
       printedReceived = `Received: ${receivedString}`;
     } else {
-      printedDiff = this.utils.printDiffOrStringify(expected, receivedText, 'Expected', 'Received', false);
+      printedDiff = this.utils.printDiffOrStringify(expected, typedReceived.raw, 'Expected', 'Received', false);
     }
     return formatMatcherMessage(this, {
       matcherName,
       expectation: 'expected',
       locator,
-      timeout: timedOut ? timeout : undefined,
+      timeout,
+      timedOut,
       printedExpected,
       printedReceived,
       printedDiff,

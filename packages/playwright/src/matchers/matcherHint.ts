@@ -29,6 +29,7 @@ type MatcherMessageDetails = {
   printedExpected?: string;
   printedReceived?: string;
   printedDiff?: string;
+  timedOut?: boolean;
   timeout?: number;
   errorMessage?: string;
   log?: string[];
@@ -59,7 +60,7 @@ export function formatMatcherMessage(state: ExpectMatcherState, details: Matcher
     message += details.printedExpected + '\n';
   if (details.printedReceived)
     message += details.printedReceived + '\n';
-  if (details.timeout)
+  if (details.timedOut && details.timeout)
     message += `Timeout: ${align ? ' ' : ''}${details.timeout}ms\n`;
   if (details.printedDiff)
     message += details.printedDiff + '\n';

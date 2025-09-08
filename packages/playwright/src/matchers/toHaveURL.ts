@@ -90,7 +90,7 @@ function toHaveURLMessage(
   expected: Function,
   received: string | undefined,
   pass: boolean,
-  didTimeout: boolean,
+  timedOut: boolean,
   timeout: number,
 ): string {
   const receivedString = received || '';
@@ -115,7 +115,8 @@ function toHaveURLMessage(
   return formatMatcherMessage(state, {
     matcherName,
     expectation: 'expected',
-    timeout: didTimeout ? timeout : undefined,
+    timeout,
+    timedOut,
     printedExpected,
     printedReceived,
     printedDiff,
