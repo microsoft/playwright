@@ -1,0 +1,6 @@
+[*]
+../sdk/
+../browser/config.ts
+../browser/browserServerBackend.ts
+../browser/browserContextFactory.ts
+../log.ts
