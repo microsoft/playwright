@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
@@ -37,7 +37,10 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     return false;
   }
 
-  const zipPath = path.join(os.tmpdir(), downloadFileName);
+  // Create a unique temporary directory for this download to prevent concurrent downloads from clobbering each other
+  const uniqueTempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-download-'));
+  const zipPath = path.join(uniqueTempDir, downloadFileName);
+  
   try {
     const retryCount = 5;
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
@@ -63,8 +66,15 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     process.exitCode = 1;
     throw e;
   } finally {
-    if (await existsAsync(zipPath))
-      await fs.promises.unlink(zipPath);
+    // Clean up the temporary directory and its contents
+    if (await existsAsync(uniqueTempDir)) {
+      try {
+        await fs.promises.rm(uniqueTempDir, { recursive: true, force: true });
+      } catch (e) {
+        // Ignore cleanup errors
+        debugLogger.log('install', `Failed to clean up temporary directory ${uniqueTempDir}: ${e}`);
+      }
+    }
   }
   logPolitely(`${title} downloaded to ${browserDirectory}`);
   return true;
@@ -133,7 +143,7 @@ function getDownloadProgress(): OnProgressCallback {
 }
 
 function getAnimatedDownloadProgress(): OnProgressCallback {
-  let progressBar: ProgressBar;
+  let progressBar: any;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {
