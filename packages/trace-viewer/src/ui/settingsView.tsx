@@ -37,7 +37,7 @@ export const SettingsView: React.FunctionComponent<{
   return (
     <div className='vbox settings-view'>
       {settings.map(setting => {
-        const labelId = `setting-${setting.name.replaceAll(' ', '-')}`;
+        const labelId = `setting-${setting.name.replaceAll(/\s+/g, '-')}`;
 
         return (
           <div key={setting.name} className={`setting setting-${setting.type}`} title={setting.title}>
