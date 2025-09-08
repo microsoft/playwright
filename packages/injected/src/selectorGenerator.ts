@@ -16,7 +16,7 @@
 
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
-import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
 
@@ -78,6 +78,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   injectedScript._evaluator.begin();
   const cache: Cache = { allowText: new Map(), disallowText: new Map() };
   beginAriaCaches();
+  beginDOMCaches();
   try {
     let selectors: string[] = [];
     if (options.forTextExpect) {
@@ -135,6 +136,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
       elements: injectedScript.querySelectorAll(parsedSelector, options.root ?? targetElement.ownerDocument)
     };
   } finally {
+    endDOMCaches();
     endAriaCaches();
     injectedScript._evaluator.end();
   }
