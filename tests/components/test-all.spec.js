@@ -37,17 +37,19 @@ async function run(command, args, folder) {
   child.stdout.on('data', data => process.stdout.write(data));
   child.stderr.on('data', data => process.stdout.write(data));
   process.on('exit', () => {
-    if (process.platform === 'win32') {
-      const taskkillProcess = spawnSync(`taskkill /pid ${child.pid} /T /F`, { shell: true });
-      const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
-      if (stdout)
-        options.log(`[pid=${child.pid}] taskkill stdout: ${stdout}`);
-      if (stderr)
-        options.log(`[pid=${child.pid}] taskkill stderr: ${stderr}`);
-    } else {
-      child.kill();
-    }
+    child.kill();
   });
+  const pid = child.pid;
   const code = await new Promise(f => child.on('close', f));
   expect(code).toEqual(0);
+
+  // On Windows the process tree might not be completely dead. Let's make sure
+  if (process.platform === 'win32') {
+    const taskkillProcess = spawnSync(`taskkill /pid ${pid} /T /F`, { shell: true });
+    const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
+    if (stdout)
+      options.log(`[pid=${pid}] taskkill stdout: ${stdout}`);
+    if (stderr)
+      options.log(`[pid=${pid}] taskkill stderr: ${stderr}`);
+  }
 }
