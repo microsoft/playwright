@@ -48,8 +48,8 @@ async function run(command, args, folder) {
     const taskkillProcess = spawnSync(`taskkill /pid ${pid} /T /F`, { shell: true });
     const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
     if (stdout)
-      options.log(`[pid=${pid}] taskkill stdout: ${stdout}`);
+      console.log(`[pid=${pid}] taskkill stdout: ${stdout}`);
     if (stderr)
-      options.log(`[pid=${pid}] taskkill stderr: ${stderr}`);
+      console.log(`[pid=${pid}] taskkill stderr: ${stderr}`);
   }
 }
