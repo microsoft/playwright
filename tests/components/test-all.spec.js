@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -32,15 +32,21 @@ async function run(command, args, folder) {
     cwd: folder,
     stdio: 'pipe',
     shell: true,
-    env: {
-      ...process.env,
-      "DEBUG": "pw:vite"
-    }
+    env: process.env
   });
   child.stdout.on('data', data => process.stdout.write(data));
   child.stderr.on('data', data => process.stdout.write(data));
   process.on('exit', () => {
-    child.kill();
+    if (process.platform === 'win32') {
+      const taskkillProcess = spawnSync(`taskkill /pid ${child.pid} /T /F`, { shell: true });
+      const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
+      if (stdout)
+        options.log(`[pid=${child.pid}] taskkill stdout: ${stdout}`);
+      if (stderr)
+        options.log(`[pid=${child.pid}] taskkill stderr: ${stderr}`);
+    } else {
+      child.kill();
+    }
   });
   const code = await new Promise(f => child.on('close', f));
   expect(code).toEqual(0);

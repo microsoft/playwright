@@ -51,13 +51,11 @@ export function createPlugin(): TestRunnerPlugin {
     name: 'playwright-vite-plugin',
 
     setup: async (configObject: FullConfig, configDirectory: string) => {
-      console.log('Vite setup');
       config = configObject;
       configDir = configDirectory;
     },
 
     begin: async (suite: Suite) => {
-      console.log('begin');
       const result = await buildBundle(config, configDir);
       if (!result)
         return;
@@ -75,13 +73,11 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     end: async () => {
-      console.log('end');
       if (stoppableServer)
         await new Promise(f => stoppableServer.stop(f));
     },
 
     populateDependencies: async () => {
-      console.log('populateDependencies');
       await buildBundle(config, configDir);
     },
 
@@ -249,12 +245,10 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
 function vitePlugin(registerSource: string, templateDir: string, buildInfo: BuildInfo, importInfos: Map<string, ImportInfo>, depsCollector: Map<string, string[]>): Plugin {
   buildInfo.sources = {};
   let moduleResolver: ResolveFn;
-  console.log('Starting vite plugin', JSON.stringify([...importInfos.entries()]));
   return {
     name: 'playwright:component-index',
 
     configResolved(config: ResolvedConfig) {
-      console.log('Vite config resolved');
       moduleResolver = config.createResolver();
     },
 
@@ -269,7 +263,6 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
           // Silent if can't read the file.
         }
       }
-      // console.log('Transforming', JSON.stringify([...importInfos.entries()]));
       return transformIndexFile(id, content, templateDir, registerSource, importInfos);
     },
 

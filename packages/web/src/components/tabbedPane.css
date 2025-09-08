@@ -44,6 +44,10 @@
   height: 100%;
 }
 
+.tabbed-pane-tab:hover {
+  background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
 .tabbed-pane-tab-label {
   max-width: 250px;
   white-space: pre;
@@ -54,6 +58,7 @@
 
 .tabbed-pane-tab.selected {
   background-color: var(--vscode-tab-activeBackground);
+  /* background-color: var(--vscode-tab-selectionBackground); */
 }
 
 .tabbed-pane-tab-counter {

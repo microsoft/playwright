@@ -146,14 +146,12 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
 
 export async function populateComponentsFromTests(componentRegistry: ComponentRegistry, componentsByImportingFile?: Map<string, string[]>) {
   const importInfos: Map<string, ImportInfo[]> = await getUserData('playwright-ct-core');
-  console.log('Cached importInfo', JSON.stringify([...importInfos.entries()]), importInfos.size);
   for (const [file, importList] of importInfos) {
     for (const importInfo of importList)
       componentRegistry.set(importInfo.id, importInfo);
     if (componentsByImportingFile)
       componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
   }
-  console.log('Final importInfo', JSON.stringify([...componentRegistry.entries()]));
 }
 
 export function hasJSComponents(components: ImportInfo[]): boolean {
@@ -192,7 +190,6 @@ export function transformIndexFile(id: string, content: string, templateDir: str
     lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 
-  console.log(`Pushed index file for ${[...importInfos.keys()].join(', ')}`);
   lines.push(`__pwRegistry.initialize({ ${[...importInfos.keys()].join(',\n  ')} });`);
   return {
     code: lines.join('\n'),
