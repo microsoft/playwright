@@ -149,7 +149,17 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       case 'screenshotElement': {
         const n = ++this._screenshotOrdinal;
         const locator = `${subject}.${this._asLocator((action as any).selector)}`;
-        return `await (async () => {\n  const box = await ${locator}.boundingBox();\n  const padding = 30;\n  await ${subject}.screenshot({ path: 'screenshot-${n}.png', clip: { x: Math.max(0, box.x - padding), y: Math.max(0, box.y - padding), width: box.width + padding * 2, height: box.height + padding * 2 } });\n})();`;
+        const pageAlias = actionInContext.frame.pageAlias;
+        const frameSelectors = actionInContext.frame.framePath;
+        const lines: string[] = [];
+        lines.push(`await (async () => {`);
+        lines.push(`  const box = await ${locator}.boundingBox();`);
+        lines.push(`  const padding = 30;`);
+        // Base clip from element bounding box in viewport coords.
+        lines.push(`  let clip = { x: Math.max(0, box.x - padding), y: Math.max(0, box.y - padding), width: box.width + padding * 2, height: box.height + padding * 2 };`);
+        lines.push(`  await ${pageAlias}.screenshot({ path: 'screenshot-${n}.png', clip });`);
+        lines.push(`})();`);
+        return lines.join('\n');
       }
     }
   }
