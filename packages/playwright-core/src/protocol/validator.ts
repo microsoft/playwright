@@ -1929,6 +1929,16 @@ scheme.WorkerInitializer = tObject({
   url: tString,
 });
 scheme.WorkerCloseEvent = tOptional(tObject({}));
+scheme.WorkerConsoleEvent = tObject({
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tInt,
+    columnNumber: tInt,
+  }),
+});
 scheme.WorkerEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
@@ -1945,6 +1955,11 @@ scheme.WorkerEvaluateExpressionHandleParams = tObject({
 scheme.WorkerEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
+scheme.WorkerUpdateSubscriptionParams = tObject({
+  event: tEnum(['console']),
+  enabled: tBoolean,
+});
+scheme.WorkerUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.JSHandleInitializer = tObject({
   preview: tString,
 });

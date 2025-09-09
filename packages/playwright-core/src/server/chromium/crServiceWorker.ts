@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 import { Worker } from '../page';
-import { CRExecutionContext } from './crExecutionContext';
+import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import { BrowserContext } from '../browserContext';
+import { ConsoleMessage } from '../console';
 import * as network from '../network';
+import { toConsoleMessageLocation } from './crProtocolHelper';
 
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -50,6 +52,29 @@ export class CRServiceWorker extends Worker {
     session.on('Inspector.targetReloadedAfterCrash', () => {
       // Resume service worker after restart.
       session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
+    });
+    session.on('Runtime.consoleAPICalled', event => {
+      if (event.executionContextId === 0) {
+        // DevTools protocol stores the last 1000 console messages. These
+        // messages are always reported even for removed execution contexts. In
+        // this case, they are marked with executionContextId = 0 and are
+        // reported upon enabling Runtime agent.
+        //
+        // Ignore these messages since:
+        // - there's no execution context we can use to operate with message
+        //   arguments
+        // - these messages are reported before Playwright clients can subscribe
+        //   to the 'console'
+        //   page event.
+        //
+        // @see https://github.com/GoogleChrome/puppeteer/issues/3865
+        return;
+      }
+      if (!this.existingExecutionContext)
+        return;
+      const args = event.args.map(o => createHandle(this.existingExecutionContext!, o));
+      const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+      this.emit(Worker.Events.Console, message);
     });
   }
 

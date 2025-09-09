@@ -2856,9 +2856,22 @@ Worker:
       returns:
         handle: JSHandle
 
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
+
   events:
 
     close:
+
+    console:
+      parameters:
+        $mixin: ConsoleMessage
 
 
 JSHandle:
