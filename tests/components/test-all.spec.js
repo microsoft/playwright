@@ -50,8 +50,8 @@ async function run(command, args, folder) {
   child.stderr.on('data', data => process.stdout.write(data));
   process.on('exit', () => {
     child.kill();
+    activeChild = undefined;
   });
-  const pid = child.pid;
   const code = await new Promise(f => child.on('close', f));
   expect(code).toEqual(0);
 }
