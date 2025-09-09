@@ -31,6 +31,9 @@ for (const dir of fs.readdirSync(__dirname)) {
 
 test.afterEach(async () => {
   // Make sure to kill server if timeout occurs
+  // It takes several ticks for the process to send its normal exit event
+  await new Promise(resolve => setTimeout(resolve, 100));
+
   if (activeChild) {
     console.log('Cleaning up abandoned server');
     activeChild.kill();
