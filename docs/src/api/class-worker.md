@@ -63,7 +63,7 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 - argument: <[ConsoleMessage]>
 
 :::note
-Console events are only supported on Chromium-based browsers and within Service Workers.
+Console events from Web Workers are dispatched on the page object. Note that console events are only supported on Chromium-based browsers and within Service Workers.
 :::
 
 Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.

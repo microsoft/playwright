@@ -54,22 +54,6 @@ export class CRServiceWorker extends Worker {
       session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
     });
     session.on('Runtime.consoleAPICalled', event => {
-      if (event.executionContextId === 0) {
-        // DevTools protocol stores the last 1000 console messages. These
-        // messages are always reported even for removed execution contexts. In
-        // this case, they are marked with executionContextId = 0 and are
-        // reported upon enabling Runtime agent.
-        //
-        // Ignore these messages since:
-        // - there's no execution context we can use to operate with message
-        //   arguments
-        // - these messages are reported before Playwright clients can subscribe
-        //   to the 'console'
-        //   page event.
-        //
-        // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-        return;
-      }
       if (!this.existingExecutionContext)
         return;
       const args = event.args.map(o => createHandle(this.existingExecutionContext!, o));

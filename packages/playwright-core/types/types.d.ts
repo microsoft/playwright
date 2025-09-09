@@ -10327,7 +10327,8 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** Console events are only supported on Chromium-based browsers and within Service Workers.
+   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
+   * supported on Chromium-based browsers and within Service Workers.
    *
    * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
    */
@@ -10350,7 +10351,8 @@ export interface Worker {
   addListener(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** Console events are only supported on Chromium-based browsers and within Service Workers.
+   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
+   * supported on Chromium-based browsers and within Service Workers.
    *
    * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
    */
@@ -10383,7 +10385,8 @@ export interface Worker {
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** Console events are only supported on Chromium-based browsers and within Service Workers.
+   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
+   * supported on Chromium-based browsers and within Service Workers.
    *
    * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
    */
