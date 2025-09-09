@@ -1033,7 +1033,7 @@ fixture   |  Fixture "context"
 pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
-test.step |Expect "poll toHaveLength" @ a.test.ts:14
+expect    |Expect "poll toHaveLength" @ a.test.ts:14
 pw:api    |  Navigate to "about:blank" @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    Expect "toBe" @ a.test.ts:10
@@ -1086,7 +1086,7 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:4
-test.step |Expect "poll toBe" @ a.test.ts:13
+expect    |Expect "poll toBe" @ a.test.ts:13
 expect    |  Expect "toHaveText" @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
 expect    |    Expect "toBeVisible" @ a.test.ts:10
@@ -1746,7 +1746,7 @@ fixture   |  Fixture "page"
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:16
 expect    |Expect "toBeInvisible" @ a.test.ts:17
-test.step |  Expect "poll toBe" @ a.test.ts:7
+expect    |  Expect "poll toBe" @ a.test.ts:7
 pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality

@@ -265,7 +265,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
         const zone = currentZone().data<TestStepInternal>('stepZone');
-        if (zone && zone.category === 'expect') {
+        const isExpectCall = data.apiName === 'locator._expect' || data.apiName === 'frame._expect' || data.apiName === 'page._expectScreenshot';
+        if (zone && zone.category === 'expect' && isExpectCall) {
           // Display the internal locator._expect call under the name of the enclosing expect call,
           // and connect it to the existing expect step.
           if (zone.apiName)
