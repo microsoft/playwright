@@ -154,6 +154,7 @@ function addBrowserMCPServerCommand(program: Command) {
 function addTestMCPServerCommand(program: Command) {
   const command = program.command('run-test-mcp-server', { hidden: true });
   command.description('Interact with the test runner over MCP');
+  command.option('--headless', 'run browser in headless mode, headed by default');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
@@ -163,7 +164,7 @@ function addTestMCPServerCommand(program: Command) {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined }),
+      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined, headless: options.headless }),
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)

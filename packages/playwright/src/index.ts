@@ -240,7 +240,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = process.env.PLAYWRIGHT_DEBUGGER_ENABLED ? 5000 : actionTimeout || 0;
+    playwright._defaultContextTimeout = (testInfo as TestInfoImpl)._pauseOnError() ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;
@@ -291,6 +291,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           tracingGroupSteps.push(step);
       },
       onApiCallRecovery: (data, error, channelOwner, recoveryHandlers) => {
+        const testInfo = currentTestInfo();
+        if (!testInfo || !testInfo._pauseOnError())
+          return;
+
         const step = data.userData;
         if (!step)
           return;

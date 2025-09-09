@@ -29,7 +29,7 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _tools: TestTool<any>[] = [listTests, runTests, debugTest];
   private _context: TestContext;
 
-  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean }) {
+  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._context = new TestContext(resolvedLocation, options);
   }
 

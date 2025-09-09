@@ -19,7 +19,7 @@ import fs from 'fs';
 import { ChildProcess, spawn } from 'child_process';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { test as baseTest, expect, programPath } from './fixtures';
+import { test as baseTest, expect, mcpServerPath } from './fixtures';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
 
@@ -32,7 +32,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
         throw new Error('Process already running');
 
       cp = spawn('node', [
-        ...programPath,
+        ...mcpServerPath,
         ...(options?.noPort ? [] : ['--port=0']),
         '--user-data-dir=' + userDataDir,
         ...(mcpHeadless ? ['--headless'] : []),

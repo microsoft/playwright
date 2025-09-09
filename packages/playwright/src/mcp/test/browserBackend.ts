@@ -16,6 +16,7 @@
 
 import * as mcp from '../sdk/exports';
 import * as mcpBundle from '../sdk/bundle';
+import { currentTestInfo } from '../../common/globals';
 
 import { snapshot, pickLocator, evaluate } from './browserTools';
 import { stripAnsiEscapes } from '../../util';
@@ -72,8 +73,10 @@ const doneToolSchema = mcp.defineToolSchema({
 });
 
 export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
-  if (!process.env.PLAYWRIGHT_DEBUGGER_ENABLED)
+  const testInfo = currentTestInfo();
+  if (!testInfo || !testInfo._pauseOnError())
     return;
+
   const snapshot = await (page as PageEx)._snapshotForAI();
   const introMessage = `### Paused on error:
 ${stripAnsiEscapes(message())}
@@ -83,5 +86,5 @@ ${snapshot}
 
 ### Task
 Try recovering from the error prior to continuing, use following tools to recover: ${tools.map(tool => tool.schema.name).join(', ')}`;
-  await mcp.runOnPauseBackendLoop(process.env.PLAYWRIGHT_MDB_URL!, new BrowserBackend(page), introMessage);
+  await mcp.runOnPauseBackendLoop(new BrowserBackend(page), introMessage);
 }
