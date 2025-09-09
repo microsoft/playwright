@@ -58,6 +58,16 @@ foreach(var pageWorker in page.Workers)
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
+## event: Worker.console
+* since: v1.56
+- argument: <[ConsoleMessage]>
+
+:::note
+Console events from Web Workers are dispatched on the page object. Note that console events are only supported on Chromium-based browsers and within Service Workers.
+:::
+
+Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
+
 ## async method: Worker.evaluate
 * since: v1.8
 - returns: <[Serializable]>

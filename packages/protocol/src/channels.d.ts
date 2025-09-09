@@ -3311,13 +3311,25 @@ export type WorkerInitializer = {
 };
 export interface WorkerEventTarget {
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
+  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
 }
 export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
+  updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
 export type WorkerCloseEvent = {};
+export type WorkerConsoleEvent = {
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
+};
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
@@ -3340,9 +3352,18 @@ export type WorkerEvaluateExpressionHandleOptions = {
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
+export type WorkerUpdateSubscriptionParams = {
+  event: 'console',
+  enabled: boolean,
+};
+export type WorkerUpdateSubscriptionOptions = {
+
+};
+export type WorkerUpdateSubscriptionResult = void;
 
 export interface WorkerEvents {
   'close': WorkerCloseEvent;
+  'console': WorkerConsoleEvent;
 }
 
 // ----------- JSHandle -----------
