@@ -4,6 +4,8 @@ const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+let activeChild = undefined;
+
 for (const dir of fs.readdirSync(__dirname)) {
   const folder = path.join(__dirname, dir);
   if (!fs.statSync(folder).isDirectory())
@@ -27,6 +29,15 @@ for (const dir of fs.readdirSync(__dirname)) {
   });
 }
 
+test.afterEach(async () => {
+  // Make sure to kill server if timeout occurs
+  if (activeChild) {
+    console.log('Cleaning up abandoned server');
+    activeChild.kill();
+    activeChild = undefined;
+  }
+});
+
 async function run(command, args, folder) {
   const child = spawn(command, args, {
     cwd: folder,
@@ -34,6 +45,7 @@ async function run(command, args, folder) {
     shell: true,
     env: process.env
   });
+  activeChild = child;
   child.stdout.on('data', data => process.stdout.write(data));
   child.stderr.on('data', data => process.stdout.write(data));
   process.on('exit', () => {
@@ -42,16 +54,4 @@ async function run(command, args, folder) {
   const pid = child.pid;
   const code = await new Promise(f => child.on('close', f));
   expect(code).toEqual(0);
-
-  // On Windows the process tree might not be completely dead. Let's make sure
-  if (process.platform === 'win32') {
-    const taskkillProcess = spawnSync(`taskkill /pid ${pid} /T /F`, { shell: true });
-    const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
-    if (stdout)
-      console.log(`[pid=${pid}] taskkill stdout: ${stdout}`);
-    if (stderr)
-      console.log(`[pid=${pid}] taskkill stderr: ${stderr}`);
-    else
-      console.log(`[pid=${pid}] taskkill succeeded`);
-  }
 }

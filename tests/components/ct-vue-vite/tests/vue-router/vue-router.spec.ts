@@ -3,6 +3,7 @@ import type { HooksConfig } from '../../playwright';
 import App from '@/App.vue';
 
 test('navigate to a page by clicking a link', async ({ page, mount }) => {
+  test.setTimeout(1000);
   const component = await mount<HooksConfig>(App, {
     hooksConfig: { routing: true },
   });
@@ -11,4 +12,5 @@ test('navigate to a page by clicking a link', async ({ page, mount }) => {
   await component.getByRole('link', { name: 'Dashboard' }).click();
   await expect(component.getByRole('main')).toHaveText('Dashboard');
   await expect(page).toHaveURL('/dashboard');
+  await new Promise(resolve => setTimeout(resolve, 2000));
 });
