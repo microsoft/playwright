@@ -17,6 +17,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import crypto from 'crypto';
 
 import { isWorkerProcess } from '../common/globals';
 import { sourceMapSupport } from '../utilsBundle';
@@ -117,7 +118,8 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   }
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
-  const cachePath = calculateCachePath(filename, hash);
+  const cacheFolderName = calculateCacheFolderName(filename);
+  const cachePath = calculateCachePath(filename, cacheFolderName, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   const dataPath = cachePath + '.data';
@@ -132,6 +134,8 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
     addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
       if (isWorkerProcess())
         return {};
+      // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
+      clearOldCacheEntry(cacheFolderName);
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
@@ -168,9 +172,22 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
   }
 }
 
-function calculateCachePath(filePath: string, hash: string): string {
+function calculateCacheFolderName(filePath: string): string {
+  const pathHash = crypto.createHash('sha1').update(filePath).digest('hex');
+  return pathHash.substring(0, 7);
+}
+
+function calculateCachePath(filePath: string, folderName: string, hash: string): string {
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
-  return path.join(cacheDir, hash[0] + hash[1], fileName);
+  return path.join(cacheDir, folderName, fileName);
+}
+
+function clearOldCacheEntry(cacheFolderName: string) {
+  const cachePath = path.join(cacheDir, cacheFolderName);
+  try {
+    fs.rmSync(cachePath, { recursive: true, force: true });
+  } catch {
+  }
 }
 
 // Since ESM and CJS collect dependencies differently,
