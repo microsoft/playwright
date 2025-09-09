@@ -16,6 +16,11 @@
 // @ts-check
 /* eslint-disable no-restricted-properties */
 /* eslint-disable no-console */
+
+// WebKit WSL Transport Client - runs inside WSL/Linux
+// See webkit-wsl-transport-server.ts for the complete architecture diagram.
+// This client connects to the TCP server and bridges it to WebKit via fd3/fd4 pipes.
+
 import net from 'net';
 import fs from 'fs';
 import { spawn, spawnSync } from 'child_process';

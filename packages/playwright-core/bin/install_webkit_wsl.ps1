@@ -1,5 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
+# WebKit WSL Installation Script
+# See webkit-wsl-transport-server.ts for the complete architecture diagram.
+# This script sets up a WSL distribution that will be used to run WebKit.
+
 $Distribution = "playwright"
 $Username = "pwuser"
 

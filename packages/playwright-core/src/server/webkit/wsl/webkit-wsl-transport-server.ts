@@ -16,19 +16,51 @@
 /* eslint-disable no-restricted-properties */
 /* eslint-disable no-console */
 import net from 'net';
+import path from 'path';
 import { spawn } from 'child_process';
 
+// WebKit WSL Transport Architecture Diagram:
+//
+// ┌─────────────────┐    fd3/fd4     ┌──────────────────────┐
+// │ Playwright      │◄──────────────►│ webkit-wsl-transport │
+// │                 │   (pipes)      │ server.ts            │
+// └─────────────────┘                │ (Windows/Host)       │
+//                                    └──────────┬───────────┘
+//                                               │ spawns
+//                                               ▼
+//                                    ┌──────────────────────┐
+//                                    │ wsl.exe              │
+//                                    │ -d playwright        │
+//                                    └──────────┬───────────┘
+//                                               │ starts
+//                                               ▼
+// ┌─────────────────┐    TCP socket   ┌──────────────────────┐    fd3/fd4     ┌─────────────┐
+// │ TCP Server      │◄───────────────►│ webkit-wsl-transport │◄──────────────►│ WebKit      │
+// │ (port forwarded │   over WSL      │ client.ts            │   (pipes)      │ Browser     │
+// │ via env var)    │   boundary      │ (WSL/Linux)          │                │ Process     │
+// └─────────────────┘                 └──────────────────────┘                └─────────────┘
+//
+// The TCP server bridges fd3/fd4 pipes across the WSL boundary because wsl.exe
+// only supports forwarding up to 3 file descriptors (stdin/stdout/stderr).
+//
+// Data flow: Playwright ↔ fd3/fd4 ↔ TCP socket ↔ WSL network ↔ TCP socket ↔ fd3/fd4 ↔ WebKit
+//
 // Start a TCP server to bridge between parent (fd3/fd4) and the WSL child process.
-// This is needed because wsl.exe only supports up to 3 forwarded fds, so we can’t
+// This is needed because wsl.exe only supports up to 3 forwarded fds, so we can't
 // pass extra pipes directly and must tunnel them over a socket instead.
 
 (async () => {
   const argv = process.argv.slice(2);
   if (!argv.length) {
-    console.error('Usage: node webkit-wsl-host-wrapper.mjs <executable> [args...]');
+    console.error(`Usage: node ${path.basename(__filename)} <executable> [args...]`);
     process.exit(1);
   }
 
+  // Use net.Socket instead of fs.createReadStream/WriteStream to avoid hanging at shutdown.
+  // fs streams use libuv's async fs API which spawns FSReqCallbacks in the threadpool.
+  // If fs operations are pending (e.g. waiting for EOF), Node's event loop stays referenced
+  // and the process never exits. net.Socket integrates with libuv's event loop directly,
+  // making reads/writes non-blocking and allowing clean shutdown via destroy().
   const parentIn  = new net.Socket({ fd: 3, readable: true,  writable: false }); // parent -> us
   const parentOut = new net.Socket({ fd: 4, readable: false, writable: true  }); // us -> parent
 
@@ -97,7 +129,7 @@ import { spawn } from 'child_process';
 
   child.on('close', (code, signal) => {
     log('Child exit', { code, signal });
-    // Use actual exit code, or 128 + signal number convention, or fallback to 1 for unknown signals
+    // Use actual exit code, or 128, or fallback to 1 for unknown signals
     const exitCode = code ?? (signal ? 128 : 0);
     shutdown(exitCode);
   });
@@ -125,7 +157,7 @@ import { spawn } from 'child_process';
   }
 
   function log(...args: any[]) {
-    console.error(new Date(), '[webkit-wsl-host-wrapper]', ...args);
+    console.error(new Date(), `[${path.basename(__filename)}]`, ...args);
   }
 })().catch(error => {
   console.error('Error occurred:', error);

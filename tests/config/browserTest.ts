@@ -76,7 +76,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   defaultSameSiteCookieValue: [async ({ browserName, platform, channel }, run) => {
     if (browserName === 'chromium' || browserName as any === '_bidiChromium' || browserName as any === '_bidiFirefox')
       await run('Lax');
-    else if (browserName === 'webkit' && platform === 'linux' || channel === 'webkit-wsl')
+    else if (browserName === 'webkit' && (platform === 'linux' || channel === 'webkit-wsl'))
       await run('Lax');
     else if (browserName === 'webkit')
       await run('None'); // Windows + older macOS
