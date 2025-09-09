@@ -184,6 +184,23 @@ test('should emit different console types from service worker', async ({ page, s
   expect(messages[2].text()).toBe('error message');
 });
 
+test('should capture console.log from ServiceWorker start', async ({ context, page, server }) => {
+  server.setRoute('/serviceworkers/empty/sw.js', (req, res) => {
+    res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
+    res.write(`console.log('Hello from the first line of sw.js');`);
+    res.end();
+  });
+
+  const [worker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+
+  const consoleMessage = await new Promise<ConsoleMessage>(resolve => worker.once('console', resolve));
+  expect(consoleMessage.text()).toBe('Hello from the first line of sw.js');
+  expect(consoleMessage.type()).toBe('log');
+});
+
 test('Page.route should work with intervention headers', async ({ server, page }) => {
   server.setRoute('/intervention', (req, res) => res.end(`
     <script>
