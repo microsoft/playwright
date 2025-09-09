@@ -162,7 +162,7 @@ export async function runMainBackend(backendFactory: mcpServer.ServerBackendFact
   await mcpServer.connect(factory, new mcpBundle.StdioServerTransport(), false);
 }
 
-export async function runOnPauseBackendLoop(mdbUrl: string, backend: ServerBackendOnPause, introMessage: string) {
+export async function runOnPauseBackendLoop(backend: ServerBackendOnPause, introMessage: string) {
   const wrappedBackend = new OnceTimeServerBackendWrapper(backend);
 
   const factory = {
@@ -178,7 +178,7 @@ export async function runOnPauseBackendLoop(mdbUrl: string, backend: ServerBacke
 
   const client = new mcpBundle.Client({ name: 'Internal client', version: '0.0.0' });
   client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
-  const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(mdbUrl));
+  const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(process.env.PLAYWRIGHT_DEBUGGER_MCP!));
   await client.connect(transport);
 
   const pushToolsResult = await client.callTool({

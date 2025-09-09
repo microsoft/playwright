@@ -51,7 +51,7 @@ export const runTests = defineTestTool({
     title: 'Run tests',
     description: 'Run tests',
     inputSchema: z.object({
-      locations: z.array(z.string()).describe('Folder, file or location to run: "test/e2e" or "test/e2e/file.spec.ts" or "test/e2e/file.spec.ts:20"'),
+      locations: z.array(z.string()).optional().describe('Folder, file or location to run: "test/e2e" or "test/e2e/file.spec.ts" or "test/e2e/file.spec.ts:20"'),
       projects: z.array(z.string()).optional().describe('Projects to run, projects from playwright.config.ts, by default runs all projects. Running with "chromium" is a good start'),
     }),
     type: 'readOnly',
@@ -103,15 +103,13 @@ export const debugTest = defineTestTool({
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
-    process.env.PLAYWRIGHT_DEBUGGER_ENABLED = '1';
     const result = await testRunner.runTests(reporter, {
-      headed: true,
+      headed: !context.options?.headless,
       testIds: [params.test.id],
       // For automatic recovery
       timeout: 0,
       workers: 1,
-    }).finally(() => {
-      process.env.PLAYWRIGHT_DEBUGGER_ENABLED = undefined;
+      pauseOnError: true,
     });
 
     const text = stream.content();

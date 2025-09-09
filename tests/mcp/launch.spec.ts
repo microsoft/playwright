@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import { test, expect, formatOutput } from './fixtures';
 
-test('test reopen browser', async ({ startClient, server, mcpMode }) => {
+test('test reopen browser', async ({ startClient, server }) => {
   const { client, stderr } = await startClient();
   await client.callTool({
     name: 'browser_navigate',

@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect } from './fixtures';
 
-test('check that trace is saved with --save-trace', async ({ startClient, server, mcpMode }, testInfo) => {
+test('check that trace is saved with --save-trace', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({
@@ -36,7 +36,7 @@ test('check that trace is saved with --save-trace', async ({ startClient, server
   expect(file).toContain('traces');
 });
 
-test('check that trace is saved with browser_start_tracing', async ({ startClient, server, mcpMode }, testInfo) => {
+test('check that trace is saved with browser_start_tracing', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({ args: [`--output-dir=${outputDir}`, '--caps=tracing'] });

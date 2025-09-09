@@ -43,4 +43,4 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run mcp-test
+    - run: npm run test-mcp
