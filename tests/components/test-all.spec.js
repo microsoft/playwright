@@ -51,5 +51,7 @@ async function run(command, args, folder) {
       console.log(`[pid=${pid}] taskkill stdout: ${stdout}`);
     if (stderr)
       console.log(`[pid=${pid}] taskkill stderr: ${stderr}`);
+    else
+      console.log(`[pid=${pid}] taskkill succeeded`);
   }
 }
