@@ -97,7 +97,9 @@ import { spawn } from 'child_process';
 
   child.on('close', (code, signal) => {
     log('Child exit', { code, signal });
-    shutdown(code ?? (signal ? 0 : 0));
+    // Use actual exit code, or 128 + signal number convention, or fallback to 1 for unknown signals
+    const exitCode = code ?? (signal ? 128 : 0);
+    shutdown(exitCode);
   });
   child.on('error', err => {
     console.error('Child process failed to start:', err);
@@ -111,12 +113,15 @@ import { spawn } from 'child_process';
       return;
     shuttingDown = true;
 
+    server.close();
+
     parentIn.destroy();
     parentOut.destroy();
-
-    // Close listener and destroy any sockets
-    await new Promise(resolve => server.close(() => resolve(null)));
     socket?.destroy();
+
+    await new Promise(resolve => server.once('close', resolve));
+
+    process.exit(code);
   }
 
   function log(...args: any[]) {
