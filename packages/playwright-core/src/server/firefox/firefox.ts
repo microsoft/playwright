@@ -69,7 +69,7 @@ export class Firefox extends BrowserType {
     transport.send(message);
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)

@@ -323,7 +323,7 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
   await closeProxyServer();
 });
 
-it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion }) => {
+it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion, channel }) => {
   it.skip(isMac && macVersion === 13, 'Times out on Mac 13');
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
@@ -352,7 +352,7 @@ it('should use http proxy for websocket requests', async ({ browserName, browser
 
   // WebKit does not use CONNECT for websockets, but other browsers do.
   if (browserName === 'webkit')
-    expect(proxyServer.wsUrls).toContain(isWindows ? '/ws' : 'ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
+    expect(proxyServer.wsUrls).toContain((isWindows && !channel) ? '/ws' : 'ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
   else
     expect(proxyServer.connectHosts).toContain('fake-localhost-127-0-0-1.nip.io:1337');
 

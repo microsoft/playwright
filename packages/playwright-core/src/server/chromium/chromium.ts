@@ -280,7 +280,7 @@ export class Chromium extends BrowserType {
     }
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     if (options.cdpPort !== undefined)

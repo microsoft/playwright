@@ -21,6 +21,8 @@ import { kBrowserCloseMessageId } from './wkConnection';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { WKBrowser } from '../webkit/wkBrowser';
+import { spawnAsync } from '../utils/spawnAsync';
+import { registry } from '../registry';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -37,10 +39,11 @@ export class WebKit extends BrowserType {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean): NodeJS.ProcessEnv {
+  override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean, options: types.LaunchOptions): NodeJS.ProcessEnv {
     return {
       ...env,
       CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
+      WEBKIT_EXECUTABLE: options.channel === 'webkit-wsl' ? registry.findExecutable('webkit-wsl')!.wslExecutablePath! : undefined
     };
   }
 
@@ -57,7 +60,7 @@ export class WebKit extends BrowserType {
     transport.send({ method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId });
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]> {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
@@ -65,12 +68,21 @@ export class WebKit extends BrowserType {
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
-    if (process.platform === 'win32')
+
+    if (options.channel === 'webkit-wsl') {
+      if (options.executablePath)
+        throw new Error('Cannot specify executablePath when using the "webkit-wsl" channel.');
+      webkitArguments.unshift(
+          path.join(__dirname, 'wsl/webkit-wsl-transport-server.js'),
+      );
+    }
+
+    if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
       webkitArguments.push('--disable-accelerated-compositing');
     if (headless)
       webkitArguments.push('--headless');
     if (isPersistent)
-      webkitArguments.push(`--user-data-dir=${userDataDir}`);
+      webkitArguments.push(`--user-data-dir=${options.channel === 'webkit-wsl' ? await translatePathToWSL(userDataDir) : userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
     const proxy = options.proxyOverride || options.proxy;
@@ -79,7 +91,7 @@ export class WebKit extends BrowserType {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
-      } else if (process.platform === 'linux') {
+      } else if (process.platform === 'linux' || (process.platform === 'win32' && options.channel === 'webkit-wsl')) {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
@@ -96,4 +108,9 @@ export class WebKit extends BrowserType {
       webkitArguments.push('about:blank');
     return webkitArguments;
   }
+}
+
+export async function translatePathToWSL(path: string): Promise<string> {
+  const { stdout } = await spawnAsync('wsl.exe', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]);
+  return stdout.toString().trim();
 }
