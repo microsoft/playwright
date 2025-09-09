@@ -152,6 +152,7 @@ x-pw-tool-item {
   height: 28px;
   width: 28px;
   border-radius: 3px;
+  user-select: none;
 }
 
 x-pw-tool-item:not(.disabled) {
@@ -170,16 +171,27 @@ x-pw-tool-item.toggled:not(.disabled):hover {
   background-color: #8acae4c4;
 }
 
-x-pw-tool-item > x-div {
+x-pw-tool-item x-div {
   width: 16px;
   height: 16px;
   margin: 6px;
   background-color: #3a3a3a;
 }
 
-x-pw-tool-item.disabled > x-div {
+x-pw-tool-item.disabled x-div {
   background-color: rgba(97, 97, 97, 0.5);
   cursor: default;
+}
+
+x-pw-tool-item.record {
+  display: grid;
+  grid-template-columns: 48px auto;
+  width: unset;
+  align-items: center;
+}
+
+x-pw-tool-item.record > x-span {
+  margin-left: 6px;
 }
 
 x-pw-tool-item.record.toggled {
@@ -190,11 +202,11 @@ x-pw-tool-item.record.toggled:not(.disabled):hover {
   background-color: hsl(0, 0%, 86%);
 }
 
-x-pw-tool-item.record.toggled > x-div {
+x-pw-tool-item.record.toggled x-div {
   background-color: #a1260d;
 }
 
-x-pw-tool-item.record.disabled.toggled > x-div {
+x-pw-tool-item.record.disabled.toggled x-div {
   opacity: 0.8;
 }
 
@@ -202,7 +214,7 @@ x-pw-tool-item.accept > x-div {
   background-color: #388a34;
 }
 
-x-pw-tool-item.record > x-div {
+x-pw-tool-item.record x-div {
   /* codicon: circle-large-filled */
   clip-path: url(#icon-circle-large-filled);
 }
