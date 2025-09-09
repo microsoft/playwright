@@ -70,6 +70,8 @@ export class WebKit extends BrowserType {
     const webkitArguments = ['--inspector-pipe'];
 
     if (options.channel === 'webkit-wsl') {
+      if (options.executablePath)
+        throw new Error('Cannot specify executablePath when using the "webkit-wsl" channel.');
       webkitArguments.unshift(
           path.join(__dirname, 'wsl/webkit-wsl-transport-server.js'),
       );
