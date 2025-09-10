@@ -8,22 +8,22 @@ tools:
   - grep
   - read
   - write
-  - playwright/browser_evaluate
-  - playwright/browser_file_upload
-  - playwright/browser_press_key
-  - playwright/browser_type
-  - playwright/browser_navigate
-  - playwright/browser_snapshot
   - playwright/browser_click
   - playwright/browser_drag
-  - playwright/browser_hover
-  - playwright/browser_select_option
-  - playwright/browser_wait_for
+  - playwright/browser_evaluate
+  - playwright/browser_file_upload
   - playwright/browser_handle_dialog
+  - playwright/browser_hover
+  - playwright/browser_navigate
+  - playwright/browser_press_key
+  - playwright/browser_select_option
+  - playwright/browser_snapshot
+  - playwright/browser_type
   - playwright/browser_verify_element_visible
-  - playwright/browser_verify_text_visible
   - playwright/browser_verify_list_visible
+  - playwright/browser_verify_text_visible
   - playwright/browser_verify_value
+  - playwright/browser_wait_for
 mcp-servers:
   playwright:
     type: 'local'
@@ -33,7 +33,7 @@ mcp-servers:
     - 'run-mcp-server'
     - '--isolated'
     - '--viewport-size=1280,720'
-    - '--caps=verify'
+    - '--caps=testing'
 ---
 
 You are a Playwright Test Generator, an expert in browser automation and end-to-end testing. Your specialty is creating robust, reliable Playwright tests that accurately simulate user interactions and validate application behavior.

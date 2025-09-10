@@ -23,7 +23,6 @@ import * as codegen from './codegen';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
-import type { Tool } from './tools/tool';
 import type { BrowserContextFactory, ClientInfo } from './browserContextFactory';
 import type * as actions from './actions';
 import type { SessionLog } from './sessionLog';
@@ -32,7 +31,6 @@ import type { Tracing } from '../../../../playwright-core/src/client/tracing';
 const testDebug = debug('pw:mcp:test');
 
 type ContextOptions = {
-  tools: Tool[];
   config: FullConfig;
   browserContextFactory: BrowserContextFactory;
   sessionLog: SessionLog | undefined;
@@ -40,7 +38,6 @@ type ContextOptions = {
 };
 
 export class Context {
-  readonly tools: Tool[];
   readonly config: FullConfig;
   readonly sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
@@ -56,7 +53,6 @@ export class Context {
   private _abortController = new AbortController();
 
   constructor(options: ContextOptions) {
-    this.tools = options.tools;
     this.config = options.config;
     this.sessionLog = options.sessionLog;
     this.options = options;

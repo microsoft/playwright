@@ -16,7 +16,7 @@
 
 import { test, expect } from './fixtures';
 
-test.use({ mcpArgs: ['--caps=verify'] });
+test.use({ mcpArgs: ['--caps=testing'] });
 
 test('browser_verify_element_visible', async ({ client, server }) => {
   server.setContent('/', `

@@ -50,7 +50,6 @@ export class BrowserServerBackend implements ServerBackend {
     }
     this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, rootPath) : undefined;
     this._context = new Context({
-      tools: this._tools,
       config: this._config,
       browserContextFactory: this._browserContextFactory,
       sessionLog: this._sessionLog,

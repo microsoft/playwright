@@ -176,10 +176,10 @@ test('playwright_test_debug_test (pause/resume)', async ({ startClient }) => {
   })).toHaveTextResponse(`### Paused on error:
 expect(locator).toBeVisible() failed
 
-Locator:  getByRole('button', { name: 'Missing' })
+Locator: getByRole('button', { name: 'Missing' })
 Expected: visible
+Timeout: 1000ms
 Error: element(s) not found
-Timeout:  1000ms
 
 Call log:
   - Expect "toBeVisible" with timeout 1000ms
@@ -190,7 +190,7 @@ Call log:
 - button "Submit" [ref=e2]
 
 ### Task
-Try recovering from the error prior to continuing, use following tools to recover: playwright_test_browser_snapshot, playwright_test_generate_locator, playwright_test_evaluate_on_pause`);
+Try recovering from the error prior to continuing`);
 
   expect(await client.callTool({
     name: 'playwright_test_run_tests',
@@ -209,8 +209,10 @@ test('playwright_test_browser_snapshot', async ({ startClient }) => {
     },
   });
   expect(await client.callTool({
-    name: 'playwright_test_browser_snapshot',
-  })).toHaveTextResponse(`- button \"Submit\" [ref=e2]`);
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
+  });
 });
 
 test('playwright_test_evaluate_on_pause', async ({ startClient }) => {
@@ -222,11 +224,13 @@ test('playwright_test_evaluate_on_pause', async ({ startClient }) => {
     },
   });
   expect(await client.callTool({
-    name: 'playwright_test_evaluate_on_pause',
+    name: 'browser_evaluate',
     arguments: {
       function: '() => 21+21',
     },
-  })).toHaveTextResponse(`42`);
+  })).toHaveResponse({
+    result: `42`,
+  });
 });
 
 test('playwright_test_evaluate_on_pause (with element)', async ({ startClient }) => {
@@ -238,13 +242,15 @@ test('playwright_test_evaluate_on_pause (with element)', async ({ startClient })
     },
   });
   expect(await client.callTool({
-    name: 'playwright_test_evaluate_on_pause',
+    name: 'browser_evaluate',
     arguments: {
       function: 'element => element.textContent',
       element: 'button',
       ref: 'e2',
     },
-  })).toHaveTextResponse(`"Submit"`);
+  })).toHaveResponse({
+    result: `"Submit"`,
+  });
 });
 
 test('playwright_test_generate_locator', async ({ startClient }) => {
@@ -256,12 +262,14 @@ test('playwright_test_generate_locator', async ({ startClient }) => {
     },
   });
   expect(await client.callTool({
-    name: 'playwright_test_generate_locator',
+    name: 'browser_generate_locator',
     arguments: {
       element: 'button',
       ref: 'e2',
     },
-  })).toHaveTextResponse(`getByRole('button', { name: 'Submit' })`);
+  })).toHaveResponse({
+    result: `getByRole('button', { name: 'Submit' })`,
+  });
 });
 
 async function prepareDebugTest(startClient: StartClient) {
