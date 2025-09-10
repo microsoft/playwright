@@ -48,7 +48,6 @@ type RenderedEntry = {
 };
 type ColumnName = keyof RenderedEntry;
 type Sorting = { by: ColumnName, negate: boolean};
-type EntryKey = { index: number, frameref: string | undefined };
 const NetworkGridView = GridView<RenderedEntry>;
 
 export function useNetworkTabModel(model: MultiTraceModel | undefined, selectedTime: Boundaries | undefined): NetworkTabModel {
@@ -72,23 +71,18 @@ export const NetworkTab: React.FunctionComponent<{
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onEntryHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
-  const [selectedEntryKey, setSelectedEntryKey] = React.useState<EntryKey | undefined>(undefined);
+  const [selectedEntryKey, setSelectedEntryKey] = React.useState<string | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
-  const { renderedEntries } = React.useMemo(() => {
+  const { renderedEntries, renderedEntryMap } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap)).filter(filterEntry(filterState));
     if (sorting)
       sort(renderedEntries, sorting);
-    return { renderedEntries };
+    const renderedEntryMap = new Map(renderedEntries.map((entry, i) => [`${entry.frameref}:${i}`, entry]));
+    return { renderedEntries, renderedEntryMap };
   }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
-  const selectedEntry = React.useMemo(() => {
-    // HAR entries don't have a concept of unique id. Attempt to treat index and frameref as the key
-    if (!selectedEntryKey || renderedEntries.length <= selectedEntryKey.index)
-      return undefined;
-    const entry = renderedEntries[selectedEntryKey.index];
-    return entry.frameref === selectedEntryKey.frameref ? entry : undefined;
-  }, [selectedEntryKey, renderedEntries]);
+  const selectedEntry = selectedEntryKey ? renderedEntryMap.get(selectedEntryKey) : undefined;
 
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
@@ -96,7 +90,7 @@ export const NetworkTab: React.FunctionComponent<{
 
   const onSelected = React.useCallback((item: RenderedEntry) => {
     const index = renderedEntries.indexOf(item);
-    setSelectedEntryKey(index !== -1 ? { index, frameref: item.frameref } : undefined);
+    setSelectedEntryKey(index !== -1 ? `${item.frameref}:${index}` : undefined);
   }, [renderedEntries]);
 
   const onFilterStateChange = React.useCallback((newFilterState: FilterState) => {
