@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { runBrowserBackendOnError } from './mcp/test/browserBackend';
+import { runBrowserBackendOnError, runBrowserBackendAtEnd } from './mcp/test/browserBackend';
 import { codeFrameColumns } from './transform/babelBundle';
 import { stripAnsiEscapes } from './util';
 
@@ -438,6 +438,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       await use(context);
+      await runBrowserBackendAtEnd(context);
       await close();
       return;
     }

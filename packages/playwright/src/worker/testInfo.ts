@@ -614,6 +614,10 @@ export class TestInfoImpl implements TestInfo {
   _pauseOnError(): boolean {
     return this._workerParams.pauseOnError;
   }
+
+  _pauseAtEnd(): boolean {
+    return this._workerParams.pauseAtEnd;
+  }
 }
 
 export class TestStepInfoImpl implements TestStepInfo {

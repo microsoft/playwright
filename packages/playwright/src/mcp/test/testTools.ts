@@ -26,7 +26,7 @@ import { StringWriteStream } from './streams';
 
 export const listTests = defineTestTool({
   schema: {
-    name: 'playwright_test_list_tests',
+    name: 'test_list',
     title: 'List tests',
     description: 'List tests',
     inputSchema: z.object({}),
@@ -47,7 +47,7 @@ export const listTests = defineTestTool({
 
 export const runTests = defineTestTool({
   schema: {
-    name: 'playwright_test_run_tests',
+    name: 'test_run',
     title: 'Run tests',
     description: 'Run tests',
     inputSchema: z.object({
@@ -79,7 +79,7 @@ export const runTests = defineTestTool({
 
 export const debugTest = defineTestTool({
   schema: {
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     title: 'Debug single test',
     description: 'Debug single test',
     inputSchema: z.object({
@@ -92,14 +92,7 @@ export const debugTest = defineTestTool({
   },
 
   handle: async (context, params) => {
-    const stream = new StringWriteStream();
-    const screen = {
-      ...terminalScreen,
-      isTTY: false,
-      colors: noColors,
-      stdout: stream as unknown as NodeJS.WriteStream,
-      stderr: stream as unknown as NodeJS.WriteStream,
-    };
+    const { screen, stream } = createScreen();
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
@@ -117,6 +110,38 @@ export const debugTest = defineTestTool({
       content: [
         { type: 'text', text },
       ],
+      isError: result.status !== 'passed',
+    };
+  },
+});
+
+export const setupPage = defineTestTool({
+  schema: {
+    name: 'test_setup_page',
+    title: 'Setup page',
+    description: 'Runs a blank test to setup the page for interaction',
+    inputSchema: z.object({
+      testLocation: z.string().describe('Location of the blank test to use for setup. For example: "test/e2e/file.spec.ts:20"'),
+    }),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params) => {
+    const { screen, stream } = createScreen();
+    const configDir = context.configLocation.configDir;
+    const reporter = new ListReporter({ configDir, screen });
+    const testRunner = await context.createTestRunner();
+    const result = await testRunner.runTests(reporter, {
+      headed: !context.options?.headless,
+      locations: [params.testLocation],
+      timeout: 0,
+      workers: 1,
+      pauseAtEnd: true,
+    });
+
+    const text = stream.content();
+    return {
+      content: [{ type: 'text', text }],
       isError: result.status !== 'passed',
     };
   },

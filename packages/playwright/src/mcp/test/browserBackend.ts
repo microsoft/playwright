@@ -30,15 +30,6 @@ export async function runBrowserBackendOnError(page: playwright.Page, message: (
   if (!testInfo || !testInfo._pauseOnError())
     return;
 
-  const browserContextFactory: BrowserContextFactory = {
-    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
-      return {
-        browserContext: page.context(),
-        close: async () => {}
-      };
-    }
-  };
-
   const config: FullConfig = {
     ...defaultConfig,
     capabilities: ['testing'],
@@ -54,5 +45,39 @@ ${snapshot}
 ### Task
 Try recovering from the error prior to continuing`;
 
-  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, browserContextFactory), introMessage);
+  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(page.context())), introMessage);
+}
+
+export async function runBrowserBackendAtEnd(context: playwright.BrowserContext) {
+  const testInfo = currentTestInfo();
+  if (!testInfo || !testInfo._pauseAtEnd())
+    return;
+
+  const page = context.pages()[0];
+  if (!page)
+    return;
+
+  const snapshot = await (page as Page)._snapshotForAI();
+  const introMessage = `### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+${snapshot}`;
+
+  const config: FullConfig = {
+    ...defaultConfig,
+    capabilities: ['testing'],
+  };
+
+  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(context)), introMessage);
+}
+
+function identityFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
+  return {
+    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
+      return {
+        browserContext,
+        close: async () => {}
+      };
+    }
+  };
 }
