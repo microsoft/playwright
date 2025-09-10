@@ -51,3 +51,8 @@ export function getPackageManagerExecCommand() {
 export function isLikelyNpxGlobal() {
   return process.argv.length >= 2 && process.argv[1].includes('_npx');
 }
+
+// Indicate that this and child processes are running under Playwright Test.
+export function setPlaywrightTestProcessEnv() {
+  return process.env['PLAYWRIGHT_TEST'] = '1';
+}

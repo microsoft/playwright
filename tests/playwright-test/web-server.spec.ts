@@ -123,7 +123,7 @@ test('should create a server with environment variables', async ({ runInlineTest
   delete process.env['FOOEXTERNAL'];
 });
 
-test('should run web server with PLAYWRIGHT=1 environment variable', {
+test('should run web server with PLAYWRIGHT_TEST=1 environment variable', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37377' }
 }, async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
@@ -132,7 +132,7 @@ test('should run web server with PLAYWRIGHT=1 environment variable', {
       import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${port}');
-        await page.goto(baseURL + '/env-PLAYWRIGHT');
+        await page.goto(baseURL + '/env-PLAYWRIGHT_TEST');
         expect(await page.textContent('body')).toBe('1');
       });
     `,
@@ -141,9 +141,6 @@ test('should run web server with PLAYWRIGHT=1 environment variable', {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
-          env: {
-            'FOO': 'BAR',
-          }
         }
       };
     `,
@@ -155,7 +152,7 @@ test('should run web server with PLAYWRIGHT=1 environment variable', {
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 });
 
-test('should allow to unset PLAYWRIGHT environment variable', {
+test('should allow to unset PLAYWRIGHT_TEST environment variable', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37377' }
 }, async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
@@ -164,7 +161,7 @@ test('should allow to unset PLAYWRIGHT environment variable', {
       import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${port}');
-        await page.goto(baseURL + '/env-PLAYWRIGHT');
+        await page.goto(baseURL + '/env-PLAYWRIGHT_TEST');
         expect(await page.textContent('body')).toBe('');
       });
     `,
@@ -174,7 +171,7 @@ test('should allow to unset PLAYWRIGHT environment variable', {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
           env: {
-            'PLAYWRIGHT': undefined,
+            'PLAYWRIGHT_TEST': undefined,
           }
         }
       };

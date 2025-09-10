@@ -44,7 +44,6 @@ const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
   'FORCE_COLOR': '1',
   'DEBUG_COLORS': '1',
-  'PLAYWRIGHT': '1',
 };
 
 const debugWebServer = debug('pw:webserver');

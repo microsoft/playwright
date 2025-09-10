@@ -17,7 +17,7 @@
 import util from 'util';
 
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer } from 'playwright-core/lib/server';
-import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
+import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest, setPlaywrightTestProcessEnv } from 'playwright-core/lib/utils';
 import { debug, open } from 'playwright-core/lib/utilsBundle';
 
 import { loadConfig, resolveConfigLocation } from '../common/configLoader';
