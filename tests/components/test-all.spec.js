@@ -4,6 +4,8 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+let activeChild = undefined;
+
 for (const dir of fs.readdirSync(__dirname)) {
   const folder = path.join(__dirname, dir);
   if (!fs.statSync(folder).isDirectory())
@@ -22,9 +24,17 @@ for (const dir of fs.readdirSync(__dirname)) {
       test(project, async () => {
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
-    } 
+    }
   });
 }
+
+test.afterEach(async () => {
+  // Make sure to kill server even if timeout occurs
+  if (activeChild) {
+    activeChild.kill();
+    activeChild = undefined;
+  }
+});
 
 async function run(command, args, folder) {
   const child = spawn(command, args, {
@@ -33,9 +43,11 @@ async function run(command, args, folder) {
     shell: true,
     env: process.env
   });
+  activeChild = child;
   child.stdout.on('data', data => process.stdout.write(data));
   child.stderr.on('data', data => process.stdout.write(data));
   process.on('exit', () => {
+    activeChild = undefined;
     child.kill();
   });
   const code = await new Promise(f => child.on('close', f));
