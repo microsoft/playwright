@@ -326,6 +326,23 @@ const keyMap = new Map<string, number>([
   ['Cut', 277],
   ['Copy', 278],
   ['Paste', 279],
+  ['MediaPlay', 126],
+  ['MediaPause', 127],
+  ['MediaPlayPause', 85],
+  ['MediaStop', 86],
+  ['MediaNext', 87],
+  ['MediaPrevious', 88],
+  ['MediaRewind', 89],
+  ['MediaFastForward', 90],
+  ['MediaRecord', 130],
+  ['MediaEject', 129],
+  ['MediaClose', 128],
+  ['MediaAudioTrack', 222],
+  ['MediaTopMenu', 226],
+  ['MediaSkipForward', 272],
+  ['MediaSkipBackward', 273],
+  ['MediaStepForward', 274],
+  ['MediaStepBackward', 275],
 ]);
 
 function fixupAndroidElementInfo(info: channels.AndroidElementInfo) {

@@ -16311,7 +16311,24 @@ export type AndroidKey =
   'Assist' |
   'Cut' |
   'Copy' |
-  'Paste';
+  'Paste' |
+  'MediaPlay' |
+  'MediaPause' |
+  'MediaPlayPause' |
+  'MediaStop' |
+  'MediaNext' |
+  'MediaPrevious' |
+  'MediaRewind' |
+  'MediaFastForward' |
+  'MediaRecord' |
+  'MediaEject' |
+  'MediaClose' |
+  'MediaAudioTrack' |
+  'MediaTopMenu' |
+  'MediaSkipForward' |
+  'MediaSkipBackward' |
+  'MediaStepForward' |
+  'MediaStepBackward';
 
 export const _electron: Electron;
 export const _android: Android;
