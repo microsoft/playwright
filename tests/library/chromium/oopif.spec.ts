@@ -371,8 +371,10 @@ it('should intercept response body from oopif', async function({ page, browser, 
   expect(await response.text()).toBeTruthy();
 });
 
-it.fail('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server }) => {
+it('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36095' });
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17656' });
+  it.skip(browserMajorVersion < 141, 'old chromium does not have TargetInfo.parentFrameId');
 
   const cdpPort = 10123 + it.info().parallelIndex * 4;
   const hostBrowser = await browserType.launch({ cdpPort } as any);
@@ -386,6 +388,8 @@ it.fail('should allow to re-connect to OOPIFs with CDP when iframes were there a
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  await browser.close();
+  await hostBrowser.close();
 });
 
 async function assertOOPIFCount(browser: Browser, count: number) {
