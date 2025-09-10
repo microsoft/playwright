@@ -670,6 +670,12 @@ copyFiles.push({
   to: 'packages/playwright-core/lib',
 });
 
+copyFiles.push({
+  files: 'packages/playwright/src/agents/*.md',
+  from: 'packages/playwright/src',
+  to: 'packages/playwright/lib',
+});
+
 if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({

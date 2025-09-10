@@ -36,6 +36,7 @@ import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
+import { initClaudeCodeRepo, initOpencodeRepo } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -169,6 +170,19 @@ function addTestMCPServerCommand(program: Command) {
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)
       console.error('MCP Listening on: ', mdbUrl);
+  });
+}
+
+function addInitAgentsCommand(program: Command) {
+  const command = program.command('init-agents', { hidden: true });
+  command.description('Initialize repository agents for the Claude Code');
+  command.option('--claude', 'Initialize repository agents for the Claude Code');
+  command.option('--opencode', 'Initialize repository agents for the Opencode');
+  command.action(async opts => {
+    if (opts.opencode)
+      await initOpencodeRepo();
+    else
+      await initClaudeCodeRepo();
   });
 }
 
@@ -404,3 +418,4 @@ addBrowserMCPServerCommand(program);
 addTestMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);
+addInitAgentsCommand(program);
