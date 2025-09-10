@@ -176,10 +176,10 @@ test('playwright_test_debug_test (pause/resume)', async ({ startClient }) => {
   })).toHaveTextResponse(`### Paused on error:
 expect(locator).toBeVisible() failed
 
-Locator:  getByRole('button', { name: 'Missing' })
+Locator: getByRole('button', { name: 'Missing' })
 Expected: visible
+Timeout: 1000ms
 Error: element(s) not found
-Timeout:  1000ms
 
 Call log:
   - Expect "toBeVisible" with timeout 1000ms
