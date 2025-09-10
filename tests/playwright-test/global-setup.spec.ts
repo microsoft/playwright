@@ -460,10 +460,8 @@ test('globalSetup and globalTeardown should have PLAYWRIGHT_TEST=1', async ({ ru
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        testDir: '..',
         globalSetup: './globalSetup',
-        globalTeardown: './globalTeardown.ts',
-        projects: [{ name: 'p1' }]
+        globalTeardown: './globalTeardown',
       };
     `,
     'globalSetup.ts': `
