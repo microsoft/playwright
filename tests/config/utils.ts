@@ -64,6 +64,8 @@ export function expectedSSLError(browserName: string, platform: string, channel:
     else
       return /Unacceptable TLS certificate|Operation was cancelled/;
   }
+  if (browserName === '_bidiFirefox')
+    return /MOZILLA_PKIX_ERROR_SELF_SIGNED_CERT/;
   return /SSL_ERROR_UNKNOWN/;
 }
 
