@@ -16,20 +16,21 @@
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 
-import * as mcp from './bundle';
-import { InProcessTransport } from './inProcessTransport';
+import * as mcpBundle from './bundle';
 import { httpAddressToString, installHttpTransport, startHttpServer } from './http';
+import { InProcessTransport } from './inProcessTransport';
 
 import type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 const serverDebug = debug('pw:mcp:server');
 const errorsDebug = debug('pw:mcp:errors');
 
 export type ClientVersion = { name: string, version: string };
+
 export interface ServerBackend {
   initialize?(server: Server, clientVersion: ClientVersion, roots: Root[]): Promise<void>;
   listTools(): Promise<Tool[]>;
@@ -57,13 +58,13 @@ export async function wrapInProcess(backend: ServerBackend): Promise<Transport> 
 export function createServer(name: string, version: string, backend: ServerBackend, runHeartbeat: boolean): Server {
   let initializedPromiseResolve = () => {};
   const initializedPromise = new Promise<void>(resolve => initializedPromiseResolve = resolve);
-  const server = new mcp.Server({ name, version }, {
+  const server = new mcpBundle.Server({ name, version }, {
     capabilities: {
       tools: {},
     }
   });
 
-  server.setRequestHandler(mcp.ListToolsRequestSchema, async () => {
+  server.setRequestHandler(mcpBundle.ListToolsRequestSchema, async () => {
     serverDebug('listTools');
     await initializedPromise;
     const tools = await backend.listTools();
@@ -71,7 +72,7 @@ export function createServer(name: string, version: string, backend: ServerBacke
   });
 
   let heartbeatRunning = false;
-  server.setRequestHandler(mcp.CallToolRequestSchema, async request => {
+  server.setRequestHandler(mcpBundle.CallToolRequestSchema, async request => {
     serverDebug('callTool', request);
     await initializedPromise;
 
@@ -94,8 +95,17 @@ export function createServer(name: string, version: string, backend: ServerBacke
       const capabilities = server.getClientCapabilities();
       let clientRoots: Root[] = [];
       if (capabilities?.roots) {
-        const { roots } = await server.listRoots(undefined, { timeout: 2_000 }).catch(() => ({ roots: [] }));
-        clientRoots = roots;
+        for (let i = 0; i < 2; i++) {
+          try {
+            // In the @modelcontextprotocol TypeScript SDK (and Cursor) in the streaming http
+            // mode, the SSE channel is not ready yet, when `initialized` notification arrives,
+            // `listRoots` times out in that case and we retry once.
+            const { roots } = await server.listRoots(undefined, { timeout: 2_000 });
+            clientRoots = roots;
+          } catch (e) {
+            continue;
+          }
+        }
       }
       const clientVersion = server.getClientVersion() ?? { name: 'unknown', version: 'unknown' };
       await backend.initialize?.(server, clientVersion, clientRoots);
@@ -133,7 +143,7 @@ function addServerListener(server: Server, event: 'close' | 'initialized', liste
 
 export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number }) {
   if (options.port === undefined) {
-    await connect(serverBackendFactory, new mcp.StdioServerTransport(), false);
+    await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false);
     return;
   }
 

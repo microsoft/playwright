@@ -751,9 +751,16 @@ test('slow double SIGINT should be respected in reporter.onExit', async ({ inter
 });
 
 test('unhandled exception in test.fail should restart worker and continue', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const files = {
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
+      import { test as baseTest, expect } from '@playwright/test';
+
+      const test = baseTest.extend({
+        worker: [async ({}, use, info) => {
+          await use();
+          console.log('\\n%%worker teardown=' + info.workerIndex);
+        }, { scope: 'worker', auto: true }],
+      });
 
       test('bad', async () => {
         test.fail();
@@ -767,12 +774,20 @@ test('unhandled exception in test.fail should restart worker and continue', asyn
       test('good', () => {
         console.log('\\n%%good running worker=' + test.info().workerIndex);
       });
-    `
-  }, { retries: 1, reporter: 'list' });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-  expect(result.failed).toBe(0);
-  expect(result.outputLines).toEqual(['bad running worker=0', 'good running worker=1']);
+    `,
+  };
+  for (const parallel of [true, false]) {
+    await test.step(`parallel=${parallel}`, async () => {
+      const options = { retries: 1, reporter: 'list', workers: 1 };
+      if (parallel)
+        options['fully-parallel'] = true;
+      const result = await runInlineTest(files, options);
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(2);
+      expect(result.failed).toBe(0);
+      expect(result.outputLines).toEqual(['bad running worker=0', 'worker teardown=0', 'good running worker=1', 'worker teardown=1']);
+    });
+  }
 });
 
 test('wait for workers to finish before reporter.onEnd', async ({ runInlineTest }) => {
@@ -842,7 +857,7 @@ test('should run last failed tests', async ({ runInlineTest }) => {
   expect(result2.failed).toBe(1);
 });
 
-test('should run last failed tests in a shard', async ({ runInlineTest }) => {
+test('should run last failed tests in a shard with a custom path', async ({ runInlineTest }) => {
   const workspace = {
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
@@ -859,17 +874,62 @@ test('should run last failed tests in a shard', async ({ runInlineTest }) => {
       });
     `,
   };
-  const result1 = await runInlineTest(workspace, { shard: '2/2' });
+  const result1 = await runInlineTest(workspace, { 'shard': '2/2', 'last-run-file': 'custom.json' });
   expect(result1.exitCode).toBe(1);
   expect(result1.passed).toBe(1);
   expect(result1.failed).toBe(1);
   expect(result1.output).toContain('b.spec.js:3:11 › pass-b');
   expect(result1.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(fs.existsSync(test.info().outputPath('custom.json'))).toBe(true);
 
-  const result2 = await runInlineTest(workspace, { shard: '2/2' }, {}, { additionalArgs: ['--last-failed'] });
+  const result2 = await runInlineTest(workspace, { 'shard': '2/2', 'last-failed': true, 'last-run-file': 'custom.json' });
   expect(result2.exitCode).toBe(1);
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
   expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
+});
+
+test('should apply filterTests from last-run.json', async ({ runInlineTest }) => {
+  const workspace = {
+    'reporter.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      export default class MyReporter {
+        onBegin(config, suite) {
+          const filterTests = suite.allTests().filter(t => t.title !== 'test2').map(t => t.id);
+          const json = JSON.stringify({ filterTests });
+          fs.writeFileSync(path.join(__dirname, 'filter.json'), json);
+        }
+      }
+    `,
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('test1', async () => {
+        console.log('\\n%%test1');
+      });
+      test('test2', async () => {
+        console.log('\\n%%test2');
+      });
+      test('test3', async () => {
+        console.log('\\n%%test3');
+        expect(1).toBe(2);
+      });
+    `
+  };
+  const result1 = await runInlineTest(workspace, { reporter: './reporter.ts', list: true });
+  expect(result1.exitCode).toBe(0);
+  expect(fs.existsSync(test.info().outputPath('filter.json'))).toBe(true);
+
+  const result2 = await runInlineTest(workspace, { 'last-run-file': 'filter.json' });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.outputLines).toEqual(['test1', 'test3']);
+
+  const result3 = await runInlineTest(workspace, { 'last-run-file': 'filter.json', 'last-failed': true });
+  expect(result3.exitCode).toBe(1);
+  expect(result3.passed).toBe(0);
+  expect(result3.failed).toBe(1);
+  expect(result3.outputLines).toEqual(['test3']);
 });

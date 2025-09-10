@@ -16,12 +16,12 @@
 
 import * as mcp from '../sdk/exports';
 import * as mcpBundle from '../sdk/bundle';
-import { snapshot, pickLocator, evaluate } from './tools';
-import { defineToolSchema } from '../sdk/exports';
-import { runOnPauseBackendLoop } from '../sdk/mdb';
+import { currentTestInfo } from '../../common/globals';
+
+import { snapshot, pickLocator, evaluate } from './browserTools';
 import { stripAnsiEscapes } from '../../util';
 
-import type { Tool } from './tool';
+import type { BrowserTool } from './browserTool';
 import type * as playwright from '../../../index';
 import type { ServerBackendOnPause } from '../sdk/mdb';
 
@@ -34,7 +34,7 @@ const tools = [snapshot, pickLocator, evaluate];
 export class BrowserBackend implements ServerBackendOnPause {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
-  private _tools: Tool<any>[] = tools;
+  private _tools: BrowserTool<any>[] = tools;
   private _page: playwright.Page;
 
   constructor(page: playwright.Page) {
@@ -64,7 +64,7 @@ export class BrowserBackend implements ServerBackendOnPause {
   }
 }
 
-const doneToolSchema = defineToolSchema({
+const doneToolSchema = mcp.defineToolSchema({
   name: 'done',
   title: 'Done',
   description: 'Done',
@@ -73,8 +73,10 @@ const doneToolSchema = defineToolSchema({
 });
 
 export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
-  if (!process.env.PLAYWRIGHT_DEBUGGER_MCP)
+  const testInfo = currentTestInfo();
+  if (!testInfo || !testInfo._pauseOnError())
     return;
+
   const snapshot = await (page as PageEx)._snapshotForAI();
   const introMessage = `### Paused on error:
 ${stripAnsiEscapes(message())}
@@ -84,5 +86,5 @@ ${snapshot}
 
 ### Task
 Try recovering from the error prior to continuing, use following tools to recover: ${tools.map(tool => tool.schema.name).join(', ')}`;
-  await runOnPauseBackendLoop(process.env.PLAYWRIGHT_DEBUGGER_MCP!, new BrowserBackend(page), introMessage);
+  await mcp.runOnPauseBackendLoop(new BrowserBackend(page), introMessage);
 }

@@ -18,6 +18,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
+import { BidiBrowserContext } from './bidiBrowser';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
@@ -30,7 +31,6 @@ import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
-import type { BidiBrowserContext } from './bidiBrowser';
 import type { BidiSession } from './bidiConnection';
 import type * as channels from '@protocol/channels';
 
@@ -75,6 +75,8 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.historyUpdated', this._onHistoryUpdated.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.domContentLoaded', this._onDomContentLoaded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.load', this._onLoad.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadWillBegin', this._onDownloadWillBegin.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadEnd', this._onDownloadEnded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptOpened', this._onUserPromptOpened.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'log.entryAdded', this._onLogEntryAdded.bind(this)),
     ];
@@ -217,7 +219,46 @@ export class BidiPage implements PageDelegate {
         event.defaultValue));
   }
 
+  private _onDownloadWillBegin(event: bidi.BrowsingContext.DownloadWillBeginParams) {
+    if (!event.navigation)
+      return;
+
+    let originPage = this._page.initializedOrUndefined();
+    // If it's a new window download, report it on the opener page.
+    if (!originPage && this._opener)
+      originPage = this._opener._page.initializedOrUndefined();
+    if (!originPage)
+      return;
+
+    this._browserContext._browser._downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename);
+  }
+
+  private _onDownloadEnded(event: bidi.BrowsingContext.DownloadEndParams) {
+    if (!event.navigation)
+      return;
+    this._browserContext._browser._downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
+  }
+
   private _onLogEntryAdded(params: bidi.Log.Entry) {
+    if (params.type === 'javascript' && params.level === 'error') {
+      let errorName = '';
+      let errorMessage: string | undefined;
+      if (params.text?.includes(': ')) {
+        const index = params.text.indexOf(': ');
+        errorName = params.text.substring(0, index);
+        errorMessage = params.text.substring(index + 2);
+      } else {
+        errorMessage = params.text ?? undefined;
+      }
+      const error = new Error(errorMessage);
+      error.name = errorName;
+      error.stack = `${params.text}\n${params.stackTrace?.callFrames.map(f => {
+        const location = `${f.url}:${f.lineNumber + 1}:${f.columnNumber + 1}`;
+        return f.functionName ? `    at ${f.functionName} (${location})` : `    at ${location}`;
+      }).join('\n')}`;
+      this._page.emitOnContextOnceInitialized(BidiBrowserContext.Events.PageError, error, this._page);
+      return;
+    }
     if (params.type !== 'console')
       return;
     const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;

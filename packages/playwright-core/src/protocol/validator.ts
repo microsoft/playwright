@@ -475,6 +475,7 @@ scheme.DebugControllerSetReportStateChangedParams = tObject({
 });
 scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
+  browserId: tOptional(tString),
   mode: tEnum(['inspecting', 'recording', 'none']),
   testIdAttributeName: tOptional(tString),
   generateAutoExpect: tOptional(tBoolean),
@@ -489,6 +490,11 @@ scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerResumeParams = tOptional(tObject({}));
 scheme.DebugControllerResumeResult = tOptional(tObject({}));
+scheme.DebugControllerCloseBrowserParams = tObject({
+  id: tString,
+  reason: tOptional(tString),
+});
+scheme.DebugControllerCloseBrowserResult = tOptional(tObject({}));
 scheme.DebugControllerKillParams = tOptional(tObject({}));
 scheme.DebugControllerKillResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
@@ -1916,12 +1922,23 @@ scheme.FrameExpectResult = tObject({
   matches: tBoolean,
   received: tOptional(tType('SerializedValue')),
   timedOut: tOptional(tBoolean),
+  errorMessage: tOptional(tString),
   log: tOptional(tArray(tString)),
 });
 scheme.WorkerInitializer = tObject({
   url: tString,
 });
 scheme.WorkerCloseEvent = tOptional(tObject({}));
+scheme.WorkerConsoleEvent = tObject({
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tInt,
+    columnNumber: tInt,
+  }),
+});
 scheme.WorkerEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
@@ -1938,6 +1955,11 @@ scheme.WorkerEvaluateExpressionHandleParams = tObject({
 scheme.WorkerEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
+scheme.WorkerUpdateSubscriptionParams = tObject({
+  event: tEnum(['console']),
+  enabled: tBoolean,
+});
+scheme.WorkerUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.JSHandleInitializer = tObject({
   preview: tString,
 });

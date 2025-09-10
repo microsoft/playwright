@@ -36,7 +36,7 @@ export class WorkerHost extends ProcessHost {
   private _params: WorkerInitParams;
   private _didFail = false;
 
-  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig, extraEnv: Record<string, string | undefined>, outputDir: string) {
+  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig, extraEnv: Record<string, string | undefined>, outputDir: string, pauseOnError: boolean) {
     const workerIndex = lastWorkerIndex++;
     super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`, {
       ...extraEnv,
@@ -54,6 +54,7 @@ export class WorkerHost extends ProcessHost {
       projectId: testGroup.projectId,
       config,
       artifactsDir: path.join(outputDir, artifactsFolderName(workerIndex)),
+      pauseOnError,
     };
   }
 

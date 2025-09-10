@@ -33,14 +33,17 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
-import { ServerBackendFactory } from './mcp/sdk/server';
-import { TestServerBackend } from './mcp/test/backend';
-import { runMainBackend } from './mcp/sdk/mdb';
+import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
+import { TestServerBackend } from './mcp/test/testBackend';
+import { decorateCommand } from './mcp/program';
+import { initClaudeCodeRepo, initOpencodeRepo } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
 import type { ReporterDescription } from '../types/test';
 import type { Command } from 'playwright-core/lib/utilsBundle';
+
+const packageJSON = require('../package.json');
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -143,9 +146,16 @@ Examples:
   $ npx playwright merge-reports playwright-report`);
 }
 
-function addMCPServerCommand(program: Command) {
+function addBrowserMCPServerCommand(program: Command) {
   const command = program.command('run-mcp-server', { hidden: true });
+  command.description('Interact with the browser over MCP');
+  decorateCommand(command, packageJSON.version);
+}
+
+function addTestMCPServerCommand(program: Command) {
+  const command = program.command('run-test-mcp-server', { hidden: true });
   command.description('Interact with the test runner over MCP');
+  command.option('--headless', 'run browser in headless mode, headed by default');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
@@ -154,12 +164,25 @@ function addMCPServerCommand(program: Command) {
     const backendFactory: ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
-      version: '0.0.0',
-      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined }),
+      version: packageJSON.version,
+      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined, headless: options.headless }),
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)
       console.error('MCP Listening on: ', mdbUrl);
+  });
+}
+
+function addInitAgentsCommand(program: Command) {
+  const command = program.command('init-agents', { hidden: true });
+  command.description('Initialize repository agents for the Claude Code');
+  command.option('--claude', 'Initialize repository agents for the Claude Code');
+  command.option('--opencode', 'Initialize repository agents for the Opencode');
+  command.action(async opts => {
+    if (opts.opencode)
+      await initOpencodeRepo();
+    else
+      await initClaudeCodeRepo();
   });
 }
 
@@ -176,6 +199,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliLastFailed = !!opts.lastFailed;
+  config.cliLastRunFile = opts.lastRunFile ? path.resolve(process.cwd(), opts.lastRunFile) : undefined;
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   filterProjects(config.projects, config.cliProjectFilter);
@@ -361,6 +385,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--headed', { description: `Run tests in headed browsers (default: headless)` }],
   ['--ignore-snapshots', { description: `Ignore screenshot and snapshot expectations` }],
   ['--last-failed', { description: `Only re-run the failures` }],
+  ['--last-run-file <file>', { description: `Path to the last-run file (default: "test-results/.last-run.json")` }],
   ['--list', { description: `Collect all the tests and report them, but do not run` }],
   ['--max-failures <N>', { description: `Stop after the first N failures` }],
   ['--no-deps', { description: `Do not run project dependencies` }],
@@ -389,6 +414,8 @@ addTestCommand(program);
 addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
-addMCPServerCommand(program);
+addBrowserMCPServerCommand(program);
+addTestMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);
+addInitAgentsCommand(program);

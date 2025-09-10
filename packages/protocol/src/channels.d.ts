@@ -743,6 +743,7 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
   highlight(params: DebugControllerHighlightParams, progress?: Progress): Promise<DebugControllerHighlightResult>;
   hideHighlight(params?: DebugControllerHideHighlightParams, progress?: Progress): Promise<DebugControllerHideHighlightResult>;
   resume(params?: DebugControllerResumeParams, progress?: Progress): Promise<DebugControllerResumeResult>;
+  closeBrowser(params: DebugControllerCloseBrowserParams, progress?: Progress): Promise<DebugControllerCloseBrowserResult>;
   kill(params?: DebugControllerKillParams, progress?: Progress): Promise<DebugControllerKillResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
@@ -791,11 +792,13 @@ export type DebugControllerSetReportStateChangedOptions = {
 };
 export type DebugControllerSetReportStateChangedResult = void;
 export type DebugControllerSetRecorderModeParams = {
+  browserId?: string,
   mode: 'inspecting' | 'recording' | 'none',
   testIdAttributeName?: string,
   generateAutoExpect?: boolean,
 };
 export type DebugControllerSetRecorderModeOptions = {
+  browserId?: string,
   testIdAttributeName?: string,
   generateAutoExpect?: boolean,
 };
@@ -815,6 +818,14 @@ export type DebugControllerHideHighlightResult = void;
 export type DebugControllerResumeParams = {};
 export type DebugControllerResumeOptions = {};
 export type DebugControllerResumeResult = void;
+export type DebugControllerCloseBrowserParams = {
+  id: string,
+  reason?: string,
+};
+export type DebugControllerCloseBrowserOptions = {
+  reason?: string,
+};
+export type DebugControllerCloseBrowserResult = void;
 export type DebugControllerKillParams = {};
 export type DebugControllerKillOptions = {};
 export type DebugControllerKillResult = void;
@@ -3285,6 +3296,7 @@ export type FrameExpectResult = {
   matches: boolean,
   received?: SerializedValue,
   timedOut?: boolean,
+  errorMessage?: string,
   log?: string[],
 };
 
@@ -3299,13 +3311,25 @@ export type WorkerInitializer = {
 };
 export interface WorkerEventTarget {
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
+  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
 }
 export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
+  updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
 export type WorkerCloseEvent = {};
+export type WorkerConsoleEvent = {
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
+};
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
@@ -3328,9 +3352,18 @@ export type WorkerEvaluateExpressionHandleOptions = {
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
+export type WorkerUpdateSubscriptionParams = {
+  event: 'console',
+  enabled: boolean,
+};
+export type WorkerUpdateSubscriptionOptions = {
+
+};
+export type WorkerUpdateSubscriptionResult = void;
 
 export interface WorkerEvents {
   'close': WorkerCloseEvent;
+  'console': WorkerConsoleEvent;
 }
 
 // ----------- JSHandle -----------

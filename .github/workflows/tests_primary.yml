@@ -9,6 +9,8 @@ on:
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
+      - 'packages/playwright/src/mcp/**'
+      - 'tests/mcp/**'
     branches:
       - main
       - release-*
@@ -142,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: 18
     - run: npm ci
@@ -178,14 +180,14 @@ jobs:
       DEBUG_GIT_COMMIT_INFO: ""
     steps:
     - uses: actions/checkout@v5
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
     - run: npm run build
-    - run: npx playwright install chromium
+    - run: npx playwright install chromium firefox
     - name: Checkout extension
       run: git clone https://github.com/microsoft/playwright-vscode.git
     - name: Print extension revision

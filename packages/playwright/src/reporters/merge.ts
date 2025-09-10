@@ -263,6 +263,8 @@ function mergeConfigureEvents(configureEvents: JsonOnConfigureEvent[], rootDirOv
     rootDir: '',
     version: '',
     workers: 0,
+    globalSetup: null,
+    globalTeardown: null,
   };
   for (const event of configureEvents)
     config = mergeConfigs(config, event.params.config);

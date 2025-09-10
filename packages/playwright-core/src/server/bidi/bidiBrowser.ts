@@ -69,6 +69,11 @@ export class BidiBrowser extends Browser {
       ],
     });
 
+    await browser._browserSession.send('network.addDataCollector', {
+      dataTypes: [bidi.Network.DataType.Response],
+      maxEncodedDataSize: 20_000_000, // same default as in CDP: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/inspector/inspector_network_agent.cc;l=134;drc=4128411589187a396829a827f59a655bed876aa7
+    });
+
     if (options.persistent) {
       const context = new BidiBrowserContext(browser, undefined, options.persistent);
       browser._defaultContext = context;
@@ -202,6 +207,12 @@ export class BidiBrowserContext extends BrowserContext {
     if (this._options.locale) {
       promises.push(this._browser._browserSession.send('emulation.setLocaleOverride', {
         locale: this._options.locale,
+        userContexts: [this._userContextId()],
+      }));
+    }
+    if (this._options.timezoneId) {
+      promises.push(this._browser._browserSession.send('emulation.setTimezoneOverride', {
+        timezone: this._options.timezoneId,
         userContexts: [this._userContextId()],
       }));
     }

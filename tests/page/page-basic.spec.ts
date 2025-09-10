@@ -125,7 +125,7 @@ it('should have sane user agent', async ({ page, browserName, isElectron, isAndr
   // Second part in parenthesis is platform - ignore it.
 
   // Third part for Firefox is the last one and encodes engine and browser versions.
-  if (browserName === 'firefox') {
+  if (browserName === 'firefox' || browserName as any === '_bidiFirefox') {
     const [engine, browser] = part3.split(' ');
     expect(engine.startsWith('Gecko')).toBe(true);
     expect(browser.startsWith('Firefox')).toBe(true);

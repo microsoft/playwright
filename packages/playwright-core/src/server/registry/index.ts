@@ -510,7 +510,7 @@ const allDownloadable = ['android', 'chromium', 'firefox', 'webkit', 'ffmpeg', '
 
 export interface Executable {
   type: 'browser' | 'tool' | 'channel';
-  name: BrowserName | InternalTool | ChromiumChannel | BidiChannel;
+  name: BrowserName | InternalTool | ChromiumChannel | BidiChannel | 'webkit-wsl';
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
@@ -519,6 +519,7 @@ export interface Executable {
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
+  wslExecutablePath?: string
 }
 
 interface ExecutableImpl extends Executable {
@@ -815,6 +816,31 @@ export class Registry {
       _install: () => this._downloadExecutable(webkit, webkitExecutable),
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
+    });
+    this._executables.push({
+      type: 'channel',
+      name: 'webkit-wsl',
+      browserName: 'webkit',
+      directory: webkit.dir,
+      executablePath: () => process.execPath,
+      executablePathOrDie: () => process.execPath,
+      wslExecutablePath: `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
+      installType: 'download-on-demand',
+      _validateHostRequirements: (sdkLanguage: string) => Promise.resolve(),
+      _isHermeticInstallation: true,
+      _install: async () => {
+        if (process.platform !== 'win32')
+          throw new Error(`WebKit via WSL is only supported on Windows`);
+        const script = path.join(BIN_PATH, 'install_webkit_wsl.ps1');
+        const { code } = await spawnAsync('powershell.exe', [
+          '-ExecutionPolicy', 'Bypass',
+          '-File', script,
+        ], {
+          stdio: 'inherit',
+        });
+        if (code !== 0)
+          throw new Error(`Failed to install WebKit via WSL`);
+      },
     });
 
     const ffmpeg = descriptors.find(d => d.name === 'ffmpeg')!;

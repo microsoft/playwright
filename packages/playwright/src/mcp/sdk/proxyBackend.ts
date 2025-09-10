@@ -15,9 +15,10 @@
  */
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import * as mcp from './bundle';
 
-import type { ServerBackend, ClientVersion, Root, Server } from './server.js';
+import * as mcpBundle from './bundle';
+
+import type { ServerBackend, ClientVersion, Root, Server } from './server';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -29,6 +30,7 @@ export type MCPProvider = {
 };
 
 const errorsDebug = debug('pw:mcp:errors');
+const { z, zodToJsonSchema } = mcpBundle;
 
 export class ProxyBackend implements ServerBackend {
   private _mcpProviders: MCPProvider[];
@@ -94,8 +96,8 @@ export class ProxyBackend implements ServerBackend {
         'Connect to a browser using one of the available methods:',
         ...this._mcpProviders.map(factory => `- "${factory.name}": ${factory.description}`),
       ].join('\n'),
-      inputSchema: mcp.zodToJsonSchema(mcp.z.object({
-        name: mcp.z.enum(this._mcpProviders.map(factory => factory.name) as [string, ...string[]]).default(this._mcpProviders[0].name).describe('The method to use to connect to the browser'),
+      inputSchema: zodToJsonSchema(z.object({
+        name: z.enum(this._mcpProviders.map(factory => factory.name) as [string, ...string[]]).default(this._mcpProviders[0].name).describe('The method to use to connect to the browser'),
       }), { strictUnions: true }) as Tool['inputSchema'],
       annotations: {
         title: 'Connect to a browser context',
@@ -109,14 +111,14 @@ export class ProxyBackend implements ServerBackend {
     await this._currentClient?.close();
     this._currentClient = undefined;
 
-    const client = new mcp.Client({ name: 'Playwright MCP Proxy', version: '0.0.0' });
+    const client = new mcpBundle.Client({ name: 'Playwright MCP Proxy', version: '0.0.0' });
     client.registerCapabilities({
       roots: {
         listRoots: true,
       },
     });
-    client.setRequestHandler(mcp.ListRootsRequestSchema, () => ({ roots: this._roots }));
-    client.setRequestHandler(mcp.PingRequestSchema, () => ({}));
+    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._roots }));
+    client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
 
     const transport = await factory.connect();
     await client.connect(transport);

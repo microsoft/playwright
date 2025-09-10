@@ -1463,7 +1463,8 @@ test('should remove noscript when javaScriptEnabled is set to true', async ({ br
   await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
 });
 
-test('should open snapshot in new browser context', async ({ browser, page, runAndTrace, server }) => {
+test('should open snapshot in new browser context', async ({ browser, page, runAndTrace, server, channel }) => {
+  test.skip(channel === 'webkit-wsl', 'Trace Viewer opens via ipv6 address which is not supported in WSL');
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('hello');
@@ -1978,4 +1979,45 @@ test('should show all actions', async ({ runAndTrace, page }) => {
     /Get attribute "checked"/,
     /Expect "toBeChecked"/,
   ]);
+});
+
+test.describe(() => {
+  // NOTE: In Firefox/WebKit, history.pushState() requires a SecureContext.
+  // On http/about:blank it throws "The operation is insecure".
+  test.use({ ignoreHTTPSErrors: true });
+
+  test('should handle failed snapshots due to dialog', async ({ page, httpsServer, runAndTrace }) => {
+    const traceViewer = await runAndTrace(async () => {
+      await page.goto(httpsServer.EMPTY_PAGE);
+      await page.setContent(`
+        <head>
+          <style>
+            button { color: red; }
+          </style>
+        </head>
+        <body>
+          <button>Click me</button>
+          <script>
+            const button = document.querySelector('button');
+            window.history.pushState({ page: 'stay' }, '', window.location.href);
+            window.addEventListener('popstate', () => {
+              if (window.confirm('ready?'))
+                button.textContent = 'Clicked';
+            });
+          </script>
+        </body>
+      `);
+      let dialogMessage = '';
+      page.on('dialog', async dialog => {
+        dialogMessage = dialog.message();
+        await dialog.accept();
+      });
+      await page.goBack();
+      await expect.poll(() => dialogMessage).toBe('ready?');
+      await expect(page.getByRole('button')).toHaveText('Clicked');
+    });
+
+    const frame = await traceViewer.snapshotFrame('Expect');
+    await expect(frame.getByRole('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  });
 });

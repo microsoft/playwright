@@ -17,10 +17,9 @@
 
 import { isString } from '../utils/isomorphic/rtti';
 
-import type * as types from './types';
 import type { Platform } from './platform';
 
-export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
+export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
   for (const name in env) {
     if (!Object.is(env[name], undefined))

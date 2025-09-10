@@ -33,7 +33,7 @@ async function checkFeatures(name: string, context: BrowserContext, server: Test
   }
 }
 
-it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headless }) => {
+it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headless, channel }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
   it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
@@ -56,7 +56,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headl
   expected.video = !!expected.video;
   actual.video = !!actual.video;
 
-  if (platform === 'linux') {
+  if (platform === 'linux' || channel === 'webkit-wsl') {
     expected.speechrecognition = false;
     expected.mediastream = false;
     if (headless)
@@ -67,7 +67,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headl
     delete expected.variablefonts;
   }
 
-  if (platform === 'win32') {
+  if (platform === 'win32' && channel !== 'webkit-wsl') {
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
@@ -91,7 +91,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headl
   expect(actual).toEqual(expected);
 });
 
-it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsServer, headless }) => {
+it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsServer, headless, channel }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
   it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
@@ -120,7 +120,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     actual.video = !!actual.video;
   }
 
-  if (platform === 'linux') {
+  if (platform === 'linux' || channel === 'webkit-wsl') {
     expected.speechrecognition = false;
     expected.mediastream = false;
     if (headless)
@@ -131,7 +131,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     delete expected.variablefonts;
   }
 
-  if (platform === 'win32') {
+  if (platform === 'win32' && channel !== 'webkit-wsl') {
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;

@@ -57,6 +57,7 @@ export class FullConfigInternal {
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
   cliLastFailed?: boolean;
+  cliLastRunFile?: string;
   preOnlyTestFilters: TestCaseFilter[] = [];
   postShardTestFilters: TestCaseFilter[] = [];
   defineConfigWasUsed = false;
@@ -130,7 +131,8 @@ export class FullConfigInternal {
       this.webServers = [];
     }
 
-    const projectConfigs = configCLIOverrides.projects || userConfig.projects || [userConfig];
+    // When no projects are defined, do not use config.workers as a hard limit for project.workers.
+    const projectConfigs = configCLIOverrides.projects || userConfig.projects || [{ ...userConfig, workers: undefined }];
     this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, packageJsonDir));
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);

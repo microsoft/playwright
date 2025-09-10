@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -367,9 +367,14 @@ export function getCSSContent(element: Element, pseudo?: '::before' | '::after')
 
   const style = getElementComputedStyle(element, pseudo);
   let content: string | undefined;
-  if (style && style.display !== 'none' && style.visibility !== 'hidden') {
-    // Note: all browsers ignore display:none and visibility:hidden pseudos.
-    content = parseCSSContentPropertyAsString(element, style.content, !!pseudo);
+  if (style) {
+    const contentValue = style.content;
+    if (contentValue && contentValue !== 'none' && contentValue !== 'normal') {
+      if (style.display !== 'none' && style.visibility !== 'hidden') {
+        // Note: all browsers ignore display:none and visibility:hidden pseudos.
+        content = parseCSSContentPropertyAsString(element, contentValue, !!pseudo);
+      }
+    }
   }
 
   if (pseudo && content !== undefined) {
@@ -1150,6 +1155,7 @@ let cachePointerEvents: Map<Element, boolean> | undefined;
 let cachesCounter = 0;
 
 export function beginAriaCaches() {
+  beginDOMCaches();
   ++cachesCounter;
   cacheAccessibleName ??= new Map();
   cacheAccessibleNameHidden ??= new Map();
@@ -1176,6 +1182,7 @@ export function endAriaCaches() {
     cachePseudoContentAfter = undefined;
     cachePointerEvents = undefined;
   }
+  endDOMCaches();
 }
 
 const inputTypeToRole: Record<string, AriaRole> = {

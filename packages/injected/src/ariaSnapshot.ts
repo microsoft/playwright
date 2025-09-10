@@ -16,7 +16,7 @@
 
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { box, getElementComputedStyle, isElementVisible } from './domUtils';
+import { computeBox, getElementComputedStyle, isElementVisible } from './domUtils';
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
@@ -54,7 +54,7 @@ export type AriaTreeOptions = {
 };
 
 type InternalOptions = {
-  visibility: 'aria' | 'visible' | 'ariaAndVisible',
+  visibility: 'aria' | 'ariaOrVisible' | 'ariaAndVisible',
   refs: 'all' | 'interactable' | 'none',
   refPrefix?: string,
   includeGenericRole?: boolean,
@@ -67,7 +67,7 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
   if (options.mode === 'ai') {
     // For AI consumption.
     return {
-      visibility: 'visible',
+      visibility: 'ariaOrVisible',
       refs: 'interactable',
       refPrefix: options.refPrefix,
       includeGenericRole: true,
@@ -92,7 +92,7 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
-    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: box(rootElement), receivesPointerEvents: true },
+    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: computeBox(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
     refs: new Map<Element, string>(),
   };
@@ -119,8 +119,8 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     const element = node as Element;
     const isElementVisibleForAria = !roleUtils.isElementHiddenForAria(element);
     let visible = isElementVisibleForAria;
-    if (options.visibility === 'visible')
-      visible = isElementVisible(element);
+    if (options.visibility === 'ariaOrVisible')
+      visible = isElementVisibleForAria || isElementVisible(element);
     if (options.visibility === 'ariaAndVisible')
       visible = isElementVisibleForAria && isElementVisible(element);
 
@@ -231,7 +231,7 @@ function toAriaNode(element: Element, options: InternalOptions): AriaNode | null
       children: [],
       props: {},
       element,
-      box: box(element),
+      box: computeBox(element),
       receivesPointerEvents: true,
       active
     };
@@ -247,13 +247,17 @@ function toAriaNode(element: Element, options: InternalOptions): AriaNode | null
   const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(element, false) || '');
   const receivesPointerEvents = roleUtils.receivesPointerEvents(element);
 
+  const box = computeBox(element);
+  if (role === 'generic' && box.inline && element.childNodes.length === 1 && element.childNodes[0].nodeType === Node.TEXT_NODE)
+    return null;
+
   const result: AriaNode = {
     role,
     name,
     children: [],
     props: {},
     element,
-    box: box(element),
+    box,
     receivesPointerEvents,
     active
   };

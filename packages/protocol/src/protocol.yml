@@ -896,6 +896,7 @@ DebugController:
     setRecorderMode:
       internal: true
       parameters:
+        browserId: string?
         mode:
           type: enum
           literals:
@@ -916,6 +917,12 @@ DebugController:
 
     resume:
       internal: true
+
+    closeBrowser:
+      internal: true
+      parameters:
+        id: string
+        reason: string?
 
     kill:
       internal: true
@@ -2796,6 +2803,7 @@ Frame:
         matches: boolean
         received: SerializedValue?
         timedOut: boolean?
+        errorMessage: string?
         log:
           type: array?
           items: string
@@ -2848,9 +2856,22 @@ Worker:
       returns:
         handle: JSHandle
 
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
+
   events:
 
     close:
+
+    console:
+      parameters:
+        $mixin: ConsoleMessage
 
 
 JSHandle:

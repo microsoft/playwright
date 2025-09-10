@@ -760,6 +760,8 @@ export const test = base.extend({
 
 This is useful for non-interesting helper fixtures. For example, an [automatic](./test-fixtures.md#automatic-fixtures) fixture that sets up some common data can be safely hidden from a test report.
 
+You can also mark the fixture as `box: 'self'` to only hide that particular fixture, but include all the steps inside the fixture in the test report.
+
 ## Custom fixture title
 
 Instead of the usual fixture name, you can give fixtures a custom title that will be shown in test reports and error messages.

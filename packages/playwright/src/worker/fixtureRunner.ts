@@ -35,7 +35,7 @@ class Fixture {
   private _selfTeardownComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
-  private _stepInfo: { title: string, category: 'fixture', location?: Location, group?: string };
+  private _stepInfo: { title: string, category: 'fixture', location?: Location, group?: string } | undefined;
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -47,7 +47,9 @@ class Fixture {
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
     this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', location };
-    if (this.registration.box)
+    if (this.registration.box === 'self')
+      this._stepInfo = undefined;
+    else if (this.registration.box)
       this._stepInfo.group = isUserFixture ? 'configuration' : 'internal';
     this._setupDescription = {
       title,
@@ -69,9 +71,11 @@ class Fixture {
       return;
     }
 
-    await testInfo._runAsStep(this._stepInfo, async () => {
-      await testInfo._runWithTimeout({ ...runnable, fixture: this._setupDescription }, () => this._setupInternal(testInfo));
-    });
+    const run = () => testInfo._runWithTimeout({ ...runnable, fixture: this._setupDescription }, () => this._setupInternal(testInfo));
+    if (this._stepInfo)
+      await testInfo._runAsStep(this._stepInfo, run);
+    else
+      await run();
   }
 
   private async _setupInternal(testInfo: TestInfoImpl) {
@@ -130,9 +134,11 @@ class Fixture {
       // Do not even start the teardown for a fixture that does not have any
       // time remaining in the time slot. This avoids cascading timeouts.
       if (!testInfo._timeoutManager.isTimeExhaustedFor(fixtureRunnable)) {
-        await testInfo._runAsStep(this._stepInfo, async () => {
-          await testInfo._runWithTimeout(fixtureRunnable, () => this._teardownInternal());
-        });
+        const run = () => testInfo._runWithTimeout(fixtureRunnable, () => this._teardownInternal());
+        if (this._stepInfo)
+          await testInfo._runAsStep(this._stepInfo, run);
+        else
+          await run();
       }
     } finally {
       // To preserve fixtures integrity, forcefully cleanup fixtures

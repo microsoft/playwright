@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from './bundle.js';
+import { zodToJsonSchema } from  '../sdk/bundle';
 
 import type { z } from 'zod';
-import type * as mcpServer from './server.js';
+import type * as mcpServer from './server';
 
 export type ToolSchema<Input extends z.Schema> = {
   name: string;

@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-import * as mcp from '../sdk/exports.js';
-import { Context } from './context';
-import { listTests } from './listTests';
-import { runTests } from './runTests';
-import { snapshot, pickLocator, evaluate } from '../browser/tools';
+import * as mcp from '../sdk/exports';
+import { TestContext } from './testContext';
+import { listTests, runTests, debugTest } from './testTools.js';
+import { snapshot, pickLocator, evaluate } from './browserTools';
 
 import type { ConfigLocation } from '../../common/config';
-import type { Tool } from './tool';
+import type { TestTool } from './testTool';
 
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
-  private _tools: Tool<any>[] = [listTests, runTests];
-  private _context: Context;
+  private _tools: TestTool<any>[] = [listTests, runTests, debugTest];
+  private _context: TestContext;
 
-  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean }) {
-    this._context = new Context(resolvedLocation, options);
+  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean, headless?: boolean }) {
+    this._context = new TestContext(resolvedLocation, options);
   }
 
   async listTools(): Promise<mcp.Tool[]> {
@@ -48,11 +47,7 @@ export class TestServerBackend implements mcp.ServerBackend {
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    const result = await tool.handle(this._context!, parsedArguments);
-    const stdio = this._context.takeStdio();
-    if (stdio.trim())
-      result.content.push({ type: 'text', text: stdio });
-    return result;
+    return await tool.handle(this._context!, parsedArguments);
   }
 
   serverClosed() {

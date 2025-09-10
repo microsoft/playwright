@@ -119,7 +119,7 @@ it('should close browser after context menu was triggered', async ({ browserType
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({ page, server, allowsThirdParty }) => {
+it('should(not) block third party cookies', async ({ page, server, allowsThirdParty, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -145,7 +145,7 @@ it('should(not) block third party cookies', async ({ page, server, allowsThirdPa
         'httpOnly': false,
         'name': 'username',
         'path': '/',
-        'sameSite': 'None',
+        'sameSite': defaultSameSiteCookieValue,
         'secure': false,
         'value': 'John Doe'
       }

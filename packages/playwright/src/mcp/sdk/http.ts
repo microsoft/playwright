@@ -18,20 +18,22 @@ import assert from 'assert';
 import net from 'net';
 import http from 'http';
 import crypto from 'crypto';
+
 import { debug } from 'playwright-core/lib/utilsBundle';
 
-import * as mcp from './bundle';
-import { connect } from './server';
+import * as mcpBundle from './bundle';
+import * as mcpServer from './server';
 
+import type { ServerBackendFactory } from './server';
 import type { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { ServerBackendFactory } from './server';
 
 const testDebug = debug('pw:mcp:test');
 
 export async function startHttpServer(config: { host?: string, port?: number }, abortSignal?: AbortSignal): Promise<http.Server> {
   const { host, port } = config;
   const httpServer = http.createServer();
+  decorateServer(httpServer);
   await new Promise<void>((resolve, reject) => {
     httpServer.on('error', reject);
     abortSignal?.addEventListener('abort', () => {
@@ -85,10 +87,10 @@ async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.I
 
     return await transport.handlePostMessage(req, res);
   } else if (req.method === 'GET') {
-    const transport = new mcp.SSEServerTransport('/sse', res);
+    const transport = new mcpBundle.SSEServerTransport('/sse', res);
     sessions.set(transport.sessionId, transport);
     testDebug(`create SSE session: ${transport.sessionId}`);
-    await connect(serverBackendFactory, transport, false);
+    await mcpServer.connect(serverBackendFactory, transport, false);
     res.on('close', () => {
       testDebug(`delete SSE session: ${transport.sessionId}`);
       sessions.delete(transport.sessionId);
@@ -113,11 +115,11 @@ async function handleStreamable(serverBackendFactory: ServerBackendFactory, req:
   }
 
   if (req.method === 'POST') {
-    const transport = new mcp.StreamableHTTPServerTransport({
+    const transport = new mcpBundle.StreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomUUID(),
       onsessioninitialized: async sessionId => {
         testDebug(`create http session: ${transport.sessionId}`);
-        await connect(serverBackendFactory, transport, true);
+        await mcpServer.connect(serverBackendFactory, transport, true);
         sessions.set(sessionId, transport);
       }
     });
@@ -135,4 +137,20 @@ async function handleStreamable(serverBackendFactory: ServerBackendFactory, req:
 
   res.statusCode = 400;
   res.end('Invalid request');
+}
+
+function decorateServer(server: net.Server) {
+  const sockets = new Set<net.Socket>();
+  server.on('connection', socket => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
+  });
+
+  const close = server.close;
+  server.close = (callback?: (err?: Error) => void) => {
+    for (const socket of sockets)
+      socket.destroy();
+    sockets.clear();
+    return close.call(server, callback);
+  };
 }

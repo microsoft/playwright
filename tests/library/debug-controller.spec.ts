@@ -34,7 +34,7 @@ const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ headless }, use) => {
     if (headless)
       process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
-    const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
+    const server = new PlaywrightServer({ mode: 'default', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false, debugController: true });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
     await server.close();
@@ -78,7 +78,7 @@ test.skip(({ mode }) => mode.startsWith('service') || mode === 'driver');
 
 // Force a separate worker to avoid registered selector engines from other tests.
 // See https://github.com/microsoft/playwright/pull/37103.
-test.use({ launchOptions: {} });
+test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
 
 test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
@@ -111,6 +111,30 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toHaveLength(2);
 });
 
+test('should allow setting recorder mode only for specific browser', async ({ backend, connectedBrowserFactory }) => {
+  const events = [];
+  backend.on('inspectRequested', event => events.push(event));
+
+  const browser1 = await connectedBrowserFactory();
+  const browser2 = await connectedBrowserFactory();
+  expect((browser1 as any)._guid).not.toBe((browser2 as any)._guid);
+  const page1 = await browser1.newPage();
+  await page1.setContent('<button>Submit</button>');
+  const page2 = await browser2.newPage();
+  await page2.setContent('<button>Submit</button>');
+
+  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser1 as any)._guid });
+  await page1.getByRole('button').click();
+  expect(events).toHaveLength(1);
+
+  await page2.getByRole('button').click();
+  expect(events).toHaveLength(1);
+
+  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser2 as any)._guid });
+  await page2.getByRole('button').click();
+  expect(events).toHaveLength(2);
+});
+
 test('should report pages', async ({ backend, connectedBrowser, browserName, channel }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
@@ -131,7 +155,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -143,7 +167,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 2,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -156,7 +180,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -168,7 +192,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 1,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -180,7 +204,7 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
     }, {
       pageCount: 0,
       browsers: [{
-        id: expect.any(String),
+        id: (connectedBrowser as any)._guid,
         name: browserName,
         channel,
         contexts: [{
@@ -401,4 +425,16 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
 
   await server.close();
   await browser.close();
+});
+
+test('should support closing browsers', async ({ backend, connectedBrowser }) => {
+  const events: channels.DebugControllerStateChangedEvent[] = [];
+  backend.on('stateChanged', event => events.push(event));
+  await backend.setReportStateChanged({ enabled: true });
+  await connectedBrowser.newPage();
+
+  await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
+  await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
+
+  await expect.poll(() => events[events.length - 1]?.browsers).toEqual([]);
 });

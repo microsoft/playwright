@@ -17,7 +17,7 @@
 // @ts-ignore
 import { asLocator } from 'playwright-core/lib/utils';
 
-import { test as it, expect } from './pageTest';
+import { test as it, expect, unshift } from './pageTest';
 
 function snapshotForAI(page: any, options?: { timeout?: number }): Promise<string> {
   return page._snapshotForAI(options);
@@ -184,9 +184,18 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
 
   expect(snapshot).toContainYaml(`
     - generic [ref=e2]:
-      - generic [ref=e5]: Apple
-      - generic [ref=e8]: Pear
-      - generic [ref=e11]: Orange
+      - generic [ref=e3]:
+        - generic [ref=e4]:
+          - radio "Apple" [checked]
+        - text: Apple
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - radio "Pear"
+        - text: Pear
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - radio "Orange"
+        - text: Orange
   `);
 });
 
@@ -289,11 +298,11 @@ it('should show visible children of hidden elements', { annotation: { type: 'iss
     </div>
   `);
 
-  expect(await snapshotForAI(page)).toContainYaml(`
+  expect(await snapshotForAI(page)).toEqual(unshift(`
     - generic [active] [ref=e1]:
       - button "Visible" [ref=e3]
       - button "Visible" [ref=e4]
-  `);
+  `));
 });
 
 it('should include active element information', async ({ page }) => {
@@ -398,5 +407,35 @@ it('should support many properties on iframes', async ({ page }) => {
       - textbox "Regular input" [ref=e2]
       - iframe [active] [ref=e3] [cursor=pointer]:
         - textbox "Input in iframe" [active] [ref=f1e2]
+  `);
+});
+
+it('should collapse inline generic nodes', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li><b>3</b> <abbr>bds</abbr></li>
+      <li><b>2</b> <abbr>ba</abbr></li>
+      <li><b>1,200</b> <abbr>sqft</abbr></li>
+    </ul>
+    <ul>
+      <li><div>3</div></li>
+      <li><div>2</div></li>
+      <li><div>1,200</div></li>
+    </ul>`);
+
+  const snapshot1 = await snapshotForAI(page);
+  expect(snapshot1).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - list [ref=e2]:
+        - listitem [ref=e3]: 3 bds
+        - listitem [ref=e4]: 2 ba
+        - listitem [ref=e5]: 1,200 sqft
+      - list [ref=e6]:
+        - listitem [ref=e7]:
+          - generic [ref=e8]: "3"
+        - listitem [ref=e9]:
+          - generic [ref=e10]: "2"
+        - listitem [ref=e11]:
+          - generic [ref=e12]: 1,200
   `);
 });

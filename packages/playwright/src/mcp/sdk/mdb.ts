@@ -17,20 +17,18 @@
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise } from 'playwright-core/lib/utils';
 
-import { PingRequestSchema, z } from './bundle.js';
-import { StreamableHTTPClientTransport } from './bundle.js';
-import * as mcpBundle from './bundle.js';
+import { defineToolSchema } from './tool';
+import * as mcpBundle from './bundle';
+import * as mcpServer from './server';
+import * as mcpHttp from './http';
+import { wrapInProcess } from './server';
 
-import { defineToolSchema } from './tool.js';
-import * as mcpServer from './server.js';
-import * as mcpHttp from './http.js';
-import { wrapInProcess } from './server.js';
-
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 const mdbDebug = debug('pw:mcp:mdb');
 const errorsDebug = debug('pw:mcp:errors');
+const z = mcpBundle.z;
 
 export class MDBBackend implements mcpServer.ServerBackend {
   private _stack: { client: Client, toolNames: string[], resultPromise: ManualPromise<mcpServer.CallToolResult> | undefined }[] = [];
@@ -70,6 +68,8 @@ export class MDBBackend implements mcpServer.ServerBackend {
       await entry.client.close();
       entry = this._stack[0];
     }
+    if (!entry)
+      throw new Error(`Tool ${name} not found in the tool stack`);
 
     const resultPromise = new ManualPromise<mcpServer.CallToolResult>();
     entry.resultPromise = resultPromise;
@@ -104,7 +104,7 @@ export class MDBBackend implements mcpServer.ServerBackend {
 
   private async _pushTools(params: { mcpUrl: string, introMessage?: string }): Promise<mcpServer.CallToolResult> {
     mdbDebug('pushing tools to the stack', params.mcpUrl);
-    const transport = new StreamableHTTPClientTransport(new URL(params.mcpUrl));
+    const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(params.mcpUrl));
     await this._pushClient(transport, params.introMessage);
     return { content: [{ type: 'text', text: 'Tools pushed' }] };
   }
@@ -112,7 +112,7 @@ export class MDBBackend implements mcpServer.ServerBackend {
   private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
     mdbDebug('pushing client to the stack');
     const client = new mcpBundle.Client({ name: 'Internal client', version: '0.0.0' });
-    client.setRequestHandler(PingRequestSchema, () => ({}));
+    client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
     await client.connect(transport);
     mdbDebug('connected to the new client');
     const { tools } = await client.listTools();
@@ -162,7 +162,7 @@ export async function runMainBackend(backendFactory: mcpServer.ServerBackendFact
   await mcpServer.connect(factory, new mcpBundle.StdioServerTransport(), false);
 }
 
-export async function runOnPauseBackendLoop(mdbUrl: string, backend: ServerBackendOnPause, introMessage: string) {
+export async function runOnPauseBackendLoop(backend: ServerBackendOnPause, introMessage: string) {
   const wrappedBackend = new OnceTimeServerBackendWrapper(backend);
 
   const factory = {
@@ -177,8 +177,8 @@ export async function runOnPauseBackendLoop(mdbUrl: string, backend: ServerBacke
   const url = mcpHttp.httpAddressToString(httpServer.address());
 
   const client = new mcpBundle.Client({ name: 'Internal client', version: '0.0.0' });
-  client.setRequestHandler(PingRequestSchema, () => ({}));
-  const transport = new StreamableHTTPClientTransport(new URL(mdbUrl));
+  client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
+  const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(process.env.PLAYWRIGHT_DEBUGGER_MCP!));
   await client.connect(transport);
 
   const pushToolsResult = await client.callTool({

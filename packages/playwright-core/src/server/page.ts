@@ -841,6 +841,7 @@ export class Page extends SdkObject {
 export class Worker extends SdkObject {
   static Events = {
     Close: 'close',
+    Console: 'console',
   };
 
   readonly url: string;

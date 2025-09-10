@@ -324,3 +324,24 @@ test('should respect project.workers>1', async ({ runInlineTest }) => {
     'test1-end',
   ]);
 });
+
+test('should not inherit config.workers into project.workers', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        workers: 1,
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test('test1', async ({}, testInfo) => {
+      });
+      test('test2', async ({}, testInfo) => {
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.passed).toBe(2);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('Running 2 tests using 2 workers');
+});

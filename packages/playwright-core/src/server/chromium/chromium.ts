@@ -41,7 +41,6 @@ import { gracefullyCloseSet } from '../utils/processLauncher';
 import type { HTTPRequestParams } from '../utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../utils/processLauncher';
 import type { Progress } from '../progress';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
@@ -165,7 +164,7 @@ export class Chromium extends BrowserType {
     return error;
   }
 
-  override amendEnvironment(env: Env): Env {
+  override amendEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     return env;
   }
 
@@ -281,7 +280,7 @@ export class Chromium extends BrowserType {
     }
   }
 
-  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     if (options.cdpPort !== undefined)
