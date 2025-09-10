@@ -17,7 +17,7 @@
 import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
-import { callLogText, expectTypes } from '../util';
+import { expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toHaveURLWithPredicate } from './toHaveURL';
@@ -25,6 +25,7 @@ import { toMatchText } from './toMatchText';
 import { takeFirst } from '../common/config';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
+import { formatMatcherMessage } from './matcherHint';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
@@ -187,7 +188,7 @@ export function toContainText(
     return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
-    }, expected, options);
+    }, expected, { ...options, matchSubstring: true });
   }
 }
 
@@ -262,7 +263,7 @@ export function toHaveClass(
     return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
-    }, expected, options, true);
+    }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
@@ -283,7 +284,7 @@ export function toContainClass(
     return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.contain.class.array', { expectedText, isNot, timeout });
-    }, expected, options, true);
+    }, expected, options);
   } else {
     if (isRegExp(expected))
       throw new Error(`"expected" argument in toContainClass cannot be a RegExp value`);
@@ -408,7 +409,7 @@ export function toHaveTitle(
   return toMatchText.call(this, 'toHaveTitle', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await (page.mainFrame() as FrameEx)._expect('to.have.title', { expectedText, isNot, timeout });
-  }, expected, { receiverLabel: 'page', ...options });
+  }, expected, options);
 }
 
 export function toHaveURL(
@@ -426,7 +427,7 @@ export function toHaveURL(
   return toMatchText.call(this, 'toHaveURL', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout });
-  }, expected, { receiverLabel: 'page', ...options });
+  }, expected, options);
 }
 
 export async function toBeOK(
@@ -443,9 +444,12 @@ export async function toBeOK(
     isTextEncoding ? response.text() : null
   ]) : [];
 
-  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) +
-    callLogText(log) +
-    (text === null ? '' : `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`);
+  const message = () => formatMatcherMessage(this, {
+    matcherName,
+    receiver: 'response',
+    expectation: '',
+    log,
+  }) + (text === null ? '' : `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`);
 
   const pass = response.ok();
   return { message, pass };
