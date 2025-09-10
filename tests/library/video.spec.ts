@@ -23,7 +23,7 @@ import { registry } from '../../packages/playwright-core/lib/server';
 import { expect, browserTest as it } from '../config/browserTest';
 import { parseTraceRaw } from '../config/utils';
 
-const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathOrDie('javascript');
 
 export class VideoPlayer {
   fileName: string;
