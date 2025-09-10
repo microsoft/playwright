@@ -312,7 +312,7 @@ export type Snapshot = {
   hasInputTarget?: boolean;
 };
 
-const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: keyof ActionTraceEvent, hasInputTarget: boolean = false): Snapshot | undefined => {
+const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapshot' | 'afterSnapshot' | 'inputSnapshot', hasInputTarget: boolean = false): Snapshot | undefined => {
   if (!action)
     return undefined;
 
@@ -393,7 +393,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
       afterSnapshot = beforeSnapshot;
   }
 
-  const actionSnapshot: Snapshot | undefined = action.inputSnapshot && action.pageId ? { action, snapshotName: action.inputSnapshot, pageId: action.pageId, hasInputTarget: true } : afterSnapshot;
+  const actionSnapshot = createSnapshot(action, 'inputSnapshot', true) ?? afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
