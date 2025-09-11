@@ -44,7 +44,7 @@
   display: grid;
   grid-template-rows: auto auto;
   row-gap: 8px;
-  margin: 0 16px 0 4px;
+  margin: 0 16px 0 22px;
 }
 
 .settings-view .setting-select:not(:first-child) {
