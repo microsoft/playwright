@@ -20,6 +20,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 import { runMainBackend, runOnPauseBackendLoop } from '../../packages/playwright/lib/mcp/sdk/mdb';
+import * as mcpBundle from '../../packages/playwright/lib/mcp/sdk/bundle';
 
 import { test, expect } from './fixtures';
 
@@ -40,8 +41,7 @@ test('call top level tool', async () => {
     name: 'cli_pause_in_gdb_twice',
     description: 'Pause in gdb twice',
     inputSchema: expect.any(Object),
-  }
-  ]);
+  }]);
 
   const echoResult = await mdbClient.client.callTool({
     name: 'cli_echo',
@@ -49,7 +49,7 @@ test('call top level tool', async () => {
       message: 'Hello, world!',
     },
   });
-  expect(echoResult.content).toEqual([{ type: 'text', text: 'Echo: Hello, world!' }]);
+  expect(echoResult.content).toEqual([{ type: 'text', text: 'Echo: Hello, world!', roots: [] }]);
 
   await mdbClient.close();
 });
@@ -72,7 +72,7 @@ test('pause on error', async () => {
       name: 'gdb_bt',
     }),
     expect.objectContaining({
-      name: 'gdb_continue',
+      name: 'gdb_echo',
     }),
   ]);
 
@@ -83,39 +83,43 @@ test('pause on error', async () => {
   });
   expect(btResult.content).toEqual([{ type: 'text', text: 'Backtrace' }]);
 
-  // Continue execution.
-  const continueResult = await mdbClient.client.callTool({
-    name: 'gdb_continue',
-    arguments: {},
-  });
-  expect(continueResult.content).toEqual([{ type: 'text', text: 'Done' }]);
-
   await mdbClient.close();
 });
 
-test('pause on error twice', async () => {
+test('outer and inner roots available', async () => {
   const { mdbUrl } = await startMDBAndCLI();
-  const mdbClient = await createMDBClient(mdbUrl);
+  const mdbClient = await createMDBClient(mdbUrl, [{ name: 'test', uri: 'file://tmp/' }]);
 
-  // Make a call that results in a recoverable error.
-  const result = await mdbClient.client.callTool({
-    name: 'cli_pause_in_gdb_twice',
+  expect(await mdbClient.client.callTool({
+    name: 'cli_echo',
+    arguments: {
+      message: 'Hello, cli!',
+    },
+  })).toEqual({
+    content: [{
+      type: 'text',
+      text: 'Echo: Hello, cli!',
+      roots: [{ name: 'test', uri: 'file://tmp/' }]
+    }]
+  });
+
+  await mdbClient.client.callTool({
+    name: 'cli_pause_in_gdb',
     arguments: {},
   });
-  expect(result.content).toEqual([{ type: 'text', text: 'Paused on exception 1' }]);
 
-  // Continue execution.
-  const continueResult1 = await mdbClient.client.callTool({
-    name: 'gdb_continue',
-    arguments: {},
+  expect(await mdbClient.client.callTool({
+    name: 'gdb_echo',
+    arguments: {
+      message: 'Hello, bt!',
+    },
+  })).toEqual({
+    content: [{
+      type: 'text',
+      text: 'Echo: Hello, bt!',
+      roots: [{ name: 'test', uri: 'file://tmp/' }]
+    }]
   });
-  expect(continueResult1.content).toEqual([{ type: 'text', text: 'Paused on exception 2' }]);
-
-  const continueResult2 = await mdbClient.client.callTool({
-    name: 'gdb_continue',
-    arguments: {},
-  });
-  expect(continueResult2.content).toEqual([{ type: 'text', text: 'Done' }]);
 
   await mdbClient.close();
 });
@@ -134,8 +138,10 @@ async function startMDBAndCLI(): Promise<{ mdbUrl: string }> {
   return { mdbUrl };
 }
 
-async function createMDBClient(mdbUrl: string): Promise<{ client: Client, close: () => Promise<void> }> {
-  const client = new Client({ name: 'Internal client', version: '0.0.0' });
+async function createMDBClient(mdbUrl: string, roots: any[] | undefined = undefined): Promise<{ client: Client, close: () => Promise<void> }> {
+  const client = new Client({ name: 'Internal client', version: '0.0.0' }, roots ? { capabilities: { roots: {} } } : undefined);
+  if (roots)
+    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots }));
   const transport = new StreamableHTTPClientTransport(new URL(mdbUrl));
   await client.connect(transport);
   return {
@@ -148,7 +154,13 @@ async function createMDBClient(mdbUrl: string): Promise<{ client: Client, close:
 }
 
 class CLIBackend {
+  private _roots: any[] | undefined;
+
   constructor(private readonly mdbUrlBox: { mdbUrl: string | undefined }) {}
+
+  async initialize(server, clientVersion, roots) {
+    this._roots = roots;
+  }
 
   async listTools() {
     return [{
@@ -168,7 +180,7 @@ class CLIBackend {
 
   async callTool(name: string, args: any) {
     if (name === 'cli_echo')
-      return { content: [{ type: 'text', text: 'Echo: ' + (args?.message as string) }] };
+      return { content: [{ type: 'text', text: 'Echo: ' + (args?.message as string), roots: this._roots }] };
     if (name === 'cli_pause_in_gdb') {
       await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception');
       return { content: [{ type: 'text', text: 'Done' }] };
@@ -183,26 +195,29 @@ class CLIBackend {
 }
 
 class GDBBackend {
+  private _roots: any[] | undefined;
+
+  async initialize(server, clientVersion, roots) {
+    this._roots = roots;
+  }
+
   async listTools() {
     return [{
       name: 'gdb_bt',
       description: 'Print backtrace',
       inputSchema: zodToJsonSchema(z.object({})) as any,
     }, {
-      name: 'gdb_continue',
-      description: 'Continue execution',
-      inputSchema: zodToJsonSchema(z.object({})) as any,
+      name: 'gdb_echo',
+      description: 'Echo a message',
+      inputSchema: zodToJsonSchema(z.object({ message: z.string() })) as any,
     }];
   }
 
-  async callTool(name: string) {
+  async callTool(name: string, args: any) {
+    if (name === 'gdb_echo')
+      return { content: [{ type: 'text', text: 'Echo: ' + (args?.message as string), roots: this._roots }] };
     if (name === 'gdb_bt')
       return { content: [{ type: 'text', text: 'Backtrace' }] };
-    if (name === 'gdb_continue') {
-      (this as any).requestSelfDestruct?.();
-      // Stall
-      await new Promise(f => setTimeout(f, 1000));
-    }
     throw new Error(`Unknown tool: ${name}`);
   }
 }

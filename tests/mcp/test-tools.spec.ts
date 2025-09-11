@@ -215,6 +215,47 @@ test('playwright_test_browser_snapshot', async ({ startClient }) => {
   });
 });
 
+test('playwright_test_debug_test (pause/snapshot/resume)', async ({ startClient }) => {
+  const { client, id } = await prepareDebugTest(startClient);
+
+  expect(await client.callTool({
+    name: 'playwright_test_debug_test',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(`### Paused on error:
+expect(locator).toBeVisible() failed
+
+Locator: getByRole('button', { name: 'Missing' })
+Expected: visible
+Timeout: 1000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 1000ms
+  - waiting for getByRole('button', { name: 'Missing' })
+
+
+### Current page snapshot:
+- button "Submit" [ref=e2]
+
+### Task
+Try recovering from the error prior to continuing`);
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
+  });
+
+  expect(await client.callTool({
+    name: 'playwright_test_run_tests',
+    arguments: {
+      locations: ['a.test.ts'],
+    },
+  })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:11 › fail`));
+});
+
 test('playwright_test_evaluate_on_pause', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
   await client.callTool({
