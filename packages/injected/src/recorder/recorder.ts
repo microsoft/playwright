@@ -1049,7 +1049,6 @@ class Overlay {
   private _overlayElement: HTMLElement;
   private _dragHandle: HTMLElement;
   private _recordToggle: HTMLElement;
-  private _recordTextSpan: HTMLElement;
   private _pickLocatorToggle: HTMLElement;
   private _assertVisibilityToggle: HTMLElement;
   private _assertTextToggle: HTMLElement;
@@ -1073,9 +1072,6 @@ class Overlay {
     this._recordToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._recordToggle.title = 'Record';
     this._recordToggle.classList.add('record');
-    this._recordTextSpan = this._recorder.document.createElement('x-span');
-    this._recordTextSpan.textContent = 'Record';
-    this._recordToggle.appendChild(this._recordTextSpan);
     this._recordToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._recordToggle);
 
@@ -1170,10 +1166,7 @@ class Overlay {
   }
 
   setUIState(state: UIState) {
-    const isRecording = state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting';
-    this._recordToggle.classList.toggle('toggled', isRecording);
-    this._recordTextSpan.textContent = isRecording ? 'Pause' : 'Record';
-    this._recordToggle.title = isRecording ? 'Pause recording' : 'Start recording';
+    this._recordToggle.classList.toggle('toggled', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting');
     this._pickLocatorToggle.classList.toggle('toggled', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
     this._assertVisibilityToggle.classList.toggle('toggled', state.mode === 'assertingVisibility');
     this._assertVisibilityToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
