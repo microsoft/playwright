@@ -238,9 +238,9 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
         .setPosition(250, 250));`);
 
     expect(sources.get('C#')!.text).toContain(`
-await page.Locator("canvas").ClickAsync(new LocatorClickOptions
+await page.Locator("canvas").ClickAsync(new()
 {
-    Position = new Position
+    Position = new()
     {
         X = 250,
         Y = 250,
@@ -975,7 +975,7 @@ await page.GetByRole(AriaRole.Textbox).FillAsync("h");`);
         .setButton(MouseButton.MIDDLE));`);
 
     expect(sources.get('C#')!.text).toContain(`
-await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
+await page.GetByText("Click me").ClickAsync(new()
 {
     Button = MouseButton.Middle,
 });`);
