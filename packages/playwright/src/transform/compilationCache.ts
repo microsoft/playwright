@@ -105,7 +105,7 @@ type CompilationCacheLookupResult = {
   addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => { serializedCache?: any };
 };
 
-export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): CompilationCacheLookupResult {
+export function getFromCompilationCache(filename: string, contentHash: string, moduleUrl?: string): CompilationCacheLookupResult {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -118,8 +118,10 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   }
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
-  const cacheFolderName = calculateCacheFolderName(filename);
-  const cachePath = calculateCachePath(filename, cacheFolderName, hash);
+  const filePathHash = calculateFilePathHash(filename);
+  const hashPrefix = filePathHash + '_' + contentHash.substring(0, 7);
+  const cacheFolderName = filePathHash.substring(0, 2);
+  const cachePath = calculateCachePath(filename, cacheFolderName, hashPrefix);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   const dataPath = cachePath + '.data';
@@ -135,7 +137,7 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
       if (isWorkerProcess())
         return {};
       // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
-      clearOldCacheEntry(cacheFolderName);
+      clearOldCacheEntries(cacheFolderName, filePathHash);
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
@@ -172,20 +174,22 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
   }
 }
 
-function calculateCacheFolderName(filePath: string): string {
-  const pathHash = crypto.createHash('sha1').update(filePath).digest('hex');
-  return pathHash.substring(0, 7);
+function calculateFilePathHash(filePath: string): string {
+  const hash = crypto.createHash('sha1').update(filePath).digest('hex');
+  return hash.substring(0, 7);
 }
 
-function calculateCachePath(filePath: string, folderName: string, hash: string): string {
-  const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
-  return path.join(cacheDir, folderName, fileName);
+function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefix: string): string {
+  const fileName = hashPrefix + '_' + path.basename(filePath, path.extname(filePath)).replace(/\W/g, '');
+  return path.join(cacheDir, cacheFolderName, fileName);
 }
 
-function clearOldCacheEntry(cacheFolderName: string) {
+function clearOldCacheEntries(cacheFolderName: string, filePathHash: string) {
   const cachePath = path.join(cacheDir, cacheFolderName);
   try {
-    fs.rmSync(cachePath, { recursive: true, force: true });
+    const cachedRelevantFiles = fs.readdirSync(cachePath).filter(file => file.startsWith(filePathHash));
+    for (const file of cachedRelevantFiles)
+      fs.rmSync(path.join(cachePath, file), { force: true });
   } catch {
   }
 }
