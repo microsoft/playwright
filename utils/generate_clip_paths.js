@@ -57,6 +57,7 @@ const outFile = path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'clip
 const iconNames = [
   'gripper',
   'circle-large-filled',
+  'stop-circle',
   'inspect',
   'whole-word',
   'eye',
