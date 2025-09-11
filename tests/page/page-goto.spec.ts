@@ -340,6 +340,7 @@ it('should throw if networkidle2 is passed as an option', async ({ page, server 
 });
 
 it('should fail when main resources failed to load', async ({ page, browserName, isWindows, mode, channel }) => {
+  it.skip(channel === 'webkit-wsl', 'Networking mode mirrored ends up stalling connections rather than terminating them, see https://github.com/microsoft/WSL/issues/10855.');
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
   if (browserName === 'chromium') {
