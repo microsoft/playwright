@@ -20,7 +20,7 @@ import url from 'url';
 import util from 'util';
 
 import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
-import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
+import { debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
@@ -226,15 +226,6 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 }
 
 export const debugTest = debug('pw:test');
-
-export const callLogText = (log: string[] | undefined) => {
-  if (!log || !log.some(l => !!l))
-    return '';
-  return `
-Call log:
-${colors.dim(log.join('\n'))}
-`;
-};
 
 const folderToPackageJsonPath = new Map<string, string>();
 

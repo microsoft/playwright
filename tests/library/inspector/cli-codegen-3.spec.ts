@@ -669,7 +669,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     ]);
   });
 
-  test('should consume contextmenu events, despite a custom context menu', async ({ openRecorder, browserName, platform }) => {
+  test('should consume contextmenu events, despite a custom context menu', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -687,11 +687,11 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
           // show custom context menu
           const menu = document.getElementById("menu");
           menu.style.display = "block";
-          menu.style.left = \`\${e.pageX}px\`;
-          menu.style.top = \`\${e.pageY}px\`;
+          menu.style.left = e.pageX + "px";
+          menu.style.top = e.pageY + "px";
         });
         const log = [];
-        for (const eventName of ['mousedown', 'mousemove', 'mouseup', 'pointerdown', 'pointermove', 'pointerup', 'click', 'contextmenu']) {
+        for (const eventName of ['auxclick', 'click', 'contextmenu']) {
           button.addEventListener(eventName, e => log.push('button: ' + e.type));
           menu.addEventListener(eventName, e => log.push('menu: ' + e.type));
         }
@@ -699,45 +699,59 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     `);
 
     await recorder.hoverOverElement('button');
-    expect(await page.evaluate('log')).toEqual(['button: pointermove', 'button: mousemove']);
+    expect(await page.evaluate('log')).toEqual([]);
+
+    const action = async () => {
+      await recorder.trustedClick({ button: 'right' });
+      await recorder.page.getByRole('listitem', { name: 'Right click' }).click();
+    };
 
     const [message] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', `button: 'right'`),
-      recorder.trustedClick({ button: 'right' }),
+      action(),
     ]);
     expect(message.text()).toBe('right-clicked');
-    if (browserName === 'chromium' && platform === 'win32') {
-      expect(await page.evaluate('log')).toEqual([
-        // hover
-        'button: pointermove',
-        'button: mousemove',
-        // trusted right click
-        'button: pointermove',
-        'button: mousemove',
-        'button: pointerdown',
-        'button: mousedown',
-        'button: pointerup',
-        'button: mouseup',
-        'button: contextmenu',
-      ]);
-    } else {
-      expect(await page.evaluate('log')).toEqual([
-        // hover
-        'button: pointermove',
-        'button: mousemove',
-        // trusted right click
-        // @Max what do you mean pointerup comes before pointerdown?
-        'button: pointerup',
-        'button: pointermove',
-        'button: mousemove',
-        'button: pointerdown',
-        'button: mousedown',
-        'button: contextmenu',
-        'menu: pointerup',
-        'menu: mouseup',
-      ]);
-    }
+    expect(await page.evaluate('log')).toEqual(['button: contextmenu']);
+  });
+
+  test('should generate hover action', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<div data-testid=testid>Hover me</div>`);
+    await recorder.hoverOverElement('div');
+
+    const action = async () => {
+      await recorder.trustedClick({ button: 'right' });
+      await expect(recorder.page.getByRole('list', { name: 'Choose action' })).toMatchAriaSnapshot(`
+        - list "Choose action":
+          - listitem "Click"
+          - listitem "Right click"
+          - listitem "Double click"
+          - listitem "Hover"
+      `);
+      await recorder.page.getByRole('listitem', { name: 'Hover' }).click();
+    };
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', `hover`),
+      action(),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.getByTestId('testid').hover();`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.get_by_test_id("testid").hover()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_test_id("testid").hover()`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.getByTestId("testid").hover()`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.GetByTestId("testid").HoverAsync();`);
   });
 
   test('should assert value', async ({ openRecorder }) => {

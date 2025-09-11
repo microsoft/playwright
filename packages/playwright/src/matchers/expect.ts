@@ -68,7 +68,7 @@ import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { TestStepCategory, TestStepInfoImpl } from '../worker/testInfo';
+import type { TestStepInfoImpl } from '../worker/testInfo';
 
 
 // #region
@@ -351,12 +351,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
       const stackFrames = filteredStackTrace(captureRawStack());
-      const category = matcherName === 'toPass' || this._info.poll ? 'test.step' : 'expect' as TestStepCategory;
 
       // toPass and poll matchers can contain other steps, expects and API calls,
       // so they behave like a retriable step.
       const stepInfo = {
-        category,
+        category: 'expect' as const,
         apiName,
         title,
         params: args[0] ? { expected: args[0] } : undefined,

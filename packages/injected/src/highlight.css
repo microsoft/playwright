@@ -51,11 +51,6 @@ x-pw-tooltip-line {
   cursor: pointer;
 }
 
-x-pw-tooltip-line.selectable:hover {
-  background-color: hsl(0, 0%, 95%);
-  overflow: hidden;
-}
-
 x-pw-tooltip-footer {
   display: flex;
   max-width: 600px;
@@ -72,10 +67,13 @@ x-pw-dialog {
   display: flex;
   flex-direction: column;
   position: absolute;
-  width: 400px;
-  height: 150px;
   z-index: 10;
   font-size: 13px;
+}
+
+x-pw-dialog:not(.autosize) {
+  width: 400px;
+  height: 150px;
 }
 
 x-pw-dialog-body {
@@ -314,4 +312,26 @@ x-locator-editor.does-not-match {
 .CodeMirror {
   width: 100% !important;
   height: 100% !important;
+}
+
+x-pw-action-list {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+x-pw-action-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+x-pw-action-item:hover {
+  background-color: hsl(0, 0%, 95%);
+}
+
+x-pw-action-item:last-child {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }

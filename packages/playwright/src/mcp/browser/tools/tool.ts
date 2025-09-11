@@ -26,12 +26,14 @@ export type FileUploadModalState = {
   type: 'fileChooser';
   description: string;
   fileChooser: playwright.FileChooser;
+  clearedBy: 'browser_file_upload';
 };
 
 export type DialogModalState = {
   type: 'dialog';
   description: string;
   dialog: playwright.Dialog;
+  clearedBy: 'browser_handle_dialog';
 };
 
 export type ModalState = FileUploadModalState | DialogModalState;
@@ -57,7 +59,7 @@ export function defineTabTool<Input extends z.Schema>(tool: TabTool<Input>): Too
   return {
     ...tool,
     handle: async (context, params, response) => {
-      const tab = context.currentTabOrDie();
+      const tab = await context.ensureTab();
       const modalStates = tab.modalStates().map(state => state.type);
       if (tool.clearsModalState && !modalStates.includes(tool.clearsModalState))
         response.addError(`Error: The tool "${tool.schema.name}" can only be used when there is related modal state present.\n` + tab.modalStatesMarkdown().join('\n'));

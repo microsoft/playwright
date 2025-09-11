@@ -87,12 +87,13 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeVisible() failed
 
-Locator:  locator('#node2')
+Locator: locator('#node2')
 Expected: visible
+Timeout: 1ms
 Error: element(s) not found
-Timeout:  1ms
 
-Call log`);
+Call log:
+`);
 
   }
 
@@ -116,7 +117,8 @@ Expected: not visible
 Received: visible
 Timeout:  1ms
 
-Call log`);
+Call log:
+`);
   }
 });
 

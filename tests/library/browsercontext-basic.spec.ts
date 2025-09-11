@@ -332,6 +332,22 @@ it('should emulate navigator.onLine', async ({ browser, server }) => {
   await context.close();
 });
 
+it('should emulate offline event', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37295' } }, async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    window.addEventListener('offline', () => events.push('offline'));
+    window.addEventListener('online', () => events.push('online'));
+    return events;
+  });
+  await context.setOffline(true);
+  expect(await events.jsonValue()).toEqual(['offline']);
+  await context.setOffline(false);
+  expect(await events.jsonValue()).toEqual(['offline', 'online']);
+  await context.close();
+});
+
 it('should emulate media in popup', async ({ browser, server }) => {
   {
     const context = await browser.newContext({ colorScheme: 'dark' });

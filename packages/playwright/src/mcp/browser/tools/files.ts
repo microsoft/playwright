@@ -25,7 +25,7 @@ const uploadFile = defineTabTool({
     title: 'Upload files',
     description: 'Upload one or multiple files',
     inputSchema: z.object({
-      paths: z.array(z.string()).describe('The absolute paths to the files to upload. Can be a single file or multiple files.'),
+      paths: z.array(z.string()).optional().describe('The absolute paths to the files to upload. Can be single file or multiple files. If omitted, file chooser is cancelled.'),
     }),
     type: 'destructive',
   },
@@ -41,9 +41,11 @@ const uploadFile = defineTabTool({
 
     tab.clearModalState(modalState);
     await tab.waitForCompletion(async () => {
-      await modalState.fileChooser.setFiles(params.paths);
+      if (params.paths)
+        await modalState.fileChooser.setFiles(params.paths);
     });
   },
+
   clearsModalState: 'fileChooser',
 });
 

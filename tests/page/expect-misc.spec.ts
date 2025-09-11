@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { stripVTControlCharacters } from 'node:util';
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
@@ -243,10 +242,13 @@ test.describe('toHaveClass', () => {
     const error = await expect(locator).toHaveClass('foo bar baz', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveClass(expected) failed
 
-Locator: locator('div')
-Expected string: "foo bar baz"
-Received string: "bar baz"
-Timeout: 1000ms`);
+Locator:  locator('div')
+Expected: "foo bar baz"
+Received: "bar baz"
+Timeout:  1000ms
+
+Call log:
+`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveClass" with timeout 1000ms`);
   });
 
@@ -289,10 +291,13 @@ test.describe('toContainClass', () => {
     const error = await expect(locator).toContainClass('does-not-exist', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).toContainClass(expected) failed
 
-Locator: locator('div')
-Expected string: "does-not-exist"
-Received string: "bar baz"
-Timeout: 1000ms`);
+Locator:  locator('div')
+Expected: "does-not-exist"
+Received: "bar baz"
+Timeout:  1000ms
+
+Call log:
+`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toContainClass" with timeout 1000ms`);
   });
 
@@ -326,9 +331,12 @@ test.describe('toHaveTitle', () => {
     const error = await expect(page).toHaveTitle('Hello', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(page).toHaveTitle(expected) failed
 
-Expected string: "Hello"
-Received string: "Bye"
-Timeout: 1000ms`);
+Expected: "Hello"
+Received: "Bye"
+Timeout:  1000ms
+
+Call log:
+`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toHaveTitle" with timeout 1000ms`);
   });
 });
@@ -344,32 +352,46 @@ test.describe('toHaveURL', () => {
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(page).toHaveURL(expected) failed
 
-Expected string: "wrong"
-Received string: "data:text/html,<div>A</div>"
-Timeout: 1000ms`);
-    expect(stripVTControlCharacters(error.message)).toContain('Expected string: "wrong"\nReceived string: "data:text/html,<div>A</div>"');
+Expected: "wrong"
+Received: "data:text/html,<div>A</div>"
+Timeout:  1000ms
+
+Call log:
+`);
   });
 
   test('fail with invalid argument', async ({ page }) => {
     await page.goto('data:text/html,<div>A</div>');
     // @ts-expect-error
     const error = await expect(page).toHaveURL({}).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain(`expect(page).toHaveURL([object Object])`);
-    expect(stripVTControlCharacters(error.message)).toContain('Expected has type:  object\nExpected has value: {}');
+    expect(stripAnsi(error.message)).toContain(`expect(page).toHaveURL(expected) failed
+
+Error: expected value must be a string or regular expression
+Expected has type:  object
+Expected has value: {}
+`);
   });
 
   test('fail with positive predicate', async ({ page }) => {
     await page.goto('data:text/html,<div>A</div>');
     const error = await expect(page).toHaveURL(_url => false).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected)');
-    expect(stripVTControlCharacters(error.message)).toContain('Expected predicate to succeed\nReceived string: "data:text/html,<div>A</div>"');
+    expect(stripAnsi(error.message)).toContain(`expect(page).toHaveURL(expected) failed
+
+Expected: predicate to succeed
+Received: "data:text/html,<div>A</div>"
+Timeout:  10000ms
+`);
   });
 
   test('fail with negative predicate', async ({ page }) => {
     await page.goto('data:text/html,<div>A</div>');
     const error = await expect(page).not.toHaveURL(_url => true).catch(e => e);
-    expect(stripVTControlCharacters(error.message)).toContain('expect(page).not.toHaveURL(expected)');
-    expect(stripVTControlCharacters(error.message)).toContain('Expected predicate to fail\nReceived string: "data:text/html,<div>A</div>"');
+    expect(stripAnsi(error.message)).toContain(`expect(page).not.toHaveURL(expected) failed
+
+Expected: predicate to fail
+Received: "data:text/html,<div>A</div>"
+Timeout:  10000ms
+`);
   });
 
   test('resolve predicate on initial call', async ({ page }) => {
@@ -404,10 +426,13 @@ test.describe('toHaveAttribute', () => {
       const error = await expect(locator).toHaveAttribute('disabled', '', { timeout: 1000 }).catch(e => e);
       expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveAttribute(expected) failed
 
-Locator: locator('#node')
-Expected string: ""
-Received string: serializes to the same string
-Timeout: 1000ms`);
+Locator:  locator('#node')
+Expected: ""
+Received: serializes to the same string
+Timeout:  1000ms
+
+Call log:
+`);
       expect(stripAnsi(error.message)).toContain(`- Expect "toHaveAttribute" with timeout 1000ms`);
     }
     {
@@ -417,7 +442,10 @@ Timeout: 1000ms`);
 Locator: locator('#node')
 Expected pattern: /.*/
 Received string:  ""
-Timeout: 1000ms`);
+Timeout: 1000ms
+
+Call log:
+`);
       expect(stripAnsi(error.message)).toContain(`- Expect "toHaveAttribute" with timeout 1000ms`);
     }
     await expect(locator).not.toHaveAttribute('disabled', '');
@@ -433,10 +461,13 @@ Timeout: 1000ms`);
       const error = await expect(locator).not.toHaveAttribute('checked', '', { timeout: 1000 }).catch(e => e);
       expect(stripAnsi(error.message)).toContain(`expect(locator).not.toHaveAttribute(expected) failed
 
-Locator: locator('#node')
-Expected string: not ""
-Received string: ""
-Timeout: 1000ms`);
+Locator:  locator('#node')
+Expected: not ""
+Received: ""
+Timeout:  1000ms
+
+Call log:
+`);
       expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveAttribute" with timeout 1000ms`);
     }
     {
@@ -584,15 +615,29 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
 });
 
 test('strict mode violation error format', async ({ page }) => {
-  await page.setContent('<div>hello</div><div>hi</div>');
-  const error = await expect(page.locator('div')).toBeVisible().catch(e => e);
-  expect(error.message).toContain('Expected: visible');
-  expect(error.message).toContain(`Error: strict mode violation: locator('div') resolved to 2 elements:`);
+  await page.setContent('<div>a</div><div>b</div>');
+  const error = await expect(page.locator('div')).toHaveText('foo').catch(e => e);
+  expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
+
+Locator: locator('div')
+Expected: "foo"
+Error: strict mode violation: locator('div') resolved to 2 elements:
+    1) <div>a</div> aka getByText('a')
+    2) <div>b</div> aka getByText('b')
+
+Call log:
+`);
 });
 
 test('invalid selector error format', async ({ page }) => {
-  await page.setContent('<div>hello</div><div>hi</div>');
+  await page.setContent('<div>a</div><div>b</div>');
   const error = await expect(page.locator('##')).toBeVisible().catch(e => e);
-  expect(error.message).toContain('Expected: visible');
-  expect(error.message).toContain(`Error: Unexpected token "#" while parsing css selector "##".`);
+  expect(stripAnsi(error.message)).toContain(`expect(locator).toBeVisible() failed
+
+Locator: ##
+Expected: visible
+Error: Unexpected token "#" while parsing css selector "##". Did you mean to CSS.escape it?
+
+Call log:
+`);
 });

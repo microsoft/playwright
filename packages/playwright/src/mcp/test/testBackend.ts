@@ -17,11 +17,10 @@
 import * as mcp from '../sdk/exports';
 import { TestContext } from './testContext';
 import { listTests, runTests, debugTest } from './testTools.js';
-import { snapshot, pickLocator, evaluate } from './browserTools';
+import { browserTools } from '../browser/tools';
 
 import type { ConfigLocation } from '../../common/config';
 import type { TestTool } from './testTool';
-
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
@@ -29,16 +28,14 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _tools: TestTool<any>[] = [listTests, runTests, debugTest];
   private _context: TestContext;
 
-  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean }) {
+  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._context = new TestContext(resolvedLocation, options);
   }
 
   async listTools(): Promise<mcp.Tool[]> {
     return [
       ...this._tools.map(tool => mcp.toMcpTool(tool.schema)),
-      mcp.toMcpTool(snapshot.schema),
-      mcp.toMcpTool(pickLocator.schema),
-      mcp.toMcpTool(evaluate.schema),
+      ...browserTools.map(tool => mcp.toMcpTool(tool.schema)),
     ];
   }
 

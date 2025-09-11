@@ -20,8 +20,8 @@ import path from 'path';
 
 import { escapeTemplateString, isString } from 'playwright-core/lib/utils';
 
-import { matcherHint } from './matcherHint';
-import { callLogText, fileExistsAsync } from '../util';
+import { formatMatcherMessage } from './matcherHint';
+import { fileExistsAsync } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
 
@@ -39,7 +39,7 @@ type ToMatchAriaSnapshotExpected = {
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
-  receiver: LocatorEx,
+  locator: LocatorEx,
   expectedParam?: ToMatchAriaSnapshotExpected,
   options: { timeout?: number } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
@@ -53,11 +53,6 @@ export async function toMatchAriaSnapshot(
     return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
 
   const updateSnapshots = testInfo.config.updateSnapshots;
-
-  const matcherOptions = {
-    isNot: this.isNot,
-    promise: this.promise,
-  };
 
   let expected: string;
   let timeout: number;
@@ -88,34 +83,38 @@ export async function toMatchAriaSnapshot(
   }
 
   expected = unshift(expected);
-  const { matches: pass, received, log, timedOut, errorMessage } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
+  const { matches: pass, received, log, timedOut, errorMessage } = await locator._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
   const typedReceived = received as MatcherReceived;
 
-  const matcherHintWithExpect = (expectedReceivedString: string) => {
-    return matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined, expectedReceivedString);
-  };
-
-  if (errorMessage) {
-    return {
-      pass: this.isNot,
-      message: () => matcherHintWithExpect(`Expected: ${this.utils.printExpected(expected)}\n${errorMessage}`) + callLogText(log),
-      name: 'toMatchAriaSnapshot',
-      expected,
-    };
-  }
-
-  const receivedText = typedReceived.raw;
   const message = () => {
-    if (pass) {
-      const receivedString = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
-      const expectedReceivedString = `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedString}`;
-      return matcherHintWithExpect(expectedReceivedString) + callLogText(log);
+    let printedExpected: string | undefined;
+    let printedReceived: string | undefined;
+    let printedDiff: string | undefined;
+    if (errorMessage) {
+      printedExpected = `Expected: ${this.isNot ? 'not ' : ''}${this.utils.printExpected(expected)}`;
+    } else if (pass) {
+      const receivedString = printReceivedStringContainExpectedSubstring(typedReceived.raw, typedReceived.raw.indexOf(expected), expected.length);
+      printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
+      printedReceived = `Received: ${receivedString}`;
     } else {
-      const labelExpected = `Expected`;
-      const expectedReceivedString = this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false);
-      return matcherHintWithExpect(expectedReceivedString) + callLogText(log);
+      printedDiff = this.utils.printDiffOrStringify(expected, typedReceived.raw, 'Expected', 'Received', false);
     }
+    return formatMatcherMessage(this, {
+      matcherName,
+      expectation: 'expected',
+      locator,
+      timeout,
+      timedOut,
+      printedExpected,
+      printedReceived,
+      printedDiff,
+      errorMessage,
+      log,
+    });
   };
+
+  if (errorMessage)
+    return { pass: this.isNot, message, name: 'toMatchAriaSnapshot', expected };
 
   if (!this.isNot) {
     if ((updateSnapshots === 'all') ||

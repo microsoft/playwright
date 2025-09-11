@@ -240,7 +240,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = process.env.PLAYWRIGHT_DEBUGGER_ENABLED ? 5000 : actionTimeout || 0;
+    playwright._defaultContextTimeout = (testInfo as TestInfoImpl)._pauseOnError() ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;
@@ -265,7 +265,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
         const zone = currentZone().data<TestStepInternal>('stepZone');
-        if (zone && zone.category === 'expect') {
+        const isExpectCall = data.apiName === 'locator._expect' || data.apiName === 'frame._expect' || data.apiName === 'page._expectScreenshot';
+        if (zone && zone.category === 'expect' && isExpectCall) {
           // Display the internal locator._expect call under the name of the enclosing expect call,
           // and connect it to the existing expect step.
           if (zone.apiName)
@@ -291,6 +292,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           tracingGroupSteps.push(step);
       },
       onApiCallRecovery: (data, error, channelOwner, recoveryHandlers) => {
+        const testInfo = currentTestInfo();
+        if (!testInfo || !testInfo._pauseOnError())
+          return;
+
         const step = data.userData;
         if (!step)
           return;

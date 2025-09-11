@@ -28,6 +28,9 @@ const testDir = path.join(__dirname, '..');
 const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   testDir,
   outputDir,
+  expect: {
+    timeout: 10000,
+  },
   timeout: 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,

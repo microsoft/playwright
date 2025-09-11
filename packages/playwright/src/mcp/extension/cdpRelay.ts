@@ -127,6 +127,9 @@ export class CDPRelayServer {
     url.searchParams.set('protocolVersion', process.env.PWMCP_TEST_PROTOCOL_VERSION ?? protocol.VERSION.toString());
     if (toolName)
       url.searchParams.set('newTab', String(toolName === 'browser_navigate'));
+    const token = process.env.PLAYWRIGHT_MCP_EXTENSION_TOKEN;
+    if (token)
+      url.searchParams.set('token', token);
     const href = url.toString();
 
     let executablePath = this._executablePath;

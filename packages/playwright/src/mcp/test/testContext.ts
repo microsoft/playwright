@@ -21,9 +21,9 @@ import type { ConfigLocation } from '../../common/config';
 export class TestContext {
   private _testRunner: TestRunner | undefined;
   readonly configLocation: ConfigLocation;
-  readonly options?: { muteConsole?: boolean };
+  readonly options?: { muteConsole?: boolean, headless?: boolean };
 
-  constructor(configLocation: ConfigLocation, options?: { muteConsole?: boolean }) {
+  constructor(configLocation: ConfigLocation, options?: { muteConsole?: boolean, headless?: boolean }) {
     this.configLocation = configLocation;
     this.options = options;
   }

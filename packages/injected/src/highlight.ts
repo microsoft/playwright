@@ -65,12 +65,6 @@ export class Highlight {
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
-    for (const eventName of ['click', 'auxclick', 'dragstart', 'input', 'keydown', 'keyup', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'mouseleave', 'focus', 'scroll']) {
-      this._glassPaneElement.addEventListener(eventName, e => {
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      });
-    }
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
@@ -204,20 +198,37 @@ export class Highlight {
     return this._renderedEntries[0]?.box;
   }
 
+  firstTooltipBox(): DOMRect | undefined {
+    const entry = this._renderedEntries[0];
+    if (!entry || !entry.tooltipElement || entry.tooltipLeft === undefined || entry.tooltipTop === undefined)
+      return;
+    return {
+      x: entry.tooltipLeft,
+      y: entry.tooltipTop,
+      left: entry.tooltipLeft,
+      top: entry.tooltipTop,
+      width: entry.tooltipElement.offsetWidth,
+      height: entry.tooltipElement.offsetHeight,
+      bottom: entry.tooltipTop + entry.tooltipElement.offsetHeight,
+      right: entry.tooltipLeft + entry.tooltipElement.offsetWidth,
+      toJSON: () => {},
+    };
+  }
+
   tooltipPosition(box: DOMRect, tooltipElement: HTMLElement) {
     const tooltipWidth = tooltipElement.offsetWidth;
     const tooltipHeight = tooltipElement.offsetHeight;
     const totalWidth = this._glassPaneElement.offsetWidth;
     const totalHeight = this._glassPaneElement.offsetHeight;
 
-    let anchorLeft = box.left;
+    let anchorLeft = Math.max(5, box.left);
     if (anchorLeft + tooltipWidth > totalWidth - 5)
       anchorLeft = totalWidth - tooltipWidth - 5;
-    let anchorTop = box.bottom + 5;
+    let anchorTop = Math.max(0, box.bottom) + 5;
     if (anchorTop + tooltipHeight > totalHeight - 5) {
       // If can't fit below, either position above...
-      if (box.top > tooltipHeight + 5) {
-        anchorTop = box.top - tooltipHeight - 5;
+      if (Math.max(0, box.top) > tooltipHeight + 5) {
+        anchorTop = Math.max(0, box.top) - tooltipHeight - 5;
       } else {
         // Or on top in case of large element
         anchorTop = totalHeight - 5 - tooltipHeight;
@@ -250,5 +261,17 @@ export class Highlight {
 
   appendChild(element: Element) {
     this._glassPaneShadow.appendChild(element);
+  }
+
+  onGlassPaneClick(handler: (event: MouseEvent) => void) {
+    this._glassPaneElement.style.pointerEvents = 'auto';
+    this._glassPaneElement.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+    this._glassPaneElement.addEventListener('click', handler);
+  }
+
+  offGlassPaneClick(handler: (event: MouseEvent) => void) {
+    this._glassPaneElement.style.pointerEvents = 'none';
+    this._glassPaneElement.style.backgroundColor = 'transparent';
+    this._glassPaneElement.removeEventListener('click', handler);
   }
 }

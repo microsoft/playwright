@@ -15,7 +15,7 @@
  */
 
 import { spawnSync } from 'child_process';
-import { test, expect, programPath } from './fixtures';
+import { test, expect, mcpServerPath } from './fixtures';
 
 test('cdp server', async ({ cdpServer, startClient, server }) => {
   await cdpServer.start();
@@ -42,7 +42,7 @@ test('cdp server reuse tab', async ({ cdpServer, startClient, server }) => {
       ref: 'f0',
     },
   })).toHaveResponse({
-    result: `Error: No open pages available. Use the "browser_navigate" tool to navigate to a page first.`,
+    result: `Error: Ref f0 not found in the current page snapshot. Try capturing new snapshot.`,
     isError: true,
   });
 
@@ -84,7 +84,7 @@ test('should throw connection error and allow re-connecting', async ({ cdpServer
 
 test('does not support --device', async () => {
   const result = spawnSync('node', [
-    ...programPath, '--device=Pixel 5', '--cdp-endpoint=http://localhost:1234',
+    ...mcpServerPath, '--device=Pixel 5', '--cdp-endpoint=http://localhost:1234',
   ]);
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(1);

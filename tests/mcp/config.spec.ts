@@ -20,7 +20,7 @@ import { test, expect } from './fixtures';
 import { configFromCLIOptions } from '../../packages/playwright/lib/mcp/browser/config';
 import type { Config } from '../../packages/playwright/src/mcp/config';
 
-test('config user data dir', async ({ startClient, server, mcpMode }, testInfo) => {
+test('config user data dir', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
     <title>Title</title>
     <body>Hello, world!</body>
@@ -59,7 +59,7 @@ test('executable path', async ({ startClient, server }, testInfo) => {
 
 test.describe(() => {
   test.use({ mcpBrowser: '' });
-  test('browserName', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/458' } }, async ({ startClient, mcpMode }, testInfo) => {
+  test('browserName', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/458' } }, async ({ startClient }, testInfo) => {
     const config: Config = {
       browser: {
         browserName: 'firefox',

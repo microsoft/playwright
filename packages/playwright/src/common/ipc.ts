@@ -66,6 +66,7 @@ export type WorkerInitParams = {
   projectId: string;
   config: SerializedConfig;
   artifactsDir: string;
+  pauseOnError: boolean;
 };
 
 export type TestBeginPayload = {

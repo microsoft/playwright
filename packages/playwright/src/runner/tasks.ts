@@ -64,10 +64,10 @@ export class TestRun {
   projectFiles: Map<FullProjectInternal, string[]> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
 
-  constructor(config: FullConfigInternal, reporter: InternalReporter) {
+  constructor(config: FullConfigInternal, reporter: InternalReporter, options?: { pauseOnError?: boolean }) {
     this.config = config;
     this.reporter = reporter;
-    this.failureTracker = new FailureTracker(config);
+    this.failureTracker = new FailureTracker(config, options);
   }
 }
 

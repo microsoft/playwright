@@ -170,12 +170,12 @@ class CLIBackend {
     if (name === 'cli_echo')
       return { content: [{ type: 'text', text: 'Echo: ' + (args?.message as string) }] };
     if (name === 'cli_pause_in_gdb') {
-      await runOnPauseBackendLoop(this.mdbUrlBox.mdbUrl!, new GDBBackend(), 'Paused on exception');
+      await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception');
       return { content: [{ type: 'text', text: 'Done' }] };
     }
     if (name === 'cli_pause_in_gdb_twice') {
-      await runOnPauseBackendLoop(this.mdbUrlBox.mdbUrl!, new GDBBackend(), 'Paused on exception 1');
-      await runOnPauseBackendLoop(this.mdbUrlBox.mdbUrl!, new GDBBackend(), 'Paused on exception 2');
+      await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception 1');
+      await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception 2');
       return { content: [{ type: 'text', text: 'Done' }] };
     }
     throw new Error(`Unknown tool: ${name}`);

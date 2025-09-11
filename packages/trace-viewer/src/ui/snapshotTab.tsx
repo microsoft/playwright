@@ -307,8 +307,33 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
 export type Snapshot = {
   action: ActionTraceEvent;
   snapshotName: string;
+  pageId: string;
   point?: { x: number, y: number };
   hasInputTarget?: boolean;
+};
+
+const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapshot' | 'afterSnapshot' | 'inputSnapshot', hasInputTarget: boolean = false): Snapshot | undefined => {
+  if (!action)
+    return undefined;
+
+  const snapshotName = action[snapshotNameKey];
+
+  if (!snapshotName)
+    return undefined;
+
+  if (!action.pageId) {
+    // eslint-disable-next-line no-console
+    console.error('snapshot action must have a pageId');
+    return undefined;
+  }
+
+  return {
+    action,
+    snapshotName,
+    pageId: action.pageId,
+    point: action.point,
+    hasInputTarget,
+  };
 };
 
 export type SnapshotInfo = {
@@ -334,18 +359,18 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   if (!action)
     return {};
 
-  let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
+  let beforeSnapshot = createSnapshot(action, 'beforeSnapshot');
   if (!beforeSnapshot) {
     // If the action has no beforeSnapshot, use the last available afterSnapshot.
     for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
       if (a.endTime <= action.startTime && a.afterSnapshot) {
-        beforeSnapshot = { action: a, snapshotName: a.afterSnapshot };
+        beforeSnapshot = createSnapshot(a, 'afterSnapshot');
         break;
       }
     }
   }
 
-  let afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : undefined;
+  let afterSnapshot = createSnapshot(action, 'afterSnapshot');
   if (!afterSnapshot) {
     let last: ActionTraceEvent | undefined;
     // - For test.step, we want to use the snapshot of the last nested action.
@@ -363,12 +388,12 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
       last = a;
     }
     if (last)
-      afterSnapshot = { action: last, snapshotName: last.afterSnapshot! };
+      afterSnapshot = createSnapshot(last, 'afterSnapshot');
     else
       afterSnapshot = beforeSnapshot;
   }
 
-  const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
+  const actionSnapshot = createSnapshot(action, 'inputSnapshot', true) ?? afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
@@ -392,8 +417,8 @@ export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScree
   if (shouldPopulateCanvasFromScreenshot)
     params.set('shouldPopulateCanvasFromScreenshot', '1');
 
-  const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
-  const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
+  const snapshotUrl = new URL(`snapshot/${snapshot.pageId}?${params.toString()}`, window.location.href).toString();
+  const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.pageId}?${params.toString()}`, window.location.href).toString();
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);

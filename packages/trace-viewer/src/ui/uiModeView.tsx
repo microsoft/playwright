@@ -100,6 +100,7 @@ export const UIModeView: React.FC<{}> = ({
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
+  const [showBrowser, setShowBrowser] = useSetting<boolean>('show-browser', false);
   const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -287,6 +288,8 @@ export const UIModeView: React.FC<{}> = ({
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
         updateSnapshots,
         reporters: queryParams.reporters,
+        headed: showBrowser,
+        workers: showBrowser ? 1 : undefined,
         trace: 'on',
       });
       // Clear pending tests in case of interrupt.
@@ -297,7 +300,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, showBrowser]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -501,6 +504,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Testing Options</div>
         </Toolbar>
         {testingOptionsVisible && <SettingsView settings={[
+          { type: 'check', value: showBrowser, set: setShowBrowser, name: 'Show browser — single worker' },
           { type: 'select', options: [
             { label: 'All', value: 'all' },
             { label: 'Changed', value: 'changed' },

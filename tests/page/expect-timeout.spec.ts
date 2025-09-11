@@ -17,15 +17,18 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
-test('should print timed out error message', async ({ page }) => {
+test('should print element not found', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const error = await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 1000 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
 
 Locator: locator('no-such-thing')
-Expected string: "hey"
+Expected: "hey"
+Timeout: 1000ms
 Error: element(s) not found
-Timeout: 1000ms`);
+
+Call log:
+`);
 });
 
 test('should print timed out error message when value does not match', async ({ page }) => {
@@ -33,10 +36,13 @@ test('should print timed out error message when value does not match', async ({ 
   const error = await expect(page.locator('div')).toHaveText('hey', { timeout: 1000 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
 
-Locator: locator('div')
-Expected string: "hey"
-Received string: "Text content"
-Timeout: 1000ms`);
+Locator:  locator('div')
+Expected: "hey"
+Received: "Text content"
+Timeout:  1000ms
+
+Call log:
+`);
 });
 
 test('should print timed out error message with impossible timeout', async ({ page }) => {
@@ -45,9 +51,11 @@ test('should print timed out error message with impossible timeout', async ({ pa
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
 
 Locator: locator('no-such-thing')
-Expected string: "hey"
+Expected: "hey"
+Timeout: 1ms
 Error: element(s) not found
-Timeout: 1ms`);
+
+Call log:`);
 });
 
 test('should print timed out error message when value does not match with impossible timeout', async ({ page }) => {
@@ -55,10 +63,13 @@ test('should print timed out error message when value does not match with imposs
   const error = await expect(page.locator('div')).toHaveText('hey', { timeout: 1 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
 
-Locator: locator('div')
-Expected string: "hey"
-Received string: "Text content"
-Timeout: 1ms`);
+Locator:  locator('div')
+Expected: "hey"
+Received: "Text content"
+Timeout:  1ms
+
+Call log:
+`);
 });
 
 test('should have timeout error name', async ({ page }) => {
@@ -89,10 +100,13 @@ test('should timeout during first locator handler check', async ({ page, server 
   const error = await expect(page.locator('span')).toHaveText('bye', { timeout: 3000 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
 
-Locator: locator('span')
-Expected string: "bye"
-Received string: ""
-Timeout: 3000ms`);
+Locator:  locator('span')
+Expected: "bye"
+Received: ""
+Timeout:  3000ms
+
+Call log:
+`);
   expect(error.message).toContain(`locator handler has finished, waiting for locator('div') to be hidden`);
   expect(error.message).toContain(`locator resolved to visible <div>hello</div>`);
 });

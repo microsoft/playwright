@@ -119,6 +119,7 @@ export class TestInfoImpl implements TestInfo {
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
+  private _workerParams: WorkerInitParams;
 
   get error(): TestInfoErrorImpl | undefined {
     return this.errors[0];
@@ -169,6 +170,7 @@ export class TestInfoImpl implements TestInfo {
     this._startWallTime = Date.now();
     this._requireFile = test?._requireFile ?? '';
     this._uniqueSymbol = Symbol('testInfoUniqueSymbol');
+    this._workerParams = workerParams;
 
     this.repeatEachIndex = workerParams.repeatEachIndex;
     this.retry = retry;
@@ -607,6 +609,10 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
+  }
+
+  _pauseOnError(): boolean {
+    return this._workerParams.pauseOnError;
   }
 }
 

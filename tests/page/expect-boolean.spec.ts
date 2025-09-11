@@ -123,12 +123,15 @@ Timeout:  1000ms`);
     const error = await expect(locator2).not.toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).not.toBeChecked() failed
 
-Locator:  locator('input2')
+Locator: locator('input2')
 Expected: not checked
+Timeout: 1000ms
 Error: element(s) not found
-Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeChecked" with timeout 1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- waiting for locator(\'input2\')`);
+
+Call log:
+  - Expect "not toBeChecked" with timeout 1000ms
+  - waiting for locator('input2')
+`);
   });
 
   test('with role', async ({ page }) => {
@@ -466,11 +469,14 @@ test.describe('toBeHidden', () => {
     const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).not.toBeHidden() failed
 
-Locator:  locator('button')
+Locator: locator('button')
 Expected: not hidden
+Timeout: 1000ms
 Error: element(s) not found
-Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeHidden" with timeout 1000ms`);
+
+Call log:
+  - Expect "not toBeHidden" with timeout 1000ms
+`);
   });
 
   test('with impossible timeout .not', async ({ page }) => {
@@ -568,9 +574,10 @@ test.describe(() => {
     test('text content type', async ({ page, server }) => {
       const res = await page.request.get(`${server.PREFIX}/text-content-type`);
       const error = await expect(res).toBeOK().catch(e => e);
+      expect(stripAnsi(error.message)).toContain(`expect(response).toBeOK() failed`);
       expect(error.message).toContain(`→ GET ${server.PREFIX}/text-content-type`);
       expect(error.message).toContain(`← 404 Not Found`);
-      expect(error.message).toContain(`Text error`);
+      expect(stripAnsi(error.message)).toContain(`Response text:\nText error`);
     });
 
     test('no content type', async ({ page, server }) => {

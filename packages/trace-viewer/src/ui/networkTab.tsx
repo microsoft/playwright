@@ -44,6 +44,7 @@ type RenderedEntry = {
   route: string,
   resource: Entry,
   contextId: string,
+  frameref: string | undefined,
 };
 type ColumnName = keyof RenderedEntry;
 type Sorting = { by: ColumnName, negate: boolean};
@@ -70,23 +71,31 @@ export const NetworkTab: React.FunctionComponent<{
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onEntryHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
-  const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
+  const [selectedEntryKey, setSelectedEntryKey] = React.useState<string | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
-  const { renderedEntries } = React.useMemo(() => {
+  const { renderedEntries, renderedEntryMap } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap)).filter(filterEntry(filterState));
     if (sorting)
       sort(renderedEntries, sorting);
-    return { renderedEntries };
+    const renderedEntryMap = new Map(renderedEntries.map((entry, i) => [`${entry.frameref}:${i}`, entry]));
+    return { renderedEntries, renderedEntryMap };
   }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
+
+  const selectedEntry = selectedEntryKey ? renderedEntryMap.get(selectedEntryKey) : undefined;
 
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
   });
 
+  const onSelected = React.useCallback((item: RenderedEntry) => {
+    const index = renderedEntries.indexOf(item);
+    setSelectedEntryKey(index !== -1 ? `${item.frameref}:${index}` : undefined);
+  }, [renderedEntries]);
+
   const onFilterStateChange = React.useCallback((newFilterState: FilterState) => {
     setFilterState(newFilterState);
-    setSelectedEntry(undefined);
+    setSelectedEntryKey(undefined);
   }, []);
 
   if (!networkModel.resources.length)
@@ -97,7 +106,7 @@ export const NetworkTab: React.FunctionComponent<{
     ariaLabel='Network requests'
     items={renderedEntries}
     selectedItem={selectedEntry}
-    onSelected={item => setSelectedEntry(item)}
+    onSelected={onSelected}
     onHighlighted={item => onEntryHovered?.(item?.resource)}
     columns={visibleColumns(!!selectedEntry, renderedEntries)}
     columnTitle={columnTitle}
@@ -118,7 +127,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={selectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
+        main={<NetworkResourceDetails resource={selectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntryKey(undefined)} />}
         sidebar={grid}
       />}
   </>;
@@ -290,6 +299,7 @@ const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator
     route: routeStatus,
     resource,
     contextId: contextIdGenerator.contextId(resource),
+    frameref: resource._frameref,
   };
 };
 

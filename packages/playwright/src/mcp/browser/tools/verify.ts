@@ -20,7 +20,7 @@ import * as javascript from '../codegen';
 import { generateLocator } from './utils';
 
 const verifyElement = defineTabTool({
-  capability: 'verify',
+  capability: 'testing',
   schema: {
     name: 'browser_verify_element_visible',
     title: 'Verify element visible',
@@ -45,7 +45,7 @@ const verifyElement = defineTabTool({
 });
 
 const verifyText = defineTabTool({
-  capability: 'verify',
+  capability: 'testing',
   schema: {
     name: 'browser_verify_text_visible',
     title: 'Verify text visible',
@@ -69,7 +69,7 @@ const verifyText = defineTabTool({
 });
 
 const verifyList = defineTabTool({
-  capability: 'verify',
+  capability: 'testing',
   schema: {
     name: 'browser_verify_list_visible',
     title: 'Verify list visible',
@@ -103,7 +103,7 @@ ${itemTexts.map(t => `  - listitem: ${javascript.escapeWithQuotes(t, '"')}`).joi
 });
 
 const verifyValue = defineTabTool({
-  capability: 'verify',
+  capability: 'testing',
   schema: {
     name: 'browser_verify_value',
     title: 'Verify value',

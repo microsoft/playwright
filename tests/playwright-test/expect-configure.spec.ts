@@ -49,7 +49,7 @@ test('should configure message', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.output).toContain('Error: x-foo must be visible');
   expect(result.output).toContain('expect(locator).toBeVisible() failed');
-  expect(result.output).toContain('Timeout:  1ms');
+  expect(result.output).toContain('Timeout: 1ms');
   expect(result.output).toContain('Call log:');
 });
 
@@ -68,7 +68,7 @@ test('should prefer local message', async ({ runInlineTest }) => {
 
   expect(result.output).toContain('Error: overridden');
   expect(result.output).toContain(`expect(locator).toBeVisible() failed`);
-  expect(result.output).toContain('Timeout:  1ms');
+  expect(result.output).toContain('Timeout: 1ms');
   expect(result.output).toContain('Call log:');
 });
 

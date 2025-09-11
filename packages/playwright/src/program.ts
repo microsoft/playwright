@@ -36,6 +36,7 @@ import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
+import { initClaudeCodeRepo, initOpencodeRepo } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -154,6 +155,7 @@ function addBrowserMCPServerCommand(program: Command) {
 function addTestMCPServerCommand(program: Command) {
   const command = program.command('run-test-mcp-server', { hidden: true });
   command.description('Interact with the test runner over MCP');
+  command.option('--headless', 'run browser in headless mode, headed by default');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
@@ -163,11 +165,24 @@ function addTestMCPServerCommand(program: Command) {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined }),
+      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined, headless: options.headless }),
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)
       console.error('MCP Listening on: ', mdbUrl);
+  });
+}
+
+function addInitAgentsCommand(program: Command) {
+  const command = program.command('init-agents', { hidden: true });
+  command.description('Initialize repository agents for the Claude Code');
+  command.option('--claude', 'Initialize repository agents for the Claude Code');
+  command.option('--opencode', 'Initialize repository agents for the Opencode');
+  command.action(async opts => {
+    if (opts.opencode)
+      await initOpencodeRepo();
+    else
+      await initClaudeCodeRepo();
   });
 }
 
@@ -403,3 +418,4 @@ addBrowserMCPServerCommand(program);
 addTestMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);
+addInitAgentsCommand(program);

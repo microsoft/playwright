@@ -200,3 +200,29 @@ test('should not duplicate network entries from beforeAll', {
   await page.getByText('Network', { exact: true }).click();
   await expect(page.getByRole('list', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
 });
+
+test('should not preserve selection across test runs', async ({ runUITest, server }) => {
+  server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
+
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+
+      test('some test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        // await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByText('some test').dblclick();
+  await page.getByText('Network', { exact: true }).click();
+
+  await page.getByText('network.html', { exact: true }).click();
+  await expect(page.getByText('General')).toBeVisible();
+
+  await page.getByText('some test').dblclick();
+  await expect(page.getByText('network.html', { exact: true })).toBeVisible();
+
+  await expect(page.getByText('General')).not.toBeVisible();
+});

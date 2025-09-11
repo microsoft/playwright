@@ -55,6 +55,11 @@ async function performActionImpl(progress: Progress, mainFrame: Frame, actionInC
     return;
   }
 
+  if (action.name === 'hover') {
+    await mainFrame.hover(progress, selector, { position: action.position, strict: true });
+    return;
+  }
+
   if (action.name === 'press') {
     const modifiers = toKeyboardModifiers(action.modifiers);
     const shortcut = [...modifiers, action.key].join('+');

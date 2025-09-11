@@ -21,8 +21,8 @@ import { compareBuffersOrStrings, getComparator, isString } from 'playwright-cor
 import { colors } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 
-import { addSuffixToFilePath, callLogText, expectTypes } from '../util';
-import {  matcherHint } from './matcherHint';
+import { addSuffixToFilePath, expectTypes } from '../util';
+import { callLogText, formatMatcherMessage } from './matcherHint';
 import { currentTestInfo } from '../common/globals';
 
 import type { MatcherResult } from './matcherHint';
@@ -301,8 +301,7 @@ export function toMatchSnapshot(
   if (!result)
     return helper.handleMatching();
 
-  const receiver = isString(received) ? 'string' : 'Buffer';
-  const header = matcherHint(this, undefined, 'toMatchSnapshot', receiver, undefined, undefined, undefined);
+  const header = formatMatcherMessage(this, { matcherName: 'toMatchSnapshot', receiver: isString(received) ? 'string' : 'Buffer', expectation: 'expected' });
   return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined, this._stepInfo);
 }
 
@@ -376,14 +375,13 @@ export async function toHaveScreenshot(
   if (helper.updateSnapshots === 'none' && !hasSnapshot)
     return helper.createMatcherResult(`A snapshot doesn't exist at ${helper.expectedPath}.`, false);
 
-  const receiver = locator ? 'locator' : 'page';
   if (!hasSnapshot) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
     const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
     // We tried re-generating new snapshot but failed.
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
     if (errorMessage) {
-      const header = matcherHint(this, locator, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
+      const header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout, timedOut });
       return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log, this._stepInfo);
     }
 
@@ -418,12 +416,12 @@ export async function toHaveScreenshot(
   if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
     if (actual)
       return writeFiles(actual);
-    let header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
+    let header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout, timedOut });
     header += '  Failed to re-generate expected.\n';
     return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
   }
 
-  const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
+  const header = formatMatcherMessage(this, { matcherName: 'toHaveScreenshot', locator, expectation: 'expected', timeout, timedOut });
   return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
 }
 
