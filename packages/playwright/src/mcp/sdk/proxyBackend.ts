@@ -45,11 +45,11 @@ export class ProxyBackend implements ServerBackend {
 
   async initialize(server: Server, clientVersion: ClientVersion, roots: Root[]): Promise<void> {
     this._roots = roots;
-    await this._setCurrentClient(this._mcpProviders[0]);
   }
 
   async listTools(): Promise<Tool[]> {
-    const response = await this._currentClient!.listTools();
+    const currentClient = await this._ensureCurrentClient();
+    const response = await currentClient.listTools();
     if (this._mcpProviders.length === 1)
       return response.tools;
     return [
@@ -61,7 +61,8 @@ export class ProxyBackend implements ServerBackend {
   async callTool(name: string, args: CallToolRequest['params']['arguments']): Promise<CallToolResult> {
     if (name === this._contextSwitchTool.name)
       return this._callContextSwitchTool(args);
-    return await this._currentClient!.callTool({
+    const currentClient = await this._ensureCurrentClient();
+    return await currentClient.callTool({
       name,
       arguments: args,
     }) as CallToolResult;
@@ -107,6 +108,12 @@ export class ProxyBackend implements ServerBackend {
     };
   }
 
+  private async _ensureCurrentClient(): Promise<Client> {
+    if (this._currentClient)
+      return this._currentClient;
+    return await this._setCurrentClient(this._mcpProviders[0]);
+  }
+
   private async _setCurrentClient(factory: MCPProvider) {
     await this._currentClient?.close();
     this._currentClient = undefined;
@@ -123,5 +130,6 @@ export class ProxyBackend implements ServerBackend {
     const transport = await factory.connect();
     await client.connect(transport);
     this._currentClient = client;
+    return client;
   }
 }
