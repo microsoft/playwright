@@ -32,7 +32,7 @@ using System;
 using System.Threading.Tasks;
 
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new()
 {
     ${launchOptions(channel)}
 });
@@ -54,27 +54,27 @@ test('should print the correct context options for custom settings', async ({ br
     server.EMPTY_PAGE]);
   const expectedResult = `
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new()
 {
     ${launchOptions(channel)}
-    Proxy = new ProxySettings
+    Proxy = new()
     {
         Server = "${proxyServer.HOST}",
     },
 });
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
+var context = await browser.NewContextAsync(new()
 {
     ColorScheme = ColorScheme.Dark,
-    Geolocation = new Geolocation
+    Geolocation = new()
     {
         Latitude = 37.819722m,
         Longitude = -122.478611m,
     },
     Locale = "es",
-    Permissions = new[] { ContextPermission.Geolocation },
+    Permissions = new[] { "geolocation" },
     TimezoneId = "Europe/Rome",
     UserAgent = "hardkodemium",
-    ViewportSize = new ViewportSize
+    ViewportSize = new()
     {
         Height = 720,
         Width = 1280,
@@ -89,7 +89,7 @@ test('should print the correct context options when using a device', async ({ br
   const cli = runCLI(['--device=Pixel 2', '--target=csharp', server.EMPTY_PAGE]);
   const expectedResult = `
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new()
 {
     ${launchOptions(channel)}
 });
@@ -114,27 +114,34 @@ test('should print the correct context options when using a device and additiona
     server.EMPTY_PAGE]);
   const expectedResult = `
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new()
 {
     ${launchOptions(channel)}
-    Proxy = new ProxySettings
+    Proxy = new()
     {
         Server = "${proxyServer.HOST}",
     },
 });
-var context = await browser.NewContextAsync(new BrowserNewContextOptions(playwright.Devices["iPhone 11"])
+var context = await browser.NewContextAsync(new()
 {
     ColorScheme = ColorScheme.Dark,
-    Geolocation = new Geolocation
+    Geolocation = new()
     {
         Latitude = 37.819722m,
         Longitude = -122.478611m,
-    },
+    },${process.platform === 'linux' && browserName === 'webkit' ? '' : `
+    HasTouch = true,
+    IsMobile = true,`}
     Locale = "es",
-    Permissions = new[] { ContextPermission.Geolocation },
+    Permissions = new[] { "geolocation" },
+    Screen = new()
+    {
+        Height = 896,
+        Width = 414,
+    },
     TimezoneId = "Europe/Rome",
     UserAgent = "hardkodemium",
-    ViewportSize = new ViewportSize
+    ViewportSize = new()
     {
         Height = 720,
         Width = 1280,
@@ -150,17 +157,17 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=csharp', server.EMPTY_PAGE]);
   const expectedResult1 = `
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new()
 {
     ${launchOptions(channel)}
 });
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
+var context = await browser.NewContextAsync(new()
 {
     StorageStatePath = "${loadFileName.replace(/\\/g, '\\\\')}",
 });`;
   await cli.waitFor(expectedResult1);
   const expectedResult2 = `
-await context.StorageStateAsync(new BrowserContextStorageStateOptions
+await context.StorageStateAsync(new()
 {
     Path = "${saveFileName.replace(/\\/g, '\\\\')}"
 });
@@ -180,7 +187,7 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
 
 test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)}, new BrowserContextRouteFromHAROptions
+  const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)}, new()
 {
     Url = "**/*.js",
 });`;
@@ -203,7 +210,7 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
     await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
     expect(await cli.text()).toContain(`    public override BrowserNewContextOptions ContextOptions()
     {
-        return new BrowserNewContextOptions
+        return new()
         {
             ColorScheme = ColorScheme.Dark,
         };
@@ -223,7 +230,7 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
 
   test(`should work with --save-har and --save-har-glob in ${testFramework}`, async ({ runCLI }, testInfo) => {
     const harFileName = testInfo.outputPath('har.har');
-    const expectedResult = `await Context.RouteFromHARAsync(${JSON.stringify(harFileName)}, new BrowserContextRouteFromHAROptions
+    const expectedResult = `await Context.RouteFromHARAsync(${JSON.stringify(harFileName)}, new()
         {
             Url = "**/*.js",
         });`;
@@ -246,7 +253,7 @@ public class Tests : PageTest
 {
     public override BrowserNewContextOptions ContextOptions()
     {
-        return new BrowserNewContextOptions
+        return new()
         {
             ColorScheme = ColorScheme.Dark,
         };
@@ -273,7 +280,7 @@ public class Tests : PageTest
 {
     public override BrowserNewContextOptions ContextOptions()
     {
-        return new BrowserNewContextOptions
+        return new()
         {
             ColorScheme = ColorScheme.Dark,
         };

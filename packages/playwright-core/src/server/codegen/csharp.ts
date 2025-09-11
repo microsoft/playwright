@@ -126,11 +126,11 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         const options = toClickOptionsForSourceCode(action);
         if (!Object.entries(options).length)
           return `await ${subject}.${this._asLocator(action.selector)}.${method}Async();`;
-        const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
+        const optionsString = formatObject(options, '    ');
         return `await ${subject}.${this._asLocator(action.selector)}.${method}Async(${optionsString});`;
       }
       case 'hover': {
-        const optionsString = action.position ? formatObject({ position: action.position }, '    ', 'LocatorHoverOptions') : '';
+        const optionsString = action.position ? formatObject({ position: action.position }, '    ') : '';
         return `await ${subject}.${this._asLocator(action.selector)}.HoverAsync(${optionsString});`;
       }
       case 'check':
@@ -183,11 +183,11 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       using System.Threading.Tasks;
 
       using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
+      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ')});
       var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
     if (options.contextOptions.recordHar) {
       const url = options.contextOptions.recordHar.urlFilter;
-      formatter.add(`      await context.RouteFromHARAsync(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatObject({ url }, '    ', 'BrowserContextRouteFromHAROptions')}` : ''});`);
+      formatter.add(`      await context.RouteFromHARAsync(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatObject({ url }, '    ')}` : ''});`);
     }
     formatter.newLine();
     return formatter.format();
@@ -216,14 +216,14 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     {`);
     if (options.contextOptions.recordHar) {
       const url = options.contextOptions.recordHar.urlFilter;
-      formatter.add(`    await Context.RouteFromHARAsync(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatObject({ url }, '    ', 'BrowserContextRouteFromHAROptions')}` : ''});`);
+      formatter.add(`    await Context.RouteFromHARAsync(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatObject({ url }, '    ')}` : ''});`);
     }
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
     const offset = this._mode === 'library' ? '' : '        ';
-    let storageStateLine = saveStorage ? `\n${offset}await context.StorageStateAsync(new BrowserContextStorageStateOptions\n${offset}{\n${offset}    Path = ${quote(saveStorage)}\n${offset}});\n` : '';
+    let storageStateLine = saveStorage ? `\n${offset}await context.StorageStateAsync(new()\n${offset}{\n${offset}    Path = ${quote(saveStorage)}\n${offset}});\n` : '';
     if (this._mode !== 'library')
       storageStateLine += `    }\n}\n`;
     return storageStateLine;
@@ -232,8 +232,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
 function formatObject(value: any, indent = '    ', name = ''): string {
   if (typeof value === 'string') {
-    if (['permissions', 'colorScheme', 'modifiers', 'button', 'recordHarContent', 'recordHarMode', 'serviceWorkers'].includes(name))
-      return `${getClassName(name)}.${toPascal(value)}`;
+    if (['colorScheme', 'modifiers', 'button', 'recordHarContent', 'recordHarMode', 'serviceWorkers'].includes(name))
+      return `${getEnumName(name)}.${toPascal(value)}`;
     return quote(value);
   }
   if (Array.isArray(value))
@@ -241,15 +241,13 @@ function formatObject(value: any, indent = '    ', name = ''): string {
   if (typeof value === 'object') {
     const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
     if (!keys.length)
-      return name ? `new ${getClassName(name)}` : '';
+      return `new()`;
     const tokens: string[] = [];
     for (const key of keys) {
       const property = getPropertyName(key);
       tokens.push(`${property} = ${formatObject(value[key], indent, key)},`);
     }
-    if (name)
-      return `new ${getClassName(name)}\n{\n${indent}${tokens.join(`\n${indent}`)}\n${indent}}`;
-    return `{\n${indent}${tokens.join(`\n${indent}`)}\n${indent}}`;
+    return `new()\n{\n${indent}${tokens.join(`\n${indent}`)}\n${indent}}`;
   }
   if (name === 'latitude' || name === 'longitude')
     return String(value) + 'm';
@@ -257,11 +255,8 @@ function formatObject(value: any, indent = '    ', name = ''): string {
   return String(value);
 }
 
-function getClassName(value: string): string {
+function getEnumName(value: string): string {
   switch (value) {
-    case 'viewport': return 'ViewportSize';
-    case 'proxy': return 'ProxySettings';
-    case 'permissions': return 'ContextPermission';
     case 'modifiers': return 'KeyboardModifier';
     case 'button': return 'MouseButton';
     case 'recordHarMode': return 'HarMode';
@@ -284,21 +279,22 @@ function toPascal(value: string): string {
 }
 
 function formatContextOptions(contextOptions: BrowserContextOptions, deviceName: string | undefined): string {
-  let options = { ...contextOptions };
+  const options = { ...contextOptions };
   // recordHAR is replaced with routeFromHAR in the generated code.
   delete options.recordHar;
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device) {
     if (!Object.entries(options).length)
       return '';
-    return formatObject(options, '    ', 'BrowserNewContextOptions');
+    return formatObject(options, '    ');
   }
 
-  options = sanitizeDeviceOptions(device, options);
-  if (!Object.entries(options).length)
+  // NOTE: If options are the same as in the device, we just use the device.
+  if (!Object.entries(sanitizeDeviceOptions(device, options)).length)
     return `playwright.Devices[${quote(deviceName!)}]`;
-
-  return formatObject(options, '    ', `BrowserNewContextOptions(playwright.Devices[${quote(deviceName!)}])`);
+  // NOTE: In csharp there is no easy way to merge options, so we just expand everything.
+  delete (options as any)['defaultBrowserType'];
+  return formatObject(options, '    ');
 }
 
 class CSharpFormatter {
