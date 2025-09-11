@@ -385,10 +385,17 @@ export class BidiPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._session.send('browsingContext.close', {
-      context: this._session.sessionId,
-      promptUnload: runBeforeUnload,
-    });
+    if (runBeforeUnload) {
+      this._session.sendMayFail('browsingContext.close', {
+        context: this._session.sessionId,
+        promptUnload: runBeforeUnload,
+      });
+    } else {
+      await this._session.send('browsingContext.close', {
+        context: this._session.sessionId,
+        promptUnload: runBeforeUnload,
+      });
+    }
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
