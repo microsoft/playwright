@@ -501,78 +501,68 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _showDialog(model: HighlightModelWithSelector, actionPosition: Point | undefined) {
+    const actions: { title: string, action: actions.PerformOnRecordAction }[] = [
+      {
+        title: 'Click',
+        action: {
+          name: 'click',
+          selector: model.selector,
+          position: actionPosition,
+          signals: [],
+          button: 'left',
+          modifiers: 0,
+          clickCount: 0,
+        }
+      },
+      {
+        title: 'Right click',
+        action: {
+          name: 'click',
+          selector: model.selector,
+          position: actionPosition,
+          signals: [],
+          button: 'right',
+          modifiers: 0,
+          clickCount: 0,
+        }
+      },
+      {
+        title: 'Double click',
+        action: {
+          name: 'click',
+          selector: model.selector,
+          position: actionPosition,
+          signals: [],
+          button: 'left',
+          modifiers: 0,
+          clickCount: 2,
+        }
+      },
+      {
+        title: 'Hover',
+        action: {
+          name: 'hover',
+          selector: model.selector,
+          position: actionPosition,
+          signals: [],
+        }
+      },
+    ];
+
     const listElement = this._recorder.document.createElement('x-pw-action-list');
     listElement.setAttribute('role', 'list');
     listElement.setAttribute('aria-label', 'Choose action');
-
-    const clickElement = this._recorder.document.createElement('x-pw-action-item');
-    clickElement.setAttribute('role', 'listitem');
-    clickElement.textContent = 'Click';
-    clickElement.setAttribute('aria-label', 'Click');
-    clickElement.addEventListener('click', () => {
-      this._dialog.close();
-      this._performAction({
-        name: 'click',
-        selector: model.selector,
-        position: actionPosition,
-        signals: [],
-        button: 'left',
-        modifiers: 0,
-        clickCount: 0,
+    for (const action of actions) {
+      const actionElement = this._recorder.document.createElement('x-pw-action-item');
+      actionElement.setAttribute('role', 'listitem');
+      actionElement.textContent = action.title;
+      actionElement.setAttribute('aria-label', action.title);
+      actionElement.addEventListener('click', () => {
+        this._dialog.close();
+        this._performAction(action.action);
       });
-    });
-    listElement.appendChild(clickElement);
-
-    const rightClickElement = this._recorder.document.createElement('x-pw-action-item');
-    rightClickElement.setAttribute('role', 'listitem');
-    rightClickElement.textContent = 'Right click';
-    rightClickElement.setAttribute('aria-label', 'Right click');
-    rightClickElement.addEventListener('click', () => {
-      this._dialog.close();
-      this._performAction({
-        name: 'click',
-        selector: model.selector,
-        position: actionPosition,
-        signals: [],
-        button: 'right',
-        modifiers: 0,
-        clickCount: 0,
-      });
-    });
-    listElement.appendChild(rightClickElement);
-
-    const doubleClickElement = this._recorder.document.createElement('x-pw-action-item');
-    doubleClickElement.setAttribute('role', 'listitem');
-    doubleClickElement.textContent = 'Double click';
-    doubleClickElement.setAttribute('aria-label', 'Double click');
-    doubleClickElement.addEventListener('click', () => {
-      this._dialog.close();
-      this._performAction({
-        name: 'click',
-        selector: model.selector,
-        position: actionPosition,
-        signals: [],
-        button: 'left',
-        modifiers: 0,
-        clickCount: 2,
-      });
-    });
-    listElement.appendChild(doubleClickElement);
-
-    const hoverElement = this._recorder.document.createElement('x-pw-action-item');
-    hoverElement.setAttribute('role', 'listitem');
-    hoverElement.textContent = 'Hover';
-    hoverElement.setAttribute('aria-label', 'Hover');
-    hoverElement.addEventListener('click', () => {
-      this._dialog.close();
-      this._performAction({
-        name: 'hover',
-        selector: model.selector,
-        position: actionPosition,
-        signals: [],
-      });
-    });
-    listElement.appendChild(hoverElement);
+      listElement.appendChild(actionElement);
+    }
 
     const dialogElement = this._dialog.show({
       label: 'Choose action',
