@@ -21,7 +21,6 @@ import { kBrowserCloseMessageId } from './wkConnection';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { WKBrowser } from '../webkit/wkBrowser';
-import { spawnAsync } from '../utils/spawnAsync';
 import { registry } from '../registry';
 
 import type { BrowserOptions } from '../browser';
@@ -111,6 +110,9 @@ export class WebKit extends BrowserType {
 }
 
 export async function translatePathToWSL(path: string): Promise<string> {
-  const { stdout } = await spawnAsync('wsl.exe', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]);
-  return stdout.toString().trim();
+  const m = path.match(/^([Cc]):[\\/](.*)$/);
+  if (!m)
+    throw new Error(`Only absolute C:\\ paths are supported: "${path}"`);
+  const rest = m[2].replace(/\\/g, '/'); // backslash -> forward slash
+  return `/mnt/c/${rest}`;
 }
