@@ -123,6 +123,67 @@ test('should create a server with environment variables', async ({ runInlineTest
   delete process.env['FOOEXTERNAL'];
 });
 
+test('should run web server with PLAYWRIGHT_TEST=1 environment variable', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37377' }
+}, async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex * 2 + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('connect to the server', async ({baseURL, page}) => {
+        expect(baseURL).toBe('http://localhost:${port}');
+        await page.goto(baseURL + '/env-PLAYWRIGHT_TEST');
+        expect(await page.textContent('body')).toBe('1');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          port: ${port},
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+});
+
+test('should allow to unset PLAYWRIGHT_TEST environment variable', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37377' }
+}, async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex * 2 + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('connect to the server', async ({baseURL, page}) => {
+        expect(baseURL).toBe('http://localhost:${port}');
+        await page.goto(baseURL + '/env-PLAYWRIGHT_TEST');
+        expect(await page.textContent('body')).toBe('');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          port: ${port},
+          env: {
+            'PLAYWRIGHT_TEST': undefined,
+          }
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+});
+
 test('should default cwd to config directory', async ({ runInlineTest }, testInfo) => {
   const port = testInfo.workerIndex * 2 + 10500;
   const configDir = testInfo.outputPath('foo');

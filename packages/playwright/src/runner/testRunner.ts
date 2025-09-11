@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { registry } from 'playwright-core/lib/server';
-import { ManualPromise, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
+import { ManualPromise, gracefullyProcessExitDoNotHang, setPlaywrightTestProcessEnv } from 'playwright-core/lib/utils';
 
 import { loadConfig } from '../common/configLoader';
 import { Watcher } from '../fsWatcher';
@@ -108,6 +108,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     watchTestDirs?: boolean;
     populateDependenciesOnList?: boolean;
   }) {
+    setPlaywrightTestProcessEnv();
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
   }
@@ -432,6 +433,8 @@ async function resolveCtDirs(config: FullConfigInternal) {
 }
 
 export async function runAllTestsWithConfig(config: FullConfigInternal): Promise<FullResultStatus> {
+  setPlaywrightTestProcessEnv();
+
   const listOnly = config.cliListOnly;
 
   addGitCommitInfoPlugin(config);

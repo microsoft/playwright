@@ -454,3 +454,38 @@ test('globalTeardown runs even if callback failed', async ({ runInlineTest }) =>
   ]);
   expect(result.output).toContain('Error: kaboom');
 });
+
+test('globalSetup and globalTeardown should have PLAYWRIGHT_TEST=1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import * as path from 'path';
+      module.exports = {
+        globalSetup: './globalSetup',
+        globalTeardown: './globalTeardown',
+      };
+    `,
+    'globalSetup.ts': `
+      export default () => {
+        console.log('\\n%%setup env=' + process.env.PLAYWRIGHT_TEST);
+      };
+    `,
+    'globalTeardown.ts': `
+      export default () => {
+        console.log('\\n%%teardown env=' + process.env.PLAYWRIGHT_TEST);
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async ({}, testInfo) => {
+        console.log('\\n%%test env=' + process.env.PLAYWRIGHT_TEST);
+      });
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.outputLines).toEqual([
+    'setup env=1',
+    'test env=1',
+    'teardown env=1',
+  ]);
+});

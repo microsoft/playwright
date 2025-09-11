@@ -31,7 +31,7 @@ export default defineConfig({
 | [`property: TestConfig.webServer`] | Launch a development web server (or multiple) during the tests. |
 | `command`| Shell command to start the local dev server of your app. |
 | `cwd` | Current working directory of the spawned process, defaults to the directory of the configuration file. |
-| `env` | Environment variables to set for the command, `process.env` by default. |
+| `env` | Environment variables for the command. Defaults to inheriting `process.env` with `PLAYWRIGHT_TEST=1` added. |
 | `gracefulShutdown` | How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal: 'SIGTERM', timeout: 500 }`, the process group is sent a `SIGTERM` signal, followed by `SIGKILL` if it doesn't exit within 500ms. You can also use `SIGINT` as the signal instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGTERM` and `SIGINT` signals, so this option is ignored on Windows. Note that shutting down a Docker container requires `SIGTERM`. |
 | `ignoreHTTPSErrors` | Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`. |
 | `name` | Specifies a custom name for the web server. This name will be prefixed to log messages. Defaults to `[WebServer]`. |

@@ -242,3 +242,17 @@ test('timeout override', async ({ startTestServer, writeFiles }) => {
 
   expect(await testServerConnection.runTests({ timeout: 42 })).toEqual({ status: 'passed' });
 });
+
+test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFiles }) => {
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+        expect(process.env.PLAYWRIGHT_TEST).toBe('1');
+      });
+      `,
+  });
+  expect(await testServerConnection.runTests({})).toEqual({ status: 'passed' });
+});
