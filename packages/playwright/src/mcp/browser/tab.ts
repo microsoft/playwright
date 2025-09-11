@@ -71,6 +71,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         type: 'fileChooser',
         description: 'File chooser',
         fileChooser: chooser,
+        clearedBy: 'browser_file_upload',
       });
     });
     page.on('dialog', dialog => this._dialogShown(dialog));
@@ -108,6 +109,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       type: 'dialog',
       description: `"${dialog.type()}" dialog with message "${dialog.message()}"`,
       dialog,
+      clearedBy: 'browser_handle_dialog',
     });
   }
 
@@ -304,10 +306,8 @@ export function renderModalStates(context: Context, modalStates: ModalState[]): 
   const result: string[] = ['### Modal state'];
   if (modalStates.length === 0)
     result.push('- There is no modal state present');
-  for (const state of modalStates) {
-    const tool = context.tools.filter(tool => 'clearsModalState' in tool).find(tool => tool.clearsModalState === state.type);
-    result.push(`- [${state.description}]: can be handled by the "${tool?.schema.name}" tool`);
-  }
+  for (const state of modalStates)
+    result.push(`- [${state.description}]: can be handled by the "${state.clearedBy}" tool`);
   return result;
 }
 

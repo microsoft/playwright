@@ -160,10 +160,27 @@ const selectOption = defineTabTool({
   },
 });
 
+const pickLocator = defineTabTool({
+  capability: 'testing',
+  schema: {
+    name: 'browser_generate_locator',
+    title: 'Create locator for element',
+    description: 'Generate locator for the given element to use in tests',
+    inputSchema: elementSchema,
+    type: 'readOnly',
+  },
+
+  handle: async (tab, params, response) => {
+    const locator = await tab.refLocator(params);
+    response.addResult(await generateLocator(locator));
+  },
+});
+
 export default [
   snapshot,
   click,
   drag,
   hover,
   selectOption,
+  pickLocator,
 ];

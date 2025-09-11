@@ -8,22 +8,22 @@ tools:
   - grep
   - read
   - write
+  - playwright/browser_click
   - playwright/browser_close
   - playwright/browser_console_messages
-  - playwright/browser_handle_dialog
+  - playwright/browser_drag
   - playwright/browser_evaluate
   - playwright/browser_file_upload
-  - playwright/browser_press_key
-  - playwright/browser_type
-  - playwright/browser_navigate
-  - playwright/browser_network_requests
-  - playwright/browser_take_screenshot
-  - playwright/browser_snapshot
-  - playwright/browser_click
-  - playwright/browser_drag
+  - playwright/browser_handle_dialog
   - playwright/browser_hover
-  - playwright/browser_select_option
+  - playwright/browser_navigate
   - playwright/browser_navigate_back
+  - playwright/browser_network_requests
+  - playwright/browser_press_key
+  - playwright/browser_select_option
+  - playwright/browser_snapshot
+  - playwright/browser_take_screenshot
+  - playwright/browser_type
   - playwright/browser_wait_for
 mcp-servers:
   playwright:

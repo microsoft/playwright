@@ -9,12 +9,12 @@ tools:
   - read
   - write
   - edit
-  - playwright-test/playwright_test_browser_snapshot
-  - playwright-test/playwright_test_generate_locator
-  - playwright-test/playwright_test_evaluate_on_pause
-  - playwright-test/playwright_test_run_tests
-  - playwright-test/playwright_test_list_tests
+  - playwright-test/browser_evaluate
+  - playwright-test/browser_generate_locator
+  - playwright-test/browser_snapshot
   - playwright-test/playwright_test_debug_test
+  - playwright-test/playwright_test_list_tests
+  - playwright-test/playwright_test_run_tests
 mcp-servers:
   playwright-test:
     type: 'local'

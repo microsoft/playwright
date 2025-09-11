@@ -42,7 +42,7 @@ test('cdp server reuse tab', async ({ cdpServer, startClient, server }) => {
       ref: 'f0',
     },
   })).toHaveResponse({
-    result: `Error: No open pages available. Use the "browser_navigate" tool to navigate to a page first.`,
+    result: `Error: Ref f0 not found in the current page snapshot. Try capturing new snapshot.`,
     isError: true,
   });
 

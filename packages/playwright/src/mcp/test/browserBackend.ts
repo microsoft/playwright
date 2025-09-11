@@ -15,69 +15,36 @@
  */
 
 import * as mcp from '../sdk/exports';
-import * as mcpBundle from '../sdk/bundle';
 import { currentTestInfo } from '../../common/globals';
-
-import { snapshot, pickLocator, evaluate } from './browserTools';
 import { stripAnsiEscapes } from '../../util';
+import { defaultConfig, FullConfig } from '../browser/config';
+import { BrowserServerBackend } from '../browser/browserServerBackend';
 
-import type { BrowserTool } from './browserTool';
 import type * as playwright from '../../../index';
-import type { ServerBackendOnPause } from '../sdk/mdb';
+import type { Page } from '../../../../playwright-core/src/client/page';
+import type { BrowserContextFactory, ClientInfo } from '../browser/browserContextFactory';
 
-type PageEx = playwright.Page & {
-  _snapshotForAI: () => Promise<string>;
-};
-
-const tools = [snapshot, pickLocator, evaluate];
-
-export class BrowserBackend implements ServerBackendOnPause {
-  readonly name = 'Playwright';
-  readonly version = '0.0.1';
-  private _tools: BrowserTool<any>[] = tools;
-  private _page: playwright.Page;
-
-  constructor(page: playwright.Page) {
-    this._page = page;
-  }
-
-  async initialize() {
-  }
-
-  async listTools(): Promise<mcp.Tool[]> {
-    return [...this._tools.map(tool => mcp.toMcpTool(tool.schema)), mcp.toMcpTool(doneToolSchema)];
-  }
-
-  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
-    if (name === 'done') {
-      (this as ServerBackendOnPause).requestSelfDestruct?.();
-      return {
-        content: [{ type: 'text', text: 'Done' }],
-      };
-    }
-
-    const tool = this._tools.find(tool => tool.schema.name === name);
-    if (!tool)
-      throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
-    const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    return await tool.handle(this._page, parsedArguments);
-  }
-}
-
-const doneToolSchema = mcp.defineToolSchema({
-  name: 'done',
-  title: 'Done',
-  description: 'Done',
-  inputSchema: mcpBundle.z.object({}),
-  type: 'destructive',
-});
 
 export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
   const testInfo = currentTestInfo();
   if (!testInfo || !testInfo._pauseOnError())
     return;
 
-  const snapshot = await (page as PageEx)._snapshotForAI();
+  const browserContextFactory: BrowserContextFactory = {
+    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
+      return {
+        browserContext: page.context(),
+        close: async () => {}
+      };
+    }
+  };
+
+  const config: FullConfig = {
+    ...defaultConfig,
+    capabilities: ['testing'],
+  };
+
+  const snapshot = await (page as Page)._snapshotForAI();
   const introMessage = `### Paused on error:
 ${stripAnsiEscapes(message())}
 
@@ -85,6 +52,7 @@ ${stripAnsiEscapes(message())}
 ${snapshot}
 
 ### Task
-Try recovering from the error prior to continuing, use following tools to recover: ${tools.map(tool => tool.schema.name).join(', ')}`;
-  await mcp.runOnPauseBackendLoop(new BrowserBackend(page), introMessage);
+Try recovering from the error prior to continuing`;
+
+  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, browserContextFactory), introMessage);
 }

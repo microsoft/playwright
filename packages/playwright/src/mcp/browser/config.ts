@@ -55,7 +55,7 @@ export type CLIOptions = {
   viewportSize?: string;
 };
 
-const defaultConfig: FullConfig = {
+export const defaultConfig: FullConfig = {
   browser: {
     browserName: 'chromium',
     launchOptions: {
