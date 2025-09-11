@@ -129,6 +129,10 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
         return `await ${subject}.${this._asLocator(action.selector)}.${method}Async(${optionsString});`;
       }
+      case 'hover': {
+        const optionsString = action.position ? formatObject({ position: action.position }, '    ', 'LocatorHoverOptions') : '';
+        return `await ${subject}.${this._asLocator(action.selector)}.HoverAsync(${optionsString});`;
+      }
       case 'check':
         return `await ${subject}.${this._asLocator(action.selector)}.CheckAsync();`;
       case 'uncheck':

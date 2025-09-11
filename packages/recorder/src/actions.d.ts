@@ -19,6 +19,7 @@ type Point = { x: number, y: number };
 export type ActionName =
   'check' |
   'click' |
+  'hover' |
   'closePage' |
   'fill' |
   'navigate' |
@@ -50,6 +51,11 @@ export type ClickAction = ActionWithSelector & {
   button: 'left' | 'middle' | 'right',
   modifiers: number,
   clickCount: number,
+  position?: Point,
+};
+
+export type HoverAction = ActionWithSelector & {
+  name: 'hover',
   position?: Point,
 };
 
@@ -121,9 +127,9 @@ export type AssertSnapshotAction = ActionWithSelector & {
   ariaSnapshot: string,
 };
 
-export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
+export type Action = ClickAction | HoverAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
 export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction | AssertVisibleAction | AssertSnapshotAction;
-export type PerformOnRecordAction = ClickAction | CheckAction | UncheckAction | PressAction | SelectAction;
+export type PerformOnRecordAction = ClickAction | HoverAction | CheckAction | UncheckAction | PressAction | SelectAction;
 
 // Signals.
 

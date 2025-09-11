@@ -91,6 +91,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const optionsString = formatOptions(options, false);
         return `await ${subject}.${this._asLocator(action.selector)}.${method}(${optionsString});`;
       }
+      case 'hover':
+        return `await ${subject}.${this._asLocator(action.selector)}.hover(${formatOptions({ position: action.position }, false)});`;
       case 'check':
         return `await ${subject}.${this._asLocator(action.selector)}.check();`;
       case 'uncheck':
@@ -182,7 +184,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
 }
 
 function formatOptions(value: any, hasArguments: boolean): string {
-  const keys = Object.keys(value);
+  const keys = Object.keys(value).filter(key => value[key] !== undefined);
   if (!keys.length)
     return '';
   return (hasArguments ? ', ' : '') + formatObject(value);
