@@ -354,14 +354,20 @@ export class BidiBrowserContext extends BrowserContext {
   override async doUpdateDefaultViewport() {
     if (!this._options.viewport)
       return;
-    await this._browser._browserSession.send('browsingContext.setViewport', {
-      viewport: {
-        width: this._options.viewport.width,
-        height: this._options.viewport.height
-      },
-      devicePixelRatio: this._options.deviceScaleFactor || 1,
-      userContexts: [this._userContextId()],
-    });
+    await Promise.all([
+      this._browser._browserSession.send('browsingContext.setViewport', {
+        viewport: {
+          width: this._options.viewport.width,
+          height: this._options.viewport.height
+        },
+        devicePixelRatio: this._options.deviceScaleFactor || 1,
+        userContexts: [this._userContextId()],
+      }),
+      this._browser._browserSession.send('emulation.setScreenOrientationOverride', {
+        screenOrientation: getScreenOrientation(!!this._options.isMobile, this._options.viewport),
+        userContexts: [this._userContextId()],
+      })
+    ]);
   }
 
   override async doUpdateDefaultEmulatedMedia() {
@@ -477,6 +483,19 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
   // TODO: support authentication.
 
   return proxy;
+}
+
+export function getScreenOrientation(isMobile: boolean, viewportSize: types.Size) {
+  const screenOrientation: bidi.Emulation.ScreenOrientation = {
+    type: 'landscape-primary',
+    natural: bidi.Emulation.ScreenOrientationNatural.Landscape
+  };
+  if (isMobile) {
+    screenOrientation.natural = bidi.Emulation.ScreenOrientationNatural.Portrait;
+    if (viewportSize.width <= viewportSize.height)
+      screenOrientation.type = 'portrait-primary';
+  }
+  return screenOrientation;
 }
 
 export namespace Network {
