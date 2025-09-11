@@ -134,7 +134,7 @@ it('should trigger correct Log', async ({ page, server, browserName, isWindows }
     page.waitForEvent('console'),
     page.evaluate(async url => fetch(url).catch(e => {}), server.EMPTY_PAGE)
   ]);
-  expect(message.text()).toContain('Access-Control-Allow-Origin');
+  expect(message.text()).toMatch(/Access-Control-Allow-Origin|CORS/);
   expect(message.type()).toEqual('error');
 });
 
