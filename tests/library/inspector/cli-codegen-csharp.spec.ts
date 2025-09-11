@@ -129,9 +129,9 @@ var context = await browser.NewContextAsync(new()
     {
         Latitude = 37.819722m,
         Longitude = -122.478611m,
-    },
+    },${process.platform === 'linux' && browserName === 'webkit' ? '' : `
     HasTouch = true,
-    IsMobile = true,
+    IsMobile = true,`}
     Locale = "es",
     Permissions = new[] { "geolocation" },
     Screen = new()
