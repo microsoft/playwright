@@ -18,8 +18,6 @@
   border-radius: 50%;
   display: inline-block;
   height: 12px;
-  margin-right: 6px;
-  margin-top: 4px;
   width: 12px;
 }
 
@@ -36,6 +34,7 @@
   white-space: nowrap;
   display: flex;
   align-items: center;
+  height: 28px;
 }
 
 .browser-frame-address-bar > button {
@@ -66,4 +65,12 @@
 
 body.dark-mode .browser-frame-header {
   background: #444950;
+}
+
+.browser-traffic-lights {
+  display: grid;
+  white-space: nowrap;
+  grid-template-columns: auto auto auto;
+  column-gap: 6px;
+  margin-right: 8px;
 }
