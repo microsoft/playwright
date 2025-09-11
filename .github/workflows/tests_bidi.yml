@@ -45,6 +45,8 @@ jobs:
         node-version: 20
     - run: npm ci
     - run: npm run build
+    # Needed for video tests
+    - run: npx playwright install ffmpeg
     - run: npx playwright install --with-deps chromium
       if: matrix.channel == 'bidi-chromium'
     - if: matrix.channel == 'moz-firefox-nightly'
