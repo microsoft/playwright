@@ -18,7 +18,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
-import { BidiBrowserContext } from './bidiBrowser';
+import { BidiBrowserContext, getScreenOrientation } from './bidiBrowser';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
@@ -299,14 +299,20 @@ export class BidiPage implements PageDelegate {
     if (!emulatedSize)
       return;
     const viewportSize = emulatedSize.viewport;
-    await this._session.send('browsingContext.setViewport', {
-      context: this._session.sessionId,
-      viewport: {
-        width: viewportSize.width,
-        height: viewportSize.height,
-      },
-      devicePixelRatio: options.deviceScaleFactor || 1
-    });
+    await Promise.all([
+      this._session.send('browsingContext.setViewport', {
+        context: this._session.sessionId,
+        viewport: {
+          width: viewportSize.width,
+          height: viewportSize.height,
+        },
+        devicePixelRatio: options.deviceScaleFactor || 1
+      }),
+      this._session.send('emulation.setScreenOrientationOverride', {
+        contexts: [this._session.sessionId],
+        screenOrientation: getScreenOrientation(!!options.isMobile, viewportSize)
+      })
+    ]);
   }
 
   async updateRequestInterception(): Promise<void> {
