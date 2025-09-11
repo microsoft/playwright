@@ -40,7 +40,13 @@
   flex-shrink: 0;
 }
 
-.settings-view .setting select {
-  margin-left: 8px;
-  flex-shrink: 0;
+.settings-view .setting-select {
+  display: grid;
+  grid-template-rows: auto auto;
+  row-gap: 8px;
+  margin: 0 16px 0 22px;
+}
+
+.settings-view .setting-select:not(:first-child) {
+  margin-top: 4px;
 }
