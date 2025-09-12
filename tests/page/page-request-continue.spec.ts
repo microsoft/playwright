@@ -55,12 +55,7 @@ it('should not allow to override unsafe HTTP headers', async ({ page, server, br
       trailer: 'baz',
     }
   }).catch(e => e);
-  if (isElectron) {
-    // Electron doesn't send the request if the host header is overridden,
-    // but doesn't throw an error either.
-    expect(error).toBeFalsy();
-    serverRequestPromise.catch(() => {});
-  } else if (browserName === 'chromium') {
+  if (browserName === 'chromium' || isElectron) {
     expect(error.message).toContain('Unsafe header');
     serverRequestPromise.catch(() => {});
   } else {
