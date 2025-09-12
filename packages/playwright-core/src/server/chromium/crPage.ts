@@ -394,6 +394,7 @@ class FrameSession {
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
   private _initScriptIds = new Map<InitScript, string>();
+  private _bufferedAttachedToTargetEvents: Protocol.Target.attachedToTargetPayload[] | undefined;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -476,6 +477,13 @@ class FrameSession {
     if (!this._isMainFrame())
       this._addRendererListeners();
     this._addBrowserListeners();
+
+    // Buffer attachedToTarget events until we receive the frame tree.
+    // This way we'll know where to insert oopif targets in the frame hierarchy.
+    // Note that we cannot send Target.setAutoAttach after Runtime.runIfWaitingForDebugger,
+    // so we have to buffer events instead.
+    this._bufferedAttachedToTargetEvents = [];
+
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({ frameTree }) => {
@@ -483,6 +491,12 @@ class FrameSession {
           this._handleFrameTree(frameTree);
           this._addRendererListeners();
         }
+
+        // Now that we have the frame tree, it is possible to insert oopif targets at the right place.
+        const attachedToTargetEvents = this._bufferedAttachedToTargetEvents || [];
+        this._bufferedAttachedToTargetEvents = undefined;
+        for (const event of attachedToTargetEvents)
+          this._onAttachedToTarget(event);
 
         const localFrames = this._isMainFrame() ? this._page.frames() : [this._page.frameManager.frame(this._targetId)!];
         for (const frame of localFrames) {
@@ -708,6 +722,11 @@ class FrameSession {
   }
 
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
+    if (this._bufferedAttachedToTargetEvents) {
+      this._bufferedAttachedToTargetEvents.push(event);
+      return;
+    }
+
     const session = this._client.createChildSession(event.sessionId);
 
     if (event.targetInfo.type === 'iframe') {
