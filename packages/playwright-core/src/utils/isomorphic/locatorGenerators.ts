@@ -20,7 +20,7 @@ import { escapeWithQuotes, normalizeEscapedRegexQuotes, toSnakeCase, toTitleCase
 import type { NestedSelectorBody } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'yaml';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'visible' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 export type Quote = '\'' | '"' | '`';
@@ -710,6 +710,7 @@ const generators: Record<Language, new (preferredQuote?: Quote) => LocatorFactor
   java: JavaLocatorFactory,
   csharp: CSharpLocatorFactory,
   jsonl: JsonlLocatorFactory,
+  yaml: JsonlLocatorFactory,
 };
 
 function isRegExp(obj: any): obj is RegExp {

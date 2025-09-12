@@ -19,6 +19,7 @@ import { JavaLanguageGenerator } from './java';
 import { JavaScriptLanguageGenerator } from './javascript';
 import { JsonlLanguageGenerator } from './jsonl';
 import { PythonLanguageGenerator } from './python';
+import { YamlLanguageGenerator } from './yaml';
 
 export function languageSet() {
   // Note: generators are ordered in the order of preference for each language.
@@ -35,5 +36,6 @@ export function languageSet() {
     new JavaLanguageGenerator('junit'),
     new JavaLanguageGenerator('library'),
     new JsonlLanguageGenerator(),
+    new YamlLanguageGenerator(),
   ]);
 }
