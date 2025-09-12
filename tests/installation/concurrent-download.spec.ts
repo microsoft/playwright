@@ -16,10 +16,8 @@
 
 import { test } from './npmTest';
 test.use({ isolateBrowsers: true });
-test.use({ isolateBrowsers: true });
 
 test('concurrent browser downloads should not clobber each other', async ({ exec, checkInstalledSoftwareOnDisk }) => {
-  
   await exec('npm init -y');
   await exec('npm install playwright');
   const numProcesses = 3;
