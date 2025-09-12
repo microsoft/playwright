@@ -522,10 +522,7 @@ it('should work with encoded server - 2', async ({ page, server, browserName }) 
     requests.push(route.request());
   });
   await page.setContent(`<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
-  if (browserName === 'firefox')
-    expect(requests.length).toBe(2); // Firefox DevTools report to navigations in this case as well.
-  else
-    expect(requests.length).toBe(1);
+  expect(requests.length).toBe(1);
   expect((await requests[0].response()).status()).toBe(404);
 });
 
