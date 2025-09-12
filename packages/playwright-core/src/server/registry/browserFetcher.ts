@@ -24,7 +24,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { getUserAgent } from '../utils/userAgent';
 import { progress as ProgressBar, colors } from '../../utilsBundle';
-import { existsAsync } from '../utils/fileUtils';
+import { existsAsync, removeFolders } from '../utils/fileUtils';
 
 import { browserDirectoryToMarkerFilePath } from '.';
 
@@ -67,14 +67,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     throw e;
   } finally {
     // Clean up the temporary directory and its contents
-    if (await existsAsync(uniqueTempDir)) {
-      try {
-        await fs.promises.rm(uniqueTempDir, { recursive: true, force: true });
-      } catch (e) {
-        // Ignore cleanup errors
-        debugLogger.log('install', `Failed to clean up temporary directory ${uniqueTempDir}: ${e}`);
-      }
-    }
+    await removeFolders([uniqueTempDir]);
   }
   logPolitely(`${title} downloaded to ${browserDirectory}`);
   return true;
@@ -143,7 +136,7 @@ function getDownloadProgress(): OnProgressCallback {
 }
 
 function getAnimatedDownloadProgress(): OnProgressCallback {
-  let progressBar: any;
+  let progressBar: ProgressBar;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {
