@@ -287,7 +287,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[Metadata]>
 
-Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
+Metadata contains key-value pairs to be included in the report. For example, the JSON report will include metadata serialized as JSON.
 
 **Usage**
 
