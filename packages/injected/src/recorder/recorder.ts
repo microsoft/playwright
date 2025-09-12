@@ -235,8 +235,15 @@ class RecordActionTool implements RecorderTool {
   }
 
   onClick(event: MouseEvent) {
-    if (this._dialog.isShowing())
+    if (this._dialog.isShowing()) {
+      if (event.button === 2 && event.type === 'auxclick') {
+        // Note: in some browsers, e.g. firefox mac,
+        // auxclick event arrives after contextmenu and should be consumed.
+        consumeEvent(event);
+      }
       return;
+    }
+
     // in webkit, sliding a range element may trigger a click event with a different target if the mouse is released outside the element bounding box.
     // So we check the hovered element instead, and if it is a range input, we skip click handling
     if (isRangeInput(this._hoveredElement))
@@ -249,7 +256,7 @@ class RecordActionTool implements RecorderTool {
       return;
 
     if (event.button === 2 && event.type === 'auxclick') {
-      this._showDialog(this._hoveredModel!, positionForEvent(event));
+      this._showActionListDialog(this._hoveredModel!, event);
       return;
     }
 
@@ -322,15 +329,19 @@ class RecordActionTool implements RecorderTool {
   }
 
   onContextMenu(event: MouseEvent) {
-    if (this._dialog.isShowing())
+    if (this._dialog.isShowing()) {
+      // Note: in some browsers, e.g. chromium windows,
+      // contextmenu event arrives after auxclick and should be consumed.
+      consumeEvent(event);
       return;
+    }
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
       return;
     if (this._consumedDueToNoModel(event, this._hoveredModel))
       return;
-    this._showDialog(this._hoveredModel!, positionForEvent(event));
+    this._showActionListDialog(this._hoveredModel!, event);
   }
 
   onPointerDown(event: PointerEvent) {
@@ -500,7 +511,9 @@ class RecordActionTool implements RecorderTool {
     this._resetHoveredModel();
   }
 
-  private _showDialog(model: HighlightModelWithSelector, actionPosition: Point | undefined) {
+  private _showActionListDialog(model: HighlightModelWithSelector, event: MouseEvent) {
+    consumeEvent(event);
+    const actionPosition = positionForEvent(event);
     const actions: { title: string, action: actions.PerformOnRecordAction }[] = [
       {
         title: 'Click',
@@ -1525,8 +1538,10 @@ export class Recorder {
   private _onContextMenu(event: MouseEvent) {
     if (!event.isTrusted)
       return;
-    if (this._ignoreOverlayEvent(event))
-      return;
+    // Note: in chromium windows, context menu event always includes overlay,
+    // even for right-click on the page. Therefore, we do not check the overlay
+    // as in any other events. This is fine, because we do not need context menu
+    // to work in our overlay anyway.
     this._currentTool.onContextMenu?.(event);
   }
 
