@@ -36,7 +36,7 @@ test('default to allow all', async ({ server, client }) => {
   expect(result).toContain('content:PPP');
 });
 
-test('blocked works', async ({ startClient }) => {
+test('blocked works (hostname)', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--blocked-origins', 'microsoft.com;example.com;playwright.dev']
   });
@@ -44,7 +44,15 @@ test('blocked works', async ({ startClient }) => {
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
-test('allowed works', async ({ server, startClient }) => {
+test('blocked works (origin)', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--blocked-origins', 'https://microsoft.com;https://example.com;https://playwright.dev']
+  });
+  const result = await fetchPage(client, 'https://example.com/');
+  expect(result).toMatch(BLOCK_MESSAGE);
+});
+
+test('allowed works (hostname)', async ({ server, startClient }) => {
   server.setContent('/ppp', 'content:PPP', 'text/html');
   const { client } = await startClient({
     args: ['--allowed-origins', `microsoft.com;${new URL(server.PREFIX).host};playwright.dev`]
@@ -53,7 +61,16 @@ test('allowed works', async ({ server, startClient }) => {
   expect(result).toContain('content:PPP');
 });
 
-test('blocked takes precedence', async ({ startClient }) => {
+test('allowed works (origin)', async ({ server, startClient }) => {
+  server.setContent('/ppp', 'content:PPP', 'text/html');
+  const { client } = await startClient({
+    args: ['--allowed-origins', `https://microsoft.com;${new URL(server.PREFIX).origin};https://playwright.dev`]
+  });
+  const result = await fetchPage(client, server.PREFIX + '/ppp');
+  expect(result).toContain('content:PPP');
+});
+
+test('blocked takes precedence (hostname)', async ({ startClient }) => {
   const { client } = await startClient({
     args: [
       '--blocked-origins', 'example.com',
@@ -64,7 +81,18 @@ test('blocked takes precedence', async ({ startClient }) => {
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
-test('allowed without blocked blocks all non-explicitly specified origins', async ({ startClient }) => {
+test('blocked takes precedence (origin)', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: [
+      '--blocked-origins', 'https://example.com',
+      '--allowed-origins', 'https://example.com',
+    ],
+  });
+  const result = await fetchPage(client, 'https://example.com/');
+  expect(result).toMatch(BLOCK_MESSAGE);
+});
+
+test('allowed without blocked blocks all non-explicitly specified origins (hostname)', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--allowed-origins', 'playwright.dev'],
   });
@@ -72,10 +100,27 @@ test('allowed without blocked blocks all non-explicitly specified origins', asyn
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
-test('blocked without allowed allows non-explicitly specified origins', async ({ server, startClient }) => {
+test('allowed without blocked blocks all non-explicitly specified origins (origin)', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--allowed-origins', 'https://playwright.dev'],
+  });
+  const result = await fetchPage(client, 'https://example.com/');
+  expect(result).toMatch(BLOCK_MESSAGE);
+});
+
+test('blocked without allowed allows non-explicitly specified origins (hostname)', async ({ server, startClient }) => {
   server.setContent('/ppp', 'content:PPP', 'text/html');
   const { client } = await startClient({
     args: ['--blocked-origins', 'example.com'],
+  });
+  const result = await fetchPage(client, server.PREFIX + '/ppp');
+  expect(result).toContain('content:PPP');
+});
+
+test('blocked without allowed allows non-explicitly specified origins (origin)', async ({ server, startClient }) => {
+  server.setContent('/ppp', 'content:PPP', 'text/html');
+  const { client } = await startClient({
+    args: ['--blocked-origins', 'https://example.com'],
   });
   const result = await fetchPage(client, server.PREFIX + '/ppp');
   expect(result).toContain('content:PPP');
