@@ -72,6 +72,7 @@ export type RunTestsParams = {
   reuseContext?: boolean;
   connectWsEndpoint?: string;
   pauseOnError?: boolean;
+  pauseAtEnd?: boolean;
 };
 
 type FullResultStatus = reporterTypes.FullResult['status'];
@@ -337,7 +338,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }),
       ...createRunTestsTasks(config),
     ];
-    const testRun = new TestRun(config, reporter, { pauseOnError: params.pauseOnError });
+    const testRun = new TestRun(config, reporter, { pauseOnError: params.pauseOnError, pauseAtEnd: params.pauseAtEnd });
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;

@@ -17,7 +17,7 @@
 import { ProgramOption } from 'playwright-core/lib/utilsBundle';
 import * as mcpServer from './sdk/server';
 import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
-import { Context } from './browser/context';
+import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
 import { BrowserServerBackend } from './browser/browserServerBackend';
@@ -121,22 +121,4 @@ export function decorateCommand(command: Command, version: string) {
         };
         await mcpServer.start(factory, config.server);
       });
-}
-
-function setupExitWatchdog() {
-  let isExiting = false;
-  const handleExit = async () => {
-    if (isExiting)
-      return;
-    isExiting = true;
-    // eslint-disable-next-line no-restricted-properties
-    setTimeout(() => process.exit(0), 15000);
-    await Context.disposeAll();
-    // eslint-disable-next-line no-restricted-properties
-    process.exit(0);
-  };
-
-  process.stdin.on('close', handleExit);
-  process.on('SIGINT', handleExit);
-  process.on('SIGTERM', handleExit);
 }
