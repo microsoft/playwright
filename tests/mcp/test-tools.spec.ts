@@ -348,6 +348,17 @@ test('test_setup_page', async ({ startClient }) => {
   });
 });
 
+test('test_setup_page (no test location)', async ({ startClient }) => {
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {},
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+`);
+});
+
 async function prepareDebugTest(startClient: StartClient) {
   await writeFiles({
     'a.test.ts': `

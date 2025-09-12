@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { noColors } from 'playwright-core/lib/utils';
 
 import { z } from '../sdk/bundle';
@@ -119,9 +122,10 @@ export const setupPage = defineTestTool({
   schema: {
     name: 'test_setup_page',
     title: 'Setup page',
-    description: 'Runs a blank test to setup the page for interaction',
+    description: 'Setup the page for test',
     inputSchema: z.object({
-      testLocation: z.string().describe('Location of the blank test to use for setup. For example: "test/e2e/file.spec.ts:20"'),
+      project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
+      testLocation: z.string().optional().describe('Location of the test to use for setup. For example: "test/e2e/file.spec.ts:20". Sets up blank page if no location is provided.'),
     }),
     type: 'readOnly',
   },
@@ -131,9 +135,23 @@ export const setupPage = defineTestTool({
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
+
+    let testLocation = params.testLocation;
+    if (!testLocation) {
+      testLocation = '.template.spec.ts';
+      const templateFile = path.join(configDir, testLocation);
+      if (!fs.existsSync(templateFile)) {
+        await fs.promises.writeFile(templateFile, `
+          import { test, expect } from '@playwright/test';
+            test('template', async ({ page }) => {});
+          `);
+      }
+    }
+
     const result = await testRunner.runTests(reporter, {
       headed: !context.options?.headless,
-      locations: [params.testLocation],
+      locations: [testLocation],
+      projects: params.project ? [params.project] : undefined,
       timeout: 0,
       workers: 1,
       pauseAtEnd: true,
