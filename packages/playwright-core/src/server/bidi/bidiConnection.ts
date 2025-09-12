@@ -97,7 +97,7 @@ export class BidiConnection {
       if (!context && realm) {
         // Find parent realm and its browing context if it is a window realm.
         while (this._realmToOwnerRealm.get(realm))
-          realm = this._realmToOwnerRealm.get(realm) as string;
+          realm = this._realmToOwnerRealm.get(realm)!;
         context = this._realmToBrowsingContext.get(realm);
       }
 

@@ -17,6 +17,7 @@
 import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
+import * as js from '../javascript';
 import { BidiBrowserContext, getScreenOrientation } from './bidiBrowser';
 import { Page, Worker } from '../page';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
@@ -45,12 +46,12 @@ export class BidiPage implements PageDelegate {
   readonly _session: BidiSession;
   readonly _opener: BidiPage | null;
   readonly _realmToContext: Map<string, dom.FrameExecutionContext>;
+  private _realmToWorkerContext = new Map<string, js.ExecutionContext>();
   private _sessionListeners: RegisteredListener[] = [];
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
   private readonly _pdf: BidiPDF;
   private _initScriptIds = new Map<InitScript, string>();
-  private _realmToWorker = new Map<string, Worker>();
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -124,8 +125,7 @@ export class BidiPage implements PageDelegate {
     if (realmInfo.type === 'dedicated-worker') {
       const delegate = new BidiExecutionContext(this._session, realmInfo);
       const worker = new Worker(this._page, realmInfo.origin);
-      worker.createExecutionContext(delegate);
-      this._realmToWorker.set(realmInfo.realm, worker);
+      this._realmToWorkerContext.set(realmInfo.realm, worker.createExecutionContext(delegate));
       this._page.addWorker(realmInfo.realm, worker);
       return;
     }
@@ -175,8 +175,8 @@ export class BidiPage implements PageDelegate {
       context.frame._contextDestroyed(context);
       return true;
     }
-    const worker = this._realmToWorker.get(params.realm);
-    if (worker) {
+    const existed = this._realmToWorkerContext.delete(params.realm);
+    if (existed) {
       this._page.removeWorker(params.realm);
       return true;
     }
@@ -277,15 +277,13 @@ export class BidiPage implements PageDelegate {
     if (params.type !== 'console')
       return;
     const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;
-    const context = this._realmToContext.get(params.source.realm);
-    const worker = this._realmToWorker.get(params.source.realm);
-    const executionContext = context ?? worker?.existingExecutionContext;
-    if (!executionContext)
+    const context = this._realmToContext.get(params.source.realm) ?? this._realmToWorkerContext.get(params.source.realm);
+    if (!context)
       return;
 
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
-    this._page.addConsoleMessage(entry.method, entry.args.map(arg => createHandle(executionContext, arg)), location, params.text || undefined);
+    this._page.addConsoleMessage(entry.method, entry.args.map(arg => createHandle(context, arg)), location, params.text || undefined);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
