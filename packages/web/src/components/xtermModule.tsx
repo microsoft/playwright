@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import 'xterm/css/xterm.css';
+import '@xterm/xterm/css/xterm.css';
 
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
