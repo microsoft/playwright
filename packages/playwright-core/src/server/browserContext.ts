@@ -79,7 +79,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
   private _selectors: Selectors;
-  private _origins = new Set<string>();
+  private _origins: Set<string> = new Set();
   readonly _harRecorders = new Map<string, HarRecorder>();
   readonly tracing: Tracing;
   readonly fetchRequest: BrowserContextAPIRequestContext;
@@ -558,8 +558,9 @@ export abstract class BrowserContext extends SdkObject {
     }
   }
 
-  addVisitedOrigin(origin: string) {
-    this._origins.add(origin);
+  addVisitedOrigin(origin: string, firstPartyOrigin: string, hasCrossOriginAncestor: boolean) {
+    const key = serializeThirdPartyOrigin(origin, firstPartyOrigin, hasCrossOriginAncestor);
+    this._origins.add(key);
   }
 
   async storageState(progress: Progress, indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
@@ -567,7 +568,17 @@ export abstract class BrowserContext extends SdkObject {
       cookies: await this.cookies(),
       origins: []
     };
-    const originsToSave = new Set(this._origins);
+
+    const firstPartyToOrigins = new Map<string, Set<string>>();
+    for (const o of this._origins.values()) {
+      const { firstParty } = parseThirdPartyOrigin(o);
+      let partition = firstPartyToOrigins.get(firstParty);
+      if (!partition) {
+        partition = new Set();
+        firstPartyToOrigins.set(firstParty, partition);
+      }
+      partition.add(o);
+    }
 
     const collectScript = `(() => {
       const module = {};
@@ -578,32 +589,54 @@ export abstract class BrowserContext extends SdkObject {
 
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
-      const origin = page.mainFrame().origin();
-      if (!origin || !originsToSave.has(origin))
+      const firstParty = page.mainFrame().origin();
+      if (!firstParty)
         continue;
-      try {
-        const storage: SerializedStorage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
-        if (storage.localStorage.length || storage.indexedDB?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
-        originsToSave.delete(origin);
-      } catch {
-        // When failed on the live page, we'll retry on the blank page below.
+      const origins = firstPartyToOrigins.get(firstParty);
+      if (!origins)
+        continue;
+      while (origins.size) {
+        const { frame, origin, hasCrossOriginAncestor, thirdPartyOrigin }  = findThirdPartyFrame(page, origins);
+        if (!frame)
+          break;
+        try {
+          const storage: SerializedStorage = await frame.nonStallingEvaluateInExistingContext(collectScript, 'utility');
+          if (storage.localStorage.length || storage.indexedDB?.length) {
+            const exportedOrigin: channels.OriginStorage = { origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB };
+            if (hasCrossOriginAncestor) {
+              exportedOrigin._crHasCrossSiteAncestor = hasCrossOriginAncestor;
+              exportedOrigin.partitionKey = firstParty;
+            }
+            result.origins.push(exportedOrigin);
+          }
+          origins.delete(thirdPartyOrigin);
+        } catch {
+          // When failed on the live page, we'll retry on the blank page below.
+          break;
+        }
       }
+      if (!origins.size)
+        firstPartyToOrigins.delete(firstParty);
     }
 
     // If there are still origins to save, create a blank page to iterate over origins.
-    if (originsToSave.size)  {
+    if (firstPartyToOrigins.size)  {
       const page = await this.newPage(progress, true /* forStorageState */);
       try {
-        await page.addRequestInterceptor(progress, route => {
-          route.fulfill({ body: '<html></html>' }).catch(() => {});
-        }, 'prepend');
-        for (const origin of originsToSave) {
-          const frame = page.mainFrame();
-          await frame.gotoImpl(progress, origin, {});
-          const storage: SerializedStorage = await progress.race(frame.evaluateExpression(collectScript, { world: 'utility' }));
-          if (storage.localStorage.length || storage.indexedDB?.length)
-            result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
+        for (const [firstParty, origins] of firstPartyToOrigins.entries()) {
+          for (const thirdPartyOrigin of origins) {
+            const { origin, hasCrossOriginAncestor } = parseThirdPartyOrigin(thirdPartyOrigin);
+            const frame = await navigateToOrigin(progress, page, origin, firstParty, hasCrossOriginAncestor);
+            const storage: SerializedStorage = await progress.race(frame.evaluateExpression(collectScript, { world: 'utility' }));
+            if (storage.localStorage.length || storage.indexedDB?.length) {
+              const exportedOrigin: channels.OriginStorage = { origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB };
+              if (hasCrossOriginAncestor) {
+                exportedOrigin._crHasCrossSiteAncestor = hasCrossOriginAncestor;
+                exportedOrigin.partitionKey = firstParty;
+              }
+              result.origins.push(exportedOrigin);
+            }
+          }
         }
       } finally {
         await page.close();
@@ -618,7 +651,6 @@ export abstract class BrowserContext extends SdkObject {
 
   async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'resetForReuse') {
     let page: Page | undefined;
-    let interceptor: network.RouteHandler | undefined;
     try {
       if (mode !== 'initial') {
         await progress.race(this.clearCache());
@@ -628,40 +660,38 @@ export abstract class BrowserContext extends SdkObject {
       if (state?.cookies)
         await progress.race(this.addCookies(state.cookies));
 
-      const newOrigins = new Map(state?.origins?.map(p => [p.origin, p]) || []);
-      const allOrigins = new Set([...this._origins, ...newOrigins.keys()]);
+      const newOriginToState = new Map<string, SerializedStorage>();
+      for (const originState of state?.origins || []) {
+        const key = serializeThirdPartyOrigin(originState.origin, originState.partitionKey ?? originState.origin, originState._crHasCrossSiteAncestor ?? false);
+        newOriginToState.set(key, originState);
+      }
+
+      const allOrigins = new Set([...this._origins, ...newOriginToState.keys()]);
       if (allOrigins.size) {
         if (mode === 'resetForReuse')
           page = this.pages()[0];
         if (!page)
           page = await this.newPage(progress, mode !== 'resetForReuse' /* forStorageState */);
 
-        interceptor = (route: network.Route) => {
-          route.fulfill({ body: '<html></html>' }).catch(() => {});
-        };
-        await page.addRequestInterceptor(progress, interceptor, 'prepend');
-
-        for (const origin of allOrigins) {
-          const frame = page.mainFrame();
-          await frame.gotoImpl(progress, origin, {});
+        for (const serializedOrigin of allOrigins) {
+          const { firstParty, hasCrossOriginAncestor, origin } = parseThirdPartyOrigin(serializedOrigin);
+          const frame = await navigateToOrigin(progress, page, origin, firstParty, hasCrossOriginAncestor);
           const restoreScript = `(() => {
             const module = {};
             ${rawStorageSource.source}
             const script = new (module.exports.StorageScript())(${this._browser.options.name === 'firefox'});
-            return script.restore(${JSON.stringify(newOrigins.get(origin))});
+            return script.restore(${JSON.stringify(newOriginToState.get(serializedOrigin))});
           })()`;
           await progress.race(frame.evaluateExpression(restoreScript, { world: 'utility' }));
         }
       }
-      this._origins = new Set([...newOrigins.keys()]);
+      this._origins = new Set([...newOriginToState.keys()]);
     } catch (error) {
       rewriteErrorMessage(error, `Error setting storage state:\n` + error.message);
       throw error;
     } finally {
       if (mode !== 'resetForReuse')
         await page?.close();
-      else if (interceptor)
-        await page?.removeRequestInterceptor(interceptor);
     }
   }
 
@@ -701,6 +731,15 @@ export abstract class BrowserContext extends SdkObject {
   async notifyRoutesInFlightAboutRemovedHandler(handler: network.RouteHandler): Promise<void> {
     await Promise.all([...this._routesInFlight].map(route => route.removeHandler(handler)));
   }
+}
+
+function serializeThirdPartyOrigin(origin: string, firstParty: string, hasCrossOriginAncestor: boolean) {
+  return JSON.stringify([firstParty, hasCrossOriginAncestor, origin]);
+}
+
+function parseThirdPartyOrigin(serialized: string) {
+  const [firstParty, hasCrossOriginAncestor, origin] = JSON.parse(serialized);
+  return { firstParty, hasCrossOriginAncestor, origin };
 }
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
@@ -790,6 +829,71 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
   if (bypass)
     bypass = bypass.split(',').map(t => t.trim()).join(',');
   return { ...proxy, server, bypass };
+}
+
+async function navigateToOrigin(progress: Progress, page: Page, origin: string, firstParty: string, hasCrossOriginAncestor: boolean): Promise<frames.Frame> {
+  const urlToContent = new Map<string, string>();
+  const addResource = (url: string, content: string) => {
+    try {
+      urlToContent.set(new URL(url).toString(), content);
+    } catch (e) {
+      throw new Error(`Invalid URL: ${url}`);
+    }
+  };
+
+  if (origin === firstParty && hasCrossOriginAncestor) {
+    const url = new URL(origin);
+    url.hostname = 'x-' + url.hostname;
+    const intermediateOrigin = url.toString();
+    // Make inner frame url different from the top level for easier routing.
+    const frameUrl = new URL('/frame', origin).toString();
+    addResource(firstParty, `<iframe src="${intermediateOrigin}"></iframe>`);
+    addResource(intermediateOrigin, `<iframe src="${frameUrl}"></iframe>`);
+    addResource(frameUrl, `<html></html>`);
+  } else if (origin !== firstParty) {
+    addResource(firstParty, `<iframe src="${origin}"></iframe>`);
+    addResource(origin, `<html></html>`);
+  } else {
+    addResource(firstParty, `<html></html>`);
+  }
+  const interceptor = (route: network.Route) => {
+    const body = urlToContent.get(route.request().url());
+    // Favicon?
+    if (!body)
+      return route.abort();
+    route.fulfill({ body });
+  };
+  await page.addRequestInterceptor(progress, interceptor, 'prepend');
+  const frame = page.mainFrame();
+  const promise = new Promise<frames.Frame>(resolve => {
+    const expectedFrameCount = urlToContent.size;
+    const listener = () => {
+      if (page.frames().length === expectedFrameCount) {
+        resolve(page.frames().pop()!);
+        page.off(Page.Events.FrameAttached, listener);
+      }
+    };
+    page.on(Page.Events.FrameAttached, listener);
+    listener();
+  });
+  await frame.gotoImpl(progress, firstParty, {});
+  const innerFrame = await promise;
+  await innerFrame._waitForLoadState(progress, 'load');
+  await progress.race(page.removeRequestInterceptor(interceptor));
+  return innerFrame!;
+}
+
+function findThirdPartyFrame(page: Page, origins: Set<string>) {
+  for (const thirdPartyOrigin of origins) {
+    const { firstParty, origin, hasCrossOriginAncestor } = parseThirdPartyOrigin(thirdPartyOrigin);
+    for (const frame of page.frames()) {
+      if (frame.origin() !== origin)
+        continue;
+      if (origin !== firstParty || frame.hasCrossOriginAncestor() === hasCrossOriginAncestor)
+        return { frame, thirdPartyOrigin, origin, hasCrossOriginAncestor };
+    }
+  }
+  return {};
 }
 
 const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReuseParams)[] = [

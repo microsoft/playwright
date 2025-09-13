@@ -295,6 +295,8 @@ SetOriginStorage:
   type: object
   properties:
     origin: string
+    partitionKey: string?
+    _crHasCrossSiteAncestor: boolean?
     localStorage:
       type: array
       items: NameValue
@@ -306,6 +308,8 @@ OriginStorage:
   type: object
   properties:
     origin: string
+    partitionKey: string?
+    _crHasCrossSiteAncestor: boolean?
     localStorage:
       type: array
       items: NameValue
