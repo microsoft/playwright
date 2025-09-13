@@ -669,7 +669,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     ]);
   });
 
-  test('should consume contextmenu events, despite a custom context menu', async ({ openRecorder }) => {
+  test('should consume contextmenu events, despite a custom context menu', async ({ openRecorder, browserName, isWindows }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -712,7 +712,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
       action(),
     ]);
     expect(message.text()).toBe('right-clicked');
-    expect(await page.evaluate('log')).toEqual(['button: contextmenu']);
+    expect(await page.evaluate('log')).toEqual((isWindows && browserName === 'chromium') ? ['button: auxclick', 'button: contextmenu'] : ['button: contextmenu']);
   });
 
   test('should generate hover action', async ({ openRecorder }) => {
