@@ -281,7 +281,7 @@ export const test = base
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options, files, mergeReports, useIntermediateMergeReport);
+          return await runPlaywrightTest(childProcess, baseDir, params, { PWTEST_CACHE_DIR: cacheDir, ...env }, options, files, mergeReports, useIntermediateMergeReport);
         });
         await removeFolders([cacheDir]);
       },
@@ -313,7 +313,7 @@ export const test = base
         let testProcess: TestChildProcess | undefined;
         await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          testProcess = startPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
+          testProcess = startPlaywrightTest(childProcess, baseDir, params, { PWTEST_CACHE_DIR: cacheDir, ...env }, options);
           return testProcess;
         });
         await testProcess?.kill();
