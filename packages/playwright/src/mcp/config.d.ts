@@ -122,6 +122,11 @@ export type Config = {
      * List of origins to block the browser to request. Origins matching both `allowedOrigins` and `blockedOrigins` will be blocked.
      */
     blockedOrigins?: string[];
+
+    /**
+     * Disable HTTP cache by enabling request routing. When enabled, all requests are intercepted which automatically disables HTTP cache.
+     */
+    disableHttpCache?: boolean;
   };
 
   timeouts?: {

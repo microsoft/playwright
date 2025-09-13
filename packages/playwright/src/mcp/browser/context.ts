@@ -173,6 +173,12 @@ export class Context {
   }
 
   private async _setupRequestInterception(context: playwright.BrowserContext) {
+    // Disable HTTP cache if requested
+    // As per Playwright docs: "Enabling routing disables http cache"
+    if (this.config.network?.disableHttpCache) {
+      await context.route('**', route => route.continue());
+    }
+
     if (this.config.network?.allowedOrigins?.length) {
       await context.route('**', route => route.abort('blockedbyclient'));
 

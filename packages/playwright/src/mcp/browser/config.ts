@@ -27,6 +27,7 @@ export type CLIOptions = {
   allowedOrigins?: string[];
   blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
+  disableHttpCache?: boolean;
   browser?: string;
   caps?: string[];
   cdpEndpoint?: string;
@@ -200,6 +201,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     network: {
       allowedOrigins: cliOptions.allowedOrigins,
       blockedOrigins: cliOptions.blockedOrigins,
+      disableHttpCache: cliOptions.disableHttpCache,
     },
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
@@ -220,6 +222,7 @@ function configFromEnv(): Config {
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
   options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
+  options.disableHttpCache = envToBoolean(process.env.PLAYWRIGHT_MCP_DISABLE_HTTP_CACHE);
   options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
