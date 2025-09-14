@@ -70,7 +70,7 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
         await expect(page).toHaveScreenshot({ timeout: 2000 });
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
   expect(result.exitCode).toBe(0);
 });
 
@@ -138,7 +138,7 @@ test.describe('expect config animations option', () => {
           await expect(page).toHaveScreenshot({ timeout: 2000 });
         });
       `
-    }, { 'update-snapshots': true });
+    }, { 'update-snapshots': 'all' });
     expect(result.exitCode).toBe(0);
   });
 
@@ -205,7 +205,7 @@ test('should have scale:css by default', async ({ runInlineTest }, testInfo) => 
         await context.close();
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
   expect(result.exitCode).toBe(0);
 
   const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
@@ -228,7 +228,7 @@ test('should ignore non-documented options in toHaveScreenshot config', async ({
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
   expect(result.exitCode).toBe(0);
 
   const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
@@ -254,7 +254,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
         await expect(page).toHaveScreenshot({ name: 'is-a-test-1.png', timeout: 2000 });
       });
     `
-  }, { 'reporter': '', 'workers': 1, 'update-snapshots': true });
+  }, { 'reporter': '', 'workers': 1, 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
@@ -313,7 +313,7 @@ test('should successfully screenshot a page with infinite animation with disable
         });
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
   expect(result.exitCode).toBe(0);
   expect(fs.existsSync(testInfo.outputPath('__screenshots__', 'a.spec.js', 'is-a-test-1.png'))).toBe(true);
 });
@@ -356,7 +356,7 @@ test('should support omitBackground option for locator', async ({ runInlineTest 
         });
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
   expect(result.exitCode).toBe(0);
   const snapshotPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
   expect(fs.existsSync(snapshotPath)).toBe(true);
@@ -847,7 +847,7 @@ test('should silently write missing expectations locally with the update-snapsho
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
@@ -1006,7 +1006,7 @@ test('should not update screenshot that matches with maxDiffPixels option when -
         await expect(page).toHaveScreenshot('snapshot.png', { maxDiffPixels: ${BAD_PIXELS} });
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'changed' });
 
   expect(result.exitCode).toBe(0);
   expect(result.output).not.toContain(`is re-generated, writing actual`);
@@ -1248,7 +1248,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
