@@ -816,3 +816,21 @@ test('automatic worker fixtures should start before automatic test fixtures', as
     'WORKER FIXTURE 2',
   ]);
 });
+
+test('should error if use is not called', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fixture: async ({}, use) => {
+          return 123;
+        },
+      });
+
+      test('test', async ({ fixture }) => {
+      });
+    `,
+  });
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain(`use() was not called in fixture "fixture"`);
+});
