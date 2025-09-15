@@ -17,10 +17,16 @@
 import { test } from './npmTest';
 test.use({ isolateBrowsers: true });
 
-test('concurrent browser downloads should not clobber each other', async ({ exec, checkInstalledSoftwareOnDisk }) => {
+test('concurrent browser downloads should not clobber each other', async ({ exec, checkInstalledSoftwareOnDisk }, testInfo) => {
   await exec('npm init -y');
   await exec('npm install playwright');
   const numProcesses = 3;
-  await Promise.all(Array.from({ length: numProcesses }, () => exec('npx playwright install chromium')));
+  await Promise.all(Array.from({ length: numProcesses }, (_, index) =>
+    exec('npx playwright install chromium', {
+      env: {
+        PLAYWRIGHT_BROWSERS_PATH: testInfo.outputPath(`browsers-${index}`),
+      }
+    })
+  ));
   await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg']);
 });
