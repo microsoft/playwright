@@ -1017,27 +1017,37 @@ class FrameSession {
       return;
     const promises = [];
     if (!preserveWindowBoundaries && this._windowId) {
-      let insets = { width: 0, height: 0 };
-      if (this._crPage._browserContext._browser.options.headful) {
-        // TODO: popup windows have their own insets.
-        insets = { width: 24, height: 88 };
-        if (process.platform === 'win32')
-          insets = { width: 16, height: 88 };
-        else if (process.platform === 'linux')
-          insets = { width: 8, height: 85 };
-        else if (process.platform === 'darwin')
-          insets = { width: 2, height: 80 };
-        if (this._crPage._browserContext.isPersistentContext()) {
-          // FIXME: Chrome bug: OOPIF router is confused when hit target is
-          // outside browser window.
-          // Account for the infobar here to work around the bug.
-          insets.height += 46;
+      const version = this._crPage._browserContext._browser.version();
+      const browserMajorVersion = parseInt(version.split('.')[0], 10);
+      if (browserMajorVersion >= 140) {
+        promises.push(this._client.send('Browser.setContentsSize', {
+          windowId: this._windowId,
+          width: viewportSize.width,
+          height: viewportSize.height,
+        }));
+      } else {
+        let insets = { width: 0, height: 0 };
+        if (this._crPage._browserContext._browser.options.headful) {
+          // TODO: popup windows have their own insets.
+          insets = { width: 24, height: 88 };
+          if (process.platform === 'win32')
+            insets = { width: 16, height: 88 };
+          else if (process.platform === 'linux')
+            insets = { width: 8, height: 85 };
+          else if (process.platform === 'darwin')
+            insets = { width: 2, height: 80 };
+          if (this._crPage._browserContext.isPersistentContext()) {
+            // FIXME: Chrome bug: OOPIF router is confused when hit target is
+            // outside browser window.
+            // Account for the infobar here to work around the bug.
+            insets.height += 46;
+          }
         }
+        promises.push(this._setWindowBounds({
+          width: viewportSize.width + insets.width,
+          height: viewportSize.height + insets.height
+        }));
       }
-      promises.push(this.setWindowBounds({
-        width: viewportSize.width + insets.width,
-        height: viewportSize.height + insets.height
-      }));
     }
     // Make sure that the viewport emulationis set after the embedder window resize.
     promises.push(this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride));
@@ -1052,7 +1062,7 @@ class FrameSession {
     return bounds;
   }
 
-  async setWindowBounds(bounds: WindowBounds) {
+  private async _setWindowBounds(bounds: WindowBounds) {
     return await this._client.send('Browser.setWindowBounds', {
       windowId: this._windowId!,
       bounds
