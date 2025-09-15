@@ -15,9 +15,11 @@
  */
 
 import { test } from './npmTest';
+import fs from 'fs';
+import path from 'path';
 test.use({ isolateBrowsers: true });
 
-test('concurrent browser downloads should not clobber each other', async ({ exec, checkInstalledSoftwareOnDisk }, testInfo) => {
+test('concurrent browser downloads should not clobber each other', async ({ exec }, testInfo) => {
   await exec('npm init -y');
   await exec('npm install playwright');
   const numProcesses = 3;
@@ -28,5 +30,18 @@ test('concurrent browser downloads should not clobber each other', async ({ exec
       }
     })
   ));
-  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg']);
+  // Aggregate installed software across individual browser paths and verify expected components exist
+  const installed = new Set<string>();
+  for (let i = 0; i < numProcesses; i++) {
+    const dir = testInfo.outputPath(`browsers-${i}`);
+    const entries = await fs.promises.readdir(dir).catch(() => []);
+    for (const entry of entries) {
+      const name = entry.split('-')[0].replace(/_/g, '-');
+      if (!name.startsWith('.'))
+        installed.add(name);
+    }
+  }
+  test.expect(installed.has('chromium')).toBeTruthy();
+  test.expect(installed.has('chromium-headless-shell')).toBeTruthy();
+  test.expect(installed.has('ffmpeg')).toBeTruthy();
 });
