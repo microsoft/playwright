@@ -183,8 +183,8 @@ export class CRPage implements PageDelegate {
     await this._networkManager.authenticate(this._browserContext._options.httpCredentials || null);
   }
 
-  async updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
-    await this._mainFrameSession._updateViewport(preserveWindowBoundaries);
+  async updateEmulatedViewportSize(): Promise<void> {
+    await this._mainFrameSession._updateViewport();
   }
 
   async bringToFront(): Promise<void> {
@@ -574,6 +574,7 @@ class FrameSession {
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
+    this._maybeUpdateViewportLater();
     await Promise.all(promises);
   }
 
@@ -990,7 +991,22 @@ class FrameSession {
       await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
   }
 
-  async _updateViewport(preserveWindowBoundaries?: boolean): Promise<void> {
+  async _maybeUpdateViewportLater() {
+    if (!this._isMainFrame())
+      return;
+    const hasInfobar = this._crPage._browserContext._browser.options.headful && this._crPage._browserContext.isPersistentContext();
+    if (!hasInfobar)
+      return;
+    // Unfortunately, on some platforms the automation infobar is shown up late.
+    // Upon showing, it triggers a resize of WebContentsView and RenderWidgetHostView
+    // through the native view hierarchy. This in turn resizes the compositor
+    // to the visible view size instead of the emulated viewport size set by _updateViewport.
+    // Hit testing for OOPIFs is affected by this, and clicks go to the wrong place.
+    // The workaround is to re-apply the viewport after a delay.
+    setTimeout(() => this._updateViewport('force').catch(() => {}), 500);
+  }
+
+  async _updateViewport(force?: 'force'): Promise<void> {
     if (this._crPage._browserContext._browser.isClank())
       return;
     assert(this._isMainFrame());
@@ -1011,12 +1027,11 @@ class FrameSession {
       screenOrientation: !!options.isMobile ? (
         isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' }
       ) : { angle: 0, type: 'landscapePrimary' },
-      dontSetVisibleSize: preserveWindowBoundaries
     };
-    if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
+    if (force !== 'force' && JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
       return;
     const promises = [];
-    if (!preserveWindowBoundaries && this._windowId) {
+    if (this._windowId) {
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.
@@ -1039,7 +1054,7 @@ class FrameSession {
         height: viewportSize.height + insets.height
       }));
     }
-    // Make sure that the viewport emulationis set after the embedder window resize.
+    // Make sure that the viewport emulation is set after the embedder window resize.
     promises.push(this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride));
     await Promise.all(promises);
     this._metricsOverride = metricsOverride;
