@@ -17,10 +17,9 @@
 import { test, expect } from './fixtures';
 
 test('clipboard write without permission dialog', async ({ startClient, server, mcpBrowser }) => {
-  test.skip(mcpBrowser === 'firefox', 'Clipboard permissions are supported only in Chromium');
+  test.skip(mcpBrowser === 'firefox' || mcpBrowser === 'webkit', 'Clipboard permissions are fully supported only in Chromium');
   const { client } = await startClient({
-    // No 'clipboard-write' permission in WebKit, it is granted automatically.
-    args: [`--grant-permissions=clipboard-read${mcpBrowser === 'webkit' ? '' : ',clipboard-write'}`]
+    args: [`--grant-permissions=clipboard-read,clipboard-write`]
   });
   await client.callTool({
     name: 'browser_navigate',
