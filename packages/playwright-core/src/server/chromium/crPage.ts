@@ -52,8 +52,6 @@ import type * as types from '../types';
 import type * as channels from '@protocol/channels';
 
 
-export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
-
 export class CRPage implements PageDelegate {
   readonly utilityWorldName: string;
   readonly _mainFrameSession: FrameSession;
@@ -183,8 +181,8 @@ export class CRPage implements PageDelegate {
     await this._networkManager.authenticate(this._browserContext._options.httpCredentials || null);
   }
 
-  async updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
-    await this._mainFrameSession._updateViewport(preserveWindowBoundaries);
+  async updateEmulatedViewportSize(): Promise<void> {
+    await this._mainFrameSession._updateViewport();
   }
 
   async bringToFront(): Promise<void> {
@@ -990,7 +988,7 @@ class FrameSession {
       await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
   }
 
-  async _updateViewport(preserveWindowBoundaries?: boolean): Promise<void> {
+  async _updateViewport(): Promise<void> {
     if (this._crPage._browserContext._browser.isClank())
       return;
     assert(this._isMainFrame());
@@ -1011,12 +1009,32 @@ class FrameSession {
       screenOrientation: !!options.isMobile ? (
         isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' }
       ) : { angle: 0, type: 'landscapePrimary' },
-      dontSetVisibleSize: preserveWindowBoundaries
     };
     if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
       return;
-    const promises = [];
-    if (!preserveWindowBoundaries && this._windowId) {
+    await Promise.all([
+      this.setWindowBounds(viewportSize),
+      // Make sure that the viewport emulation is set after the embedder window resize.
+      this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride),
+    ]);
+    this._metricsOverride = metricsOverride;
+  }
+
+  async setWindowBounds(contentSize: types.Size): Promise<void> {
+    if (!this._windowId)
+      return;
+
+    let useNewAPI = false;
+    try {
+      const version = this._crPage._browserContext._browser.version();
+      const browserMajorVersion = parseInt(version.split('.')[0], 10);
+      useNewAPI = browserMajorVersion >= 140;
+    } catch {
+    }
+
+    if (useNewAPI) {
+      await this._client.send('Browser.setContentsSize', { windowId: this._windowId, ...contentSize });
+    } else {
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.
@@ -1034,29 +1052,14 @@ class FrameSession {
           insets.height += 46;
         }
       }
-      promises.push(this.setWindowBounds({
-        width: viewportSize.width + insets.width,
-        height: viewportSize.height + insets.height
-      }));
+      await this._client.send('Browser.setWindowBounds', {
+        windowId: this._windowId,
+        bounds: {
+          width: contentSize.width + insets.width,
+          height: contentSize.height + insets.height
+        },
+      });
     }
-    // Make sure that the viewport emulationis set after the embedder window resize.
-    promises.push(this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride));
-    await Promise.all(promises);
-    this._metricsOverride = metricsOverride;
-  }
-
-  async windowBounds(): Promise<WindowBounds> {
-    const { bounds } = await this._client.send('Browser.getWindowBounds', {
-      windowId: this._windowId!
-    });
-    return bounds;
-  }
-
-  async setWindowBounds(bounds: WindowBounds) {
-    return await this._client.send('Browser.setWindowBounds', {
-      windowId: this._windowId!,
-      bounds
-    });
   }
 
   async _updateEmulateMedia(): Promise<void> {
