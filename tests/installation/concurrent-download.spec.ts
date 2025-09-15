@@ -16,7 +16,6 @@
 
 import { test } from './npmTest';
 import fs from 'fs';
-import path from 'path';
 test.use({ isolateBrowsers: true });
 
 test('concurrent browser downloads should not clobber each other', async ({ exec }, testInfo) => {
