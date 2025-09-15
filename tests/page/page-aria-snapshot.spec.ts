@@ -686,3 +686,11 @@ it('should snapshot placeholder when different from the name', async ({ page }) 
       - /placeholder: Placeholder
   `);
 });
+
+it('match values both against regex and string', async ({ page }) => {
+  await page.setContent(`<a href="/auth?r=/">Log in</a>`);
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Log in":
+      - /url: /auth?r=/
+  `);
+});
