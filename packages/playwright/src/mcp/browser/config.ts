@@ -34,6 +34,7 @@ export type CLIOptions = {
   config?: string;
   device?: string;
   executablePath?: string;
+  grantPermissions?: string[];
   headless?: boolean;
   host?: string;
   ignoreHttpsErrors?: boolean;
@@ -182,6 +183,9 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.blockServiceWorkers)
     contextOptions.serviceWorkers = 'block';
 
+  if (cliOptions.grantPermissions)
+    contextOptions.permissions = cliOptions.grantPermissions;
+
   const result: Config = {
     browser: {
       browserName,
@@ -227,6 +231,7 @@ function configFromEnv(): Config {
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
   options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.grantPermissions = commaSeparatedList(process.env.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
