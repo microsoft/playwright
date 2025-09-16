@@ -20,7 +20,7 @@ import { computeBox, getElementComputedStyle, isElementVisible } from './domUtil
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
-import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
+import type { AriaProps, AriaRegex, AriaTextValue, AriaRole, AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { Box } from './domUtils';
 
 export type AriaNode = AriaProps & {
@@ -342,7 +342,7 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
   visit(rootA11yNode);
 }
 
-function matchesText(text: string, template: AriaRegex | string | undefined): boolean {
+function matchesStringOrRegex(text: string, template: AriaRegex | string | undefined): boolean {
   if (!template)
     return true;
   if (!text)
@@ -352,12 +352,39 @@ function matchesText(text: string, template: AriaRegex | string | undefined): bo
   return !!text.match(new RegExp(template.pattern));
 }
 
-function matchesTextNode(text: string, template: AriaTemplateTextNode) {
-  return matchesText(text, template.text);
+function matchesTextValue(text: string, template: AriaTextValue | undefined) {
+  if (!template?.normalized)
+    return true;
+  if (!text)
+    return false;
+  if (text === template.normalized)
+    return true;
+  // Accept pattern as value.
+  if (text === template.raw)
+    return true;
+
+  const regex = cachedRegex(template);
+  if (regex)
+    return !!text.match(regex);
+  return false;
 }
 
-function matchesName(text: string, template: AriaTemplateRoleNode) {
-  return matchesText(text, template.name);
+const cachedRegexSymbol = Symbol('cachedRegex');
+
+function cachedRegex(template: AriaTextValue): RegExp | null {
+  if ((template as any)[cachedRegexSymbol] !== undefined)
+    return (template as any)[cachedRegexSymbol];
+
+  const { raw } = template;
+  const canBeRegex = raw.startsWith('/') && raw.endsWith('/') && raw.length > 1;
+  let regex: RegExp | null;
+  try {
+    regex = canBeRegex ? new RegExp(raw.slice(1, -1)) : null;
+  } catch (e) {
+    regex = null;
+  }
+  (template as any)[cachedRegexSymbol] = regex;
+  return regex;
 }
 
 export type MatcherReceived = {
@@ -385,7 +412,7 @@ export function getAllElementsMatchingExpectAriaTemplate(rootElement: Element, t
 
 function matchesNode(node: AriaNode | string, template: AriaTemplateNode, isDeepEqual: boolean): boolean {
   if (typeof node === 'string' && template.kind === 'text')
-    return matchesTextNode(node, template);
+    return matchesTextValue(node, template.text);
 
   if (node === null || typeof node !== 'object' || template.kind !== 'role')
     return false;
@@ -404,9 +431,9 @@ function matchesNode(node: AriaNode | string, template: AriaTemplateNode, isDeep
     return false;
   if (template.selected !== undefined && template.selected !== node.selected)
     return false;
-  if (!matchesName(node.name, template))
+  if (!matchesStringOrRegex(node.name, template.name))
     return false;
-  if (!matchesText(node.props.url, template.props?.url))
+  if (!matchesTextValue(node.props.url, template.props?.url))
     return false;
 
   // Proceed based on the container mode.

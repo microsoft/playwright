@@ -849,3 +849,15 @@ test('top-level deep-equal', { annotation: { type: 'issue', description: 'https:
 +       - listitem: "1.2"
   `.trim());
 });
+
+
+test('treat bad regex as a string', async ({ page }) => {
+  await page.setContent(`<a href="/foo">Log in</a>`);
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - link "Log in":
+      - /url: /[a/
+  `, { timeout: 1 }).catch(e => e);
+  expect(stripAnsi(error.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(error.message)).toContain('-   - /url: /[a/');
+  expect(stripAnsi(error.message)).toContain('+   - /url: /foo');
+});
