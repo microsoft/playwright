@@ -93,7 +93,7 @@ export const TestFilesHeader: React.FC<{
   </>;
 
   return <>
-    <HeaderView title={report.title} leftSuperHeader={leftSuperHeader} rightSuperHeader={rightSuperHeader} />
+    <HeaderView title={report.options.title} leftSuperHeader={leftSuperHeader} rightSuperHeader={rightSuperHeader} />
     {!isMetadataInTopLine && metadataToggleButton}
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>

@@ -15,7 +15,7 @@
 */
 
 import type { TestAnnotation } from '@playwright/test';
-import type { TestCase, TestCaseSummary } from './types';
+import type { HTMLReportOptions, TestCase, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -39,7 +39,8 @@ export const TestCaseView: React.FC<{
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
   run: number,
-}> = ({ projectNames, test, testRunMetadata, run, next, prev }) => {
+  options?: HTMLReportOptions,
+}> = ({ projectNames, test, testRunMetadata, run, next, prev, options }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
 
@@ -83,7 +84,7 @@ export const TestCaseView: React.FC<{
             {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
               {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
             </AutoChip>}
-            <TestResultView test={test!} result={result} testRunMetadata={testRunMetadata} />
+            <TestResultView test={test!} result={result} testRunMetadata={testRunMetadata} options={options} />
           </>;
         },
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
+import type { HTMLReportOptions, TestAttachment, TestCase, TestResult, TestStep } from './types';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { msToString } from './utils';
@@ -74,7 +74,8 @@ export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
   testRunMetadata: MetadataWithCommitInfo | undefined,
-}> = ({ test, result, testRunMetadata }) => {
+  options?: HTMLReportOptions,
+}> = ({ test, result, testRunMetadata, options }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -91,6 +92,9 @@ export const TestResultView: React.FC<{
   }, [result]);
 
   const prompt = useAsyncMemo(async () => {
+    if (options?.noCopyPrompt)
+      return undefined;
+
     const stdoutAttachment = result.attachments.find(a => a.name === 'stdout');
     const stderrAttachment = result.attachments.find(a => a.name === 'stderr');
     const stdout = stdoutAttachment?.body && stdoutAttachment.contentType === 'text/plain' ? stdoutAttachment.body : undefined;
