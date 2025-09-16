@@ -22,8 +22,8 @@ import { BrowserServerBackend } from '../browser/browserServerBackend';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
-import type { BrowserContextFactory, ClientInfo } from '../browser/browserContextFactory';
-
+import type { BrowserContextFactory } from '../browser/browserContextFactory';
+import type { ClientInfo } from '../sdk/server';
 
 export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
   const testInfo = currentTestInfo();

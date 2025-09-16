@@ -48,6 +48,7 @@ export type StartClient = (options?: {
   config?: Config,
   roots?: { name: string, uri: string }[],
   rootsResponseDelay?: number,
+  env?: NodeJS.ProcessEnv,
 }) => Promise<{ client: Client, stderr: () => string }>;
 
 
@@ -112,7 +113,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
           };
         });
       }
-      const { transport, stderr } = await createTransport(mcpServerType, args);
+      const env = { ...process.env, ...options?.env };
+      const { transport, stderr } = await createTransport(mcpServerType, args, env);
       let stderrBuffer = '';
       stderr?.on('data', data => {
         if (process.env.PWMCP_DEBUG)
@@ -176,7 +178,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpServerType: ['mcp', { option: true }],
 });
 
-async function createTransport(mcpServerType: TestOptions['mcpServerType'], args: string[]): Promise<{
+async function createTransport(mcpServerType: TestOptions['mcpServerType'], args: string[], env: NodeJS.ProcessEnv): Promise<{
   transport: Transport,
   stderr: Stream | null,
 }> {
@@ -187,7 +189,7 @@ async function createTransport(mcpServerType: TestOptions['mcpServerType'], args
     cwd: test.info().outputPath(),
     stderr: 'pipe',
     env: {
-      ...process.env,
+      ...env,
       DEBUG: process.env.DEBUG ? `${process.env.DEBUG},pw:mcp:test` : 'pw:mcp:test',
       DEBUG_COLORS: '0',
       DEBUG_HIDE_DATE: '1',

@@ -17,11 +17,15 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
 import { devices } from 'playwright-core';
 import { dotenv } from 'playwright-core/lib/utilsBundle';
 
+import { firstRootPath } from '../sdk/server';
+
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
+import type { ClientInfo } from '../sdk/server';
 
 export type CLIOptions = {
   allowedOrigins?: string[];
@@ -265,10 +269,11 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-export async function outputFile(config: FullConfig, rootPath: string | undefined, name: string): Promise<string> {
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, name: string): Promise<string> {
+  const rootPath = firstRootPath(clientInfo);
   const outputDir = config.outputDir
     ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
-    ?? path.join(os.tmpdir(), 'playwright-mcp-output', sanitizeForFilePath(new Date().toISOString()));
+    ?? path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output', String(clientInfo.timestamp));
 
   await fs.promises.mkdir(outputDir, { recursive: true });
   const fileName = sanitizeForFilePath(name);

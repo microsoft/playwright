@@ -26,8 +26,8 @@ import { contextFactory } from '../browser/browserContextFactory';
 
 import type { z as zod } from 'zod';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { ClientVersion, ServerBackend } from '../sdk/server';
-import type { Root, Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+import type { ClientInfo, ServerBackend } from '../sdk/server';
+import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Browser, BrowserContext, BrowserServer } from 'playwright';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
@@ -47,8 +47,7 @@ class VSCodeProxyBackend implements ServerBackend {
 
   private _currentClient: Client | undefined;
   private _contextSwitchTool: Tool;
-  private _roots: Root[] = [];
-  private _clientVersion?: ClientVersion;
+  private _clientInfo?: ClientInfo;
   private _context?: BrowserContext;
   private _browser?: Browser;
   private _browserServer?: BrowserServer;
@@ -57,9 +56,8 @@ class VSCodeProxyBackend implements ServerBackend {
     this._contextSwitchTool = this._defineContextSwitchTool();
   }
 
-  async initialize(server: mcpServer.Server, clientVersion: ClientVersion, roots: Root[]): Promise<void> {
-    this._clientVersion = clientVersion;
-    this._roots = roots;
+  async initialize(server: mcpServer.Server, clientInfo: ClientInfo): Promise<void> {
+    this._clientInfo = clientInfo;
     const transport = await this._defaultTransportFactory(this);
     await this._setCurrentClient(transport);
   }
@@ -166,13 +164,13 @@ class VSCodeProxyBackend implements ServerBackend {
     await this._currentClient?.close();
     this._currentClient = undefined;
 
-    const client = new mcpBundle.Client(this._clientVersion!);
+    const client = new mcpBundle.Client({ name: this._clientInfo!.name, version: this._clientInfo!.version });
     client.registerCapabilities({
       roots: {
         listRoots: true,
       },
     });
-    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._roots }));
+    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo!.roots }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
 
     await client.connect(transport);

@@ -34,15 +34,15 @@ export class MDBBackend implements mcpServer.ServerBackend {
   private _stack: { client: Client, toolNames: string[], resultPromise: ManualPromise<mcpServer.CallToolResult> | undefined }[] = [];
   private _interruptPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
   private _topLevelBackend: mcpServer.ServerBackend;
-  private _roots: mcpServer.Root[] | undefined;
+  private _clientInfo: mcpServer.ClientInfo | undefined;
 
   constructor(topLevelBackend: mcpServer.ServerBackend) {
     this._topLevelBackend = topLevelBackend;
   }
 
-  async initialize(server: mcpServer.Server, clientVersion: mcpServer.ClientVersion, roots: mcpServer.Root[]): Promise<void> {
-    if (!this._roots)
-      this._roots = roots;
+  async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
+    if (!this._clientInfo)
+      this._clientInfo = clientInfo;
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {
@@ -107,8 +107,8 @@ export class MDBBackend implements mcpServer.ServerBackend {
 
   private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
     mdbDebug('pushing client to the stack');
-    const client = new mcpBundle.Client({ name: 'Internal client', version: '0.0.0' }, { capabilities: { roots: {} } });
-    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._roots || [] }));
+    const client = new mcpBundle.Client({ name: 'Pushing client', version: '0.0.0' }, { capabilities: { roots: {} } });
+    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
     await client.connect(transport);
     mdbDebug('connected to the new client');
@@ -169,7 +169,7 @@ export async function runOnPauseBackendLoop(backend: mcpServer.ServerBackend, in
   await mcpHttp.installHttpTransport(httpServer, factory);
   const url = mcpHttp.httpAddressToString(httpServer.address());
 
-  const client = new mcpBundle.Client({ name: 'Internal client', version: '0.0.0' });
+  const client = new mcpBundle.Client({ name: 'On-pause client', version: '0.0.0' });
   client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
   const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(process.env.PLAYWRIGHT_DEBUGGER_MCP!));
   await client.connect(transport);
@@ -205,8 +205,8 @@ class ServerBackendWithCloseListener implements mcpServer.ServerBackend {
     this._backend = backend;
   }
 
-  async initialize(server: mcpServer.Server, clientVersion: mcpServer.ClientVersion, roots: mcpServer.Root[]): Promise<void> {
-    await this._backend.initialize?.(server, clientVersion, roots);
+  async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
+    await this._backend.initialize?.(server, clientInfo);
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {

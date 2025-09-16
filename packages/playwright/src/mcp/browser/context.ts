@@ -23,10 +23,11 @@ import * as codegen from './codegen';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
-import type { BrowserContextFactory, ClientInfo } from './browserContextFactory';
+import type { BrowserContextFactory } from './browserContextFactory';
 import type * as actions from './actions';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../../../playwright-core/src/client/tracing';
+import type { ClientInfo } from '../sdk/server';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -113,7 +114,7 @@ export class Context {
   }
 
   async outputFile(name: string): Promise<string> {
-    return outputFile(this.config, this._clientInfo.rootPath, name);
+    return outputFile(this.config, this._clientInfo, name);
   }
 
   private _onPageCreated(page: playwright.Page) {
