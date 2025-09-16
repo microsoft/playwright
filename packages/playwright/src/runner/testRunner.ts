@@ -139,6 +139,13 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await registry.install(executables, false);
   }
 
+  async loadConfig() {
+    const { config, error } = await this._loadConfig(this._configCLIOverrides);
+    if (config)
+      return config;
+    throw new Error('Failed to load config: ' + (error ? error.message : 'Unknown error'));
+  }
+
   async runGlobalSetup(userReporters: AnyReporter[]): Promise<{ status: FullResultStatus }> {
     await this.runGlobalTeardown();
 

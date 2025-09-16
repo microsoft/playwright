@@ -139,7 +139,10 @@ export const setupPage = defineTestTool({
     let testLocation = params.testLocation;
     if (!testLocation) {
       testLocation = '.template.spec.ts';
-      const templateFile = path.join(configDir, testLocation);
+      const config = await testRunner.loadConfig();
+      const project = params.project ? config.projects.find(p => p.project.name === params.project) : config.projects[0];
+      const testDir = project?.project.testDir || configDir;
+      const templateFile = path.join(testDir, testLocation);
       if (!fs.existsSync(templateFile)) {
         await fs.promises.writeFile(templateFile, `
           import { test, expect } from '@playwright/test';

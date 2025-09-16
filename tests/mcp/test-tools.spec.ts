@@ -16,6 +16,8 @@
 
 import { test, expect, writeFiles, StartClient } from './fixtures';
 
+import fs from 'fs';
+
 test.use({ mcpServerType: 'test-mcp' });
 
 test('test_list', async ({ startClient }) => {
@@ -357,6 +359,33 @@ test('test_setup_page (no test location)', async ({ startClient }) => {
 
 ### Current page snapshot:
 `);
+});
+
+test('test_setup_page without location respects testsDir', async ({ startClient }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        testDir: './tests',
+        projects: [{ name: 'foo' }]
+      };
+    `,
+
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('existing', async ({ page }) => {
+      });
+    `,
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {},
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+`);
+  expect(fs.existsSync(test.info().outputPath('tests', '.template.spec.ts'))).toBe(true);
 });
 
 async function prepareDebugTest(startClient: StartClient) {
