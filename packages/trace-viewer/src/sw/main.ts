@@ -134,7 +134,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (!clientIdToTraceUrls.has(event.clientId)) {
       // Service worker was restarted upon subresource fetch.
-      // It was stopped because ping did not keep in alive since the tab itself was throttled.
+      // It was stopped because ping did not keep it alive since the tab itself was throttled.
       const params = await loadClientIdParams(event.clientId);
       if (params) {
         for (const traceUrl of params.traceUrls)
