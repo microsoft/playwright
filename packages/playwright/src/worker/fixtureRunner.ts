@@ -117,6 +117,8 @@ class Fixture {
     this._selfTeardownComplete = (async () => {
       try {
         await this.registration.fn(params, useFunc, info);
+        if (!useFuncStarted.isDone())
+          throw new Error(`use() was not called in fixture "${this.registration.name}"`);
       } catch (error) {
         this.failed = true;
         if (!useFuncStarted.isDone())
