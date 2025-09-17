@@ -23,7 +23,7 @@ import { minimatch } from 'playwright-core/lib/utilsBundle';
 
 import { createFileMatcher } from '../util';
 
-import type { FullProjectInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 
 
 const readFileAsync = promisify(fs.readFile);
@@ -113,6 +113,11 @@ export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?:
   for (const p of projects)
     visit(0, p);
   return result;
+}
+
+export function findTopLevelProjects(config: FullConfigInternal): FullProjectInternal[] {
+  const closure = buildProjectsClosure(config.projects);
+  return [...closure].filter(entry => entry[1] === 'top-level').map(entry => entry[0]);
 }
 
 export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {

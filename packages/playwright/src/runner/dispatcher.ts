@@ -224,7 +224,7 @@ export class Dispatcher {
       extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
       outputDir,
       pauseOnError: this._failureTracker.pauseOnError(),
-      pauseAtEnd: this._failureTracker.pauseAtEnd(),
+      pauseAtEnd: this._failureTracker.pauseAtEnd(projectConfig),
     });
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);

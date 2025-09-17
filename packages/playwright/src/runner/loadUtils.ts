@@ -120,7 +120,7 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 }
 
-export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<{ rootSuite: Suite, topLevelProjects: FullProjectInternal[] }> {
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
@@ -200,6 +200,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   if (config.postShardTestFilters.length)
     filterTestsRemoveEmptySuites(rootSuite, test => config.postShardTestFilters.every(filter => filter(test)));
 
+  const topLevelProjects = [];
   // Now prepend dependency projects without filtration.
   {
     // Filtering 'only' and sharding might have reduced the number of top-level projects.
@@ -210,10 +211,12 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     for (const [project, level] of projectClosure.entries()) {
       if (level === 'dependency')
         rootSuite._prependSuite(buildProjectSuite(project, projectSuites.get(project)!));
+      else
+        topLevelProjects.push(project);
     }
   }
 
-  return rootSuite;
+  return { rootSuite, topLevelProjects };
 }
 
 function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): Suite {
