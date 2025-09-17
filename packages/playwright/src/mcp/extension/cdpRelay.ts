@@ -34,7 +34,7 @@ import { logUnhandledError } from '../log';
 import * as protocol from './protocol';
 
 import type websocket from 'ws';
-import type { ClientInfo } from '../browser/browserContextFactory';
+import type { ClientInfo } from '../sdk/server';
 import type { ExtensionCommand, ExtensionEvents } from './protocol';
 import type { WebSocket, WebSocketServer } from 'playwright-core/lib/utilsBundle';
 

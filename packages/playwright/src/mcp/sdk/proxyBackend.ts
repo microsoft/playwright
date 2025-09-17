@@ -18,7 +18,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 
 import * as mcpBundle from './bundle';
 
-import type { ServerBackend, ClientVersion, Root, Server } from './server';
+import type { ServerBackend, ClientInfo, Server } from './server';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -36,15 +36,15 @@ export class ProxyBackend implements ServerBackend {
   private _mcpProviders: MCPProvider[];
   private _currentClient: Client | undefined;
   private _contextSwitchTool: Tool;
-  private _roots: Root[] = [];
+  private _clientInfo: ClientInfo | undefined;
 
   constructor(mcpProviders: MCPProvider[]) {
     this._mcpProviders = mcpProviders;
     this._contextSwitchTool = this._defineContextSwitchTool();
   }
 
-  async initialize(server: Server, clientVersion: ClientVersion, roots: Root[]): Promise<void> {
-    this._roots = roots;
+  async initialize(server: Server, clientInfo: ClientInfo): Promise<void> {
+    this._clientInfo = clientInfo;
   }
 
   async listTools(): Promise<Tool[]> {
@@ -124,7 +124,7 @@ export class ProxyBackend implements ServerBackend {
         listRoots: true,
       },
     });
-    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._roots }));
+    client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
 
     const transport = await factory.connect();

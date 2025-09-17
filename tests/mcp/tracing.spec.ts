@@ -67,3 +67,41 @@ test('check that trace is saved with browser_start_tracing', async ({ startClien
     expect.stringMatching(/trace-\d+\.trace/),
   ]);
 });
+
+test('check that trace is saved with browser_start_tracing (no output dir)', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath();
+
+  const { client } = await startClient({
+    args: ['--caps=tracing'],
+    env: { ...process.env, PW_TMPDIR_FOR_TEST: outputDir },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_start_tracing',
+  })).toHaveResponse({
+    result: expect.stringContaining(`Tracing started, saving to ${outputDir}`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_stop_tracing',
+  })).toHaveResponse({
+    result: expect.stringMatching(/trace-\d+.trace/)
+  });
+
+  const folders = await fs.promises.readdir(path.join(outputDir, 'playwright-mcp-output'));
+  expect(folders.length).toBe(1);
+  expect(folders[0]).toMatch(/\d+/);
+  const files = await fs.promises.readdir(path.join(outputDir, 'playwright-mcp-output', folders[0], 'traces'));
+  expect(files).toEqual([
+    'resources',
+    expect.stringMatching(/trace-\d+\.network/),
+    expect.stringMatching(/trace-\d+\.trace/),
+  ]);
+});

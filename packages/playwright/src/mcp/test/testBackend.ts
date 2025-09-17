@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { fileURLToPath } from 'url';
-
 import * as mcp from '../sdk/exports';
 import { TestContext } from './testContext';
 import { listTests, runTests, debugTest, setupPage } from './testTools.js';
@@ -36,20 +34,16 @@ export class TestServerBackend implements mcp.ServerBackend {
     this._configOption = configOption;
   }
 
-  async initialize(server: mcp.Server, clientVersion: mcp.ClientVersion, roots: mcp.Root[]): Promise<void> {
+  async initialize(server: mcp.Server, clientInfo: mcp.ClientInfo): Promise<void> {
     if (this._configOption) {
       this._context.setConfigLocation(resolveConfigLocation(this._configOption));
       return;
     }
 
-    if (roots.length > 0) {
-      const firstRootUri = roots[0]?.uri;
-      const url = firstRootUri ? new URL(firstRootUri) : undefined;
-      const folder = url ? fileURLToPath(url) : undefined;
-      if (folder) {
-        this._context.setConfigLocation(resolveConfigLocation(folder));
-        return;
-      }
+    const rootPath = mcp.firstRootPath(clientInfo);
+    if (rootPath) {
+      this._context.setConfigLocation(resolveConfigLocation(rootPath));
+      return;
     }
 
     throw new Error('No config option or MCP root path provided');

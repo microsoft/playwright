@@ -24,6 +24,7 @@ import { outputFile  } from './config';
 import type { FullConfig } from './config';
 import type * as actions from './actions';
 import type { Tab, TabSnapshot } from './tab';
+import type * as mcpServer from '../sdk/server';
 
 type LogEntry = {
   timestamp: number;
@@ -51,8 +52,8 @@ export class SessionLog {
     this._file = path.join(this._folder, 'session.md');
   }
 
-  static async create(config: FullConfig, rootPath: string | undefined): Promise<SessionLog> {
-    const sessionFolder = await outputFile(config, rootPath, `session-${Date.now()}`);
+  static async create(config: FullConfig, clientInfo: mcpServer.ClientInfo): Promise<SessionLog> {
+    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`);
     await fs.promises.mkdir(sessionFolder, { recursive: true });
     // eslint-disable-next-line no-console
     console.error(`Session: ${sessionFolder}`);

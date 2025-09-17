@@ -17,10 +17,11 @@
 import * as mcpBundle from '../sdk/bundle';
 import * as mcpServer from '../sdk/server';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
-import { BrowserContextFactory, ClientInfo } from '../browser/browserContextFactory';
+import { BrowserContextFactory } from '../browser/browserContextFactory';
 
 import type { FullConfig } from '../browser/config';
 import type { BrowserContext } from 'playwright-core';
+import type { ClientInfo } from '../sdk/server';
 
 class VSCodeBrowserContextFactory implements BrowserContextFactory {
   name = 'vscode';

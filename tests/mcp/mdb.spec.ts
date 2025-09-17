@@ -139,7 +139,7 @@ async function startMDBAndCLI(): Promise<{ mdbUrl: string }> {
 }
 
 async function createMDBClient(mdbUrl: string, roots: any[] | undefined = undefined): Promise<{ client: Client, close: () => Promise<void> }> {
-  const client = new Client({ name: 'Internal client', version: '0.0.0' }, roots ? { capabilities: { roots: {} } } : undefined);
+  const client = new Client({ name: 'Test client', version: '0.0.0' }, roots ? { capabilities: { roots: {} } } : undefined);
   if (roots)
     client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots }));
   const transport = new StreamableHTTPClientTransport(new URL(mdbUrl));
@@ -158,8 +158,8 @@ class CLIBackend {
 
   constructor(private readonly mdbUrlBox: { mdbUrl: string | undefined }) {}
 
-  async initialize(server, clientVersion, roots) {
-    this._roots = roots;
+  async initialize(server, clientInfo) {
+    this._roots = clientInfo.roots;
   }
 
   async listTools() {
@@ -197,8 +197,8 @@ class CLIBackend {
 class GDBBackend {
   private _roots: any[] | undefined;
 
-  async initialize(server, clientVersion, roots) {
-    this._roots = roots;
+  async initialize(server, clientVersion) {
+    this._roots = clientVersion.roots;
   }
 
   async listTools() {
