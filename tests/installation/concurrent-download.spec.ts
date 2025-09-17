@@ -22,25 +22,19 @@ test('concurrent browser downloads should not clobber each other', async ({ exec
   await exec('npm init -y');
   await exec('npm install playwright');
   const numProcesses = 3;
-  await Promise.all(Array.from({ length: numProcesses }, (_, index) =>
-    exec('npx playwright install chromium', {
+  await Promise.all(Array.from({ length: numProcesses }, async (_, index) => {
+    const browserPath = testInfo.outputPath(`browsers-${index}`);
+    await exec('npx playwright install chromium', {
       env: {
-        PLAYWRIGHT_BROWSERS_PATH: testInfo.outputPath(`browsers-${index}`),
+        PLAYWRIGHT_BROWSERS_PATH: browserPath,
       }
-    })
-  ));
-  // Aggregate installed software across individual browser paths and verify expected components exist
-  const installed = new Set<string>();
-  for (let i = 0; i < numProcesses; i++) {
-    const dir = testInfo.outputPath(`browsers-${i}`);
-    const entries = await fs.promises.readdir(dir).catch(() => []);
-    for (const entry of entries) {
-      const name = entry.split('-')[0].replace(/_/g, '-');
-      if (!name.startsWith('.'))
-        installed.add(name);
-    }
-  }
-  test.expect(installed.has('chromium')).toBeTruthy();
-  test.expect(installed.has('chromium-headless-shell')).toBeTruthy();
-  test.expect(installed.has('ffmpeg')).toBeTruthy();
+    });
+    
+    // Check that each installation has all required binaries
+    const entries = await fs.promises.readdir(browserPath).catch(() => []);
+    const installed = new Set(entries.map(entry => entry.split('-')[0].replace(/_/g, '-')).filter(name => !name.startsWith('.')));
+    test.expect(installed.has('chromium')).toBeTruthy();
+    test.expect(installed.has('chromium-headless-shell')).toBeTruthy();
+    test.expect(installed.has('ffmpeg')).toBeTruthy();
+  }));
 });
