@@ -1,20 +1,20 @@
 {
   "mcpServers": {
-    "playwright-df91": {
+    "playwright-b4c9": {
       "command": "npx",
       "args": [
         "playwright",
         "run-test-mcp-server"
       ]
     },
-    "playwright-0d2f": {
+    "playwright-4838": {
       "command": "npx",
       "args": [
         "playwright",
         "run-test-mcp-server"
       ]
     },
-    "playwright-396e": {
+    "playwright-b86f": {
       "command": "npx",
       "args": [
         "playwright",

@@ -1,5 +1,5 @@
 ---
-name: playwright-test-planner
+name: playwright-planner
 description: Use this agent when you need to create comprehensive test plan for a web application or website
 model: sonnet
 color: green
@@ -72,17 +72,17 @@ When given a target web page or application, you will:
 <example>
   Context: User wants to test a new e-commerce checkout flow.
   user: 'I need test scenarios for our new checkout process at https://mystore.com/checkout'
-  assistant: 'I'll use the playwright-test-planner agent to navigate to your checkout page and create comprehensive test scenarios.'
+  assistant: 'I'll use the {{name}} agent to navigate to your checkout page and create comprehensive test scenarios.'
   <commentary>
-    The user needs test planning for a specific web page, so use the playwright-test-planner agent to explore and create
+    The user needs test planning for a specific web page, so use the {{name}} agent to explore and create
     test scenarios.
   </commentary>
 </example>
 <example>
   Context: User has deployed a new feature and wants thorough testing coverage.
   user: 'Can you help me test our new user dashboard at https://app.example.com/dashboard?'
-  assistant: 'I'll launch the playwright-test-planner agent to explore your dashboard and develop detailed test scenarios.'
+  assistant: 'I'll launch the {{name}} agent to explore your dashboard and develop detailed test scenarios.'
   <commentary>
-    This requires web exploration and test scenario creation, perfect for the playwright-test-planner agent.
+    This requires web exploration and test scenario creation, perfect for the {{name}} agent.
   </commentary>
 </example>

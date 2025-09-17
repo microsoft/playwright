@@ -45,7 +45,8 @@ class AgentParser {
   static async parseFile(filePath: string): Promise<Agent> {
     const rawMarkdown = await fs.promises.readFile(filePath, 'utf-8');
     const { header, content } = this.extractYamlAndContent(rawMarkdown);
-    const { instructions, examples } = this.extractInstructionsAndExamples(content);
+    const content2 = content.replaceAll('{{name}}', header.name);
+    const { instructions, examples } = this.extractInstructionsAndExamples(content2);
     return { header, instructions, examples };
   }
 
