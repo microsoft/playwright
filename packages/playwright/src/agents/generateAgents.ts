@@ -257,10 +257,10 @@ export async function initVSCodeRepo() {
   if (!mcpJson.servers)
     mcpJson.servers = {};
 
-  mcpJson.servers['playwright-test-mcp'] = {
+  mcpJson.servers['playwright-test'] = {
     type: 'stdio',
-    command: 'npx',
-    args: ['playwright', 'run-test-mcp-server'],
+    command: commonMcpServers.playwrightTest.command,
+    args: commonMcpServers.playwrightTest.args,
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
 }
