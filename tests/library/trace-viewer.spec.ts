@@ -2021,3 +2021,22 @@ test.describe(() => {
     await expect(frame.getByRole('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   });
 });
+
+test('should survive service worker restart', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('Old world');
+    await page.evaluate(() => document.body.textContent = 'New world');
+  });
+  const snapshot1 = await traceViewer.snapshotFrame('Evaluate');
+  await expect(snapshot1.locator('body')).toHaveText('New world');
+
+  const status = await traceViewer.page.evaluate(async () => {
+    const response = await fetch('restartServiceWorker');
+    return response.status;
+  });
+  expect(status).toBe(200);
+
+  const snapshot2 = await traceViewer.snapshotFrame('Set content');
+  await expect(snapshot2.locator('body')).toHaveText('Old world');
+});

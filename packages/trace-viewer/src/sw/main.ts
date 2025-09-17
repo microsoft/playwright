@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as idbKeyval from 'idb-keyval';
+
 import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
@@ -33,10 +35,13 @@ self.addEventListener('activate', function(event: any) {
 });
 
 const scopePath = new URL(self.registration.scope).pathname;
-
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
-
 const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
+
+function simulateServiceWorkerRestart() {
+  loadedTraces.clear();
+  clientIdToTraceUrls.clear();
+}
 
 async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   await gc();
@@ -49,6 +54,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
     clientIdToTraceUrls.set(clientId, data);
   }
   data.traceUrls.add(traceUrl);
+  await saveClientIdParams();
 
   const traceModel = new TraceModel();
   try {
@@ -101,6 +107,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       await gc();
       return new Response(null, { status: 200 });
     }
+    if (relativePath === '/restartServiceWorker') {
+      simulateServiceWorkerRestart();
+      return new Response(null, { status: 200 });
+    }
 
     const traceUrl = url.searchParams.get('trace');
 
@@ -119,6 +129,16 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
+      }
+    }
+
+    if (!clientIdToTraceUrls.has(event.clientId)) {
+      // Service worker was restarted upon subresource fetch.
+      // It was stopped because ping did not keep it alive since the tab itself was throttled.
+      const params = await loadClientIdParams(event.clientId);
+      if (params) {
+        for (const traceUrl of params.traceUrls)
+          await loadTrace(traceUrl, null, client, params.limit, () => {});
       }
     }
 
@@ -221,6 +241,36 @@ async function gc() {
     if (!usedTraces.has(traceUrl))
       loadedTraces.delete(traceUrl);
   }
+
+  await saveClientIdParams();
+}
+
+// Persist clientIdToTraceUrls to localStorage to avoid losing it when the service worker is restarted.
+async function saveClientIdParams() {
+  const serialized: Record<string, {
+    limit: number | undefined,
+    traceUrls: string[]
+  }> = {};
+  for (const [clientId, data] of clientIdToTraceUrls) {
+    serialized[clientId] = {
+      limit: data.limit,
+      traceUrls: [...data.traceUrls]
+    };
+  }
+
+  const newValue = JSON.stringify(serialized);
+  const oldValue = await idbKeyval.get('clientIdToTraceUrls');
+  if (newValue === oldValue)
+    return;
+  idbKeyval.set('clientIdToTraceUrls', newValue);
+}
+
+async function loadClientIdParams(clientId: string): Promise<{ limit: number | undefined, traceUrls: string[] } | undefined> {
+  const serialized = await idbKeyval.get('clientIdToTraceUrls') as string | undefined;
+  if (!serialized)
+    return;
+  const deserialized = JSON.parse(serialized);
+  return deserialized[clientId];
 }
 
 // @ts-ignore
