@@ -201,7 +201,10 @@ export async function initClaudeCodeRepo() {
 
   await writeFile('.mcp.json', JSON.stringify({
     mcpServers: {
-      'playwright-test': commonMcpServers.playwrightTest,
+      'playwright-test': {
+        command: commonMcpServers.playwrightTest.command,
+        args: commonMcpServers.playwrightTest.args,
+      }
     }
   }, null, 2));
 }

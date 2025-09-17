@@ -1,7 +1,6 @@
 {
   "mcpServers": {
     "playwright-test": {
-      "type": "local",
       "command": "npx",
       "args": [
         "playwright",
