@@ -37,7 +37,7 @@ import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
-import { initClaudeCodeRepo, initOpencodeRepo } from './agents/generateAgents';
+import { initClaudeCodeRepo, initOpencodeRepo, initVSCodeRepo } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -179,9 +179,12 @@ function addInitAgentsCommand(program: Command) {
   command.description('Initialize repository agents for the Claude Code');
   command.option('--claude', 'Initialize repository agents for the Claude Code');
   command.option('--opencode', 'Initialize repository agents for the Opencode');
+  command.option('--vscode', 'Initialize repository agents for the VS Code Copilot');
   command.action(async opts => {
     if (opts.opencode)
       await initOpencodeRepo();
+    else if (opts.vscode)
+      await initVSCodeRepo();
     else
       await initClaudeCodeRepo();
   });
