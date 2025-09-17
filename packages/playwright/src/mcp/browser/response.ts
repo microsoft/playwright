@@ -76,6 +76,11 @@ export class Response {
     this._includeSnapshot = true;
   }
 
+  setMaybeIncludeSnapshot() {
+    if (!this._context.config.quietMode)
+      this._includeSnapshot = true;
+  }
+
   setIncludeTabs() {
     this._includeTabs = true;
   }

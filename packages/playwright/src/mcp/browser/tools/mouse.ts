@@ -58,7 +58,7 @@ const mouseClick = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.setIncludeSnapshot();
+    response.setMaybeIncludeSnapshot();
 
     response.addCode(`// Click mouse at coordinates (${params.x}, ${params.y})`);
     response.addCode(`await page.mouse.move(${params.x}, ${params.y});`);
@@ -89,7 +89,7 @@ const mouseDrag = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.setIncludeSnapshot();
+    response.setMaybeIncludeSnapshot();
 
     response.addCode(`// Drag mouse from (${params.startX}, ${params.startY}) to (${params.endX}, ${params.endY})`);
     response.addCode(`await page.mouse.move(${params.startX}, ${params.startY});`);

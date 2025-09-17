@@ -101,6 +101,12 @@ export type Config = {
   saveTrace?: boolean;
 
   /**
+   * When enabled, reduces verbosity by omitting automatic snapshots after certain tool actions.
+   * Snapshots will still be included for tools that explicitly require them.
+   */
+  quietMode?: boolean;
+
+  /**
    * Secrets are used to prevent LLM from getting sensitive data while
    * automating scenarios such as authentication.
    * Prefer the browser.contextOptions.storageState over secrets file as a more secure alternative.

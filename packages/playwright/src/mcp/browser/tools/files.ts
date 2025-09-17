@@ -31,7 +31,7 @@ const uploadFile = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.setIncludeSnapshot();
+    response.setMaybeIncludeSnapshot();
 
     const modalState = tab.modalStates().find(state => state.type === 'fileChooser');
     if (!modalState)

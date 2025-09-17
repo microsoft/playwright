@@ -49,6 +49,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--port <port>', 'port to listen on for SSE transport.')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+      .option('--quiet-mode', 'reduce verbosity by omitting automatic snapshots after certain tool actions')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)

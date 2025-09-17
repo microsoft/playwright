@@ -38,7 +38,7 @@ const evaluate = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.setIncludeSnapshot();
+    response.setMaybeIncludeSnapshot();
 
     let locator: playwright.Locator | undefined;
     if (params.ref && params.element) {

@@ -44,6 +44,7 @@ export type CLIOptions = {
   port?: number;
   proxyBypass?: string;
   proxyServer?: string;
+  quietMode?: boolean;
   saveSession?: boolean;
   saveTrace?: boolean;
   secrets?: Record<string, string>;
@@ -201,6 +202,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       allowedOrigins: cliOptions.allowedOrigins,
       blockedOrigins: cliOptions.blockedOrigins,
     },
+    quietMode: cliOptions.quietMode,
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
     secrets: cliOptions.secrets,
@@ -238,6 +240,7 @@ function configFromEnv(): Config {
   options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
+  options.quietMode = envToBoolean(process.env.PLAYWRIGHT_MCP_QUIET_MODE);
   options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
   options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
