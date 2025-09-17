@@ -52,7 +52,7 @@ export const ReportView: React.FC<{
   const testId = searchParams.get('testId');
   const q = searchParams.get('q')?.toString() || '';
   const filterParam = q ? '&q=' + q : '';
-  const reportTitle = report?.json()?.title;
+  const reportTitle = report?.json()?.options.title;
 
   const testIdToFileIdMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -181,10 +181,12 @@ const TestCaseViewLoader: React.FC<{
     </div>;
   }
 
+  const { projectNames, metadata, options } = report.json();
   return <div className='test-case-column'>
     <TestCaseView
-      projectNames={report.json().projectNames}
-      testRunMetadata={report.json().metadata}
+      projectNames={projectNames}
+      testRunMetadata={metadata}
+      options={options}
       next={next}
       prev={prev}
       test={test}
