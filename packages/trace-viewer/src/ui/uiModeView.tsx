@@ -112,6 +112,18 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, []);
 
+  React.useEffect(() => {
+    // This weird contrivance prevents the browser from navigation on back event, particularly when in Chromium "app" mode
+    // For some reason it's more reliable than calling pushState in the popstate handler
+    window.history.pushState(null, document.title, window.location.href);
+    window.history.back();
+    window.history.forward();
+
+    const onPopState = () => window.history.go(1);
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   // Load tests on startup.
   React.useEffect(() => {
     inputRef.current?.focus();
