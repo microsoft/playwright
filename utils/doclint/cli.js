@@ -197,6 +197,7 @@ async function run() {
                   'java',
                   'css',
                   'js',
+                  'markdown',
                   'ts',
                   'python',
                   'py',
