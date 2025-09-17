@@ -2677,6 +2677,21 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 * since: v1.8
 - type: <[Keyboard]>
 
+
+## async method: Page.consoleMessages
+* since: v1.56
+- returns: <[Array]<[ConsoleMessage]>>
+
+Returns up to 200 last console messages from this page. See [`event: Page.console`] for more details.
+
+
+## async method: Page.pageErrors
+* since: v1.56
+- returns: <[Array]<[Error]>>
+
+Returns up to 200 last page errors from this page. See [`event: Page.pageError`] for more details.
+
+
 ## method: Page.locator
 * since: v1.14
 - returns: <[Locator]>

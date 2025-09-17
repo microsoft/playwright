@@ -1245,6 +1245,19 @@ scheme.PageCloseParams = tObject({
   reason: tOptional(tString),
 });
 scheme.PageCloseResult = tOptional(tObject({}));
+scheme.PageConsoleMessagesParams = tOptional(tObject({}));
+scheme.PageConsoleMessagesResult = tObject({
+  messages: tArray(tObject({
+    type: tString,
+    text: tString,
+    args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+    location: tObject({
+      url: tString,
+      lineNumber: tInt,
+      columnNumber: tInt,
+    }),
+  })),
+});
 scheme.PageEmulateMediaParams = tObject({
   media: tOptional(tEnum(['screen', 'print', 'no-override'])),
   colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
@@ -1439,6 +1452,10 @@ scheme.PageAccessibilitySnapshotParams = tObject({
 });
 scheme.PageAccessibilitySnapshotResult = tObject({
   rootAXNode: tOptional(tType('AXNode')),
+});
+scheme.PagePageErrorsParams = tOptional(tObject({}));
+scheme.PagePageErrorsResult = tObject({
+  errors: tArray(tType('SerializedError')),
 });
 scheme.PagePdfParams = tObject({
   scale: tOptional(tFloat),

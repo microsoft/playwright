@@ -1618,6 +1618,17 @@ Page:
       flags:
         pausesBeforeAction: true
 
+    consoleMessages:
+      title: Get console messages
+      group: getter
+      returns:
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              $mixin: ConsoleMessage
+
     emulateMedia:
       title: Emulate media
       parameters:
@@ -1952,6 +1963,14 @@ Page:
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
+
+    pageErrors:
+      title: Get page errors
+      group: getter
+      returns:
+        errors:
+          type: array
+          items: SerializedError
 
     pdf:
       title: PDF
