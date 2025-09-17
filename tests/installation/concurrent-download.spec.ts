@@ -29,7 +29,7 @@ test('concurrent browser downloads should not clobber each other', async ({ exec
         PLAYWRIGHT_BROWSERS_PATH: browserPath,
       }
     });
-    
+
     // Check that each installation has all required binaries
     const entries = await fs.promises.readdir(browserPath).catch(() => []);
     const installed = new Set(entries.map(entry => entry.split('-')[0].replace(/_/g, '-')).filter(name => !name.startsWith('.')));
