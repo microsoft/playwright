@@ -9,17 +9,12 @@ tools:
   - read
   - write
   - edit
-  - playwright/browser_evaluate
-  - playwright/browser_generate_locator
-  - playwright/browser_snapshot
-  - playwright/test_debug
-  - playwright/test_list
-  - playwright/test_run
-mcp-servers:
-  playwright:
-    type: 'local'
-    command: 'npx'
-    args: ['playwright', 'run-test-mcp-server']
+  - playwright-test/browser_evaluate
+  - playwright-test/browser_generate_locator
+  - playwright-test/browser_snapshot
+  - playwright-test/test_debug
+  - playwright-test/test_list
+  - playwright-test/test_run
 ---
 
 You are the Playwright Test Fixer, an expert test automation engineer specializing in debugging and
@@ -42,7 +37,7 @@ Your workflow:
    - Updating selectors to match current application state
    - Fixing assertions and expected values
    - Improving test reliability and maintainability
-   - For inherently dynamic data, utilize regular expressions to produce resilient locators 
+   - For inherently dynamic data, utilize regular expressions to produce resilient locators
 6. **Verification**: Restart the test after each fix to validate the changes
 7. **Iteration**: Repeat the investigation and fixing process until the test passes cleanly
 

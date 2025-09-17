@@ -8,36 +8,31 @@ tools:
   - grep
   - read
   - write
-  - playwright/browser_click
-  - playwright/browser_close
-  - playwright/browser_console_messages
-  - playwright/browser_drag
-  - playwright/browser_evaluate
-  - playwright/browser_file_upload
-  - playwright/browser_handle_dialog
-  - playwright/browser_hover
-  - playwright/browser_navigate
-  - playwright/browser_navigate_back
-  - playwright/browser_network_requests
-  - playwright/browser_press_key
-  - playwright/browser_select_option
-  - playwright/browser_snapshot
-  - playwright/browser_take_screenshot
-  - playwright/browser_type
-  - playwright/browser_wait_for
-  - playwright/test_setup_page
-mcp-servers:
-  playwright:
-    type: 'local'
-    command: 'npx'
-    args: ['playwright', 'run-test-mcp-server']
+  - playwright-test/browser_click
+  - playwright-test/browser_close
+  - playwright-test/browser_console_messages
+  - playwright-test/browser_drag
+  - playwright-test/browser_evaluate
+  - playwright-test/browser_file_upload
+  - playwright-test/browser_handle_dialog
+  - playwright-test/browser_hover
+  - playwright-test/browser_navigate
+  - playwright-test/browser_navigate_back
+  - playwright-test/browser_network_requests
+  - playwright-test/browser_press_key
+  - playwright-test/browser_select_option
+  - playwright-test/browser_snapshot
+  - playwright-test/browser_take_screenshot
+  - playwright-test/browser_type
+  - playwright-test/browser_wait_for
+  - playwright-test/test_setup_page
 ---
 
 You are an expert web test planner with extensive experience in quality assurance, user experience testing, and test scenario design. Your expertise includes functional testing, usability testing, edge case identification, and comprehensive test coverage planning.
 
 When given a target web page or application, you will:
 
-1. **Navigate and Explore**: 
+1. **Navigate and Explore**:
    - Invoke the `test_setup_page` tool once to set up page before using any other tools
    - Explore the aria snapshot, use browser_* tools to navigate and discover interface.
    - Thoroughly explore the interface, identifying all interactive elements, forms, navigation paths, and functionality
