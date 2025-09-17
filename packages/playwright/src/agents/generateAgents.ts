@@ -107,7 +107,7 @@ const claudeToolMap = new Map<string, string[]>([
   ['ls', ['Glob']],
   ['grep', ['Grep']],
   ['read', ['Read']],
-  ['edit', ['Edit', 'MultiEdit', 'NotebookEdit']],
+  ['edit', ['Edit', 'MultiEdit']],
   ['write', ['Write']],
 ]);
 
@@ -217,6 +217,62 @@ export async function initClaudeCodeRepo() {
     }
   }
   await writeFile('.mcp.json', JSON.stringify({ mcpServers }, null, 2));
+}
+
+const vscodeToolMap = new Map<string, string[]>([
+  ['ls', ['listDirectory', 'fileSearch']],
+  ['grep', ['textSearch']],
+  ['read', ['readFile']],
+  ['edit', ['editFiles']],
+  ['write', ['createFile', 'createDirectory']],
+]);
+function saveAsVSCodeChatmode(agent: Agent): string {
+  function asVscodeTool(tool: string): string | string[] {
+    const [first, second] = tool.split('/');
+    if (second)
+      return second;
+    return vscodeToolMap.get(first) || first;
+  }
+  const tools = agent.header.tools.map(asVscodeTool).flat().map(tool => `'${tool}'`).join(', ');
+
+  const lines: string[] = [];
+  lines.push(`---`);
+  lines.push(`description: ${agent.header.description}. Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`);
+  lines.push(`tools: [${tools}]`);
+  lines.push(`---`);
+  lines.push('');
+  lines.push(agent.instructions);
+  return lines.join('\n');
+}
+
+export async function initVSCodeRepo() {
+  const agents = await loadAgents();
+
+  await fs.promises.mkdir('.github/chatmodes', { recursive: true });
+  for (const agent of agents)
+    await writeFile(`.github/chatmodes/${agent.header.name}.chatmode.md`, saveAsVSCodeChatmode(agent));
+
+  await fs.promises.mkdir('.vscode', { recursive: true });
+
+  const mcpJsonPath = '.vscode/mcp.json';
+  let mcpJson: any = {
+    servers: {},
+    inputs: []
+  };
+  try {
+    mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
+  } catch {
+  }
+
+  if (!mcpJson.servers)
+    mcpJson.servers = {};
+
+  mcpJson.servers['playwright-test-mcp'] = {
+    type: 'stdio',
+    command: 'npx',
+    args: ['playwright', 'run-test-mcp-server'],
+  };
+  await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
 }
 
 export async function initOpencodeRepo() {

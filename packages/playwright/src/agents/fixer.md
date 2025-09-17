@@ -15,7 +15,6 @@ tools:
   - playwright/test_debug
   - playwright/test_list
   - playwright/test_run
-  - playwright/test_setup_page
 mcp-servers:
   playwright:
     type: 'local'
