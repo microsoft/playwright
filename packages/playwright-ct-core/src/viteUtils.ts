@@ -169,7 +169,8 @@ const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function transformIndexFile(id: string, content: string, templateDir: string, registerSource: string, importInfos: Map<string, ImportInfo>): TransformResult  | null {
   // Vite React plugin will do this for .jsx files, but not .js files.
-  if (id.endsWith('.js') && content.includes('React.createElement') && !content.match(importReactRE) && !content.match(compiledReactRE)) {
+  // `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` check is to avoid modifying React itself (such as react.development.js)
+  if (id.endsWith('.js') && content.includes('React.createElement') && !content.includes('__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED') && !content.match(importReactRE) && !content.match(compiledReactRE)) {
     const code = `import React from 'react';\n${content}`;
     return { code, map: { mappings: '' } };
   }
