@@ -33,9 +33,7 @@
     "./lib/server/registry/index": "./lib/server/registry/index.js",
     "./lib/utils": "./lib/utils.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
-    "./lib/zipBundle": "./lib/zipBundle.js",
-    "./types/protocol": "./types/protocol.d.ts",
-    "./types/structs": "./types/structs.d.ts"
+    "./lib/zipBundle": "./lib/zipBundle.js"
   },
   "bin": {
     "playwright-core": "cli.js"
