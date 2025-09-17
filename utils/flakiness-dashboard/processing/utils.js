@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // @ts-check
-const { DefaultAzureCredential } = require('@azure/identity');
+const { ManagedIdentityCredential } = require('@azure/identity');
 const { BlobServiceClient } = require('@azure/storage-blob');
-const defaultAzureCredential = new DefaultAzureCredential();
+const defaultAzureCredential = new ManagedIdentityCredential();
 const zlib = require('zlib');
 const util = require('util');
 
