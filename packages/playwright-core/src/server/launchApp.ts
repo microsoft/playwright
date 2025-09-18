@@ -44,6 +44,20 @@ export async function launchApp(browserType: BrowserType, options: {
         ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
         '--test-type=',
     );
+    // UI-mode rendering workarounds for environments like WSLg where GPU drivers
+    // may cause a transparent window or no rendering when defaulting to the iGPU.
+    // Priority:
+    // 1) If PW_UI_DISABLE_GPU=1, force-disable GPU entirely.
+    // 2) Else if PW_UI_USE_SWIFTSHADER=1, force SwiftShader software GL.
+    // 3) Else if running under WSL, prefer SwiftShader by default.
+    const uiDisableGpu = process.env.PW_UI_DISABLE_GPU === '1';
+    const uiUseSwiftShader = process.env.PW_UI_USE_SWIFTSHADER === '1';
+    const isWSL = process.platform === 'linux' && (fs.existsSync('/proc/sys/fs/binfmt_misc/WSLInterop') || (fs.existsSync('/proc/version') && fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')) || !!process.env.WSL_DISTRO_NAME);
+    if (uiDisableGpu) {
+      args.push('--disable-gpu', '--disable-software-rasterizer');
+    } else if (uiUseSwiftShader || isWSL) {
+      args.push('--use-gl=swiftshader');
+    }
     if (!channel && !options.persistentContextOptions?.executablePath)
       channel = findChromiumChannelBestEffort(options.sdkLanguage);
   }
