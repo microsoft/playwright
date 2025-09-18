@@ -309,12 +309,16 @@ export type IndexedDBDatabase = {
 
 export type SetOriginStorage = {
   origin: string,
+  partitionKey?: string,
+  _crHasCrossSiteAncestor?: boolean,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
 };
 
 export type OriginStorage = {
   origin: string,
+  partitionKey?: string,
+  _crHasCrossSiteAncestor?: boolean,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
 };
