@@ -169,7 +169,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   const traceViewerPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
 
-  const { context, page } = await launchApp(traceViewerPlaywright[traceViewerBrowser as 'chromium'], {
+  const { context, page, hasInitialUrl } = await launchApp(traceViewerPlaywright[traceViewerBrowser as 'chromium'], {
     sdkLanguage: traceViewerPlaywright.options.sdkLanguage,
     windowSize: { width: 1280, height: 800 },
     persistentContextOptions: {
@@ -178,6 +178,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
     },
+    initialUrl: url
   });
 
   const controller = new ProgressController();
@@ -195,7 +196,8 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     if (isUnderTest())
       page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
 
-    await page.mainFrame().goto(progress, url);
+    if (!hasInitialUrl)
+      await page.mainFrame().goto(progress, url);
   });
   return page;
 }
