@@ -17,6 +17,7 @@
 import { test, expect, writeFiles, StartClient } from './fixtures';
 
 import fs from 'fs';
+import path from 'path';
 
 test.use({ mcpServerType: 'test-mcp' });
 
@@ -137,6 +138,51 @@ Running 2 tests using 1 worker
 `);
 });
 
+test('test_run should include dependencies', async ({ startClient }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /.*setup\\.ts/ },
+          { name: 'chromium', dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'auth.setup.ts': `
+      import { test as setup, expect } from '@playwright/test';
+      setup('auth', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'example.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('example2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_run',
+    arguments: {
+      locations: ['example.test.ts'],
+      projects: ['chromium'],
+    },
+  })).toHaveTextResponse(`
+Running 3 tests using 1 worker
+
+  ok 1 [id=<ID>] [project=setup] › auth.setup.ts:3:12 › auth (XXms)
+  ok 2 [id=<ID>] [project=chromium] › example.test.ts:3:11 › example1 (XXms)
+  ok 3 [id=<ID>] [project=chromium] › example.test.ts:6:11 › example2 (XXms)
+
+  3 passed (XXms)
+`);
+});
+
 test('test_debug (passed)', async ({ startClient }) => {
   await writeFiles({
     'a.test.ts': `
@@ -217,7 +263,7 @@ test('test_debug / browser_snapshot', async ({ startClient }) => {
   });
 });
 
-test('test_debug_test (pause/snapshot/resume)', async ({ startClient }) => {
+test('test_debug (pause/snapshot/resume)', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
 
   expect(await client.callTool({
@@ -350,6 +396,49 @@ test('test_setup_page', async ({ startClient }) => {
   });
 });
 
+test('test_setup_page with dependencies', async ({ startClient }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /.*setup\\.ts/ },
+          { name: 'chromium', dependencies: ['setup'] },
+          { name: 'ignored', dependencies: ['chromium'] },
+        ],
+      };
+    `,
+    'auth.setup.ts': `
+      import { test as setup, expect } from '@playwright/test';
+      setup('auth', async ({ page }, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('auth.txt'), 'done');
+      });
+    `,
+    'template.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('template', async ({ page }, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('template.txt'), 'done');
+      });
+    `,
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {
+      testLocation: 'template.test.ts:3',
+      project: 'chromium',
+    },
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+`);
+
+  // Should pause at the target test, not in a dependency or any other stray project.
+  expect(fs.existsSync(path.join(baseDir, 'test-results', 'auth.setup.ts-auth-setup', 'auth.txt'))).toBe(true);
+  expect(fs.existsSync(path.join(baseDir, 'test-results', 'template-template-chromium', 'template.txt'))).toBe(true);
+  expect(fs.existsSync(path.join(baseDir, 'test-results', 'template-template-ignored', 'template.txt'))).toBe(false);
+});
+
 test('test_setup_page (no test location)', async ({ startClient }) => {
   const { client } = await startClient();
   expect(await client.callTool({
@@ -359,6 +448,31 @@ test('test_setup_page (no test location)', async ({ startClient }) => {
 
 ### Current page snapshot:
 `);
+});
+
+test('test_setup_page chooses top-level project', async ({ startClient }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'one', testDir: './one' },
+          { name: 'two', testDir: './two', dependencies: ['one'] },
+        ],
+      };
+    `,
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {},
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+`);
+
+  expect(fs.existsSync(path.join(baseDir, 'one', 'default.seed.spec.ts'))).toBe(false);
+  expect(fs.existsSync(path.join(baseDir, 'two', 'default.seed.spec.ts'))).toBe(true);
 });
 
 test('test_setup_page without location respects testsDir', async ({ startClient }) => {

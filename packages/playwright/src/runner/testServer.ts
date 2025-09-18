@@ -200,7 +200,10 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
-    const { status } = await this._testRunner.runTests(wireReporter, params);
+    const { status } = await this._testRunner.runTests(wireReporter, {
+      ...params,
+      doNotRunDepsOutsideProjectFilter: true,
+    });
     return { status };
   }
 

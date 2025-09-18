@@ -63,6 +63,7 @@ export class TestRun {
   readonly phases: Phase[] = [];
   projectFiles: Map<FullProjectInternal, string[]> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
+  topLevelProjects: FullProjectInternal[] = [];
 
   constructor(config: FullConfigInternal, reporter: InternalReporter, options?: { pauseOnError?: boolean, pauseAtEnd?: boolean }) {
     this.config = config;
@@ -232,8 +233,9 @@ export function createListFilesTask(): Task<TestRun> {
   return {
     title: 'load tests',
     setup: async (testRun, errors) => {
-      testRun.rootSuite = await createRootSuite(testRun, errors, false);
-      testRun.failureTracker.onRootSuite(testRun.rootSuite);
+      const { rootSuite, topLevelProjects } = await createRootSuite(testRun, errors, false);
+      testRun.rootSuite = rootSuite;
+      testRun.failureTracker.onRootSuite(rootSuite, topLevelProjects);
       await collectProjectsAndTestFiles(testRun, false);
       for (const [project, files] of testRun.projectFiles) {
         const projectSuite = new Suite(project.project.name, 'project');
@@ -269,8 +271,9 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
         testRun.config.preOnlyTestFilters.push(test => changedFiles.has(test.location.file));
       }
 
-      testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
-      testRun.failureTracker.onRootSuite(testRun.rootSuite);
+      const { rootSuite, topLevelProjects } = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
+      testRun.rootSuite = rootSuite;
+      testRun.failureTracker.onRootSuite(rootSuite, topLevelProjects);
       // Fail when no tests.
       if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard && !testRun.config.cliOnlyChanged) {
         if (testRun.config.cliArgs.length) {
