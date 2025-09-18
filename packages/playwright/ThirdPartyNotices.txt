@@ -161,6 +161,7 @@ This project incorporates components from the projects listed below. The origina
 -	jsesc@3.1.0 (https://github.com/mathiasbynens/jsesc)
 -	json-schema-traverse@0.4.1 (https://github.com/epoberezkin/json-schema-traverse)
 -	json5@2.2.3 (https://github.com/json5/json5)
+-	launch-editor@2.11.1 (https://github.com/yyx990803/launch-editor)
 -	lru-cache@5.1.1 (https://github.com/isaacs/node-lru-cache)
 -	math-intrinsics@1.1.0 (https://github.com/es-shims/math-intrinsics)
 -	media-typer@1.1.0 (https://github.com/jshttp/media-typer)
@@ -200,6 +201,7 @@ This project incorporates components from the projects listed below. The origina
 -	setprototypeof@1.2.0 (https://github.com/wesleytodd/setprototypeof)
 -	shebang-command@2.0.0 (https://github.com/kevva/shebang-command)
 -	shebang-regex@3.0.0 (https://github.com/sindresorhus/shebang-regex)
+-	shell-quote@1.8.3 (https://github.com/ljharb/shell-quote)
 -	side-channel-list@1.0.0 (https://github.com/ljharb/side-channel-list)
 -	side-channel-map@1.0.1 (https://github.com/ljharb/side-channel-map)
 -	side-channel-weakmap@1.0.2 (https://github.com/ljharb/side-channel-weakmap)
@@ -4692,6 +4694,32 @@ SOFTWARE.
 =========================================
 END OF json5@2.2.3 AND INFORMATION
 
+%% launch-editor@2.11.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2017-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF launch-editor@2.11.1 AND INFORMATION
+
 %% lru-cache@5.1.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
@@ -5653,6 +5681,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF shebang-regex@3.0.0 AND INFORMATION
 
+%% shell-quote@1.8.3 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License
+
+Copyright (c) 2013 James Halliday (mail@substack.net)
+
+Permission is hereby granted, free of charge, 
+to any person obtaining a copy of this software and 
+associated documentation files (the "Software"), to 
+deal in the Software without restriction, including 
+without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell 
+copies of the Software, and to permit persons to whom 
+the Software is furnished to do so, 
+subject to the following conditions:
+
+The above copyright notice and this permission notice 
+shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF shell-quote@1.8.3 AND INFORMATION
+
 %% side-channel-list@1.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -6272,6 +6329,6 @@ END OF zod@3.25.76 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 222
+Total Packages: 224
 =========================================
 END OF SUMMARY

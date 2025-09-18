@@ -31,3 +31,6 @@ export const chokidar = chokidarLibrary;
 
 import * as getEastAsianWidthLibrary from 'get-east-asian-width';
 export const getEastAsianWidth = getEastAsianWidthLibrary;
+
+import launchEditorLibrary from 'launch-editor';
+export const launchEditor = launchEditorLibrary;
