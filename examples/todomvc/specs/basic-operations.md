@@ -15,12 +15,14 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 
 ### 1. Adding New Todos
 
+**Seed:** `tests/seed.spec.ts`
+
 #### 1.1 Add Valid Todo
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Click in the "What needs to be done?" input field
-3. Type "Buy groceries"
-4. Press Enter key
+1. Click in the "What needs to be done?" input field
+2. Type "Buy groceries"
+3. Press Enter key
 
 **Expected Results:**
 - Todo appears in the list with unchecked checkbox
@@ -29,11 +31,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Todo list controls become visible (Mark all as complete checkbox)
 
 #### 1.2 Add Multiple Todos
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add first todo: "Buy groceries" and press Enter
-3. Add second todo: "Walk the dog" and press Enter
-4. Add third todo: "Call dentist" and press Enter
+1. Add first todo: "Buy groceries" and press Enter
+2. Add second todo: "Walk the dog" and press Enter
+3. Add third todo: "Call dentist" and press Enter
 
 **Expected Results:**
 - All three todos appear in the list in the order added
@@ -42,10 +44,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Input field remains active and cleared after each addition
 
 #### 1.3 Add Todo with Special Characters
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Type "Buy coffee & donuts (2-3 pieces) @$5.99!" in input field
-3. Press Enter
+1. Type "Buy coffee & donuts (2-3 pieces) @$5.99!" in input field
+2. Press Enter
 
 **Expected Results:**
 - Todo appears exactly as typed with all special characters preserved
@@ -53,10 +55,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - No encoding or display issues with special characters
 
 #### 1.4 Add Empty Todo (Negative Test)
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Click in input field but don't type anything
-3. Press Enter
+1. Click in input field but don't type anything
+2. Press Enter
 
 **Expected Results:**
 - No todo is added to the list
@@ -65,10 +67,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Input field remains focused and empty
 
 #### 1.5 Add Todo with Only Whitespace (Negative Test)
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Type only spaces "   " in input field
-3. Press Enter
+1. Type only spaces "   " in input field
+2. Press Enter
 
 **Expected Results:**
 - No todo is added to the list
@@ -79,10 +81,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 2. Marking Todos Complete/Incomplete
 
 #### 2.1 Mark Single Todo Complete
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Click the checkbox next to "Buy groceries"
+1. Add todo "Buy groceries"
+2. Click the checkbox next to "Buy groceries"
 
 **Expected Results:**
 - Checkbox becomes checked
@@ -92,11 +94,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Delete button (×) becomes visible on hover
 
 #### 2.2 Mark Multiple Todos Complete
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Click checkbox for "Buy groceries"
-4. Click checkbox for "Call dentist"
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Click checkbox for "Buy groceries"
+3. Click checkbox for "Call dentist"
 
 **Expected Results:**
 - Two todos show as completed
@@ -105,11 +107,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Only "Walk the dog" remains unchecked
 
 #### 2.3 Toggle Todo Back to Incomplete
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Click checkbox to mark complete
-4. Click checkbox again to mark incomplete
+1. Add todo "Buy groceries"
+2. Click checkbox to mark complete
+3. Click checkbox again to mark incomplete
 
 **Expected Results:**
 - Checkbox becomes unchecked
@@ -118,10 +120,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - "Clear completed" button disappears if no other completed todos exist
 
 #### 2.4 Mark All Todos Complete
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Click the "Mark all as complete" checkbox
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Click the "Mark all as complete" checkbox
 
 **Expected Results:**
 - All todo checkboxes become checked
@@ -130,11 +132,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - "Mark all as complete" checkbox shows as checked
 
 #### 2.5 Toggle All Todos Back to Incomplete
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
-3. Click "Mark all as complete" checkbox
-4. Click "Mark all as complete" checkbox again
+1. Add todos: "Buy groceries", "Walk the dog"
+2. Click "Mark all as complete" checkbox
+3. Click "Mark all as complete" checkbox again
 
 **Expected Results:**
 - All todo checkboxes become unchecked
@@ -145,12 +147,12 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 3. Editing Todos
 
 #### 3.1 Edit Todo Text
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Double-click on the todo text "Buy groceries"
-4. Clear text and type "Buy organic groceries"
-5. Press Enter
+1. Add todo "Buy groceries"
+2. Double-click on the todo text "Buy groceries"
+3. Clear text and type "Buy organic groceries"
+4. Press Enter
 
 **Expected Results:**
 - Todo enters edit mode with text selected
@@ -159,12 +161,12 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Counter remains "1 item left"
 
 #### 3.2 Cancel Edit with Escape
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Double-click on the todo text
-4. Change text to "Buy organic groceries"
-5. Press Escape key
+1. Add todo "Buy groceries"
+2. Double-click on the todo text
+3. Change text to "Buy organic groceries"
+4. Press Escape key
 
 **Expected Results:**
 - Todo exits edit mode
@@ -173,12 +175,12 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Todo remains in its original state
 
 #### 3.3 Edit Todo to Empty Text (Negative Test)
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Double-click on the todo text
-4. Clear all text
-5. Press Enter
+1. Add todo "Buy groceries"
+2. Double-click on the todo text
+3. Clear all text
+4. Press Enter
 
 **Expected Results:**
 - Todo should be deleted/removed from list
@@ -186,11 +188,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - List becomes empty if this was the only todo
 
 #### 3.4 Edit Multiple Todos
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
-3. Double-click "Buy groceries", change to "Buy organic groceries", press Enter
-4. Double-click "Walk the dog", change to "Walk the cat", press Enter
+1. Add todos: "Buy groceries", "Walk the dog"
+2. Double-click "Buy groceries", change to "Buy organic groceries", press Enter
+3. Double-click "Walk the dog", change to "Walk the cat", press Enter
 
 **Expected Results:**
 - Both todos are updated with new text
@@ -200,11 +202,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 4. Deleting Todos
 
 #### 4.1 Delete Single Todo
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Hover over the todo item
-4. Click the delete button (×)
+1. Add todo "Buy groceries"
+2. Hover over the todo item
+3. Click the delete button (×)
 
 **Expected Results:**
 - Todo is removed from the list
@@ -213,11 +215,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Todo controls (filters, mark all) disappear
 
 #### 4.2 Delete Multiple Todos
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Hover over "Walk the dog" and click delete (×)
-4. Hover over "Call dentist" and click delete (×)
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Hover over "Walk the dog" and click delete (×)
+3. Hover over "Call dentist" and click delete (×)
 
 **Expected Results:**
 - Only "Buy groceries" remains in the list
@@ -225,11 +227,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - List controls remain visible
 
 #### 4.3 Delete Completed Todo
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
-3. Mark "Buy groceries" as complete
-4. Hover over "Buy groceries" and click delete (×)
+1. Add todos: "Buy groceries", "Walk the dog"
+2. Mark "Buy groceries" as complete
+3. Hover over "Buy groceries" and click delete (×)
 
 **Expected Results:**
 - "Buy groceries" is removed from list
@@ -238,11 +240,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - "Clear completed" button disappears
 
 #### 4.4 Clear All Completed Todos
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Mark "Buy groceries" and "Call dentist" as complete
-4. Click "Clear completed" button
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Mark "Buy groceries" and "Call dentist" as complete
+3. Click "Clear completed" button
 
 **Expected Results:**
 - Both completed todos are removed
@@ -253,11 +255,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 5. Filtering Todos
 
 #### 5.1 Filter by All
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Mark "Buy groceries" as complete
-4. Click "All" filter link
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Mark "Buy groceries" as complete
+3. Click "All" filter link
 
 **Expected Results:**
 - All todos are visible (both completed and active)
@@ -266,11 +268,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Counter shows "2 items left"
 
 #### 5.2 Filter by Active
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Mark "Buy groceries" as complete
-4. Click "Active" filter link
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Mark "Buy groceries" as complete
+3. Click "Active" filter link
 
 **Expected Results:**
 - Only incomplete todos are visible ("Walk the dog", "Call dentist")
@@ -280,11 +282,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Counter shows "2 items left"
 
 #### 5.3 Filter by Completed
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Mark "Buy groceries" and "Walk the dog" as complete
-4. Click "Completed" filter link
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Mark "Buy groceries" and "Walk the dog" as complete
+3. Click "Completed" filter link
 
 **Expected Results:**
 - Only completed todos are visible ("Buy groceries", "Walk the dog")
@@ -294,13 +296,13 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Counter still shows "1 item left" (maintains global count)
 
 #### 5.4 Navigate Between Filters
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
-3. Mark "Buy groceries" as complete
-4. Click "Active" filter
-5. Click "Completed" filter
-6. Click "All" filter
+1. Add todos: "Buy groceries", "Walk the dog"
+2. Mark "Buy groceries" as complete
+3. Click "Active" filter
+4. Click "Completed" filter
+5. Click "All" filter
 
 **Expected Results:**
 - Each filter shows appropriate todos
@@ -312,29 +314,29 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 6. Counter and Status Display
 
 #### 6.1 Counter with Single Item
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add one todo "Buy groceries"
+1. Add one todo "Buy groceries"
 
 **Expected Results:**
 - Counter displays "1 item left" (singular form)
 - Counter updates immediately when todo is added
 
 #### 6.2 Counter with Multiple Items
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
+1. Add todos: "Buy groceries", "Walk the dog"
 
 **Expected Results:**
 - Counter displays "2 items left" (plural form)
 - Counter shows correct count
 
 #### 6.3 Counter Updates with Completion
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Mark "Buy groceries" as complete
-4. Mark "Walk the dog" as complete
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Mark "Buy groceries" as complete
+3. Mark "Walk the dog" as complete
 
 **Expected Results:**
 - Counter starts at "3 items left"
@@ -343,10 +345,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Counter updates immediately with each change
 
 #### 6.4 Counter with All Items Complete
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todo "Buy groceries"
-3. Mark it as complete
+1. Add todo "Buy groceries"
+2. Mark it as complete
 
 **Expected Results:**
 - Counter shows "0 items left"
@@ -356,10 +358,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 7. Bulk Operations
 
 #### 7.1 Mark All Complete When None Completed
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Click "Mark all as complete" checkbox
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Click "Mark all as complete" checkbox
 
 **Expected Results:**
 - All todos become checked/completed
@@ -368,11 +370,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - "Mark all as complete" checkbox shows as checked
 
 #### 7.2 Mark All Incomplete When All Completed
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
-3. Mark both todos as complete individually
-4. Click "Mark all as complete" checkbox
+1. Add todos: "Buy groceries", "Walk the dog"
+2. Mark both todos as complete individually
+3. Click "Mark all as complete" checkbox
 
 **Expected Results:**
 - All todos become unchecked/incomplete
@@ -381,11 +383,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - "Mark all as complete" checkbox shows as unchecked
 
 #### 7.3 Mark All with Mixed State
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
-3. Mark "Buy groceries" as complete
-4. Click "Mark all as complete" checkbox
+1. Add todos: "Buy groceries", "Walk the dog", "Call dentist"
+2. Mark "Buy groceries" as complete
+3. Click "Mark all as complete" checkbox
 
 **Expected Results:**
 - All todos become completed (including the already completed one)
@@ -395,10 +397,10 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 ### 8. Edge Cases and Error Handling
 
 #### 8.1 Very Long Todo Text
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Type a very long todo text (200+ characters)
-3. Press Enter
+1. Type a very long todo text (200+ characters)
+2. Press Enter
 
 **Expected Results:**
 - Todo is added successfully
@@ -407,11 +409,11 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - Edit functionality works with long text
 
 #### 8.2 Rapid Sequential Actions
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Quickly add multiple todos by typing and pressing Enter rapidly
-3. Quickly toggle completion states
-4. Rapidly switch between filters
+1. Quickly add multiple todos by typing and pressing Enter rapidly
+2. Quickly toggle completion states
+3. Rapidly switch between filters
 
 **Expected Results:**
 - All actions are processed correctly
@@ -422,8 +424,8 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 #### 8.3 Direct URL Navigation
 **Steps:**
 1. Navigate directly to `{base_url}#/active`
-2. Navigate directly to `{base_url}#/completed`
-3. Navigate directly to `{base_url}#/`
+1. Navigate directly to `{base_url}#/completed`
+2. Navigate directly to `{base_url}#/`
 
 **Expected Results:**
 - Page loads correctly for each URL
@@ -432,13 +434,13 @@ The TodoMVC application is a React-based todo list manager that demonstrates sta
 - No JavaScript errors occur
 
 #### 8.4 Todo Operations Across Filters
+
 **Steps:**
-1. Use seed test `tests/seed.spec.ts` to initialize page
-2. Add todos: "Buy groceries", "Walk the dog"
-3. Navigate to "Active" filter
-4. Mark "Buy groceries" as complete
-5. Navigate to "Completed" filter
-6. Delete "Buy groceries"
+1. Add todos: "Buy groceries", "Walk the dog"
+2. Navigate to "Active" filter
+3. Mark "Buy groceries" as complete
+4. Navigate to "Completed" filter
+5. Delete "Buy groceries"
 
 **Expected Results:**
 - Operations work correctly across filter views

@@ -1,13 +1,9 @@
 /* eslint-disable notice/notice */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import type { Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'parallel' });
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('https://demo.playwright.dev/todomvc');
-});
 
 const TODO_ITEMS = [
   'buy some cheese',
