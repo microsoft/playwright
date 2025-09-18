@@ -35,7 +35,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NODE_OPTIONS: --max-old-space-size=8192
-        HTML_REPORT_URL: 'https://mspwblobreport.z1.web.core.windows.net/run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}/index.html'
+        HTML_REPORT_URL: 'https://mspwblobreport-apgjhvh7fpfwdebw.b01.azurefd.net/run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}/index.html'
 
     - name: Azure Login
       uses: azure/login@v2
@@ -48,6 +48,6 @@ jobs:
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
         azcopy cp --recursive "./playwright-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
+        echo "Report url: https://mspwblobreport-apgjhvh7fpfwdebw.b01.azurefd.net/$REPORT_DIR/index.html"
       env:
         AZCOPY_AUTO_LOGIN_TYPE: AZCLI
