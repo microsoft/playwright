@@ -17,8 +17,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import crypto from 'crypto';
 
+import { calculateSha1 } from 'playwright-core/lib/utils';
 import { isWorkerProcess } from '../common/globals';
 import { sourceMapSupport } from '../utilsBundle';
 
@@ -175,8 +175,8 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
 }
 
 function calculateFilePathHash(filePath: string): string {
-  const hash = crypto.createHash('sha1').update(filePath).digest('hex');
-  return hash.substring(0, 7);
+  // Larger file path hash allows for fewer collisions compared to content, as we only check file path collision for deleting files
+  return calculateSha1(filePath).substring(0, 10);
 }
 
 function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefix: string): string {
