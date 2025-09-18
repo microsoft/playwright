@@ -2091,6 +2091,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   _type_Page: boolean;
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
+  consoleMessages(params?: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
   emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
   exposeBinding(params: PageExposeBindingParams, progress?: Progress): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, progress?: Progress): Promise<PageGoBackResult>;
@@ -2118,6 +2119,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseWheel(params: PageMouseWheelParams, progress?: Progress): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, progress?: Progress): Promise<PageAccessibilitySnapshotResult>;
+  pageErrors(params?: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
   snapshotForAI(params: PageSnapshotForAIParams, progress?: Progress): Promise<PageSnapshotForAIResult>;
   startJSCoverage(params: PageStartJSCoverageParams, progress?: Progress): Promise<PageStartJSCoverageResult>;
@@ -2187,6 +2189,20 @@ export type PageCloseOptions = {
   reason?: string,
 };
 export type PageCloseResult = void;
+export type PageConsoleMessagesParams = {};
+export type PageConsoleMessagesOptions = {};
+export type PageConsoleMessagesResult = {
+  messages: {
+    type: string,
+    text: string,
+    args: JSHandleChannel[],
+    location: {
+      url: string,
+      lineNumber: number,
+      columnNumber: number,
+    },
+  }[],
+};
 export type PageEmulateMediaParams = {
   media?: 'screen' | 'print' | 'no-override',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
@@ -2502,6 +2518,11 @@ export type PageAccessibilitySnapshotOptions = {
 };
 export type PageAccessibilitySnapshotResult = {
   rootAXNode?: AXNode,
+};
+export type PagePageErrorsParams = {};
+export type PagePageErrorsOptions = {};
+export type PagePageErrorsResult = {
+  errors: SerializedError[],
 };
 export type PagePdfParams = {
   scale?: number,

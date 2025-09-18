@@ -16,7 +16,7 @@
 
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
-import { parseError } from '../errors';
+import { parseError, serializeError } from '../errors';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -124,6 +124,20 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   page(): Page {
     return this._page;
+  }
+
+  serializeConsoleMessage(message: ConsoleMessage) {
+    return {
+      type: message.type(),
+      text: message.text(),
+      args: message.args().map(a => {
+        const elementHandle = a.asElement();
+        if (elementHandle)
+          return ElementHandleDispatcher.from(FrameDispatcher.from(this.parentScope(), elementHandle._frame), elementHandle);
+        return JSHandleDispatcher.fromJSHandle(this, a);
+      }),
+      location: message.location(),
+    };
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams, progress: Progress): Promise<void> {
@@ -271,6 +285,14 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async keyboardPress(params: channels.PageKeyboardPressParams, progress: Progress): Promise<void> {
     await this._page.keyboard.press(progress, params.key, params);
+  }
+
+  async consoleMessages(params: channels.PageConsoleMessagesParams, progress: Progress): Promise<channels.PageConsoleMessagesResult> {
+    return { messages: this._page.consoleMessages().map(message => this.serializeConsoleMessage(message)) };
+  }
+
+  async pageErrors(params: channels.PagePageErrorsParams, progress: Progress): Promise<channels.PagePageErrorsResult> {
+    return { errors: this._page.pageErrors().map(error => serializeError(error)) };
   }
 
   async mouseMove(params: channels.PageMouseMoveParams, progress: Progress): Promise<void> {

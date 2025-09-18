@@ -783,7 +783,7 @@ class FrameSession {
       const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
       this._page.addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
-    session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
+    session.on('Runtime.exceptionThrown', exception => this._page.addPageError(exceptionToError(exception.exceptionDetails)));
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
@@ -873,7 +873,7 @@ class FrameSession {
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exceptionDetails), this._page);
+    this._page.addPageError(exceptionToError(exceptionDetails));
   }
 
   async _onTargetCrashed() {

@@ -2285,6 +2285,12 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Returns up to 200 last console messages from this page. See
+   * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
+   */
+  consoleMessages(): Promise<Array<ConsoleMessage>>;
+
+  /**
    * Gets the full HTML contents of the page, including the doctype.
    */
   content(): Promise<string>;
@@ -3597,6 +3603,12 @@ export interface Page {
    * Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
    */
   opener(): Promise<null|Page>;
+
+  /**
+   * Returns up to 200 last page errors from this page. See
+   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
+   */
+  pageErrors(): Promise<Array<Error>>;
 
   /**
    * Pauses script execution. Playwright will stop executing the script and wait for the user to either press the

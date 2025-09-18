@@ -47,7 +47,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
       this.emit(Events.Worker.Close, this);
     });
     this._channel.on('console', event => {
-      this.emit(Events.Worker.Console, new ConsoleMessage(this._page?.context()._platform ?? this._context?._platform!, event));
+      this.emit(Events.Worker.Console, new ConsoleMessage(this._page?.context()._platform ?? this._context?._platform!, event, null));
     });
     this.once(Events.Worker.Close, () => this._closedScope.close(this._page?._closeErrorWithReason() || new TargetClosedError()));
     this._setEventToSubscriptionMapping(new Map<string, channels.WorkerUpdateSubscriptionParams['event']>([
