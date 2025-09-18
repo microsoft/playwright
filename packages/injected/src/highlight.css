@@ -205,6 +205,11 @@ x-pw-tool-item.record > x-div {
   clip-path: url(#icon-circle-large-filled);
 }
 
+x-pw-tool-item.record.toggled > x-div {
+  /* codicon: stop-circle */
+  clip-path: url(#icon-stop-circle);
+}
+
 x-pw-tool-item.pick-locator > x-div {
   /* codicon: inspect */
   clip-path: url(#icon-inspect);
