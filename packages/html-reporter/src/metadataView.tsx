@@ -65,21 +65,23 @@ const InnerMetadataView: React.FC<{ metadata: Metadata }> = params => {
   return <div className='metadata-view'>
     {commitInfo.ci && !commitInfo.gitCommit && <CiInfoView info={commitInfo.ci}/>}
     {commitInfo.gitCommit && <GitCommitInfoView ci={commitInfo.ci} commit={commitInfo.gitCommit}/>}
-    {otherEntries.length > 0 && (commitInfo.gitCommit || commitInfo.ci) && <div className='metadata-separator' />}
-    <div className='metadata-section metadata-properties' role='list'>
-      {otherEntries.map(([propertyName, value]) => {
-        const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
-        const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
-        return (
-          <div key={propertyName} className='copyable-property' role='listitem'>
-            <CopyToClipboardContainer value={valueString}>
-              <span style={{ fontWeight: 'bold' }} title={propertyName}>{propertyName}</span>
-              : <span title={trimmedValue}>{linkifyText(trimmedValue)}</span>
-            </CopyToClipboardContainer>
-          </div>
-        );
-      })}
-    </div>
+    {otherEntries.length > 0 && <>
+      {(commitInfo.gitCommit || commitInfo.ci) && <div className='metadata-separator' />}
+      <div className='metadata-section metadata-properties' role='list'>
+        {otherEntries.map(([propertyName, value]) => {
+          const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
+          const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
+          return (
+            <div key={propertyName} className='copyable-property' role='listitem'>
+              <CopyToClipboardContainer value={valueString}>
+                <span style={{ fontWeight: 'bold' }} title={propertyName}>{propertyName}</span>
+                : <span title={trimmedValue}>{linkifyText(trimmedValue)}</span>
+              </CopyToClipboardContainer>
+            </div>
+          );
+        })}
+      </div>
+    </>}
   </div>;
 };
 
