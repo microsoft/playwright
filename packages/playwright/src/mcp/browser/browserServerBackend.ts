@@ -75,8 +75,6 @@ export class BrowserServerBackend implements ServerBackend {
   }
 
   serverClosed() {
-    if (this._config.sharedHttpContext)
-      return;
     void this._context?.dispose().catch(logUnhandledError);
   }
 }

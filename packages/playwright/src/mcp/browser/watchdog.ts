@@ -26,7 +26,7 @@ export function setupExitWatchdog() {
     // eslint-disable-next-line no-restricted-properties
     setTimeout(() => process.exit(0), 15000);
     await Context.disposeAll();
-    await SharedContextFactory.disposeAll();
+    await SharedContextFactory.dispose();
     // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   };

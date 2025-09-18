@@ -269,12 +269,10 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
 
   await client2.close();
 
-  kill();
-  // console.log(stderr());
   await expect(async () => {
     const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create http session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete http session/)).length).toBe(2);
+    expect(lines.filter(line => line.match(/create SSE session/)).length).toBe(2);
+    expect(lines.filter(line => line.match(/delete SSE session/)).length).toBe(2);
 
     // Should have only one context creation since it's shared
     expect(lines.filter(line => line.match(/create shared browser context/)).length).toBe(1);
@@ -285,7 +283,15 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
     expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
     expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
 
-    // Context should only close when last client disconnects
+    // Context should only close when the server shuts down.
+    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(0);
+  }).toPass();
+
+  kill();
+
+  await expect(async () => {
+    const lines = stderr().split('\n');
+    // Context should only close when the server shuts down.
     expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
   }).toPass();
 });

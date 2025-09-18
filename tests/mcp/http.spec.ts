@@ -286,8 +286,6 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
   await transport2.terminateSession();
   await client2.close();
 
-  kill();
-
   await expect(async () => {
     const lines = stderr().split('\n');
     expect(lines.filter(line => line.match(/create http session/)).length).toBe(2);
@@ -302,9 +300,18 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
     expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
     expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
 
-    // Context should only close when last client disconnects
+    // Context should only close when the server shuts down.
+    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(0);
+  }).toPass();
+
+  kill();
+
+  await expect(async () => {
+    const lines = stderr().split('\n');
+    // Context should only close when the server shuts down.
     expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
   }).toPass();
+
 });
 
 test('http transport (default)', async ({ serverEndpoint }) => {
