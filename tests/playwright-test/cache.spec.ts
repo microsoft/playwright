@@ -65,7 +65,7 @@ test('should automatically clean cached versions of a changed file', async ({ ru
   expect(cacheDirectories).toHaveLength(1);
   const testCacheDirectory = path.join(cacheDir, cacheDirectories[0]);
 
-  const matchRegex = (extension: string) => new RegExp('^([0-9a-f]{7})_([0-9a-f]{7})_aspec\\.' + extension + '$', 'i');
+  const matchRegex = (extension: string) => new RegExp('^([0-9a-f]{10})_([0-9a-f]{7})_aspec\\.' + extension + '$', 'i');
 
   let cachedFiles = await fs.promises.readdir(testCacheDirectory);
   cachedFiles.sort();
