@@ -19,6 +19,22 @@ import fs from 'fs';
 
 const test = base.extend<{}>({});
 
+// Helper function to create a simple test file
+const createTestFile = () => ({
+  'test.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('sample test', async ({ page }) => {
+      await page.goto('data:text/html,<h1>Hello</h1>');
+      await expect(page.locator('h1')).toHaveText('Hello');
+    });
+  `
+});
+
+// Helper function to verify UI mode loads correctly
+const verifyUILoads = async (page: any) => {
+  await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+};
+
 test.describe('UI mode WSL rendering workarounds', () => {
   test('should use SwiftShader by default on WSL', async ({ runUITest }) => {
     const originalPlatform = process.platform;
@@ -29,18 +45,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     process.env.WSL_DISTRO_NAME = 'Ubuntu';
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly (check for Playwright UI elements)
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       // Restore original environment
       Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
@@ -53,18 +59,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     process.env.PW_UI_DISABLE_GPU = '1';
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with GPU disabled
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       Object.assign(process.env, originalEnv);
     }
@@ -75,18 +71,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     process.env.PW_UI_USE_SWIFTSHADER = '1';
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with SwiftShader
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       Object.assign(process.env, originalEnv);
     }
@@ -97,18 +83,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     process.env.PW_UI_USE_DISCRETE_GPU = '1';
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with discrete GPU
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       Object.assign(process.env, originalEnv);
     }
@@ -121,18 +97,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     process.env.PW_UI_USE_DISCRETE_GPU = '1';
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with GPU disabled (highest priority)
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       Object.assign(process.env, originalEnv);
     }
@@ -144,18 +110,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     process.env.PW_UI_USE_DISCRETE_GPU = '1';
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with SwiftShader (higher priority than discrete GPU)
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       Object.assign(process.env, originalEnv);
     }
@@ -182,18 +138,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     };
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with WSL detection
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       // Restore original environment
       Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
@@ -229,18 +175,8 @@ test.describe('UI mode WSL rendering workarounds', () => {
     };
 
     try {
-      const { page } = await runUITest({
-        'test.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('sample test', async ({ page }) => {
-            await page.goto('data:text/html,<h1>Hello</h1>');
-            await expect(page.locator('h1')).toHaveText('Hello');
-          });
-        `
-      });
-
-      // Verify the UI mode loads correctly with WSL detection
-      await expect(page.locator('[data-testid="test-tree"]')).toBeVisible({ timeout: 10000 });
+      const { page } = await runUITest(createTestFile());
+      await verifyUILoads(page);
     } finally {
       // Restore original environment
       Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });

@@ -27,6 +27,55 @@ import type { CRPage } from './chromium/crPage';
 import type { Page } from './page';
 import type * as types from './types';
 
+/**
+ * Get Chromium rendering arguments for WSL UI mode workarounds.
+ * Addresses transparent window issues in WSL with Intel iGPU + discrete GPU.
+ *
+ * Environment variables (in precedence order):
+ * - PW_UI_DISABLE_GPU=1: Disable GPU entirely
+ * - PW_UI_USE_SWIFTSHADER=1: Force SwiftShader software rendering
+ * - PW_UI_USE_DISCRETE_GPU=1: Force discrete GPU selection
+ * - Auto-detect WSL and use SwiftShader as fallback
+ */
+function getWSLRenderingArgs(): string[] {
+  // Check explicit environment variable overrides first
+  if (process.env.PW_UI_DISABLE_GPU === '1')
+    return ['--disable-gpu', '--disable-software-rasterizer'];
+
+
+  if (process.env.PW_UI_USE_SWIFTSHADER === '1')
+    return ['--use-gl=swiftshader'];
+
+
+  if (process.env.PW_UI_USE_DISCRETE_GPU === '1')
+    return ['--use-gl=angle', '--use-angle=d3d11'];
+
+
+  // Auto-detect WSL and apply SwiftShader fallback
+  if (isWSL())
+    return ['--use-gl=swiftshader'];
+
+
+  return [];
+}
+
+/**
+ * Detect if running under WSL (Windows Subsystem for Linux)
+ */
+function isWSL(): boolean {
+  if (process.platform !== 'linux')
+    return false;
+
+
+  // Check for WSL-specific indicators
+  return (
+    fs.existsSync('/proc/sys/fs/binfmt_misc/WSLInterop') ||
+    (fs.existsSync('/proc/version') &&
+     fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')) ||
+    !!process.env.WSL_DISTRO_NAME
+  );
+}
+
 
 export async function launchApp(browserType: BrowserType, options: {
   sdkLanguage: string,
@@ -44,33 +93,12 @@ export async function launchApp(browserType: BrowserType, options: {
         ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
         '--test-type=',
     );
-    // UI-mode rendering workarounds for WSL environments where Intel iGPU
-    // may cause transparent windows or no rendering in Playwright UI mode.
+    // WSL UI rendering workarounds for transparent window issues
     // See: https://github.com/microsoft/playwright/issues/37287
-    //
-    // Environment variable options (in order of precedence):
-    // 1) PW_UI_DISABLE_GPU=1 - Force disable GPU entirely
-    // 2) PW_UI_USE_SWIFTSHADER=1 - Force SwiftShader software rendering
-    // 3) PW_UI_USE_DISCRETE_GPU=1 - Force discrete GPU selection
-    // 4) Auto-detect WSL and use SwiftShader as fallback
-    const uiDisableGpu = process.env.PW_UI_DISABLE_GPU === '1';
-    const uiUseSwiftShader = process.env.PW_UI_USE_SWIFTSHADER === '1';
-    const uiUseDiscreteGpu = process.env.PW_UI_USE_DISCRETE_GPU === '1';
-    const isWSL = process.platform === 'linux' && (
-      fs.existsSync('/proc/sys/fs/binfmt_misc/WSLInterop') ||
-      (fs.existsSync('/proc/version') && fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')) ||
-      !!process.env.WSL_DISTRO_NAME
-    );
+    const gpuArgs = getWSLRenderingArgs();
+    if (gpuArgs.length > 0)
+      args.push(...gpuArgs);
 
-    if (uiDisableGpu) {
-      args.push('--disable-gpu', '--disable-software-rasterizer');
-    } else if (uiUseDiscreteGpu) {
-      // Force discrete GPU selection (useful when MESA_D3D12_DEFAULT_ADAPTER_NAME is set)
-      args.push('--use-gl=angle', '--use-angle=d3d11');
-    } else if (uiUseSwiftShader || isWSL) {
-      // Use SwiftShader software rendering as fallback for WSL or when explicitly requested
-      args.push('--use-gl=swiftshader');
-    }
     if (!channel && !options.persistentContextOptions?.executablePath)
       channel = findChromiumChannelBestEffort(options.sdkLanguage);
   }
