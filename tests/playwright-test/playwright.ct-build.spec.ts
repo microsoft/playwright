@@ -41,7 +41,7 @@ test('should work with the empty component list', async ({ runInlineTest }, test
   expect(metainfo.version).toEqual(require('playwright-core/package.json').version);
   expect(metainfo.viteVersion).toEqual(require('vite/package.json').version);
   expect(Object.entries(metainfo.deps)).toHaveLength(0);
-  expect(Object.entries(metainfo.sources)).toHaveLength(9);
+  expect(Object.entries(metainfo.sources)).toHaveLength(10);
 });
 
 test('should extract component list', async ({ runInlineTest }, testInfo) => {

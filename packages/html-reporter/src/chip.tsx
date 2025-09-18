@@ -23,7 +23,7 @@ import { clsx } from '@web/uiUtils';
 import { type AnchorID, useAnchor } from './links';
 
 export const Chip: React.FC<{
-  header: JSX.Element | string,
+  header: React.JSX.Element | string,
   expanded?: boolean,
   noInsets?: boolean,
   setExpanded?: (expanded: boolean) => void,
@@ -48,7 +48,7 @@ export const Chip: React.FC<{
 };
 
 export const AutoChip: React.FC<{
-  header: JSX.Element | string,
+  header: React.JSX.Element | string,
   initialExpanded?: boolean,
   noInsets?: boolean,
   children?: any,

@@ -25,7 +25,7 @@ export interface DialogProps {
   width?: number;
   verticalOffset?: number;
   requestClose?: () => void;
-  anchor?: React.RefObject<HTMLElement>;
+  anchor?: React.RefObject<HTMLElement|null>;
   dataTestId?: string;
 }
 
