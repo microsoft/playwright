@@ -57,7 +57,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     if (response.type === 'success')
       return BidiDeserializer.deserialize(response.result);
     if (response.type === 'exception')
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
@@ -76,7 +76,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       throw new js.JavaScriptErrorInEvaluate('Cannot get handle: ' + JSON.stringify(response.result));
     }
     if (response.type === 'exception')
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
@@ -95,7 +95,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       userActivation: true,
     });
     if (response.type === 'exception')
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     if (response.type === 'success') {
       if (returnByValue)
         return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
@@ -180,7 +180,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       userActivation: true,
     });
     if (response.type === 'exception')
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     if (response.type === 'success')
       return response.result;
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
