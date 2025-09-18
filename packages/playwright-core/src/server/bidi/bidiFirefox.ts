@@ -77,6 +77,7 @@ export class BidiFirefox extends BrowserType {
   }
 
   override async attemptToGracefullyCloseBrowser(transport: ConnectionTransport): Promise<void> {
+    // Note that it's fine to reuse the transport, since our connection ignores kBrowserCloseMessageId.
     if (!transport.onmessage) {
       // browser.close does not work without an active session. If there is no connection
       // created with the transport, make sure to create a new session first.
