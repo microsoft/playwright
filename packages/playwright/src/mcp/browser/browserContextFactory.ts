@@ -31,6 +31,8 @@ import type { LaunchOptions } from '../../../../playwright-core/src/client/types
 import type { ClientInfo } from '../sdk/server';
 
 export function contextFactory(config: FullConfig): BrowserContextFactory {
+  if (config.sharedHttpContext)
+    return new SharedContextFactory(config);
   if (config.browser.remoteEndpoint)
     return new RemoteContextFactory(config);
   if (config.browser.cdpEndpoint)
@@ -258,4 +260,45 @@ async function startTraceServer(config: FullConfig, tracesDir: string): Promise<
 
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
+}
+
+export class SharedContextFactory implements BrowserContextFactory {
+  private _contextPromise: Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> | undefined;
+  private _baseFactory: BrowserContextFactory;
+  private static _allContexts: Set<SharedContextFactory> = new Set();
+
+  constructor(config: FullConfig) {
+    const baseConfig = { ...config, sharedHttpContext: false };
+    this._baseFactory = contextFactory(baseConfig);
+    SharedContextFactory._allContexts.add(this);
+  }
+
+  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+    if (!this._contextPromise) {
+      testDebug('create shared browser context');
+      this._contextPromise = this._baseFactory.createContext(clientInfo, abortSignal, toolName);
+    }
+
+    const { browserContext } = await this._contextPromise;
+    testDebug(`shared context client connected`);
+    return {
+      browserContext,
+      close: async () => {
+        testDebug(`shared context client disconnected`);
+      },
+    };
+  }
+
+  private async _dispose() {
+    const contextPromise = this._contextPromise;
+    this._contextPromise = undefined;
+    if (!contextPromise)
+      return;
+    const { close } = await contextPromise;
+    await close();
+  }
+
+  static async disposeAll() {
+    await Promise.all([...SharedContextFactory._allContexts].map(context => context._dispose()));
+  }
 }
