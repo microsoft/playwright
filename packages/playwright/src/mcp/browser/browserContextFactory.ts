@@ -23,10 +23,12 @@ import * as playwright from 'playwright-core';
 import { registryDirectory } from 'playwright-core/lib/server/registry/index';
 import { startTraceViewerServer } from 'playwright-core/lib/server';
 import { logUnhandledError, testDebug } from '../log';
-import { outputFile  } from './config';
+import { outputFile } from './config';
+import { firstRootPath } from '../sdk/server';
 
 import type { FullConfig } from './config';
 import type { LaunchOptions } from '../../../../playwright-core/src/client/types';
+import type { ClientInfo } from '../sdk/server';
 
 export function contextFactory(config: FullConfig): BrowserContextFactory {
   if (config.browser.remoteEndpoint)
@@ -37,8 +39,6 @@ export function contextFactory(config: FullConfig): BrowserContextFactory {
     return new IsolatedContextFactory(config);
   return new PersistentContextFactory(config);
 }
-
-export type ClientInfo = { name?: string, version?: string, rootPath?: string };
 
 export interface BrowserContextFactory {
   createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }>;
@@ -104,7 +104,7 @@ class IsolatedContextFactory extends BaseContextFactory {
   protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
     await injectCdpPort(this.config.browser);
     const browserType = playwright[this.config.browser.browserName];
-    const tracesDir = await outputFile(this.config, clientInfo.rootPath, `traces`);
+    const tracesDir = await outputFile(this.config, clientInfo, `traces`);
     if (this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
     return browserType.launch({
@@ -170,8 +170,8 @@ class PersistentContextFactory implements BrowserContextFactory {
   async createContext(clientInfo: ClientInfo): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
     await injectCdpPort(this.config.browser);
     testDebug('create browser context (persistent)');
-    const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo.rootPath);
-    const tracesDir = await outputFile(this.config, clientInfo.rootPath, `traces`);
+    const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo);
+    const tracesDir = await outputFile(this.config, clientInfo, `traces`);
     if (this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
 
@@ -217,10 +217,11 @@ class PersistentContextFactory implements BrowserContextFactory {
     testDebug('close browser context complete (persistent)');
   }
 
-  private async _createUserDataDir(rootPath: string | undefined) {
+  private async _createUserDataDir(clientInfo: ClientInfo) {
     const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? registryDirectory;
     const browserToken = this.config.browser.launchOptions?.channel ?? this.config.browser?.browserName;
     // Hesitant putting hundreds of files into the user's workspace, so using it for hashing instead.
+    const rootPath = firstRootPath(clientInfo);
     const rootPathToken = rootPath ? `-${createHash(rootPath)}` : '';
     const result = path.join(dir, `mcp-${browserToken}${rootPathToken}`);
     await fs.promises.mkdir(result, { recursive: true });

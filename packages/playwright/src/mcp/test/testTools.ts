@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { noColors } from 'playwright-core/lib/utils';
 
 import { z } from '../sdk/bundle';
@@ -26,7 +29,7 @@ import { StringWriteStream } from './streams';
 
 export const listTests = defineTestTool({
   schema: {
-    name: 'playwright_test_list_tests',
+    name: 'test_list',
     title: 'List tests',
     description: 'List tests',
     inputSchema: z.object({}),
@@ -47,7 +50,7 @@ export const listTests = defineTestTool({
 
 export const runTests = defineTestTool({
   schema: {
-    name: 'playwright_test_run_tests',
+    name: 'test_run',
     title: 'Run tests',
     description: 'Run tests',
     inputSchema: z.object({
@@ -79,7 +82,7 @@ export const runTests = defineTestTool({
 
 export const debugTest = defineTestTool({
   schema: {
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     title: 'Debug single test',
     description: 'Debug single test',
     inputSchema: z.object({
@@ -92,14 +95,7 @@ export const debugTest = defineTestTool({
   },
 
   handle: async (context, params) => {
-    const stream = new StringWriteStream();
-    const screen = {
-      ...terminalScreen,
-      isTTY: false,
-      colors: noColors,
-      stdout: stream as unknown as NodeJS.WriteStream,
-      stderr: stream as unknown as NodeJS.WriteStream,
-    };
+    const { screen, stream } = createScreen();
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
@@ -117,6 +113,56 @@ export const debugTest = defineTestTool({
       content: [
         { type: 'text', text },
       ],
+      isError: result.status !== 'passed',
+    };
+  },
+});
+
+export const setupPage = defineTestTool({
+  schema: {
+    name: 'test_setup_page',
+    title: 'Setup page',
+    description: 'Setup the page for test',
+    inputSchema: z.object({
+      project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
+      testLocation: z.string().optional().describe('Location of the seed test to use for setup. For example: "test/seed/default.spec.ts:20".'),
+    }),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params) => {
+    const { screen, stream } = createScreen();
+    const configDir = context.configLocation.configDir;
+    const reporter = new ListReporter({ configDir, screen });
+    const testRunner = await context.createTestRunner();
+
+    let testLocation = params.testLocation;
+    if (!testLocation) {
+      testLocation = 'default.seed.spec.ts';
+      const config = await testRunner.loadConfig();
+      const project = params.project ? config.projects.find(p => p.project.name === params.project) : config.projects[0];
+      const testDir = project?.project.testDir || configDir;
+      const seedFile = path.join(testDir, testLocation);
+      if (!fs.existsSync(seedFile)) {
+        await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
+
+test('seed', async ({ page }) => {});
+`);
+      }
+    }
+
+    const result = await testRunner.runTests(reporter, {
+      headed: !context.options?.headless,
+      locations: [testLocation],
+      projects: params.project ? [params.project] : undefined,
+      timeout: 0,
+      workers: 1,
+      pauseAtEnd: true,
+    });
+
+    const text = stream.content();
+    return {
+      content: [{ type: 'text', text }],
       isError: result.status !== 'passed',
     };
   },

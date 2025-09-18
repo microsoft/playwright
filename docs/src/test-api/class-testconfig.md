@@ -287,7 +287,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[Metadata]>
 
-Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
+Metadata contains key-value pairs to be included in the report. For example, the JSON report will include metadata serialized as JSON.
 
 **Usage**
 
@@ -627,7 +627,7 @@ export default defineConfig({
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
 * `'all'` - All tests that are executed will update snapshots.
-* `'changed'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated.
+* `'changed'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated. Also creates missing snapshots.
 * `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
 * `'none'` - No snapshots are updated.
 

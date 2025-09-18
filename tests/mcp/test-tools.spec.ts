@@ -16,9 +16,11 @@
 
 import { test, expect, writeFiles, StartClient } from './fixtures';
 
+import fs from 'fs';
+
 test.use({ mcpServerType: 'test-mcp' });
 
-test('playwright_test_list_tests', async ({ startClient }) => {
+test('test_list', async ({ startClient }) => {
   await writeFiles({
     'playwright.config.ts': `
       module.exports = { projects: [{ name: 'foo' }, {}] };
@@ -36,7 +38,7 @@ test('playwright_test_list_tests', async ({ startClient }) => {
 
   const { client } = await startClient();
   expect(await client.callTool({
-    name: 'playwright_test_list_tests',
+    name: 'test_list',
     arguments: {},
   })).toHaveTextResponse(`Listing tests:
   [id=<ID>] [project=foo] › a.test.ts:3:11 › example1
@@ -47,7 +49,7 @@ Total: 4 tests in 1 file
 `);
 });
 
-test('playwright_test_run_tests', async ({ startClient }) => {
+test('test_run', async ({ startClient }) => {
   await writeFiles({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -72,7 +74,7 @@ test('playwright_test_run_tests', async ({ startClient }) => {
 
   const { client } = await startClient();
   const response = await client.callTool({
-    name: 'playwright_test_run_tests',
+    name: 'test_run',
   });
 
   const text = response.content[0].text;
@@ -93,7 +95,7 @@ test('playwright_test_run_tests', async ({ startClient }) => {
   expect(text).not.toContain(`../../test-results`);
 });
 
-test('playwright_test_run_tests filters', async ({ startClient }) => {
+test('test_run filters', async ({ startClient }) => {
   await writeFiles({
     'playwright.config.ts': `
       module.exports = { projects: [{ name: 'foo' }, { name: 'bar' }] };
@@ -120,7 +122,7 @@ test('playwright_test_run_tests filters', async ({ startClient }) => {
 
   const { client } = await startClient();
   expect(await client.callTool({
-    name: 'playwright_test_run_tests',
+    name: 'test_run',
     arguments: {
       locations: ['b.test.ts'],
       projects: ['foo'],
@@ -135,7 +137,7 @@ Running 2 tests using 1 worker
 `);
 });
 
-test('playwright_test_debug_test (passed)', async ({ startClient }) => {
+test('test_debug (passed)', async ({ startClient }) => {
   await writeFiles({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -147,12 +149,12 @@ test('playwright_test_debug_test (passed)', async ({ startClient }) => {
 
   const { client } = await startClient();
   const listResult = await client.callTool({
-    name: 'playwright_test_list_tests',
+    name: 'test_list',
   });
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
 
   expect(await client.callTool({
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     arguments: {
       test: { id, title: 'pass' },
     },
@@ -165,11 +167,11 @@ Running 1 test using 1 worker
 `);
 });
 
-test('playwright_test_debug_test (pause/resume)', async ({ startClient }) => {
+test('test_debug (pause/resume)', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
 
   expect(await client.callTool({
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     arguments: {
       test: { id, title: 'fail' },
     },
@@ -193,17 +195,17 @@ Call log:
 Try recovering from the error prior to continuing`);
 
   expect(await client.callTool({
-    name: 'playwright_test_run_tests',
+    name: 'test_run',
     arguments: {
       locations: ['a.test.ts'],
     },
   })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:11 › fail`));
 });
 
-test('playwright_test_browser_snapshot', async ({ startClient }) => {
+test('test_debug / browser_snapshot', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
   await client.callTool({
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     arguments: {
       test: { id, title: 'fail' },
     },
@@ -215,10 +217,51 @@ test('playwright_test_browser_snapshot', async ({ startClient }) => {
   });
 });
 
-test('playwright_test_evaluate_on_pause', async ({ startClient }) => {
+test('test_debug_test (pause/snapshot/resume)', async ({ startClient }) => {
+  const { client, id } = await prepareDebugTest(startClient);
+
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(`### Paused on error:
+expect(locator).toBeVisible() failed
+
+Locator: getByRole('button', { name: 'Missing' })
+Expected: visible
+Timeout: 1000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 1000ms
+  - waiting for getByRole('button', { name: 'Missing' })
+
+
+### Current page snapshot:
+- button "Submit" [ref=e2]
+
+### Task
+Try recovering from the error prior to continuing`);
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
+  });
+
+  expect(await client.callTool({
+    name: 'test_run',
+    arguments: {
+      locations: ['a.test.ts'],
+    },
+  })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:11 › fail`));
+});
+
+test('test_debug / evaluate', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
   await client.callTool({
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     arguments: {
       test: { id, title: 'fail' },
     },
@@ -233,10 +276,10 @@ test('playwright_test_evaluate_on_pause', async ({ startClient }) => {
   });
 });
 
-test('playwright_test_evaluate_on_pause (with element)', async ({ startClient }) => {
+test('test_debug / evaluate (with element)', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
   await client.callTool({
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     arguments: {
       test: { id, title: 'fail' },
     },
@@ -253,10 +296,10 @@ test('playwright_test_evaluate_on_pause (with element)', async ({ startClient })
   });
 });
 
-test('playwright_test_generate_locator', async ({ startClient }) => {
+test('test_debug / generate_locator', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
   await client.callTool({
-    name: 'playwright_test_debug_test',
+    name: 'test_debug',
     arguments: {
       test: { id, title: 'fail' },
     },
@@ -272,6 +315,79 @@ test('playwright_test_generate_locator', async ({ startClient }) => {
   });
 });
 
+test('test_setup_page', async ({ startClient }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+      });
+      test('template', async ({ page }) => {
+      });
+    `,
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {
+      testLocation: 'a.test.ts:6',
+    },
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+- button "Submit" [ref=e2]`);
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+    },
+  })).toHaveResponse({
+    code: `await page.getByRole('button', { name: 'Submit' }).click();`,
+    pageState: expect.stringContaining(`- button "Submit"`),
+  });
+});
+
+test('test_setup_page (no test location)', async ({ startClient }) => {
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {},
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+`);
+});
+
+test('test_setup_page without location respects testsDir', async ({ startClient }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        testDir: './tests',
+        projects: [{ name: 'foo' }]
+      };
+    `,
+
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('existing', async ({ page }) => {
+      });
+    `,
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {},
+  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+
+### Current page snapshot:
+`);
+  expect(fs.existsSync(test.info().outputPath('tests', 'default.seed.spec.ts'))).toBe(true);
+});
+
 async function prepareDebugTest(startClient: StartClient) {
   await writeFiles({
     'a.test.ts': `
@@ -285,7 +401,7 @@ async function prepareDebugTest(startClient: StartClient) {
 
   const { client } = await startClient();
   const listResult = await client.callTool({
-    name: 'playwright_test_list_tests',
+    name: 'test_list',
   });
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
   return { client, id };

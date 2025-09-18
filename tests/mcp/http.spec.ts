@@ -254,7 +254,7 @@ test('http transport (default)', async ({ serverEndpoint }) => {
   expect(transport.sessionId, 'has session support').toBeDefined();
 });
 
-test('client should receive list roots request', async ({ serverEndpoint }) => {
+test('client should receive list roots request', async ({ serverEndpoint, server }) => {
   const { url } = await serverEndpoint();
   const transport = new StreamableHTTPClientTransport(url);
   const client = new Client({ name: 'test', version: '1.0.0' }, { capabilities: { roots: {} } });
@@ -275,6 +275,9 @@ test('client should receive list roots request', async ({ serverEndpoint }) => {
     };
   });
   await client.connect(transport);
-  await client.ping();
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
   expect(await rootsListedPromise).toBe('success');
 });

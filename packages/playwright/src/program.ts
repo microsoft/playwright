@@ -36,7 +36,8 @@ import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
-import { initClaudeCodeRepo, initOpencodeRepo } from './agents/generateAgents';
+import { setupExitWatchdog } from './mcp/browser/watchdog';
+import { initClaudeCodeRepo, initOpencodeRepo, initVSCodeRepo } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -160,12 +161,12 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
-    const resolvedLocation = resolveConfigLocation(options.config);
+    setupExitWatchdog();
     const backendFactory: ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: () => new TestServerBackend(resolvedLocation, { muteConsole: options.port === undefined, headless: options.headless }),
+      create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)
@@ -176,12 +177,15 @@ function addTestMCPServerCommand(program: Command) {
 function addInitAgentsCommand(program: Command) {
   const command = program.command('init-agents', { hidden: true });
   command.description('Initialize repository agents for the Claude Code');
-  command.option('--claude', 'Initialize repository agents for the Claude Code');
-  command.option('--opencode', 'Initialize repository agents for the Opencode');
+  const option = command.createOption('--loop <loop>', 'Agentic loop provider');
+  option.choices(['claude', 'opencode', 'vscode']);
+  command.addOption(option);
   command.action(async opts => {
-    if (opts.opencode)
+    if (opts.loop === 'opencode')
       await initOpencodeRepo();
-    else
+    else if (opts.loop === 'vscode')
+      await initVSCodeRepo();
+    else if (opts.loop === 'claude')
       await initClaudeCodeRepo();
   });
 }

@@ -22,9 +22,7 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { Dispatcher } from './dispatcher';
-import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { CRBrowserContext } from '../chromium/crBrowser';
@@ -126,15 +124,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         const pageDispatcher = PageDispatcher.from(this, page);
         this._dispatchEvent('console', {
           page: pageDispatcher,
-          type: message.type(),
-          text: message.text(),
-          args: message.args().map(a => {
-            const elementHandle = a.asElement();
-            if (elementHandle)
-              return ElementHandleDispatcher.from(FrameDispatcher.from(this, elementHandle._frame), elementHandle);
-            return JSHandleDispatcher.fromJSHandle(pageDispatcher, a);
-          }),
-          location: message.location(),
+          ...pageDispatcher.serializeConsoleMessage(message),
         });
       }
     });

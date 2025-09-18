@@ -1,6 +1,6 @@
 ---
 id: test-use-options
-title: "Test use options"
+title: "Configuration (use)"
 ---
 
 ## Introduction

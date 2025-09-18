@@ -249,9 +249,7 @@ it('should click in OOPIF', async ({ browserName, launchPersistent, server }) =>
   expect(consoleLog).toContain('ok');
 });
 
-it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server, isWindows }) => {
-  it.fixme(browserName === 'chromium' && isWindows, 'Click is offset by the infobar height');
-
+it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
@@ -270,18 +268,24 @@ it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPe
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
         button { position: absolute; bottom: 0; }
       </style>
-      <button id="button" onclick="console.log('ok')">Submit</button>`);
+      <button id="button" onclick="window._clicked=true">Submit</button>`);
   });
 
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
-  // Chrome bug! Investigate what's happening in the oopif router.
-  const consoleLog: string[] = [];
-  page.on('console', m => consoleLog.push(m.text()));
-  while (!consoleLog.includes('ok')) {
-    await page.waitForTimeout(100);
-    await page.frames()[1].click('text=Submit');
+  if (browserName === 'chromium') {
+    // CHROME BUG:
+    //   Unfortunately, on some platforms the automation infobar is shown up late or animates in.
+    //   Upon showing, it triggers a resize of WebContentsView and RenderWidgetHostView
+    //   through the native view hierarchy. This in turn resizes the compositor to the visible view size
+    //   instead of the emulated size specified in Emulation.setDeviceMetricsOverride.
+    //   Hit testing for OOPIFs is affected by the new size, and clicks do not reach the iframe.
+    //
+    //   The workaround is to re-apply the viewport after a delay, in this case after the navigation.
+    await page.setViewportSize({ width: 800, height: 600 });
   }
+  await page.frames()[1].click('text=Submit');
+  expect(await page.frames()[1].evaluate('window._clicked')).toBe(true);
 });
 
 it('headless and headful should use same default fonts', async ({ page, browserName, browserType }) => {

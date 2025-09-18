@@ -37,9 +37,15 @@ export type AriaProps = {
 // We pass parsed template between worlds using JSON, make it easy.
 export type AriaRegex = { pattern: string };
 
+// We can't tell apart pattern and text, so we pass both.
+export type AriaTextValue = {
+  raw: string;
+  normalized: string;
+};
+
 export type AriaTemplateTextNode = {
   kind: 'text';
-  text: AriaRegex | string;
+  text: AriaTextValue;
 };
 
 export type AriaTemplateRoleNode = AriaProps & {
@@ -47,7 +53,7 @@ export type AriaTemplateRoleNode = AriaProps & {
   role: AriaRole | 'fragment';
   name?: AriaRegex | string;
   children?: AriaTemplateNode[];
-  props?: Record<string, string | AriaRegex>;
+  props?: Record<string, AriaTextValue>;
   containerMode?: 'contain' | 'equal' | 'deep-equal';
 };
 
@@ -150,7 +156,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
         }
         container.children.push({
           kind: 'text',
-          text: valueOrRegex(value.value)
+          text: textValue(value.value)
         });
         continue;
       }
@@ -180,7 +186,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
           continue;
         }
         container.props = container.props ?? {};
-        container.props[key.value.slice(1)] = valueOrRegex(value.value);
+        container.props[key.value.slice(1)] = textValue(value.value);
         continue;
       }
 
@@ -205,7 +211,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
           ...childNode,
           children: [{
             kind: 'text',
-            text: valueOrRegex(String(value.value))
+            text: textValue(String(value.value))
           }]
         });
         continue;
@@ -258,19 +264,21 @@ function normalizeWhitespace(text: string) {
   return text.replace(/[\u200b\u00ad]/g, '').replace(/[\r\n\s\t]+/g, ' ').trim();
 }
 
-export function valueOrRegex(value: string): string | AriaRegex {
-  return value.startsWith('/') && value.endsWith('/') && value.length > 1 ? { pattern: value.slice(1, -1) } : normalizeWhitespace(value);
+export function textValue(value: string): AriaTextValue {
+  return {
+    raw: value,
+    normalized: normalizeWhitespace(value),
+  };
 }
 
 export class KeyParser {
   private _input: string;
   private _pos: number;
   private _length: number;
-  private _options: ParsingOptions;
 
   static parse(text: yamlTypes.Scalar<string>, options: ParsingOptions, errors: ParsedYamlError[]): AriaTemplateRoleNode | null {
     try {
-      return new KeyParser(text.value, options)._parse();
+      return new KeyParser(text.value)._parse();
     } catch (e) {
       if (e instanceof ParserError) {
         const message = options.prettyErrors === false ? e.message : e.message + ':\n\n' + text.value + '\n' + ' '.repeat(e.pos) + '^\n';
@@ -284,11 +292,10 @@ export class KeyParser {
     }
   }
 
-  constructor(input: string, options: ParsingOptions) {
+  constructor(input: string) {
     this._input = input;
     this._pos = 0;
     this._length = input.length;
-    this._options = options;
   }
 
   private _peek() {

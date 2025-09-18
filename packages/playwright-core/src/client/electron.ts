@@ -92,7 +92,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     this._channel.on('close', () => {
       this.emit(Events.ElectronApplication.Close);
     });
-    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(this._platform, event)));
+    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(this._platform, event, null)));
     this._setEventToSubscriptionMapping(new Map<string, channels.ElectronApplicationUpdateSubscriptionParams['event']>([
       [Events.ElectronApplication.Console, 'console'],
     ]));

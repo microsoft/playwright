@@ -20,7 +20,8 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { startHttpServer } from '../sdk/http';
 import { CDPRelayServer } from './cdpRelay';
 
-import type { BrowserContextFactory, ClientInfo } from '../browser/browserContextFactory';
+import type { BrowserContextFactory } from '../browser/browserContextFactory';
+import type { ClientInfo } from '../sdk/server';
 
 const debugLogger = debug('pw:mcp:relay');
 

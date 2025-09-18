@@ -31,7 +31,7 @@ import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import type { ReporterV2 } from './reporterV2';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
-import type { HTMLReport, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
 
@@ -131,7 +131,18 @@ class HtmlReporter implements ReporterV2 {
       noSnippets = true;
     noSnippets = noSnippets || this._options.noSnippets;
 
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, process.env.PLAYWRIGHT_HTML_TITLE || this._options.title, noSnippets);
+    let noCopyPrompt: boolean | undefined;
+    if (process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT === 'false' || process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT === '0')
+      noCopyPrompt = false;
+    else if (process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT)
+      noCopyPrompt = true;
+    noCopyPrompt = noCopyPrompt || this._options.noCopyPrompt;
+
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, {
+      title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
+      noSnippets,
+      noCopyPrompt,
+    });
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
@@ -228,17 +239,15 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
-  private _title: string | undefined;
-  private _noSnippets: boolean;
+  private _options: HTMLReportOptions;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, title: string | undefined, noSnippets: boolean = false) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, options: HTMLReportOptions) {
     this._config = config;
     this._reportFolder = outputDir;
-    this._noSnippets = noSnippets;
+    this._options = options;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
-    this._title = title;
   }
 
   async build(metadata: Metadata, projectSuites: api.Suite[], result: api.FullResult, topLevelErrors: api.TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
@@ -264,7 +273,7 @@ class HtmlBuilder {
         }
       }
     }
-    if (!this._noSnippets)
+    if (!this._options.noSnippets)
       createSnippets(this._stepsInFile);
 
     let ok = true;
@@ -296,13 +305,13 @@ class HtmlBuilder {
     }
     const htmlReport: HTMLReport = {
       metadata,
-      title: this._title,
       startTime: result.startTime.getTime(),
       duration: result.duration,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: projectSuites.map(r => r.project()!.name),
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
       errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
+      options: this._options,
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;

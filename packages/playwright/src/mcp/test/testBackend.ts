@@ -16,20 +16,37 @@
 
 import * as mcp from '../sdk/exports';
 import { TestContext } from './testContext';
-import { listTests, runTests, debugTest } from './testTools.js';
+import { listTests, runTests, debugTest, setupPage } from './testTools.js';
 import { browserTools } from '../browser/tools';
+import { resolveConfigLocation } from '../../common/configLoader';
 
-import type { ConfigLocation } from '../../common/config';
 import type { TestTool } from './testTool';
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
-  private _tools: TestTool<any>[] = [listTests, runTests, debugTest];
+  private _tools: TestTool<any>[] = [listTests, runTests, debugTest, setupPage];
   private _context: TestContext;
+  private _configOption: string | undefined;
 
-  constructor(resolvedLocation: ConfigLocation, options?: { muteConsole?: boolean, headless?: boolean }) {
-    this._context = new TestContext(resolvedLocation, options);
+  constructor(configOption: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
+    this._context = new TestContext(options);
+    this._configOption = configOption;
+  }
+
+  async initialize(server: mcp.Server, clientInfo: mcp.ClientInfo): Promise<void> {
+    if (this._configOption) {
+      this._context.setConfigLocation(resolveConfigLocation(this._configOption));
+      return;
+    }
+
+    const rootPath = mcp.firstRootPath(clientInfo);
+    if (rootPath) {
+      this._context.setConfigLocation(resolveConfigLocation(rootPath));
+      return;
+    }
+
+    throw new Error('No config option or MCP root path provided');
   }
 
   async listTools(): Promise<mcp.Tool[]> {

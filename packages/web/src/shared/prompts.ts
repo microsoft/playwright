@@ -42,7 +42,7 @@ export async function copyPrompt<ErrorInfo extends { message: string }>({
   buildCodeFrame(error: ErrorInfo): Promise<string | undefined>;
   stdout?: string;
   stderr?: string;
-}) {
+}): Promise<string | undefined> {
   const meaningfulSingleLineErrors = new Set(errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
   for (const error of errors) {
     for (const singleLineError of meaningfulSingleLineErrors.keys()) {

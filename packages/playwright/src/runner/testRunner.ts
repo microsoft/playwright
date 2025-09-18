@@ -72,6 +72,7 @@ export type RunTestsParams = {
   reuseContext?: boolean;
   connectWsEndpoint?: string;
   pauseOnError?: boolean;
+  pauseAtEnd?: boolean;
 };
 
 type FullResultStatus = reporterTypes.FullResult['status'];
@@ -136,6 +137,13 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   async installBrowsers() {
     const executables = registry.defaultExecutables();
     await registry.install(executables, false);
+  }
+
+  async loadConfig() {
+    const { config, error } = await this._loadConfig(this._configCLIOverrides);
+    if (config)
+      return config;
+    throw new Error('Failed to load config: ' + (error ? error.message : 'Unknown error'));
   }
 
   async runGlobalSetup(userReporters: AnyReporter[]): Promise<{ status: FullResultStatus }> {
@@ -337,7 +345,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }),
       ...createRunTestsTasks(config),
     ];
-    const testRun = new TestRun(config, reporter, { pauseOnError: params.pauseOnError });
+    const testRun = new TestRun(config, reporter, { pauseOnError: params.pauseOnError, pauseAtEnd: params.pauseAtEnd });
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;

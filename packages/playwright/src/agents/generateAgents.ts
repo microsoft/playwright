@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { yaml } from 'playwright-core/lib/utilsBundle';
@@ -25,15 +24,8 @@ interface AgentHeader {
   model: string;
   color: string;
   tools: string[];
-  'mcp-servers': Record<string, McpServerConfig>;
 }
 
-interface McpServerConfig {
-  type: string;
-  command: string;
-  args: string[];
-  tools: string[];
-}
 
 interface Agent {
   header: AgentHeader;
@@ -107,25 +99,32 @@ const claudeToolMap = new Map<string, string[]>([
   ['ls', ['Glob']],
   ['grep', ['Grep']],
   ['read', ['Read']],
-  ['edit', ['Edit', 'MultiEdit', 'NotebookEdit']],
+  ['edit', ['Edit', 'MultiEdit']],
   ['write', ['Write']],
 ]);
 
+// Common MCP server configurations
+const commonMcpServers = {
+  playwrightTest: {
+    type: 'local',
+    command: 'npx',
+    args: ['playwright', 'run-test-mcp-server']
+  }
+};
+
 function saveAsClaudeCode(agent: Agent): string {
-  function asClaudeTool(hash: string, tool: string): string {
+  function asClaudeTool(tool: string): string {
     const [first, second] = tool.split('/');
     if (!second)
       return (claudeToolMap.get(first) || [first]).join(', ');
-    return `mcp__${first}-${hash}__${second}`;
+    return `mcp__${first}__${second}`;
   }
-
-  const hash = shortHash(agent.header.name);
 
   const lines: string[] = [];
   lines.push(`---`);
   lines.push(`name: ${agent.header.name}`);
   lines.push(`description: ${agent.header.description}. Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`);
-  lines.push(`tools: ${agent.header.tools.map(tool => asClaudeTool(hash, tool)).join(', ')}`);
+  lines.push(`tools: ${agent.header.tools.map(tool => asClaudeTool(tool)).join(', ')}`);
   lines.push(`model: ${agent.header.model}`);
   lines.push(`color: ${agent.header.color}`);
   lines.push(`---`);
@@ -143,13 +142,13 @@ const opencodeToolMap = new Map<string, string[]>([
 ]);
 
 function saveAsOpencodeJson(agents: Agent[]): string {
-  function asOpencodeTool(tools: Record<string, boolean>, hash: string, tool: string): void {
+  function asOpencodeTool(tools: Record<string, boolean>, tool: string): void {
     const [first, second] = tool.split('/');
     if (!second) {
       for (const tool of opencodeToolMap.get(first) || [first])
         tools[tool] = true;
     } else {
-      tools[`${first}-${hash}*${second}`] = true;
+      tools[`${first}*${second}`] = true;
     }
   }
 
@@ -161,7 +160,6 @@ function saveAsOpencodeJson(agents: Agent[]): string {
   };
   result['agent'] = {};
   for (const agent of agents) {
-    const hash = shortHash(agent.header.name);
     const tools: Record<string, boolean> = {};
     result['agent'][agent.header.name] = {
       description: agent.header.description,
@@ -170,21 +168,17 @@ function saveAsOpencodeJson(agents: Agent[]): string {
       tools,
     };
     for (const tool of agent.header.tools)
-      asOpencodeTool(tools, hash, tool);
-
-    for (const [name, mcp] of Object.entries(agent.header['mcp-servers'])) {
-      result['mcp'][name + '-' + hash] = {
-        type: mcp.type,
-        command: [mcp.command, ...mcp.args],
-        enabled: true,
-      };
-    }
+      asOpencodeTool(tools, tool);
   }
-  return JSON.stringify(result, null, 2);
-}
 
-function shortHash(str: string): string {
-  return crypto.createHash('sha256').update(str).digest('hex').slice(0, 4);
+  const server = commonMcpServers.playwrightTest;
+  result['mcp']['playwright-test'] = {
+    type: server.type,
+    command: [server.command, ...server.args],
+    enabled: true,
+  };
+
+  return JSON.stringify(result, null, 2);
 }
 
 async function loadAgents(): Promise<Agent[]> {
@@ -205,18 +199,70 @@ export async function initClaudeCodeRepo() {
   for (const agent of agents)
     await writeFile(`.claude/agents/${agent.header.name}.md`, saveAsClaudeCode(agent));
 
-  const mcpServers: Record<string, { command: string; args: string[] }> = {};
-  for (const agent of agents) {
-    const hash = shortHash(agent.header.name);
-    for (const [name, mcp] of Object.entries(agent.header['mcp-servers'])) {
-      const entry = {
-        command: mcp.command,
-        args: mcp.args,
-      };
-      mcpServers[name + '-' + hash] = entry;
+  await writeFile('.mcp.json', JSON.stringify({
+    mcpServers: {
+      'playwright-test': {
+        command: commonMcpServers.playwrightTest.command,
+        args: commonMcpServers.playwrightTest.args,
+      }
     }
+  }, null, 2));
+}
+
+const vscodeToolMap = new Map<string, string[]>([
+  ['ls', ['listDirectory', 'fileSearch']],
+  ['grep', ['textSearch']],
+  ['read', ['readFile']],
+  ['edit', ['editFiles']],
+  ['write', ['createFile', 'createDirectory']],
+]);
+function saveAsVSCodeChatmode(agent: Agent): string {
+  function asVscodeTool(tool: string): string | string[] {
+    const [first, second] = tool.split('/');
+    if (second)
+      return second;
+    return vscodeToolMap.get(first) || first;
   }
-  await writeFile('.mcp.json', JSON.stringify({ mcpServers }, null, 2));
+  const tools = agent.header.tools.map(asVscodeTool).flat().map(tool => `'${tool}'`).join(', ');
+
+  const lines: string[] = [];
+  lines.push(`---`);
+  lines.push(`description: ${agent.header.description}. Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`);
+  lines.push(`tools: [${tools}]`);
+  lines.push(`---`);
+  lines.push('');
+  lines.push(agent.instructions);
+  return lines.join('\n');
+}
+
+export async function initVSCodeRepo() {
+  const agents = await loadAgents();
+
+  await fs.promises.mkdir('.github/chatmodes', { recursive: true });
+  for (const agent of agents)
+    await writeFile(`.github/chatmodes/${agent.header.name}.chatmode.md`, saveAsVSCodeChatmode(agent));
+
+  await fs.promises.mkdir('.vscode', { recursive: true });
+
+  const mcpJsonPath = '.vscode/mcp.json';
+  let mcpJson: any = {
+    servers: {},
+    inputs: []
+  };
+  try {
+    mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
+  } catch {
+  }
+
+  if (!mcpJson.servers)
+    mcpJson.servers = {};
+
+  mcpJson.servers['playwright-test'] = {
+    type: 'stdio',
+    command: commonMcpServers.playwrightTest.command,
+    args: commonMcpServers.playwrightTest.args,
+  };
+  await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
 }
 
 export async function initOpencodeRepo() {

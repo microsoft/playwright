@@ -27,7 +27,6 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { debugLogger } from '../utils/debugLogger';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
-import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 
 import type { Progress } from '../progress';
@@ -224,7 +223,7 @@ export class FFPage implements PageDelegate {
     const error = new Error(message);
     error.stack = params.message + '\n' + params.stack.split('\n').filter(Boolean).map(a => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)')).join('\n');
     error.name = name;
-    this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, error, this._page);
+    this._page.addPageError(error);
   }
 
   _onConsole(payload: Protocol.Runtime.consolePayload) {

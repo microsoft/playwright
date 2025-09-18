@@ -218,7 +218,14 @@ export class Dispatcher {
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
     const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
     const outputDir = projectConfig.project.outputDir;
-    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir, this._failureTracker.pauseOnError());
+    const worker = new WorkerHost(testGroup, {
+      parallelIndex,
+      config: loaderData,
+      extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
+      outputDir,
+      pauseOnError: this._failureTracker.pauseOnError(),
+      pauseAtEnd: this._failureTracker.pauseAtEnd(),
+    });
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {

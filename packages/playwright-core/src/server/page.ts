@@ -138,7 +138,8 @@ export class Page extends SdkObject {
   private _closedPromise = new ManualPromise<void>();
   private _initialized: Page | Error | undefined;
   private _initializedPromise = new ManualPromise<Page | Error>();
-  private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
+  private _consoleMessages: ConsoleMessage[] = [];
+  private _pageErrors: Error[] = [];
   private _crashed = false;
   readonly openScope = new LongStandingScope();
   readonly browserContext: BrowserContext;
@@ -209,9 +210,10 @@ export class Page extends SdkObject {
     this._initialized = error || this;
     this.emitOnContext(contextEvent, this);
 
-    for (const { event, args } of this._eventsToEmitAfterInitialized)
-      this.browserContext.emit(event, ...args);
-    this._eventsToEmitAfterInitialized = [];
+    for (const pageError of this._pageErrors)
+      this.emitOnContext(BrowserContext.Events.PageError, pageError, this);
+    for (const message of this._consoleMessages)
+      this.emitOnContext(BrowserContext.Events.Console, message);
 
     // It may happen that page initialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
@@ -238,19 +240,6 @@ export class Page extends SdkObject {
     if (this.isStorageStatePage)
       return;
     this.browserContext.emit(event, ...args);
-  }
-
-  emitOnContextOnceInitialized(event: string | symbol, ...args: any[]) {
-    if (this.isStorageStatePage)
-      return;
-    // Some events, like console messages, may come before page is ready.
-    // In this case, postpone the event until page is initialized,
-    // and dispatch it to the client later, either on the live Page,
-    // or on the "errored" Page.
-    if (this._initialized)
-      this.browserContext.emit(event, ...args);
-    else
-      this._eventsToEmitAfterInitialized.push({ event, args });
   }
 
   async resetForReuse(progress: Progress) {
@@ -374,7 +363,34 @@ export class Page extends SdkObject {
       args.forEach(arg => arg.dispose());
       return;
     }
-    this.emitOnContextOnceInitialized(BrowserContext.Events.Console, message);
+
+    this._consoleMessages.push(message);
+    ensureArrayLimit(this._consoleMessages, 200); // Avoid unbounded memory growth.
+
+    // Console messages may come before the page is ready. In this case,
+    // we'll dispatch them to the client later, either on the live Page,
+    // or on the "errored" Page.
+    if (this._initialized)
+      this.emitOnContext(BrowserContext.Events.Console, message);
+  }
+
+  consoleMessages() {
+    return this._consoleMessages;
+  }
+
+  addPageError(pageError: Error) {
+    this._pageErrors.push(pageError);
+    ensureArrayLimit(this._pageErrors, 200); // Avoid unbounded memory growth.
+
+    // Page errors may come before the page is ready. In this case,
+    // we'll dispatch them to the client later, either on the live Page,
+    // or on the "errored" Page.
+    if (this._initialized)
+      this.emitOnContext(BrowserContext.Events.PageError, pageError, this);
+  }
+
+  pageErrors() {
+    return this._pageErrors;
   }
 
   async reload(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -1060,4 +1076,9 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
     }
   }
   return result;
+}
+
+function ensureArrayLimit(array: any[], limit: number) {
+  if (array.length > limit)
+    array.splice(0, limit / 10);
 }

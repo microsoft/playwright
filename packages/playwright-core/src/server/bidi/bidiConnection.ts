@@ -40,6 +40,9 @@ export class BidiConnection {
   private _closed = false;
   readonly browserSession: BidiSession;
   readonly _browsingContextToSession = new Map<string, BidiSession>();
+  readonly _realmToBrowsingContext = new Map<string, string>();
+  // TODO: shared/service workers might have multiple owner realms.
+  readonly _realmToOwnerRealm = new Map<string, string>();
 
   constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     this._transport = transport;
@@ -69,12 +72,35 @@ export class BidiConnection {
     // Bidi messages do not have a common session identifier, so we
     // route them based on BrowsingContext.
     if (object.type === 'event') {
+      // Track realms to context as well as realm ownership to later resolve
+      // non-window realms to a browsing context.
+      if (object.method === 'script.realmCreated') {
+        if ('context' in object.params)
+          this._realmToBrowsingContext.set(object.params.realm, object.params.context);
+        if (object.params.type === 'dedicated-worker')
+          this._realmToOwnerRealm.set(object.params.realm, object.params.owners[0]);
+      } else if (object.method === 'script.realmDestroyed') {
+        this._realmToBrowsingContext.delete(object.params.realm);
+        this._realmToOwnerRealm.delete(object.params.realm);
+      }
       // Route page events to the right session.
       let context;
-      if ('context' in object.params)
+      let realm;
+      if ('context' in object.params) {
         context = object.params.context;
-      else if (object.method === 'log.entryAdded' || object.method === 'script.message')
+      } else if (object.method === 'log.entryAdded' || object.method === 'script.message') {
         context = object.params.source?.context;
+        realm = object.params.source?.realm;
+      } else if (object.method === 'script.realmCreated' && object.params.type === 'dedicated-worker') {
+        realm = object.params.owners[0];
+      }
+      if (!context && realm) {
+        // Find parent realm and its browing context if it is a window realm.
+        while (this._realmToOwnerRealm.get(realm))
+          realm = this._realmToOwnerRealm.get(realm)!;
+        context = this._realmToBrowsingContext.get(realm);
+      }
+
       if (context) {
         const session = this._browsingContextToSession.get(context);
         if (session) {

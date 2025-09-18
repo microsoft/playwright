@@ -17,11 +17,15 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
 import { devices } from 'playwright-core';
 import { dotenv } from 'playwright-core/lib/utilsBundle';
 
+import { firstRootPath } from '../sdk/server';
+
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
+import type { ClientInfo } from '../sdk/server';
 
 export type CLIOptions = {
   allowedOrigins?: string[];
@@ -34,6 +38,7 @@ export type CLIOptions = {
   config?: string;
   device?: string;
   executablePath?: string;
+  grantPermissions?: string[];
   headless?: boolean;
   host?: string;
   ignoreHttpsErrors?: boolean;
@@ -182,6 +187,9 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.blockServiceWorkers)
     contextOptions.serviceWorkers = 'block';
 
+  if (cliOptions.grantPermissions)
+    contextOptions.permissions = cliOptions.grantPermissions;
+
   const result: Config = {
     browser: {
       browserName,
@@ -227,6 +235,7 @@ function configFromEnv(): Config {
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
   options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.grantPermissions = commaSeparatedList(process.env.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
@@ -260,10 +269,11 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-export async function outputFile(config: FullConfig, rootPath: string | undefined, name: string): Promise<string> {
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, name: string): Promise<string> {
+  const rootPath = firstRootPath(clientInfo);
   const outputDir = config.outputDir
     ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
-    ?? path.join(os.tmpdir(), 'playwright-mcp-output', sanitizeForFilePath(new Date().toISOString()));
+    ?? path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output', String(clientInfo.timestamp));
 
   await fs.promises.mkdir(outputDir, { recursive: true });
   const fileName = sanitizeForFilePath(name);

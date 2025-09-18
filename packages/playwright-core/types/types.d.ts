@@ -2285,6 +2285,12 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Returns up to 200 last console messages from this page. See
+   * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
+   */
+  consoleMessages(): Promise<Array<ConsoleMessage>>;
+
+  /**
    * Gets the full HTML contents of the page, including the doctype.
    */
   content(): Promise<string>;
@@ -3597,6 +3603,12 @@ export interface Page {
    * Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
    */
   opener(): Promise<null|Page>;
+
+  /**
+   * Returns up to 200 last page errors from this page. See
+   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
+   */
+  pageErrors(): Promise<Array<Error>>;
 
   /**
    * Pauses script execution. Playwright will stop executing the script and wait for the user to either press the
@@ -16268,18 +16280,16 @@ export type AndroidKey =
   'Home' |
   'Back' |
   'Call' | 'EndCall' |
-  '0' |  '1' |  '2' |  '3' |  '4' |  '5' |  '6' |  '7' |  '8' |  '9' |
-  'Star' | 'Pound' | '*' | '#' |
+  '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' |
+  'Star' | '*' | 'Pound' | '#' |
   'DialUp' | 'DialDown' | 'DialLeft' | 'DialRight' | 'DialCenter' |
   'VolumeUp' | 'VolumeDown' |
-  'ChannelUp' | 'ChannelDown' |
   'Power' |
   'Camera' |
   'Clear' |
   'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' |
   'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z' |
-  'Comma' | ',' |
-  'Period' | '.' |
+  'Comma' | ',' | 'Period' | '.' |
   'AltLeft' | 'AltRight' |
   'ShiftLeft' | 'ShiftRight' |
   'Tab' | '\t' |
@@ -16307,8 +16317,26 @@ export type AndroidKey =
   'Notification' |
   'Search' |
   'RecentApps' |
+  'MediaPlayPause' |
+  'MediaStop' |
+  'MediaNext' |
+  'MediaPrevious' |
+  'MediaRewind' |
+  'MediaFastForward' |
+  'MediaPlay' |
+  'MediaPause' |
+  'MediaClose' |
+  'MediaEject' |
+  'MediaRecord' |
+  'ChannelUp' | 'ChannelDown' |
   'AppSwitch' |
   'Assist' |
+  'MediaAudioTrack' |
+  'MediaTopMenu' |
+  'MediaSkipForward' |
+  'MediaSkipBackward' |
+  'MediaStepForward' |
+  'MediaStepBackward' |
   'Cut' |
   'Copy' |
   'Paste';
