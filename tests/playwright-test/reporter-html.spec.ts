@@ -3204,6 +3204,47 @@ for (const useIntermediateMergeReport of [true, false] as const) {
   });
 }
 
+test('should support noFiles option', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        name: 'project-name',
+        reporter: [['html', { noFiles: true }]]
+      });
+      module.exports = { name: 'project-name', reporter: [['html', { noFiles: true }]] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('describe', () => {
+        test('test 1', async ({}) => {});
+      });
+      test('test 2', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('describe', () => {
+        test('test 3', async ({}) => {});
+      });
+    `,
+  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+  await showReport();
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button "describe" [expanded]
+    - region:
+      - link "test 1"
+      - link "a.test.js:4"
+      - link "test 3"
+      - link "b.test.js:4"
+    - button "<anonymous>" [expanded]
+    - region:
+      - link "test 2"
+      - link "a.test.js:6"
+  `);
+});
+
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise(resolve => {
     const chunks: Buffer[] = [];

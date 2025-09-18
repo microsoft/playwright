@@ -253,6 +253,7 @@ HTML report supports the following configuration options and environment variabl
 | `PLAYWRIGHT_HTML_PORT` | `port` | When report opens in the browser, it will be served on this port. | `9323` or any available port when `9323` is not available.
 | `PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL` | `attachmentsBaseURL` | A separate location where attachments from the `data` subdirectory are uploaded. Only needed when you upload report and `data` separately to different locations. | `data/`
 | `PLAYWRIGHT_HTML_NO_COPY_PROMPT` | `noCopyPrompt` | If true, disable rendering of the Copy prompt for errors. Supports `true`, `1`, `false`, and `0`. | `false`
+| `PLAYWRIGHT_HTML_NO_FILES` | `noFiles` | If true, omit file-based grouping and render describe suites on the top. Supports `true`, `1`, `false`, and `0`. | `false`
 | `PLAYWRIGHT_HTML_NO_SNIPPETS` | `noSnippets` | If true, disable rendering code snippets in the action log. If there is a top level error, that report section with code snippet will still render. Supports `true`, `1`, `false`, and `0`. | `false`
 
 ### Blob reporter

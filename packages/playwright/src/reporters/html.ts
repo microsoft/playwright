@@ -138,10 +138,18 @@ class HtmlReporter implements ReporterV2 {
       noCopyPrompt = true;
     noCopyPrompt = noCopyPrompt || this._options.noCopyPrompt;
 
+    let noFiles: boolean | undefined;
+    if (process.env.PLAYWRIGHT_HTML_NO_FILES === 'false' || process.env.PLAYWRIGHT_HTML_NO_FILES === '0')
+      noFiles = false;
+    else if (process.env.PLAYWRIGHT_HTML_NO_FILES)
+      noFiles = true;
+    noFiles = noFiles || this._options.noFiles;
+
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
+      noFiles,
     });
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
@@ -232,6 +240,8 @@ export function startHtmlReportServer(folder: string): HttpServer {
   return server;
 }
 
+type DataMap = Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>;
+
 class HtmlBuilder {
   private _config: api.FullConfig;
   private _reportFolder: string;
@@ -251,25 +261,23 @@ class HtmlBuilder {
   }
 
   async build(metadata: Metadata, projectSuites: api.Suite[], result: api.FullResult, topLevelErrors: api.TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
-    const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
+    const data: DataMap = new Map();
     for (const projectSuite of projectSuites) {
+      const projectName = projectSuite.project()!.name;
       for (const fileSuite of projectSuite.suites) {
-        const fileName = this._relativeLocation(fileSuite.location)!.file;
-        const fileId = calculateSha1(toPosixPath(fileName)).slice(0, 20);
-        let fileEntry = data.get(fileId);
-        if (!fileEntry) {
-          fileEntry = {
-            testFile: { fileId, fileName, tests: [] },
-            testFileSummary: { fileId, fileName, tests: [], stats: emptyStats() },
-          };
-          data.set(fileId, fileEntry);
-        }
-        const { testFile, testFileSummary } = fileEntry;
-        const testEntries: TestEntry[] = [];
-        this._processSuite(fileSuite, projectSuite.project()!.name, [], testEntries);
-        for (const test of testEntries) {
-          testFile.tests.push(test.testCase);
-          testFileSummary.tests.push(test.testCaseSummary);
+        if (this._options.noFiles) {
+          for (const describeSuite of fileSuite.suites) {
+            const groupName = describeSuite.title;
+            this._createEntryForSuite(data, projectName, describeSuite, groupName, true);
+          }
+          const hasTestsOutsideGroups = fileSuite.tests.length > 0;
+          if (hasTestsOutsideGroups) {
+            const fileName = '<anonymous>';
+            this._createEntryForSuite(data, projectName, fileSuite, fileName, false);
+          }
+        } else {
+          const fileName = this._relativeLocation(fileSuite.location)!.file;
+          this._createEntryForSuite(data, projectName, fileSuite, fileName, true);
         }
       }
     }
@@ -396,13 +404,33 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processSuite(suite: api.Suite, projectName: string, path: string[], outTests: TestEntry[]) {
+  private _createEntryForSuite(data: DataMap, projectName: string, suite: api.Suite, fileName: string, deep: boolean) {
+    const fileId = calculateSha1(fileName).slice(0, 20);
+    let fileEntry = data.get(fileId);
+    if (!fileEntry) {
+      fileEntry = {
+        testFile: { fileId, fileName, tests: [] },
+        testFileSummary: { fileId, fileName, tests: [], stats: emptyStats() },
+      };
+      data.set(fileId, fileEntry);
+    }
+
+    const { testFile, testFileSummary } = fileEntry;
+    const testEntries: TestEntry[] = [];
+    this._processSuite(suite, projectName, [], deep, testEntries);
+    for (const test of testEntries) {
+      testFile.tests.push(test.testCase);
+      testFileSummary.tests.push(test.testCaseSummary);
+    }
+  }
+
+  private _processSuite(suite: api.Suite, projectName: string, path: string[], deep: boolean, outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
     suite.entries().forEach(e => {
       if (e.type === 'test')
         outTests.push(this._createTestEntry(e, projectName, newPath));
-      else
-        this._processSuite(e, projectName, newPath, outTests);
+      else if (deep)
+        this._processSuite(e, projectName, newPath, deep, outTests);
     });
   }
 
