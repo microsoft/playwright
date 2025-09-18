@@ -52,7 +52,7 @@ export type CLIOptions = {
   saveSession?: boolean;
   saveTrace?: boolean;
   secrets?: Record<string, string>;
-  sharedHttpContext?: boolean;
+  sharedBrowserContext?: boolean;
   storageState?: string;
   timeoutAction?: number;
   timeoutNavigation?: number;
@@ -213,7 +213,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
     secrets: cliOptions.secrets,
-    sharedHttpContext: cliOptions.sharedHttpContext,
+    sharedBrowserContext: cliOptions.sharedBrowserContext,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
     timeouts: {

@@ -31,7 +31,7 @@ import type { LaunchOptions } from '../../../../playwright-core/src/client/types
 import type { ClientInfo } from '../sdk/server';
 
 export function contextFactory(config: FullConfig): BrowserContextFactory {
-  if (config.sharedHttpContext)
+  if (config.sharedBrowserContext)
     return SharedContextFactory.create(config);
   if (config.browser.remoteEndpoint)
     return new RemoteContextFactory(config);
@@ -270,7 +270,7 @@ export class SharedContextFactory implements BrowserContextFactory {
   static create(config: FullConfig) {
     if (SharedContextFactory._instance)
       throw new Error('SharedContextFactory already exists');
-    const baseConfig = { ...config, sharedHttpContext: false };
+    const baseConfig = { ...config, sharedBrowserContext: false };
     const baseFactory = contextFactory(baseConfig);
     SharedContextFactory._instance = new SharedContextFactory(baseFactory);
     return SharedContextFactory._instance;

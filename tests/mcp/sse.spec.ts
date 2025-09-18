@@ -234,7 +234,7 @@ test('sse transport browser lifecycle (persistent, multiclient)', async ({ serve
 });
 
 test('sse transport shared context', async ({ serverEndpoint, server }) => {
-  const { url, stderr, kill } = await serverEndpoint({ args: ['--shared-http-context'] });
+  const { url, stderr, kill } = await serverEndpoint({ args: ['--shared-browser-context'] });
 
   // Create first client and navigate
   const transport1 = new SSEClientTransport(new URL('/sse', url));

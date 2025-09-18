@@ -249,7 +249,7 @@ test('http transport browser lifecycle (persistent, multiclient)', async ({ serv
 });
 
 test('http transport shared context', async ({ serverEndpoint, server }) => {
-  const { url, stderr, kill } = await serverEndpoint({ args: ['--shared-http-context'] });
+  const { url, stderr, kill } = await serverEndpoint({ args: ['--shared-browser-context'] });
 
   // Create first client and navigate
   const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));

@@ -103,7 +103,7 @@ export type Config = {
   /**
    * Reuse the same browser context between all connected HTTP clients.
    */
-  sharedHttpContext?: boolean;
+  sharedBrowserContext?: boolean;
 
   /**
    * Secrets are used to prevent LLM from getting sensitive data while
