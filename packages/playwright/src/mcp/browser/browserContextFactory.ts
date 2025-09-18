@@ -31,6 +31,8 @@ import type { LaunchOptions } from '../../../../playwright-core/src/client/types
 import type { ClientInfo } from '../sdk/server';
 
 export function contextFactory(config: FullConfig): BrowserContextFactory {
+  if (config.sharedBrowserContext)
+    return SharedContextFactory.create(config);
   if (config.browser.remoteEndpoint)
     return new RemoteContextFactory(config);
   if (config.browser.cdpEndpoint)
@@ -258,4 +260,52 @@ async function startTraceServer(config: FullConfig, tracesDir: string): Promise<
 
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
+}
+
+export class SharedContextFactory implements BrowserContextFactory {
+  private _contextPromise: Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> | undefined;
+  private _baseFactory: BrowserContextFactory;
+  private static _instance: SharedContextFactory | undefined;
+
+  static create(config: FullConfig) {
+    if (SharedContextFactory._instance)
+      throw new Error('SharedContextFactory already exists');
+    const baseConfig = { ...config, sharedBrowserContext: false };
+    const baseFactory = contextFactory(baseConfig);
+    SharedContextFactory._instance = new SharedContextFactory(baseFactory);
+    return SharedContextFactory._instance;
+  }
+
+  private constructor(baseFactory: BrowserContextFactory) {
+    this._baseFactory = baseFactory;
+  }
+
+  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+    if (!this._contextPromise) {
+      testDebug('create shared browser context');
+      this._contextPromise = this._baseFactory.createContext(clientInfo, abortSignal, toolName);
+    }
+
+    const { browserContext } = await this._contextPromise;
+    testDebug(`shared context client connected`);
+    return {
+      browserContext,
+      close: async () => {
+        testDebug(`shared context client disconnected`);
+      },
+    };
+  }
+
+  static async dispose() {
+    await SharedContextFactory._instance?._dispose();
+  }
+
+  private async _dispose() {
+    const contextPromise = this._contextPromise;
+    this._contextPromise = undefined;
+    if (!contextPromise)
+      return;
+    const { close } = await contextPromise;
+    await close();
+  }
 }

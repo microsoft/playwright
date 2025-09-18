@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { SharedContextFactory } from './browserContextFactory';
 import { Context } from './context';
 
 export function setupExitWatchdog() {
@@ -25,6 +26,7 @@ export function setupExitWatchdog() {
     // eslint-disable-next-line no-restricted-properties
     setTimeout(() => process.exit(0), 15000);
     await Context.disposeAll();
+    await SharedContextFactory.dispose();
     // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   };

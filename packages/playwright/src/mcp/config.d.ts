@@ -101,6 +101,11 @@ export type Config = {
   saveTrace?: boolean;
 
   /**
+   * Reuse the same browser context between all connected HTTP clients.
+   */
+  sharedBrowserContext?: boolean;
+
+  /**
    * Secrets are used to prevent LLM from getting sensitive data while
    * automating scenarios such as authentication.
    * Prefer the browser.contextOptions.storageState over secrets file as a more secure alternative.
