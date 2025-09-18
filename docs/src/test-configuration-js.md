@@ -1,6 +1,6 @@
 ---
 id: test-configuration
-title: "Test configuration"
+title: "Configuration"
 ---
 
 ## Introduction
