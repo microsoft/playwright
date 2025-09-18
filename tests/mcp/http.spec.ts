@@ -56,10 +56,9 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       }));
 
       return { url: new URL(url), stderr: () => stderr, kill: () => {
-          cp?.kill('SIGTERM');
-          cp = undefined;
-        }
-      };
+        cp?.kill('SIGTERM');
+        cp = undefined;
+      } };
     });
     cp?.kill('SIGTERM');
   },
