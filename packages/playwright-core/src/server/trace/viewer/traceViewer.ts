@@ -108,7 +108,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   return server;
 }
 
-export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
+export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerServerOptions & TraceViewerRedirectOptions) {
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
@@ -130,6 +130,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('project', project);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
+  if (!options.host && !options.port)
+    params.append('app', 'true');
 
   let baseUrl = '.';
   if (process.env.PW_HMR) {

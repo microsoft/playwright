@@ -51,6 +51,7 @@ const testServerBaseUrl = new URL(searchParams.get('server') ?? '../', window.lo
 const wsURL = new URL(searchParams.get('ws')!, testServerBaseUrl);
 wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
+  app: searchParams.has('app'),
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
   grepInvert: searchParams.get('grepInvert') || undefined,
@@ -112,17 +113,22 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, []);
 
-  React.useEffect(() => {
-    // This weird contrivance prevents the browser from navigation on back event, particularly when in Chromium "app" mode
-    // For some reason it's more reliable than calling pushState in the popstate handler
-    window.history.pushState(null, document.title, window.location.href);
-    window.history.back();
-    window.history.forward();
+  if (queryParams.app) {
+    // Effect is effectively static per page load
+    // Only apply back button redirection if we are running in our own custom "app"
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    React.useEffect(() => {
+      // This weird contrivance prevents the browser from navigation on back event
+      // For some reason it's more reliable than calling pushState in the popstate handler
+      window.history.pushState(null, document.title, window.location.href);
+      window.history.back();
+      window.history.forward();
 
-    const onPopState = () => window.history.go(1);
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+      const onPopState = () => window.history.go(1);
+      window.addEventListener('popstate', onPopState);
+      return () => window.removeEventListener('popstate', onPopState);
+    }, []);
+  }
 
   // Load tests on startup.
   React.useEffect(() => {
