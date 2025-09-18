@@ -52,7 +52,7 @@ export interface MountResultJsx extends Locator {
   update(component: JSX.Element): Promise<void>;
 }
 
-export const test: TestType<{
+export interface ComponentFixtures {
   mount<HooksConfig>(
     component: JSX.Element,
     options?: MountOptionsJsx<HooksConfig>
@@ -61,6 +61,8 @@ export const test: TestType<{
     component: Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
-}>;
+}
+
+export const test: TestType<ComponentFixtures>;
 
 export { defineConfig, PlaywrightTestConfig, expect, devices } from '@playwright/experimental-ct-core';
