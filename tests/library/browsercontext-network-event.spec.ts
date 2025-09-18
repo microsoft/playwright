@@ -105,7 +105,7 @@ it('should fire events in proper order', async ({ context, server }) => {
 });
 
 it('should not fire events for favicon or favicon redirects', async ({ context, page, server, browserName, channel, headless }) => {
-  it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
+  it.skip(headless && browserName !== 'firefox' && browserName as any !== '_bidiFirefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
   const favicon = `/no-cache/favicon.ico`;
   const hashedFaviconUrl = `/favicon-hashed.ico`;

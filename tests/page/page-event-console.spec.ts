@@ -199,7 +199,9 @@ it('should use object previews for errors', async ({ page, browserName }) => {
   await page.evaluate(() => console.log(new Error('Exception')));
   if (browserName === 'chromium')
     expect(text).toContain('.evaluate');
-  if (browserName === 'webkit')
+  if (browserName as any === '_bidiChromium')
+    expect(text).toEqual('error');
+  if (browserName === 'webkit' || browserName as any === '_bidiFirefox')
     expect(text).toEqual('Error: Exception');
   if (browserName === 'firefox')
     expect(text).toEqual('Error');

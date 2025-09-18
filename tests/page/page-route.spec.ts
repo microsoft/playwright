@@ -634,11 +634,11 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
       const response = await fetch('https://example.com/cars?reject', { mode: 'cors' });
       return response.json();
     }).catch(e => e);
-    if (browserName === 'chromium')
+    if (browserName === 'chromium' || browserName === '_bidiChromium')
       expect(error.message).toContain('Failed');
     if (browserName === 'webkit')
       expect(error.message).toContain('TypeError');
-    if (browserName === 'firefox')
+    if (browserName === 'firefox' || browserName === '_bidiFirefox')
       expect(error.message).toContain('NetworkError');
   }
 });
