@@ -44,18 +44,31 @@ export async function launchApp(browserType: BrowserType, options: {
         ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
         '--test-type=',
     );
-    // UI-mode rendering workarounds for environments like WSLg where GPU drivers
-    // may cause a transparent window or no rendering when defaulting to the iGPU.
-    // Priority:
-    // 1) If PW_UI_DISABLE_GPU=1, force-disable GPU entirely.
-    // 2) Else if PW_UI_USE_SWIFTSHADER=1, force SwiftShader software GL.
-    // 3) Else if running under WSL, prefer SwiftShader by default.
+    // UI-mode rendering workarounds for WSL environments where Intel iGPU
+    // may cause transparent windows or no rendering in Playwright UI mode.
+    // See: https://github.com/microsoft/playwright/issues/37287
+    //
+    // Environment variable options (in order of precedence):
+    // 1) PW_UI_DISABLE_GPU=1 - Force disable GPU entirely
+    // 2) PW_UI_USE_SWIFTSHADER=1 - Force SwiftShader software rendering
+    // 3) PW_UI_USE_DISCRETE_GPU=1 - Force discrete GPU selection
+    // 4) Auto-detect WSL and use SwiftShader as fallback
     const uiDisableGpu = process.env.PW_UI_DISABLE_GPU === '1';
     const uiUseSwiftShader = process.env.PW_UI_USE_SWIFTSHADER === '1';
-    const isWSL = process.platform === 'linux' && (fs.existsSync('/proc/sys/fs/binfmt_misc/WSLInterop') || (fs.existsSync('/proc/version') && fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')) || !!process.env.WSL_DISTRO_NAME);
+    const uiUseDiscreteGpu = process.env.PW_UI_USE_DISCRETE_GPU === '1';
+    const isWSL = process.platform === 'linux' && (
+      fs.existsSync('/proc/sys/fs/binfmt_misc/WSLInterop') ||
+      (fs.existsSync('/proc/version') && fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')) ||
+      !!process.env.WSL_DISTRO_NAME
+    );
+
     if (uiDisableGpu) {
       args.push('--disable-gpu', '--disable-software-rasterizer');
+    } else if (uiUseDiscreteGpu) {
+      // Force discrete GPU selection (useful when MESA_D3D12_DEFAULT_ADAPTER_NAME is set)
+      args.push('--use-gl=angle', '--use-angle=d3d11');
     } else if (uiUseSwiftShader || isWSL) {
+      // Use SwiftShader software rendering as fallback for WSL or when explicitly requested
       args.push('--use-gl=swiftshader');
     }
     if (!channel && !options.persistentContextOptions?.executablePath)
