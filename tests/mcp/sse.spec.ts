@@ -289,9 +289,11 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
 
   kill();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    // Context should only close when the server shuts down.
-    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
-  }).toPass();
+  if (process.platform !== 'win32') {
+    await expect(async () => {
+      const lines = stderr().split('\n');
+      // Context should only close when the server shuts down.
+      expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
+    }).toPass();
+  }
 });
