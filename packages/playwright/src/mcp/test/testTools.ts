@@ -125,7 +125,7 @@ export const setupPage = defineTestTool({
     description: 'Setup the page for test',
     inputSchema: z.object({
       project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
-      testLocation: z.string().optional().describe('Location of the test to use for setup. For example: "test/e2e/file.spec.ts:20". Sets up blank page if no location is provided.'),
+      testLocation: z.string().optional().describe('Location of the seed test to use for setup. For example: "test/seed/default.spec.ts:20".'),
     }),
     type: 'readOnly',
   },
@@ -138,16 +138,16 @@ export const setupPage = defineTestTool({
 
     let testLocation = params.testLocation;
     if (!testLocation) {
-      testLocation = '.template.spec.ts';
+      testLocation = 'default.seed.spec.ts';
       const config = await testRunner.loadConfig();
       const project = params.project ? config.projects.find(p => p.project.name === params.project) : config.projects[0];
       const testDir = project?.project.testDir || configDir;
-      const templateFile = path.join(testDir, testLocation);
-      if (!fs.existsSync(templateFile)) {
-        await fs.promises.writeFile(templateFile, `
-          import { test, expect } from '@playwright/test';
-            test('template', async ({ page }) => {});
-          `);
+      const seedFile = path.join(testDir, testLocation);
+      if (!fs.existsSync(seedFile)) {
+        await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
+
+test('seed', async ({ page }) => {});
+`);
       }
     }
 

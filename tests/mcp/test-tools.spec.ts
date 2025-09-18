@@ -385,7 +385,7 @@ test('test_setup_page without location respects testsDir', async ({ startClient 
 
 ### Current page snapshot:
 `);
-  expect(fs.existsSync(test.info().outputPath('tests', '.template.spec.ts'))).toBe(true);
+  expect(fs.existsSync(test.info().outputPath('tests', 'default.seed.spec.ts'))).toBe(true);
 });
 
 async function prepareDebugTest(startClient: StartClient) {

@@ -177,15 +177,15 @@ function addTestMCPServerCommand(program: Command) {
 function addInitAgentsCommand(program: Command) {
   const command = program.command('init-agents', { hidden: true });
   command.description('Initialize repository agents for the Claude Code');
-  command.option('--claude', 'Initialize repository agents for the Claude Code');
-  command.option('--opencode', 'Initialize repository agents for the Opencode');
-  command.option('--vscode', 'Initialize repository agents for the VS Code Copilot');
+  const option = command.createOption('--loop <loop>', 'Agentic loop provider');
+  option.choices(['claude', 'opencode', 'vscode']);
+  command.addOption(option);
   command.action(async opts => {
-    if (opts.opencode)
+    if (opts.loop === 'opencode')
       await initOpencodeRepo();
-    else if (opts.vscode)
+    else if (opts.loop === 'vscode')
       await initVSCodeRepo();
-    else
+    else if (opts.loop === 'claude')
       await initClaudeCodeRepo();
   });
 }

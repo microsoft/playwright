@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('https://demo.playwright.dev/todomvc');
 });
 
-test('template', async ({ page }) => {
+test('seed', async ({ page }) => {
   // This test tells agents how to start recording the test
   // so that the page was already configured.
 });

@@ -200,7 +200,7 @@ Playwright and should be regenerated whenever Playwright is updated.
 Example for Claude Code subagents:
 
 ```bash
-npx playwright init-agents --claude
+npx playwright init-agents --loop=claude
 ```
 
 ### Specs in `specs/`
