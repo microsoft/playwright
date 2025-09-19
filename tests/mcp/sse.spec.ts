@@ -23,7 +23,7 @@ import { test as baseTest, expect, mcpServerPath } from './fixtures';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
 
-const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string, kill: () => void }> }>({
+const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
     let cp: ChildProcess | undefined;
     const userDataDir = testInfo.outputPath('user-data-dir');
@@ -54,10 +54,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
           resolve(match[1]);
       }));
 
-      return { url: new URL(url), stderr: () => stderr, kill: () => {
-        cp?.kill('SIGTERM');
-        cp = undefined;
-      } };
+      return { url: new URL(url), stderr: () => stderr };
     });
     cp?.kill('SIGTERM');
   },
@@ -234,7 +231,7 @@ test('sse transport browser lifecycle (persistent, multiclient)', async ({ serve
 });
 
 test('sse transport shared context', async ({ serverEndpoint, server }) => {
-  const { url, stderr, kill } = await serverEndpoint({ args: ['--shared-browser-context'] });
+  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
 
   // Create first client and navigate
   const transport1 = new SSEClientTransport(new URL('/sse', url));
@@ -287,13 +284,11 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
     expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(0);
   }).toPass();
 
-  kill();
+  await fetch(new URL('/killkillkill', url).href).catch(() => {});
 
-  if (process.platform !== 'win32') {
-    await expect(async () => {
-      const lines = stderr().split('\n');
-      // Context should only close when the server shuts down.
-      expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
-    }).toPass();
-  }
+  await expect(async () => {
+    const lines = stderr().split('\n');
+    // Context should only close when the server shuts down.
+    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
+  }).toPass();
 });
