@@ -28,7 +28,8 @@ import type * as bidi from './third_party/bidiProtocol';
 
 // BidiPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
-export const kBrowserCloseMessageId = 0;
+export const kBrowserCloseMessageId = Number.MAX_SAFE_INTEGER - 1;
+export const kShutdownSessionNewMessageId = kBrowserCloseMessageId - 1;
 
 export class BidiConnection {
   private readonly _transport: ConnectionTransport;
@@ -235,7 +236,7 @@ export class BidiSession extends EventEmitter {
 
   dispatchMessage(message: any) {
     const object = message as bidi.Message;
-    if (object.id === kBrowserCloseMessageId)
+    if (object.id === kBrowserCloseMessageId || object.id === kShutdownSessionNewMessageId)
       return;
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
