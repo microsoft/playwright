@@ -21,7 +21,7 @@ import * as React from 'react';
 
 export interface TabbedPaneTab {
   id: string;
-  title: string | JSX.Element;
+  title: string | React.JSX.Element;
   count?: number;
   render: () => React.ReactElement;
 }

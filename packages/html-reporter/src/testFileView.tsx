@@ -71,7 +71,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   </Chip>;
 };
 
-function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
+function imageDiffBadge(test: TestCaseSummary): React.JSX.Element | undefined {
   for (const result of test.results) {
     for (const attachment of result.attachments) {
       if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
@@ -80,7 +80,7 @@ function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
   }
 }
 
-function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
+function videoBadge(test: TestCaseSummary): React.JSX.Element | undefined {
   const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
   return resultWithVideo ? <LinkBadge href={testResultHref({ test, result: resultWithVideo, anchor: 'attachment-video' })} title='View video' dim={true}>{video()}</LinkBadge> : undefined;
 }

@@ -20,8 +20,8 @@ import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
 
 export const TreeItem: React.FunctionComponent<{
-  title: JSX.Element,
-  loadChildren?: () => JSX.Element[],
+  title: React.JSX.Element,
+  loadChildren?: () => React.JSX.Element[],
   onClick?: () => void,
   expandByDefault?: boolean,
   depth: number,

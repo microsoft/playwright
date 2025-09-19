@@ -106,7 +106,7 @@ const FilmStripLane: React.FunctionComponent<{
   const frameCount = (effectiveWidth / (frameSize.width + 2 * frameMargin)) | 0;
   const frameDuration = (endTime - startTime) / frameCount;
 
-  const frames: JSX.Element[] = [];
+  const frames: React.JSX.Element[] = [];
   for (let i = 0; startTime && frameDuration && i < frameCount; ++i) {
     const time = startTime + frameDuration * i;
     const index = upperBound(screencastFrames, time, timeComparator) - 1;

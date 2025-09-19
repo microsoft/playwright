@@ -325,7 +325,7 @@ export const Workbench: React.FunctionComponent<{
     component: <MetadataView model={model}/>
   };
 
-  return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
+  return <div className='vbox workbench' {...(inert ? { inert: true } : {})}>
     {!hideTimeline && <Timeline
       model={model}
       consoleEntries={consoleModel.entries}

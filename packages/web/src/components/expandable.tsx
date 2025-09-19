@@ -19,7 +19,7 @@ import './expandable.css';
 import { clsx } from '../uiUtils';
 
 export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
-  title: JSX.Element | string,
+  title: React.JSX.Element | string,
   setExpanded: (expanded: boolean) => void,
   expanded: boolean,
   expandOnTitleClick?: boolean,
