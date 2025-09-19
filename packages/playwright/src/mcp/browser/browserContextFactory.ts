@@ -106,7 +106,7 @@ class IsolatedContextFactory extends BaseContextFactory {
   protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
     await injectCdpPort(this.config.browser);
     const browserType = playwright[this.config.browser.browserName];
-    const tracesDir = await outputFile(this.config, clientInfo, `traces`);
+    const tracesDir = await outputFile(this.config, clientInfo, `traces`, { origin: 'code' });
     if (this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
     return browserType.launch({
@@ -173,7 +173,7 @@ class PersistentContextFactory implements BrowserContextFactory {
     await injectCdpPort(this.config.browser);
     testDebug('create browser context (persistent)');
     const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo);
-    const tracesDir = await outputFile(this.config, clientInfo, `traces`);
+    const tracesDir = await outputFile(this.config, clientInfo, `traces`, { origin: 'code' });
     if (this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
 

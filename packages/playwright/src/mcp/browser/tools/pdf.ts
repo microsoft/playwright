@@ -17,6 +17,7 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import * as javascript from '../codegen';
+import { dateAsFileName } from './utils';
 
 const pdfSchema = z.object({
   filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified.'),
@@ -34,7 +35,7 @@ const pdf = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const fileName = await tab.context.outputFile(params.filename ?? `page-${new Date().toISOString()}.pdf`);
+    const fileName = await tab.context.outputFile(params.filename ?? `page-${dateAsFileName()}.pdf`, { origin: 'llm' });
     response.addCode(`await page.pdf(${javascript.formatObject({ path: fileName })});`);
     response.addResult(`Saved page as ${fileName}`);
     await tab.page.pdf({ path: fileName });

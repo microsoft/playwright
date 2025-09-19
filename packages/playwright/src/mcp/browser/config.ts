@@ -271,15 +271,27 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, name: string): Promise<string> {
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
   const rootPath = firstRootPath(clientInfo);
   const outputDir = config.outputDir
     ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
     ?? path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output', String(clientInfo.timestamp));
 
-  await fs.promises.mkdir(outputDir, { recursive: true });
-  const fileName = sanitizeForFilePath(name);
-  return path.join(outputDir, fileName);
+  // Trust code.
+  if (options.origin === 'code')
+    return path.resolve(outputDir, fileName);
+
+  // Trust llm to use valid characters in file names.
+  if (options.origin === 'llm') {
+    fileName = fileName.split('\\').join('/');
+    const resolvedFile = path.resolve(outputDir, fileName);
+    if (!resolvedFile.startsWith(path.resolve(outputDir) + path.sep))
+      throw new Error(`Resolved file path for ${fileName} is outside of the output directory`);
+    return resolvedFile;
+  }
+
+  // Do not trust web, at all.
+  return path.join(outputDir, sanitizeForFilePath(fileName));
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {

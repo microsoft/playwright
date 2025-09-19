@@ -113,8 +113,8 @@ export class Context {
     return url;
   }
 
-  async outputFile(name: string): Promise<string> {
-    return outputFile(this.config, this._clientInfo, name);
+  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+    return outputFile(this.config, this._clientInfo, fileName, options);
   }
 
   private _onPageCreated(page: playwright.Page) {
