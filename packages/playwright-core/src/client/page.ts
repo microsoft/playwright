@@ -29,7 +29,7 @@ import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
-import { Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
+import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
@@ -48,7 +48,7 @@ import type { Clock } from './clock';
 import type { APIRequestContext } from './fetch';
 import type { WaitForNavigationOptions } from './frame';
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
-import type { Request, RouteHandlerCallback, WebSocketRouteHandlerCallback } from './network';
+import type { RouteHandlerCallback, WebSocketRouteHandlerCallback } from './network';
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, TimeoutOptions, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -802,6 +802,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: WaitForFunctionOptions): Promise<structs.SmartHandle<R>> {
     return await this._mainFrame.waitForFunction(pageFunction, arg, options);
+  }
+
+  async requests() {
+    const { requests } = await this._channel.requests();
+    return requests.map(request => Request.from(request));
   }
 
   workers(): Worker[] {

@@ -2121,6 +2121,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, progress?: Progress): Promise<PageAccessibilitySnapshotResult>;
   pageErrors(params?: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
+  requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
   snapshotForAI(params: PageSnapshotForAIParams, progress?: Progress): Promise<PageSnapshotForAIResult>;
   startJSCoverage(params: PageStartJSCoverageParams, progress?: Progress): Promise<PageStartJSCoverageResult>;
   stopJSCoverage(params?: PageStopJSCoverageParams, progress?: Progress): Promise<PageStopJSCoverageResult>;
@@ -2568,6 +2569,11 @@ export type PagePdfOptions = {
 };
 export type PagePdfResult = {
   pdf: Binary,
+};
+export type PageRequestsParams = {};
+export type PageRequestsOptions = {};
+export type PageRequestsResult = {
+  requests: RequestChannel[],
 };
 export type PageSnapshotForAIParams = {
   timeout: number,

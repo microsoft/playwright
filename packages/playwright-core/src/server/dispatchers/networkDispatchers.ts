@@ -32,6 +32,7 @@ import type { Progress } from '@protocol/progress';
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;
   private _browserContextDispatcher: BrowserContextDispatcher;
+  reportedThroughEvent = false;
 
   static from(scope: BrowserContextDispatcher, request: Request): RequestDispatcher {
     const result = scope.connection.existingDispatcher<RequestDispatcher>(request);
@@ -48,9 +49,9 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
     const frame = request.frame();
     const page = request.frame()?._page;
     const pageDispatcher = page ? scope.connection.existingDispatcher<PageDispatcher>(page) : null;
-    const frameDispatcher = frame ? FrameDispatcher.from(scope, frame) : null;
+    const frameDispatcher = FrameDispatcher.fromNullable(scope, frame);
     super(pageDispatcher || frameDispatcher || scope, request, 'Request', {
-      frame: FrameDispatcher.fromNullable(scope, request.frame()),
+      frame: frameDispatcher,
       serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
       url: request.url(),
       resourceType: request.resourceType(),

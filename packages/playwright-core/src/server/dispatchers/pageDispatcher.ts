@@ -339,6 +339,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { pdf: buffer };
   }
 
+  async requests(params: channels.PageRequestsParams, progress: Progress): Promise<channels.PageRequestsResult> {
+    return { requests: this._page.networkRequests().map(request => RequestDispatcher.from(this.parentScope(), request)) };
+  }
+
   async snapshotForAI(params: channels.PageSnapshotForAIParams, progress: Progress): Promise<channels.PageSnapshotForAIResult> {
     return { snapshot: await this._page.snapshotForAI(progress) };
   }

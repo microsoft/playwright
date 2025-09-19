@@ -1481,6 +1481,10 @@ scheme.PagePdfParams = tObject({
 scheme.PagePdfResult = tObject({
   pdf: tBinary,
 });
+scheme.PageRequestsParams = tOptional(tObject({}));
+scheme.PageRequestsResult = tObject({
+  requests: tArray(tChannel(['Request'])),
+});
 scheme.PageSnapshotForAIParams = tObject({
   timeout: tFloat,
 });

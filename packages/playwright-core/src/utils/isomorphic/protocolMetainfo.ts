@@ -131,6 +131,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.accessibilitySnapshot', { title: 'Accessibility snapshot', group: 'getter', }],
   ['Page.pageErrors', { title: 'Get page errors', group: 'getter', }],
   ['Page.pdf', { title: 'PDF', }],
+  ['Page.requests', { title: 'Get network requests', group: 'getter', }],
   ['Page.snapshotForAI', { internal: true, }],
   ['Page.startJSCoverage', { title: 'Start JS coverage', group: 'configuration', }],
   ['Page.stopJSCoverage', { title: 'Stop JS coverage', group: 'configuration', }],

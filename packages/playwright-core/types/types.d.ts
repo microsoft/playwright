@@ -3927,6 +3927,12 @@ export interface Page {
   requestGC(): Promise<void>;
 
   /**
+   * Returns up to 100 last network request from this page. See
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) for more details.
+   */
+  requests(): Promise<Array<Request>>;
+
+  /**
    * Routing provides the capability to modify network requests that are made by a page.
    *
    * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or
