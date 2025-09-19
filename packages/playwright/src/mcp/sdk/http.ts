@@ -64,7 +64,7 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
   const streamableSessions = new Map();
   httpServer.on('request', async (req, res) => {
     const url = new URL(`http://localhost${req.url}`);
-    if (url.pathname === '/killkillkill') {
+    if (url.pathname === '/killkillkill' && req.method === 'GET') {
       res.statusCode = 200;
       res.end('Killing process');
       // Simulate Ctrl+C in a way that works on Windows too.
