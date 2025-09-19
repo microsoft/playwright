@@ -268,14 +268,14 @@ export async function initVSCodeRepo() {
 }
 
 async function copyVSCodePrompts() {
-  await fs.promises.mkdir('.vscode/prompts', { recursive: true });
+  await fs.promises.mkdir('.github/prompts', { recursive: true });
   const promptsDir = path.join(__dirname, 'vscode');
   const promptFiles = await fs.promises.readdir(promptsDir);
   for (const file of promptFiles) {
     if (file.endsWith('.prompt.md')) {
       const sourcePath = path.join(promptsDir, file);
       const content = await fs.promises.readFile(sourcePath, 'utf-8');
-      await writeFile(`.vscode/prompts/${file}`, content);
+      await writeFile(`.github/prompts/${file}`, content);
     }
   }
 }
