@@ -96,6 +96,26 @@ test('test_run', async ({ startClient }) => {
   expect(text).not.toContain(`../../test-results`);
 });
 
+test('test_run for a failed tests is not an error', async ({ startClient }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+  });
+
+  const { client } = await startClient();
+  const response = await client.callTool({
+    name: 'test_run',
+  });
+
+  const text = response.content[0].text;
+  // The tool run has succeeded, even though the test has failed.
+  expect(response.isError).toBeFalsy();
+
+  expect(text).toContain(`1 failed`);
+});
+
 test('test_run filters', async ({ startClient }) => {
   await writeFiles({
     'playwright.config.ts': `
