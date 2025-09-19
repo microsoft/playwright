@@ -116,7 +116,6 @@ it('should restore state from userDataDir', async ({ browserType, server, create
   const page = await browserContext.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => localStorage.hey = 'hello');
-  await page.goto(server.EMPTY_PAGE);
   await browserContext.close();
 
   const browserContext2 = await browserType.launchPersistentContext(userDataDir);
