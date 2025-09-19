@@ -42,19 +42,15 @@ function getWSLRenderingArgs(): string[] {
   if (process.env.PW_UI_DISABLE_GPU === '1')
     return ['--disable-gpu', '--disable-software-rasterizer'];
 
-
   if (process.env.PW_UI_USE_SWIFTSHADER === '1')
     return ['--use-gl=swiftshader'];
-
 
   if (process.env.PW_UI_USE_DISCRETE_GPU === '1')
     return ['--use-gl=angle', '--use-angle=d3d11'];
 
-
   // Auto-detect WSL and apply SwiftShader fallback
   if (isWSL())
     return ['--use-gl=swiftshader'];
-
 
   return [];
 }
@@ -66,8 +62,6 @@ function isWSL(): boolean {
   if (process.platform !== 'linux')
     return false;
 
-
-  // Check for WSL-specific indicators
   return (
     fs.existsSync('/proc/sys/fs/binfmt_misc/WSLInterop') ||
     (fs.existsSync('/proc/version') &&
@@ -75,7 +69,6 @@ function isWSL(): boolean {
     !!process.env.WSL_DISTRO_NAME
   );
 }
-
 
 export async function launchApp(browserType: BrowserType, options: {
   sdkLanguage: string,

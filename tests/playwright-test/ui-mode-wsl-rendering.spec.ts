@@ -120,20 +120,14 @@ test.describe('UI mode WSL rendering workarounds', () => {
   test('should detect WSL via WSLInterop file', async ({ runUITest }) => {
     const originalPlatform = process.platform;
     const originalEnv = { ...process.env };
-
-    // Mock WSL environment with WSLInterop file
-    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
-
-    // Create a temporary WSLInterop file
-    const tempWSLInterop = '/tmp/WSLInterop';
-    fs.writeFileSync(tempWSLInterop, '');
-
-    // Mock fs.existsSync to return true for WSLInterop
     const originalExistsSync = fs.existsSync;
+
+    // Mock WSL environment
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+    delete process.env.WSL_DISTRO_NAME; // Ensure other WSL detection is off
     fs.existsSync = (path: string) => {
       if (path === '/proc/sys/fs/binfmt_misc/WSLInterop')
         return true;
-
       return originalExistsSync(path);
     };
 
@@ -145,7 +139,6 @@ test.describe('UI mode WSL rendering workarounds', () => {
       Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
       Object.assign(process.env, originalEnv);
       fs.existsSync = originalExistsSync;
-      fs.unlinkSync(tempWSLInterop);
     }
   });
 
