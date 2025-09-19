@@ -136,9 +136,9 @@ export class TestServerDispatcher implements TestServerInterface {
   async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
     if (isUnderTest())
       return;
-    // Prevent opening CLI editors
-    process.env.EDITOR = undefined;
-    process.env.VISUAL = undefined;
+    // Prevent opening any configured CLI editors and fallback to VSCode automatically (opening it if installed and closed)
+    process.env.EDITOR = 'code';
+    delete process.env.VISUAL;
     // eslint-disable-next-line no-console
     launchEditor(`${params.location.file}:${params.location.line}:${params.location.column}`, undefined, (_, e) => console.error('Failed to launch editor: ' + e));
   }
