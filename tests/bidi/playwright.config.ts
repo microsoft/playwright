@@ -92,10 +92,7 @@ for (const [key, channels] of Object.entries(browserToChannels)) {
     console.error(`Using executable at ${executablePath}`);
   for (const channel of channels) {
     const testIgnore: RegExp[] = [
-      /library\/debug-controller/,
       /library\/inspector/,
-      /library\/trace-viewer.spec.ts/,
-      /library\/tracing.spec.ts/,
       /page\/page-leaks.spec.ts/,
     ];
     if (browserName.toLowerCase().includes('firefox'))
