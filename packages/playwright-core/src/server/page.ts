@@ -62,7 +62,7 @@ export interface PageDelegate {
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
   updateExtraHTTPHeaders(): Promise<void>;
-  updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void>;
+  updateEmulatedViewportSize(): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   updateFileChooserInterception(): Promise<void>;
