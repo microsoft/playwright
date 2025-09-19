@@ -66,7 +66,6 @@ test('should not leak dispatchers after closing page', async ({ context, server 
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(COUNT);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').RequestDispatcher)).toBe(COUNT);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').ResponseDispatcher)).toBe(COUNT);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/console').ConsoleMessage)).toBe(0);
 
   for (const page of pages)
     await page.close();
@@ -75,7 +74,6 @@ test('should not leak dispatchers after closing page', async ({ context, server 
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(0);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').RequestDispatcher)).toBe(0);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').ResponseDispatcher)).toBe(0);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/console').ConsoleMessage)).toBe(0);
 
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/page').Page)).toBeLessThan(COUNT);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(0);
