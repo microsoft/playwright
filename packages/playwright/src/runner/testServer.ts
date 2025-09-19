@@ -18,7 +18,7 @@ import util from 'util';
 
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
-import { debug } from 'playwright-core/lib/utilsBundle';
+import { debug, open } from 'playwright-core/lib/utilsBundle';
 
 import { loadConfig, resolveConfigLocation } from '../common/configLoader';
 import ListReporter from '../reporters/list';
@@ -137,10 +137,12 @@ export class TestServerDispatcher implements TestServerInterface {
     if (isUnderTest())
       return;
     // Prevent opening any configured CLI editors and fallback to VSCode automatically (opening it if installed and closed)
-    process.env.EDITOR = 'code';
+    delete process.env.EDITOR;
     delete process.env.VISUAL;
-    // eslint-disable-next-line no-console
-    launchEditor(`${params.location.file}:${params.location.line}:${params.location.column}`, undefined, (_, e) => console.error('Failed to launch editor: ' + e));
+    launchEditor(`${params.location.file}:${params.location.line}:${params.location.column}`, undefined, (_, e) => {
+      // eslint-disable-next-line no-console
+      open(`vscode://file/${params.location.file}:${params.location.line}`).catch(e => console.error(e));
+    });
   }
 
   async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {
