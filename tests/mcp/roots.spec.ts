@@ -78,6 +78,28 @@ test('should list all tools when listRoots is slow', async ({ startClient }) => 
   expect(tools.tools.length).toBeGreaterThan(10);
 });
 
+test('should tolerate malformed roots', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    clientName: 'Visual Studio Code',
+    roots: [
+      {
+        name: 'test',
+        uri: 'bogus://' + p.replace(/\\/g, '/'),
+      }
+    ],
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  const [file] = await fs.promises.readdir(testInfo.outputPath('ms-playwright'));
+  expect(file).toMatch(/mcp-.*/);
+});
+
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
 }
