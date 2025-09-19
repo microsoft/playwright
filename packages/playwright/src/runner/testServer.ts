@@ -25,6 +25,7 @@ import ListReporter from '../reporters/list';
 import { createReporterForTestServer } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
 import { TestRunner, TestRunnerEvent } from './testRunner';
+import { launchEditor } from '../utilsBundle';
 
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
@@ -135,8 +136,13 @@ export class TestServerDispatcher implements TestServerInterface {
   async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
     if (isUnderTest())
       return;
-    // eslint-disable-next-line no-console
-    open('vscode://file/' + params.location.file + ':' + params.location.line).catch(e => console.error(e));
+    // Prevent opening any configured CLI editors and fallback to VSCode automatically (opening it if installed and closed)
+    delete process.env.EDITOR;
+    delete process.env.VISUAL;
+    launchEditor(`${params.location.file}:${params.location.line}:${params.location.column}`, undefined, (_, e) => {
+      // eslint-disable-next-line no-console
+      open(`vscode://file/${params.location.file}:${params.location.line}`).catch(e => console.error(e));
+    });
   }
 
   async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {

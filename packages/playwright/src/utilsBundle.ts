@@ -20,4 +20,5 @@ export const stoppable: typeof import('../bundles/utils/node_modules/@types/stop
 export const enquirer: typeof import('../bundles/utils/node_modules/enquirer') = require('./utilsBundleImpl').enquirer;
 export const chokidar: typeof import('../bundles/utils/node_modules/chokidar') = require('./utilsBundleImpl').chokidar;
 export const getEastAsianWidth: typeof import('../bundles/utils/node_modules/get-east-asian-width') = require('./utilsBundleImpl').getEastAsianWidth;
+export const launchEditor: typeof import('../bundles/utils/node_modules/launch-editor') = require('./utilsBundleImpl').launchEditor;
 export type { RawSourceMap } from '../bundles/utils/node_modules/source-map';
