@@ -66,7 +66,7 @@ export const runTests = defineTestTool({
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen, includeTestId: true });
     const testRunner = await context.createTestRunner();
-    const result = await testRunner.runTests(reporter, {
+    await testRunner.runTests(reporter, {
       locations: params.locations,
       projects: params.projects,
       disableConfigReporters: true,
@@ -76,8 +76,7 @@ export const runTests = defineTestTool({
     return {
       content: [
         { type: 'text', text },
-      ],
-      isError: result.status !== 'passed',
+      ]
     };
   },
 });
