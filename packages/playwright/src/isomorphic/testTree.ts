@@ -60,7 +60,7 @@ export class TestTree {
   private _treeItemByTestId = new Map<string, TestItem | TestCaseItem>();
   readonly pathSeparator: string;
 
-  constructor(rootFolder: string, rootSuite: reporterTypes.Suite | undefined, loadErrors: reporterTypes.TestError[], projectFilters: Map<string, boolean> | undefined, pathSeparator: string) {
+  constructor(rootFolder: string, rootSuite: reporterTypes.Suite | undefined, loadErrors: reporterTypes.TestError[], projectFilters: Map<string, boolean> | undefined, pathSeparator: string, hideFiles: boolean) {
     const filterProjects = projectFilters && [...projectFilters.values()].some(Boolean);
     this.pathSeparator = pathSeparator;
     this.rootItem = {
@@ -77,11 +77,11 @@ export class TestTree {
     };
     this._treeItemById.set(rootFolder, this.rootItem);
 
-    const visitSuite = (project: reporterTypes.FullProject, parentSuite: reporterTypes.Suite, parentGroup: GroupItem) => {
-      for (const suite of parentSuite.suites) {
+    const visitSuite = (project: reporterTypes.FullProject, parentSuite: reporterTypes.Suite, parentGroup: GroupItem, mode: 'tests' | 'suites' | 'all') => {
+      for (const suite of mode === 'tests' ? [] : parentSuite.suites) {
         if (!suite.title) {
           // Flatten anonymous describes.
-          visitSuite(project, suite, parentGroup);
+          visitSuite(project, suite, parentGroup, 'all');
           continue;
         }
 
@@ -101,10 +101,10 @@ export class TestTree {
           };
           this._addChild(parentGroup, group);
         }
-        visitSuite(project, suite, group);
+        visitSuite(project, suite, group, 'all');
       }
 
-      for (const test of parentSuite.tests) {
+      for (const test of mode === 'suites' ? [] : parentSuite.tests) {
         const title = test.title;
         let testCaseItem = parentGroup.children.find(t => t.kind !== 'group' && t.title === title) as TestCaseItem;
         if (!testCaseItem) {
@@ -163,8 +163,16 @@ export class TestTree {
       if (filterProjects && !projectFilters.get(projectSuite.title))
         continue;
       for (const fileSuite of projectSuite.suites) {
-        const fileItem = this._fileItem(fileSuite.location!.file.split(pathSeparator), true);
-        visitSuite(projectSuite.project()!, fileSuite, fileItem);
+        if (hideFiles) {
+          visitSuite(projectSuite.project()!, fileSuite, this.rootItem, 'suites');
+          if (fileSuite.tests.length) {
+            const defaultDescribeItem = this._defaultDescribeItem();
+            visitSuite(projectSuite.project()!, fileSuite, defaultDescribeItem, 'tests');
+          }
+        } else {
+          const fileItem = this._fileItem(fileSuite.location!.file.split(pathSeparator), true);
+          visitSuite(projectSuite.project()!, fileSuite, fileItem, 'all');
+        }
       }
     }
 
@@ -236,6 +244,26 @@ export class TestTree {
     };
     this._addChild(parentFileItem, fileItem);
     return fileItem;
+  }
+
+  private _defaultDescribeItem(): GroupItem {
+    let defaultDescribeItem = this._treeItemById.get('<anonymous>') as GroupItem;
+    if (!defaultDescribeItem) {
+      defaultDescribeItem = {
+        kind: 'group',
+        subKind: 'describe',
+        id: '<anonymous>',
+        title: '<anonymous>',
+        location: { file: '', line: 0, column: 0 },
+        duration: 0,
+        parent: this.rootItem,
+        children: [],
+        status: 'none',
+        hasLoadErrors: false,
+      };
+      this._addChild(this.rootItem, defaultDescribeItem);
+    }
+    return defaultDescribeItem;
   }
 
   sortAndPropagateStatus() {
