@@ -698,9 +698,9 @@ it('should contain http2 for http2 requests', async ({ contextFactory }, testInf
   server.close();
 });
 
-it('should filter favicon and favicon redirects', async ({ server, browserName, channel, headless, asset, contextFactory }, testInfo) => {
+it('should filter favicon and favicon redirects', async ({ server, browserName, headless, asset, contextFactory }, testInfo) => {
   it.skip(headless && browserName !== 'firefox' && browserName as any !== '_bidiFirefox', 'headless browsers, except firefox, do not request favicons');
-  it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
+  it.skip(!headless && browserName === 'webkit', 'headed webkit does not have a favicon feature');
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
 
