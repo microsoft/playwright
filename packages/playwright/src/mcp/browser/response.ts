@@ -25,7 +25,7 @@ export class Response {
   private _code: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
   private _context: Context;
-  private _includeSnapshot = false;
+  private _includeSnapshot: 'full' | 'partial' | 'none' = 'none';
   private _includeTabs = false;
   private _tabSnapshot: TabSnapshot | undefined;
 
@@ -72,8 +72,8 @@ export class Response {
     return this._images;
   }
 
-  setIncludeSnapshot() {
-    this._includeSnapshot = true;
+  setIncludeSnapshot(full?: 'full') {
+    this._includeSnapshot = full ?? 'partial';
   }
 
   setIncludeTabs() {
@@ -83,7 +83,7 @@ export class Response {
   async finish() {
     // All the async snapshotting post-action is happening here.
     // Everything below should race against modal states.
-    if (this._includeSnapshot && this._context.currentTab())
+    if (this._includeSnapshot !== 'none' && this._context.currentTab())
       this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot();
     for (const tab of this._context.tabs())
       await tab.updateTitle();
@@ -113,7 +113,7 @@ ${this._code.join('\n')}
     }
 
     // List browser tabs.
-    if (this._includeSnapshot || this._includeTabs)
+    if (this._includeSnapshot !== 'none' || this._includeTabs)
       response.push(...renderTabsMarkdown(this._context.tabs(), this._includeTabs));
 
     // Add snapshot if provided.
@@ -121,7 +121,7 @@ ${this._code.join('\n')}
       response.push(...renderModalStates(this._context, this._tabSnapshot.modalStates));
       response.push('');
     } else if (this._tabSnapshot) {
-      response.push(renderTabSnapshot(this._tabSnapshot));
+      response.push(renderTabSnapshot(this._tabSnapshot, this._includeSnapshot === 'full'));
       response.push('');
     }
 
@@ -153,7 +153,7 @@ ${this._code.join('\n')}
   }
 }
 
-function renderTabSnapshot(tabSnapshot: TabSnapshot): string {
+function renderTabSnapshot(tabSnapshot: TabSnapshot, fullSnapshot: boolean): string {
   const lines: string[] = [];
 
   if (tabSnapshot.consoleMessages.length) {
@@ -177,10 +177,15 @@ function renderTabSnapshot(tabSnapshot: TabSnapshot): string {
   lines.push(`### Page state`);
   lines.push(`- Page URL: ${tabSnapshot.url}`);
   lines.push(`- Page Title: ${tabSnapshot.title}`);
-  lines.push(`- Page Snapshot:`);
-  lines.push('```yaml');
-  lines.push(tabSnapshot.ariaSnapshot);
-  lines.push('```');
+  if (!fullSnapshot && tabSnapshot.formattedAriaSnapshotDiff) {
+    lines.push(`- Page Snapshot Diff:`);
+    lines.push(tabSnapshot.formattedAriaSnapshotDiff);
+  } else {
+    lines.push(`- Page Snapshot:`);
+    lines.push('```yaml');
+    lines.push(tabSnapshot.ariaSnapshot);
+    lines.push('```');
+  }
 
   return lines.join('\n');
 }

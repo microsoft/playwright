@@ -31,7 +31,7 @@ const snapshot = defineTool({
 
   handle: async (context, params, response) => {
     await context.ensureTab();
-    response.setIncludeSnapshot();
+    response.setIncludeSnapshot('full');
   },
 });
 

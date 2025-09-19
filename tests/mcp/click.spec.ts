@@ -16,10 +16,16 @@
 
 import { test, expect } from './fixtures';
 
-test('browser_click', async ({ client, server, mcpBrowser }) => {
+test('browser_click', async ({ client, server }) => {
   server.setContent('/', `
     <title>Title</title>
     <button>Submit</button>
+    <script>
+      const button = document.querySelector('button');
+      button.addEventListener('click', () => {
+        button.focus(); // without manual focus, webkit focuses body
+      });
+    </script>
   `, 'text/html');
 
   await client.callTool({
@@ -35,7 +41,7 @@ test('browser_click', async ({ client, server, mcpBrowser }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- button "Submit" ${mcpBrowser !== 'webkit' || process.platform === 'linux' ? '[active] ' : ''}[ref=e2]`),
+    pageState: expect.stringContaining(`- button "Submit" [active] [ref=e2]`),
   });
 });
 
@@ -125,7 +131,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
       },
     })).toHaveResponse({
       code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Control'] });`,
-      pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
+      pageState: expect.stringContaining(`generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
     });
   }
 
@@ -138,7 +144,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift'] });`,
-    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:false`),
+    pageState: expect.stringContaining(`generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:false`),
   });
 
   expect(await client.callTool({
@@ -150,6 +156,6 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift', 'Alt'] });`,
-    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
+    pageState: expect.stringContaining(`generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
   });
 });
