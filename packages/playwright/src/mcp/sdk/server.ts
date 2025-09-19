@@ -97,7 +97,10 @@ const initializeServer = async (server: Server, backend: ServerBackend, runHeart
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
-    const { roots } = await server.listRoots();
+    const { roots } = await server.listRoots().catch(e => {
+      serverDebug(e);
+      return { roots: [] };
+    });
     clientRoots = roots;
   }
 
