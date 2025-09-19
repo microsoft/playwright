@@ -97,6 +97,8 @@ export class BidiFirefox extends BrowserType {
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--profile');
+    if (args.find(arg => !arg.startsWith('-')))
+      throw new Error('Arguments can not specify page to be opened');
     const firefoxArguments = ['--remote-debugging-port=0'];
     if (headless)
       firefoxArguments.push('--headless');
