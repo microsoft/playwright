@@ -39,7 +39,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2211",
+      "revision": "2212",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
