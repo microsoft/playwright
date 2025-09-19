@@ -755,11 +755,11 @@ it.describe('screencast', () => {
     expectAll(pixels, isAlmostRed);
   });
 
-  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux, isHeadlessShell }, testInfo) => {
+  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux, isHeadlessShell, channel }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
-    it.fixme(browserName === 'webkit' && isLinux && !headless, 'https://github.com/microsoft/playwright/issues/22617');
+    it.fixme(browserName === 'webkit' && !headless && (isLinux || (isWindows && channel === 'webkit-wsl')), 'https://github.com/microsoft/playwright/issues/22617');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 

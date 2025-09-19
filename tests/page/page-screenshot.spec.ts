@@ -280,9 +280,9 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server, isElectron, isMac, isLinux, macVersion, browserName, isHeadlessShell, headless, channel }) => {
+  it('should work for canvas', async ({ page, server, isElectron, isMac, isLinux, isWindows, macVersion, browserName, isHeadlessShell, headless, channel }) => {
     it.fixme(isElectron && isMac, 'Fails on the bots');
-    it.fixme(browserName === 'webkit' && isLinux && !headless, 'WebKit has slightly different corners on gtk4.');
+    it.fixme(browserName === 'webkit' && !headless && (isLinux || (isWindows && channel === 'webkit-wsl')), 'WebKit has slightly different corners on gtk4.');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
