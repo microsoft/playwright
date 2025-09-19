@@ -27,8 +27,8 @@ These steps can be performed independently, manually, or as chained calls in an 
 **Prompt**
 
 ```markdown
-Ask `playwright-test-planner` agent to generate a test plan for "Guest Checkout" scenario.
-Use `seed.spec.ts` as a seed test for the plan.
+<agent:planner> Generate a test plan for "Guest Checkout" scenario.
+                Use `seed.spec.ts` as a seed test for the plan.
 ```
 
 **Output**
@@ -95,7 +95,7 @@ behavioral validation.
 **Prompt**
 
 ```markdown
-Ask `playwright-test-generator` to generate tests for the guest checkout plan under `specs/`.
+<agent:generator> Generate tests for the guest checkout plan under `specs/`.
 ```
 
 **Output**
@@ -168,7 +168,7 @@ When a test fails, the healing agent:
 **Prompt**
 
 ```markdown
-Ask `playwright-test-healer` to fix all failing tests for the guest checkout scenario.
+<agent:healer> Fix all failing tests for the guest checkout scenario.
 ```
 
 **Output**
