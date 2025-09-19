@@ -9,5 +9,6 @@ Test basic functionality of todo app.
 
 - For each scenario in `specs/basic-operations.md`, use `playwright-test-generator`
   subagent to perform the scenario and generate the test source code into `tests/` folder.
+  Process all scenarios sequentially, do not run in parallel.
 
 - Use `playwright-test-healer` subagent to fix the failing tests.
