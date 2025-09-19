@@ -46,6 +46,7 @@ export type AriaTextValue = {
 export type AriaTemplateTextNode = {
   kind: 'text';
   text: AriaTextValue;
+  sourceRange?: { from: number, to: number, subtreeTo: number };
 };
 
 export type AriaTemplateRoleNode = AriaProps & {
@@ -55,6 +56,7 @@ export type AriaTemplateRoleNode = AriaProps & {
   children?: AriaTemplateNode[];
   props?: Record<string, AriaTextValue>;
   containerMode?: 'contain' | 'equal' | 'deep-equal';
+  sourceRange?: { from: number, to: number, subtreeTo: number };
 };
 
 export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
@@ -70,7 +72,7 @@ type YamlLibrary = {
 };
 
 type ParsedYamlPosition = { line: number; col: number; };
-type ParsingOptions = yamlTypes.ParseOptions;
+type ParsingOptions = yamlTypes.ParseOptions & { laxProps?: boolean };
 
 export type ParsedYamlError = {
   message: string;
@@ -98,6 +100,13 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
     return [lineCounter.linePos(range[0]), lineCounter.linePos(range[1])];
   };
 
+  const computeRange = (selfStart: { range?: yamlTypes.Range | null }, selfEnd: { range?: yamlTypes.Range | null }, subtreeEnd: { range?: yamlTypes.Range | null }) => {
+    if (!selfStart.range)
+      return;
+    const to = selfEnd.range ? selfEnd.range[2] : selfStart.range[2];
+    return { from: selfStart.range[0], to, subtreeTo: subtreeEnd.range ? subtreeEnd.range[2] : to };
+  };
+
   const addError = (error: yamlTypes.YAMLError) => {
     errors.push({
       message: error.message,
@@ -111,6 +120,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
       if (itemIsString) {
         const childNode = KeyParser.parse(item, parseOptions, errors);
         if (childNode) {
+          childNode.sourceRange = computeRange(item, item, item);
           container.children = container.children || [];
           container.children.push(childNode);
         }
@@ -156,7 +166,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
         }
         container.children.push({
           kind: 'text',
-          text: textValue(value.value)
+          text: textValue(value.value),
+          sourceRange: computeRange(key, value, value),
         });
         continue;
       }
@@ -211,8 +222,10 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
           ...childNode,
           children: [{
             kind: 'text',
-            text: textValue(String(value.value))
-          }]
+            text: textValue(String(value.value)),
+            sourceRange: computeRange(value, value, value),
+          }],
+          sourceRange: computeRange(key, key, value),
         });
         continue;
       }
@@ -222,6 +235,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
       const valueIsSequence = value instanceof yaml.YAMLSeq;
       if (valueIsSequence) {
         container.children.push(childNode);
+        childNode.sourceRange = computeRange(key, key, value);
         convertSeq(childNode, value as yamlTypes.YAMLSeq);
         continue;
       }
@@ -233,7 +247,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
     }
   };
 
-  const fragment: AriaTemplateNode = { kind: 'role', role: 'fragment' };
+  const emptyRange = { range: [0, 0, 0] as [number, number, number] };  // Fragment has no "self" source, only subtree.
+  const fragment: AriaTemplateNode = { kind: 'role', role: 'fragment', sourceRange: computeRange(emptyRange, emptyRange, yamlDoc) };
 
   yamlDoc.errors.forEach(addError);
   if (errors.length)
@@ -272,13 +287,14 @@ export function textValue(value: string): AriaTextValue {
 }
 
 export class KeyParser {
+  private _options: ParsingOptions;
   private _input: string;
   private _pos: number;
   private _length: number;
 
   static parse(text: yamlTypes.Scalar<string>, options: ParsingOptions, errors: ParsedYamlError[]): AriaTemplateRoleNode | null {
     try {
-      return new KeyParser(text.value)._parse();
+      return new KeyParser(text.value, options)._parse();
     } catch (e) {
       if (e instanceof ParserError) {
         const message = options.prettyErrors === false ? e.message : e.message + ':\n\n' + text.value + '\n' + ' '.repeat(e.pos) + '^\n';
@@ -292,7 +308,8 @@ export class KeyParser {
     }
   }
 
-  constructor(input: string) {
+  constructor(input: string, options: ParsingOptions) {
+    this._options = options;
     this._input = input;
     this._pos = 0;
     this._length = input.length;
@@ -475,6 +492,11 @@ export class KeyParser {
       node.selected = value === 'true';
       return;
     }
+    if (this._options.laxProps) {
+      node.props = node.props || {};
+      node.props[key] = textValue(value);
+      return;
+    }
     this._assert(false, `Unsupported attribute [${key}]`, errorPos);
   }
 
@@ -490,5 +512,70 @@ export class ParserError extends Error {
   constructor(message: string, pos: number) {
     super(message);
     this.pos = pos;
+  }
+}
+
+type AriaSnapshotDiffResult = 'equal' | 'different' | { ref: string, newSource: string }[];
+
+export function diffAriaSnapshots(yaml: YamlLibrary, oldSnapshot: string, newSnapshot: string): AriaSnapshotDiffResult {
+  const diffTree = (oldNode: AriaTemplateNode, newNode: AriaTemplateNode): AriaSnapshotDiffResult => {
+    if (!oldNode.sourceRange || !newNode.sourceRange)
+      return 'different';
+
+    const oldSelfSource = oldSnapshot.slice(oldNode.sourceRange.from, oldNode.sourceRange.to);
+    const newSelfSource = newSnapshot.slice(newNode.sourceRange.from, newNode.sourceRange.to);
+    if (oldNode.kind !== 'role' || newNode.kind !== 'role')
+      return (oldNode.kind === newNode.kind && oldSelfSource === newSelfSource) ? 'equal' : 'different';
+
+    const newSubtreeSource = newSnapshot.slice(newNode.sourceRange.from, newNode.sourceRange.subtreeTo);
+
+    const oldChildren = oldNode.children || [];
+    const newChildren = newNode.children || [];
+    const childrenDiffs = [];
+    // When "self" is the same, we can diff children and try to find a small diff there.
+    let useChildrenDiffs = oldSelfSource === newSelfSource && oldChildren.length === newChildren.length;
+    let childrenTotalLength = 0;
+
+    if (useChildrenDiffs) {
+      for (let i = 0; i < oldChildren.length; i++) {
+        const childDiff = diffTree(oldChildren[i], newChildren[i]);
+        if (childDiff === 'equal')
+          continue;
+        if (childDiff === 'different') {
+          useChildrenDiffs = false;
+          break;
+        }
+        for (const diff of childDiff) {
+          childrenTotalLength += diff.newSource.length;
+          childrenDiffs.push(diff);
+        }
+      }
+    }
+
+    if (childrenDiffs.length > 1 && childrenTotalLength * 2 >= newSubtreeSource.length) {
+      // Too many children diffs without too much of a benefit.
+      useChildrenDiffs = false;
+    }
+
+    if (useChildrenDiffs) {
+      if (!childrenDiffs.length)
+        return 'equal';
+      return childrenDiffs;
+    }
+
+    const oldRef = oldNode.props?.ref?.raw;
+    const newRef = newNode.props?.ref?.raw;
+    if (!oldRef || oldRef !== newRef)
+      return 'different';
+
+    return [{ ref: oldRef, newSource: newSubtreeSource }];
+  };
+
+  try {
+    const oldParsed = parseAriaSnapshotUnsafe(yaml, oldSnapshot, { laxProps: true });
+    const newParsed = parseAriaSnapshotUnsafe(yaml, newSnapshot, { laxProps: true });
+    return diffTree(oldParsed, newParsed);
+  } catch {
+    return 'different';
   }
 }
