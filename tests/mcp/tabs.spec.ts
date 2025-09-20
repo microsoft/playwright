@@ -98,10 +98,8 @@ test('select tab', async ({ client }) => {
 - 2: [Tab two] (data:text/html,<title>Tab two</title><body>Body two</body>)`,
     pageState: expect.stringContaining(`- Page URL: data:text/html,<title>Tab one</title><body>Body one</body>
 - Page Title: Tab one
-- Page Snapshot:
-\`\`\`yaml
-- generic [active] [ref=e1]: Body one
-\`\`\``),
+- Page Snapshot Diff:
+<no changes>`),
   });
 
   expect(await client.callTool({
@@ -133,10 +131,8 @@ test('close tab', async ({ client }) => {
 - 1: (current) [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)`,
     pageState: expect.stringContaining(`- Page URL: data:text/html,<title>Tab one</title><body>Body one</body>
 - Page Title: Tab one
-- Page Snapshot:
-\`\`\`yaml
-- generic [active] [ref=e1]: Body one
-\`\`\``),
+- Page Snapshot Diff:
+<no changes>`),
   });
 });
 
