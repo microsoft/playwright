@@ -32,7 +32,7 @@ const tracingStart = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    const tracesDir = await context.outputFile(`traces`);
+    const tracesDir = await context.outputFile(`traces`, { origin: 'code' });
     const name = 'trace-' + Date.now();
     await (browserContext.tracing as Tracing).start({
       name,
