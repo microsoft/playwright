@@ -129,7 +129,7 @@ async function validateConfig(config: FullConfig): Promise<void> {
   }
 }
 
-function configFromCLIOptions(cliOptions: CLIOptions): Config {
+export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
   let channel: string | undefined;
   switch (cliOptions.browser) {
