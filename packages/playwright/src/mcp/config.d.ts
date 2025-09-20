@@ -68,6 +68,12 @@ export type Config = {
      * Remote endpoint to connect to an existing Playwright server.
      */
     remoteEndpoint?: string;
+
+    /**
+     * Paths to JavaScript files to add as initialization scripts.
+     * The scripts will be evaluated in every page before any of the page's scripts.
+     */
+    initScript?: string[];
   },
 
   server?: {
