@@ -62,6 +62,7 @@ export abstract class BrowserContext extends SdkObject {
     RequestAborted: 'requestaborted',
     RequestFulfilled: 'requestfulfilled',
     RequestContinued: 'requestcontinued',
+    RequestCollected: 'requestcollected',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
     RecorderEvent: 'recorderevent',

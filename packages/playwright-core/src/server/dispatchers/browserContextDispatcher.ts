@@ -154,6 +154,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request') && !request.isNavigationRequest())
         return;
       const requestDispatcher = RequestDispatcher.from(this, request);
+      requestDispatcher.reportedThroughEvent = true;
       this._dispatchEvent('request', {
         request: requestDispatcher,
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
@@ -189,6 +190,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         responseEndTiming: request._responseEndTiming,
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
+    });
+    this.addObjectListener(BrowserContext.Events.RequestCollected, (request: Request) => {
+      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(request);
+      if (requestDispatcher && !requestDispatcher.reportedThroughEvent)
+        requestDispatcher._dispose('gc');
     });
     this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }) => {
       this._dispatchEvent('recorderEvent', { event, data, code, page: PageDispatcher.from(this, page) });

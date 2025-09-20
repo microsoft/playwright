@@ -1998,6 +1998,14 @@ Page:
       returns:
         pdf: binary
 
+    requests:
+      title: Get network requests
+      group: getter
+      returns:
+        requests:
+          type: array
+          items: Request
+
     snapshotForAI:
       internal: true
       parameters:

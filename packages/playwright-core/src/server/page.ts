@@ -166,6 +166,7 @@ export class Page extends SdkObject {
   private _locatorHandlers = new Map<number, { selector: string, noWaitAfter?: boolean, resolved?: ManualPromise<void> }>();
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
+  private _networkRequests: network.Request[] = [];
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -348,6 +349,16 @@ export class Page extends SdkObject {
 
   extraHTTPHeaders(): types.HeadersArray | undefined {
     return this._extraHTTPHeaders;
+  }
+
+  addNetworkRequest(request: network.Request) {
+    this._networkRequests.push(request);
+    for (const collected of ensureArrayLimit(this._networkRequests, 100))
+      this.emitOnContext(BrowserContext.Events.RequestCollected, collected);
+  }
+
+  networkRequests() {
+    return this._networkRequests;
   }
 
   async onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
@@ -1078,7 +1089,8 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
   return result;
 }
 
-function ensureArrayLimit(array: any[], limit: number) {
+function ensureArrayLimit<T>(array: T[], limit: number): T[] {
   if (array.length > limit)
-    array.splice(0, limit / 10);
+    return array.splice(0, limit / 10);
+  return [];
 }

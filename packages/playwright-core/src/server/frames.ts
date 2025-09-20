@@ -302,6 +302,7 @@ export class FrameManager {
       route?.abort('aborted').catch(() => {});
       return;
     }
+    this._page.addNetworkRequest(request);
     this._page.emitOnContext(BrowserContext.Events.Request, request);
     if (route)
       new network.Route(request, route).handle([...this._page.requestInterceptors, ...this._page.browserContext.requestInterceptors]);

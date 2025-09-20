@@ -3137,6 +3137,13 @@ return value resolves to `[]`.
 * since: v1.9
 
 
+## async method: Page.requests
+* since: v1.56
+- returns: <[Array]<[Request]>>
+
+Returns up to 100 last network request from this page. See [`event: Page.request`] for more details.
+
+
 ## async method: Page.addLocatorHandler
 * since: v1.42
 
