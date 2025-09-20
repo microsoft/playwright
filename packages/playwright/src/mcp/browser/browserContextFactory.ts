@@ -87,12 +87,10 @@ class BaseContextFactory implements BrowserContextFactory {
     throw new Error('Not implemented');
   }
 
-  protected async _addInitScript(browserContext: playwright.BrowserContext): Promise<void> {
+  protected async _addInitScript(browserContext: playwright.BrowserContext) {
     for (const scriptPath of this.config.browser.initScript ?? []) {
       try {
-        const resolvedPath = path.resolve(scriptPath);
-        const scriptContent = await fs.promises.readFile(resolvedPath, 'utf8');
-        await browserContext.addInitScript({ content: scriptContent });
+        await browserContext.addInitScript({ path: path.resolve(scriptPath) });
       } catch (error) {
         throw new Error(`Failed to load init script from "${scriptPath}": ${error.message}`);
       }
