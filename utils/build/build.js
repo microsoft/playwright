@@ -676,6 +676,12 @@ copyFiles.push({
   to: 'packages/playwright/lib',
 });
 
+copyFiles.push({
+  files: 'packages/playwright/src/agents/vscode/*.prompt.md',
+  from: 'packages/playwright/src',
+  to: 'packages/playwright/lib',
+});
+
 if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
