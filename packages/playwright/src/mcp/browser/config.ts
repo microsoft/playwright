@@ -254,7 +254,7 @@ function configFromEnv(): Config {
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
-  const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT)
+  const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT);
   if (initScript)
     options.initScript = [initScript];
   options.isolated = envToBoolean(process.env.PLAYWRIGHT_MCP_ISOLATED);
