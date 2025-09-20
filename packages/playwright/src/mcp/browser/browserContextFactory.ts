@@ -79,22 +79,12 @@ class BaseContextFactory implements BrowserContextFactory {
     testDebug(`create browser context (${this._logName})`);
     const browser = await this._obtainBrowser(clientInfo);
     const browserContext = await this._doCreateContext(browser);
-    await this._addInitScript(browserContext);
+    await addInitScript(browserContext, this.config.browser.initScript);
     return { browserContext, close: () => this._closeBrowserContext(browserContext, browser) };
   }
 
   protected async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
     throw new Error('Not implemented');
-  }
-
-  protected async _addInitScript(browserContext: playwright.BrowserContext) {
-    for (const scriptPath of this.config.browser.initScript ?? []) {
-      try {
-        await browserContext.addInitScript({ path: path.resolve(scriptPath) });
-      } catch (error) {
-        throw new Error(`Failed to load init script from "${scriptPath}": ${error.message}`);
-      }
-    }
   }
 
   private async _closeBrowserContext(browserContext: playwright.BrowserContext, browser: playwright.Browser) {
@@ -206,7 +196,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       };
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
-        await this._addInitScript(browserContext);
+        await addInitScript(browserContext, this.config.browser.initScript);
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
@@ -221,22 +211,6 @@ class PersistentContextFactory implements BrowserContextFactory {
       }
     }
     throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
-  }
-
-  private async _addInitScript(browserContext: playwright.BrowserContext): Promise<void> {
-    if (!this.config.browser.initScript || this.config.browser.initScript.length === 0)
-      return;
-
-    for (const scriptPath of this.config.browser.initScript) {
-      try {
-        const resolvedPath = path.resolve(scriptPath);
-        const scriptContent = fs.readFileSync(resolvedPath, 'utf8');
-        await browserContext.addInitScript({ content: scriptContent });
-        testDebug(`Added init script from ${resolvedPath}`);
-      } catch (error) {
-        throw new Error(`Failed to load init script from "${scriptPath}": ${error.message}`);
-      }
-    }
   }
 
   private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string) {
@@ -288,6 +262,11 @@ async function startTraceServer(config: FullConfig, tracesDir: string): Promise<
 
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
+}
+
+async function addInitScript(browserContext: playwright.BrowserContext, initScript: string[] | undefined) {
+  for (const scriptPath of initScript ?? [])
+    await browserContext.addInitScript({ path: path.resolve(scriptPath) });
 }
 
 export class SharedContextFactory implements BrowserContextFactory {

@@ -17,48 +17,49 @@
 import { test, expect } from './fixtures';
 import fs from 'fs';
 
-test('--init-script option loads and executes script', async ({ startClient, server }, testInfo) => {
-  // Create a temporary init script
-  const initScriptPath = testInfo.outputPath('init-script1.js');
-  const initScriptContent1 = `window.testInitScriptExecuted = true;`;
-  await fs.promises.writeFile(initScriptPath, initScriptContent1);
 
-  const initScriptPath2 = testInfo.outputPath('init-script2.js');
-  const initScriptContent2 = `console.log('Init script executed successfully');`;
-  await fs.promises.writeFile(initScriptPath2, initScriptContent2);
+for (const context of ['isolated', 'persistent']) {
+  test(`--init-script option loads and executes script (${context})`, async ({ startClient, server }, testInfo) => {
+    // Create a temporary init script
+    const initScriptPath = testInfo.outputPath('init-script1.js');
+    const initScriptContent1 = `window.testInitScriptExecuted = true;`;
+    await fs.promises.writeFile(initScriptPath, initScriptContent1);
 
-  // Start the client with the init script option
-  const { client: client } = await startClient({
-    args: [`--init-script=${initScriptPath}`, `--init-script=${initScriptPath2}`]
+    const initScriptPath2 = testInfo.outputPath('init-script2.js');
+    const initScriptContent2 = `console.log('Init script executed successfully');`;
+    await fs.promises.writeFile(initScriptPath2, initScriptContent2);
+
+    // Start the client with the init script option
+    const { client: client } = await startClient({
+      args: [`--init-script=${initScriptPath}`, `--init-script=${initScriptPath2}`, ...(context === 'isolated' ? ['--isolated'] : [])]
+    });
+
+    // Navigate to a page and verify the init script was executed
+    await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    });
+
+    await client.callTool({
+      name: 'browser_evaluate',
+      arguments: { function: '() => console.log("Custom log")' }
+    });
+
+    // Check that the init script variables are available
+    expect(await client.callTool({
+      name: 'browser_evaluate',
+      arguments: { function: '() => window.testInitScriptExecuted' }
+    })).toHaveResponse({
+      result: 'true',
+    });
+
+    expect(await client.callTool({
+      name: 'browser_console_messages',
+    })).toHaveResponse({
+      result: expect.stringMatching(/Init script executed successfully.*Custom log/ms),
+    });
   });
-
-  // Navigate to a page and verify the init script was executed
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-
-  await client.callTool({
-    name: 'browser_evaluate',
-    arguments: { function: '() => console.log("Custom log")' }
-  });
-
-  // Check that the init script variables are available
-   expect(await client.callTool({
-    name: 'browser_evaluate',
-    arguments: { function: '() => window.testInitScriptExecuted' }
-  })).toHaveResponse({
-    result: 'true',
-  });
-
-  expect(await client.callTool({
-    name: 'browser_console_messages',
-  })).toHaveResponse({
-    result: expect.stringContaining(`[LOG] Init script executed successfully @ :1
-[LOG] Custom log @ :0`),
-  });
-
-});
+}
 
 test('--init-script option with non-existent file throws error', async ({ startClient }, testInfo) => {
   const nonExistentPath = testInfo.outputPath('non-existent-script.js');
