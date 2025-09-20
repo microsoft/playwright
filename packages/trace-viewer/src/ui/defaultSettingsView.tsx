@@ -27,6 +27,7 @@ export const DefaultSettingsView: React.FC<{}> = () => {
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+  const [hideFiles, setHideFiles] = useSetting('hideFiles', false);
   const [darkMode, setDarkMode] = useDarkModeSetting();
 
   return (
@@ -37,6 +38,12 @@ export const DefaultSettingsView: React.FC<{}> = () => {
           value: darkMode,
           set: setDarkMode,
           name: 'Dark mode'
+        },
+        {
+          type: 'check',
+          value: hideFiles,
+          set: setHideFiles,
+          name: 'Hide files'
         },
         {
           type: 'check',
