@@ -108,7 +108,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   return server;
 }
 
-export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
+export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerServerOptions & TraceViewerRedirectOptions) {
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
@@ -130,6 +130,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('project', project);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
+  if (!options.host && !options.port)
+    params.append('app', 'true');
 
   let baseUrl = '.';
   if (process.env.PW_HMR) {
@@ -167,7 +169,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
   const traceViewerPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
 
-  const { context, page } = await launchApp(traceViewerPlaywright[traceViewerBrowser as 'chromium'], {
+  const { context, page, hasInitialUrl } = await launchApp(traceViewerPlaywright[traceViewerBrowser as 'chromium'], {
     sdkLanguage: traceViewerPlaywright.options.sdkLanguage,
     windowSize: { width: 1280, height: 800 },
     persistentContextOptions: {
@@ -176,6 +178,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       headless: !!options?.headless,
       colorScheme: isUnderTest() ? 'light' : undefined,
     },
+    initialUrl: url
   });
 
   const controller = new ProgressController();
@@ -193,7 +196,8 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     if (isUnderTest())
       page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
 
-    await page.mainFrame().goto(progress, url);
+    if (!hasInitialUrl)
+      await page.mainFrame().goto(progress, url);
   });
   return page;
 }

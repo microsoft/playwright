@@ -32,14 +32,18 @@ export async function launchApp(browserType: BrowserType, options: {
   sdkLanguage: string,
   windowSize: types.Size,
   windowPosition?: types.Point,
-  persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
+  persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2],
+  initialUrl?: string,
 }) {
   const args = [...options.persistentContextOptions?.args ?? []];
 
   let channel = options.persistentContextOptions?.channel;
+  let hasInitialUrl = false;
   if (browserType.name() === 'chromium') {
+    const initialUrl = options.initialUrl ?? 'data:text/html,';
+    hasInitialUrl = options.initialUrl !== undefined;
     args.push(
-        '--app=data:text/html,',
+        `--app=${initialUrl}`,
         `--window-size=${options.windowSize.width},${options.windowSize.height}`,
         ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
         '--test-type=',
@@ -84,7 +88,7 @@ export async function launchApp(browserType: BrowserType, options: {
   }
   if (browserType.name() === 'chromium')
     await installAppIcon(page);
-  return { context, page };
+  return { context, page, hasInitialUrl };
 }
 
 async function installAppIcon(page: Page) {
