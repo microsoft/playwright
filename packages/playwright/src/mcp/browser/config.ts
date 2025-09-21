@@ -20,6 +20,7 @@ import path from 'path';
 
 import { devices } from 'playwright-core';
 import { dotenv } from 'playwright-core/lib/utilsBundle';
+import { fileExistsAsync } from '../../util';
 
 import { firstRootPath } from '../sdk/server';
 
@@ -42,6 +43,7 @@ export type CLIOptions = {
   headless?: boolean;
   host?: string;
   ignoreHttpsErrors?: boolean;
+  initScript?: string[];
   isolated?: boolean;
   imageResponses?: 'allow' | 'omit';
   sandbox?: boolean;
@@ -114,7 +116,17 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   result = mergeConfig(result, configInFile);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
+  await validateConfig(result);
   return result;
+}
+
+async function validateConfig(config: FullConfig): Promise<void> {
+  if (config.browser.initScript) {
+    for (const script of config.browser.initScript) {
+      if (!await fileExistsAsync(script))
+        throw new Error(`Init script file does not exist: ${script}`);
+    }
+  }
 }
 
 export function configFromCLIOptions(cliOptions: CLIOptions): Config {
@@ -200,6 +212,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
+      initScript: cliOptions.initScript,
     },
     server: {
       port: cliOptions.port,
@@ -241,6 +254,9 @@ function configFromEnv(): Config {
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT);
+  if (initScript)
+    options.initScript = [initScript];
   options.isolated = envToBoolean(process.env.PLAYWRIGHT_MCP_ISOLATED);
   if (process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES === 'omit')
     options.imageResponses = 'omit';

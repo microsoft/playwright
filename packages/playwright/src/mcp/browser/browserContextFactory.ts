@@ -79,6 +79,7 @@ class BaseContextFactory implements BrowserContextFactory {
     testDebug(`create browser context (${this._logName})`);
     const browser = await this._obtainBrowser(clientInfo);
     const browserContext = await this._doCreateContext(browser);
+    await addInitScript(browserContext, this.config.browser.initScript);
     return { browserContext, close: () => this._closeBrowserContext(browserContext, browser) };
   }
 
@@ -195,6 +196,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       };
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
+        await addInitScript(browserContext, this.config.browser.initScript);
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
@@ -260,6 +262,11 @@ async function startTraceServer(config: FullConfig, tracesDir: string): Promise<
 
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
+}
+
+async function addInitScript(browserContext: playwright.BrowserContext, initScript: string[] | undefined) {
+  for (const scriptPath of initScript ?? [])
+    await browserContext.addInitScript({ path: path.resolve(scriptPath) });
 }
 
 export class SharedContextFactory implements BrowserContextFactory {
