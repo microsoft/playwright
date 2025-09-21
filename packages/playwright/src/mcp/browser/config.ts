@@ -19,6 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { devices } from 'playwright-core';
+import { dotenv } from 'playwright-core/lib/utilsBundle';
 import { fileExistsAsync } from '../../util';
 
 import { firstRootPath } from '../sdk/server';
