@@ -124,7 +124,7 @@ xUnit v3 uses the [`conservative` parallelism algorithm](https://xunit.net/docs/
 }>
 <TabItem value="nunit">
 
-To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.NUnit.PageTest` or `Microsoft.Playwright.NUnit.ContextTest`. See the following example:
 
 ```csharp
 using Microsoft.Playwright.NUnit;
