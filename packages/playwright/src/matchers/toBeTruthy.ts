@@ -16,7 +16,6 @@
 
 import { expectTypes } from '../util';
 import { formatMatcherMessage } from './matcherHint';
-import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
@@ -69,8 +68,6 @@ export async function toBeTruthy(
       log,
     });
   };
-
-  await runBrowserBackendOnError(locator.page(), message);
 
   return {
     message,

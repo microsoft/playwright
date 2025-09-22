@@ -18,7 +18,6 @@ import { isRegExp } from 'playwright-core/lib/utils';
 
 import { expectTypes } from '../util';
 import { formatMatcherMessage } from './matcherHint';
-import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
@@ -98,8 +97,6 @@ export async function toEqual<T>(
       log,
     });
   };
-
-  await runBrowserBackendOnError(locator.page(), message);
 
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,

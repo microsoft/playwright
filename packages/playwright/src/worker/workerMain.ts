@@ -396,7 +396,10 @@ export class WorkerMain extends ProcessRunner {
 
       try {
         // Run "immediately upon test function finish" callback.
-        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => testInfo._onDidFinishTestFunction?.());
+        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => {
+          for (const fn of testInfo._onDidFinishTestFunctions)
+            await fn();
+        });
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }

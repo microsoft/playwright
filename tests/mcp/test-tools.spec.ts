@@ -242,7 +242,7 @@ test('test_debug (pause/resume)', async ({ startClient }) => {
       test: { id, title: 'fail' },
     },
   })).toHaveTextResponse(`### Paused on error:
-expect(locator).toBeVisible() failed
+Error: expect(locator).toBeVisible() failed
 
 Locator: getByRole('button', { name: 'Missing' })
 Expected: visible
@@ -254,8 +254,13 @@ Call log:
   - waiting for getByRole('button', { name: 'Missing' })
 
 
-### Current page snapshot:
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
 - button "Submit" [ref=e2]
+\`\`\`
 
 ### Task
 Try recovering from the error prior to continuing`);
@@ -303,6 +308,45 @@ test('test_debug (browser_snapshot/network/console)', async ({ startClient, serv
   });
 });
 
+test('test_debug (multiple pages and custom errors)', async ({ startClient, server }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        const page2 = await page.context().newPage();
+        await page.goto(${JSON.stringify(server.PREFIX + '/frames/frame.html')});
+        await page2.goto(${JSON.stringify(server.PREFIX + '/wrappedlink.html')});
+        throw new Error('non-api error');
+      });
+  `);
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(`### Paused on error:
+Error: non-api error
+
+### Page 1 of 2
+- Page URL: ${server.PREFIX + '/frames/frame.html'}
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+- generic [ref=e2]: Hi, I'm frame
+\`\`\`
+
+### Page 2 of 2
+- Page URL: ${server.PREFIX + '/wrappedlink.html'}
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+- link "123321" [ref=e3] [cursor=pointer]:
+  - /url: "#clicked"
+\`\`\`
+
+### Task
+Try recovering from the error prior to continuing`);
+});
+
 test('test_debug (pause/snapshot/resume)', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
 
@@ -312,7 +356,7 @@ test('test_debug (pause/snapshot/resume)', async ({ startClient }) => {
       test: { id, title: 'fail' },
     },
   })).toHaveTextResponse(`### Paused on error:
-expect(locator).toBeVisible() failed
+Error: expect(locator).toBeVisible() failed
 
 Locator: getByRole('button', { name: 'Missing' })
 Expected: visible
@@ -324,8 +368,13 @@ Call log:
   - waiting for getByRole('button', { name: 'Missing' })
 
 
-### Current page snapshot:
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
 - button "Submit" [ref=e2]
+\`\`\`
 
 ### Task
 Try recovering from the error prior to continuing`);
@@ -421,8 +470,14 @@ test('test_setup_page', async ({ startClient }) => {
     },
   })).toHaveTextResponse(`### Paused at end of test. ready for interaction
 
-### Current page snapshot:
-- button "Submit" [ref=e2]`);
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+- button "Submit" [ref=e2]
+\`\`\`
+`);
 
   expect(await client.callTool({
     name: 'browser_click',
@@ -470,7 +525,13 @@ test('test_setup_page with dependencies', async ({ startClient }) => {
     },
   })).toHaveTextResponse(`### Paused at end of test. ready for interaction
 
-### Current page snapshot:
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+
+\`\`\`
 `);
 
   // Should pause at the target test, not in a dependency or any other stray project.
@@ -486,7 +547,13 @@ test('test_setup_page (no test location)', async ({ startClient }) => {
     arguments: {},
   })).toHaveTextResponse(`### Paused at end of test. ready for interaction
 
-### Current page snapshot:
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+
+\`\`\`
 `);
 });
 
@@ -508,7 +575,13 @@ test('test_setup_page chooses top-level project', async ({ startClient }) => {
     arguments: {},
   })).toHaveTextResponse(`### Paused at end of test. ready for interaction
 
-### Current page snapshot:
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+
+\`\`\`
 `);
 
   expect(fs.existsSync(path.join(baseDir, 'one', 'default.seed.spec.ts'))).toBe(false);
@@ -537,7 +610,13 @@ test('test_setup_page without location respects testsDir', async ({ startClient 
     arguments: {},
   })).toHaveTextResponse(`### Paused at end of test. ready for interaction
 
-### Current page snapshot:
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Page Snapshot:
+\`\`\`yaml
+
+\`\`\`
 `);
   expect(fs.existsSync(test.info().outputPath('tests', 'default.seed.spec.ts'))).toBe(true);
 });
