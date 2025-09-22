@@ -19,10 +19,10 @@ import { parseAriaSnapshotUnsafe, diffAriaSnapshots } from '../../../packages/pl
 import { yaml } from 'playwright-core/lib/utilsBundle';
 
 function addSource(text: string, node: any) {
-  if (node.sourceRange) {
+  if (node.sourceRange)
     node.source = text.slice(node.sourceRange.from, node.sourceRange.to).trim();
-    node.subtreeSource = text.slice(node.sourceRange.from, node.sourceRange.subtreeTo).trim();
-  }
+  if (node.subtreeSourceRange)
+    node.subtreeSource = text.slice(node.subtreeSourceRange.from, node.subtreeSourceRange.to).trim();
   (node.children || []).forEach(child => addSource(text, child));
 }
 
@@ -75,7 +75,6 @@ test('parse aria snapshot returns source ranges', () => {
                 kind: 'text',
                 text: expect.objectContaining({ raw: 'item 1' }),
                 source: 'item 1',
-                subtreeSource: 'item 1',
               }),
             ],
           }),
@@ -90,13 +89,11 @@ test('parse aria snapshot returns source ranges', () => {
                 name: 'click me',
                 props: { ref: expect.objectContaining({ raw: 'e2' }) },
                 source: 'button "click me" [ref=e2]',
-                subtreeSource: 'button "click me" [ref=e2]',
               }),
               expect.objectContaining({
                 kind: 'text',
                 text: expect.objectContaining({ raw: 'hello' }),
                 source: 'text: hello',
-                subtreeSource: 'text: hello',
               }),
             ],
           }),
@@ -114,7 +111,6 @@ test('parse aria snapshot returns source ranges', () => {
                     kind: 'text',
                     text: expect.objectContaining({ raw: 'text1' }),
                     source: 'text1',
-                    subtreeSource: 'text1',
                   }),
                 ],
               }),
@@ -129,7 +125,6 @@ test('parse aria snapshot returns source ranges', () => {
                     kind: 'text',
                     text: expect.objectContaining({ raw: 'text2' }),
                     source: 'text2',
-                    subtreeSource: 'text2',
                   }),
                 ],
               }),
@@ -142,7 +137,6 @@ test('parse aria snapshot returns source ranges', () => {
         name: 'another button',
         props: { ref: expect.objectContaining({ raw: 'e4' }) },
         source: 'button "another button" [ref=e4]',
-        subtreeSource: 'button "another button" [ref=e4]',
       }),
     ],
   }));

@@ -43,10 +43,13 @@ export type AriaTextValue = {
   normalized: string;
 };
 
+// Character offsets in the parsed source.
+type SourceRange = { from: number, to: number };
+
 export type AriaTemplateTextNode = {
   kind: 'text';
   text: AriaTextValue;
-  sourceRange?: { from: number, to: number, subtreeTo: number };
+  sourceRange?: SourceRange;
 };
 
 export type AriaTemplateRoleNode = AriaProps & {
@@ -56,7 +59,8 @@ export type AriaTemplateRoleNode = AriaProps & {
   children?: AriaTemplateNode[];
   props?: Record<string, AriaTextValue>;
   containerMode?: 'contain' | 'equal' | 'deep-equal';
-  sourceRange?: { from: number, to: number, subtreeTo: number };
+  sourceRange?: SourceRange;
+  subtreeSourceRange?: SourceRange;  // only present when different from sourceRange
 };
 
 export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
@@ -100,11 +104,11 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
     return [lineCounter.linePos(range[0]), lineCounter.linePos(range[1])];
   };
 
-  const computeRange = (selfStart: { range?: yamlTypes.Range | null }, selfEnd: { range?: yamlTypes.Range | null }, subtreeEnd: { range?: yamlTypes.Range | null }) => {
-    if (!selfStart.range)
+  type WithYamlRange = { range?: yamlTypes.Range | null };
+  const computeRange = (firstToken: WithYamlRange, lastToken: WithYamlRange): SourceRange | undefined => {
+    if (!firstToken.range)
       return;
-    const to = selfEnd.range ? selfEnd.range[2] : selfStart.range[2];
-    return { from: selfStart.range[0], to, subtreeTo: subtreeEnd.range ? subtreeEnd.range[2] : to };
+    return { from: firstToken.range[0], to: lastToken.range ? lastToken.range[2] : firstToken.range[2] };
   };
 
   const addError = (error: yamlTypes.YAMLError) => {
@@ -120,7 +124,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
       if (itemIsString) {
         const childNode = KeyParser.parse(item, parseOptions, errors);
         if (childNode) {
-          childNode.sourceRange = computeRange(item, item, item);
+          childNode.sourceRange = computeRange(item, item);
           container.children = container.children || [];
           container.children.push(childNode);
         }
@@ -167,7 +171,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
         container.children.push({
           kind: 'text',
           text: textValue(value.value),
-          sourceRange: computeRange(key, value, value),
+          sourceRange: computeRange(key, value),
         });
         continue;
       }
@@ -223,9 +227,10 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
           children: [{
             kind: 'text',
             text: textValue(String(value.value)),
-            sourceRange: computeRange(value, value, value),
+            sourceRange: computeRange(value, value),
           }],
-          sourceRange: computeRange(key, key, value),
+          sourceRange: computeRange(key, key),
+          subtreeSourceRange: computeRange(key, value),
         });
         continue;
       }
@@ -235,7 +240,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
       const valueIsSequence = value instanceof yaml.YAMLSeq;
       if (valueIsSequence) {
         container.children.push(childNode);
-        childNode.sourceRange = computeRange(key, key, value);
+        childNode.sourceRange = computeRange(key, key);
+        childNode.subtreeSourceRange = computeRange(key, value);
         convertSeq(childNode, value as yamlTypes.YAMLSeq);
         continue;
       }
@@ -247,8 +253,13 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
     }
   };
 
-  const emptyRange = { range: [0, 0, 0] as [number, number, number] };  // Fragment has no "self" source, only subtree.
-  const fragment: AriaTemplateNode = { kind: 'role', role: 'fragment', sourceRange: computeRange(emptyRange, emptyRange, yamlDoc) };
+  const emptyRange: WithYamlRange = { range: [0, 0, 0] };  // Fragment has no "self" source, only subtree.
+  const fragment: AriaTemplateNode = {
+    kind: 'role',
+    role: 'fragment',
+    sourceRange: computeRange(emptyRange, emptyRange),
+    subtreeSourceRange: computeRange(emptyRange, yamlDoc),
+  };
 
   yamlDoc.errors.forEach(addError);
   if (errors.length)
@@ -527,7 +538,8 @@ export function diffAriaSnapshots(yaml: YamlLibrary, oldSnapshot: string, newSna
     if (oldNode.kind !== 'role' || newNode.kind !== 'role')
       return (oldNode.kind === newNode.kind && oldSelfSource === newSelfSource) ? 'equal' : 'different';
 
-    const newSubtreeSource = newSnapshot.slice(newNode.sourceRange.from, newNode.sourceRange.subtreeTo);
+    const newNodeSubtreeSourceRange = newNode.subtreeSourceRange || newNode.sourceRange;
+    const newSubtreeSource = newSnapshot.slice(newNodeSubtreeSourceRange.from, newNodeSubtreeSourceRange.to);
 
     const oldChildren = oldNode.children || [];
     const newChildren = newNode.children || [];
