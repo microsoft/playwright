@@ -70,6 +70,7 @@ def test_my_app_is_working(fixture_name):
 
 - `browser_type_launch_args`: Override launch arguments for [`method: BrowserType.launch`]. It should return a Dict.
 - `browser_context_args`: Override the options for [`method: Browser.newContext`]. It should return a Dict.
+- `connect_options`: Connect to an existing browser via WebSocket endpoint. It should return a Dict with [`method: BrowserType.connect`] options.
 
 Its also possible to override the context options ([`method: Browser.newContext`]) for a single test by using the `browser_context_args` marker:
 
@@ -218,6 +219,18 @@ def browser_context_args(browser_context_args, playwright):
 ```
 
 Or via the CLI `--device="iPhone 11 Pro"`
+
+### Connect to remote browsers
+
+```py title="conftest.py"
+import pytest
+
+@pytest.fixture(scope="session")
+def connect_options():
+    return {
+        "wsEndpoint": "ws://localhost:8080/ws"
+    }
+```
 
 ### Using with `unittest.TestCase`
 
