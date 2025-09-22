@@ -16,7 +16,7 @@
 
 import { ProgramOption } from 'playwright-core/lib/utilsBundle';
 import * as mcpServer from './sdk/server';
-import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
+import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
@@ -53,6 +53,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
+      .option('--save-video <size>', 'Whether to save the video of the session into the output directory. For example "--save-video=800x600"', resolutionParser.bind(null, '--save-video'))
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
       .option('--shared-browser-context', 'reuse the same browser context between all connected HTTP clients.')
       .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
@@ -60,7 +61,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--timeout-navigation <timeout>', 'specify navigation timeout in milliseconds, defaults to 60000ms', numberParser)
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
-      .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"')
+      .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--connect-tool', 'Allow to switch between different browser connection methods.').hideHelp())
       .addOption(new ProgramOption('--vscode', 'VS Code tools.').hideHelp())
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
