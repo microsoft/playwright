@@ -8199,14 +8199,7 @@ export interface BrowserContext {
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
   /**
-   * **NOTE** Only works with Chromium browser's persistent context.
-   *
-   * Emitted when new background page is created in the context.
-   *
-   * ```js
-   * const backgroundPage = await context.waitForEvent('backgroundpage');
-   * ```
-   *
+   * This event is not emitted.
    */
   on(event: 'backgroundpage', listener: (page: Page) => any): this;
 
@@ -8398,14 +8391,7 @@ export interface BrowserContext {
   once(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
-   * **NOTE** Only works with Chromium browser's persistent context.
-   *
-   * Emitted when new background page is created in the context.
-   *
-   * ```js
-   * const backgroundPage = await context.waitForEvent('backgroundpage');
-   * ```
-   *
+   * This event is not emitted.
    */
   addListener(event: 'backgroundpage', listener: (page: Page) => any): this;
 
@@ -8652,14 +8638,7 @@ export interface BrowserContext {
   off(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
-   * **NOTE** Only works with Chromium browser's persistent context.
-   *
-   * Emitted when new background page is created in the context.
-   *
-   * ```js
-   * const backgroundPage = await context.waitForEvent('backgroundpage');
-   * ```
-   *
+   * This event is not emitted.
    */
   prependListener(event: 'backgroundpage', listener: (page: Page) => any): this;
 
@@ -8858,9 +8837,8 @@ export interface BrowserContext {
   }>): Promise<void>;
 
   /**
-   * **NOTE** Background pages are only supported on Chromium-based browsers.
-   *
-   * All existing background pages in the context.
+   * Returns an empty list.
+   * @deprecated Background pages have been removed from Chromium together with Manifest V2 extensions.
    */
   backgroundPages(): Array<Page>;
 
@@ -9377,14 +9355,7 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * **NOTE** Only works with Chromium browser's persistent context.
-   *
-   * Emitted when new background page is created in the context.
-   *
-   * ```js
-   * const backgroundPage = await context.waitForEvent('backgroundpage');
-   * ```
-   *
+   * This event is not emitted.
    */
   waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 

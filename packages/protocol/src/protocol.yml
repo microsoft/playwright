@@ -1543,10 +1543,6 @@ BrowserContext:
       parameters:
         artifact: Artifact
 
-    backgroundPage:
-      parameters:
-        page: Page
-
     serviceWorker:
       parameters:
         worker: Worker

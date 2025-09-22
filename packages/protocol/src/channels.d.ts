@@ -1620,7 +1620,6 @@ export interface BrowserContextEventTarget {
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: BrowserContextWebSocketRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
-  on(event: 'backgroundPage', callback: (params: BrowserContextBackgroundPageEvent) => void): this;
   on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
   on(event: 'request', callback: (params: BrowserContextRequestEvent) => void): this;
   on(event: 'requestFailed', callback: (params: BrowserContextRequestFailedEvent) => void): this;
@@ -1697,9 +1696,6 @@ export type BrowserContextWebSocketRouteEvent = {
 };
 export type BrowserContextVideoEvent = {
   artifact: ArtifactChannel,
-};
-export type BrowserContextBackgroundPageEvent = {
-  page: PageChannel,
 };
 export type BrowserContextServiceWorkerEvent = {
   worker: WorkerChannel,
@@ -2052,7 +2048,6 @@ export interface BrowserContextEvents {
   'route': BrowserContextRouteEvent;
   'webSocketRoute': BrowserContextWebSocketRouteEvent;
   'video': BrowserContextVideoEvent;
-  'backgroundPage': BrowserContextBackgroundPageEvent;
   'serviceWorker': BrowserContextServiceWorkerEvent;
   'request': BrowserContextRequestEvent;
   'requestFailed': BrowserContextRequestFailedEvent;
