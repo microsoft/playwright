@@ -729,6 +729,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
           - listitem "Right click"
           - listitem "Double click"
           - listitem "Hover"
+          - listitem "Pick locator"
       `);
       await recorder.page.getByRole('listitem', { name: 'Hover' }).click();
     };

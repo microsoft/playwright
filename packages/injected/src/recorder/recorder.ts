@@ -514,10 +514,10 @@ class RecordActionTool implements RecorderTool {
   private _showActionListDialog(model: HighlightModelWithSelector, event: MouseEvent) {
     consumeEvent(event);
     const actionPosition = positionForEvent(event);
-    const actions: { title: string, action: actions.PerformOnRecordAction }[] = [
+    const actions: { title: string, cb: () => void }[] = [
       {
         title: 'Click',
-        action: {
+        cb: () => this._performAction({
           name: 'click',
           selector: model.selector,
           position: actionPosition,
@@ -525,11 +525,11 @@ class RecordActionTool implements RecorderTool {
           button: 'left',
           modifiers: 0,
           clickCount: 0,
-        }
+        }),
       },
       {
         title: 'Right click',
-        action: {
+        cb: () => this._performAction({
           name: 'click',
           selector: model.selector,
           position: actionPosition,
@@ -537,11 +537,11 @@ class RecordActionTool implements RecorderTool {
           button: 'right',
           modifiers: 0,
           clickCount: 0,
-        }
+        }),
       },
       {
         title: 'Double click',
-        action: {
+        cb: () => this._performAction({
           name: 'click',
           selector: model.selector,
           position: actionPosition,
@@ -549,16 +549,20 @@ class RecordActionTool implements RecorderTool {
           button: 'left',
           modifiers: 0,
           clickCount: 2,
-        }
+        }),
       },
       {
         title: 'Hover',
-        action: {
+        cb: () => this._performAction({
           name: 'hover',
           selector: model.selector,
           position: actionPosition,
           signals: [],
-        }
+        }),
+      },
+      {
+        title: 'Pick locator',
+        cb: () => this._recorder.elementPicked(model.selector, model),
       },
     ];
 
@@ -572,7 +576,7 @@ class RecordActionTool implements RecorderTool {
       actionElement.setAttribute('aria-label', action.title);
       actionElement.addEventListener('click', () => {
         this._dialog.close();
-        this._performAction(action.action);
+        action.cb();
       });
       listElement.appendChild(actionElement);
     }
