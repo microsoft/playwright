@@ -12,19 +12,41 @@ These steps can be performed independently, manually, or as chained calls in an 
 
 1. **Plan**: A planning agent explores the app and produces a test plan in `specs/*.md`.
 
-2. **Generate**: A generating agent transforms the plan into `tests/*.spec.ts` files. It executes actions live to verify selectors and flows, then emits testing code and assertions.
+2. **Generate**: A generating agent transforms the plan into `tests/*.spec.ts` files. It executes actions against your site to verify selectors and flows, then emits testing code and assertions.
 
 3. **Heal**: A healing agent executes the test suite and automatically repairs failing tests by applying diffs in place.
 
+### Getting Started
+
+In order to use Playwright Agents, you must add their definitions to your project using
+the `init-agents` command. These definitions should be regenerated whenever Playwright
+is updated.
+
+You need to run this command for each agentic loop you will be using:
+
+```bash
+# Generate agent files for each agentic loop
+# Visual Studio Code
+npx playwright init-agents --loop=vscode
+# Claude Code
+npx playwright init-agents --loop=claude
+# opencode
+npx playwright init-agents --loop=opencode
+```
+
+Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests. Playwright splits this into three steps with one agent per step:
+
 ## 1. Plan
+
+The planning agent explores your app environment and produces a test plan for one or many scenarios and user flows.
 
 **Input**
 
-* A clear request (e.g., “Generate a plan for guest checkout.”)
-* A live entry point (URL) or a seed Playwright test that sets up the environment
-* PRD (optional)
+* A clear request to the planning agent (e.g., “Generate a plan for guest checkout.”)
+* A live app entry point (URL) or a seed Playwright test that sets up the environment necessary to talk to your app
+* A Product Requirement Document (PRD) (optional)
 
-**Prompt**
+**Example Prompt**
 
 ```markdown
 <agent:planner> Generate a test plan for "Guest Checkout" scenario.
@@ -33,7 +55,7 @@ These steps can be performed independently, manually, or as chained calls in an 
 
 **Output**
 
-* A Markdown test plan saved to `specs/guest-checkout.md`. The plan is human-readable but precise enough for test generation.
+* A Markdown test plan saved to `specs/[scenario name].md`. The plan is human-readable but precise enough for test generation.
 
 <details>
 <summary>Example: specs/guest-checkout.md</summary>
@@ -92,7 +114,7 @@ behavioral validation.
 
 * Markdown plan from `specs/`
 
-**Prompt**
+**Example Prompt**
 
 ```markdown
 <agent:generator> Generate tests for the guest checkout plan under `specs/`.
@@ -101,7 +123,7 @@ behavioral validation.
 **Output**
 
 * A test suite under `tests/`
-* Tests may include initial errors that can be healed automatically
+* Generated tests may include initial errors that can be healed automatically by the healer agent
 
 <details>
 <summary>Example: tests/guest-checkout.spec.ts</summary>
@@ -165,7 +187,7 @@ When a test fails, the healing agent:
 
 * Failing test name
 
-**Prompt**
+**Example Prompt**
 
 ```markdown
 <agent:healer> Fix all failing tests for the guest checkout scenario.
@@ -173,11 +195,11 @@ When a test fails, the healing agent:
 
 **Output**
 
-* A passing test, or a skipped test if the functionality is broken
+* A passing test, or a skipped test if the healer was unable to ensure correct functionality
 
 ## Artifacts and Conventions
 
-Follow a simple, auditable structure:
+The static agent definitions and generated files follow a simple, auditable structure:
 
 ```bash
 repo/
@@ -192,7 +214,7 @@ repo/
   playwright.config.ts
 ```
 
-### Agents definitions
+### Agent Definitions
 
 Agent definitions are collections of instructions and MCP tools. They are provided by
 Playwright and should be regenerated whenever Playwright is updated.
