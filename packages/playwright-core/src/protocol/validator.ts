@@ -963,9 +963,6 @@ scheme.BrowserContextWebSocketRouteEvent = tObject({
 scheme.BrowserContextVideoEvent = tObject({
   artifact: tChannel(['Artifact']),
 });
-scheme.BrowserContextBackgroundPageEvent = tObject({
-  page: tChannel(['Page']),
-});
 scheme.BrowserContextServiceWorkerEvent = tObject({
   worker: tChannel(['Worker']),
 });

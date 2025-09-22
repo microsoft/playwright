@@ -191,16 +191,16 @@ export class Page extends SdkObject {
     this.isStorageStatePage = browserContext.isCreatingStorageStatePage();
   }
 
-  async reportAsNew(opener: Page | undefined, error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
+  async reportAsNew(opener: Page | undefined, error?: Error) {
     if (opener) {
       const openerPageOrError = await opener.waitForInitializedOrError();
       if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())
         this._opener = openerPageOrError;
     }
-    this._markInitialized(error, contextEvent);
+    this._markInitialized(error);
   }
 
-  private _markInitialized(error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
+  private _markInitialized(error: Error | undefined = undefined) {
     if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
@@ -209,7 +209,7 @@ export class Page extends SdkObject {
       this.frameManager.createDummyMainFrameIfNeeded();
     }
     this._initialized = error || this;
-    this.emitOnContext(contextEvent, this);
+    this.emitOnContext(BrowserContext.Events.Page, this);
 
     for (const pageError of this._pageErrors)
       this.emitOnContext(BrowserContext.Events.PageError, pageError, this);

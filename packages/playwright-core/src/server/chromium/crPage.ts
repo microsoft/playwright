@@ -39,7 +39,6 @@ import { CRPDF } from './crPdf';
 import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crProtocolHelper';
 import { platformToFontFamilies } from './defaultFontFamilies';
 import { VideoRecorder } from './videoRecorder';
-import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
 
@@ -68,7 +67,6 @@ export class CRPage implements PageDelegate {
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
   readonly _browserContext: CRBrowserContext;
-  private _isBackgroundPage: boolean;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -82,10 +80,9 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean, isBackgroundPage: boolean }) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean }) {
     this._targetId = targetId;
     this._opener = opener;
-    this._isBackgroundPage = bits.isBackgroundPage;
     const dragManager = new DragManager(this);
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._platform() === 'mac', dragManager);
     this.rawMouse = new RawMouseImpl(this, client, dragManager);
@@ -113,10 +110,9 @@ export class CRPage implements PageDelegate {
         this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
 
-    const createdEvent = this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page;
     this._mainFrameSession._initialize(bits.hasUIWindow).then(
-        () => this._page.reportAsNew(this._opener?._page, undefined, createdEvent),
-        error => this._page.reportAsNew(this._opener?._page, error, createdEvent));
+        () => this._page.reportAsNew(this._opener?._page, undefined),
+        error => this._page.reportAsNew(this._opener?._page, error));
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {

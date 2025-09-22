@@ -238,7 +238,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   _onClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
-    this._browserContext._backgroundPages.delete(this);
     this._disposeHarRouters();
     this.emit(Events.Page.Close, this);
   }

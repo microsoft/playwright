@@ -72,7 +72,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly tracing: Tracing;
   readonly clock: Clock;
 
-  readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
   _closingStatus: 'none' | 'closing' | 'closed' = 'none';
@@ -102,11 +101,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(network.WebSocketRoute.from(webSocketRoute)));
-    this._channel.on('backgroundPage', ({ page }) => {
-      const backgroundPage = Page.from(page);
-      this._backgroundPages.add(backgroundPage);
-      this.emit(Events.BrowserContext.BackgroundPage, backgroundPage);
-    });
     this._channel.on('serviceWorker', ({ worker }) => {
       const serviceWorker = Worker.from(worker);
       serviceWorker._context = this;
@@ -456,7 +450,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   backgroundPages(): Page[] {
-    return [...this._backgroundPages];
+    return [];
   }
 
   serviceWorkers(): Worker[] {

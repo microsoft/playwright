@@ -46,7 +46,6 @@ export class CRBrowser extends Browser {
   private _clientRootSessionPromise: Promise<CDPSession> | null = null;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _crPages = new Map<string, CRPage>();
-  _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
   private _version = '';
@@ -176,18 +175,11 @@ export class CRBrowser extends Browser {
     }
 
     assert(!this._crPages.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
-    assert(!this._backgroundPages.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
-
-    if (targetInfo.type === 'background_page') {
-      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, { hasUIWindow: false, isBackgroundPage: true });
-      this._backgroundPages.set(targetInfo.targetId, backgroundPage);
-      return;
-    }
 
     if (targetInfo.type === 'page' || treatOtherAsPage) {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page', isBackgroundPage: false });
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page' });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
@@ -215,12 +207,6 @@ export class CRBrowser extends Browser {
       crPage.didClose();
       return;
     }
-    const backgroundPage = this._backgroundPages.get(targetId);
-    if (backgroundPage) {
-      this._backgroundPages.delete(targetId);
-      backgroundPage.didClose();
-      return;
-    }
     const serviceWorker = this._serviceWorkers.get(targetId);
     if (serviceWorker) {
       this._serviceWorkers.delete(targetId);
@@ -233,9 +219,6 @@ export class CRBrowser extends Browser {
     for (const crPage of this._crPages.values())
       crPage.didClose();
     this._crPages.clear();
-    for (const backgroundPage of this._backgroundPages.values())
-      backgroundPage.didClose();
-    this._backgroundPages.clear();
     for (const serviceWorker of this._serviceWorkers.values())
       serviceWorker.didClose();
     this._serviceWorkers.clear();
@@ -337,7 +320,6 @@ export class CRBrowser extends Browser {
 
 export class CRBrowserContext extends BrowserContext {
   static CREvents = {
-    BackgroundPage: 'backgroundpage',
     ServiceWorker: 'serviceworker',
   };
 
@@ -566,14 +548,6 @@ export class CRBrowserContext extends BrowserContext {
   }
 
   onClosePersistent() {
-    // When persistent context is closed, we do not necessary get Target.detachedFromTarget
-    // for all the background pages.
-    for (const [targetId, backgroundPage] of this._browser._backgroundPages.entries()) {
-      if (backgroundPage._browserContext === this && backgroundPage._page.initializedOrUndefined()) {
-        backgroundPage.didClose();
-        this._browser._backgroundPages.delete(targetId);
-      }
-    }
   }
 
   override async clearCache(): Promise<void> {
@@ -589,15 +563,6 @@ export class CRBrowserContext extends BrowserContext {
       guid: guid,
       browserContextId: this._browserContextId,
     });
-  }
-
-  backgroundPages(): Page[] {
-    const result: Page[] = [];
-    for (const backgroundPage of this._browser._backgroundPages.values()) {
-      if (backgroundPage._browserContext === this && backgroundPage._page.initializedOrUndefined())
-        result.push(backgroundPage._page);
-    }
-    return result;
   }
 
   serviceWorkers(): Worker[] {
