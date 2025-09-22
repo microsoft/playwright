@@ -91,10 +91,28 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
+    void this._initialize();
   }
 
   static forPage(page: playwright.Page): Tab | undefined {
     return (page as any)[tabSymbol];
+  }
+
+  private async _initialize() {
+    const messages = await this.page.consoleMessages().catch(() => []);
+    for (const message of messages)
+      this._handleConsoleMessage(messageToConsoleMessage(message));
+    const errors = await this.page.pageErrors().catch(() => []);
+    for (const error of errors)
+      this._handleConsoleMessage(pageErrorToConsoleMessage(error));
+    const requests = await this.page.requests().catch(() => []);
+    for (const request of requests) {
+      this._requests.set(request, null);
+      void request.response().catch(() => null).then(response => {
+        if (response)
+          this._requests.set(request, response);
+      });
+    }
   }
 
   modalStates(): ModalState[] {

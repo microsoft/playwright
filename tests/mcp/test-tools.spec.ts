@@ -268,18 +268,38 @@ Try recovering from the error prior to continuing`);
   })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:11 › fail`));
 });
 
-test('test_debug / browser_snapshot', async ({ startClient }) => {
-  const { client, id } = await prepareDebugTest(startClient);
+test('test_debug (browser_snapshot/network/console)', async ({ startClient, server }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.goto(${JSON.stringify(server.HELLO_WORLD)});
+        await page.evaluate(() => {
+          console.log('hello from console');
+          setTimeout(() => { throw new Error('error from page'); }, 0);
+        });
+        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+      });
+  `);
   await client.callTool({
     name: 'test_debug',
     arguments: {
       test: { id, title: 'fail' },
     },
   });
+  await expect.poll(() => client.callTool({
+    name: 'browser_network_requests',
+  })).toHaveResponse({
+    result: expect.stringContaining(`[GET] ${server.HELLO_WORLD} => [200] OK`),
+  });
+  expect(await client.callTool({
+    name: 'browser_console_messages',
+  })).toHaveResponse({
+    result: expect.stringMatching(/\[LOG\] hello from console.*\nError: error from page/),
+  });
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
+    pageState: expect.stringContaining(`generic [active] [ref=e1]: Hello, world!`),
   });
 });
 
@@ -522,9 +542,9 @@ test('test_setup_page without location respects testsDir', async ({ startClient 
   expect(fs.existsSync(test.info().outputPath('tests', 'default.seed.spec.ts'))).toBe(true);
 });
 
-async function prepareDebugTest(startClient: StartClient) {
+async function prepareDebugTest(startClient: StartClient, testFile?: string) {
   await writeFiles({
-    'a.test.ts': `
+    'a.test.ts': testFile || `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         await page.setContent('<button>Submit</button>');
