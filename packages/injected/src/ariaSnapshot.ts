@@ -302,7 +302,7 @@ function normalizeGenericRoles(node: AriaNode) {
     }
 
     // Only remove generic that encloses one element, logical grouping still makes sense, even if it is not ref-able.
-    const removeSelf = node.role === 'generic' && result.length <= 1 && result.every(c => typeof c !== 'string' && !!c.ref);
+    const removeSelf = node.role === 'generic' && !node.name && result.length <= 1 && result.every(c => typeof c !== 'string' && !!c.ref);
     if (removeSelf)
       return result;
     node.children = result;

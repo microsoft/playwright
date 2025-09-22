@@ -439,3 +439,12 @@ it('should collapse inline generic nodes', async ({ page }) => {
           - generic [ref=e12]: 1,200
   `);
 });
+
+it('should not remove generic nodes with title', async ({ page }) => {
+  await page.setContent(`<div title="Element title">Element content</div>`);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - generic "Element title" [ref=e2]
+  `);
+});
