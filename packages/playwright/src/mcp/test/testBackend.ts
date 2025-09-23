@@ -28,12 +28,10 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _tools: TestTool<any>[] = [listTests, runTests, debugTest, setupPage];
   private _context: TestContext;
   private _configOption: string | undefined;
-  private _prefix: string | undefined;
 
-  constructor(configOption: string | undefined, options?: { muteConsole?: boolean, headless?: boolean, prefix?: string }) {
+  constructor(configOption: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._context = new TestContext(options);
     this._configOption = configOption;
-    this._prefix = options?.prefix;
   }
 
   async initialize(server: mcp.Server, clientInfo: mcp.ClientInfo): Promise<void> {
@@ -53,31 +51,20 @@ export class TestServerBackend implements mcp.ServerBackend {
 
   async listTools(): Promise<mcp.Tool[]> {
     return [
-      ...this._tools.map(tool => this._applyPrefix(tool.schema)),
-      ...browserTools.map(tool => this._applyPrefix(tool.schema)),
+      ...this._tools.map(tool => mcp.toMcpTool(tool.schema)),
+      ...browserTools.map(tool => mcp.toMcpTool(tool.schema)),
     ];
   }
 
   async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
-    const toolName = this._prefix && name.startsWith(this._prefix) ? name.slice(this._prefix.length) : name;
-
-    const tool = this._tools.find(tool => tool.schema.name === toolName);
+    const tool = this._tools.find(tool => tool.schema.name === name);
     if (!tool)
-      throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => this._applyPrefix(tool.schema).name).join(', ')}`);
+      throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
     return await tool.handle(this._context!, parsedArguments);
   }
 
   serverClosed() {
     void this._context!.close();
-  }
-
-  private _applyPrefix(toolSchema: mcp.ToolSchema<any>): mcp.Tool {
-    if (this._prefix) {
-      const prefixedSchema = { ...toolSchema };
-      prefixedSchema.name = this._prefix + toolSchema.name;
-      return mcp.toMcpTool(prefixedSchema);
-    }
-    return mcp.toMcpTool(toolSchema);
   }
 }

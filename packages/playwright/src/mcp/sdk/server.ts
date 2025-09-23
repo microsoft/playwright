@@ -44,6 +44,41 @@ export interface ServerBackend {
   serverClosed?(server: Server): void;
 }
 
+export class PrefixedServerBackend implements ServerBackend {
+  private _backend: ServerBackend;
+  private _prefix: string;
+
+  constructor(backend: ServerBackend, prefix: string) {
+    this._backend = backend;
+    this._prefix = prefix;
+  }
+
+  async initialize(server: Server, clientInfo: ClientInfo): Promise<void> {
+    return this._backend.initialize?.(server, clientInfo);
+  }
+
+  async listTools(): Promise<Tool[]> {
+    const tools = await this._backend.listTools();
+    return tools.map(tool => this._applyPrefix(tool));
+  }
+
+  async callTool(name: string, args: CallToolRequest['params']['arguments']): Promise<CallToolResult> {
+    const toolName = name.startsWith(this._prefix) ? name.slice(this._prefix.length) : name;
+    return this._backend.callTool(toolName, args);
+  }
+
+  serverClosed(server: Server): void {
+    return this._backend.serverClosed?.(server);
+  }
+
+  private _applyPrefix(tool: Tool): Tool {
+    return {
+      ...tool,
+      name: this._prefix + tool.name
+    };
+  }
+}
+
 export type ServerBackendFactory = {
   name: string;
   nameInConfig: string;

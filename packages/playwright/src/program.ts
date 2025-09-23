@@ -34,7 +34,7 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
-import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
+import { ServerBackendFactory, runMainBackend, PrefixedServerBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
@@ -168,7 +168,10 @@ function addTestMCPServerCommand(program: Command) {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless, prefix: options.prefix }),
+      create: () => {
+        const backend = new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless });
+        return options.prefix ? new PrefixedServerBackend(backend, options.prefix) : backend;
+      },
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)
