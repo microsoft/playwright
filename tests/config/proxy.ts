@@ -24,6 +24,7 @@ import { SocksProxy } from '../../packages/playwright-core/lib/server/utils/sock
 // Certain browsers perform telemetry requests which we want to ignore.
 const kConnectHostsToIgnore = new Set([
   'www.bing.com:443',
+  'www.google.com:443',
 ]);
 
 export class TestProxy {
