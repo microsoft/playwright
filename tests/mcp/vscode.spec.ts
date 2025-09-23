@@ -118,3 +118,28 @@ test('browser_connect(debugController) works', async ({ startClient }) => {
 
   await expect.poll(() => messages).toContainEqual(expect.objectContaining({ method: 'stateChanged' }));
 });
+
+test('tool prefix', async ({ startClient, server }) => {
+  const { client } = await startClient({ env: { 'PLAYWRIGHT_MCP_TOOL_PREFIX': 'test_' } });
+  expect(await client.callTool({
+    name: 'test_browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: `await page.goto('${server.HELLO_WORLD}');`,
+    pageState: `- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title
+- Page Snapshot:
+\`\`\`yaml
+- generic [active] [ref=e1]: Hello, world!
+\`\`\``,
+  });
+});
+
+test.describe(() => {
+  test.use({ mcpServerType: 'test-mcp' });
+  test('tool prefix does not affect test tools', async ({ startClient }) => {
+    const { client } = await startClient({ env: { 'PLAYWRIGHT_MCP_TOOL_PREFIX': 'test_' } });
+    const { tools } = await client.listTools();
+    expect(tools.map(t => t.name)).toContain('test_setup_page');
+  });
+});
