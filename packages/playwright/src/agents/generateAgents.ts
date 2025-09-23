@@ -216,38 +216,22 @@ const vscodeToolMap = new Map<string, string[]>([
   ['edit', ['editFiles']],
   ['write', ['createFile', 'createDirectory']],
 ]);
-const vscodeToolsOrder = ['createFile', 'createDirectory', 'editFiles', 'fileSearch', 'textSearch', 'listDirectory', 'readFile'];
-const vscodeToolPrefix = 'test_'; // FIXME: this is ugly, fix VSCode!
 function saveAsVSCodeChatmode(agent: Agent): string {
   function asVscodeTool(tool: string): string | string[] {
     const [first, second] = tool.split('/');
     if (second)
-      return second.startsWith('browser_') ? vscodeToolPrefix + second : second;
+      return second;
     return vscodeToolMap.get(first) || first;
   }
-  const tools = agent.header.tools.map(asVscodeTool).flat().sort((a, b) => {
-    // VSCode insisits on the specific tools order when editing agent config.
-    const indexA = vscodeToolsOrder.indexOf(a);
-    const indexB = vscodeToolsOrder.indexOf(b);
-    if (indexA === -1 && indexB === -1)
-      return a.localeCompare(b);
-    if (indexA === -1)
-      return 1;
-    if (indexB === -1)
-      return -1;
-    return indexA - indexB;
-  }).map(tool => `'${tool}'`).join(', ');
+  const tools = agent.header.tools.map(asVscodeTool).flat().map(tool => `'${tool}'`).join(', ');
 
   const lines: string[] = [];
   lines.push(`---`);
-  lines.push(`description: ${agent.header.description}.`);
+  lines.push(`description: ${agent.header.description}. Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`);
   lines.push(`tools: [${tools}]`);
   lines.push(`---`);
   lines.push('');
   lines.push(agent.instructions);
-  for (const example of agent.examples)
-    lines.push(`<example>${example}</example>`);
-
   return lines.join('\n');
 }
 
@@ -277,7 +261,6 @@ export async function initVSCodeRepo() {
     type: 'stdio',
     command: commonMcpServers.playwrightTest.command,
     args: commonMcpServers.playwrightTest.args,
-    env: { 'PLAYWRIGHT_MCP_TOOL_PREFIX': vscodeToolPrefix },
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
 }
