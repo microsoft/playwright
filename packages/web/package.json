@@ -5,7 +5,7 @@
   "scripts": {},
   "dependencies": {
     "codemirror": "5.65.18",
-    "@xterm/xterm": "^5.5.0",
-    "@xterm/addon-fit": "^0.10.0"
+    "xterm": "^5.1.0",
+    "xterm-addon-fit": "^0.7.0"
   }
 }
