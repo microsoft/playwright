@@ -64,6 +64,7 @@
     "@stylistic/eslint-plugin": "^5.2.3",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",
+    "@types/immutable": "^3.8.7",
     "@types/node": "18.19.76",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",

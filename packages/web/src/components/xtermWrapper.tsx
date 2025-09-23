@@ -16,8 +16,8 @@
 
 import * as React from 'react';
 import './xtermWrapper.css';
-import type { ITheme, Terminal } from '@xterm/xterm';
-import type { FitAddon } from '@xterm/addon-fit';
+import type { ITheme, Terminal } from 'xterm';
+import type { FitAddon } from 'xterm-addon-fit';
 import type { XtermModule } from './xtermModule';
 import { currentTheme, addThemeListener, removeThemeListener } from '../theme';
 import { useMeasure } from '../uiUtils';
