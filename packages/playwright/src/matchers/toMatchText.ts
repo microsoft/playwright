@@ -22,7 +22,6 @@ import {
 } from './expect';
 import { formatMatcherMessage } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';
-import { runBrowserBackendOnError } from '../mcp/test/browserBackend';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
@@ -102,9 +101,6 @@ export async function toMatchText(
       errorMessage,
     });
   };
-
-  if (locator)
-    await runBrowserBackendOnError(locator.page(), message);
 
   return {
     name: matcherName,

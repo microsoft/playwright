@@ -25,50 +25,46 @@ import type { Page } from '../../../../playwright-core/src/client/page';
 import type { BrowserContextFactory } from '../browser/browserContextFactory';
 import type { ClientInfo } from '../sdk/server';
 
-export async function runBrowserBackendOnError(page: playwright.Page, message: () => string) {
+export async function runBrowserBackendAtEnd(context: playwright.BrowserContext, errorMessage?: string) {
   const testInfo = currentTestInfo();
-  if (!testInfo || !testInfo._pauseOnError())
+  if (!testInfo)
     return;
+
+  const shouldPause = errorMessage ? testInfo?._pauseOnError() : testInfo?._pauseAtEnd();
+  if (!shouldPause)
+    return;
+
+  const lines: string[] = [];
+  if (errorMessage)
+    lines.push(`### Paused on error:`, stripAnsiEscapes(errorMessage));
+  else
+    lines.push(`### Paused at end of test. ready for interaction`);
+
+  for (let i = 0; i < context.pages().length; i++) {
+    const page = context.pages()[i];
+    const stateSuffix = context.pages().length > 1 ? (i + 1) + ' of ' + (context.pages().length) : 'state';
+    lines.push(
+        '',
+        `### Page ${stateSuffix}`,
+        `- Page URL: ${page.url()}`,
+        `- Page Title: ${await page.title()}`.trim(),
+        `- Page Snapshot:`,
+        '```yaml',
+        await (page as Page)._snapshotForAI(),
+        '```',
+    );
+  }
+
+  lines.push('');
+  if (errorMessage)
+    lines.push(`### Task`, `Try recovering from the error prior to continuing`);
 
   const config: FullConfig = {
     ...defaultConfig,
     capabilities: ['testing'],
   };
 
-  const snapshot = await (page as Page)._snapshotForAI();
-  const introMessage = `### Paused on error:
-${stripAnsiEscapes(message())}
-
-### Current page snapshot:
-${snapshot}
-
-### Task
-Try recovering from the error prior to continuing`;
-
-  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(page.context())), introMessage);
-}
-
-export async function runBrowserBackendAtEnd(context: playwright.BrowserContext) {
-  const testInfo = currentTestInfo();
-  if (!testInfo || !testInfo._pauseAtEnd())
-    return;
-
-  const page = context.pages()[0];
-  if (!page)
-    return;
-
-  const snapshot = await (page as Page)._snapshotForAI();
-  const introMessage = `### Paused at end of test. ready for interaction
-
-### Current page snapshot:
-${snapshot}`;
-
-  const config: FullConfig = {
-    ...defaultConfig,
-    capabilities: ['testing'],
-  };
-
-  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(context)), introMessage);
+  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(context)), lines.join('\n'));
 }
 
 function identityFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
