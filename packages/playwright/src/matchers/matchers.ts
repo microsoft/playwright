@@ -486,3 +486,71 @@ export async function toPass(
   }
   return { pass: !this.isNot, message: () => '' };
 }
+
+// New: Page assertion to wait for a cookie to appear/match.
+export async function toHaveCookie(
+  this: ExpectMatcherState,
+  page: Page,
+  expectedCookie: { name: string, value?: string | RegExp } | Record<string, string | RegExp>,
+  options: { timeout?: number } = {},
+) {
+  const matcherName = 'toHaveCookie';
+  expectTypes(page, ['Page'], matcherName);
+
+  const testInfo = currentTestInfo();
+  const timeout = takeFirst(options.timeout, (testInfo as any)?._projectInternal?.expect?.toHaveCookie?.timeout, 0);
+  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+
+  const expectedMap: Record<string, string | RegExp> = (() => {
+    if ('name' in (expectedCookie as any)) {
+      const { name, value } = expectedCookie as { name: string, value?: string | RegExp };
+      return { [name]: value === undefined ? /.*/ : value };
+    }
+    return expectedCookie as Record<string, string | RegExp>;
+  })();
+
+  const matchesExpected = (cookies: { name: string, value: string }[]) => {
+    for (const [name, expectedValue] of Object.entries(expectedMap)) {
+      const actual = cookies.find(c => c.name === name)?.value;
+      if (actual === undefined)
+        return false;
+      if (isRegExp(expectedValue)) {
+        if (!(expectedValue as RegExp).test(actual))
+          return false;
+      } else {
+        if (actual !== expectedValue)
+          return false;
+      }
+    }
+    return true;
+  };
+
+  const intervals = [100, 250, 500, 1000];
+  const result = await pollAgainstDeadline(async () => {
+    // Scope cookies to the current page URL for correctness.
+    const url = page.url();
+    const cookies = await page.context().cookies(url ? [url] : undefined);
+    const ok = matchesExpected(cookies);
+    return { continuePolling: this.isNot ? ok : !ok, result: cookies };
+  }, deadline, intervals);
+
+  const actualCookies = result.result as any[] | undefined;
+  if (result.timedOut) {
+    const expectedPretty = Object.entries(expectedMap)
+        .map(([n, v]) => `${n}=${isRegExp(v) ? `/${(v as RegExp).source}/` : JSON.stringify(v)}`).join(', ');
+    const actualPretty = (actualCookies || [])
+        .map(c => `${c.name}=${JSON.stringify(c.value)}`).slice(0, 20).join(', ');
+    const message = [
+      this.utils.matcherHint(matcherName, 'page', '', { isNot: this.isNot }),
+      '',
+      `Expected: ${this.isNot ? 'not ' : ''}${expectedPretty}`,
+      `Received: ${actualPretty}`,
+      '',
+      `Call Log:`,
+      `- ${timeoutMessage}`,
+    ].join('\n');
+    return { message: () => message, pass: !!this.isNot };
+  }
+
+  return { pass: !this.isNot, message: () => '' };
+}

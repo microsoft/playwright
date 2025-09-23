@@ -422,7 +422,7 @@ test('should silently write missing expectations locally with the update-snapsho
         expect('${ACTUAL_SNAPSHOT}').toMatchSnapshot('snapshot.txt');
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
   const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
@@ -694,7 +694,7 @@ test('should correctly handle different JPEG image signatures', async ({ runInli
         expect(Buffer.from('/9j/4AAQSkZJRgABJD+3EOqoh+DYbgljkJTDA0AfvKeYZU/uxcluvipXU7hAGOoguGFv/Tq3/azTyFRJjgsQRp4mu0elkP9IxBh6uj5gpJVpNk9XJdE+51Nk7kUSQSZtPiXYUR2zd7JxzAVMvGFsjQ==', 'base64')).toMatchSnapshot();
       });
     `,
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
   const expectedTest1ArtifactPath = testInfo.outputPath('a.spec.js-snapshots', 'test1-1.jpg');
   const expectedTest2ArtifactPath = testInfo.outputPath('a.spec.js-snapshots', 'test2-1.png');
   const expectedTest3ArtifactPath = testInfo.outputPath('a.spec.js-snapshots', 'test3-1.jpg');
@@ -986,7 +986,7 @@ test('should update snapshot with array of path segments', async ({ runInlineTes
         expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
   const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/test/path/snapshot.txt');
@@ -1150,7 +1150,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
         expect('Hello world').toMatchSnapshot('snapshot.txt');
       });
     `
-  }, { 'update-snapshots': true });
+  }, { 'update-snapshots': 'all' });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
