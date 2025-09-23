@@ -42,6 +42,7 @@ test('session log should record tool calls', async ({ startClient, server }, tes
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
+    pageState: expect.stringContaining(`- button "Submit"`),
   });
 
   const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
