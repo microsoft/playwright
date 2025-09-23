@@ -61,6 +61,7 @@ export class BrowserServerBackend implements ServerBackend {
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments || {});
     const context = this._context!;
     const response = new Response(context, name, parsedArguments);
+    response.logBegin();
     context.setRunningTool(name);
     try {
       await tool.handle(context, parsedArguments, response);
@@ -71,6 +72,7 @@ export class BrowserServerBackend implements ServerBackend {
     } finally {
       context.setRunningTool(undefined);
     }
+    response.logEnd();
     return response.serialize();
   }
 

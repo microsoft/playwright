@@ -16,10 +16,10 @@
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 
-const errorsDebug = debug('pw:mcp:errors');
+const errorDebug = debug('pw:mcp:error');
 
 export function logUnhandledError(error: unknown) {
-  errorsDebug(error);
+  errorDebug(error);
 }
 
 export const testDebug = debug('pw:mcp:test');
