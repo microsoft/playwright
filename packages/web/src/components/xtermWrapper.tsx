@@ -64,7 +64,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
         convertEol: true,
         fontSize: 13,
         scrollback: 10000,
-        fontFamily: 'var(--vscode-editor-font-family)',
+        fontFamily: 'monospace',
         theme: terminalTheme,
       });
 
