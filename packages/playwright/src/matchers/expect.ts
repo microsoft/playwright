@@ -54,6 +54,7 @@ import {
   toHaveValues,
   toPass
 } from './matchers';
+import { toHaveCookie } from './matchers';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toHaveScreenshotStepTitle, toMatchSnapshot } from './toMatchSnapshot';
 import {
@@ -276,6 +277,7 @@ const customAsyncMatchers = {
   toHaveValue,
   toHaveValues,
   toHaveScreenshot,
+  toHaveCookie,
   toMatchAriaSnapshot,
   toPass,
 };
