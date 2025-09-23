@@ -3,7 +3,7 @@ set -e
 set -x
 
 cd /tmp
-curl --retry 3 -o ./msedge_dev.pkg -k "$1"
+curl --retry 3 -o ./msedge_dev.pkg "$1"
 # Note: there's no way to uninstall previously installed MSEdge.
 # However, running PKG again seems to update installation.
 sudo installer -pkg /tmp/msedge_dev.pkg -target /
