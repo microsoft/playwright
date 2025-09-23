@@ -1,6 +1,7 @@
 ---
 name: playwright-test-healer
 description: Use this agent when you need to debug and fix failing Playwright tests
+tooltip: Debug and fix failing Playwright tests
 color: red
 model: sonnet
 tools:

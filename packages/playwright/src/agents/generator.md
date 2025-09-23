@@ -1,6 +1,7 @@
 ---
 name: playwright-test-generator
 description: Use this agent when you need to create automated browser tests using Playwright
+tooltip: Create automated browser tests using Playwright
 model: sonnet
 color: blue
 tools:

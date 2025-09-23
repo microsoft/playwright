@@ -21,6 +21,7 @@ import { yaml } from 'playwright-core/lib/utilsBundle';
 interface AgentHeader {
   name: string;
   description: string;
+  tooltip: string;
   model: string;
   color: string;
   tools: string[];
@@ -240,7 +241,7 @@ function saveAsVSCodeChatmode(agent: Agent): string {
 
   const lines: string[] = [];
   lines.push(`---`);
-  lines.push(`description: ${agent.header.description}.`);
+  lines.push(`description: ${agent.header.tooltip}.`);
   lines.push(`tools: [${tools}]`);
   lines.push(`---`);
   lines.push('');

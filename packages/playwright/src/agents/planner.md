@@ -1,6 +1,7 @@
 ---
 name: playwright-test-planner
 description: Use this agent when you need to create comprehensive test plan for a web application or website
+tooltip: Create comprehensive test plan for a web application or website
 model: sonnet
 color: green
 tools:
