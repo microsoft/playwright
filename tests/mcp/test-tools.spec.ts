@@ -542,6 +542,38 @@ test('test_setup_page without location respects testsDir', async ({ startClient 
   expect(fs.existsSync(test.info().outputPath('tests', 'default.seed.spec.ts'))).toBe(true);
 });
 
+test('prefix option', async ({ startClient }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = { projects: [{ name: 'foo' }] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+
+  const { client } = await startClient({ args: ['--prefix', 'custom_prefix_'] });
+
+  const tools = await client.listTools();
+  const testTools = tools.tools.filter(tool => tool.name.includes('test_'));
+
+  expect(testTools.length).toBeGreaterThan(0);
+  for (const tool of testTools)
+    expect(tool.name).toMatch(/^custom_prefix_test_/);
+
+  // Test that prefixed tool calls work
+  expect(await client.callTool({
+    name: 'custom_prefix_test_list',
+    arguments: {},
+  })).toHaveTextResponse(`Listing tests:
+  [id=<ID>] [project=foo] › a.test.ts:3:11 › example
+Total: 1 test in 1 file
+`);
+});
+
 async function prepareDebugTest(startClient: StartClient, testFile?: string) {
   await writeFiles({
     'a.test.ts': testFile || `

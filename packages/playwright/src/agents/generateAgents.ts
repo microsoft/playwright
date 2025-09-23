@@ -103,12 +103,14 @@ const claudeToolMap = new Map<string, string[]>([
   ['write', ['Write']],
 ]);
 
+const toolPrefix = 'playwright_test_';
+
 // Common MCP server configurations
 const commonMcpServers = {
   playwrightTest: {
     type: 'local',
     command: 'npx',
-    args: ['playwright', 'run-test-mcp-server']
+    args: ['playwright', 'run-test-mcp-server', '--prefix', toolPrefix]
   }
 };
 
@@ -220,7 +222,7 @@ function saveAsVSCodeChatmode(agent: Agent): string {
   function asVscodeTool(tool: string): string | string[] {
     const [first, second] = tool.split('/');
     if (second)
-      return second;
+      return toolPrefix + second;
     return vscodeToolMap.get(first) || first;
   }
   const tools = agent.header.tools.map(asVscodeTool).flat().map(tool => `'${tool}'`).join(', ');

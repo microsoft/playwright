@@ -21,6 +21,7 @@ import path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { ProgramOption } from 'playwright-core/lib/utilsBundle';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
@@ -160,13 +161,14 @@ function addTestMCPServerCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
+  command.addOption(new ProgramOption('--prefix <prefix>', 'custom prefix for all tools (e.g., "playwright_test_")').hideHelp());
   command.action(async options => {
     setupExitWatchdog();
     const backendFactory: ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
+      create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless, prefix: options.prefix }),
     };
     const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
     if (mdbUrl)
