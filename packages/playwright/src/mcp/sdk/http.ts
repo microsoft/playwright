@@ -59,10 +59,27 @@ export function httpAddressToString(address: string | net.AddressInfo | null): s
   return `http://${resolvedHost}:${resolvedPort}`;
 }
 
-export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory) {
+export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
+  const url = httpAddressToString(httpServer.address());
+  const host = new URL(url).host;
+  allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
+
   const sseSessions = new Map();
   const streamableSessions = new Map();
   httpServer.on('request', async (req, res) => {
+    const host = req.headers.host?.toLowerCase();
+    if (!host) {
+      res.statusCode = 400;
+      return res.end('Missing host');
+    }
+
+    // Prevent DNS evil.com -> localhost rebind.
+    if (!allowedHosts.includes(host)) {
+      // Access from the browser is forbidden.
+      res.statusCode = 403;
+      return res.end('Access is only allowed at ' + allowedHosts.join(', '));
+    }
+
     const url = new URL(`http://localhost${req.url}`);
     if (url.pathname === '/killkillkill' && req.method === 'GET') {
       res.statusCode = 200;
