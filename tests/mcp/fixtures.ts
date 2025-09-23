@@ -117,7 +117,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
       const { transport, stderr } = await createTransport(mcpServerType, args, env);
       let stderrBuffer = '';
       stderr?.on('data', data => {
-        if (process.env.PWMCP_DEBUG)
+        if (process.env.PWDEBUGIMPL)
           process.stderr.write(data);
         stderrBuffer += data.toString();
       });

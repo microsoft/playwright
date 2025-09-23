@@ -28,6 +28,8 @@ import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
 
+type ViewportSize = { width: number; height: number };
+
 export type CLIOptions = {
   allowedOrigins?: string[];
   blockedOrigins?: string[];
@@ -53,6 +55,7 @@ export type CLIOptions = {
   proxyServer?: string;
   saveSession?: boolean;
   saveTrace?: boolean;
+  saveVideo?: ViewportSize;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
   storageState?: string;
@@ -60,7 +63,7 @@ export type CLIOptions = {
   timeoutNavigation?: number;
   userAgent?: string;
   userDataDir?: string;
-  viewportSize?: string;
+  viewportSize?: ViewportSize;
 };
 
 export const defaultConfig: FullConfig = {
@@ -127,6 +130,8 @@ async function validateConfig(config: FullConfig): Promise<void> {
         throw new Error(`Init script file does not exist: ${script}`);
     }
   }
+  if (config.sharedBrowserContext && config.saveVideo)
+    throw new Error('saveVideo is not supported when sharedBrowserContext is true');
 }
 
 export function configFromCLIOptions(cliOptions: CLIOptions): Config {
@@ -183,16 +188,8 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.userAgent)
     contextOptions.userAgent = cliOptions.userAgent;
 
-  if (cliOptions.viewportSize) {
-    try {
-      const [width, height] = cliOptions.viewportSize.split(',').map(n => +n);
-      if (isNaN(width) || isNaN(height))
-        throw new Error('bad values');
-      contextOptions.viewport = { width, height };
-    } catch (e) {
-      throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800,600"');
-    }
-  }
+  if (cliOptions.viewportSize)
+    contextOptions.viewport = cliOptions.viewportSize;
 
   if (cliOptions.ignoreHttpsErrors)
     contextOptions.ignoreHTTPSErrors = true;
@@ -202,6 +199,14 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
 
   if (cliOptions.grantPermissions)
     contextOptions.permissions = cliOptions.grantPermissions;
+
+  if (cliOptions.saveVideo) {
+    contextOptions.recordVideo = {
+      // Videos are moved to output directory on saveAs.
+      dir: tmpDir(),
+      size: cliOptions.saveVideo,
+    };
+  }
 
   const result: Config = {
     browser: {
@@ -225,6 +230,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     },
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
+    saveVideo: cliOptions.saveVideo,
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     outputDir: cliOptions.outputDir,
@@ -266,13 +272,14 @@ function configFromEnv(): Config {
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
   options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
+  options.saveVideo = resolutionParser('--save-video', process.env.PLAYWRIGHT_MCP_SAVE_VIDEO);
   options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.timeoutAction = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
   options.timeoutNavigation = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
-  options.viewportSize = envToString(process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
   return configFromCLIOptions(options);
 }
 
@@ -287,27 +294,35 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+function tmpDir(): string {
+  return path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output');
+}
+
+export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
   const rootPath = firstRootPath(clientInfo);
-  const outputDir = config.outputDir
+  return config.outputDir
     ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
-    ?? path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output', String(clientInfo.timestamp));
+    ?? path.join(tmpDir(), String(clientInfo.timestamp));
+}
+
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+  const dir = outputDir(config, clientInfo);
 
   // Trust code.
   if (options.origin === 'code')
-    return path.resolve(outputDir, fileName);
+    return path.resolve(dir, fileName);
 
   // Trust llm to use valid characters in file names.
   if (options.origin === 'llm') {
     fileName = fileName.split('\\').join('/');
-    const resolvedFile = path.resolve(outputDir, fileName);
-    if (!resolvedFile.startsWith(path.resolve(outputDir) + path.sep))
+    const resolvedFile = path.resolve(dir, fileName);
+    if (!resolvedFile.startsWith(path.resolve(dir) + path.sep))
       throw new Error(`Resolved file path for ${fileName} is outside of the output directory`);
     return resolvedFile;
   }
 
   // Do not trust web, at all.
-  return path.join(outputDir, sanitizeForFilePath(fileName));
+  return path.join(dir, sanitizeForFilePath(fileName));
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
@@ -377,6 +392,27 @@ export function numberParser(value: string | undefined): number | undefined {
   if (!value)
     return undefined;
   return +value;
+}
+
+export function resolutionParser(name: string, value: string | undefined): ViewportSize | undefined {
+  if (!value)
+    return undefined;
+  if (value.includes('x')) {
+    const [width, height] = value.split('x').map(v => +v);
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0)
+      throw new Error(`Invalid resolution format: use ${name}="800x600"`);
+    return { width, height };
+  }
+
+  // Legacy format
+  if (value.includes(',')) {
+    const [width, height] = value.split(',').map(v => +v);
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0)
+      throw new Error(`Invalid resolution format: use ${name}="800x600"`);
+    return { width, height };
+  }
+
+  throw new Error(`Invalid resolution format: use ${name}="800x600"`);
 }
 
 export function headerParser(arg: string | undefined, previous?: Record<string, string>): Record<string, string> {

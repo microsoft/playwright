@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
 import { outputFile  } from './config';
 import * as codegen from './codegen';
+import { dateAsFileName } from './tools/utils';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
-import type { BrowserContextFactory } from './browserContextFactory';
+import type { BrowserContextFactory, BrowserContextFactoryResult } from './browserContextFactory';
 import type * as actions from './actions';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../../../playwright-core/src/client/tracing';
@@ -42,7 +45,7 @@ export class Context {
   readonly config: FullConfig;
   readonly sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
-  private _browserContextPromise: Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> | undefined;
+  private _browserContextPromise: Promise<BrowserContextFactoryResult> | undefined;
   private _browserContextFactory: BrowserContextFactory;
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
@@ -163,7 +166,20 @@ export class Context {
     await promise.then(async ({ browserContext, close }) => {
       if (this.config.saveTrace)
         await browserContext.tracing.stop();
-      await close();
+      const videos = browserContext.pages().map(page => page.video()).filter(video => !!video);
+      await close(async () => {
+        for (const video of videos) {
+          const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code' });
+          const path = await video.path();
+          // video.saveAs() does not work for persistent contexts.
+          try {
+            if (fs.existsSync(path))
+              await fs.promises.rename(path, name);
+          } catch (e) {
+            logUnhandledError(e);
+          }
+        }
+      });
     });
   }
 
@@ -202,7 +218,7 @@ export class Context {
     return this._browserContextPromise;
   }
 
-  private async _setupBrowserContext(): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+  private async _setupBrowserContext(): Promise<BrowserContextFactoryResult> {
     if (this._closeBrowserContextPromise)
       throw new Error('Another browser context is being closed.');
     // TODO: move to the browser context factory to make it based on isolation mode.

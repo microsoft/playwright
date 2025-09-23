@@ -51,7 +51,7 @@ const screenshot = defineTabTool({
 
   handle: async (tab, params, response) => {
     const fileType = params.type || 'png';
-    const fileName = await tab.context.outputFile(params.filename ?? `page-${dateAsFileName()}.${fileType}`, { origin: 'llm' });
+    const fileName = await tab.context.outputFile(params.filename ?? dateAsFileName(fileType), { origin: 'llm' });
     const options: playwright.PageScreenshotOptions = {
       type: fileType,
       quality: fileType === 'png' ? undefined : 90,

@@ -35,7 +35,7 @@ const pdf = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const fileName = await tab.context.outputFile(params.filename ?? `page-${dateAsFileName()}.pdf`, { origin: 'llm' });
+    const fileName = await tab.context.outputFile(params.filename ?? dateAsFileName('pdf'), { origin: 'llm' });
     response.addCode(`await page.pdf(${javascript.formatObject({ path: fileName })});`);
     response.addResult(`Saved page as ${fileName}`);
     await tab.page.pdf({ path: fileName });
