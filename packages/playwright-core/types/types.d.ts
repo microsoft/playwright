@@ -2285,7 +2285,7 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * Returns up to 200 last console messages from this page. See
+   * Returns up to (currently) 200 last console messages from this page. See
    * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
    */
   consoleMessages(): Promise<Array<ConsoleMessage>>;
@@ -3605,7 +3605,7 @@ export interface Page {
   opener(): Promise<null|Page>;
 
   /**
-   * Returns up to 200 last page errors from this page. See
+   * Returns up to (currently) 200 last page errors from this page. See
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
    */
   pageErrors(): Promise<Array<Error>>;
@@ -3927,8 +3927,17 @@ export interface Page {
   requestGC(): Promise<void>;
 
   /**
-   * Returns up to 100 last network request from this page. See
+   * Returns up to (currently) 100 last network request from this page. See
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) for more details.
+   *
+   * Returned requests should be accessed immediately, otherwise they might be collected to prevent unbounded memory
+   * growth as new requests come in. Once collected, retrieving most information about the request is impossible.
+   *
+   * Note that requests reported through the
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) request are not collected, so
+   * there is a trade off between efficient memory usage with
+   * [page.requests()](https://playwright.dev/docs/api/class-page#page-requests) and the amount of available information
+   * reported through [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    */
   requests(): Promise<Array<Request>>;
 
