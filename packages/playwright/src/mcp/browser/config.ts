@@ -19,9 +19,8 @@ import os from 'os';
 import path from 'path';
 
 import { devices } from 'playwright-core';
-import { dotenv } from 'playwright-core/lib/utilsBundle';
+import { dotenv, debug } from 'playwright-core/lib/utilsBundle';
 import { fileExistsAsync } from '../../util';
-
 import { firstRootPath } from '../sdk/server';
 
 import type * as playwright from '../../../types/test';
@@ -308,7 +307,13 @@ export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
     ?? path.join(tmpDir(), String(clientInfo.timestamp));
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
+  const file = await resolveFile(config, clientInfo, fileName, options);
+  debug('pw:mcp:file')(options.reason, file);
+  return file;
+}
+
+async function resolveFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
   const dir = outputDir(config, clientInfo);
 
   // Trust code.

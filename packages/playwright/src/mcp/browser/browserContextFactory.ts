@@ -116,8 +116,8 @@ class IsolatedContextFactory extends BaseContextFactory {
   protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
     await injectCdpPort(this.config.browser);
     const browserType = playwright[this.config.browser.browserName];
-    const tracesDir = await outputFile(this.config, clientInfo, `traces`, { origin: 'code' });
-    if (this.config.saveTrace)
+    const tracesDir = await computeTracesDir(this.config, clientInfo);
+    if (tracesDir && this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
     return browserType.launch({
       tracesDir,
@@ -183,8 +183,8 @@ class PersistentContextFactory implements BrowserContextFactory {
     await injectCdpPort(this.config.browser);
     testDebug('create browser context (persistent)');
     const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo);
-    const tracesDir = await outputFile(this.config, clientInfo, `traces`, { origin: 'code' });
-    if (this.config.saveTrace)
+    const tracesDir = await computeTracesDir(this.config, clientInfo);
+    if (tracesDir && this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
 
     this._userDataDirs.add(userDataDir);
@@ -325,4 +325,10 @@ export class SharedContextFactory implements BrowserContextFactory {
     const { close } = await contextPromise;
     await close(async () => {});
   }
+}
+
+async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
+  if (!config.saveTrace && !config.capabilities?.includes('tracing'))
+    return;
+  return await outputFile(config, clientInfo, `traces`, { origin: 'code', reason: 'Collecting trace' });
 }

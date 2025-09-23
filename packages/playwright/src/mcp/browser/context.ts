@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 
@@ -116,7 +117,7 @@ export class Context {
     return url;
   }
 
-  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
     return outputFile(this.config, this._clientInfo, fileName, options);
   }
 
@@ -169,12 +170,13 @@ export class Context {
       const videos = browserContext.pages().map(page => page.video()).filter(video => !!video);
       await close(async () => {
         for (const video of videos) {
-          const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code' });
-          const path = await video.path();
+          const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code', reason: 'Saving video' });
+          await fs.promises.mkdir(path.dirname(name), { recursive: true });
+          const p = await video.path();
           // video.saveAs() does not work for persistent contexts.
           try {
-            if (fs.existsSync(path))
-              await fs.promises.rename(path, name);
+            if (fs.existsSync(p))
+              await fs.promises.rename(p, name);
           } catch (e) {
             logUnhandledError(e);
           }
