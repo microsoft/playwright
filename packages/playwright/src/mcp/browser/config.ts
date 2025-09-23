@@ -29,6 +29,7 @@ import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
 
 export type CLIOptions = {
+  allowedHosts?: string[];
   allowedOrigins?: string[];
   blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
@@ -217,6 +218,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     server: {
       port: cliOptions.port,
       host: cliOptions.host,
+      allowedHosts: cliOptions.allowedHosts,
     },
     capabilities: cliOptions.caps as ToolCapability[],
     network: {
@@ -240,6 +242,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
 
 function configFromEnv(): Config {
   const options: CLIOptions = {};
+  options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
   options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
