@@ -57,6 +57,13 @@ export const browserTools: Tool<any>[] = [
   ...verify,
 ];
 
+// FIXME: this is ugly, fix VSCode!
+const customPrefix = process.env.PLAYWRIGHT_MCP_TOOL_PREFIX;
+if (customPrefix) {
+  for (const tool of browserTools)
+    tool.schema.name = customPrefix + tool.schema.name;
+}
+
 export function filteredTools(config: FullConfig) {
   return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability));
 }
