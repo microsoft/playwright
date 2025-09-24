@@ -220,7 +220,7 @@ jobs:
         - macos-latest
         - windows-latest
     runs-on: ${{ matrix.os  }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
