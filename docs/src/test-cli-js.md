@@ -103,6 +103,8 @@ npx playwright test --ui
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", or others (default: "list"). You can also pass a path to a custom reporter file. |
 | `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
 | `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
+| `--test-list <file>` | Path to a file containing a list of tests to run. See [test list](#test-list) for details. |
+| `--test-list-invert <file>` | Path to a file containing a list of tests to skip. See [test list](#test-list) for details.  |
 | `--timeout <timeout>` | Specify test timeout threshold in milliseconds, zero for unlimited (default: 30 seconds). |
 | `--trace <mode>` | Force tracing mode, can be `on`, `off`, `on-first-retry`, `on-all-retries`, `retain-on-failure`, `retain-on-first-failure`. |
 | `--tsconfig <path>` | Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately). |
@@ -113,6 +115,29 @@ npx playwright test --ui
 | `--update-source-method [mode]` | Update snapshots with actual results. Possible values are "patch" (default), "3way" and "overwrite". "Patch" creates a unified diff file that can be used to update the source code later. "3way" generates merge conflict markers in source code. "Overwrite" overwrites the source code with the new snapshot values.|
 | `-x` | Stop after the first failure. |
 
+#### Test list
+
+Options `--test-list` and `--test-list-invert` accept a path to a test list file. This file should list tests in the format similar to the output produced in `--list` mode.
+
+```txt
+# This is a test list file.
+# It can include comments and empty lines.
+
+# Fully qualified test with a project:
+[chromium] › path/to/example.spec.ts:3:9 › suite › nested suite › example test
+
+# This test is included for all projects:
+path/to/example.spec.ts:3:9 › example test
+
+# Use "›" or ">" as a separator:
+[firefox] > example.spec.ts > suite > nested suite > example test
+
+# Line/column numbers are completely ignored, you can omit them.
+# Three entries below refer to the same test:
+example.spec.ts › example test
+example.spec.ts:15 › example test
+example.spec.ts:42:42 › example test
+```
 
 ### Show Report
 
