@@ -85,14 +85,19 @@ export type TestFileFilter = {
 
 export type TestCaseFilter = (test: TestCase) => boolean;
 
+export function parseLocationArg(arg: string): { file: string, line: number | null, column: number | null } {
+  const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
+  return {
+    file: match ? match[1] : arg,
+    line: match ? parseInt(match[2], 10) : null,
+    column: match?.[3] ? parseInt(match[3], 10) : null,
+  };
+}
+
 export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
   return args.map(arg => {
-    const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
-    return {
-      re: forceRegExp(match ? match[1] : arg),
-      line: match ? parseInt(match[2], 10) : null,
-      column: match?.[3] ? parseInt(match[3], 10) : null,
-    };
+    const parsed = parseLocationArg(arg);
+    return { re: forceRegExp(parsed.file), line: parsed.line, column: parsed.column };
   });
 }
 
