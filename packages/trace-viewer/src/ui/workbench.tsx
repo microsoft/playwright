@@ -82,6 +82,7 @@ export const Workbench: React.FunctionComponent<{
   }, []);
 
   const actions = React.useMemo(() => model?.filteredActions(actionsFilter), [model, actionsFilter]);
+  const hiddenActionsCount = (model?.actions.length ?? 0) - (actions?.length ?? 0);
 
   const highlightedAction = React.useMemo(() => {
     return actions?.find(a => a.callId === highlightedCallId);
@@ -317,6 +318,10 @@ export const Workbench: React.FunctionComponent<{
         revealConsole={() => selectPropertiesTab('console')}
         isLive={isLive}
       />
+      <div className='workbench-actions-status-bar'>
+        {!!hiddenActionsCount && <span className='workbench-actions-hidden-count' title={hiddenActionsCount + ' actions hidden by filters'}>{hiddenActionsCount} hidden</span>}
+        <ActionsFilterButton counters={model?.actionCounters} />
+      </div>
     </div>
   };
   const metadataTab: TabbedPaneTabModel = {
@@ -360,7 +365,6 @@ export const Workbench: React.FunctionComponent<{
             tabs={[actionsTab, metadataTab]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
-            rightToolbar={[<ActionsFilterButton key='filter'/>]}
           />
         }
       />}
@@ -383,9 +387,9 @@ export const Workbench: React.FunctionComponent<{
   </div>;
 };
 
-const ActionsFilterButton: React.FC<{}> = () => {
+const ActionsFilterButton: React.FC<{ counters?: Map<string, number> }> = ({ counters }) => {
   const [actionsFilter, setActionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
-  return <DialogToolbarButton icon='filter' title='Filter actions'>
+  return <DialogToolbarButton icon='filter' title='Filter actions' dialogDataTestId='actions-filter-dialog'>
     <SettingsView
       settings={[
         {
@@ -393,18 +397,21 @@ const ActionsFilterButton: React.FC<{}> = () => {
           value: actionsFilter.includes('getter'),
           set: value => setActionsFilter(value ? [...actionsFilter, 'getter'] : actionsFilter.filter(a => a !== 'getter')),
           name: 'Getters',
+          count: counters?.get('getter'),
         },
         {
           type: 'check',
           value: actionsFilter.includes('route'),
           set: value => setActionsFilter(value ? [...actionsFilter, 'route'] : actionsFilter.filter(a => a !== 'route')),
           name: 'Network routes',
+          count: counters?.get('route'),
         },
         {
           type: 'check',
           value: actionsFilter.includes('configuration'),
           set: value => setActionsFilter(value ? [...actionsFilter, 'configuration'] : actionsFilter.filter(a => a !== 'configuration')),
           name: 'Configuration',
+          count: counters?.get('configuration'),
         },
       ]}
     />
