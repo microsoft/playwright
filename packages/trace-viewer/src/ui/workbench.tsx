@@ -45,7 +45,7 @@ import type { HighlightedElement } from './snapshotTab';
 import type { TestAnnotation } from '@playwright/test';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
-import { DialogToolbarButton } from '@web/components/dialog';
+import { DialogToolbarButton } from '@web/components/dialogToolbarButton';
 import { SettingsView } from './settingsView';
 
 export const Workbench: React.FunctionComponent<{
