@@ -1,4 +1,4 @@
-name: "publish canary"
+name: "publish release - npm, driver, trace viewer"
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
-  publish-npm:
+  publish-npm-and-driver:
     name: "publish NPM"
     runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
