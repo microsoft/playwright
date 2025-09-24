@@ -28,6 +28,8 @@ env:
 jobs:
   test_mcp:
     name: ${{ matrix.os }}
+    # Used for authentication of flakiness upload
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
