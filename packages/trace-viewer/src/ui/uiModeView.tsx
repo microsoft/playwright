@@ -289,7 +289,6 @@ export const UIModeView: React.FC<{}> = ({
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
         updateSnapshots,
         reporters: queryParams.reporters,
-        headed: false,
         workers: singleWorker ? 1 : undefined,
         trace: 'on',
       });
