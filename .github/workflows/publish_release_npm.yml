@@ -23,11 +23,6 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: utils/publish_all_packages.sh --release-candidate
-      if: ${{ github.event.release.prerelease }}
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - run: utils/publish_all_packages.sh --release
-      if: ${{ !github.event.release.prerelease }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
