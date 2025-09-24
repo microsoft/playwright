@@ -13,10 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as path from 'path';
 
 import { defineConfig } from '@playwright/test';
 
 import type { TestOptions } from './fixtures';
+import type { ReporterDescription } from '@playwright/test';
+
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
+
+const reporters = () => {
+  const result: ReporterDescription[] = process.env.CI ? [
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report'), fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+  ] : [
+    ['list']
+  ];
+  return result;
+};
 
 export default defineConfig<TestOptions>({
   testDir: './',
@@ -24,7 +39,7 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
-  reporter: 'list',
+  reporter: reporters(),
   projects: [
     { name: 'chrome' },
     { name: 'chromium', use: { mcpBrowser: 'chromium' } },
