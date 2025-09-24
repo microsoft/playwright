@@ -33,14 +33,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-15, windows-latest]
     runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@v5
-    - name: Use Node.js 20
-      uses: actions/setup-node@v5
+    - uses: ./.github/actions/run-test
       with:
-        node-version: '20'
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run test-mcp
+        node-version: "20"
+        command: npm run test-mcp
+        bot-name: "${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
