@@ -84,6 +84,7 @@ export class MultiTraceModel {
   readonly testIdAttributeName: string | undefined;
   readonly sources: Map<string, SourceModel>;
   resources: ResourceSnapshot[];
+  readonly actionCounters: Map<string, number>;
 
 
   constructor(contexts: ContextEntry[]) {
@@ -116,6 +117,13 @@ export class MultiTraceModel {
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.errorDescriptors = this.hasStepData ? this._errorDescriptorsFromTestRunner() : this._errorDescriptorsFromActions();
     this.sources = collectSources(this.actions, this.errorDescriptors);
+
+    this.actionCounters = new Map();
+    for (const action of this.actions) {
+      action.group = action.group ?? getActionGroup({ type: action.class, method: action.method });
+      if (action.group)
+        this.actionCounters.set(action.group, 1 + (this.actionCounters.get(action.group) || 0));
+    }
   }
 
   failedAction() {
@@ -125,10 +133,7 @@ export class MultiTraceModel {
 
   filteredActions(actionsFilter: ActionGroup[]) {
     const filter = new Set<string>(actionsFilter);
-    return this.actions.filter(action => {
-      const group = action.group ?? getActionGroup({ type: action.class, method: action.method });
-      return !group || filter.has(group);
-    });
+    return this.actions.filter(action => !action.group || filter.has(action.group));
   }
 
   private _errorDescriptorsFromActions(): ErrorDescription[] {

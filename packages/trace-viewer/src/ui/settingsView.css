@@ -50,3 +50,16 @@
 .settings-view .setting-select:not(:first-child) {
   margin-top: 4px;
 }
+
+.settings-view .setting-counter {
+  padding: 0 4px;
+  background: var(--vscode-menu-separatorBackground);
+  border-radius: 9px;
+  height: 18px;
+  margin-left: 4px;
+  line-height: 18px;
+  min-width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

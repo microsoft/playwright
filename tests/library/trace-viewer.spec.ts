@@ -1955,7 +1955,7 @@ test('should load trace from HTTP with progress indicator', async ({ showTraceVi
   await expect(traceViewer.actionTitles).toContainText([/Create page/]);
 });
 
-test('should show all actions', async ({ runAndTrace, page }) => {
+test('should filter actions', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/*', async route => {
       await route.fulfill({ contentType: 'text/html', body: '<input type=checkbox checked>' });
@@ -1969,9 +1969,25 @@ test('should show all actions', async ({ runAndTrace, page }) => {
     /Navigate to/,
     /Expect "toBeChecked"/,
   ]);
+  await expect(traceViewer.page.getByText('3 hidden', { exact: true })).toBeVisible();
 
-  await traceViewer.showAllActions();
+  await traceViewer.page.getByRole('button', { name: 'Filter actions' }).click();
+  await expect(traceViewer.page.getByTestId('actions-filter-dialog')).toMatchAriaSnapshot(`
+    - dialog:
+      - checkbox "Getters 1"
+      - checkbox "Network routes 2"
+      - checkbox "Configuration"
+  `);
 
+  await traceViewer.page.locator('.setting').getByText('Getters').click();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /Navigate to/,
+    /Get attribute "checked"/,
+    /Expect "toBeChecked"/,
+  ]);
+  await expect(traceViewer.page.getByText('2 hidden', { exact: true })).toBeVisible();
+
+  await traceViewer.page.locator('.setting').getByText('Network routes').click();
   await expect(traceViewer.actionTitles).toHaveText([
     /Route requests/,
     /Navigate to/,

@@ -57,7 +57,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
       top: bounds.bottom + (verticalOffset ?? 0),
       left: buildTopLeftCoord(bounds, width ?? 0),
       width,
-      zIndex: 100,
+      zIndex: 110,  // on top of split view resizer
       ...externalStyle
     };
   }
