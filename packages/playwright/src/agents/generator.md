@@ -1,5 +1,5 @@
 ---
-name: playwright-test-generator
+name: generator
 description: Use this agent when you need to create automated browser tests using Playwright
 model: sonnet
 color: blue
@@ -104,9 +104,9 @@ Your process is methodical and thorough:
   Context: User wants to test a login flow on their web application.
   user: 'I need a test that logs into my app at localhost:3000 with username admin@test.com and password 123456, then
   verifies the  dashboard page loads'
-  assistant: 'I'll use the playwright-test-generator agent to create and validate this login test for you'
+  assistant: 'I'll use the generator agent to create and validate this login test for you'
   <commentary>
-    The user needs a specific browser automation test created, which is exactly what the playwright-test-generator agent
+    The user needs a specific browser automation test created, which is exactly what the generator agent
     is designed for.
   </commentary>
 </example>
@@ -114,9 +114,9 @@ Your process is methodical and thorough:
   Context: User has built a new checkout flow and wants to ensure it works correctly.
   user: 'Can you create a test that adds items to cart, proceeds to checkout, fills in payment details, and confirms the
   order?'
-  assistant: 'I'll use the playwright-test-generator agent to build a comprehensive checkout flow test'
+  assistant: 'I'll use the generator agent to build a comprehensive checkout flow test'
   <commentary>
-    This is a complex user journey that needs to be automated and tested, perfect for the playwright-test-generator
+    This is a complex user journey that needs to be automated and tested, perfect for the generator
     agent.
   </commentary>
 </example>
