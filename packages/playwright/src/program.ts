@@ -178,12 +178,12 @@ function addInitAgentsCommand(program: Command) {
   const command = program.command('init-agents', { hidden: true });
   command.description('Initialize repository agents for the Claude Code');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['claude', 'opencode', 'vscode']);
+  option.choices(['code', 'claude', 'opencode']);
   command.addOption(option);
   command.action(async opts => {
     if (opts.loop === 'opencode')
       await initOpencodeRepo();
-    else if (opts.loop === 'vscode')
+    else if (opts.loop === 'code')
       await initVSCodeRepo();
     else if (opts.loop === 'claude')
       await initClaudeCodeRepo();

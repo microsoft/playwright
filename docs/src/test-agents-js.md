@@ -27,7 +27,7 @@ You need to run this command for each agentic loop you will be using:
 ```bash
 # Generate agent files for each agentic loop
 # Visual Studio Code
-npx playwright init-agents --loop=vscode
+npx playwright init-agents --loop=code
 # Claude Code
 npx playwright init-agents --loop=claude
 # opencode
