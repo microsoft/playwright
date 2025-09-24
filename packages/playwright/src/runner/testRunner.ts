@@ -454,7 +454,8 @@ export async function runAllTestsWithConfig(config: FullConfigInternal): Promise
 
   const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
   const lastRun = new LastRunReporter(config);
-  await lastRun.applyFilter();
+  if (config.cliLastFailed)
+    await lastRun.filterLastFailed();
 
   const reporter = new InternalReporter([...reporters, lastRun]);
   const tasks = listOnly ? [
