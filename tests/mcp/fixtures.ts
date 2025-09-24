@@ -140,7 +140,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'CDP is not supported for non-Chromium browsers');
 
     let browserContext: BrowserContext | undefined;
-    const port = 3200 + test.info().parallelIndex;
+    const port = 9100 + testInfo.workerIndex;
     await use({
       endpoint: `http://localhost:${port}`,
       start: async () => {
