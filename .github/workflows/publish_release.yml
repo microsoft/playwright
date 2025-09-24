@@ -7,17 +7,19 @@ on:
   push:
     branches:
       - release-*
+  release:
+    types: [published]
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
-  publish-canary:
-    name: "publish canary NPM"
+  publish-npm:
+    name: "publish NPM"
     runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
     permissions:
-      id-token: write  # This is required for OIDC login (azure/login) to succeed
+      id-token: write  # This is required for OIDC login (azure/login, NPM publish) to succeed
       contents: read   # This is required for actions/checkout to succeed
     environment: allow-publish-driver-to-cdn # This is required for OIDC login (azure/login)
     steps:
@@ -28,27 +30,26 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
+
     - name: "@next: publish with commit timestamp (triggered manually)"
       if: contains(github.ref, 'main') && github.event_name == 'workflow_dispatch'
       run: |
         node utils/build/update_canary_version.js --alpha --commit-timestamp
         utils/publish_all_packages.sh --alpha
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - name: "@next: publish with today's date (triggered automatically)"
-      if: contains(github.ref, 'main') && github.event_name != 'workflow_dispatch'
+      if: contains(github.ref, 'main') && github.event.schedule
       run: |
         node utils/build/update_canary_version.js --alpha --today-date
         utils/publish_all_packages.sh --alpha
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - name: "@beta: publish with commit timestamp (triggered automatically)"
-      if: contains(github.ref, 'release') && github.event_name != 'workflow_dispatch'
+      if: contains(github.ref, 'release') && github.event_name == 'push'
       run: |
         node utils/build/update_canary_version.js --beta --commit-timestamp
         utils/publish_all_packages.sh --beta
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - name: "publish release to NPM"
+      if: contains(github.ref, 'release') && github.event_name == 'release'
+      run: utils/publish_all_packages.sh --release
+
     - name: Azure Login
       uses: azure/login@v2
       with:
@@ -57,7 +58,7 @@ jobs:
         subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
     - name: build & publish driver
       env:
-        AZ_UPLOAD_FOLDER: driver/next
+        AZ_UPLOAD_FOLDER: ${{ github.event_name == 'release' && 'driver' || 'driver/next' }}
       run: |
         utils/build/build-playwright-driver.sh
         utils/build/upload-playwright-driver.sh
@@ -82,8 +83,13 @@ jobs:
       if: contains(github.ref, 'main')
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
-    - name: Deploy BETA
+    - name: Deploy Beta
       run: bash utils/build/deploy-trace-viewer.sh --beta
-      if: contains(github.ref, 'release')
+      if: contains(github.ref, 'release') && github.event_name == 'push'
+      env:
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
+    - name: Deploy Stable
+      run: bash utils/build/deploy-trace-viewer.sh --stable
+      if: contains(github.ref, 'release') && github.event_name == 'release'
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
