@@ -57,7 +57,7 @@ if [[ "$1" == "--release" ]]; then
     exit 1
   fi
   NPM_PUBLISH_TAG="latest"
-  elif [[ "$1" == "--alpha" ]]; then
+elif [[ "$1" == "--alpha" ]]; then
   # Ensure package version contains alpha.
   if [[ "${VERSION}" != *-alpha* ]]; then
     echo "ERROR: cannot publish release version ${VERSION} with --alpha flag"
