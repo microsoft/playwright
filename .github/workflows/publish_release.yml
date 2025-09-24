@@ -15,7 +15,7 @@ env:
 
 jobs:
   publish-npm-and-driver:
-    name: "publish NPM"
+    name: "publish NPM and driver"
     runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
     permissions:
@@ -28,6 +28,9 @@ jobs:
       with:
         node-version: 18
         registry-url: 'https://registry.npmjs.org'
+    # Ensure npm 11.5.1 or later is installed (for OIDC npm publishing)
+    - name: Update npm
+      run: npm install -g npm@latest
     - run: npm ci
     - run: npm run build
 
