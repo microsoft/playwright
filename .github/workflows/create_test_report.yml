@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v5
     - uses: actions/setup-node@v5
       with:
-        node-version: 18
+        node-version: 20
     - run: npm ci
       env:
         ELECTRON_SKIP_BINARY_DOWNLOAD: 1
