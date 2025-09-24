@@ -21,6 +21,8 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import { callOnPageNoTrace, waitForCompletion } from './tools/utils';
 import { logUnhandledError } from '../log';
 import { ModalState } from './tools/tool';
+import { handleDialog } from './tools/dialogs';
+import { uploadFile } from './tools/files';
 
 import type { Context } from './context';
 
@@ -71,7 +73,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         type: 'fileChooser',
         description: 'File chooser',
         fileChooser: chooser,
-        clearedBy: 'browser_file_upload',
+        clearedBy: uploadFile.schema.name,
       });
     });
     page.on('dialog', dialog => this._dialogShown(dialog));
@@ -127,7 +129,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       type: 'dialog',
       description: `"${dialog.type()}" dialog with message "${dialog.message()}"`,
       dialog,
-      clearedBy: 'browser_handle_dialog',
+      clearedBy: handleDialog.schema.name
     });
   }
 

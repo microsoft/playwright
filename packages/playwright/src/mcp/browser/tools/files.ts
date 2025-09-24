@@ -17,7 +17,7 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 
-const uploadFile = defineTabTool({
+export const uploadFile = defineTabTool({
   capability: 'core',
 
   schema: {

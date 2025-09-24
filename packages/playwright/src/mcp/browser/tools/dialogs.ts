@@ -17,7 +17,7 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 
-const handleDialog = defineTabTool({
+export const handleDialog = defineTabTool({
   capability: 'core',
 
   schema: {

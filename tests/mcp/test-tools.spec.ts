@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, writeFiles, StartClient } from './fixtures';
+import { test, expect, writeFiles, prepareDebugTest } from './fixtures';
 
 import fs from 'fs';
 import path from 'path';
@@ -620,22 +620,3 @@ test('test_setup_page without location respects testsDir', async ({ startClient 
 `);
   expect(fs.existsSync(test.info().outputPath('tests', 'default.seed.spec.ts'))).toBe(true);
 });
-
-async function prepareDebugTest(startClient: StartClient, testFile?: string) {
-  await writeFiles({
-    'a.test.ts': testFile || `
-      import { test, expect } from '@playwright/test';
-      test('fail', async ({ page }) => {
-        await page.setContent('<button>Submit</button>');
-        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
-      });
-    `
-  });
-
-  const { client } = await startClient();
-  const listResult = await client.callTool({
-    name: 'test_list',
-  });
-  const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
-  return { client, id };
-}
