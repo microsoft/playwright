@@ -520,7 +520,7 @@ test('test_setup_page with dependencies', async ({ startClient }) => {
   expect(await client.callTool({
     name: 'test_setup_page',
     arguments: {
-      testLocation: 'template.test.ts:3',
+      testLocation: 'template.test.ts',
       project: 'chromium',
     },
   })).toHaveTextResponse(`### Paused at end of test. ready for interaction
@@ -538,6 +538,31 @@ test('test_setup_page with dependencies', async ({ startClient }) => {
   expect(fs.existsSync(path.join(baseDir, 'test-results', 'auth.setup.ts-auth-setup', 'auth.txt'))).toBe(true);
   expect(fs.existsSync(path.join(baseDir, 'test-results', 'template-template-chromium', 'template.txt'))).toBe(true);
   expect(fs.existsSync(path.join(baseDir, 'test-results', 'template-template-ignored', 'template.txt'))).toBe(false);
+});
+
+test('test_setup_page (loading error)', async ({ startClient }) => {
+  await writeFiles({
+    'template.test.ts': `
+      throw new Error('loading error');
+    `,
+  });
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {
+      testLocation: 'template.test.ts',
+    },
+  })).toHaveTextResponse(expect.stringContaining('Error: loading error'));
+});
+
+test('test_setup_page (wrong test location)', async ({ startClient }) => {
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'test_setup_page',
+    arguments: {
+      testLocation: 'a.test.ts:6',
+    },
+  })).toHaveTextResponse(`Error: seed test not found.`);
 });
 
 test('test_setup_page (no test location)', async ({ startClient }) => {
