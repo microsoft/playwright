@@ -236,8 +236,10 @@ may be useful for specifying a list of extra conditions on an element.
 
 ### CSS: matching elements based on layout
 
-:::note
-Matching based on layout may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
+:::warning
+Layout selectors are deprecated and may be removed in the future. Matching based on layout may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
+
+We recommend prioritizing [user-visible locators](./locators.md#quick-guide) instead.
 :::
 
 Sometimes, it is hard to come up with a good selector to the target element when it lacks distinctive features. In this case, using Playwright layout CSS pseudo-classes could help. These can be combined with regular CSS to pinpoint one of the multiple choices.
