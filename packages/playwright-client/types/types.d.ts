@@ -10325,36 +10325,15 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
-
-  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10364,31 +10343,13 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   off(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   url(): string;
 }

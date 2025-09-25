@@ -31,7 +31,6 @@ import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
 import type { CRCoverage } from '../chromium/crCoverage';
-import type { ConsoleMessage } from '../console';
 import type { Download } from '../download';
 import type { FileChooser } from '../fileChooser';
 import type { JSHandle } from '../javascript';
@@ -41,6 +40,7 @@ import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type { ConsoleMessage } from '../console';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -414,7 +414,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
 export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WorkerChannel {
   _type_Worker = true;
-  private readonly _subscriptions = new Set<channels.WorkerUpdateSubscriptionParams['event']>();
 
   static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
     if (!worker)
@@ -428,23 +427,6 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
       url: worker.url
     });
     this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
-    this.addObjectListener(Worker.Events.Console, (message: ConsoleMessage) => {
-      if (!this._subscriptions.has('console'))
-        return;
-      this._dispatchEvent('console', {
-        type: message.type(),
-        text: message.text(),
-        args: message.args().map(a => JSHandleDispatcher.fromJSHandle(this, a)),
-        location: message.location(),
-      });
-    });
-  }
-
-  async updateSubscription(params: channels.WorkerUpdateSubscriptionParams, progress: Progress): Promise<void> {
-    if (params.enabled)
-      this._subscriptions.add(params.event);
-    else
-      this._subscriptions.delete(params.event);
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionResult> {
