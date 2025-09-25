@@ -3447,6 +3447,7 @@ Request:
       items: NameValue
     isNavigationRequest: boolean
     redirectedFrom: Request?
+    hasResponse: boolean
 
   commands:
 
@@ -3462,6 +3463,8 @@ Request:
           type: array
           items: NameValue
 
+  events:
+    response:
 
 Route:
   type: interface
