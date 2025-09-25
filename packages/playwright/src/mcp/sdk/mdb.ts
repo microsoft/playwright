@@ -85,13 +85,17 @@ export class MDBBackend implements mcpServer.ServerBackend {
       },
     }).then(result => {
       resultPromise.resolve(result as mcpServer.CallToolResult);
-    }).catch(e => resultPromise.reject(e));
+    }).catch(e => {
+      resultPromise.resolve({ content: [{ type: 'text', text: String(e) }], isError: true });
+    });
+
     const result = await Promise.race([interruptPromise, resultPromise]);
     if (interruptPromise.isDone())
       mdbDebug('client call intercepted', result);
     else
       mdbDebug('client call result', result);
     result.content.unshift(...this._progress);
+    this._progress.length = 0;
     return result;
   }
 

@@ -199,13 +199,13 @@ function mergeTextParts(result: CallToolResult): CallToolResult {
       continue;
     }
     if (testParts.length > 0) {
-      content.push({ type: 'text', text: testParts.join('\n\n') });
+      content.push({ type: 'text', text: testParts.join('\n') });
       testParts.length = 0;
     }
     content.push(part);
   }
   if (testParts.length > 0)
-    content.push({ type: 'text', text: testParts.join('\n\n') });
+    content.push({ type: 'text', text: testParts.join('\n') });
   return {
     ...result,
     content,
