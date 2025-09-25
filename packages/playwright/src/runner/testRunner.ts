@@ -75,6 +75,7 @@ export type RunTestsParams = {
   pauseAtEnd?: boolean;
   doNotRunDepsOutsideProjectFilter?: boolean;
   disableConfigReporters?: boolean;
+  failOnLoadErrors?: boolean;
 };
 
 type FullResultStatus = reporterTypes.FullResult['status'];
@@ -344,7 +345,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     const stop = new ManualPromise();
     const tasks = [
       createApplyRebaselinesTask(),
-      createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: params.doNotRunDepsOutsideProjectFilter }),
+      createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: !!params.failOnLoadErrors, doNotRunDepsOutsideProjectFilter: params.doNotRunDepsOutsideProjectFilter }),
       ...createRunTestsTasks(config),
     ];
     const testRun = new TestRun(config, reporter, { pauseOnError: params.pauseOnError, pauseAtEnd: params.pauseAtEnd });

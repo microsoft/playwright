@@ -127,7 +127,7 @@ export const setupPage = defineTestTool({
     description: 'Setup the page for test',
     inputSchema: z.object({
       project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
-      testLocation: z.string().optional().describe('Location of the seed test to use for setup. For example: "test/seed/default.spec.ts:20".'),
+      testLocation: z.string().optional().describe('Location of the seed test to use for setup. For example: "tests/seed.spec.ts" or "tests/seed.spec.ts:20".'),
     }),
     type: 'readOnly',
   },
@@ -162,7 +162,17 @@ test('seed', async ({ page }) => {});
       workers: 1,
       pauseAtEnd: true,
       disableConfigReporters: true,
+      failOnLoadErrors: true,
     });
+
+    // Ideally, we should check that page was indeed created and browser mcp has kicked in.
+    // However, that is handled in the upper layer, so hard to check here.
+    if (result.status === 'passed' && !reporter.suite?.allTests().length) {
+      return {
+        content: [{ type: 'text', text: 'Error: seed test not found.' }],
+        isError: true,
+      };
+    }
 
     const text = stream.content();
     return {
