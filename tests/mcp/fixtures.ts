@@ -87,7 +87,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         args.push('--headless');
 
       if (mcpServerType === 'test-mcp') {
-        args.push('--config', test.info().outputPath());
+        if (!options?.args?.some(arg => arg.startsWith('--config')))
+          args.push('--config', test.info().outputPath());
       } else {
         if (process.env.CI && process.platform === 'linux')
           args.push('--no-sandbox');

@@ -27,6 +27,7 @@ import { findTopLevelProjects } from '../../runner/projectUtils';
 
 import { defineTestTool } from './testTool';
 import { StringWriteStream } from './streams';
+import { fileExistsAsync } from '../../util';
 
 export const listTests = defineTestTool({
   schema: {
@@ -124,10 +125,10 @@ export const setupPage = defineTestTool({
   schema: {
     name: 'test_setup_page',
     title: 'Setup page',
-    description: 'Setup the page for test',
+    description: 'Setup the page for test.',
     inputSchema: z.object({
       project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
-      testLocation: z.string().optional().describe('Location of the seed test to use for setup. For example: "tests/seed.spec.ts" or "tests/seed.spec.ts:20".'),
+      seedFile: z.string().optional().describe('A seed file contains a single test that is used to setup the page for testing, for example: "tests/seed.spec.ts". If no seed file is provided, a default seed file is created.'),
     }),
     type: 'readOnly',
   },
@@ -137,26 +138,40 @@ export const setupPage = defineTestTool({
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
+    const config = await testRunner.loadConfig();
+    const project = params.project ? config.projects.find(p => p.project.name === params.project) : findTopLevelProjects(config)[0];
+    const testDir = project?.project.testDir || configDir;
 
-    let testLocation = params.testLocation;
-    if (!testLocation) {
-      testLocation = 'default.seed.spec.ts';
-      const config = await testRunner.loadConfig();
-      const project = params.project ? config.projects.find(p => p.project.name === params.project) : findTopLevelProjects(config)[0];
-      const testDir = project?.project.testDir || configDir;
-      const seedFile = path.join(testDir, testLocation);
-      if (!fs.existsSync(seedFile)) {
-        await fs.promises.mkdir(path.dirname(seedFile), { recursive: true });
-        await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
+    let seedFile: string | undefined;
+    if (!params.seedFile) {
+      seedFile = path.resolve(testDir, 'seed.spec.ts');
+      await fs.promises.mkdir(path.dirname(seedFile), { recursive: true });
+      await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
 
-test('seed', async ({ page }) => {});
+test.describe('Test group', () => {
+  test('seed', async ({ page }) => {
+    // generate code here.
+  });
+});
 `);
+    } else {
+      const candidateFiles: string[] = [];
+      candidateFiles.push(path.resolve(testDir, params.seedFile));
+      candidateFiles.push(path.resolve(configDir, params.seedFile));
+      candidateFiles.push(path.resolve(process.cwd(), params.seedFile));
+      for (const candidateFile of candidateFiles) {
+        if (await fileExistsAsync(candidateFile)) {
+          seedFile = candidateFile;
+          break;
+        }
       }
+      if (!seedFile)
+        throw new Error('seed test not found.');
     }
 
     const result = await testRunner.runTests(reporter, {
       headed: !context.options?.headless,
-      locations: [testLocation],
+      locations: [seedFile],
       projects: params.project ? [params.project] : undefined,
       timeout: 0,
       workers: 1,
@@ -167,17 +182,14 @@ test('seed', async ({ page }) => {});
 
     // Ideally, we should check that page was indeed created and browser mcp has kicked in.
     // However, that is handled in the upper layer, so hard to check here.
-    if (result.status === 'passed' && !reporter.suite?.allTests().length) {
-      return {
-        content: [{ type: 'text', text: 'Error: seed test not found.' }],
-        isError: true,
-      };
-    }
+    if (result.status === 'passed' && !reporter.suite?.allTests().length)
+      throw new Error('seed test not found.');
 
-    const text = stream.content();
+    if (result.status !== 'passed')
+      throw new Error(stream.content());
+
     return {
-      content: [{ type: 'text', text }],
-      isError: result.status !== 'passed',
+      content: [{ type: 'text', text: 'Done.' }],
     };
   },
 });
