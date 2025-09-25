@@ -36,6 +36,26 @@ for (const mode of ['isolated', 'persistent']) {
       code: expect.stringContaining(`page.goto('http://localhost`),
     });
 
+    await client.callTool({
+      name: 'browser_evaluate',
+      arguments: {
+        function: `() => new Promise(f => {
+          document.body.style.backgroundColor = 'red';
+          function waitForRaf(count) {
+            const onRaf = () => {
+              --count;
+              if (!count)
+                f();
+              else
+                requestAnimationFrame(onRaf);
+            };
+            requestAnimationFrame(onRaf);
+          }
+          waitForRaf(5);
+        })`,
+      },
+    });
+
     expect(await client.callTool({
       name: 'browser_close',
     })).toHaveResponse({

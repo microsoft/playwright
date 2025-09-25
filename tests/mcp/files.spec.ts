@@ -127,11 +127,11 @@ test('clicking on download link emits download', async ({ startClient, server },
 });
 
 test('navigating to download link emits download', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chromium', 'This test is racy');
   const { client } = await startClient({
     config: { outputDir: testInfo.outputPath('output') },
   });
 
-  test.skip(mcpBrowser !== 'chromium', 'This test is racy');
   server.setRoute('/download', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/plain',
