@@ -41,7 +41,7 @@ test('test_setup_page', async ({ startClient }) => {
     },
   });
 
-  expect(response).toHaveTextResponse(expect.stringContaining(`### Seed test\nFile: `));
+  expect(response).toHaveTextResponse(expect.stringContaining(`### Seed test\nFile: a.test.ts`));
   expect(response).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction
 
 ### Page state
