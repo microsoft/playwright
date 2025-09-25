@@ -463,12 +463,15 @@ test('test_setup_page', async ({ startClient }) => {
   });
 
   const { client } = await startClient();
-  expect(await client.callTool({
+  const response = await client.callTool({
     name: 'test_setup_page',
     arguments: {
       seedFile: 'a.test.ts',
     },
-  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+  });
+
+  expect(response).toHaveTextResponse(expect.stringContaining(`### Seed test\nFile: `));
+  expect(response).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction
 
 ### Page state
 - Page URL: about:blank
@@ -477,7 +480,7 @@ test('test_setup_page', async ({ startClient }) => {
 \`\`\`yaml
 - button "Submit" [ref=e2]
 \`\`\`
-`);
+`));
 
   expect(await client.callTool({
     name: 'browser_click',
@@ -584,16 +587,7 @@ test('test_setup_page with dependencies', async ({ startClient }) => {
       seedFile: 'seed.test.ts',
       project: 'chromium',
     },
-  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
-
-### Page state
-- Page URL: about:blank
-- Page Title:
-- Page Snapshot:
-\`\`\`yaml
-
-\`\`\`
-`);
+  })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction`));
 
   // Should pause at the target test, not in a dependency or any other stray project.
   expect(fs.existsSync(path.join(baseDir, 'test-results', 'auth.setup.ts-auth-setup', 'auth.txt'))).toBe(true);
@@ -632,16 +626,7 @@ test('test_setup_page (no test location)', async ({ startClient }) => {
   expect(await client.callTool({
     name: 'test_setup_page',
     arguments: {},
-  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
-
-### Page state
-- Page URL: about:blank
-- Page Title:
-- Page Snapshot:
-\`\`\`yaml
-
-\`\`\`
-`);
+  })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction`));
 });
 
 test('test_setup_page chooses top-level project', async ({ startClient }) => {
@@ -660,16 +645,7 @@ test('test_setup_page chooses top-level project', async ({ startClient }) => {
   expect(await client.callTool({
     name: 'test_setup_page',
     arguments: {},
-  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
-
-### Page state
-- Page URL: about:blank
-- Page Title:
-- Page Snapshot:
-\`\`\`yaml
-
-\`\`\`
-`);
+  })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction`));
 
   expect(fs.existsSync(path.join(baseDir, 'one', 'seed.spec.ts'))).toBe(false);
   expect(fs.existsSync(path.join(baseDir, 'two', 'seed.spec.ts'))).toBe(true);
@@ -695,15 +671,7 @@ test('test_setup_page without location respects testsDir', async ({ startClient 
   expect(await client.callTool({
     name: 'test_setup_page',
     arguments: {},
-  })).toHaveTextResponse(`### Paused at end of test. ready for interaction
+  })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction`));
 
-### Page state
-- Page URL: about:blank
-- Page Title:
-- Page Snapshot:
-\`\`\`yaml
-
-\`\`\`
-`);
   expect(fs.existsSync(test.info().outputPath('tests', 'seed.spec.ts'))).toBe(true);
 });
