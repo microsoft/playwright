@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 import { Worker } from '../page';
-import { createHandle, CRExecutionContext } from './crExecutionContext';
+import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import { BrowserContext } from '../browserContext';
-import { ConsoleMessage } from '../console';
 import * as network from '../network';
-import { toConsoleMessageLocation } from './crProtocolHelper';
 
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -52,13 +50,6 @@ export class CRServiceWorker extends Worker {
     session.on('Inspector.targetReloadedAfterCrash', () => {
       // Resume service worker after restart.
       session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
-    });
-    session.on('Runtime.consoleAPICalled', event => {
-      if (!this.existingExecutionContext)
-        return;
-      const args = event.args.map(o => createHandle(this.existingExecutionContext!, o));
-      const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
-      this.emit(Worker.Events.Console, message);
     });
   }
 
