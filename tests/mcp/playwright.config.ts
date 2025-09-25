@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-import { defineConfig } from '@playwright/test';
+import { defineConfig, ReporterDescription } from '@playwright/test';
+import * as path from 'path';
 
 import type { TestOptions } from './fixtures';
+
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
+
+const reporter: ReporterDescription[] = process.env.CI ? [
+  ['list'],
+  ['json', { outputFile: path.join(outputDir, 'report.json') }]
+] : [['list']];
 
 export default defineConfig<TestOptions>({
   testDir: './',
@@ -24,7 +32,7 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
-  reporter: 'list',
+  reporter,
   projects: [
     { name: 'chrome' },
     { name: 'chromium', use: { mcpBrowser: 'chromium' } },
