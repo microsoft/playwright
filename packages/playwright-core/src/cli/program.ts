@@ -611,9 +611,9 @@ async function open(options: Options, url: string | undefined) {
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
   const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
   const tracesDir = path.join(os.tmpdir(), `playwright-recorder-trace-${Date.now()}`);
+
   const { context, browser, launchOptions, contextOptions, closeBrowser } = await launchContext(options, {
-    headless: !!process.env.PWTEST_CLI_HEADLESS,
-    executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH,
+    headless: false,
     tracesDir,
   });
   const donePromise = new ManualPromise<void>();
