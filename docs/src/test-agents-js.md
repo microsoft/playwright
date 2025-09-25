@@ -237,3 +237,35 @@ Generated Playwright tests, aligned one-to-one with specs wherever feasible.
 ### Seed tests `seed.spec.ts`
 
 Seed tests provide a ready-to-use `page` context to bootstrap execution.
+
+### Custom headers for multi-tenant testing
+
+Opt into the `headers` capability when you need to drive tenant-aware applications that are keyed off HTTP headers instead of host names or paths.
+
+```bash
+npx @playwright/mcp@latest --caps=headers
+```
+
+You can also enable the capability in your MCP configuration:
+
+```json
+{
+  "capabilities": ["headers"]
+}
+```
+
+After enabling it, use the `browser_set_headers` tool to persist headers for the active browser context:
+
+```json
+{
+  "name": "browser_set_headers",
+  "arguments": {
+    "headers": {
+      "X-Tenant-ID": "tenant-123",
+      "Authorization": "Bearer token123"
+    }
+  }
+}
+```
+
+All subsequent navigations and network requests reuse these headers, which makes it straightforward to swap tenants during a single session.

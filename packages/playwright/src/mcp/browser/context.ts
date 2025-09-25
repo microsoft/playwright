@@ -51,6 +51,7 @@ export class Context {
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
   private _clientInfo: ClientInfo;
+  private _extraHTTPHeaders: Record<string, string> | undefined;
 
   private static _allContexts: Set<Context> = new Set();
   private _closeBrowserContextPromise: Promise<void> | undefined;
@@ -210,6 +211,12 @@ export class Context {
     return browserContext;
   }
 
+  async setExtraHTTPHeaders(headers: Record<string, string>) {
+    this._extraHTTPHeaders = { ...headers };
+    const { browserContext } = await this._ensureBrowserContext();
+    await browserContext.setExtraHTTPHeaders(this._extraHTTPHeaders);
+  }
+
   private _ensureBrowserContext() {
     if (!this._browserContextPromise) {
       this._browserContextPromise = this._setupBrowserContext();
@@ -227,6 +234,8 @@ export class Context {
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
     await this._setupRequestInterception(browserContext);
+    if (this._extraHTTPHeaders)
+      await browserContext.setExtraHTTPHeaders(this._extraHTTPHeaders);
     if (this.sessionLog)
       await InputRecorder.create(this, browserContext);
     for (const page of browserContext.pages())
