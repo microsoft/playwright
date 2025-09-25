@@ -161,7 +161,7 @@ test.describe('Test group', () => {
 
     const seedFileContent = await fs.promises.readFile(seedFile, 'utf8');
     progress({ message: `### Seed test
-File: ${seedFile}
+File: ${path.relative(context.rootPath, seedFile)}
 \`\`\`ts
 ${seedFileContent}
 \`\`\`

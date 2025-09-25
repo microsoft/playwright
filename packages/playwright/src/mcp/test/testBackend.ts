@@ -35,14 +35,15 @@ export class TestServerBackend implements mcp.ServerBackend {
   }
 
   async initialize(server: mcp.Server, clientInfo: mcp.ClientInfo): Promise<void> {
+    const rootPath = mcp.firstRootPath(clientInfo);
+
     if (this._configOption) {
-      this._context.setConfigLocation(resolveConfigLocation(this._configOption));
+      this._context.initialize(rootPath, resolveConfigLocation(this._configOption));
       return;
     }
 
-    const rootPath = mcp.firstRootPath(clientInfo);
     if (rootPath) {
-      this._context.setConfigLocation(resolveConfigLocation(rootPath));
+      this._context.initialize(rootPath, resolveConfigLocation(rootPath));
       return;
     }
 
