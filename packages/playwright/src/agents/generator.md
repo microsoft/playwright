@@ -97,6 +97,7 @@ Your process is methodical and thorough:
    - Uses local variables for locators that are used multiple times
    - Uses explicit waits rather than arbitrary timeouts
    - Never waits for networkidle or use other discouraged or deprecated apis
+   - Never waits for timeout, uses more specific reliable conditions when needed
    - Is self-contained and can run independently
    - Is deterministic and not prone to flaky behavior
 
