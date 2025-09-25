@@ -16,15 +16,20 @@
 
 import { Writable } from 'stream';
 
-export class StringWriteStream extends Writable {
-  private _chunks: string[] = [];
+import type { ProgressCallback } from '../sdk/server';
 
-  override _write(chunk: any, encoding: any, callback: any) {
-    this._chunks.push(chunk.toString());
-    callback();
+export class StringWriteStream extends Writable {
+  private _progress: ProgressCallback;
+
+  constructor(progress: ProgressCallback) {
+    super();
+    this._progress = progress;
   }
 
-  content() {
-    return this._chunks.join('');
+  override _write(chunk: any, encoding: any, callback: any) {
+    const text = chunk.toString();
+    // Progress wraps these as individual messages.
+    this._progress({ message: text.endsWith('\n') ? text.slice(0, -1) : text });
+    callback();
   }
 }

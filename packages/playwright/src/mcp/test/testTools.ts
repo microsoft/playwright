@@ -29,6 +29,8 @@ import { defineTestTool } from './testTool';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 
+import type { ProgressCallback } from '../sdk/server';
+
 export const listTests = defineTestTool({
   schema: {
     name: 'test_list',
@@ -38,15 +40,13 @@ export const listTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async context => {
-    const { screen, stream } = createScreen();
+  handle: async (context, _, progress) => {
+    const { screen } = createScreen(progress);
     const reporter = new ListModeReporter({ screen, includeTestId: true });
     const testRunner = await context.createTestRunner();
     await testRunner.listTests(reporter, {});
 
-    return {
-      content: [{ type: 'text', text: stream.content() }],
-    };
+    return { content: [] };
   },
 });
 
@@ -62,10 +62,10 @@ export const runTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const { screen, stream } = createScreen();
+  handle: async (context, params, progress) => {
+    const { screen } = createScreen(progress);
     const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen, includeTestId: true });
+    const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
     const testRunner = await context.createTestRunner();
     await testRunner.runTests(reporter, {
       locations: params.locations,
@@ -73,12 +73,7 @@ export const runTests = defineTestTool({
       disableConfigReporters: true,
     });
 
-    const text = stream.content();
-    return {
-      content: [
-        { type: 'text', text },
-      ]
-    };
+    return { content: [] };
   },
 });
 
@@ -96,12 +91,12 @@ export const debugTest = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const { screen, stream } = createScreen();
+  handle: async (context, params, progress) => {
+    const { screen } = createScreen(progress);
     const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen });
+    const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
     const testRunner = await context.createTestRunner();
-    const result = await testRunner.runTests(reporter, {
+    await testRunner.runTests(reporter, {
       headed: !context.options?.headless,
       testIds: [params.test.id],
       // For automatic recovery
@@ -111,13 +106,7 @@ export const debugTest = defineTestTool({
       disableConfigReporters: true,
     });
 
-    const text = stream.content();
-    return {
-      content: [
-        { type: 'text', text },
-      ],
-      isError: result.status !== 'passed',
-    };
+    return { content: [] };
   },
 });
 
@@ -134,7 +123,7 @@ export const setupPage = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const { screen, stream } = createScreen();
+    const { screen } = createScreen(progress);
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
@@ -195,16 +184,14 @@ ${seedFileContent}
       throw new Error('seed test not found.');
 
     if (result.status !== 'passed')
-      throw new Error(stream.content());
+      throw new Error('Errors while running the seed test.');
 
-    return {
-      content: [{ type: 'text', text: 'Done.' }],
-    };
+    return { content: [] };
   },
 });
 
-function createScreen() {
-  const stream = new StringWriteStream();
+function createScreen(progress: ProgressCallback) {
+  const stream = new StringWriteStream(progress);
   const screen = {
     ...terminalScreen,
     isTTY: false,
