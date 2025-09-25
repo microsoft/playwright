@@ -49,7 +49,7 @@ test('call top level tool', async () => {
       message: 'Hello, world!',
     },
   });
-  expect(echoResult.content).toEqual([{ type: 'text', text: 'Echo: Hello, world!', roots: [] }]);
+  expect(echoResult.content).toEqual([{ type: 'text', text: 'Echo: Hello, world!, roots: ' }]);
 
   await mdbClient.close();
 });
@@ -98,8 +98,7 @@ test('outer and inner roots available', async () => {
   })).toEqual({
     content: [{
       type: 'text',
-      text: 'Echo: Hello, cli!',
-      roots: [{ name: 'test', uri: 'file://tmp/' }]
+      text: 'Echo: Hello, cli!, roots: test=file://tmp/',
     }]
   });
 
@@ -116,8 +115,7 @@ test('outer and inner roots available', async () => {
   })).toEqual({
     content: [{
       type: 'text',
-      text: 'Echo: Hello, bt!',
-      roots: [{ name: 'test', uri: 'file://tmp/' }]
+      text: 'Echo: Hello, bt!, roots: test=file://tmp/',
     }]
   });
 
@@ -180,7 +178,7 @@ class CLIBackend {
 
   async callTool(name: string, args: any) {
     if (name === 'cli_echo')
-      return { content: [{ type: 'text', text: 'Echo: ' + (args?.message as string), roots: this._roots }] };
+      return { content: [{ type: 'text', text: `Echo: ${args?.message as string}, roots: ${stringifyRoots(this._roots)}` }] };
     if (name === 'cli_pause_in_gdb') {
       await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception');
       return { content: [{ type: 'text', text: 'Done' }] };
@@ -215,9 +213,13 @@ class GDBBackend {
 
   async callTool(name: string, args: any) {
     if (name === 'gdb_echo')
-      return { content: [{ type: 'text', text: 'Echo: ' + (args?.message as string), roots: this._roots }] };
+      return { content: [{ type: 'text', text: `Echo: ${args?.message as string}, roots: ${stringifyRoots(this._roots)}` }] };
     if (name === 'gdb_bt')
       return { content: [{ type: 'text', text: 'Backtrace' }] };
     throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+function stringifyRoots(roots: any[]) {
+  return roots.map(root => `${root.name}=${root.uri}`).join(',');
 }

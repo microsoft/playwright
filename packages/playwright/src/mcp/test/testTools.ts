@@ -133,7 +133,7 @@ export const setupPage = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
+  handle: async (context, params, progress) => {
     const { screen, stream } = createScreen();
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
@@ -168,6 +168,15 @@ test.describe('Test group', () => {
       if (!seedFile)
         throw new Error('seed test not found.');
     }
+
+
+    const seedFileContent = await fs.promises.readFile(seedFile, 'utf8');
+    progress({ message: `### Seed test
+File: ${seedFile}
+\`\`\`ts
+${seedFileContent}
+\`\`\`
+` });
 
     const result = await testRunner.runTests(reporter, {
       headed: !context.options?.headless,

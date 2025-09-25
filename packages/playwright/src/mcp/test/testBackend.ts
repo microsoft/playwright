@@ -56,12 +56,12 @@ export class TestServerBackend implements mcp.ServerBackend {
     ];
   }
 
-  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
+  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments'], progress: mcp.ProgressCallback): Promise<mcp.CallToolResult> {
     const tool = this._tools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    return await tool.handle(this._context!, parsedArguments);
+    return await tool.handle(this._context!, parsedArguments, progress);
   }
 
   serverClosed() {

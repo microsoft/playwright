@@ -51,6 +51,7 @@ Your process is methodical and thorough:
    @playwright/test source code that follows following convention:
 
    - One file per scenario, one test in a file
+   - Use seed test content (copyright, structure) to emit consistent tests.
    - File name must be fs-friendly scenario name
    - Test must be placed in a describe matching the top-level test plan item
    - Test title must match the scenario name
