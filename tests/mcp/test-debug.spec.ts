@@ -348,3 +348,34 @@ Error: expect(locator).toBeVisible() failed`));
     result: `\[GET\] ${server.HELLO_WORLD} => [200] OK\n\[GET\] ${server.PREFIX}/missing => [404] Not Found`,
   });
 });
+
+test('test_debug w/ route', async ({ startClient, server }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        let counter = 0;
+        await page.route('**', route => route.fulfill({ body: '<title>Title' + (++counter) + '</title><div>mocked</div>', contentType: 'text/html' }));
+        await page.goto(${JSON.stringify(server.EMPTY_PAGE)});
+        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+      });
+  `);
+
+  const response = await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  });
+  expect(response).toHaveTextResponse(expect.stringContaining(`
+Running 1 test using 1 worker
+### Paused on error:
+Error: expect(locator).toBeVisible() failed`));
+  expect(response).toHaveTextResponse(expect.stringContaining(`- Page URL: ${server.EMPTY_PAGE}\n- Page Title: Title1`));
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- Page URL: ${server.HELLO_WORLD}\n- Page Title: Title2`),
+  });
+});
