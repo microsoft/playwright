@@ -37,6 +37,12 @@ const setHeaders = defineTool({
       return;
     }
 
+    const invalidHeader = entries.find(([name]) => !name.trim());
+    if (invalidHeader) {
+      response.addError('Header names must be non-empty strings.');
+      return;
+    }
+
     await context.setExtraHTTPHeaders(params.headers);
 
     const count = entries.length;
