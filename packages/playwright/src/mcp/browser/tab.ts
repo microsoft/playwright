@@ -90,13 +90,20 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return (page as any)[tabSymbol];
   }
 
-  private async _initialize() {
-    const messages = await this.page.consoleMessages().catch(() => []);
+  static async collectConsoleMessages(page: playwright.Page): Promise<ConsoleMessage[]> {
+    const result: ConsoleMessage[] = [];
+    const messages = await page.consoleMessages().catch(() => []);
     for (const message of messages)
-      this._handleConsoleMessage(messageToConsoleMessage(message));
-    const errors = await this.page.pageErrors().catch(() => []);
+      result.push(messageToConsoleMessage(message));
+    const errors = await page.pageErrors().catch(() => []);
     for (const error of errors)
-      this._handleConsoleMessage(pageErrorToConsoleMessage(error));
+      result.push(pageErrorToConsoleMessage(error));
+    return result;
+  }
+
+  private async _initialize() {
+    for (const message of await Tab.collectConsoleMessages(this.page))
+      this._handleConsoleMessage(message);
     const requests = await this.page.requests().catch(() => []);
     for (const request of requests)
       this._requests.add(request);

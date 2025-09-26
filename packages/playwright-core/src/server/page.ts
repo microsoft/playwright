@@ -353,8 +353,7 @@ export class Page extends SdkObject {
 
   addNetworkRequest(request: network.Request) {
     this._networkRequests.push(request);
-    for (const collected of ensureArrayLimit(this._networkRequests, 100))
-      this.emitOnContext(BrowserContext.Events.RequestCollected, collected);
+    ensureArrayLimit(this._networkRequests, 100);
   }
 
   networkRequests() {
