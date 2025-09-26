@@ -40,7 +40,7 @@
   color: #a1260d;
 }
 
-:root:dark-mode .recorder .toolbar-button.toggled.circle-large-filled {
+:root.dark-mode .recorder .toolbar-button.toggled.circle-large-filled {
   color: #f48771;
 }
 
