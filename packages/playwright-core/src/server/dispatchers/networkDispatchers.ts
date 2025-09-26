@@ -19,15 +19,15 @@ import { Dispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
+import { Request } from '../network';
 
 import type { APIRequestContext } from '../fetch';
-import type { Request, Response, Route } from '../network';
+import type { Response, Route } from '../network';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
-
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;
@@ -60,9 +60,11 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
+      hasResponse: !!request._existingResponse(),
     });
     this._type_Request = true;
     this._browserContextDispatcher = scope;
+    this.addObjectListener(Request.Events.Response, () => this._dispatchEvent('response', {}));
   }
 
   async rawRequestHeaders(params: channels.RequestRawRequestHeadersParams, progress: Progress): Promise<channels.RequestRawRequestHeadersResult> {

@@ -1,6 +1,6 @@
 ---
 description: Use this agent when you need to debug and fix failing Playwright tests.
-tools: ['createFile', 'createDirectory', 'editFiles', 'fileSearch', 'textSearch', 'listDirectory', 'readFile', 'test_browser_evaluate', 'test_browser_generate_locator', 'test_browser_snapshot', 'test_debug', 'test_list', 'test_run']
+tools: ['createFile', 'createDirectory', 'editFiles', 'fileSearch', 'textSearch', 'listDirectory', 'readFile', 'test_browser_console_messages', 'test_browser_evaluate', 'test_browser_generate_locator', 'test_browser_network_requests', 'test_browser_snapshot', 'test_debug', 'test_list', 'test_run']
 ---
 
 You are the Playwright Test Healer, an expert test automation engineer specializing in debugging and

@@ -53,10 +53,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _lastTitle = 'about:blank';
   private _consoleMessages: ConsoleMessage[] = [];
   private _recentConsoleMessages: ConsoleMessage[] = [];
-  private _requests: Map<playwright.Request, playwright.Response | null> = new Map();
+  private _requests: Set<playwright.Request> = new Set();
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _downloads: { download: playwright.Download, finished: boolean, outputFile: string }[] = [];
+  private _initializedPromise: Promise<void>;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -65,8 +66,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._onPageClose = onPageClose;
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
-    page.on('request', request => this._requests.set(request, null));
-    page.on('response', response => this._requests.set(response.request(), response));
+    page.on('request', request => this._requests.add(request));
     page.on('close', () => this._onClose());
     page.on('filechooser', chooser => {
       this.setModalState({
@@ -83,7 +83,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
-    void this._initialize();
+    this._initializedPromise = this._initialize();
   }
 
   static forPage(page: playwright.Page): Tab | undefined {
@@ -98,13 +98,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     for (const error of errors)
       this._handleConsoleMessage(pageErrorToConsoleMessage(error));
     const requests = await this.page.requests().catch(() => []);
-    for (const request of requests) {
-      this._requests.set(request, null);
-      void request.response().catch(() => null).then(response => {
-        if (response)
-          this._requests.set(request, response);
-      });
-    }
+    for (const request of requests)
+      this._requests.add(request);
   }
 
   modalStates(): ModalState[] {
@@ -207,11 +202,13 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this.waitForLoadState('load', { timeout: 5000 });
   }
 
-  consoleMessages(): ConsoleMessage[] {
+  async consoleMessages(): Promise<ConsoleMessage[]> {
+    await this._initializedPromise;
     return this._consoleMessages;
   }
 
-  requests(): Map<playwright.Request, playwright.Response | null> {
+  async requests(): Promise<Set<playwright.Request>> {
+    await this._initializedPromise;
     return this._requests;
   }
 

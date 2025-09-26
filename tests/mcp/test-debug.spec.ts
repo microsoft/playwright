@@ -290,3 +290,61 @@ Running 1 test using 1 worker
 ### Paused on error:
 Error: expect(locator).toBeVisible() failed`));
 });
+
+test('test_debug w/ console_messages', async ({ startClient }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.evaluate(() => {
+          console.log('console.log');
+          console.error('console.error');
+        });
+        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+      });
+  `);
+
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(expect.stringContaining(`
+Running 1 test using 1 worker
+### Paused on error:
+Error: expect(locator).toBeVisible() failed`));
+
+  expect(await client.callTool({
+    name: 'browser_console_messages',
+  })).toHaveResponse({
+    result: expect.stringMatching(/\[LOG] console.log.*\n\[ERROR\] console.error/),
+  });
+});
+
+test('test_debug w/ network_requests', async ({ startClient, server }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.goto(${JSON.stringify(server.HELLO_WORLD)});
+        await page.evaluate(async () => {
+          await fetch('missing');
+        });
+        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+      });
+  `);
+
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(expect.stringContaining(`
+Running 1 test using 1 worker
+### Paused on error:
+Error: expect(locator).toBeVisible() failed`));
+
+  expect(await client.callTool({
+    name: 'browser_network_requests',
+  })).toHaveResponse({
+    result: `\[GET\] ${server.HELLO_WORLD} => [200] OK\n\[GET\] ${server.PREFIX}/missing => [404] Not Found`,
+  });
+});
