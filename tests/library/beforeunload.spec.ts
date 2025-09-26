@@ -128,11 +128,11 @@ it('should not stall on click when dismissing beforeunload', async ({ page, serv
 });
 
 it('should support dismissing the dialog multiple times', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.PREFIX + '/beforeunload.html');
 
-  await page.evaluate(() => {
-    window.onbeforeunload = () => true;
-  });
+  // We have to interact with a page so that 'beforeunload' handlers
+  // fire (in Firefox).
+  await page.click('body');
 
   const [dialog] = await Promise.all([
     page.waitForEvent('dialog'),
@@ -150,11 +150,11 @@ it('should support dismissing the dialog multiple times', async ({ page, server 
 });
 
 it('should support closing the page after a previous dismiss', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.PREFIX + '/beforeunload.html');
 
-  await page.evaluate(() => {
-    window.onbeforeunload = () => true;
-  });
+  // We have to interact with a page so that 'beforeunload' handlers
+  // fire (in Firefox).
+  await page.click('body');
 
   const [dialog] = await Promise.all([
     page.waitForEvent('dialog'),
@@ -168,11 +168,11 @@ it('should support closing the page after a previous dismiss', async ({ page, se
 });
 
 it('should support closing the page via a subsequent onbeforeunload dialog', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.PREFIX + '/beforeunload.html');
 
-  await page.evaluate(() => {
-    window.onbeforeunload = () => true;
-  });
+  // We have to interact with a page so that 'beforeunload' handlers
+  // fire (in Firefox).
+  await page.click('body');
 
   const [dialog] = await Promise.all([
     page.waitForEvent('dialog'),
