@@ -39,7 +39,7 @@ test('browser_set_headers rejects empty input', async ({ startClient }) => {
   });
 });
 
-test('browser_set_headers validates header names', async ({ startClient }) => {
+test('browser_set_headers defers invalid headers to Playwright', async ({ startClient }) => {
   const { client } = await startClient({ args: ['--caps=headers'] });
 
   const response = await client.callTool({
@@ -49,7 +49,6 @@ test('browser_set_headers validates header names', async ({ startClient }) => {
 
   expect(response).toHaveResponse({
     isError: true,
-    result: 'Header names must be non-empty strings.',
   });
 });
 
@@ -102,7 +101,7 @@ test('browser_set_headers applies to all requests from the context', async ({ st
     arguments: {
       headers: {
         'X-Tenant-ID': 'tenant-456',
-        Authorization: 'Bearer token456',
+        'Authorization': 'Bearer token456',
       },
     },
   })).toHaveResponse({

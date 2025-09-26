@@ -37,18 +37,11 @@ const setHeaders = defineTool({
       return;
     }
 
-    const invalidHeader = entries.find(([name]) => !name.trim());
-    if (invalidHeader) {
-      response.addError('Header names must be non-empty strings.');
-      return;
-    }
-
-    const normalizedHeaders = Object.fromEntries(entries.map(([name, value]) => [name.trim(), value]));
-    await context.setExtraHTTPHeaders(normalizedHeaders);
+    await context.setExtraHTTPHeaders(params.headers);
 
     const count = entries.length;
     response.addResult(`Configured ${count} ${count === 1 ? 'header' : 'headers'} for this session.`);
-    response.addCode(`await context.setExtraHTTPHeaders(${JSON.stringify(normalizedHeaders, null, 2)});`);
+    response.addCode(`await context.setExtraHTTPHeaders(${JSON.stringify(params.headers, null, 2)});`);
   },
 });
 
