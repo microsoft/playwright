@@ -218,7 +218,7 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
   const passesItemLocator = page.getByRole('treeitem', { name: 'passes' });
   await passesItemLocator.hover();
   await passesItemLocator.getByTitle('Show source').click();
-  await page.getByTitle('Open in VS Code').click();
+  await page.getByTitle('Open in editor').click();
 
   expect(messages).toEqual([{
     method: 'open',
@@ -249,7 +249,7 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
   messages.length = 0;
   await passesItemLocator.hover();
   await passesItemLocator.getByTitle('Show source').click();
-  await page.getByTitle('Open in VS Code').click();
+  await page.getByTitle('Open in editor').click();
 
   expect(messages).toEqual([{
     method: 'open',

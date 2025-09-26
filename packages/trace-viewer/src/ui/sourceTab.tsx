@@ -112,7 +112,7 @@ export const SourceTab: React.FunctionComponent<{
           <div>{shortFileName}</div>
         </div>
         <CopyToClipboard description='Copy filename' value={shortFileName}/>
-        {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
+        {location && <ToolbarButton icon='link-external' title='Open in editor' onClick={openExternally}></ToolbarButton>}
       </Toolbar> }
       <CodeMirrorWrapper text={source.content || ''} highlighter='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} dataTestId='source-code-mirror'/>
     </div>}
