@@ -18,6 +18,7 @@ import { test, expect, writeFiles } from './fixtures';
 
 import fs from 'fs';
 import path from 'path';
+import url from 'url';
 
 test.use({ mcpServerType: 'test-mcp' });
 
@@ -99,14 +100,14 @@ test('test_setup_page seed resolution', async ({ startClient }) => {
   })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test.`));
 });
 
-test('test_setup_page seed resolution - cwd', async ({ startClient }) => {
+test('test_setup_page seed resolution - rootPath', async ({ startClient }) => {
   await writeFiles({
-    'configs/playwright.config.ts': `
+    'packages/my-app/configs/playwright.config.ts': `
       module.exports = {
         testDir: '../tests',
       };
     `,
-    'tests/seed.test.ts': `
+    'packages/my-app/tests/seed.test.ts': `
       import { test, expect } from '@playwright/test';
       test('template', async ({ page }) => {
         await page.setContent('<button>Submit</button>');
@@ -115,13 +116,14 @@ test('test_setup_page seed resolution - cwd', async ({ startClient }) => {
   });
 
   const { client } = await startClient({
-    args: ['--config=configs/playwright.config.ts'],
+    args: ['--config=packages/my-app/configs/playwright.config.ts'],
+    roots: [{ name: 'root', uri: url.pathToFileURL(test.info().outputPath('')).toString() }],
   });
 
   expect(await client.callTool({
     name: 'test_setup_page',
     arguments: {
-      seedFile: 'tests/seed.test.ts',
+      seedFile: 'packages/my-app/tests/seed.test.ts',
     },
   })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test.`));
 });

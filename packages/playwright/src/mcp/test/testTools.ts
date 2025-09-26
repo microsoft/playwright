@@ -147,7 +147,7 @@ test.describe('Test group', () => {
       const candidateFiles: string[] = [];
       candidateFiles.push(path.resolve(testDir, params.seedFile));
       candidateFiles.push(path.resolve(configDir, params.seedFile));
-      candidateFiles.push(path.resolve(process.cwd(), params.seedFile));
+      candidateFiles.push(path.resolve(context.rootPath, params.seedFile));
       for (const candidateFile of candidateFiles) {
         if (await fileExistsAsync(candidateFile)) {
           seedFile = candidateFile;
