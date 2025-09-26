@@ -48,7 +48,7 @@ cd PlaywrightTests
 <TabItem value="xunit-v3">
 
 ```bash
-dotnet new xunit -n PlaywrightTests
+dotnet new xunit3 -n PlaywrightTests
 cd PlaywrightTests
 ```
 
