@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { noColors } from 'playwright-core/lib/utils';
+import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
 
 import { z } from '../sdk/bundle';
 import { terminalScreen } from '../../reporters/base';
@@ -169,7 +169,7 @@ ${seedFileContent}
 
     const result = await testRunner.runTests(reporter, {
       headed: !context.options?.headless,
-      locations: [seedFile],
+      locations: ['/' + escapeRegExp(seedFile) + '/'],
       projects: params.project ? [params.project] : undefined,
       timeout: 0,
       workers: 1,
