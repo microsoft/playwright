@@ -169,7 +169,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     })();
   }, [isServer, traceURLs, uploadedTraceNames]);
 
-  const showLoading = progress.done !== progress.total && progress.total !== 0;
+  const showLoading = progress.done !== progress.total && progress.total !== 0 && !processingErrorMessage;
 
   React.useEffect(() => {
     if (showLoading) {
