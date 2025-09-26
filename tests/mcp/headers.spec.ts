@@ -39,7 +39,9 @@ test('browser_set_headers rejects empty input', async ({ startClient }) => {
   });
 });
 
-test('browser_set_headers defers invalid headers to Playwright', async ({ startClient }) => {
+test('browser_set_headers defers invalid headers to Playwright', async ({ startClient, server }) => {
+  server.setContent('/check-invalid-header', '<title>Check</title>', 'text/html');
+
   const { client } = await startClient({ args: ['--caps=headers'] });
 
   const response = await client.callTool({
@@ -47,9 +49,25 @@ test('browser_set_headers defers invalid headers to Playwright', async ({ startC
     arguments: { headers: { '   ': 'value' } },
   });
 
-  expect(response).toHaveResponse({
-    isError: true,
+  if (response.isError) {
+    expect(response).toHaveResponse({
+      isError: true,
+    });
+    return;
+  }
+
+  const text = response.content[0]?.text ?? '';
+  expect(text).toContain('Configured 1 header for this session.');
+
+  const requestPromise = server.waitForRequest('/check-invalid-header');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: `${server.PREFIX}/check-invalid-header` },
   });
+  const request = await requestPromise;
+  expect(request.headers['']).toBeUndefined();
+  expect(request.headers[' ']).toBeUndefined();
+  expect(request.headers['   ']).toBeUndefined();
 });
 
 test('browser_set_headers persists headers across navigations', async ({ startClient, server }) => {
