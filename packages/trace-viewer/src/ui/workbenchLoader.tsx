@@ -143,7 +143,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         };
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
-        const contextEntries: ContextEntry[] = [];
+        let contextEntries: ContextEntry[] = [];
         for (let i = 0; i < traceURLs.length; i++) {
           const url = traceURLs[i];
           const params = new URLSearchParams();
@@ -156,14 +156,14 @@ export const WorkbenchLoader: React.FunctionComponent<{
             if (!isServer)
               setTraceURLs([]);
             setProcessingErrorMessage((await response.json()).error);
-            return;
+            contextEntries = [];
+            break;
           }
           contextEntries.push(...(await response.json()));
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
-        const model = new MultiTraceModel(contextEntries);
         setProgress({ done: 0, total: 0 });
-        setModel(model);
+        setModel(contextEntries.length ? new MultiTraceModel(contextEntries) : emptyModel);
       } else {
         setModel(emptyModel);
       }
