@@ -150,7 +150,7 @@ export class CRBrowser extends Browser {
     await Promise.all([...this._crPages.values()].map(crPage => crPage._page.waitForInitializedOrError()));
   }
 
-  _onAttachedToTarget({ targetInfo, sessionId }: Protocol.Target.attachedToTargetPayload) {
+  _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }: Protocol.Target.attachedToTargetPayload) {
     if (targetInfo.type === 'browser')
       return;
     const session = this._session.createChildSession(sessionId);
