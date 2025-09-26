@@ -755,12 +755,7 @@ export class Page extends SdkObject {
     if (options.reason)
       this.closeReason = options.reason;
     const runBeforeUnload = !!options.runBeforeUnload;
-    if (this._closedState !== 'closing') {
-      this._closedState = 'closing';
-      // This might throw if the browser context containing the page closes
-      // while we are trying to close the page.
-      await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
-    }
+    await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
     if (!runBeforeUnload)
       await this._closedPromise;
   }
