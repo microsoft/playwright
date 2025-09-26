@@ -26,6 +26,7 @@ import { filterWithQuery } from './filter';
 import { linkifyText } from '@web/renderUtils';
 import { Dialog } from '@web/shared/dialog';
 import { useDarkModeSetting } from '@web/theme';
+import { useSetting } from '@web/uiUtils';
 
 export const HeaderView: React.FC<{
   title: string | undefined,
@@ -117,40 +118,49 @@ const NavLink: React.FC<{
 };
 
 const SettingsButton: React.FC = () => {
-  const settingsRef = React.useRef<HTMLAnchorElement>(null);
+  const settingsRef = React.useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
 
-  return <>
+  return <div
+    role='button'
+    ref={settingsRef}
+    style={{ cursor: 'pointer' }}
+    className='subnav-item'
+    title='Settings'
+    onClick={e => {
+      setSettingsOpen(!settingsOpen);
+      e.preventDefault();
+    }}
+    onMouseDown={preventDefault}>
     <Dialog
       open={settingsOpen}
-      width={200}
+      width={150}
       verticalOffset={8}
       requestClose={() => setSettingsOpen(false)}
       anchor={settingsRef}
       dataTestId='settings-dialog'
     >
-      <div className='hbox cursor-pointer' style={{ alignItems: 'center' }}>
-        <input type='checkbox' id='dark-mode-setting' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
-        <label htmlFor='dark-mode-setting'>Dark mode</label>
-      </div>
+      <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
+        <input type='checkbox' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
+        Dark mode
+      </label>
+      <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
+        <input type='checkbox' checked={mergeFiles} onChange={() => setMergeFiles(!mergeFiles)}></input>
+        Merge files
+      </label>
     </Dialog>
-    <a
-      ref={settingsRef}
-      style={{ cursor: 'pointer' }}
-      className='subnav-item'
-      title='Settings'
-      onClick={e => {
-        setSettingsOpen(!settingsOpen);
-        e.preventDefault();
-      }}
-      onMouseDown={preventDefault}>
-      {icons.settings()}
-    </a>
-  </>;
+    {icons.settings()}
+  </div>;
 };
 
 const preventDefault = (e: any) => {
   e.stopPropagation();
   e.preventDefault();
+};
+
+const stopPropagation = (e: any) => {
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 };

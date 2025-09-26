@@ -138,18 +138,10 @@ class HtmlReporter implements ReporterV2 {
       noCopyPrompt = true;
     noCopyPrompt = noCopyPrompt || this._options.noCopyPrompt;
 
-    let noFiles: boolean | undefined;
-    if (process.env.PLAYWRIGHT_HTML_NO_FILES === 'false' || process.env.PLAYWRIGHT_HTML_NO_FILES === '0')
-      noFiles = false;
-    else if (process.env.PLAYWRIGHT_HTML_NO_FILES)
-      noFiles = true;
-    noFiles = noFiles || this._options.noFiles;
-
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
-      noFiles,
     });
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
@@ -265,20 +257,8 @@ class HtmlBuilder {
     for (const projectSuite of projectSuites) {
       const projectName = projectSuite.project()!.name;
       for (const fileSuite of projectSuite.suites) {
-        if (this._options.noFiles) {
-          for (const describeSuite of fileSuite.suites) {
-            const groupName = describeSuite.title;
-            this._createEntryForSuite(data, projectName, describeSuite, groupName, true);
-          }
-          const hasTestsOutsideGroups = fileSuite.tests.length > 0;
-          if (hasTestsOutsideGroups) {
-            const fileName = '<anonymous>';
-            this._createEntryForSuite(data, projectName, fileSuite, fileName, false);
-          }
-        } else {
-          const fileName = this._relativeLocation(fileSuite.location)!.file;
-          this._createEntryForSuite(data, projectName, fileSuite, fileName, true);
-        }
+        const fileName = this._relativeLocation(fileSuite.location)!.file;
+        this._createEntryForSuite(data, projectName, fileSuite, fileName, true);
       }
     }
     if (!this._options.noSnippets)
