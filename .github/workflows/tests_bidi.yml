@@ -64,6 +64,14 @@ jobs:
         path: test-results/report.csv
         retention-days: 7
 
+    - name: Upload json report to GitHub
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: json-report-${{ matrix.channel }}
+        path: test-results/report.json
+        retention-days: 7
+
     - name: Azure Login
       if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
       uses: azure/login@v2
