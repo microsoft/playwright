@@ -1,0 +1,17 @@
+{
+  "servers": {
+    "playwright-test": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "playwright",
+        "run-test-mcp-server"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PLAYWRIGHT_MCP_TOOL_PREFIX": "test_"
+      }
+    }
+  },
+  "inputs": []
+}

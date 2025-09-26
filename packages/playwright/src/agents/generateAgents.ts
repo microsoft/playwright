@@ -227,7 +227,7 @@ function saveAsVSCodeChatmode(agent: Agent): string {
     return vscodeToolMap.get(first) || first;
   }
   const tools = agent.header.tools.map(asVscodeTool).flat().sort((a, b) => {
-    // VSCode insisits on the specific tools order when editing agent config.
+    // VSCode insists on the specific tools order when editing agent config.
     const indexA = vscodeToolsOrder.indexOf(a);
     const indexB = vscodeToolsOrder.indexOf(b);
     if (indexA === -1 && indexB === -1)
@@ -278,6 +278,7 @@ export async function initVSCodeRepo() {
     type: 'stdio',
     command: commonMcpServers.playwrightTest.command,
     args: commonMcpServers.playwrightTest.args,
+    cwd: '${workspaceFolder}',
     env: { 'PLAYWRIGHT_MCP_TOOL_PREFIX': vscodeToolPrefix },
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
