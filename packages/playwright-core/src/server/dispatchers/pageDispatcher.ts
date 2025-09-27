@@ -288,6 +288,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async consoleMessages(params: channels.PageConsoleMessagesParams, progress: Progress): Promise<channels.PageConsoleMessagesResult> {
+    // Send all future console messages to the client, so that it can reliably receive all of them.
+    // Otherwise, if subscription is added in a different task from this call (either before or after),
+    // there is a chance for a duplicate or a lost console message.
+    this._subscriptions.add('console');
     return { messages: this._page.consoleMessages().map(message => this.serializeConsoleMessage(message)) };
   }
 
@@ -340,6 +344,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async requests(params: channels.PageRequestsParams, progress: Progress): Promise<channels.PageRequestsResult> {
+    // Send all future requests to the client, so that it can reliably receive all of them.
+    // Otherwise, if subscription is added in a different task from this call (either before or after),
+    // there is a chance for a duplicate or a lost request.
+    this._subscriptions.add('request');
     return { requests: this._page.networkRequests().map(request => RequestDispatcher.from(this.parentScope(), request)) };
   }
 

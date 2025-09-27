@@ -19,6 +19,7 @@ import { currentTestInfo } from '../../common/globals';
 import { stripAnsiEscapes } from '../../util';
 import { defaultConfig, FullConfig } from '../browser/config';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
+import { Tab } from '../browser/tab';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
@@ -47,7 +48,17 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
         '',
         `### Page ${stateSuffix}`,
         `- Page URL: ${page.url()}`,
-        `- Page Title: ${await page.title()}`.trim(),
+        `- Page Title: ${await page.title()}`.trim()
+    );
+    // Only print console errors when pausing on error, not when everything works as expected.
+    let console = errorMessage ? await Tab.collectConsoleMessages(page) : [];
+    console = console.filter(msg => !msg.type || msg.type === 'error');
+    if (console.length) {
+      lines.push('- Console Messages:');
+      for (const message of console)
+        lines.push(`  - ${message.toString()}`);
+    }
+    lines.push(
         `- Page Snapshot:`,
         '```yaml',
         await (page as Page)._snapshotForAI(),
