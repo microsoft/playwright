@@ -215,6 +215,7 @@ export class Highlight {
     };
   }
 
+  // Note: there is a copy of this method in dialog.tsx. Please fix bugs in both places.
   tooltipPosition(box: DOMRect, tooltipElement: HTMLElement) {
     const tooltipWidth = tooltipElement.offsetWidth;
     const tooltipHeight = tooltipElement.offsetHeight;

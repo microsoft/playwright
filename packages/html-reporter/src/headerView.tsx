@@ -123,21 +123,24 @@ const SettingsButton: React.FC = () => {
   const [darkMode, setDarkMode] = useDarkModeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
 
-  return <div
-    role='button'
-    ref={settingsRef}
-    style={{ cursor: 'pointer' }}
-    className='subnav-item'
-    title='Settings'
-    onClick={e => {
-      setSettingsOpen(!settingsOpen);
-      e.preventDefault();
-    }}
-    onMouseDown={preventDefault}>
+  return <>
+    <div
+      role='button'
+      ref={settingsRef}
+      style={{ cursor: 'pointer' }}
+      className='subnav-item'
+      title='Settings'
+      onClick={e => {
+        setSettingsOpen(!settingsOpen);
+        e.preventDefault();
+      }}
+      onMouseDown={preventDefault}>
+      {icons.settings()}
+    </div>
     <Dialog
       open={settingsOpen}
-      width={150}
-      verticalOffset={8}
+      minWidth={150}
+      verticalOffset={4}
       requestClose={() => setSettingsOpen(false)}
       anchor={settingsRef}
       dataTestId='settings-dialog'
@@ -151,8 +154,7 @@ const SettingsButton: React.FC = () => {
         Merge files
       </label>
     </Dialog>
-    {icons.settings()}
-  </div>;
+  </>;
 };
 
 const preventDefault = (e: any) => {
