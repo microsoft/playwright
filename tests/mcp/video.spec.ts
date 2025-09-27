@@ -36,6 +36,20 @@ for (const mode of ['isolated', 'persistent']) {
       code: expect.stringContaining(`page.goto('http://localhost`),
     });
 
+    await client.callTool({
+      name: 'browser_evaluate',
+      arguments: {
+        function: `async () => {
+          document.body.style.backgroundColor = "red";
+          await new Promise(resolve => setTimeout(resolve, 100));
+          document.body.style.backgroundColor = "green";
+          await new Promise(resolve => setTimeout(resolve, 100));
+          document.body.style.backgroundColor = "blue";
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }`,
+      },
+    });
+
     expect(await client.callTool({
       name: 'browser_close',
     })).toHaveResponse({
@@ -70,6 +84,20 @@ for (const mode of ['isolated', 'persistent']) {
       arguments: { url: server.HELLO_WORLD },
     })).toHaveResponse({
       code: expect.stringContaining(`page.goto('http://localhost`),
+    });
+
+    await client.callTool({
+      name: 'browser_evaluate',
+      arguments: {
+        function: `async () => {
+          document.body.style.backgroundColor = "red";
+          await new Promise(resolve => setTimeout(resolve, 100));
+          document.body.style.backgroundColor = "green";
+          await new Promise(resolve => setTimeout(resolve, 100));
+          document.body.style.backgroundColor = "blue";
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }`,
+      },
     });
 
     expect(await client.callTool({
