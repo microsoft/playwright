@@ -254,7 +254,7 @@ export function formatOutput(output: string): string[] {
   return output.split('\n').map(line => line.replace(/^pw:mcp:test /, '').replace(/user data dir.*/, 'user data dir').trim()).filter(Boolean);
 }
 
-function parseResponse(response: any) {
+export function parseResponse(response: any) {
   const text = response.content[0].text;
   const sections = parseSections(text);
 

@@ -25,11 +25,15 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   let waitCallback: () => void = () => {};
   const waitBarrier = new Promise<void>(f => { waitCallback = f; });
 
-  const requestListener = (request: playwright.Request) => requests.add(request);
-  const requestFinishedListener = (request: playwright.Request) => {
+  const responseListener = (request: playwright.Request) => {
     requests.delete(request);
     if (!requests.size)
       waitCallback();
+  };
+
+  const requestListener = (request: playwright.Request) => {
+    requests.add(request);
+    void request.response().then(() => responseListener(request)).catch(() => {});
   };
 
   const frameNavigateListener = (frame: playwright.Frame) => {
@@ -47,13 +51,13 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   };
 
   tab.page.on('request', requestListener);
-  tab.page.on('requestfinished', requestFinishedListener);
+  tab.page.on('requestfailed', responseListener);
   tab.page.on('framenavigated', frameNavigateListener);
   const timeout = setTimeout(onTimeout, 10000);
 
   const dispose = () => {
     tab.page.off('request', requestListener);
-    tab.page.off('requestfinished', requestFinishedListener);
+    tab.page.off('requestfailed', responseListener);
     tab.page.off('framenavigated', frameNavigateListener);
     clearTimeout(timeout);
   };
