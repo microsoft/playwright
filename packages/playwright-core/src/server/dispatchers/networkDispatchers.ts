@@ -32,7 +32,6 @@ import type { Progress } from '@protocol/progress';
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;
   private _browserContextDispatcher: BrowserContextDispatcher;
-  reportedThroughEvent = false;
 
   static from(scope: BrowserContextDispatcher, request: Request): RequestDispatcher {
     const result = scope.connection.existingDispatcher<RequestDispatcher>(request);

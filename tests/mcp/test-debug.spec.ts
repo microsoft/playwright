@@ -122,12 +122,12 @@ test('test_debug (browser_snapshot/network/console)', async ({ startClient, serv
   });
 });
 
-test('test_debug (multiple pages and custom errors)', async ({ startClient, server }) => {
+test('test_debug (multiple pages and custom error)', async ({ startClient, server }) => {
   const { client, id } = await prepareDebugTest(startClient, `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         const page2 = await page.context().newPage();
-        await page.goto(${JSON.stringify(server.PREFIX + '/frames/frame.html')});
+        await page.goto(${JSON.stringify(server.EMPTY_PAGE)});
         await page2.goto(${JSON.stringify(server.PREFIX + '/wrappedlink.html')});
         throw new Error('non-api error');
       });
@@ -143,11 +143,11 @@ Running 1 test using 1 worker
 Error: non-api error
 
 ### Page 1 of 2
-- Page URL: ${server.PREFIX + '/frames/frame.html'}
+- Page URL: ${server.EMPTY_PAGE}
 - Page Title:
 - Page Snapshot:
 \`\`\`yaml
-- generic [ref=e2]: Hi, I'm frame
+
 \`\`\`
 
 ### Page 2 of 2
@@ -296,10 +296,16 @@ test('test_debug w/ console_messages', async ({ startClient }) => {
       import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         await page.evaluate(() => {
-          console.log('console.log');
           console.error('console.error');
+          console.log('console.log');  // Log should be ignored in the initial message.
+          setTimeout(() => {
+            const error = new Error('Error from page');
+            error.stack = '';
+            throw error;
+          }, 0);
+          return new Promise(f => setTimeout(f, 10));
         });
-        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+        throw new Error('failure');
       });
   `);
 
@@ -311,12 +317,21 @@ test('test_debug w/ console_messages', async ({ startClient }) => {
   })).toHaveTextResponse(expect.stringContaining(`
 Running 1 test using 1 worker
 ### Paused on error:
-Error: expect(locator).toBeVisible() failed`));
+Error: failure
+
+### Page state
+- Page URL: about:blank
+- Page Title:
+- Console Messages:
+  - [ERROR] console.error @ :1
+  - Error from page
+- Page Snapshot:
+`));
 
   expect(await client.callTool({
     name: 'browser_console_messages',
   })).toHaveResponse({
-    result: expect.stringMatching(/\[LOG] console.log.*\n\[ERROR\] console.error/),
+    result: expect.stringMatching(/\[ERROR\] console.error.*\n\[LOG] console.log/),
   });
 });
 
