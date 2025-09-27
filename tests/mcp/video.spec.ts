@@ -43,6 +43,42 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     const [file] = await fs.promises.readdir(outputDir);
-    expect(file).toMatch(/page-.*.webm/);
+    expect(file).toMatch(/page-.*\.webm/);
+  });
+
+  test(`should work with recordVideo (${mode})`, async ({ startClient, server }, testInfo) => {
+    const videosDir = testInfo.outputPath('videos');
+
+    const { client } = await startClient({
+      config: {
+        browser: {
+          contextOptions: {
+            recordVideo: {
+              dir: videosDir,
+              size: { width: 800, height: 600 },
+            },
+          }
+        }
+      },
+      args: [
+        ...(mode === 'isolated' ? ['--isolated'] : []),
+      ],
+    });
+
+    expect(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    })).toHaveResponse({
+      code: expect.stringContaining(`page.goto('http://localhost`),
+    });
+
+    expect(await client.callTool({
+      name: 'browser_close',
+    })).toHaveResponse({
+      code: expect.stringContaining(`page.close()`),
+    });
+
+    const [file] = await fs.promises.readdir(videosDir);
+    expect(file).toMatch(/.*.\webm/);
   });
 }
