@@ -578,7 +578,7 @@ test('should resolve title conflicts', async ({ runUITest }) => {
   `);
 });
 
-test('should hide file names', async ({ runUITest }) => {
+test('should merge files', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
@@ -605,7 +605,7 @@ test('should hide file names', async ({ runUITest }) => {
   });
 
   await page.getByText('Settings', { exact: true }).click();
-  await page.getByLabel('Hide files').click();
+  await page.getByLabel('Merge files').click();
 
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ <anonymous>

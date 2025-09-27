@@ -40,12 +40,6 @@ svg {
   position: relative;
 }
 
-.cursor-pointer,
-.cursor-pointer > * {
-  cursor: pointer;
-  user-select: none;
-}
-
 .hbox {
   display: flex;
   flex: auto;

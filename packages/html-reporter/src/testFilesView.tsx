@@ -27,20 +27,20 @@ import { HeaderView } from './headerView';
 import { clsx } from '@web/uiUtils';
 
 export const TestFilesView: React.FC<{
-  tests: TestFileSummary[],
+  files: TestFileSummary[],
   expandedFiles: Map<string, boolean>,
   setExpandedFiles: (value: Map<string, boolean>) => void,
   projectNames: string[],
-}> = ({ tests, expandedFiles, setExpandedFiles, projectNames }) => {
+}> = ({ files, expandedFiles, setExpandedFiles, projectNames }) => {
   const filteredFiles = React.useMemo(() => {
     const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
-    for (const file of tests) {
+    for (const file of files) {
       visibleTests += file.tests.length;
       result.push({ file, defaultExpanded: visibleTests < 200 });
     }
     return result;
-  }, [tests]);
+  }, [files]);
   return <>
     {filteredFiles.map(({ file, defaultExpanded }) => {
       return <TestFileView

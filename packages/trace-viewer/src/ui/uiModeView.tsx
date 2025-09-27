@@ -102,7 +102,7 @@ export const UIModeView: React.FC<{}> = ({
 
   const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
   const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
-  const [hideFiles] = useSetting('hideFiles', false);
+  const [mergeFiles] = useSetting('mergeFiles', false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -241,15 +241,15 @@ export const UIModeView: React.FC<{}> = ({
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
     if (!testModel)
-      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, queryParams.pathSeparator, hideFiles) };
-    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, hideFiles);
+      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, queryParams.pathSeparator, mergeFiles) };
+    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, mergeFiles);
     testTree.filterTree(filterText, statusFilters, isRunningTest ? runningState?.testIds : undefined);
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
     testTree.flattenForSingleProject();
     setVisibleTestIds(testTree.testIds());
     return { testTree };
-  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest, hideFiles]);
+  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest, mergeFiles]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
     if (!testServerConnection || !testModel)
@@ -326,7 +326,7 @@ export const UIModeView: React.FC<{}> = ({
 
       // run affected watched tests
       const testModel = teleSuiteUpdater.asModel();
-      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, hideFiles);
+      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, mergeFiles);
 
       const testIds: string[] = [];
       const set = new Set(params.testFiles);
@@ -350,7 +350,7 @@ export const UIModeView: React.FC<{}> = ({
       runTests('queue-if-busy', new Set(testIds));
     });
     return () => disposable.dispose();
-  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, hideFiles]);
+  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, mergeFiles]);
 
   // Shortcuts.
   React.useEffect(() => {
