@@ -122,19 +122,6 @@ const SettingsButton: React.FC = () => {
   const [darkMode, setDarkMode] = useDarkModeSetting();
 
   return <>
-    <Dialog
-      open={settingsOpen}
-      width={200}
-      verticalOffset={8}
-      requestClose={() => setSettingsOpen(false)}
-      anchor={settingsRef}
-      dataTestId='settings-dialog'
-    >
-      <div className='hbox cursor-pointer' style={{ alignItems: 'center' }}>
-        <input type='checkbox' id='dark-mode-setting' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
-        <label htmlFor='dark-mode-setting'>Dark mode</label>
-      </div>
-    </Dialog>
     <a
       ref={settingsRef}
       style={{ cursor: 'pointer' }}
@@ -147,6 +134,18 @@ const SettingsButton: React.FC = () => {
       onMouseDown={preventDefault}>
       {icons.settings()}
     </a>
+    <Dialog
+      open={settingsOpen}
+      verticalOffset={5}
+      requestClose={() => setSettingsOpen(false)}
+      anchor={settingsRef}
+      dataTestId='settings-dialog'
+    >
+      <div className='hbox cursor-pointer' style={{ alignItems: 'center' }}>
+        <input type='checkbox' id='dark-mode-setting' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
+        <label htmlFor='dark-mode-setting'>Dark mode</label>
+      </div>
+    </Dialog>
   </>;
 };
 

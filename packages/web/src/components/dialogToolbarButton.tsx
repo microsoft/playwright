@@ -41,7 +41,6 @@ export const DialogToolbarButton: React.FC<React.PropsWithChildren<DialogToolbar
           padding: '4px 8px'
         }}
         open={open}
-        width={200}
         // TODO: Temporary spacing until design of toolbar buttons is revisited
         verticalOffset={8}
         requestClose={() => setOpen(false)}

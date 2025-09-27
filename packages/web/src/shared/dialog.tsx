@@ -16,12 +16,13 @@
 
 import * as React from 'react';
 
+import { useMeasureForRef } from '../uiUtils';
+
 export interface DialogProps {
   className?: string;
   style?: React.CSSProperties;
   open: boolean;
   isModal?: boolean;
-  width?: number;
   verticalOffset?: number;
   requestClose?: () => void;
   anchor?: React.RefObject<HTMLElement|null>;
@@ -33,7 +34,6 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   style: externalStyle,
   open,
   isModal,
-  width,
   verticalOffset,
   requestClose,
   anchor,
@@ -44,22 +44,9 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setRecalculateDimensionsCount] = React.useState(0);
-
-  let style: React.CSSProperties | undefined = externalStyle;
-
-  if (anchor?.current) {
-    const bounds = anchor.current.getBoundingClientRect();
-
-    style = {
-      position: 'fixed',
-      margin: 0,
-      top: bounds.bottom + (verticalOffset ?? 0),
-      left: buildTopLeftCoord(bounds, width ?? 0),
-      width,
-      zIndex: 110,  // on top of split view resizer
-      ...externalStyle
-    };
-  }
+  const dialogMeasure = useMeasureForRef(dialogRef);
+  const anchorMeasure = useMeasureForRef(anchor);
+  const position = dialogPosition(dialogMeasure, anchorMeasure, verticalOffset);
 
   React.useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -113,53 +100,33 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   }, [open, isModal]);
 
   return (
-    <dialog ref={dialogRef} style={style} className={className} data-testid={dataTestId}>
+    <dialog ref={dialogRef} style={{
+      position: 'fixed',
+      margin: 0,
+      zIndex: 110,  // on top of split view resizer
+      top: position.top,
+      left: position.left,
+      ...externalStyle,
+    }} className={className} data-testid={dataTestId}>
       {children}
     </dialog>
   );
 };
 
-const buildTopLeftCoord = (bounds: DOMRect, width: number): number => {
-  const leftAlignCoord = buildTopLeftCoordWithAlignment(bounds, width, 'left');
-
-  if (leftAlignCoord.inBounds)
-    return leftAlignCoord.value;
-
-  const rightAlignCoord = buildTopLeftCoordWithAlignment(
-      bounds,
-      width,
-      'right'
-  );
-
-  if (rightAlignCoord.inBounds)
-    return rightAlignCoord.value;
-
-  return leftAlignCoord.value;
-};
-
-const buildTopLeftCoordWithAlignment = (
-  bounds: DOMRect,
-  width: number,
-  alignment: 'left' | 'right'
-): {
-  value: number;
-  inBounds: boolean;
-} => {
-  const maxLeft = document.documentElement.clientWidth;
-
-  if (alignment === 'left') {
-    const value = bounds.left;
-
-    return {
-      value,
-      inBounds: value + width <= maxLeft,
-    };
-  } else {
-    const value = bounds.right - width;
-
-    return {
-      value,
-      inBounds: bounds.right - width >= 0,
-    };
+// Note: there is a copy of this method in highlight.ts. Please fix bugs in both places.
+function dialogPosition(dialogBox: DOMRect, anchorBox: DOMRect, verticalOffset = 5, horizontalOffset = 5): { top: number, left: number } {
+  let left = Math.max(horizontalOffset, anchorBox.left);
+  if (left + dialogBox.width > window.innerWidth - horizontalOffset)
+    left = window.innerWidth - dialogBox.width - horizontalOffset;
+  let top = Math.max(0, anchorBox.bottom) + verticalOffset;
+  if (top + dialogBox.height > window.innerHeight - verticalOffset) {
+    // If can't fit below, either position above...
+    if (Math.max(0, anchorBox.top) > dialogBox.height + verticalOffset) {
+      top = Math.max(0, anchorBox.top) - dialogBox.height - verticalOffset;
+    } else {
+      // Or on top in case of large element
+      top = window.innerHeight - verticalOffset - dialogBox.height;
+    }
   }
-};
+  return { left, top };
+}
