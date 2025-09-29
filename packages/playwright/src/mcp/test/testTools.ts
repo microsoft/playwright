@@ -23,13 +23,12 @@ import { z } from '../sdk/bundle';
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import ListModeReporter from '../../reporters/listModeReporter';
-
+import { ensureSeedTest, seedProject } from './seed';
 import { defineTestTool } from './testTool';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 
 import type { ProgressCallback } from '../sdk/server';
-import { ensureSeedTest, seedProject } from './seed';
 
 export const listTests = defineTestTool({
   schema: {
