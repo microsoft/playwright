@@ -27,10 +27,6 @@
   margin: 0 0 8px 23px;
 }
 
-.ui-mode-sidebar input[type=search] {
-  flex: auto;
-}
-
 .ui-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
   color: var(--vscode-debugIcon-restartForeground);
 }
@@ -108,6 +104,17 @@
   line-height: 24px;
   outline: none;
   margin: 0 4px;
+  border: none;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+}
+
+.ui-mode-sidebar select {
+  flex: auto;
+  padding: 0 5px;
+  height: 24px;
+  line-height: 24px;
+  outline: none;
   border: none;
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
