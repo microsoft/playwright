@@ -169,7 +169,13 @@ function addTestMCPServerCommand(program: Command) {
       version: packageJSON.version,
       create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
     };
-    const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
+    const mdbUrl = await runMainBackend(
+        backendFactory,
+        TestServerBackend.allowedOnPause,
+        {
+          port: options.port === undefined ? undefined : +options.port
+        },
+    );
     if (mdbUrl)
       console.error('MCP Listening on: ', mdbUrl);
   });

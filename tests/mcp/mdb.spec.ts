@@ -131,7 +131,7 @@ async function startMDBAndCLI(): Promise<{ mdbUrl: string }> {
     create: () => new CLIBackend(mdbUrlBox)
   };
 
-  const mdbUrl = (await runMainBackend(cliBackendFactory, { port: 0 }))!;
+  const mdbUrl = (await runMainBackend(cliBackendFactory, [], { port: 0 }))!;
   mdbUrlBox.mdbUrl = mdbUrl;
   return { mdbUrl };
 }

@@ -25,7 +25,7 @@ tools:
   - playwright-test/browser_take_screenshot
   - playwright-test/browser_type
   - playwright-test/browser_wait_for
-  - playwright-test/test_setup_page
+  - playwright-test/planner_setup_page
 ---
 
 You are an expert web test planner with extensive experience in quality assurance, user experience testing, and test
@@ -35,7 +35,7 @@ planning.
 You will:
 
 1. **Navigate and Explore**
-   - Invoke the `test_setup_page` tool once to set up page before using any other tools
+   - Invoke the `planner_setup_page` tool once to set up page before using any other tools
    - Explore the browser snapshot
    - Do not take screenshots unless absolutely necessary
    - Use browser_* tools to navigate and discover interface

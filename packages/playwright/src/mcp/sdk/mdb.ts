@@ -30,15 +30,23 @@ const mdbDebug = debug('pw:mcp:mdb');
 const errorsDebug = debug('pw:mcp:errors');
 const z = mcpBundle.z;
 
+type StackEntry = {
+  client: Client;
+  toolNames: string[];
+  resultPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
+};
+
 export class MDBBackend implements mcpServer.ServerBackend {
-  private _stack: { client: Client, toolNames: string[], resultPromise: ManualPromise<mcpServer.CallToolResult> | undefined }[] = [];
+  private _stack: StackEntry[] = [];
   private _interruptPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
   private _topLevelBackend: mcpServer.ServerBackend;
+  private _allowedOnPause: string[];
   private _clientInfo: mcpServer.ClientInfo | undefined;
   private _progress: mcpServer.CallToolResult['content'] = [];
 
-  constructor(topLevelBackend: mcpServer.ServerBackend) {
+  constructor(topLevelBackend: mcpServer.ServerBackend, allowedOnPause: string[]) {
     this._topLevelBackend = topLevelBackend;
+    this._allowedOnPause = allowedOnPause;
   }
 
   async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
@@ -61,19 +69,30 @@ export class MDBBackend implements mcpServer.ServerBackend {
 
     const interruptPromise = new ManualPromise<mcpServer.CallToolResult>();
     this._interruptPromise = interruptPromise;
-    let [entry] = this._stack;
 
-    // Pop the client while the tool is not found.
-    while (entry && !entry.toolNames.includes(name)) {
+    // Reset the stack if the command is in the reset commands.
+    if (!this._allowedOnPause.includes(name)) {
+      for (let i = 0; i < this._stack.length - 1; i++) {
+        if (this._stack[i].toolNames.includes(name))
+          break;
+        await this._stack[i].client.close().catch(errorsDebug);
+        this._stack.shift();
+      }
+    }
+
+    // Otherwise find the client for the tool.
+    let entry: StackEntry | undefined;
+    for (let i = 0; i < this._stack.length; i++) {
+      if (this._stack[i].toolNames.includes(name)) {
+        entry = this._stack[i];
+        break;
+      }
       mdbDebug('popping client from stack for ', name);
-      this._stack.shift();
-      await entry.client.close().catch(errorsDebug);
-      entry = this._stack[0];
     }
     if (!entry)
       throw new Error(`Tool ${name} not found in the tool stack`);
 
-    const client = await this._client();
+    const client = entry.client;
     const resultPromise = new ManualPromise<mcpServer.CallToolResult>();
     entry.resultPromise = resultPromise;
 
@@ -116,7 +135,7 @@ export class MDBBackend implements mcpServer.ServerBackend {
 
   private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
     mdbDebug('pushing client to the stack');
-    const client = new mcpBundle.Client({ name: 'Pushing client', version: '0.0.0' }, { capabilities: { roots: {} } });
+    const client = new mcpBundle.Client({ name: 'Interrupting client', version: '0.0.0' }, { capabilities: { roots: {} } });
     client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
     client.setNotificationHandler(mcpBundle.ProgressNotificationSchema, notification => {
@@ -154,8 +173,8 @@ const pushToolsSchema = defineToolSchema({
   type: 'readOnly',
 });
 
-export async function runMainBackend(backendFactory: mcpServer.ServerBackendFactory, options?: { port?: number }): Promise<string | undefined> {
-  const mdbBackend = new MDBBackend(backendFactory.create());
+export async function runMainBackend(backendFactory: mcpServer.ServerBackendFactory, allowedOnPause: string[], options?: { port?: number }): Promise<string | undefined> {
+  const mdbBackend = new MDBBackend(backendFactory.create(), allowedOnPause);
   // Start HTTP unconditionally.
   const factory: mcpServer.ServerBackendFactory = {
     ...backendFactory,
@@ -185,7 +204,7 @@ export async function runOnPauseBackendLoop(backend: mcpServer.ServerBackend, in
   await mcpHttp.installHttpTransport(httpServer, factory);
   const url = mcpHttp.httpAddressToString(httpServer.address());
 
-  const client = new mcpBundle.Client({ name: 'On-pause client', version: '0.0.0' });
+  const client = new mcpBundle.Client({ name: 'Pushing client', version: '0.0.0' });
   client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
   const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(process.env.PLAYWRIGHT_DEBUGGER_MCP!));
   await client.connect(transport);

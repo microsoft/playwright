@@ -14,21 +14,10 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-
-import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
-
 import { z } from '../sdk/bundle';
-import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import ListModeReporter from '../../reporters/listModeReporter';
-import { ensureSeedTest, seedProject } from './seed';
 import { defineTestTool } from './testTool';
-import { StringWriteStream } from './streams';
-import { fileExistsAsync } from '../../util';
-
-import type { ProgressCallback } from '../sdk/server';
 
 export const listTests = defineTestTool({
   schema: {
@@ -40,7 +29,7 @@ export const listTests = defineTestTool({
   },
 
   handle: async (context, _, progress) => {
-    const { screen } = createScreen(progress);
+    const { screen } = context.createScreen(progress);
     const reporter = new ListModeReporter({ screen, includeTestId: true });
     const testRunner = await context.createTestRunner();
     await testRunner.listTests(reporter, {});
@@ -62,7 +51,7 @@ export const runTests = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const { screen } = createScreen(progress);
+    const { screen } = context.createScreen(progress);
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
     const testRunner = await context.createTestRunner();
@@ -91,7 +80,7 @@ export const debugTest = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const { screen } = createScreen(progress);
+    const { screen } = context.createScreen(progress);
     const configDir = context.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
     const testRunner = await context.createTestRunner();
@@ -108,85 +97,3 @@ export const debugTest = defineTestTool({
     return { content: [] };
   },
 });
-
-export const setupPage = defineTestTool({
-  schema: {
-    name: 'test_setup_page',
-    title: 'Setup page',
-    description: 'Setup the page for test.',
-    inputSchema: z.object({
-      project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
-      seedFile: z.string().optional().describe('A seed file contains a single test that is used to setup the page for testing, for example: "tests/seed.spec.ts". If no seed file is provided, a default seed file is created.'),
-    }),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params, progress) => {
-    const { screen } = createScreen(progress);
-    const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen });
-    const testRunner = await context.createTestRunner();
-    const config = await testRunner.loadConfig();
-
-    let seedFile: string | undefined;
-    if (!params.seedFile) {
-      seedFile = await ensureSeedTest(config, params.project, false);
-    } else {
-      const candidateFiles: string[] = [];
-      const testDir = seedProject(config, params.project).project.testDir;
-      candidateFiles.push(path.resolve(testDir, params.seedFile));
-      candidateFiles.push(path.resolve(configDir, params.seedFile));
-      candidateFiles.push(path.resolve(context.rootPath, params.seedFile));
-      for (const candidateFile of candidateFiles) {
-        if (await fileExistsAsync(candidateFile)) {
-          seedFile = candidateFile;
-          break;
-        }
-      }
-      if (!seedFile)
-        throw new Error('seed test not found.');
-    }
-
-
-    const seedFileContent = await fs.promises.readFile(seedFile, 'utf8');
-    progress({ message: `### Seed test
-File: ${path.relative(context.rootPath, seedFile)}
-\`\`\`ts
-${seedFileContent}
-\`\`\`
-` });
-
-    const result = await testRunner.runTests(reporter, {
-      headed: !context.options?.headless,
-      locations: ['/' + escapeRegExp(seedFile) + '/'],
-      projects: params.project ? [params.project] : undefined,
-      timeout: 0,
-      workers: 1,
-      pauseAtEnd: true,
-      disableConfigReporters: true,
-      failOnLoadErrors: true,
-    });
-
-    // Ideally, we should check that page was indeed created and browser mcp has kicked in.
-    // However, that is handled in the upper layer, so hard to check here.
-    if (result.status === 'passed' && !reporter.suite?.allTests().length)
-      throw new Error('seed test not found.');
-
-    if (result.status !== 'passed')
-      throw new Error('Errors while running the seed test.');
-
-    return { content: [] };
-  },
-});
-
-function createScreen(progress: ProgressCallback) {
-  const stream = new StringWriteStream(progress);
-  const screen = {
-    ...terminalScreen,
-    isTTY: false,
-    colors: noColors,
-    stdout: stream as unknown as NodeJS.WriteStream,
-    stderr: stream as unknown as NodeJS.WriteStream,
-  };
-  return { screen, stream };
-}
