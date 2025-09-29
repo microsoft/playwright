@@ -9772,6 +9772,11 @@ export interface Location {
    * Line number in the source file.
    */
   line: number;
+
+  /**
+   * Qualified name of the function.
+   */
+  function?: string;
 }
 
 /**

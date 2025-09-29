@@ -21,3 +21,8 @@ Line number in the source file.
 - type: <[int]>
 
 Column number in the source file.
+
+## property: Location.function
+- type: <[string]>
+
+Qualified name of the function.
