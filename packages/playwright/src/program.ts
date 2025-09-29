@@ -35,6 +35,7 @@ import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
+import { ensureSeedTest } from './mcp/test/seed';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
 import { initClaudeCodeRepo, initOpencodeRepo, initVSCodeRepo } from './agents/generateAgents';
@@ -180,15 +181,21 @@ function addInitAgentsCommand(program: Command) {
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
   option.choices(['vscode', 'claude', 'opencode']);
   command.addOption(option);
+  command.option('-c, --config <file>', `Configuration file to find a project to use for seed test`);
+  command.option('--project <project>', 'Project to use for seed test');
   command.action(async opts => {
-    if (opts.loop === 'opencode')
+    if (opts.loop === 'opencode') {
       await initOpencodeRepo();
-    else if (opts.loop === 'vscode')
+    } else if (opts.loop === 'vscode') {
       await initVSCodeRepo();
-    else if (opts.loop === 'claude')
+    } else if (opts.loop === 'claude') {
       await initClaudeCodeRepo();
-    else
+    } else {
       command.help();
+      return;
+    }
+    const config = await loadConfigFromFile(opts.config);
+    await ensureSeedTest(config, opts.project, true);
   });
 }
 

@@ -17,8 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 import { yaml } from 'playwright-core/lib/utilsBundle';
-import { loadConfigFromFile, resolveConfigLocation } from '../common/configLoader';
-import { createDefaultSeedFile } from '../mcp/test/testTools';
 
 interface AgentHeader {
   name: string;
@@ -283,17 +281,6 @@ export async function initVSCodeRepo() {
     env: { 'PLAYWRIGHT_MCP_TOOL_PREFIX': vscodeToolPrefix },
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
-
-  try {
-    const configLocation = resolveConfigLocation(undefined);
-    const config = await loadConfigFromFile(configLocation.resolvedConfigFile);
-    const seedFile = await createDefaultSeedFile(config);
-    // eslint-disable-next-line no-console
-    console.log(`Writing file: ${path.relative(process.cwd(), seedFile)}`);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Could not create seed.spec.ts:', error);
-  }
 }
 
 export async function initOpencodeRepo() {
