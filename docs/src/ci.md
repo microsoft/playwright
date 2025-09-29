@@ -675,7 +675,7 @@ pool:
 container: mcr.microsoft.com/playwright:v%%VERSION%%-noble
 
 steps:
-- task: NodeTool@1
+- task: UseNode@1
   inputs:
     version: '22'
   displayName: 'Install Node.js'
