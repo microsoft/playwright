@@ -17,20 +17,19 @@
 import fs from 'fs';
 import path from 'path';
 
-import { noColors, escapeRegExp, mkdirIfNeeded } from 'playwright-core/lib/utils';
+import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
 
 import { z } from '../sdk/bundle';
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import ListModeReporter from '../../reporters/listModeReporter';
-import { findTopLevelProjects } from '../../runner/projectUtils';
 
 import { defineTestTool } from './testTool';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 
 import type { ProgressCallback } from '../sdk/server';
-import type { FullConfigInternal } from '../../common/config';
+import { ensureSeedTest, seedProject } from './seed';
 
 export const listTests = defineTestTool({
   schema: {
@@ -111,28 +110,6 @@ export const debugTest = defineTestTool({
   },
 });
 
-function resolveTestDir(config: FullConfigInternal, projectName?: string) {
-  const project = projectName ? config.projects.find(p => p.project.name === projectName) : findTopLevelProjects(config)[0];
-  return project?.project.testDir || config.configDir;
-}
-
-export async function createDefaultSeedFile(config: FullConfigInternal, projectName?: string) {
-  const testDir = resolveTestDir(config, projectName);
-  const seedFile  = path.resolve(testDir, 'seed.spec.ts');
-  if (!await fileExistsAsync(seedFile)) {
-    await mkdirIfNeeded(seedFile);
-    await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
-
-test.describe('Test group', () => {
-  test('seed', async ({ page }) => {
-    // generate code here.
-  });
-});
-`);
-  }
-  return seedFile;
-}
-
 export const setupPage = defineTestTool({
   schema: {
     name: 'test_setup_page',
@@ -151,13 +128,13 @@ export const setupPage = defineTestTool({
     const reporter = new ListReporter({ configDir, screen });
     const testRunner = await context.createTestRunner();
     const config = await testRunner.loadConfig();
-    const testDir = resolveTestDir(config, params.project);
 
     let seedFile: string | undefined;
     if (!params.seedFile) {
-      seedFile = await createDefaultSeedFile(config, params.project);
+      seedFile = await ensureSeedTest(config, params.project, false);
     } else {
       const candidateFiles: string[] = [];
+      const testDir = seedProject(config, params.project).project.testDir;
       candidateFiles.push(path.resolve(testDir, params.seedFile));
       candidateFiles.push(path.resolve(configDir, params.seedFile));
       candidateFiles.push(path.resolve(context.rootPath, params.seedFile));
