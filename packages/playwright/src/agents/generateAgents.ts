@@ -288,6 +288,7 @@ export async function initVSCodeRepo() {
     const configLocation = resolveConfigLocation(undefined);
     const config = await loadConfigFromFile(configLocation.resolvedConfigFile);
     const seedFile = await createDefaultSeedFile(config);
+    // eslint-disable-next-line no-console
     console.log(`Writing file: ${path.relative(process.cwd(), seedFile)}`);
   } catch (error) {
     // eslint-disable-next-line no-console
