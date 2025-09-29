@@ -125,6 +125,10 @@ export interface Commands {
     params: Bidi.Emulation.SetTimezoneOverrideParameters;
     returnType: Bidi.EmptyResult;
   };
+  'emulation.setUserAgentOverride': {
+    params: Bidi.Emulation.SetUserAgentOverrideParameters;
+    returnType: Bidi.Emulation.SetUserAgentOverrideResult;
+  };
 
   'emulation.setLocaleOverride': {
     params: Bidi.Emulation.SetLocaleOverrideParameters;

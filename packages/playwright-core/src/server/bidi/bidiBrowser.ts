@@ -216,6 +216,12 @@ export class BidiBrowserContext extends BrowserContext {
         userContexts: [this._userContextId()],
       }));
     }
+    if (this._options.userAgent) {
+      promises.push(this._browser._browserSession.send('emulation.setUserAgentOverride', {
+        userAgent: this._options.userAgent,
+        userContexts: [this._userContextId()],
+      }));
+    }
     await Promise.all(promises);
   }
 
@@ -317,6 +323,11 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
+    this._options.userAgent = userAgent;
+    await this._browser._browserSession.send('emulation.setUserAgentOverride', {
+      userAgent: userAgent ?? null,
+      userContexts: [this._userContextId()],
+    });
   }
 
   async doUpdateOffline(): Promise<void> {
