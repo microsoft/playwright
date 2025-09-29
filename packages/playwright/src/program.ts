@@ -187,6 +187,8 @@ function addInitAgentsCommand(program: Command) {
       await initVSCodeRepo();
     else if (opts.loop === 'claude')
       await initClaudeCodeRepo();
+    else
+      command.help();
   });
 }
 
