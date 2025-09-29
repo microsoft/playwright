@@ -33,6 +33,13 @@ const reporters = () => {
   return result;
 };
 
+const metadata = {
+  platform: process.platform,
+  headless: 'headless',
+  mode: 'default',
+  video: false,
+};
+
 export default defineConfig<TestOptions>({
   testDir: './',
   grepInvert: /extension/,
@@ -41,10 +48,10 @@ export default defineConfig<TestOptions>({
   workers: process.env.CI ? 2 : undefined,
   reporter: reporters(),
   projects: [
-    { name: 'chrome' },
-    { name: 'chromium', use: { mcpBrowser: 'chromium' } },
-    { name: 'firefox', use: { mcpBrowser: 'firefox' } },
-    { name: 'webkit', use: { mcpBrowser: 'webkit' } },
-    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' } }] : [],
+    { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' } },
+    { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' } },
+    { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' } },
+    { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' } },
+    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' } }] : [],
   ],
 });
