@@ -36,6 +36,26 @@ for (const mode of ['isolated', 'persistent']) {
       code: expect.stringContaining(`page.goto('http://localhost`),
     });
 
+    await client.callTool({
+      name: 'browser_evaluate',
+      arguments: {
+        function: `() => new Promise(f => {
+          document.body.style.backgroundColor = 'red';
+          function waitForRaf(count) {
+            const onRaf = () => {
+              --count;
+              if (!count)
+                f();
+              else
+                requestAnimationFrame(onRaf);
+            };
+            requestAnimationFrame(onRaf);
+          }
+          waitForRaf(100);
+        })`,
+      },
+    });
+
     expect(await client.callTool({
       name: 'browser_close',
     })).toHaveResponse({
@@ -70,6 +90,26 @@ for (const mode of ['isolated', 'persistent']) {
       arguments: { url: server.HELLO_WORLD },
     })).toHaveResponse({
       code: expect.stringContaining(`page.goto('http://localhost`),
+    });
+
+    await client.callTool({
+      name: 'browser_evaluate',
+      arguments: {
+        function: `() => new Promise(f => {
+          document.body.style.backgroundColor = 'red';
+          function waitForRaf(count) {
+            const onRaf = () => {
+              --count;
+              if (!count)
+                f();
+              else
+                requestAnimationFrame(onRaf);
+            };
+            requestAnimationFrame(onRaf);
+          }
+          waitForRaf(100);
+        })`,
+      },
     });
 
     expect(await client.callTool({
