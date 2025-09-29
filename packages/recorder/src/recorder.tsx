@@ -133,9 +133,11 @@ export const Recorder: React.FC<RecorderProps> = ({
       window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
   }, [mode]);
 
+  const isRecording = mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility';
+
   return <div className='recorder'>
     <Toolbar>
-      <ToolbarButton icon='circle-large-filled' title='Record' toggled={mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility'} onClick={() => {
+      <ToolbarButton icon={isRecording ? 'stop-circle' : 'circle-large-filled'} title={isRecording ? 'Stop Recording' : 'Start Recording'} toggled={isRecording} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby' } });
       }}>Record</ToolbarButton>
       <ToolbarSeparator />

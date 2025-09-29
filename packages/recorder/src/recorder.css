@@ -36,11 +36,15 @@
   font-size: 15px;
 }
 
-.recorder .toolbar-button.toggled.circle-large-filled {
+.recorder .codicon.stop-circle {
+  font-size: 15px;
+}
+
+.recorder .toolbar-button.toggled.stop-circle {
   color: #a1260d;
 }
 
-:root.dark-mode .recorder .toolbar-button.toggled.circle-large-filled {
+:root.dark-mode .recorder .toolbar-button.toggled.stop-circle {
   color: #f48771;
 }
 
