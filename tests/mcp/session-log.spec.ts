@@ -20,7 +20,7 @@ import path from 'path';
 import { test, expect } from './fixtures';
 
 test('session log should record tool calls', async ({ startClient, server }, testInfo) => {
-  const { client, stderr } = await startClient({
+  const { client } = await startClient({
     args: [
       '--save-session',
       '--output-dir', testInfo.outputPath('output'),
@@ -45,10 +45,11 @@ test('session log should record tool calls', async ({ startClient, server }, tes
     pageState: expect.stringContaining(`- button "Submit"`),
   });
 
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
+  const outputDir = testInfo.outputPath('output');
+  const sessionFolder = path.join(outputDir, fs.readdirSync(outputDir).find(f => f.startsWith('session-')));
+
   await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_navigate
+#### Tool call: browser_navigate
 - Args
 \`\`\`json
 {
@@ -62,7 +63,7 @@ await page.goto('http://localhost:${server.PORT}');
 - Snapshot: 001.snapshot.yml
 
 
-### Tool call: browser_click
+#### Tool call: browser_click
 - Args
 \`\`\`json
 {
@@ -81,7 +82,7 @@ await page.getByRole('button', { name: 'Submit' }).click();
 
 test('session log should record user action', async ({ cdpServer, startClient }, testInfo) => {
   const browserContext = await cdpServer.start();
-  const { client, stderr } = await startClient({
+  const { client } = await startClient({
     args: [
       '--save-session',
       '--output-dir', testInfo.outputPath('output'),
@@ -102,11 +103,11 @@ test('session log should record user action', async ({ cdpServer, startClient },
 
   await page.getByRole('button', { name: 'Button 1' }).click();
 
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
+  const outputDir = testInfo.outputPath('output');
+  const sessionFolder = path.join(outputDir, fs.readdirSync(outputDir).find(f => f.startsWith('session-')));
 
   await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_snapshot
+#### Tool call: browser_snapshot
 - Args
 \`\`\`json
 {}
@@ -114,7 +115,7 @@ test('session log should record user action', async ({ cdpServer, startClient },
 - Snapshot: 001.snapshot.yml
 
 
-### User action: click
+#### User action: click
 - Args
 \`\`\`json
 {
@@ -136,7 +137,7 @@ await page.getByRole('button', { name: 'Button 1' }).click();
 
 test('session log should update user action', async ({ cdpServer, startClient }, testInfo) => {
   const browserContext = await cdpServer.start();
-  const { client, stderr } = await startClient({
+  const { client } = await startClient({
     args: [
       '--save-session',
       '--output-dir', testInfo.outputPath('output'),
@@ -157,11 +158,11 @@ test('session log should update user action', async ({ cdpServer, startClient },
 
   await page.getByRole('button', { name: 'Button 1' }).dblclick();
 
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
+  const outputDir = testInfo.outputPath('output');
+  const sessionFolder = path.join(outputDir, fs.readdirSync(outputDir).find(f => f.startsWith('session-')));
 
   await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_snapshot
+#### Tool call: browser_snapshot
 - Args
 \`\`\`json
 {}
@@ -169,7 +170,7 @@ test('session log should update user action', async ({ cdpServer, startClient },
 - Snapshot: 001.snapshot.yml
 
 
-### User action: click
+#### User action: click
 - Args
 \`\`\`json
 {
@@ -191,7 +192,7 @@ await page.getByRole('button', { name: 'Button 1' }).dblclick();
 
 test('session log should record tool calls and user actions', async ({ cdpServer, startClient }, testInfo) => {
   const browserContext = await cdpServer.start();
-  const { client, stderr } = await startClient({
+  const { client } = await startClient({
     args: [
       '--save-session',
       '--output-dir', testInfo.outputPath('output'),
@@ -224,10 +225,11 @@ test('session log should record tool calls and user actions', async ({ cdpServer
     },
   });
 
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
+  const outputDir = testInfo.outputPath('output');
+  const sessionFolder = path.join(outputDir, fs.readdirSync(outputDir).find(f => f.startsWith('session-')));
+
   await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_snapshot
+#### Tool call: browser_snapshot
 - Args
 \`\`\`json
 {}
@@ -235,7 +237,7 @@ test('session log should record tool calls and user actions', async ({ cdpServer
 - Snapshot: 001.snapshot.yml
 
 
-### User action: click
+#### User action: click
 - Args
 \`\`\`json
 {
@@ -253,7 +255,7 @@ await page.getByRole('button', { name: 'Button 1' }).click();
 - Snapshot: 002.snapshot.yml
 
 
-### Tool call: browser_click
+#### Tool call: browser_click
 - Args
 \`\`\`json
 {
@@ -268,6 +270,60 @@ await page.getByRole('button', { name: 'Button 2' }).click();
 - Snapshot: 003.snapshot.yml
 
 `);
+});
+
+test('session log capability', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    args: ['--caps=session'],
+  });
+
+  server.setContent('/', `<title>Title</title><button>Submit</button>`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+    },
+  })).toHaveResponse({
+    code: `await page.getByRole('button', { name: 'Submit' }).click();`,
+    pageState: expect.stringContaining(`- button "Submit"`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_session_log',
+  })).toHaveResponse({
+    result: `#### Tool call: browser_navigate
+- Args
+\`\`\`json
+{
+  "url": "${server.PREFIX}"
+}
+\`\`\`
+- Code
+\`\`\`js
+await page.goto('${server.PREFIX}');
+\`\`\`
+
+
+#### Tool call: browser_click
+- Args
+\`\`\`json
+{
+  "element": "Submit button",
+  "ref": "e2"
+}
+\`\`\`
+- Code
+\`\`\`js
+await page.getByRole('button', { name: 'Submit' }).click();
+\`\`\``,
+  });
 });
 
 async function readSessionLog(sessionFolder: string): Promise<string> {

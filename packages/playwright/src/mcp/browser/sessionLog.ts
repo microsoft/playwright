@@ -41,26 +41,30 @@ type LogEntry = {
 
 export class SessionLog {
   private _folder: string;
-  private _file: string;
   private _ordinal = 0;
-  private _pendingEntries: LogEntry[] = [];
+  private _entries: LogEntry[] = [];
   private _sessionFileQueue = Promise.resolve();
   private _flushEntriesTimeout: NodeJS.Timeout | undefined;
+  private _mode: 'disk' | 'memory' | 'none';
+  private _includeSnapshots: boolean;
 
-  constructor(sessionFolder: string) {
-    this._folder = sessionFolder;
-    this._file = path.join(this._folder, 'session.md');
+  constructor(config: FullConfig, clientInfo: mcpServer.ClientInfo) {
+    this._folder = outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code', reason: 'Saving session' });
+    this._mode = config.saveSession ? 'disk' : config.capabilities.includes('session') ? 'memory' : 'none';
+    this._includeSnapshots = !!config.saveSession;
   }
 
-  static async create(config: FullConfig, clientInfo: mcpServer.ClientInfo): Promise<SessionLog> {
-    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code', reason: 'Saving session' });
-    await fs.promises.mkdir(sessionFolder, { recursive: true });
-    // eslint-disable-next-line no-console
-    console.error(`Session: ${sessionFolder}`);
-    return new SessionLog(sessionFolder);
+  serializedLog(): string {
+    const lines: string[] = [];
+    for (const entry of this._entries)
+      this._serializeEntry(entry, lines);
+    return lines.join('\n');
   }
 
-  logResponse(response: Response) {
+  async logResponse(response: Response) {
+    if (this._mode === 'none')
+      return;
+
     const entry: LogEntry = {
       timestamp: performance.now(),
       toolCall: {
@@ -70,15 +74,19 @@ export class SessionLog {
         isError: response.isError(),
       },
       code: response.code(),
-      tabSnapshot: response.tabSnapshot(),
+      tabSnapshot: this._includeSnapshots ? response.tabSnapshot() : undefined,
     };
-    this._appendEntry(entry);
+    this._entries.push(entry);
+    await this._flushEntries();
   }
 
   logUserAction(action: actions.Action, tab: Tab, code: string, isUpdate: boolean) {
+    if (this._mode === 'none')
+      return;
+
     code = code.trim();
     if (isUpdate) {
-      const lastEntry = this._pendingEntries[this._pendingEntries.length - 1];
+      const lastEntry = this._entries[this._entries.length - 1];
       if (lastEntry?.userAction?.name === action.name) {
         lastEntry.userAction = action;
         lastEntry.code = code;
@@ -87,7 +95,7 @@ export class SessionLog {
     }
     if (action.name === 'navigate') {
       // Already logged at this location.
-      const lastEntry = this._pendingEntries[this._pendingEntries.length - 1];
+      const lastEntry = this._entries[this._entries.length - 1];
       if (lastEntry?.tabSnapshot?.url === action.url)
         return;
     }
@@ -104,74 +112,82 @@ export class SessionLog {
         downloads: [],
       },
     };
-    this._appendEntry(entry);
+    this._entries.push(entry);
+    this._scheduleFlushEntries();
   }
 
-  private _appendEntry(entry: LogEntry) {
-    this._pendingEntries.push(entry);
+  private _scheduleFlushEntries() {
     if (this._flushEntriesTimeout)
       clearTimeout(this._flushEntriesTimeout);
     this._flushEntriesTimeout = setTimeout(() => this._flushEntries(), 1000);
   }
 
   private async _flushEntries() {
+    if (this._mode === 'disk')
+      await this._flushEntriesToDisk();
+  }
+
+  private async _flushEntriesToDisk() {
+    await fs.promises.mkdir(this._folder, { recursive: true });
     clearTimeout(this._flushEntriesTimeout);
-    const entries = this._pendingEntries;
-    this._pendingEntries = [];
+    const entries = this._entries;
+    this._entries = [];
     const lines: string[] = [''];
+    for (const entry of entries)
+      this._serializeEntry(entry, lines);
+    const file = path.join(this._folder, 'session.md');
+    this._sessionFileQueue = this._sessionFileQueue.then(() => fs.promises.appendFile(file, lines.join('\n')));
+  }
 
-    for (const entry of entries) {
-      const ordinal = (++this._ordinal).toString().padStart(3, '0');
-      if (entry.toolCall) {
+  private _serializeEntry(entry: LogEntry, lines: string[]) {
+    const ordinal = (++this._ordinal).toString().padStart(3, '0');
+    if (entry.toolCall) {
+      lines.push(
+          `#### Tool call: ${entry.toolCall.toolName}`,
+          `- Args`,
+          '```json',
+          JSON.stringify(entry.toolCall.toolArgs, null, 2),
+          '```',
+      );
+      if (entry.toolCall.result) {
         lines.push(
-            `### Tool call: ${entry.toolCall.toolName}`,
-            `- Args`,
-            '```json',
-            JSON.stringify(entry.toolCall.toolArgs, null, 2),
+            entry.toolCall.isError ? `- Error` : `- Result`,
             '```',
-        );
-        if (entry.toolCall.result) {
-          lines.push(
-              entry.toolCall.isError ? `- Error` : `- Result`,
-              '```',
-              entry.toolCall.result,
-              '```',
-          );
-        }
-      }
-
-      if (entry.userAction) {
-        const actionData = { ...entry.userAction } as any;
-        delete actionData.ariaSnapshot;
-        delete actionData.selector;
-        delete actionData.signals;
-
-        lines.push(
-            `### User action: ${entry.userAction.name}`,
-            `- Args`,
-            '```json',
-            JSON.stringify(actionData, null, 2),
+            entry.toolCall.result,
             '```',
         );
       }
-
-      if (entry.code) {
-        lines.push(
-            `- Code`,
-            '```js',
-            entry.code,
-            '```');
-      }
-
-      if (entry.tabSnapshot) {
-        const fileName = `${ordinal}.snapshot.yml`;
-        fs.promises.writeFile(path.join(this._folder, fileName), entry.tabSnapshot.ariaSnapshot).catch(logUnhandledError);
-        lines.push(`- Snapshot: ${fileName}`);
-      }
-
-      lines.push('', '');
     }
 
-    this._sessionFileQueue = this._sessionFileQueue.then(() => fs.promises.appendFile(this._file, lines.join('\n')));
+    if (entry.userAction) {
+      const actionData = { ...entry.userAction } as any;
+      delete actionData.ariaSnapshot;
+      delete actionData.selector;
+      delete actionData.signals;
+
+      lines.push(
+          `#### User action: ${entry.userAction.name}`,
+          `- Args`,
+          '```json',
+          JSON.stringify(actionData, null, 2),
+          '```',
+      );
+    }
+
+    if (entry.code) {
+      lines.push(
+          `- Code`,
+          '```js',
+          entry.code,
+          '```');
+    }
+
+    if (entry.tabSnapshot) {
+      const fileName = `${ordinal}.snapshot.yml`;
+      fs.promises.writeFile(path.join(this._folder, fileName), entry.tabSnapshot.ariaSnapshot).catch(logUnhandledError);
+      lines.push(`- Snapshot: ${fileName}`);
+    }
+
+    lines.push('', '');
   }
 }

@@ -41,7 +41,7 @@ export class BrowserServerBackend implements ServerBackend {
   }
 
   async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
-    this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, clientInfo) : undefined;
+    this._sessionLog = new SessionLog(this._config, clientInfo);
     this._context = new Context({
       config: this._config,
       browserContextFactory: this._browserContextFactory,
@@ -66,7 +66,7 @@ export class BrowserServerBackend implements ServerBackend {
     try {
       await tool.handle(context, parsedArguments, response);
       await response.finish();
-      this._sessionLog?.logResponse(response);
+      await this._sessionLog?.logResponse(response);
     } catch (error: any) {
       response.addError(String(error));
     } finally {

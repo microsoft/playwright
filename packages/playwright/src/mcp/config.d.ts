@@ -16,7 +16,7 @@
 
 import type * as playwright from 'playwright-core';
 
-export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing';
+export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing' | 'session';
 
 export type Config = {
   /**

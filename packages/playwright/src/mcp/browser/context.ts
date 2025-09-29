@@ -38,13 +38,13 @@ const testDebug = debug('pw:mcp:test');
 type ContextOptions = {
   config: FullConfig;
   browserContextFactory: BrowserContextFactory;
-  sessionLog: SessionLog | undefined;
+  sessionLog: SessionLog;
   clientInfo: ClientInfo;
 };
 
 export class Context {
   readonly config: FullConfig;
-  readonly sessionLog: SessionLog | undefined;
+  readonly sessionLog: SessionLog;
   readonly options: ContextOptions;
   private _browserContextPromise: Promise<BrowserContextFactoryResult> | undefined;
   private _browserContextFactory: BrowserContextFactory;

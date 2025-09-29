@@ -78,6 +78,7 @@ export const defaultConfig: FullConfig = {
       viewport: null,
     },
   },
+  capabilities: [],
   network: {
     allowedOrigins: undefined,
     blockedOrigins: undefined,
@@ -98,6 +99,7 @@ export type FullConfig = Config & {
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
   },
+  capabilities: NonNullable<Config['capabilities']>,
   network: NonNullable<Config['network']>,
   saveTrace: boolean;
   server: NonNullable<Config['server']>,
@@ -307,13 +309,13 @@ export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
     ?? path.join(tmpDir(), String(clientInfo.timestamp));
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
-  const file = await resolveFile(config, clientInfo, fileName, options);
+export function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): string {
+  const file = resolveFile(config, clientInfo, fileName, options);
   debug('pw:mcp:file')(options.reason, file);
   return file;
 }
 
-async function resolveFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+function resolveFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): string {
   const dir = outputDir(config, clientInfo);
 
   // Trust code.

@@ -72,7 +72,7 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
 
   const config: FullConfig = {
     ...defaultConfig,
-    capabilities: ['testing'],
+    capabilities: ['testing', 'session'],
   };
 
   await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(context)), lines.join('\n'));
