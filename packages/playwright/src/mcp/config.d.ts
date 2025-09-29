@@ -86,6 +86,12 @@ export type Config = {
      * The host to bind the server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.
      */
     host?: string;
+
+    /**
+     * The hosts this server is allowed to serve from. Defaults to the host server is bound to.
+     * This is not for CORS, but rather for the DNS rebinding protection.
+     */
+    allowedHosts?: string[];
   },
 
   /**
@@ -105,6 +111,14 @@ export type Config = {
    * Whether to save the Playwright trace of the session into the output directory.
    */
   saveTrace?: boolean;
+
+  /**
+   * If specified, saves the Playwright video of the session into the output directory.
+   */
+  saveVideo?: {
+    width: number;
+    height: number;
+  };
 
   /**
    * Reuse the same browser context between all connected HTTP clients.

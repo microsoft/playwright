@@ -26,14 +26,14 @@ export type FileUploadModalState = {
   type: 'fileChooser';
   description: string;
   fileChooser: playwright.FileChooser;
-  clearedBy: 'browser_file_upload';
+  clearedBy: string;
 };
 
 export type DialogModalState = {
   type: 'dialog';
   description: string;
   dialog: playwright.Dialog;
-  clearedBy: 'browser_handle_dialog';
+  clearedBy: string;
 };
 
 export type ModalState = FileUploadModalState | DialogModalState;

@@ -3333,25 +3333,13 @@ export type WorkerInitializer = {
 };
 export interface WorkerEventTarget {
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
-  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
 }
 export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
-  updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
 export type WorkerCloseEvent = {};
-export type WorkerConsoleEvent = {
-  type: string,
-  text: string,
-  args: JSHandleChannel[],
-  location: {
-    url: string,
-    lineNumber: number,
-    columnNumber: number,
-  },
-};
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
@@ -3374,18 +3362,9 @@ export type WorkerEvaluateExpressionHandleOptions = {
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
-export type WorkerUpdateSubscriptionParams = {
-  event: 'console',
-  enabled: boolean,
-};
-export type WorkerUpdateSubscriptionOptions = {
-
-};
-export type WorkerUpdateSubscriptionResult = void;
 
 export interface WorkerEvents {
   'close': WorkerCloseEvent;
-  'console': WorkerConsoleEvent;
 }
 
 // ----------- JSHandle -----------
@@ -3884,14 +3863,17 @@ export type RequestInitializer = {
   headers: NameValue[],
   isNavigationRequest: boolean,
   redirectedFrom?: RequestChannel,
+  hasResponse: boolean,
 };
 export interface RequestEventTarget {
+  on(event: 'response', callback: (params: RequestResponseEvent) => void): this;
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
   response(params?: RequestResponseParams, progress?: Progress): Promise<RequestResponseResult>;
   rawRequestHeaders(params?: RequestRawRequestHeadersParams, progress?: Progress): Promise<RequestRawRequestHeadersResult>;
 }
+export type RequestResponseEvent = {};
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
 export type RequestResponseResult = {
@@ -3904,6 +3886,7 @@ export type RequestRawRequestHeadersResult = {
 };
 
 export interface RequestEvents {
+  'response': RequestResponseEvent;
 }
 
 // ----------- Route -----------

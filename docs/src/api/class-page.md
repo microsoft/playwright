@@ -2682,14 +2682,14 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 * since: v1.56
 - returns: <[Array]<[ConsoleMessage]>>
 
-Returns up to 200 last console messages from this page. See [`event: Page.console`] for more details.
+Returns up to (currently) 200 last console messages from this page. See [`event: Page.console`] for more details.
 
 
 ## async method: Page.pageErrors
 * since: v1.56
 - returns: <[Array]<[Error]>>
 
-Returns up to 200 last page errors from this page. See [`event: Page.pageError`] for more details.
+Returns up to (currently) 200 last page errors from this page. See [`event: Page.pageError`] for more details.
 
 
 ## method: Page.locator
@@ -3141,7 +3141,11 @@ return value resolves to `[]`.
 * since: v1.56
 - returns: <[Array]<[Request]>>
 
-Returns up to 100 last network request from this page. See [`event: Page.request`] for more details.
+Returns up to (currently) 100 last network request from this page. See [`event: Page.request`] for more details.
+
+Returned requests should be accessed immediately, otherwise they might be collected to prevent unbounded memory growth as new requests come in. Once collected, retrieving most information about the request is impossible.
+
+Note that requests reported through the [`event: Page.request`] request are not collected, so there is a trade off between efficient memory usage with [`method: Page.requests`] and the amount of available information reported through [`event: Page.request`].
 
 
 ## async method: Page.addLocatorHandler

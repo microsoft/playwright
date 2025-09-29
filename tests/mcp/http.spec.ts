@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import net from 'net';
 
 import { ChildProcess, spawn } from 'child_process';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -348,3 +349,42 @@ test('client should receive list roots request', async ({ serverEndpoint, server
   });
   expect(await rootsListedPromise).toBe('success');
 });
+
+test('should not allow rebinding to localhost', async ({ serverEndpoint }) => {
+  const { url } = await serverEndpoint();
+  const response = await fetch(url.href.replace('localhost', '127.0.0.1'));
+  expect(response.status).toBe(403);
+  expect(await response.text()).toContain('Access is only allowed at localhost');
+});
+
+test('should respect allowed hosts (negative)', async ({ serverEndpoint }) => {
+  const { url } = await serverEndpoint({ args: ['--allowed-hosts=example.com'] });
+  const response = await fetch(url.href);
+  expect(response.status).toBe(403);
+  expect(await response.text()).toContain('Access is only allowed at example.com');
+});
+
+test('should respect allowed hosts (positive)', async ({ serverEndpoint }) => {
+  const port = await findFreePort();
+  await serverEndpoint({
+    args: [
+      '--host=127.0.0.1',
+      '--port=' + port,
+      '--allowed-hosts=localhost:' + port,
+    ]
+  });
+  const response = await fetch('http://localhost:' + port);
+  // 400 is expected for the mcp fetch.
+  expect(response.status).toBe(400);
+});
+
+async function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, () => {
+      const { port } = server.address() as net.AddressInfo;
+      server.close(() => resolve(port));
+    });
+    server.on('error', reject);
+  });
+}

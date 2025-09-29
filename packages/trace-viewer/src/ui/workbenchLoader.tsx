@@ -20,7 +20,8 @@ import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
-import { Dialog, DialogToolbarButton } from '@web/components/dialog';
+import { DialogToolbarButton } from '@web/components/dialogToolbarButton';
+import { Dialog } from '@web/shared/dialog';
 import { DefaultSettingsView } from './defaultSettingsView';
 
 export const WorkbenchLoader: React.FunctionComponent<{

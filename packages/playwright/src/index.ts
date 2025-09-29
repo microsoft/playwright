@@ -22,11 +22,9 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { runBrowserBackendOnError, runBrowserBackendAtEnd } from './mcp/test/browserBackend';
-import { codeFrameColumns } from './transform/babelBundle';
-import { stripAnsiEscapes } from './util';
+import { runBrowserBackendAtEnd } from './mcp/test/browserBackend';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode, Location } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -36,7 +34,6 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
-import type { Frame as FrameImpl } from '../../playwright-core/src/client/frame';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
@@ -291,23 +288,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
-      onApiCallRecovery: (data, error, channelOwner, recoveryHandlers) => {
-        const testInfo = currentTestInfo();
-        if (!testInfo || !testInfo._pauseOnError())
-          return;
-
-        const step = data.userData;
-        if (!step)
-          return;
-        const page = channelToPage(channelOwner);
-        if (!page)
-          return;
-        recoveryHandlers.push(async () => {
-          await runBrowserBackendOnError(page, () => {
-            return stripAnsiEscapes(createErrorCodeframe(error.message, step.location));
-          });
-        });
-      },
       onApiCallEnd: data => {
 
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
@@ -437,13 +417,14 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
+      (testInfo as TestInfoImpl)._onDidFinishTestFunctions.unshift(() => runBrowserBackendAtEnd(context, testInfo.errors[0]?.message));
       await use(context);
-      await runBrowserBackendAtEnd(context);
       await close();
       return;
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
+    (testInfo as TestInfoImpl)._onDidFinishTestFunctions.unshift(() => runBrowserBackendAtEnd(context, testInfo.errors[0]?.message));
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -666,7 +647,7 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
+    testInfo._onDidFinishTestFunctions.push(() => this.didFinishTestFunction());
 
     this._screenshotRecorder.fixOrdinal();
 
@@ -804,36 +785,3 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFix
 export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
-
-function channelToPage(channelOwner: ChannelOwner): Page | undefined {
-  if (channelOwner._type === 'Page')
-    return channelOwner as PageImpl;
-  if (channelOwner._type === 'Frame')
-    return (channelOwner as FrameImpl).page();
-  return undefined;
-}
-
-function createErrorCodeframe(message: string, location: Location) {
-  let source: string;
-  try {
-    source = fs.readFileSync(location.file, 'utf-8') + '\n//';
-  } catch (e) {
-    return '';
-  }
-
-  return codeFrameColumns(
-      source,
-      {
-        start: {
-          line: location.line,
-          column: location.column,
-        },
-      },
-      {
-        highlightCode: true,
-        linesAbove: 5,
-        linesBelow: 5,
-        message: message.split('\n')[0] || undefined,
-      }
-  );
-}

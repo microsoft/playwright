@@ -24,6 +24,9 @@ import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithQuery } from './filter';
 import { linkifyText } from '@web/renderUtils';
+import { Dialog } from '@web/shared/dialog';
+import { useDarkModeSetting } from '@web/theme';
+import { useSetting } from '@web/uiUtils';
 
 export const HeaderView: React.FC<{
   title: string | undefined,
@@ -90,6 +93,7 @@ const StatsNavView: React.FC<{
     <NavLink token='failed' count={stats.unexpected} />
     <NavLink token='flaky' count={stats.flaky} />
     <NavLink token='skipped' count={stats.skipped} />
+    <SettingsButton />
   </nav>;
 };
 
@@ -111,4 +115,52 @@ const NavLink: React.FC<{
     <span className='subnav-item-label'>{label}</span>
     <span className='d-inline counter'>{count}</span>
   </Link>;
+};
+
+const SettingsButton: React.FC = () => {
+  const settingsRef = React.useRef<HTMLDivElement>(null);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
+
+  return <div
+    role='button'
+    ref={settingsRef}
+    style={{ cursor: 'pointer' }}
+    className='subnav-item'
+    title='Settings'
+    onClick={e => {
+      setSettingsOpen(!settingsOpen);
+      e.preventDefault();
+    }}
+    onMouseDown={preventDefault}>
+    <Dialog
+      open={settingsOpen}
+      width={150}
+      verticalOffset={8}
+      requestClose={() => setSettingsOpen(false)}
+      anchor={settingsRef}
+      dataTestId='settings-dialog'
+    >
+      <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
+        <input type='checkbox' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
+        Dark mode
+      </label>
+      <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
+        <input type='checkbox' checked={mergeFiles} onChange={() => setMergeFiles(!mergeFiles)}></input>
+        Merge files
+      </label>
+    </Dialog>
+    {icons.settings()}
+  </div>;
+};
+
+const preventDefault = (e: any) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
+
+const stopPropagation = (e: any) => {
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 };

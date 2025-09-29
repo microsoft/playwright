@@ -15,7 +15,7 @@
  */
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
 
 import { defineToolSchema } from './tool';
 import * as mcpBundle from './bundle';
@@ -35,6 +35,7 @@ export class MDBBackend implements mcpServer.ServerBackend {
   private _interruptPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
   private _topLevelBackend: mcpServer.ServerBackend;
   private _clientInfo: mcpServer.ClientInfo | undefined;
+  private _progress: mcpServer.CallToolResult['content'] = [];
 
   constructor(topLevelBackend: mcpServer.ServerBackend) {
     this._topLevelBackend = topLevelBackend;
@@ -79,14 +80,22 @@ export class MDBBackend implements mcpServer.ServerBackend {
     client.callTool({
       name,
       arguments: args,
+      _meta: {
+        progressToken: name + '@' + createGuid().slice(0, 8),
+      },
     }).then(result => {
       resultPromise.resolve(result as mcpServer.CallToolResult);
-    }).catch(e => resultPromise.reject(e));
+    }).catch(e => {
+      resultPromise.resolve({ content: [{ type: 'text', text: String(e) }], isError: true });
+    });
+
     const result = await Promise.race([interruptPromise, resultPromise]);
     if (interruptPromise.isDone())
       mdbDebug('client call intercepted', result);
     else
       mdbDebug('client call result', result);
+    result.content.unshift(...this._progress);
+    this._progress.length = 0;
     return result;
   }
 
@@ -110,6 +119,13 @@ export class MDBBackend implements mcpServer.ServerBackend {
     const client = new mcpBundle.Client({ name: 'Pushing client', version: '0.0.0' }, { capabilities: { roots: {} } });
     client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
+    client.setNotificationHandler(mcpBundle.ProgressNotificationSchema, notification => {
+      if (notification.method === 'notifications/progress') {
+        const { message } = notification.params;
+        if (message)
+          this._progress.push({ type: 'text', text: message });
+      }
+    });
     await client.connect(transport);
     mdbDebug('connected to the new client');
     const { tools } = await client.listTools();
@@ -213,8 +229,8 @@ class ServerBackendWithCloseListener implements mcpServer.ServerBackend {
     return this._backend.listTools();
   }
 
-  async callTool(name: string, args: mcpServer.CallToolRequest['params']['arguments']): Promise<mcpServer.CallToolResult> {
-    return this._backend.callTool(name, args);
+  async callTool(name: string, args: mcpServer.CallToolRequest['params']['arguments'], progress: mcpServer.ProgressCallback): Promise<mcpServer.CallToolResult> {
+    return this._backend.callTool(name, args, progress);
   }
 
   serverClosed(server: mcpServer.Server) {

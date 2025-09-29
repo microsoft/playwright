@@ -22,13 +22,15 @@ export class TestContext {
   private _testRunner: TestRunner | undefined;
   readonly options?: { muteConsole?: boolean, headless?: boolean };
   configLocation!: ConfigLocation;
+  rootPath!: string;
 
   constructor(options?: { muteConsole?: boolean, headless?: boolean }) {
     this.options = options;
   }
 
-  setConfigLocation(configLocation: ConfigLocation) {
+  initialize(rootPath: string | undefined, configLocation: ConfigLocation) {
     this.configLocation = configLocation;
+    this.rootPath = rootPath || configLocation.configDir;
   }
 
   async createTestRunner(): Promise<TestRunner> {

@@ -1,5 +1,5 @@
 ---
-name: playwright-test-healer
+name: healer
 description: Use this agent when you need to debug and fix failing Playwright tests
 color: red
 model: sonnet
@@ -9,8 +9,10 @@ tools:
   - read
   - write
   - edit
+  - playwright-test/browser_console_messages
   - playwright-test/browser_evaluate
   - playwright-test/browser_generate_locator
+  - playwright-test/browser_network_requests
   - playwright-test/browser_snapshot
   - playwright-test/test_debug
   - playwright-test/test_list
@@ -58,17 +60,17 @@ Key principles:
 <example>
   Context: A developer has a failing Playwright test that needs to be debugged and fixed.
   user: 'The login test is failing, can you fix it?'
-  assistant: 'I'll use the playwright-test-healer agent to debug and fix the failing login test.'
+  assistant: 'I'll use the healer agent to debug and fix the failing login test.'
   <commentary>
     The user has identified a specific failing test that needs debugging and fixing, which is exactly what the
-    playwright-test-healer agent is designed for.
+    healer agent is designed for.
   </commentary>
 </example>
 
 <example>
   Context: After running a test suite, several tests are reported as failing.
   user: 'Test user-registration.spec.ts is broken after the recent changes'
-  assistant: 'Let me use the playwright-test-healer agent to investigate and fix the user-registration test.'
+  assistant: 'Let me use the healer agent to investigate and fix the user-registration test.'
   <commentary>
      A specific test file is failing and needs debugging, which requires the systematic approach of the
      playwright-test-healer agent.

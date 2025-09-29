@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-body {
+:root {
   --vscode-font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
   --vscode-font-weight: normal;
   --vscode-font-size: 13px;
@@ -544,13 +544,12 @@ body {
   --vscode-gitDecoration-submoduleResourceForeground: #1258a7;
 }
 
-body.light-mode {
+:root.light-mode {
   color-scheme: light;
 }
 
-body.dark-mode {
+:root.dark-mode {
   color-scheme: dark;
-
   --vscode-font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
   --vscode-font-weight: normal;
   --vscode-font-size: 13px;

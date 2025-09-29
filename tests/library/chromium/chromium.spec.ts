@@ -17,7 +17,6 @@
 
 import { contextTest as test, expect } from '../../config/browserTest';
 import { playwrightTest } from '../../config/browserTest';
-import { ConsoleMessage } from 'playwright-core';
 
 test('should create a worker from a service worker', async ({ page, server }) => {
   const [worker] = await Promise.all([
@@ -127,78 +126,6 @@ test('should not create a worker from a shared worker', async ({ page, server })
     new SharedWorker('data:text/javascript,console.log("hi")');
   });
   expect(serviceWorkerCreated).not.toBeTruthy();
-});
-
-test('should emit console messages from service worker', async ({ page, server }) => {
-  const [worker] = await Promise.all([
-    page.context().waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
-  ]);
-
-  const [consoleMessage] = await Promise.all([
-    new Promise<ConsoleMessage>(resolve => worker.once('console', resolve)),
-    worker.evaluate(() => console.log('hello from service worker', {
-      i: 'am',
-      am: 1,
-      complex: {
-        yup: true,
-      }
-    }))
-  ]);
-
-  expect(consoleMessage.text()).toContain('hello from service worker');
-  expect(consoleMessage.type()).toBe('log');
-  const args = consoleMessage.args();
-  expect(args).toHaveLength(2);
-  expect(await args[0].jsonValue()).toBe('hello from service worker');
-  expect(await args[1].jsonValue()).toEqual({
-    i: 'am',
-    am: 1,
-    complex: {
-      yup: true,
-    }
-  });
-});
-
-test('should emit different console types from service worker', async ({ page, server }) => {
-  const [worker] = await Promise.all([
-    page.context().waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
-  ]);
-
-  const messages: ConsoleMessage[] = [];
-  worker.on('console', m => messages.push(m));
-
-  await worker.evaluate(() => {
-    console.log('log message');
-    console.warn('warn message');
-    console.error('error message');
-  });
-
-  expect(messages).toHaveLength(3);
-  expect(messages[0].type()).toBe('log');
-  expect(messages[0].text()).toBe('log message');
-  expect(messages[1].type()).toBe('warning');
-  expect(messages[1].text()).toBe('warn message');
-  expect(messages[2].type()).toBe('error');
-  expect(messages[2].text()).toBe('error message');
-});
-
-test('should capture console.log from ServiceWorker start', async ({ context, page, server }) => {
-  server.setRoute('/serviceworkers/empty/sw.js', (req, res) => {
-    res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
-    res.write(`console.log('Hello from the first line of sw.js');`);
-    res.end();
-  });
-
-  const [worker] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-  ]);
-
-  const consoleMessage = await new Promise<ConsoleMessage>(resolve => worker.once('console', resolve));
-  expect(consoleMessage.text()).toBe('Hello from the first line of sw.js');
-  expect(consoleMessage.type()).toBe('log');
 });
 
 test('Page.route should work with intervention headers', async ({ server, page }) => {

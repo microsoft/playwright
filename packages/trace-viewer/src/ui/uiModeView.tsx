@@ -100,9 +100,9 @@ export const UIModeView: React.FC<{}> = ({
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
-  const [showBrowser, setShowBrowser] = useSetting<boolean>('show-browser', false);
+  const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
   const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
-  const [hideFiles] = useSetting('hideFiles', false);
+  const [mergeFiles] = useSetting('mergeFiles', false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -241,15 +241,15 @@ export const UIModeView: React.FC<{}> = ({
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
     if (!testModel)
-      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, queryParams.pathSeparator, hideFiles) };
-    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, hideFiles);
+      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, queryParams.pathSeparator, mergeFiles) };
+    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, mergeFiles);
     testTree.filterTree(filterText, statusFilters, isRunningTest ? runningState?.testIds : undefined);
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
     testTree.flattenForSingleProject();
     setVisibleTestIds(testTree.testIds());
     return { testTree };
-  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest, hideFiles]);
+  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest, mergeFiles]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
     if (!testServerConnection || !testModel)
@@ -289,8 +289,7 @@ export const UIModeView: React.FC<{}> = ({
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
         updateSnapshots,
         reporters: queryParams.reporters,
-        headed: showBrowser,
-        workers: showBrowser ? 1 : undefined,
+        workers: singleWorker ? 1 : undefined,
         trace: 'on',
       });
       // Clear pending tests in case of interrupt.
@@ -301,7 +300,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, showBrowser]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, singleWorker]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -327,7 +326,7 @@ export const UIModeView: React.FC<{}> = ({
 
       // run affected watched tests
       const testModel = teleSuiteUpdater.asModel();
-      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, hideFiles);
+      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, mergeFiles);
 
       const testIds: string[] = [];
       const set = new Set(params.testFiles);
@@ -351,7 +350,7 @@ export const UIModeView: React.FC<{}> = ({
       runTests('queue-if-busy', new Set(testIds));
     });
     return () => disposable.dispose();
-  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, hideFiles]);
+  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, mergeFiles]);
 
   // Shortcuts.
   React.useEffect(() => {
@@ -505,7 +504,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Testing Options</div>
         </Toolbar>
         {testingOptionsVisible && <SettingsView settings={[
-          { type: 'check', value: showBrowser, set: setShowBrowser, name: 'Show browser — single worker' },
+          { type: 'check', value: singleWorker, set: setSingleWorker, name: 'Single worker' },
           { type: 'select', options: [
             { label: 'All', value: 'all' },
             { label: 'Changed', value: 'changed' },

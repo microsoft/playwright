@@ -38,3 +38,18 @@
   align-items: center;
   color: var(--vscode-editorCodeLens-foreground);
 }
+
+.workbench-actions-status-bar {
+  padding: 2px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
+.workbench-actions-hidden-count {
+  padding-right: 4px;
+  user-select: none;
+  color: var(--vscode-editorCodeLens-foreground);
+}

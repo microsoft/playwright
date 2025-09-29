@@ -15,7 +15,6 @@
 */
 
 import * as React from 'react';
-import { ToolbarButton } from './toolbarButton';
 
 export interface DialogProps {
   className?: string;
@@ -57,7 +56,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
       top: bounds.bottom + (verticalOffset ?? 0),
       left: buildTopLeftCoord(bounds, width ?? 0),
       width,
-      zIndex: 100,
+      zIndex: 110,  // on top of split view resizer
       ...externalStyle
     };
   }
@@ -163,40 +162,4 @@ const buildTopLeftCoordWithAlignment = (
       inBounds: bounds.right - width >= 0,
     };
   }
-};
-
-export interface DialogToolbarButtonProps {
-  title?: string;
-  icon?: string;
-  dialogDataTestId?: string;
-}
-
-export const DialogToolbarButton: React.FC<React.PropsWithChildren<DialogToolbarButtonProps>> = ({ title, icon, dialogDataTestId, children }) => {
-  const hostingRef = React.useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = React.useState(false);
-  return (
-    <>
-      <ToolbarButton
-        ref={hostingRef}
-        icon={icon}
-        title={title}
-        onClick={() => setOpen(current => !current)}
-      />
-      <Dialog
-        style={{
-          backgroundColor: 'var(--vscode-sideBar-background)',
-          padding: '4px 8px'
-        }}
-        open={open}
-        width={200}
-        // TODO: Temporary spacing until design of toolbar buttons is revisited
-        verticalOffset={8}
-        requestClose={() => setOpen(false)}
-        anchor={hostingRef}
-        dataTestId={dialogDataTestId}
-      >
-        {children}
-      </Dialog>
-    </>
-  );
 };

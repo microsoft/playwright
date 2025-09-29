@@ -35,7 +35,7 @@
   color: var(--color-fg-default);
 }
 
-@media(prefers-color-scheme: light) {
+:root.light-mode {
   .label-color-0 {
     background-color: var(--color-scale-blue-0);
     color: var(--color-scale-blue-6);
@@ -68,7 +68,7 @@
   }
 }
 
-@media(prefers-color-scheme: dark) {
+:root.dark-mode {
   .label-color-0 {
     background-color: var(--color-scale-blue-9);
     color: var(--color-scale-blue-2);

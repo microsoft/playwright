@@ -30,7 +30,7 @@ import { useDarkModeSetting } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
-import { Dialog } from '@web/components/dialog';
+import { Dialog } from '@web/shared/dialog';
 
 export interface RecorderProps {
   sources: Source[],

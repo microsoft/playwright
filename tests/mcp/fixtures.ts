@@ -87,7 +87,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         args.push('--headless');
 
       if (mcpServerType === 'test-mcp') {
-        args.push('--config', test.info().outputPath());
+        if (!options?.args?.some(arg => arg.startsWith('--config')))
+          args.push('--config', test.info().outputPath());
       } else {
         if (process.env.CI && process.platform === 'linux')
           args.push('--no-sandbox');
@@ -117,7 +118,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
       const { transport, stderr } = await createTransport(mcpServerType, args, env);
       let stderrBuffer = '';
       stderr?.on('data', data => {
-        if (process.env.PWMCP_DEBUG)
+        if (process.env.PWDEBUGIMPL)
           process.stderr.write(data);
         stderrBuffer += data.toString();
       });
@@ -140,7 +141,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'CDP is not supported for non-Chromium browsers');
 
     let browserContext: BrowserContext | undefined;
-    const port = 3200 + test.info().parallelIndex;
+    const port = 9100 + testInfo.workerIndex;
     await use({
       endpoint: `http://localhost:${port}`,
       start: async () => {
@@ -190,7 +191,6 @@ async function createTransport(mcpServerType: TestOptions['mcpServerType'], args
     stderr: 'pipe',
     env: {
       ...env,
-      DEBUG: process.env.DEBUG ? `${process.env.DEBUG},pw:mcp:test` : 'pw:mcp:test',
       DEBUG_COLORS: '0',
       DEBUG_HIDE_DATE: '1',
       PWMCP_PROFILES_DIR_FOR_TEST: profilesDir,
@@ -330,4 +330,23 @@ export async function writeFiles(files: Files, options?: { update?: boolean }) {
   }));
 
   return baseDir;
+}
+
+export async function prepareDebugTest(startClient: StartClient, testFile?: string, clientArgs?: Parameters<StartClient>[0]) {
+  await writeFiles({
+    'a.test.ts': testFile || `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+      });
+    `
+  });
+
+  const { client } = await startClient(clientArgs);
+  const listResult = await client.callTool({
+    name: 'test_list',
+  });
+  const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
+  return { client, id };
 }

@@ -41,7 +41,9 @@ export function applyTheme() {
 
   const currentTheme = settings.getString('theme', defaultTheme);
   if (currentTheme === 'dark-mode')
-    document.body.classList.add('dark-mode');
+    document.documentElement.classList.add('dark-mode');
+  else
+    document.documentElement.classList.add('light-mode');
 }
 
 type Theme = 'dark-mode' | 'light-mode';
@@ -52,8 +54,8 @@ export function toggleTheme() {
   const newTheme = oldTheme === 'dark-mode' ? 'light-mode' : 'dark-mode';
 
   if (oldTheme)
-    document.body.classList.remove(oldTheme);
-  document.body.classList.add(newTheme);
+    document.documentElement.classList.remove(oldTheme);
+  document.documentElement.classList.add(newTheme);
   settings.setString('theme', newTheme);
   for (const listener of listeners)
     listener(newTheme);
@@ -68,7 +70,7 @@ export function removeThemeListener(listener: (theme: Theme) => void) {
 }
 
 export function currentTheme(): Theme {
-  return document.body.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
+  return document.documentElement.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
 }
 
 export function useDarkModeSetting(): [boolean, (value: boolean) => void] {

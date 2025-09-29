@@ -35,14 +35,15 @@ export class TestServerBackend implements mcp.ServerBackend {
   }
 
   async initialize(server: mcp.Server, clientInfo: mcp.ClientInfo): Promise<void> {
+    const rootPath = mcp.firstRootPath(clientInfo);
+
     if (this._configOption) {
-      this._context.setConfigLocation(resolveConfigLocation(this._configOption));
+      this._context.initialize(rootPath, resolveConfigLocation(this._configOption));
       return;
     }
 
-    const rootPath = mcp.firstRootPath(clientInfo);
     if (rootPath) {
-      this._context.setConfigLocation(resolveConfigLocation(rootPath));
+      this._context.initialize(rootPath, resolveConfigLocation(rootPath));
       return;
     }
 
@@ -56,12 +57,12 @@ export class TestServerBackend implements mcp.ServerBackend {
     ];
   }
 
-  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
+  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments'], progress: mcp.ProgressCallback): Promise<mcp.CallToolResult> {
     const tool = this._tools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
     const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    return await tool.handle(this._context!, parsedArguments);
+    return await tool.handle(this._context!, parsedArguments, progress);
   }
 
   serverClosed() {

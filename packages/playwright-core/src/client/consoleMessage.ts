@@ -26,9 +26,9 @@ type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];
 export class ConsoleMessage implements api.ConsoleMessage {
 
   private _page: Page | null;
-  private _event: channels.WorkerConsoleEvent;
+  private _event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent;
 
-  constructor(platform: Platform, event: channels.WorkerConsoleEvent, page: Page | null) {
+  constructor(platform: Platform, event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent, page: Page | null) {
     this._page = page;
     this._event = event;
     if (platform.inspectCustom)

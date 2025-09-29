@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 18
+          node-version: 20
       - run: node utils/build/update-playwright-driver-version.mjs
       - name: Prepare branch
         id: prepare-branch

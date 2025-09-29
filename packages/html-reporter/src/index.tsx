@@ -28,6 +28,8 @@ const zipjs = zipImport as typeof zip;
 
 import logo from '@web/assets/playwright-logo.svg';
 import { SearchParamsProvider } from './links';
+import { applyTheme } from '@web/theme';
+
 const link = document.createElement('link');
 link.rel = 'shortcut icon';
 link.href = logo;
@@ -49,6 +51,7 @@ const ReportLoader: React.FC = () => {
 };
 
 window.onload = () => {
+  applyTheme();
   ReactDOM.createRoot(document.querySelector('#root')!).render(<ReportLoader />);
 };
 

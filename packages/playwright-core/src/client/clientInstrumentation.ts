@@ -15,7 +15,6 @@
  */
 
 import type { BrowserContext } from './browserContext';
-import type { ChannelOwner } from './channelOwner';
 import type { APIRequestContext } from './fetch';
 import type { StackFrame } from '@protocol/channels';
 
@@ -29,14 +28,11 @@ export interface ApiCallData {
   error?: Error;
 }
 
-export type RecoverFromApiErrorHandler = () => Promise<void>;
-
 export interface ClientInstrumentation {
   addListener(listener: ClientInstrumentationListener): void;
   removeListener(listener: ClientInstrumentationListener): void;
   removeAllListeners(): void;
   onApiCallBegin(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any> }): void;
-  onApiCallRecovery(apiCall: ApiCallData, error: Error, channelOwner: ChannelOwner, recoveryHandlers: RecoverFromApiErrorHandler[]): void;
   onApiCallEnd(apiCall: ApiCallData): void;
   onWillPause(options: { keepTestTimeout: boolean }): void;
 
@@ -48,7 +44,6 @@ export interface ClientInstrumentation {
 
 export interface ClientInstrumentationListener {
   onApiCallBegin?(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any>  }): void;
-  onApiCallRecovery?(apiCall: ApiCallData, error: Error, channelOwner: ChannelOwner, recoveryHandlers: RecoverFromApiErrorHandler[]): void;
   onApiCallEnd?(apiCall: ApiCallData): void;
   onWillPause?(options: { keepTestTimeout: boolean }): void;
 

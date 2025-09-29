@@ -27,6 +27,7 @@ const StreamableHTTPServerTransport: typeof import('@modelcontextprotocol/sdk/se
 const StreamableHTTPClientTransport: typeof import('@modelcontextprotocol/sdk/client/streamableHttp.js').StreamableHTTPClientTransport = bundle.StreamableHTTPClientTransport;
 const CallToolRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').CallToolRequestSchema = bundle.CallToolRequestSchema;
 const ListRootsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListRootsRequestSchema = bundle.ListRootsRequestSchema;
+const ProgressNotificationSchema: typeof import('@modelcontextprotocol/sdk/types.js').ProgressNotificationSchema = bundle.ProgressNotificationSchema;
 const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListToolsRequestSchema = bundle.ListToolsRequestSchema;
 const PingRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').PingRequestSchema = bundle.PingRequestSchema;
 const z: typeof import('zod') = bundle.z;
@@ -44,5 +45,6 @@ export {
   ListRootsRequestSchema,
   ListToolsRequestSchema,
   PingRequestSchema,
+  ProgressNotificationSchema,
   z,
 };

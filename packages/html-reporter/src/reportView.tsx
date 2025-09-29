@@ -26,6 +26,7 @@ import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
 import './theme.css';
+import { useSetting } from '@web/uiUtils';
 
 declare global {
   interface Window {
@@ -49,6 +50,7 @@ export const ReportView: React.FC<{
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
   const [metadataVisible, setMetadataVisible] = React.useState(false);
+  const [mergeFiles] = useSetting('mergeFiles', false);
   const testId = searchParams.get('testId');
   const q = searchParams.get('q')?.toString() || '';
   const filterParam = q ? '&q=' + q : '';
@@ -66,15 +68,8 @@ export const ReportView: React.FC<{
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
   const filteredStats = React.useMemo(() => filter.empty() ? undefined : computeStats(report?.json().files || [], filter), [report, filter]);
   const testModel = React.useMemo(() => {
-    const result: TestModelSummary = { files: [], tests: [] };
-    for (const file of report?.json().files || []) {
-      const tests = file.tests.filter(t => filter.matches(t));
-      if (tests.length)
-        result.files.push({ ...file, tests });
-      result.tests.push(...tests);
-    }
-    return result;
-  }, [report, filter]);
+    return mergeFiles ? createMergedFilesModel(report, filter) : createFilesModel(report, filter);
+  }, [report, filter, mergeFiles]);
 
   const { prev, next } = React.useMemo(() => {
     const index = testModel.tests.findIndex(t => t.testId === testId);
@@ -133,7 +128,7 @@ export const ReportView: React.FC<{
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
-          tests={testModel.files}
+          files={testModel.files}
           expandedFiles={expandedFiles}
           setExpandedFiles={setExpandedFiles}
           projectNames={report?.json().projectNames || []}
@@ -207,4 +202,47 @@ function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
       stats.duration += test.duration;
   }
   return stats;
+}
+
+function createFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
+  const result: TestModelSummary = { files: [], tests: [] };
+  for (const file of report?.json().files || []) {
+    const tests = file.tests.filter(t => filter.matches(t));
+    if (tests.length)
+      result.files.push({ ...file, tests });
+    result.tests.push(...tests);
+  }
+  return result;
+}
+
+function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
+  const groups: TestFileSummary[] = [];
+  const groupMap = new Map<string, TestFileSummary>();
+
+  for (const file of report?.json().files || []) {
+    const tests = file.tests.filter(t => filter.matches(t));
+    for (const test of tests) {
+      const describe = test.path[0] ?? '<anonymous>';
+      let group = groupMap.get(describe);
+      if (!group) {
+        group = {
+          fileId: describe,
+          fileName: describe,
+          tests: [],
+          stats: { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0, ok: true }
+        };
+        groupMap.set(describe, group);
+        groups.push(group);
+      }
+      const testCopy = { ...test, path: test.path.slice(1) };
+      group.tests.push(testCopy);
+    }
+  }
+
+  groups.sort((a, b) => a.fileName.localeCompare(b.fileName));
+
+  const result: TestModelSummary = { files: groups, tests: [] };
+  for (const group of groups)
+    result.tests.push(...group.tests);
+  return result;
 }

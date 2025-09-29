@@ -13,10 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as path from 'path';
 
 import { defineConfig } from '@playwright/test';
 
 import type { TestOptions } from './fixtures';
+import type { ReporterDescription } from '@playwright/test';
+
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
+
+const reporters = () => {
+  const result: ReporterDescription[] = process.env.CI ? [
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report'), fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+  ] : [
+    ['list']
+  ];
+  return result;
+};
+
+const metadata = {
+  platform: process.platform,
+  headless: 'headless',
+  mode: 'default',
+  video: false,
+};
 
 export default defineConfig<TestOptions>({
   testDir: './',
@@ -24,12 +46,12 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
-  reporter: 'list',
+  reporter: reporters(),
   projects: [
-    { name: 'chrome' },
-    { name: 'chromium', use: { mcpBrowser: 'chromium' } },
-    { name: 'firefox', use: { mcpBrowser: 'firefox' } },
-    { name: 'webkit', use: { mcpBrowser: 'webkit' } },
-    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' } }] : [],
+    { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' } },
+    { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' } },
+    { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' } },
+    { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' } },
+    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' } }] : [],
   ],
 });

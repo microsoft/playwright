@@ -21,6 +21,6 @@ export { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 export { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 export { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 export { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-export { CallToolRequestSchema, ListRootsRequestSchema, ListToolsRequestSchema, PingRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+export { CallToolRequestSchema, ListRootsRequestSchema, ListToolsRequestSchema, PingRequestSchema, ProgressNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 export { z } from 'zod';
 export { zodToJsonSchema } from 'zod-to-json-schema';

@@ -14,7 +14,7 @@ Step category to differentiate steps with different origin and verbosity. Built-
 * `hook` for hooks initialization and teardown
 * `pw:api` for Playwright API calls.
 * `test.step` for test.step API calls.
-* `test.attach` for test attachmen calls.
+* `test.attach` for testInfo.attach API calls.
 
 
 ## property: TestStep.duration

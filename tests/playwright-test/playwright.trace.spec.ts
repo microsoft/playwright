@@ -785,7 +785,7 @@ test('should use custom expect message in trace', async ({ runInlineTest }, test
   ]);
 });
 
-test('should not throw when merging traces multiple times', async ({ runInlineTest }, testInfo) => {
+test('should not throw when merging traces multiple times', async ({ runInlineTest, server }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27286' });
 
   const result = await runInlineTest({
@@ -813,7 +813,7 @@ test('should not throw when merging traces multiple times', async ({ runInlineTe
       });
 
       test.beforeAll(async ({ page }) => {
-        await page.goto('https://playwright.dev');
+        await page.goto(${JSON.stringify(server.PREFIX + '/frames/nested-frames.html')});
       });
 
       test.afterAll(async ({ context }) => {
@@ -821,7 +821,7 @@ test('should not throw when merging traces multiple times', async ({ runInlineTe
       });
 
       test('foo', async ({ page }) => {
-        await expect(page.locator('h1')).toContainText('Playwright');
+        await expect(page.frameLocator('iframe').nth(1).locator('div')).toHaveText("Hi, I'm frame");
       });
     `,
   }, { workers: 1 });

@@ -383,38 +383,24 @@ it('should return last requests', async ({ page, server }) => {
     server.setRoute('/fetch?' + i, (req, res) => res.end('url:' + server.PREFIX + req.url));
 
   // #0 is the navigation request, so start with #1.
-  for (let i = 1; i < 50; ++i)
+  for (let i = 0; i < 99; ++i)
     await page.evaluate(url => fetch(url), server.PREFIX + '/fetch?' + i);
-  const first50Requests = await page.requests();
-  const firstReponse = await first50Requests[1].response();
-  expect(await firstReponse.text()).toBe('url:' + server.PREFIX + '/fetch?1');
-
-  page.on('request', () => {});
-  for (let i = 50; i < 100; ++i)
-    await page.evaluate(url => fetch(url), server.PREFIX + '/fetch?' + i);
-  const first100Requests = await page.requests();
-
-  for (let i = 100; i < 200; ++i)
+  const first99Requests = await page.requests();
+  first99Requests.shift();
+  for (let i = 99; i < 199; ++i)
     await page.evaluate(url => fetch(url), server.PREFIX + '/fetch?' + i);
   const last100Requests = await page.requests();
+  const allRequests = [...first99Requests, ...last100Requests];
 
-  // Last 100 requests are fully functional.
-  const received = await Promise.all(last100Requests.map(async request => {
+  // All 199 requests are fully functional.
+  const received = await Promise.all(allRequests.map(async request => {
     const response = await request.response();
     return { text: await response.text(), url: request.url() };
   }));
   const expected = [];
-  for (let i = 100; i < 200; ++i) {
+  for (let i = 0; i < 199; ++i) {
     const url = server.PREFIX + '/fetch?' + i;
     expected.push({ url, text: 'url:' + url });
   }
   expect(received).toEqual(expected);
-
-  // First 50 requests were collected.
-  const error = await first50Requests[1].response().catch(e => e);
-  expect(error.message).toContain('request.response: The object has been collected to prevent unbounded heap growth.');
-
-  // Second 50 requests are functional, because they were reported through the event and not collected.
-  const reponse50 = await first100Requests[50].response();
-  expect(await reponse50.text()).toBe('url:' + server.PREFIX + '/fetch?50');
 });

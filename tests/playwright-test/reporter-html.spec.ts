@@ -3204,16 +3204,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
   });
 }
 
-test('should support noFiles option', async ({ runInlineTest, showReport, page }) => {
+test('should support merge files option', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/test';
-      export default defineConfig({
-        name: 'project-name',
-        reporter: [['html', { noFiles: true }]]
-      });
-      module.exports = { name: 'project-name', reporter: [['html', { noFiles: true }]] };
-    `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test.describe('describe', () => {
@@ -3227,21 +3219,24 @@ test('should support noFiles option', async ({ runInlineTest, showReport, page }
         test('test 3', async ({}) => {});
       });
     `,
-  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+  }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
   await showReport();
 
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('checkbox', { name: 'Merge files' }).click();
+
   await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button "<anonymous>" [expanded]
+    - region:
+      - link "test 2"
+      - link "a.test.js:6"
     - button "describe" [expanded]
     - region:
       - link "test 1"
       - link "a.test.js:4"
       - link "test 3"
       - link "b.test.js:4"
-    - button "<anonymous>" [expanded]
-    - region:
-      - link "test 2"
-      - link "a.test.js:6"
   `);
 });
 

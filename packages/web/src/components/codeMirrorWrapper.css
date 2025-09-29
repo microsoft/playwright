@@ -79,33 +79,33 @@
   color: #267f99;
 }
 
-body.dark-mode .CodeMirror span.cm-def,
-body.dark-mode .CodeMirror span.cm-tag {
+:root.dark-mode .CodeMirror span.cm-def,
+:root.dark-mode .CodeMirror span.cm-tag {
   color: var(--vscode-debugView-valueChangedHighlight);
 }
 
-body.dark-mode .CodeMirror span.cm-comment,
-body.dark-mode .CodeMirror span.cm-link {
+:root.dark-mode .CodeMirror span.cm-comment,
+:root.dark-mode .CodeMirror span.cm-link {
   color: #6a9955;
 }
 
-body.dark-mode .CodeMirror span.cm-variable,
-body.dark-mode .CodeMirror span.cm-variable-2,
-body.dark-mode .CodeMirror span.cm-atom {
+:root.dark-mode .CodeMirror span.cm-variable,
+:root.dark-mode .CodeMirror span.cm-variable-2,
+:root.dark-mode .CodeMirror span.cm-atom {
   color: #4fc1ff;
 }
 
-body.dark-mode .CodeMirror span.cm-property {
+:root.dark-mode .CodeMirror span.cm-property {
   color: #dcdcaa;
 }
 
-body.dark-mode .CodeMirror span.cm-qualifier,
-body.dark-mode .CodeMirror span.cm-attribute {
+:root.dark-mode .CodeMirror span.cm-qualifier,
+:root.dark-mode .CodeMirror span.cm-attribute {
   color: #9cdcfe;
 }
 
-body.dark-mode .CodeMirror span.cm-variable-3,
-body.dark-mode .CodeMirror span.cm-type {
+:root.dark-mode .CodeMirror span.cm-variable-3,
+:root.dark-mode .CodeMirror span.cm-type {
   color: #4ec9b0;
 }
 

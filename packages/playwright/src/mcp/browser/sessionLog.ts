@@ -53,7 +53,7 @@ export class SessionLog {
   }
 
   static async create(config: FullConfig, clientInfo: mcpServer.ClientInfo): Promise<SessionLog> {
-    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code' });
+    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code', reason: 'Saving session' });
     await fs.promises.mkdir(sessionFolder, { recursive: true });
     // eslint-disable-next-line no-console
     console.error(`Session: ${sessionFolder}`);
@@ -79,7 +79,7 @@ export class SessionLog {
     code = code.trim();
     if (isUpdate) {
       const lastEntry = this._pendingEntries[this._pendingEntries.length - 1];
-      if (lastEntry.userAction?.name === action.name) {
+      if (lastEntry?.userAction?.name === action.name) {
         lastEntry.userAction = action;
         lastEntry.code = code;
         return;

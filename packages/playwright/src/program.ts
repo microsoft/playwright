@@ -175,10 +175,10 @@ function addTestMCPServerCommand(program: Command) {
 }
 
 function addInitAgentsCommand(program: Command) {
-  const command = program.command('init-agents', { hidden: true });
-  command.description('Initialize repository agents for the Claude Code');
+  const command = program.command('init-agents');
+  command.description('Initialize repository agents');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['claude', 'opencode', 'vscode']);
+  option.choices(['vscode', 'claude', 'opencode']);
   command.addOption(option);
   command.action(async opts => {
     if (opts.loop === 'opencode')
@@ -187,6 +187,8 @@ function addInitAgentsCommand(program: Command) {
       await initVSCodeRepo();
     else if (opts.loop === 'claude')
       await initClaudeCodeRepo();
+    else
+      command.help();
   });
 }
 
@@ -203,7 +205,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliLastFailed = !!opts.lastFailed;
-  config.cliLastRunFile = opts.lastRunFile ? path.resolve(process.cwd(), opts.lastRunFile) : undefined;
+  config.cliTestList = opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined;
+  config.cliTestListInvert = opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined;
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   filterProjects(config.projects, config.cliProjectFilter);
@@ -389,7 +392,6 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--headed', { description: `Run tests in headed browsers (default: headless)` }],
   ['--ignore-snapshots', { description: `Ignore screenshot and snapshot expectations` }],
   ['--last-failed', { description: `Only re-run the failures` }],
-  ['--last-run-file <file>', { description: `Path to the last-run file (default: "test-results/.last-run.json")` }],
   ['--list', { description: `Collect all the tests and report them, but do not run` }],
   ['--max-failures <N>', { description: `Stop after the first N failures` }],
   ['--no-deps', { description: `Do not run project dependencies` }],
@@ -402,6 +404,8 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")` }],
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
+  ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
+  ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],
   ['--trace <mode>', { description: `Force tracing mode`, choices: kTraceModes as string[] }],
   ['--tsconfig <path>', { description: `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)` }],

@@ -2285,7 +2285,7 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * Returns up to 200 last console messages from this page. See
+   * Returns up to (currently) 200 last console messages from this page. See
    * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
    */
   consoleMessages(): Promise<Array<ConsoleMessage>>;
@@ -3605,7 +3605,7 @@ export interface Page {
   opener(): Promise<null|Page>;
 
   /**
-   * Returns up to 200 last page errors from this page. See
+   * Returns up to (currently) 200 last page errors from this page. See
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
    */
   pageErrors(): Promise<Array<Error>>;
@@ -3927,8 +3927,17 @@ export interface Page {
   requestGC(): Promise<void>;
 
   /**
-   * Returns up to 100 last network request from this page. See
+   * Returns up to (currently) 100 last network request from this page. See
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) for more details.
+   *
+   * Returned requests should be accessed immediately, otherwise they might be collected to prevent unbounded memory
+   * growth as new requests come in. Once collected, retrieving most information about the request is impossible.
+   *
+   * Note that requests reported through the
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) request are not collected, so
+   * there is a trade off between efficient memory usage with
+   * [page.requests()](https://playwright.dev/docs/api/class-page#page-requests) and the amount of available information
+   * reported through [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    */
   requests(): Promise<Array<Request>>;
 
@@ -10316,36 +10325,15 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
-
-  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10355,31 +10343,13 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   off(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   url(): string;
 }

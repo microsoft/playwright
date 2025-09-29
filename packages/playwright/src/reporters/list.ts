@@ -38,10 +38,12 @@ class ListReporter extends TerminalReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
+  private _prefixStdio?: string;
 
-  constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
+  constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions & { prefixStdio?: string }) {
     super(options);
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
+    this._prefixStdio = options?.prefixStdio;
   }
 
   override onBegin(suite: Suite) {
@@ -68,12 +70,12 @@ class ListReporter extends TerminalReporter {
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(test, chunk, this.screen.stdout);
+    this._dumpToStdio(test, chunk, this.screen.stdout, 'out');
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, this.screen.stderr);
+    this._dumpToStdio(test, chunk, this.screen.stderr, 'err');
   }
 
   private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
@@ -157,12 +159,15 @@ class ListReporter extends TerminalReporter {
     }
   }
 
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream, stdio: 'out' | 'err') {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
     this._updateLineCountAndNewLineFlagForOutput(text);
-    stream.write(chunk);
+    if (this._prefixStdio)
+      stream.write(`[${stdio}] ${chunk}`);
+    else
+      stream.write(chunk);
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {

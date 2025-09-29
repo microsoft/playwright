@@ -308,6 +308,9 @@ export class WKPage implements PageDelegate {
         session.dispatchMessage({ id: message.id, error: { message: e.message } });
       });
     });
+    // TODO: support OOPIFs.
+    if (targetInfo.type === 'frame' as any)
+      return;
     assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
 
     if (!targetInfo.isProvisional) {
