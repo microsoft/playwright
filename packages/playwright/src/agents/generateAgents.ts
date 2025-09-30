@@ -210,13 +210,13 @@ export async function initClaudeCodeRepo() {
 }
 
 const vscodeToolMap = new Map<string, string[]>([
-  ['ls', ['listDirectory', 'fileSearch']],
-  ['grep', ['textSearch']],
-  ['read', ['readFile']],
-  ['edit', ['editFiles']],
-  ['write', ['createFile', 'createDirectory']],
+  ['ls', ['search/listDirectory', 'search/fileSearch']],
+  ['grep', ['search/textSearch']],
+  ['read', ['search/readFile']],
+  ['edit', ['edit/editFiles']],
+  ['write', ['edit/createFile', 'edit/createDirectory']],
 ]);
-const vscodeToolsOrder = ['createFile', 'createDirectory', 'editFiles', 'fileSearch', 'textSearch', 'listDirectory', 'readFile'];
+const vscodeToolsOrder = ['edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search/fileSearch', 'search/textSearch', 'search/listDirectory', 'search/readFile'];
 const vscodeMcpName = 'playwright-test';
 function saveAsVSCodeChatmode(agent: Agent): string {
   function asVscodeTool(tool: string): string | string[] {
