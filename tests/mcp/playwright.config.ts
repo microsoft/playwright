@@ -20,6 +20,8 @@ import { defineConfig } from '@playwright/test';
 import type { TestOptions } from './fixtures';
 import type { ReporterDescription } from '@playwright/test';
 
+const rootTestDir = path.join(__dirname, '..');
+const testDir = path.join(rootTestDir, 'mcp');
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 
 const reporters = () => {
@@ -41,17 +43,17 @@ const metadata = {
 };
 
 export default defineConfig<TestOptions>({
-  testDir: './',
+  testDir: rootTestDir,
   grepInvert: /extension/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   reporter: reporters(),
   projects: [
-    { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' } },
-    { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' } },
-    { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' } },
-    { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' } },
-    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' } }] : [],
+    { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' }, testDir },
+    { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },
+    { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
+    { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
+    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
   ],
 });
