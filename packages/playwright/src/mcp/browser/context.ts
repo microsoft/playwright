@@ -169,14 +169,17 @@ export class Context {
         await browserContext.tracing.stop();
       const videos = this.config.saveVideo ? browserContext.pages().map(page => page.video()).filter(video => !!video) : [];
       await close(async () => {
+        testDebug(`Saving ${videos.length} videos`);
         for (const video of videos) {
           const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code', reason: 'Saving video' });
           await fs.promises.mkdir(path.dirname(name), { recursive: true });
           const p = await video.path();
           // video.saveAs() does not work for persistent contexts.
           try {
-            if (fs.existsSync(p))
+            if (fs.existsSync(p)) {
+              testDebug('Saving video ' + p);
               await fs.promises.rename(p, name);
+            }
           } catch (e) {
             logUnhandledError(e);
           }

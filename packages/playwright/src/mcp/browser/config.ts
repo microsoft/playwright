@@ -201,9 +201,12 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     contextOptions.permissions = cliOptions.grantPermissions;
 
   if (cliOptions.saveVideo) {
+    const testDebug = debug('pw:mcp:test');
+    const dir = tmpDir()
+    testDebug('Enabling recording to dir ' + dir)
     contextOptions.recordVideo = {
       // Videos are moved to output directory on saveAs.
-      dir: tmpDir(),
+      dir: dir,
       size: cliOptions.saveVideo,
     };
   }

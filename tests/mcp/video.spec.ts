@@ -21,7 +21,10 @@ for (const mode of ['isolated', 'persistent']) {
   test(`should work with --save-video (${mode})`, async ({ startClient, server }, testInfo) => {
     const outputDir = testInfo.outputPath('output');
 
-    const { client } = await startClient({
+    const { client, stderr } = await startClient({
+          env: {
+      DEBUG: 'pw:mcp:test',
+    },
       args: [
         '--save-video=800x600',
         ...(mode === 'isolated' ? ['--isolated'] : []),
@@ -41,6 +44,10 @@ for (const mode of ['isolated', 'persistent']) {
     })).toHaveResponse({
       code: expect.stringContaining(`page.close()`),
     });
+
+    await expect.poll(() => {
+        console.log(stderr());
+    }, {timeout:0}).toEqual("hi");
 
     const [file] = await fs.promises.readdir(outputDir);
     expect(file).toMatch(/page-.*\.webm/);
