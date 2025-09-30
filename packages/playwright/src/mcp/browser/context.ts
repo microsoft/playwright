@@ -177,7 +177,7 @@ export class Context {
           // video.saveAs() does not work for persistent contexts.
           try {
             if (fs.existsSync(p)) {
-              testDebug('Saving video ' + p);
+              testDebug(`Saving video ${p} to ${name}`);
               await fs.promises.rename(p, name);
             }
           } catch (e) {
