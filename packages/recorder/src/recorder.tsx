@@ -198,7 +198,6 @@ export const Recorder: React.FC<RecorderProps> = ({
       <Dialog
         style={{ padding: '4px 8px' }}
         open={settingsOpen}
-        width={200}
         verticalOffset={8}
         requestClose={() => setSettingsOpen(false)}
         anchor={settingsButtonRef}
