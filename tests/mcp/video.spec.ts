@@ -45,12 +45,10 @@ for (const mode of ['isolated', 'persistent']) {
       code: expect.stringContaining(`page.close()`),
     });
 
-    await expect.poll(() => {
-        console.log(stderr());
-    }, {timeout:0}).toEqual("hi");
-
-    const [file] = await fs.promises.readdir(outputDir);
-    expect(file).toMatch(/page-.*\.webm/);
+    await expect.poll(async () => {
+      const [file] = await fs.promises.readdir(outputDir);
+      return file;
+    }).toMatch(/page-.*\.webm/);
   });
 
   test(`should work with recordVideo (${mode})`, async ({ startClient, server }, testInfo) => {
