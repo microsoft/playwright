@@ -52,12 +52,10 @@ jobs:
       matrix:
         # Intel: *-large
         # Arm64: *-xlarge
-        os: [macos-13-large, macos-13-xlarge, macos-14-large, macos-14-xlarge]
+        os: [macos-14-large, macos-14-xlarge, macos-15-large, macos-15-xlarge]
         browser: [chromium, firefox, webkit]
         include:
-          - os: macos-15-large
-            browser: webkit
-          - os: macos-15-xlarge
+          - os: macos-26-xlarge
             browser: webkit
     runs-on: ${{ matrix.os }}
     steps:
