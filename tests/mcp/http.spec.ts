@@ -378,6 +378,14 @@ test('should respect allowed hosts (positive)', async ({ serverEndpoint }) => {
   expect(response.status).toBe(400);
 });
 
+test('should be able to allow any host', async ({ serverEndpoint }) => {
+  const { url } = await serverEndpoint({ args: ['--allowed-hosts=*'] });
+  const response = await fetch(url.href);
+  // 400 is expected for the mcp fetch.
+  expect(response.status).toBe(400);
+  expect(await response.text()).toBe('Invalid request');
+});
+
 async function findFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = net.createServer();

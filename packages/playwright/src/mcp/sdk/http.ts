@@ -63,6 +63,7 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
   const url = httpAddressToString(httpServer.address());
   const host = new URL(url).host;
   allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
+  const allowAnyHost = allowedHosts.includes('*');
 
   const sseSessions = new Map();
   const streamableSessions = new Map();
@@ -74,7 +75,7 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
     }
 
     // Prevent DNS evil.com -> localhost rebind.
-    if (!allowedHosts.includes(host)) {
+    if (!allowAnyHost && !allowedHosts.includes(host)) {
       // Access from the browser is forbidden.
       res.statusCode = 403;
       return res.end('Access is only allowed at ' + allowedHosts.join(', '));
