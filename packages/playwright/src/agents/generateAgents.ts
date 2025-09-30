@@ -222,7 +222,7 @@ function saveAsVSCodeChatmode(agent: Agent): string {
   function asVscodeTool(tool: string): string | string[] {
     const [first, second] = tool.split('/');
     if (second)
-      return second.startsWith('browser_') ? `${vscodeMcpName}/${second}` : second;
+      return `${vscodeMcpName}/${second}`;
     return vscodeToolMap.get(first) || first;
   }
   const tools = agent.header.tools.map(asVscodeTool).flat().sort((a, b) => {
@@ -276,8 +276,7 @@ export async function initVSCodeRepo() {
   mcpJson.servers['playwright-test'] = {
     type: 'stdio',
     command: commonMcpServers.playwrightTest.command,
-    args: commonMcpServers.playwrightTest.args,
-    cwd: '${workspaceFolder}'
+    args: commonMcpServers.playwrightTest.args
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
 }
