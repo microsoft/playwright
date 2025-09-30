@@ -68,17 +68,19 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
   const sseSessions = new Map();
   const streamableSessions = new Map();
   httpServer.on('request', async (req, res) => {
-    const host = req.headers.host?.toLowerCase();
-    if (!host) {
-      res.statusCode = 400;
-      return res.end('Missing host');
-    }
+    if (!allowAnyHost) {
+      const host = req.headers.host?.toLowerCase();
+      if (!host) {
+        res.statusCode = 400;
+        return res.end('Missing host');
+      }
 
-    // Prevent DNS evil.com -> localhost rebind.
-    if (!allowAnyHost && !allowedHosts.includes(host)) {
-      // Access from the browser is forbidden.
-      res.statusCode = 403;
-      return res.end('Access is only allowed at ' + allowedHosts.join(', '));
+      // Prevent DNS evil.com -> localhost rebind.
+      if (!allowedHosts.includes(host)) {
+        // Access from the browser is forbidden.
+        res.statusCode = 403;
+        return res.end('Access is only allowed at ' + allowedHosts.join(', '));
+      }
     }
 
     const url = new URL(`http://localhost${req.url}`);
