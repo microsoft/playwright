@@ -36,25 +36,36 @@ self.addEventListener('activate', function(event: any) {
 
 const scopePath = new URL(self.registration.scope).pathname;
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
-const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
+const clientIdToTraceUrls = new Map<string, { clientUrl: string | undefined, limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
 
-function simulateServiceWorkerRestart() {
-  loadedTraces.clear();
-  clientIdToTraceUrls.clear();
+// Service worker was restarted upon subresource fetch.
+// It was stopped because ping did not keep it alive since the tab itself was throttled.
+async function loadTracesFromIndexDB() {
+  const clients = await loadClientParams();
+  for (const [clientId, params] of Object.entries(clients ?? {})) {
+    for (const traceUrl of params.traceUrls)
+      await loadTrace(traceUrl, null, { id: clientId, url: params.clientUrl }, params.limit, () => {});
+  }
 }
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
-  await gc();
+let loadTracesPromise = loadTracesFromIndexDB();
+
+async function simulateServiceWorkerRestart() {
+  loadedTraces.clear();
+  clientIdToTraceUrls.clear();
+  loadTracesPromise = loadTracesFromIndexDB();
+}
+
+async function loadTrace(traceUrl: string, traceFileName: string | null, client: { id?: string, url?: string } | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   const clientId = client?.id ?? '';
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
     const clientURL = new URL(client?.url ?? self.registration.scope);
     const traceViewerServerBaseUrl = new URL(clientURL.searchParams.get('server') ?? '../', clientURL);
-    data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
+    data = { clientUrl: client?.url, limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
     clientIdToTraceUrls.set(clientId, data);
   }
   data.traceUrls.add(traceUrl);
-  await saveClientIdParams();
 
   const traceModel = new TraceModel();
   try {
@@ -100,6 +111,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   // the https urls.
   const isDeployedAsHttps = self.registration.scope.startsWith('https://');
 
+  // Wait until the old traces are loaded again to prevent altering (stored) clientIdToTraceUrls in the meantime.
+  await loadTracesPromise;
+
   if (request.url.startsWith(self.registration.scope)) {
     const url = new URL(unwrapPopoutUrl(request.url));
     const relativePath = url.pathname.substring(scopePath.length - 1);
@@ -108,7 +122,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 200 });
     }
     if (relativePath === '/restartServiceWorker') {
-      simulateServiceWorkerRestart();
+      await simulateServiceWorkerRestart();
       return new Response(null, { status: 200 });
     }
 
@@ -116,10 +130,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath === '/contexts') {
       try {
+        await gc();
         const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
         const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), client, limit, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
+        await saveClientParams();
         return new Response(JSON.stringify(traceModel!.contextEntries), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
@@ -129,16 +145,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
-      }
-    }
-
-    if (!clientIdToTraceUrls.has(event.clientId)) {
-      // Service worker was restarted upon subresource fetch.
-      // It was stopped because ping did not keep it alive since the tab itself was throttled.
-      const params = await loadClientIdParams(event.clientId);
-      if (params) {
-        for (const traceUrl of params.traceUrls)
-          await loadTrace(traceUrl, null, client, params.limit, () => {});
       }
     }
 
@@ -227,6 +233,7 @@ async function gc() {
     // @ts-ignore
     if (!clients.find(c => c.id === clientId)) {
       clientIdToTraceUrls.delete(clientId);
+      await saveClientParams();
       continue;
     }
     if (data.limit !== undefined) {
@@ -241,36 +248,26 @@ async function gc() {
     if (!usedTraces.has(traceUrl))
       loadedTraces.delete(traceUrl);
   }
-
-  await saveClientIdParams();
 }
 
-// Persist clientIdToTraceUrls to localStorage to avoid losing it when the service worker is restarted.
-async function saveClientIdParams() {
-  const serialized: Record<string, {
-    limit: number | undefined,
-    traceUrls: string[]
-  }> = {};
+type StoredClientParams = Record<string, { clientUrl?: string, limit?: number, traceUrls: string[] }>;
+
+// Persist clientIdToTraceUrls to IndexDB to avoid losing it when the service worker is restarted.
+async function saveClientParams() {
+  const params: StoredClientParams = {};
   for (const [clientId, data] of clientIdToTraceUrls) {
-    serialized[clientId] = {
+    params[clientId] = {
+      clientUrl: data.clientUrl,
       limit: data.limit,
       traceUrls: [...data.traceUrls]
     };
   }
 
-  const newValue = JSON.stringify(serialized);
-  const oldValue = await idbKeyval.get('clientIdToTraceUrls');
-  if (newValue === oldValue)
-    return;
-  idbKeyval.set('clientIdToTraceUrls', newValue);
+  await idbKeyval.set('clientIdToTraceUrls', params);
 }
 
-async function loadClientIdParams(clientId: string): Promise<{ limit: number | undefined, traceUrls: string[] } | undefined> {
-  const serialized = await idbKeyval.get('clientIdToTraceUrls') as string | undefined;
-  if (!serialized)
-    return;
-  const deserialized = JSON.parse(serialized);
-  return deserialized[clientId];
+async function loadClientParams() {
+  return await idbKeyval.get<StoredClientParams>('clientIdToTraceUrls');
 }
 
 // @ts-ignore
