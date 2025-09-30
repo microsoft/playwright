@@ -217,12 +217,12 @@ const vscodeToolMap = new Map<string, string[]>([
   ['write', ['createFile', 'createDirectory']],
 ]);
 const vscodeToolsOrder = ['createFile', 'createDirectory', 'editFiles', 'fileSearch', 'textSearch', 'listDirectory', 'readFile'];
-const vscodeToolPrefix = 'test_'; // FIXME: Remove this once VSCode rolls fix for https://github.com/microsoft/vscode/issues/267811.
+const vscodeMcpName = 'playwright-test';
 function saveAsVSCodeChatmode(agent: Agent): string {
   function asVscodeTool(tool: string): string | string[] {
     const [first, second] = tool.split('/');
     if (second)
-      return second.startsWith('browser_') ? vscodeToolPrefix + second : second;
+      return second.startsWith('browser_') ? `${vscodeMcpName}/${second}` : second;
     return vscodeToolMap.get(first) || first;
   }
   const tools = agent.header.tools.map(asVscodeTool).flat().sort((a, b) => {
@@ -277,8 +277,7 @@ export async function initVSCodeRepo() {
     type: 'stdio',
     command: commonMcpServers.playwrightTest.command,
     args: commonMcpServers.playwrightTest.args,
-    cwd: '${workspaceFolder}',
-    env: { 'PLAYWRIGHT_MCP_TOOL_PREFIX': vscodeToolPrefix },
+    cwd: '${workspaceFolder}'
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
 }
