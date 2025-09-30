@@ -238,6 +238,8 @@ export class BidiPage implements PageDelegate {
     if (!event.navigation)
       return;
 
+    this._page.frameManager.frameAbortedNavigation(event.context, 'Download is starting');
+
     let originPage = this._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage && this._opener)
