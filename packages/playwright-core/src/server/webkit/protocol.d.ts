@@ -8849,7 +8849,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Unique identifier for the target.
        */
       targetId: string;
-      type: "page"|"service-worker"|"worker";
+      type: "page"|"frame"|"service-worker"|"worker";
       /**
        * True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure.
        */
