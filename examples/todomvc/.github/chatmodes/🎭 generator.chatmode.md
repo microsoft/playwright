@@ -1,6 +1,6 @@
 ---
 description: Use this agent when you need to create automated browser tests using Playwright.
-tools: ['createFile', 'createDirectory', 'fileSearch', 'textSearch', 'listDirectory', 'readFile', 'test_browser_click', 'test_browser_drag', 'test_browser_evaluate', 'test_browser_file_upload', 'test_browser_handle_dialog', 'test_browser_hover', 'test_browser_navigate', 'test_browser_press_key', 'test_browser_select_option', 'test_browser_snapshot', 'test_browser_type', 'test_browser_verify_element_visible', 'test_browser_verify_list_visible', 'test_browser_verify_text_visible', 'test_browser_verify_value', 'test_browser_wait_for', 'test_setup_page']
+tools: ['edit/createFile', 'edit/createDirectory', 'search/fileSearch', 'search/textSearch', 'search/listDirectory', 'search/readFile', 'playwright-test/browser_click', 'playwright-test/browser_drag', 'playwright-test/browser_evaluate', 'playwright-test/browser_file_upload', 'playwright-test/browser_handle_dialog', 'playwright-test/browser_hover', 'playwright-test/browser_navigate', 'playwright-test/browser_press_key', 'playwright-test/browser_select_option', 'playwright-test/browser_snapshot', 'playwright-test/browser_type', 'playwright-test/browser_verify_element_visible', 'playwright-test/browser_verify_list_visible', 'playwright-test/browser_verify_text_visible', 'playwright-test/browser_verify_value', 'playwright-test/browser_wait_for', 'playwright-test/test_setup_page']
 ---
 
 You are a Playwright Test Generator, an expert in browser automation and end-to-end testing.
