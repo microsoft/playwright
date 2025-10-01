@@ -79,32 +79,16 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v5
-    - shell: pwsh
+    - name: Enable location data access
+      shell: pwsh
       run: |
-        Write-Host "=== OS Info ==="
-        Write-Host "ImageOS=$env:ImageOS"
-        Write-Host "ImageVersion=$env:ImageVersion"
-        systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
-
-        Write-Host "== Start lfsvc =="
+        Write-Host "-- Start lfsvc --"
         sc.exe config lfsvc start= demand | Out-Host
         net start lfsvc | Out-Host
 
-        Write-Host "== Allow global HKCU location consent =="
+        Write-Host "-- Allow global HKCU location consent --"
         $capRoot = "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location"
         reg add $capRoot /v Value /t REG_SZ /d Allow /f | Out-Host
-
-        Write-Host "`n=== lfsvc service (Geolocation) ==="
-        Get-Service lfsvc -ErrorAction SilentlyContinue | Format-List Name,Status,StartType
-
-        Write-Host "`n=== lfsvc HKLM Start value ==="
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\lfsvc" /v Start
-
-        Write-Host "`n=== Global per-user location consent ==="
-        reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /v Value
-
-        Write-Host "`n=== NonPackaged app consent entries (look for firefox.exe) ==="
-        reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location\NonPackaged" /s /f firefox.exe
 
     - uses: ./.github/actions/run-test
       with:
