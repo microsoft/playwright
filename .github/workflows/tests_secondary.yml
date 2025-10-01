@@ -81,6 +81,25 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v5
+    - shell: pwsh
+      run: |
+        Write-Host "=== OS Info ==="
+        Write-Host "ImageOS=$env:ImageOS"
+        Write-Host "ImageVersion=$env:ImageVersion"
+        systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+
+        Write-Host "`n=== lfsvc service (Geolocation) ==="
+        Get-Service lfsvc -ErrorAction SilentlyContinue | Format-List Name,Status,StartType
+
+        Write-Host "`n=== lfsvc HKLM Start value ==="
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\lfsvc" /v Start
+
+        Write-Host "`n=== Global per-user location consent ==="
+        reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /v Value
+
+        Write-Host "`n=== NonPackaged app consent entries (look for firefox.exe) ==="
+        reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location\NonPackaged" /s /f firefox.exe
+
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
