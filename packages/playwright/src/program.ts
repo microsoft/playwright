@@ -171,7 +171,6 @@ function addTestMCPServerCommand(program: Command) {
     };
     const mdbUrl = await runMainBackend(
         backendFactory,
-        TestServerBackend.allowedOnPause,
         {
           port: options.port === undefined ? undefined : +options.port
         },

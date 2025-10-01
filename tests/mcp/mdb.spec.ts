@@ -119,18 +119,58 @@ test('outer and inner roots available', async () => {
   await mdbClient.close();
 });
 
-async function startMDBAndCLI(): Promise<{ mdbUrl: string }> {
+test('reset on pause tools', async () => {
+  const { mdbUrl, log } = await startMDBAndCLI();
+  const mdbClient = await createMDBClient(mdbUrl);
+
+  // Make a call that results in a recoverable error.
+  const interruptResult = await mdbClient.client.callTool({
+    name: 'cli_pause_in_gdb',
+    arguments: {},
+  });
+  expect(interruptResult.content).toEqual([{ type: 'text', text: 'Paused on exception' }]);
+
+  // Call the new inner tool.
+  const btResult = await mdbClient.client.callTool({
+    name: 'gdb_bt',
+    arguments: {},
+  });
+  expect(btResult.content).toEqual([{ type: 'text', text: 'Backtrace' }]);
+
+  await mdbClient.client.callTool({
+    name: 'cli_echo',
+    arguments: {},
+  });
+
+  await expect.poll(() => log).toEqual([
+    'CLI: initialize',
+    'CLI: beforeCallTool cli_pause_in_gdb',
+    'CLI: callTool cli_pause_in_gdb',
+    'GDB: listTools',
+    'CLI: beforeCallTool gdb_bt',
+    'GDB: initialize',
+    'GDB: callTool gdb_bt',
+    'CLI: beforeCallTool cli_echo',
+    'GDB: serverClosed',
+    'CLI: callTool cli_echo',
+  ]);
+
+  await mdbClient.close();
+});
+
+async function startMDBAndCLI(): Promise<{ mdbUrl: string, log: string[] }> {
   const mdbUrlBox = { mdbUrl: undefined as string | undefined };
+  const log: string[] = [];
   const cliBackendFactory = {
     name: 'CLI',
     nameInConfig: 'cli',
     version: '0.0.0',
-    create: () => new CLIBackend(mdbUrlBox)
+    create: () => new CLIBackend(log)
   };
 
-  const mdbUrl = (await runMainBackend(cliBackendFactory, [], { port: 0 }))!;
+  const mdbUrl = (await runMainBackend(cliBackendFactory, { port: 0 }))!;
   mdbUrlBox.mdbUrl = mdbUrl;
-  return { mdbUrl };
+  return { mdbUrl, log };
 }
 
 async function createMDBClient(mdbUrl: string, roots: any[] | undefined = undefined): Promise<{ client: Client, close: () => Promise<void> }> {
@@ -150,14 +190,19 @@ async function createMDBClient(mdbUrl: string, roots: any[] | undefined = undefi
 
 class CLIBackend {
   private _roots: any[] | undefined;
+  private _log: string[] = [];
 
-  constructor(private readonly mdbUrlBox: { mdbUrl: string | undefined }) {}
+  constructor(log: string[]) {
+    this._log = log;
+  }
 
   async initialize(server, clientInfo) {
+    this._log.push('CLI: initialize');
     this._roots = clientInfo.roots;
   }
 
   async listTools() {
+    this._log.push('CLI: listTools');
     return [{
       name: 'cli_echo',
       description: 'Echo a message',
@@ -181,30 +226,49 @@ class CLIBackend {
     }];
   }
 
+  async beforeCallTool(name: string, args: any) {
+    this._log.push(`CLI: beforeCallTool ${name}`);
+    if (name.startsWith('gdb_'))
+      return { fallbackToOnPause: true };
+    return { resetOnPause: true };
+  }
+
   async callTool(name: string, args: any) {
+    this._log.push(`CLI: callTool ${name}`);
     if (name === 'cli_echo')
       return { content: [{ type: 'text', text: `Echo: ${args?.message as string}, roots: ${stringifyRoots(this._roots)}` }] };
     if (name === 'cli_pause_in_gdb') {
-      await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception');
+      await runOnPauseBackendLoop(new GDBBackend(this._log), 'Paused on exception');
       return { content: [{ type: 'text', text: 'Done' }] };
     }
     if (name === 'cli_pause_in_gdb_twice') {
-      await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception 1');
-      await runOnPauseBackendLoop(new GDBBackend(), 'Paused on exception 2');
+      await runOnPauseBackendLoop(new GDBBackend(this._log), 'Paused on exception 1');
+      await runOnPauseBackendLoop(new GDBBackend(this._log), 'Paused on exception 2');
       return { content: [{ type: 'text', text: 'Done' }] };
     }
     throw new Error(`Unknown tool: ${name}`);
+  }
+
+  serverClosed() {
+    this._log.push('CLI: serverClosed');
   }
 }
 
 class GDBBackend {
   private _roots: any[] | undefined;
+  private _log: string[] = [];
+
+  constructor(log: string[]) {
+    this._log = log;
+  }
 
   async initialize(server, clientVersion) {
+    this._log.push('GDB: initialize');
     this._roots = clientVersion.roots;
   }
 
   async listTools() {
+    this._log.push('GDB: listTools');
     return [{
       name: 'gdb_bt',
       description: 'Print backtrace',
@@ -217,11 +281,16 @@ class GDBBackend {
   }
 
   async callTool(name: string, args: any) {
+    this._log.push(`GDB: callTool ${name}`);
     if (name === 'gdb_echo')
       return { content: [{ type: 'text', text: `Echo: ${args?.message as string}, roots: ${stringifyRoots(this._roots)}` }] };
     if (name === 'gdb_bt')
       return { content: [{ type: 'text', text: 'Backtrace' }] };
     throw new Error(`Unknown tool: ${name}`);
+  }
+
+  serverClosed() {
+    this._log.push('GDB: serverClosed');
   }
 }
 
