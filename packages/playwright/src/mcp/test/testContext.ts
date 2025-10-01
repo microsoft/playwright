@@ -112,14 +112,16 @@ export class TestContext {
       candidateFiles.push(path.resolve(testDir, seedFile));
       candidateFiles.push(path.resolve(configDir, seedFile));
       candidateFiles.push(path.resolve(this.rootPath, seedFile));
+      let resolvedSeedFile: string | undefined;
       for (const candidateFile of candidateFiles) {
         if (await fileExistsAsync(candidateFile)) {
-          seedFile = candidateFile;
+          resolvedSeedFile = candidateFile;
           break;
         }
       }
-      if (!seedFile)
+      if (!resolvedSeedFile)
         throw new Error('seed test not found.');
+      seedFile = resolvedSeedFile;
     }
 
     const seedFileContent = await fs.promises.readFile(seedFile, 'utf8');
