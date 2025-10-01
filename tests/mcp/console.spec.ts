@@ -107,7 +107,6 @@ test('browser_console_messages errors only', async ({ client, server }) => {
     },
   });
 
-  console.log(performance.now());
   await client.callTool({
     name: 'browser_evaluate',
     arguments: {
@@ -120,7 +119,6 @@ test('browser_console_messages errors only', async ({ client, server }) => {
       }`,
     },
   });
-  console.log(performance.now());
 
   const response = parseResponse(await client.callTool({
     name: 'browser_console_messages',
@@ -128,7 +126,6 @@ test('browser_console_messages errors only', async ({ client, server }) => {
       onlyErrors: true,
     },
   }));
-  console.log(performance.now());
   expect.soft(response.result).toContain('console.error');
   expect.soft(response.result).toContain('Error: unhandled');
   expect.soft(response.result).toContain('404');

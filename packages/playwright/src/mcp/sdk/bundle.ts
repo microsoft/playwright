@@ -20,6 +20,7 @@ import * as bundle from '../../mcpBundleImpl';
 const zodToJsonSchema: typeof import('zod-to-json-schema').zodToJsonSchema = bundle.zodToJsonSchema;
 const Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client = bundle.Client;
 const Server: typeof import('@modelcontextprotocol/sdk/server/index.js').Server = bundle.Server;
+const SSEClientTransport: typeof import('@modelcontextprotocol/sdk/client/sse.js').SSEClientTransport = bundle.SSEClientTransport;
 const SSEServerTransport: typeof import('@modelcontextprotocol/sdk/server/sse.js').SSEServerTransport = bundle.SSEServerTransport;
 const StdioClientTransport: typeof import('@modelcontextprotocol/sdk/client/stdio.js').StdioClientTransport = bundle.StdioClientTransport;
 const StdioServerTransport: typeof import('@modelcontextprotocol/sdk/server/stdio.js').StdioServerTransport = bundle.StdioServerTransport;
@@ -36,6 +37,7 @@ export {
   zodToJsonSchema,
   Client,
   Server,
+  SSEClientTransport,
   SSEServerTransport,
   StdioClientTransport,
   StdioServerTransport,

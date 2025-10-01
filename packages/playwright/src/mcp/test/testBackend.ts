@@ -40,10 +40,6 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _context: TestContext;
   private _configOption: string | undefined;
 
-  static allowedOnPause: string[] = [
-    generatorTools.generatorLogStep.schema.name,
-  ];
-
   constructor(configOption: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._context = new TestContext(options);
     this._configOption = configOption;
@@ -70,6 +66,14 @@ export class TestServerBackend implements mcp.ServerBackend {
       ...this._tools.map(tool => mcp.toMcpTool(tool.schema)),
       ...browserTools.map(tool => mcp.toMcpTool(tool.schema)),
     ];
+  }
+
+  async beforeCallTool(name: string, args: mcp.CallToolRequest['params']['arguments']) {
+    if (browserTools.find(tool => tool.schema.name === name))
+      return { fallbackToOnPause: true };
+    if (name !== generatorTools.generatorLogStep.schema.name)
+      return { resetOnPause: true };
+    return {};
   }
 
   async callTool(name: string, args: mcp.CallToolRequest['params']['arguments'], progress: mcp.ProgressCallback): Promise<mcp.CallToolResult> {

@@ -16,6 +16,7 @@
 
 export { Client } from '@modelcontextprotocol/sdk/client/index.js';
 export { Server } from '@modelcontextprotocol/sdk/server/index.js';
+export { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 export { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 export { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 export { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';

@@ -22,7 +22,7 @@ import * as mcpBundle from './bundle';
 import * as mcpServer from './server';
 import * as mcpHttp from './http';
 
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 const mdbDebug = debug('pw:mcp:mdb');
@@ -30,17 +30,15 @@ const errorsDebug = debug('pw:mcp:errors');
 const z = mcpBundle.z;
 
 export class MDBBackend implements mcpServer.ServerBackend {
-  private _onPauseClient: { client: Client, tools: mcpServer.Tool[] } | undefined;
+  private _onPauseClient: { client: Client, tools: mcpServer.Tool[], transport: StreamableHTTPClientTransport } | undefined;
   private _interruptPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
   private _mainBackend: mcpServer.ServerBackend;
-  private _allowedOnPause: string[];
   private _clientInfo: mcpServer.ClientInfo | undefined;
   private _progress: mcpServer.CallToolResult['content'] = [];
   private _progressCallback: mcpServer.ProgressCallback;
 
-  constructor(mainBackend: mcpServer.ServerBackend, allowedOnPause: string[]) {
+  constructor(mainBackend: mcpServer.ServerBackend) {
     this._mainBackend = mainBackend;
-    this._allowedOnPause = allowedOnPause;
     this._progressCallback = (params: mcpServer.ProgressParams) => {
       if (params.message)
         this._progress.push({ type: 'text', text: params.message });
@@ -59,25 +57,32 @@ export class MDBBackend implements mcpServer.ServerBackend {
   }
 
   async callTool(name: string, args: mcpServer.CallToolRequest['params']['arguments']): Promise<mcpServer.CallToolResult> {
-    if (name === pushToolsSchema.name)
-      return await this._pushTools(pushToolsSchema.inputSchema.parse(args || {}));
-
-    if (this._onPauseClient && this._onPauseClient.tools.find(tool => tool.name === name)) {
-      const result = await this._onPauseClient.client.callTool({
-        name,
-        arguments: args,
-      });
-      return result as mcpServer.CallToolResult;
+    if (name === pushToolsSchema.name) {
+      await this._createOnPauseClient(pushToolsSchema.inputSchema.parse(args || {}));
+      return { content: [{ type: 'text', text: 'Tools pushed' }] };
     }
 
-    if (this._onPauseClient && !this._allowedOnPause.includes(name)) {
-      await this._onPauseClient.client.close().catch(errorsDebug);
+    const disposition = await this._mainBackend.beforeCallTool?.(name, args);
+    if (disposition?.resetOnPause) {
+      await this._onPauseClient?.transport.terminateSession().catch(errorsDebug);
+      await this._onPauseClient?.client.close().catch(errorsDebug);
       this._onPauseClient = undefined;
+    }
+
+    if (disposition?.fallbackToOnPause) {
+      if (!this._onPauseClient)
+        throw new Error(`Can't call tool while not in on-pause mode`);
+
+      return await this._onPauseClient.client.callTool({
+        name,
+        arguments: args,
+      }) as mcpServer.CallToolResult;
     }
 
     const resultPromise = new ManualPromise<mcpServer.CallToolResult>();
     const interruptPromise = new ManualPromise<mcpServer.CallToolResult>();
     this._interruptPromise = interruptPromise;
+
     this._mainBackend.callTool(name, args, this._progressCallback).then(result => {
       resultPromise.resolve(result as mcpServer.CallToolResult);
     }).catch(e => {
@@ -94,13 +99,22 @@ export class MDBBackend implements mcpServer.ServerBackend {
     return result;
   }
 
-  private async _pushTools(params: { mcpUrl: string, introMessage?: string }): Promise<mcpServer.CallToolResult> {
-    const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(params.mcpUrl));
-    await this._pushClient(transport, params.introMessage);
-    return { content: [{ type: 'text', text: 'Tools pushed' }] };
+  private async _createOnPauseClient(params: { mcpUrl: string, introMessage?: string }) {
+    if (this._onPauseClient)
+      await this._onPauseClient.client.close().catch(errorsDebug);
+
+    this._onPauseClient = await this._createClient(params.mcpUrl);
+
+    this._interruptPromise?.resolve({
+      content: [{
+        type: 'text',
+        text: params.introMessage || '',
+      }],
+    });
+    this._interruptPromise = undefined;
   }
 
-  private async _createClient(transport: Transport, introMessage?: string): Promise<{ client: Client, tools: mcpServer.Tool[] }> {
+  private async _createClient(url: string): Promise<{ client: Client, tools: mcpServer.Tool[], transport: StreamableHTTPClientTransport }> {
     const client = new mcpBundle.Client({ name: 'Interrupting client', version: '0.0.0' }, { capabilities: { roots: {} } });
     client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
@@ -111,24 +125,10 @@ export class MDBBackend implements mcpServer.ServerBackend {
           this._progress.push({ type: 'text', text: message });
       }
     });
+    const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(url));
     await client.connect(transport);
     const { tools } = await client.listTools();
-    return { client, tools };
-  }
-
-  private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
-    if (this._onPauseClient)
-      await this._onPauseClient.client.close().catch(errorsDebug);
-    this._onPauseClient = await this._createClient(transport);
-
-    this._interruptPromise?.resolve({
-      content: [{
-        type: 'text',
-        text: introMessage || '',
-      }],
-    });
-    this._interruptPromise = undefined;
-    return { content: [{ type: 'text', text: 'Tools pushed' }] };
+    return { client, tools, transport };
   }
 }
 
@@ -143,8 +143,8 @@ const pushToolsSchema = defineToolSchema({
   type: 'readOnly',
 });
 
-export async function runMainBackend(backendFactory: mcpServer.ServerBackendFactory, allowedOnPause: string[], options?: { port?: number }): Promise<string | undefined> {
-  const mdbBackend = new MDBBackend(backendFactory.create(), allowedOnPause);
+export async function runMainBackend(backendFactory: mcpServer.ServerBackendFactory, options?: { port?: number }): Promise<string | undefined> {
+  const mdbBackend = new MDBBackend(backendFactory.create());
   // Start HTTP unconditionally.
   const factory: mcpServer.ServerBackendFactory = {
     ...backendFactory,
