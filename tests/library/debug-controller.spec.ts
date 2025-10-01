@@ -34,7 +34,7 @@ const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ headless }, use) => {
     if (headless)
       process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
-    const server = new PlaywrightServer({ mode: 'default', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false, debugController: true });
+    const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
     await server.close();
@@ -349,16 +349,4 @@ test('should not work with browser._launchServer(_debugController: false)', asyn
 
   await server.close();
   await browser.close();
-});
-
-test('should support closing browsers', async ({ backend, connectedBrowser }) => {
-  const events: channels.DebugControllerStateChangedEvent[] = [];
-  backend.on('stateChanged', event => events.push(event));
-  await backend.setReportStateChanged({ enabled: true });
-  await connectedBrowser.newPage();
-
-  await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
-  await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
-
-  await expect.poll(() => events[events.length - 1]?.browsers).toEqual([]);
 });

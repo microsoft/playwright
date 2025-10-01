@@ -743,7 +743,6 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
   highlight(params: DebugControllerHighlightParams, progress?: Progress): Promise<DebugControllerHighlightResult>;
   hideHighlight(params?: DebugControllerHideHighlightParams, progress?: Progress): Promise<DebugControllerHideHighlightResult>;
   resume(params?: DebugControllerResumeParams, progress?: Progress): Promise<DebugControllerResumeResult>;
-  closeBrowser(params: DebugControllerCloseBrowserParams, progress?: Progress): Promise<DebugControllerCloseBrowserResult>;
   kill(params?: DebugControllerKillParams, progress?: Progress): Promise<DebugControllerKillResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
@@ -782,13 +781,11 @@ export type DebugControllerSetReportStateChangedOptions = {
 };
 export type DebugControllerSetReportStateChangedResult = void;
 export type DebugControllerSetRecorderModeParams = {
-  browserId?: string,
   mode: 'inspecting' | 'recording' | 'none',
   testIdAttributeName?: string,
   generateAutoExpect?: boolean,
 };
 export type DebugControllerSetRecorderModeOptions = {
-  browserId?: string,
   testIdAttributeName?: string,
   generateAutoExpect?: boolean,
 };
@@ -808,14 +805,6 @@ export type DebugControllerHideHighlightResult = void;
 export type DebugControllerResumeParams = {};
 export type DebugControllerResumeOptions = {};
 export type DebugControllerResumeResult = void;
-export type DebugControllerCloseBrowserParams = {
-  id: string,
-  reason?: string,
-};
-export type DebugControllerCloseBrowserOptions = {
-  reason?: string,
-};
-export type DebugControllerCloseBrowserResult = void;
 export type DebugControllerKillParams = {};
 export type DebugControllerKillOptions = {};
 export type DebugControllerKillResult = void;
