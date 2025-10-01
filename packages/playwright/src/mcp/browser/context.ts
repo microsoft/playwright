@@ -177,13 +177,11 @@ export class Context {
           // video.saveAs() does not work for persistent contexts.
           if (fs.existsSync(p)) {
             try {
-              testDebug(`Saving video ${p} to ${name}`);
               await fs.promises.rename(p, name);
             } catch (e) {
               if (e.code !== 'EXDEV')
                 logUnhandledError(e);
               // Retry operation (possibly cross-fs) with copy and unlink
-              testDebug('Retrying cross fs operation')
               try {
                 await fs.promises.copyFile(p, name);
                 await fs.promises.unlink(p);

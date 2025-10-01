@@ -116,6 +116,9 @@ it('should restore state from userDataDir', async ({ browserType, server, create
   const page = await browserContext.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => localStorage.hey = 'hello');
+  // Browsers do not persist local storage immediately, they do it asynchronously in another process.
+  // Navigate away to give it a chance to save (best-effort).
+  await page.goto(server.EMPTY_PAGE);
   await browserContext.close();
 
   const browserContext2 = await browserType.launchPersistentContext(userDataDir);

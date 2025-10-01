@@ -896,7 +896,6 @@ DebugController:
     setRecorderMode:
       internal: true
       parameters:
-        browserId: string?
         mode:
           type: enum
           literals:
@@ -918,12 +917,6 @@ DebugController:
     resume:
       internal: true
 
-    closeBrowser:
-      internal: true
-      parameters:
-        id: string
-        reason: string?
-
     kill:
       internal: true
 
@@ -941,25 +934,6 @@ DebugController:
     stateChanged:
       parameters:
         pageCount: int
-        browsers:
-          type: array
-          items:
-            type: object
-            properties:
-              id: string
-              name: string
-              channel: string?
-              contexts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    pages:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          url: string
 
     sourceChanged:
       parameters:

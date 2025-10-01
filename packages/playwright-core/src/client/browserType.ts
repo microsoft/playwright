@@ -31,11 +31,9 @@ import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, Lau
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
-import type { Browser as BrowserImpl } from '../server/browser';
 
 export interface BrowserServerLauncher {
-  launchServer(options?: LaunchOptions & LaunchServerOptions): Promise<api.BrowserServer>;
-  launchServerOnExistingBrowser(browser: BrowserImpl, options?: LaunchServerOptions): Promise<api.BrowserServer>;
+  launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
 }
 
 // This is here just for api generation and checking.

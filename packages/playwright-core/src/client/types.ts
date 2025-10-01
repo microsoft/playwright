@@ -104,12 +104,10 @@ export type ConnectOptions = {
   timeout?: number,
   logger?: Logger,
 };
-export type LaunchServerOptions = {
+export type LaunchServerOptions = LaunchOptions & {
   host?: string,
   port?: number,
   wsPath?: string,
-  _debugController?: boolean;
-  _sharedBrowser?: boolean;
 };
 
 export type LaunchAndroidServerOptions = {

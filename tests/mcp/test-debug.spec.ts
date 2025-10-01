@@ -229,6 +229,44 @@ test('test_debug / evaluate', async ({ startClient }) => {
   });
 });
 
+test('test_debug / evaluate x 2', async ({ startClient }) => {
+  const { client, id } = await prepareDebugTest(startClient);
+  await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '() => 21+21',
+    },
+  })).toHaveResponse({
+    result: `42`,
+  });
+
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toEqual({
+    content: [
+      { type: 'text', text: expect.stringContaining(`Paused on error`) },
+    ]
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '() => 21+23',
+    },
+  })).toHaveResponse({
+    result: `44`,
+  });
+});
+
 test('test_debug / evaluate (with element)', async ({ startClient }) => {
   const { client, id } = await prepareDebugTest(startClient);
   await client.callTool({

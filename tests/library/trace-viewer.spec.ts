@@ -2056,3 +2056,23 @@ test('should survive service worker restart', async ({ page, runAndTrace, server
   const snapshot2 = await traceViewer.snapshotFrame('Set content');
   await expect(snapshot2.locator('body')).toHaveText('Old world');
 });
+
+test('should survive ping after service worker restart', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('Old world');
+    await page.evaluate(() => document.body.textContent = 'New world');
+  });
+  const snapshot1 = await traceViewer.snapshotFrame('Evaluate');
+  await expect(snapshot1.locator('body')).toHaveText('New world');
+
+  const status = await traceViewer.page.evaluate(async () => {
+    const response1 = await fetch('restartServiceWorker');
+    const response2 = await fetch('ping');
+    return response1.status + '/' + response2.status;
+  });
+  expect(status).toBe('200/200');
+
+  const snapshot2 = await traceViewer.snapshotFrame('Set content');
+  await expect(snapshot2.locator('body')).toHaveText('Old world');
+});

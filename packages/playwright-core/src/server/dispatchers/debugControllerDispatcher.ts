@@ -78,10 +78,6 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.kill();
   }
 
-  async closeBrowser(params: channels.DebugControllerCloseBrowserParams, progress: Progress) {
-    await this._object.closeBrowser(progress, params.id, params.reason);
-  }
-
   override _onDispose() {
     eventsHelper.removeEventListeners(this._listeners);
     this._object.dispose();

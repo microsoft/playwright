@@ -209,9 +209,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this.waitForLoadState('load', { timeout: 5000 });
   }
 
-  async consoleMessages(): Promise<ConsoleMessage[]> {
+  async consoleMessages(type?: 'error'): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
-    return this._consoleMessages;
+    return this._consoleMessages.filter(message => type ? message.type === type : true);
   }
 
   async requests(): Promise<Set<playwright.Request>> {
@@ -314,13 +314,13 @@ function messageToConsoleMessage(message: playwright.ConsoleMessage): ConsoleMes
 function pageErrorToConsoleMessage(errorOrValue: Error | any): ConsoleMessage {
   if (errorOrValue instanceof Error) {
     return {
-      type: undefined,
+      type: 'error',
       text: errorOrValue.message,
       toString: () => errorOrValue.stack || errorOrValue.message,
     };
   }
   return {
-    type: undefined,
+    type: 'error',
     text: String(errorOrValue),
     toString: () => String(errorOrValue),
   };
