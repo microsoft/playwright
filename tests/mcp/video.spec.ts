@@ -46,9 +46,11 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await expect.poll(async () => {
-      console.log(stderr());
-      const [file] = await fs.promises.readdir(outputDir);
-      return file;
+      console.log(mode + stderr());
+      console.log('Reading ' + outputDir);
+      const output = await fs.promises.readdir(outputDir);
+      console.log(`Files: ${output}`);
+      return output[0];
     }).toMatch(/page-.*\.webm/);
   });
 
