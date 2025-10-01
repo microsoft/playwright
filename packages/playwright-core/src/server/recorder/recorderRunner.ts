@@ -94,7 +94,7 @@ async function performActionImpl(progress: Progress, mainFrame: Frame, actionInC
       options.sourcePosition = action.sourcePosition;
     if (action.targetPosition)
       options.targetPosition = action.targetPosition;
-    
+
     await mainFrame.dragAndDrop(progress, selector, targetSelector, options);
     return;
   }

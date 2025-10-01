@@ -197,7 +197,7 @@ class RecordActionTool implements RecorderTool {
   private _dialog: Dialog;
   private _justCompletedDrag = false;
   private _dragDropListeners: (() => void)[] | null = null;
-  
+
   // Drag detection state
   private _dragState: {
     phase: 'none' | 'potential' | 'confirmed';
@@ -280,7 +280,7 @@ class RecordActionTool implements RecorderTool {
       (target as HTMLElement).getAttribute?.('draggable') === 'true' ||
       this._dragState.phase !== 'none'
     );
-    
+
     const delayMs = isDraggable ? 500 : 100; // Much longer delay for potential drags
 
     // CRITICAL: Check if this click is part of a drag operation
@@ -415,7 +415,7 @@ class RecordActionTool implements RecorderTool {
       return;
     this._consumeWhenAboutToPerform(event);
     this._activeModel = this._hoveredModel;
-    
+
     // Initialize potential drag state on left mouse button
     if (event.button === 0) {
       const eventTarget = this._recorder.deepEventTarget(event);
@@ -441,7 +441,7 @@ class RecordActionTool implements RecorderTool {
       return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    
+
     // Complete drag operation if confirmed
     if (this._dragState.phase === 'confirmed' && this._dragState.startSelector) {
       const targetSelector = this._dragState.targetSelector || this._selectorForEventTarget(event);
@@ -459,7 +459,7 @@ class RecordActionTool implements RecorderTool {
       }
       // Mark that we just completed a drag to suppress subsequent click events
       this._justCompletedDrag = true;
-      
+
       // Reset drag state after a short delay to ensure click suppression works
       this._recorder.injectedScript.utils.builtins.setTimeout(() => {
         this._resetDragState();
@@ -481,10 +481,10 @@ class RecordActionTool implements RecorderTool {
       return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    
+
     // CRITICAL: Cancel any pending click actions since this is definitely a drag
     this._cancelPendingClickAction();
-    
+
     // HTML5 drag started - record the source element
     const eventTarget = this._recorder.deepEventTarget(event);
     const startElement = eventTarget?.nodeType === Node.TEXT_NODE ? eventTarget.parentElement : eventTarget as HTMLElement | null;
@@ -502,7 +502,7 @@ class RecordActionTool implements RecorderTool {
       modifiers: modifiersForEvent(event),
       targetSelector: null,
     };
-    
+
     // Add listeners for dragover and drop events to detect the target
     this._installDragDropListeners();
   }
@@ -510,7 +510,7 @@ class RecordActionTool implements RecorderTool {
   private _installDragDropListeners() {
     // Clean up any existing listeners
     this._cleanupDragDropListeners();
-    
+
     // Add temporary listeners for drag and drop events
     this._dragDropListeners = [
       addEventListener(this._recorder.injectedScript.document, 'dragover', (event: Event) => {
@@ -575,22 +575,22 @@ class RecordActionTool implements RecorderTool {
       return;
     this._hoveredElement = target;
     this._updateModelForHoveredElement();
-    
+
     // Check for drag movement
     if (this._dragState.phase === 'potential' && this._dragState.startPosition) {
       const distance = Math.sqrt(
           Math.pow(event.clientX - this._dragState.startPosition.x, 2) +
           Math.pow(event.clientY - this._dragState.startPosition.y, 2)
       );
-      
+
       // More sensitive threshold: 5 pixels to detect drags easier
       if (distance > 5) {
         this._dragState.phase = 'confirmed';
         this._dragState.dragType = 'mouse'; // Default to mouse drag
-        
+
         // CRITICAL: Cancel any pending click actions immediately when drag is confirmed
         this._cancelPendingClickAction();
-        
+
         // Visual feedback that drag is being recorded - make it more obvious
         this._showDragFeedback('Recording drag operation...');
       }
@@ -601,10 +601,7 @@ class RecordActionTool implements RecorderTool {
     }
   }
 
-  private _showDragFeedback(message: string) {
-    // Display drag feedback through console for now, could be enhanced with overlay UI
-    // Debug: message logged to console in development
-    
+  private _showDragFeedback() {
     // Add visual indication via document body class
     if (this._recorder.document.body) {
       this._recorder.document.body.classList.add('pw-recording-drag');
@@ -885,7 +882,7 @@ class RecordActionTool implements RecorderTool {
         // Never consume mousedown - let it start drag detection
         if (event.type === 'mousedown' && event.button === 0)
           return;
-        
+
         // Don't consume mousemove or mouseup if we're in a drag operation
         if ((event.type === 'mousemove' || event.type === 'mouseup') &&
             (this._dragState.phase === 'potential' || this._dragState.phase === 'confirmed'))
@@ -898,7 +895,7 @@ class RecordActionTool implements RecorderTool {
             (this._dragState.phase === 'potential' || this._dragState.phase === 'confirmed'))
           return;
       }
-      
+
       consumeEvent(event);
     }
   }
@@ -1633,7 +1630,7 @@ class Overlay {
         // If mouse is outside overlay, don't interfere with page drags
         return false;
       }
-      
+
       this._offsetX = this._dragState.offsetX + event.clientX - this._dragState.dragStart.x;
       const halfGapSize = (this._recorder.injectedScript.window.innerWidth - this._measure.width) / 2 - 10;
       this._offsetX = Math.max(-halfGapSize, Math.min(halfGapSize, this._offsetX));

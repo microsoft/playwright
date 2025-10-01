@@ -117,7 +117,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
           options.sourcePosition = action.sourcePosition;
         if (action.targetPosition)
           options.targetPosition = action.targetPosition;
-        
+
         const optionsString = formatOptions(options, false);
         return `await ${subject}.locator(${quote(action.selector)}).dragTo(${subject}.locator(${quote(action.targetSelector)})${optionsString ? ', ' + optionsString : ''});`;
       }
