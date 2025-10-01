@@ -111,31 +111,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toHaveLength(2);
 });
 
-test('should allow setting recorder mode only for specific browser', async ({ backend, connectedBrowserFactory }) => {
-  const events = [];
-  backend.on('inspectRequested', event => events.push(event));
-
-  const browser1 = await connectedBrowserFactory();
-  const browser2 = await connectedBrowserFactory();
-  expect((browser1 as any)._guid).not.toBe((browser2 as any)._guid);
-  const page1 = await browser1.newPage();
-  await page1.setContent('<button>Submit</button>');
-  const page2 = await browser2.newPage();
-  await page2.setContent('<button>Submit</button>');
-
-  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser1 as any)._guid });
-  await page1.getByRole('button').click();
-  expect(events).toHaveLength(1);
-
-  await page2.getByRole('button').click();
-  expect(events).toHaveLength(1);
-
-  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser2 as any)._guid });
-  await page2.getByRole('button').click();
-  expect(events).toHaveLength(2);
-});
-
-test('should report pages', async ({ backend, connectedBrowser, browserName, channel }) => {
+test('should report pages', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
   await backend.setReportStateChanged({ enabled: true });
@@ -144,7 +120,6 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
   const page1 = await context.newPage();
   const page2 = await context.newPage();
   await page1.close();
-  await page2.goto('data:text/html,Foo');
   await page2.close();
 
   await backend.setReportStateChanged({ enabled: false });
@@ -154,63 +129,12 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
   expect(events).toEqual([
     {
       pageCount: 1,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'about:blank' }
-          ]
-        }]
-      }]
     }, {
       pageCount: 2,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'about:blank' },
-            { url: 'about:blank' }
-          ]
-        }]
-      }]
     }, {
       pageCount: 1,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'about:blank' }
-          ]
-        }]
-      }]
-    }, {
-      pageCount: 1,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'data:text/html,Foo' }
-          ]
-        }]
-      }]
     }, {
       pageCount: 0,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: []
-        }]
-      }]
     }
   ]);
 });
