@@ -98,20 +98,20 @@ export class TestContext {
     return testRunner;
   }
 
-  async getOrCreateSeedFile(params: { project?: string, seedFile?: string }) {
+  async getOrCreateSeedFile(seedFile: string | undefined, projectName: string | undefined) {
     const configDir = this.configLocation.configDir;
     const testRunner = await this.createTestRunner();
     const config = await testRunner.loadConfig();
+    const project = seedProject(config, projectName);
 
-    let seedFile: string | undefined;
-    if (!params.seedFile) {
-      seedFile = await ensureSeedTest(config, params.project, false);
+    if (!seedFile) {
+      seedFile = await ensureSeedTest(project, false);
     } else {
       const candidateFiles: string[] = [];
-      const testDir = seedProject(config, params.project).project.testDir;
-      candidateFiles.push(path.resolve(testDir, params.seedFile));
-      candidateFiles.push(path.resolve(configDir, params.seedFile));
-      candidateFiles.push(path.resolve(this.rootPath, params.seedFile));
+      const testDir = project.project.testDir;
+      candidateFiles.push(path.resolve(testDir, seedFile));
+      candidateFiles.push(path.resolve(configDir, seedFile));
+      candidateFiles.push(path.resolve(this.rootPath, seedFile));
       for (const candidateFile of candidateFiles) {
         if (await fileExistsAsync(candidateFile)) {
           seedFile = candidateFile;
@@ -123,10 +123,14 @@ export class TestContext {
     }
 
     const seedFileContent = await fs.promises.readFile(seedFile, 'utf8');
-    return { file: seedFile, content: seedFileContent };
+    return {
+      file: seedFile,
+      content: seedFileContent,
+      projectName: project.project.name,
+    };
   }
 
-  async runSeedTest(seedFile: string, projectName: string | undefined, progress: ProgressCallback) {
+  async runSeedTest(seedFile: string, projectName: string, progress: ProgressCallback) {
     const { screen } = this.createScreen(progress);
     const configDir = this.configLocation.configDir;
     const reporter = new ListReporter({ configDir, screen });
@@ -135,7 +139,7 @@ export class TestContext {
     const result = await testRunner.runTests(reporter, {
       headed: !this.options?.headless,
       locations: ['/' + escapeRegExp(seedFile) + '/'],
-      projects: projectName ? [projectName] : undefined,
+      projects: [projectName],
       timeout: 0,
       workers: 1,
       pauseAtEnd: true,

@@ -35,7 +35,7 @@ import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
-import { ensureSeedTest } from './mcp/test/seed';
+import { ensureSeedTest, seedProject } from './mcp/test/seed';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
 import { initClaudeCodeRepo, initOpencodeRepo, initVSCodeRepo } from './agents/generateAgents';
@@ -201,7 +201,8 @@ function addInitAgentsCommand(program: Command) {
       return;
     }
     const config = await loadConfigFromFile(opts.config);
-    await ensureSeedTest(config, opts.project, true);
+    const project = seedProject(config, opts.project);
+    await ensureSeedTest(project, true);
   });
 }
 

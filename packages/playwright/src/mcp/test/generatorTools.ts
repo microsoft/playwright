@@ -35,9 +35,9 @@ export const setupPage = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const seed = await context.getOrCreateSeedFile(params);
+    const seed = await context.getOrCreateSeedFile(params.seedFile, params.project);
     context.generatorJournal = new GeneratorJournal(context.rootPath, params.plan, seed);
-    await context.runSeedTest(seed.file, params.project, progress);
+    await context.runSeedTest(seed.file, seed.projectName, progress);
     return { content: [] };
   },
 });

@@ -21,7 +21,7 @@ import { mkdirIfNeeded } from 'playwright-core/lib/utils';
 
 import { collectFilesForProject, findTopLevelProjects } from '../../runner/projectUtils';
 
-import type { FullConfigInternal } from '../../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../../common/config';
 
 export function seedProject(config: FullConfigInternal, projectName?: string) {
   if (!projectName)
@@ -32,8 +32,7 @@ export function seedProject(config: FullConfigInternal, projectName?: string) {
   return project;
 }
 
-export async function ensureSeedTest(config: FullConfigInternal, projectName: string | undefined, logNew: boolean) {
-  const project = seedProject(config, projectName);
+export async function ensureSeedTest(project: FullProjectInternal, logNew: boolean) {
   const files = await collectFilesForProject(project);
   const seed = files.find(file => path.basename(file).includes('seed'));
   if (seed)
