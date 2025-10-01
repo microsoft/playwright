@@ -27,7 +27,7 @@ const navigate = defineTool({
     inputSchema: z.object({
       url: z.string().describe('The URL to navigate to'),
     }),
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (context, params, response) => {
@@ -46,7 +46,7 @@ const goBack = defineTabTool({
     title: 'Go back',
     description: 'Go back to the previous page',
     inputSchema: z.object({}),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (tab, params, response) => {

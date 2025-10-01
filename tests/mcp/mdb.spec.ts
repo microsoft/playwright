@@ -144,13 +144,11 @@ test('reset on pause tools', async () => {
 
   await expect.poll(() => log).toEqual([
     'CLI: initialize',
-    'CLI: beforeCallTool cli_pause_in_gdb',
     'CLI: callTool cli_pause_in_gdb',
     'GDB: listTools',
-    'CLI: beforeCallTool gdb_bt',
     'GDB: initialize',
     'GDB: callTool gdb_bt',
-    'CLI: beforeCallTool cli_echo',
+    'CLI: afterCallTool gdb_bt',
     'GDB: serverClosed',
     'CLI: callTool cli_echo',
   ]);
@@ -226,11 +224,8 @@ class CLIBackend {
     }];
   }
 
-  async beforeCallTool(name: string, args: any) {
-    this._log.push(`CLI: beforeCallTool ${name}`);
-    if (name.startsWith('gdb_'))
-      return { fallbackToOnPause: true };
-    return { resetOnPause: true };
+  async afterCallTool(name: string, args: any) {
+    this._log.push(`CLI: afterCallTool ${name}`);
   }
 
   async callTool(name: string, args: any) {

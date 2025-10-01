@@ -28,7 +28,7 @@ const browserTabs = defineTool({
       action: z.enum(['list', 'new', 'close', 'select']).describe('Operation to perform'),
       index: z.number().optional().describe('Tab index, used for close/select. If omitted for close, current tab is closed.'),
     }),
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (context, params, response) => {

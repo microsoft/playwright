@@ -43,7 +43,7 @@ export type ProgressCallback = (params: ProgressParams) => void;
 export interface ServerBackend {
   initialize?(server: Server, clientInfo: ClientInfo): Promise<void>;
   listTools(): Promise<Tool[]>;
-  beforeCallTool?(name: string, args: CallToolRequest['params']['arguments']): Promise<{ fallbackToOnPause?: boolean, resetOnPause?: boolean }>;
+  afterCallTool?(name: string, args: CallToolRequest['params']['arguments'], result: CallToolResult): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
   serverClosed?(server: Server): void;
 }

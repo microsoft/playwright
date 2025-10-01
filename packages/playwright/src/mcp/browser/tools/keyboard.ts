@@ -29,7 +29,7 @@ const pressKey = defineTabTool({
     inputSchema: z.object({
       key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
     }),
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
@@ -56,7 +56,7 @@ const type = defineTabTool({
     title: 'Type text',
     description: 'Type text into editable element',
     inputSchema: typeSchema,
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {

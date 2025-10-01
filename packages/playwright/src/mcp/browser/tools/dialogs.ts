@@ -28,7 +28,7 @@ export const handleDialog = defineTabTool({
       accept: z.boolean().describe('Whether to accept the dialog.'),
       promptText: z.string().optional().describe('The text of the prompt in case of a prompt dialog.'),
     }),
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (tab, params, response) => {

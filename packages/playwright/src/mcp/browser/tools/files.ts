@@ -27,7 +27,7 @@ export const uploadFile = defineTabTool({
     inputSchema: z.object({
       paths: z.array(z.string()).optional().describe('The absolute paths to the files to upload. Can be single file or multiple files. If omitted, file chooser is cancelled.'),
     }),
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (tab, params, response) => {
