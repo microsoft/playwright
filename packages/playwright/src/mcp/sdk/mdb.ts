@@ -167,8 +167,7 @@ export async function runOnPauseBackendLoop(backend: mcpServer.ServerBackend, in
   };
 
   const httpServer = await mcpHttp.startHttpServer({ port: 0 });
-  await mcpHttp.installHttpTransport(httpServer, factory);
-  const url = mcpHttp.httpAddressToString(httpServer.address());
+  const url = await mcpHttp.installHttpTransport(httpServer, factory, true);
 
   const client = new mcpBundle.Client({ name: 'Pushing client', version: '0.0.0' });
   client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
@@ -193,8 +192,7 @@ export async function runOnPauseBackendLoop(backend: mcpServer.ServerBackend, in
 
 async function startAsHttp(backendFactory: mcpServer.ServerBackendFactory, options: { port: number }) {
   const httpServer = await mcpHttp.startHttpServer(options);
-  await mcpHttp.installHttpTransport(httpServer, backendFactory);
-  return mcpHttp.httpAddressToString(httpServer.address());
+  return await mcpHttp.installHttpTransport(httpServer, backendFactory, true);
 }
 
 
