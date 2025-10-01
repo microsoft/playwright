@@ -20,6 +20,43 @@ import { test, expect, writeFiles } from './fixtures';
 
 test.use({ mcpServerType: 'test-mcp' });
 
+test('generator tools intent', async ({ startClient }) => {
+  const { client } = await startClient();
+  const { tools } = await client.listTools();
+  const toolsWithIntent: string[] = [];
+  for (const tool of tools) {
+    if (tool.inputSchema.properties?.intent)
+      toolsWithIntent.push(tool.name);
+  }
+
+  expect(toolsWithIntent).toEqual([
+    'browser_close',
+    'browser_resize',
+    'browser_handle_dialog',
+    'browser_evaluate',
+    'browser_file_upload',
+    'browser_fill_form',
+    'browser_install',
+    'browser_press_key',
+    'browser_type',
+    'browser_navigate',
+    'browser_navigate_back',
+    'browser_mouse_move_xy',
+    'browser_mouse_click_xy',
+    'browser_mouse_drag_xy',
+    'browser_click',
+    'browser_drag',
+    'browser_hover',
+    'browser_select_option',
+    'browser_tabs',
+    'browser_wait_for',
+    'browser_verify_element_visible',
+    'browser_verify_text_visible',
+    'browser_verify_list_visible',
+    'browser_verify_value',
+  ]);
+});
+
 test('generator_setup_page', async ({ startClient }) => {
   await writeFiles({
     'a.test.ts': `
@@ -53,12 +90,11 @@ test('generator_setup_page', async ({ startClient }) => {
 `));
 
   await client.callTool({
-    name: 'generator_log_step',
+    name: 'browser_click',
     arguments: {
-      title: 'Click submit button',
-      code: `\`\`\`ts
-await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\``,
+      element: 'Submit button',
+      ref: 'e2',
+      intent: 'Click submit button',
     },
   });
 
@@ -113,21 +149,12 @@ test('click after generator_log_action', async ({ startClient }) => {
     },
   });
 
-  await client.callTool({
-    name: 'generator_log_step',
-    arguments: {
-      title: 'Click submit button',
-      code: `\`\`\`ts
-await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\``,
-    },
-  });
-
   expect(await client.callTool({
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
       ref: 'e2',
+      intent: 'Click submit button',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
@@ -177,19 +204,6 @@ test('generator_setup_page is required', async ({ startClient }) => {
   });
 
   const { client } = await startClient();
-
-  expect(await client.callTool({
-    name: 'generator_log_step',
-    arguments: {
-      title: 'Click submit button',
-      code: `\`\`\`ts
-await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\``,
-    },
-  })).toEqual({
-    content: [{ type: 'text', text: `Error: Please setup page using "generator_setup_page" first.` }],
-    isError: true,
-  });
 
   expect(await client.callTool({
     name: 'generator_read_log',

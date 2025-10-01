@@ -29,7 +29,7 @@ const verifyElement = defineTabTool({
       role: z.string().describe('ROLE of the element. Can be found in the snapshot like this: \`- {ROLE} "Accessible Name":\`'),
       accessibleName: z.string().describe('ACCESSIBLE_NAME of the element. Can be found in the snapshot like this: \`- role "{ACCESSIBLE_NAME}"\`'),
     }),
-    type: 'readOnly',
+    type: 'assertion',
   },
 
   handle: async (tab, params, response) => {
@@ -53,7 +53,7 @@ const verifyText = defineTabTool({
     inputSchema: z.object({
       text: z.string().describe('TEXT to verify. Can be found in the snapshot like this: \`- role "Accessible Name": {TEXT}\` or like this: \`- text: {TEXT}\`'),
     }),
-    type: 'readOnly',
+    type: 'assertion',
   },
 
   handle: async (tab, params, response) => {
@@ -79,7 +79,7 @@ const verifyList = defineTabTool({
       ref: z.string().describe('Exact target element reference that points to the list'),
       items: z.array(z.string()).describe('Items to verify'),
     }),
-    type: 'readOnly',
+    type: 'assertion',
   },
 
   handle: async (tab, params, response) => {
@@ -114,7 +114,7 @@ const verifyValue = defineTabTool({
       ref: z.string().describe('Exact target element reference that points to the element'),
       value: z.string().describe('Value to verify. For checkbox, use "true" or "false".'),
     }),
-    type: 'readOnly',
+    type: 'assertion',
   },
 
   handle: async (tab, params, response) => {

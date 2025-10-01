@@ -34,7 +34,7 @@ const evaluate = defineTabTool({
     title: 'Evaluate JavaScript',
     description: 'Evaluate JavaScript expression on page or element',
     inputSchema: evaluateSchema,
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (tab, params, response) => {

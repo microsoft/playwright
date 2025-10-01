@@ -24,12 +24,15 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
+import { parseResponse } from '../../packages/playwright/lib/mcp/browser/response';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Stream } from 'stream';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
+
+export { parseResponse };
 
 export type TestOptions = {
   mcpArgs: string[] | undefined;
@@ -252,51 +255,6 @@ export const expect = baseExpect.extend({
 
 export function formatOutput(output: string): string[] {
   return output.split('\n').map(line => line.replace(/^pw:mcp:test /, '').replace(/user data dir.*/, 'user data dir').trim()).filter(Boolean);
-}
-
-export function parseResponse(response: any) {
-  const text = response.content[0].text;
-  const sections = parseSections(text);
-
-  const result = sections.get('Result');
-  const code = sections.get('Ran Playwright code');
-  const tabs = sections.get('Open tabs');
-  const pageState = sections.get('Page state');
-  const consoleMessages = sections.get('New console messages');
-  const modalState = sections.get('Modal state');
-  const downloads = sections.get('Downloads');
-  const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
-  const isError = response.isError;
-  const attachments = response.content.slice(1);
-
-  return {
-    result,
-    code: codeNoFrame,
-    tabs,
-    pageState,
-    consoleMessages,
-    modalState,
-    downloads,
-    isError,
-    attachments,
-  };
-}
-
-function parseSections(text: string): Map<string, string> {
-  const sections = new Map<string, string>();
-  const sectionHeaders = text.split(/^### /m).slice(1); // Remove empty first element
-
-  for (const section of sectionHeaders) {
-    const firstNewlineIndex = section.indexOf('\n');
-    if (firstNewlineIndex === -1)
-      continue;
-
-    const sectionName = section.substring(0, firstNewlineIndex);
-    const sectionContent = section.substring(firstNewlineIndex + 1).trim();
-    sections.set(sectionName, sectionContent);
-  }
-
-  return sections;
 }
 
 export const mcpServerPath = [path.join(__dirname, '../../packages/playwright/cli.js'), 'run-mcp-server'];

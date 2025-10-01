@@ -18,7 +18,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { renderModalStates } from './tab';
 
 import type { Tab, TabSnapshot } from './tab';
-import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context } from './context';
 
 export const requestDebug = debug('pw:mcp:request');
@@ -224,4 +224,51 @@ function trim(text: string, maxLength: number) {
   if (text.length <= maxLength)
     return text;
   return text.slice(0, maxLength) + '...';
+}
+
+function parseSections(text: string): Map<string, string> {
+  const sections = new Map<string, string>();
+  const sectionHeaders = text.split(/^### /m).slice(1); // Remove empty first element
+
+  for (const section of sectionHeaders) {
+    const firstNewlineIndex = section.indexOf('\n');
+    if (firstNewlineIndex === -1)
+      continue;
+
+    const sectionName = section.substring(0, firstNewlineIndex);
+    const sectionContent = section.substring(firstNewlineIndex + 1).trim();
+    sections.set(sectionName, sectionContent);
+  }
+
+  return sections;
+}
+
+export function parseResponse(response: CallToolResult) {
+  if (response.content?.[0].type !== 'text')
+    return undefined;
+  const text = response.content[0].text;
+
+  const sections = parseSections(text);
+  const result = sections.get('Result');
+  const code = sections.get('Ran Playwright code');
+  const tabs = sections.get('Open tabs');
+  const pageState = sections.get('Page state');
+  const consoleMessages = sections.get('New console messages');
+  const modalState = sections.get('Modal state');
+  const downloads = sections.get('Downloads');
+  const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
+  const isError = response.isError;
+  const attachments = response.content.slice(1);
+
+  return {
+    result,
+    code: codeNoFrame,
+    tabs,
+    pageState,
+    consoleMessages,
+    modalState,
+    downloads,
+    isError,
+    attachments,
+  };
 }

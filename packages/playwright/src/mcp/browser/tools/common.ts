@@ -25,7 +25,7 @@ const close = defineTool({
     title: 'Close browser',
     description: 'Close the page',
     inputSchema: z.object({}),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (context, params, response) => {
@@ -45,7 +45,7 @@ const resize = defineTabTool({
       width: z.number().describe('Width of the browser window'),
       height: z.number().describe('Height of the browser window'),
     }),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (tab, params, response) => {

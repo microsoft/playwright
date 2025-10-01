@@ -47,8 +47,9 @@ export class GeneratorJournal {
     this._steps = [];
   }
 
-  logStep(title: string, code: string) {
-    this._steps.push({ title, code });
+  logStep(title: string | undefined, code: string) {
+    if (title)
+      this._steps.push({ title, code });
   }
 
   journal() {
@@ -60,7 +61,10 @@ export class GeneratorJournal {
     result.push(this._seed.content);
     result.push('```');
     result.push(`# Steps`);
-    result.push(this._steps.map(step => `### ${step.title}\n${step.code}`).join('\n\n'));
+    result.push(this._steps.map(step => `### ${step.title}
+\`\`\`ts
+${step.code}
+\`\`\``).join('\n\n'));
     return result.join('\n\n');
   }
 }

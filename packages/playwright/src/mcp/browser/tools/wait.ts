@@ -29,7 +29,7 @@ const wait = defineTool({
       text: z.string().optional().describe('The text to wait for'),
       textGone: z.string().optional().describe('The text to wait for to disappear'),
     }),
-    type: 'readOnly',
+    type: 'assertion',
   },
 
   handle: async (context, params, response) => {

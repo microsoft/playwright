@@ -62,22 +62,18 @@ export class MDBBackend implements mcpServer.ServerBackend {
       return { content: [{ type: 'text', text: 'Tools pushed' }] };
     }
 
-    const disposition = await this._mainBackend.beforeCallTool?.(name, args);
-    if (disposition?.resetOnPause) {
-      await this._onPauseClient?.transport.terminateSession().catch(errorsDebug);
-      await this._onPauseClient?.client.close().catch(errorsDebug);
-      this._onPauseClient = undefined;
-    }
-
-    if (disposition?.fallbackToOnPause) {
-      if (!this._onPauseClient)
-        throw new Error(`Can't call tool while not in on-pause mode`);
-
-      return await this._onPauseClient.client.callTool({
+    if (this._onPauseClient?.tools.find(tool => tool.name === name)) {
+      const result = await this._onPauseClient.client.callTool({
         name,
         arguments: args,
       }) as mcpServer.CallToolResult;
+      await this._mainBackend.afterCallTool?.(name, args, result);
+      return result;
     }
+
+    await this._onPauseClient?.transport.terminateSession().catch(errorsDebug);
+    await this._onPauseClient?.client.close().catch(errorsDebug);
+    this._onPauseClient = undefined;
 
     const resultPromise = new ManualPromise<mcpServer.CallToolResult>();
     const interruptPromise = new ManualPromise<mcpServer.CallToolResult>();

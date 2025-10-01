@@ -42,26 +42,6 @@ export const setupPage = defineTestTool({
   },
 });
 
-export const generatorLogStep = defineTestTool({
-  schema: {
-    name: 'generator_log_step',
-    title: 'Log a test step',
-    description: 'Log a successful test step.',
-    inputSchema: z.object({
-      title: z.string().describe('Title of the test step'),
-      code: z.string().describe('The code for the last step only, as a markdown code block'),
-    }),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params) => {
-    if (!context.generatorJournal)
-      throw new Error(`Please setup page using "${setupPage.schema.name}" first.`);
-    context.generatorJournal.logStep(params.title, params.code);
-    return { content: [] };
-  },
-});
-
 export const generatorReadLog = defineTestTool({
   schema: {
     name: 'generator_read_log',
@@ -91,7 +71,7 @@ export const generatorWriteTest = defineTestTool({
       fileName: z.string().describe('The file to write the test to'),
       code: z.string().describe('The generated test code'),
     }),
-    type: 'destructive',
+    type: 'readOnly',
   },
 
   handle: async (context, params) => {
@@ -108,7 +88,9 @@ export const generatorWriteTest = defineTestTool({
       const testDir = path.relative(context.rootPath, project.project.testDir).replace(/\\/g, '/');
       const fileName = params.fileName.replace(/\\/g, '/');
       if (fileName.startsWith(testDir)) {
-        await fs.promises.writeFile(path.resolve(context.rootPath, fileName), params.code);
+        const resolvedFile = path.resolve(context.rootPath, fileName);
+        await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
+        await fs.promises.writeFile(resolvedFile, params.code);
         return {
           content: [{
             type: 'text',
