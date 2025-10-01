@@ -30,8 +30,8 @@ export const setupPage = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const seed = await context.getOrCreateSeedFile(params);
-    await context.runSeedTest(seed.file, params.project, progress);
+    const seed = await context.getOrCreateSeedFile(params.seedFile, params.project);
+    await context.runSeedTest(seed.file, seed.projectName, progress);
     return { content: [] };
   },
 });
