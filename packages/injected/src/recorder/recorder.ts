@@ -592,7 +592,7 @@ class RecordActionTool implements RecorderTool {
         this._cancelPendingClickAction();
 
         // Visual feedback that drag is being recorded - make it more obvious
-        this._showDragFeedback('Recording drag operation...');
+        this._showDragFeedback();
       }
     } else if (this._dragState.phase === 'confirmed') {
       const selector = this._selectorForEventTarget(event);
