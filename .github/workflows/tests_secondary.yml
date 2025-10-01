@@ -86,6 +86,14 @@ jobs:
         Write-Host "ImageVersion=$env:ImageVersion"
         systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
 
+        Write-Host "== Start lfsvc =="
+        sc.exe config lfsvc start= demand | Out-Host
+        net start lfsvc | Out-Hosts
+
+        Write-Host "== Allow global HKCU location consent =="
+        $capRoot = "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location"
+        reg add $capRoot /v Value /t REG_SZ /d Allow /f | Out-Host
+
         Write-Host "`n=== lfsvc service (Geolocation) ==="
         Get-Service lfsvc -ErrorAction SilentlyContinue | Format-List Name,Status,StartType
 
