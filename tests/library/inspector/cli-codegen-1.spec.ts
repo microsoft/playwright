@@ -1020,6 +1020,68 @@ await page.GetByText("Click me").ClickAsync(new()
 await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
   });
 
+  test('should record drag and drop', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <style>
+        #source, #target {
+          width: 120px;
+          height: 120px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin: 16px;
+          border-radius: 8px;
+          font-family: sans-serif;
+          user-select: none;
+        }
+        #source {
+          background: #2f80ed;
+          color: white;
+        }
+        #target {
+          border: 2px dashed #2f80ed;
+          color: #2f80ed;
+        }
+        #target.dropped {
+          border-style: solid;
+          background: rgba(39, 174, 96, 0.1);
+          color: #145a32;
+        }
+      </style>
+      <div id="source" draggable="true">Task</div>
+      <div id="target">Drop here</div>
+      <script>
+        const source = document.getElementById('source');
+        const target = document.getElementById('target');
+        source.addEventListener('dragstart', event => {
+          event.dataTransfer.setData('text/plain', 'task');
+          source.classList.add('dragging');
+        });
+        source.addEventListener('dragend', () => {
+          source.classList.remove('dragging');
+        });
+        target.addEventListener('dragover', event => {
+          event.preventDefault();
+        });
+        target.addEventListener('drop', event => {
+          event.preventDefault();
+          target.classList.add('dropped');
+          target.textContent = 'Dropped!';
+        });
+      </script>
+    `);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', '.dragTo('),
+      page.dragAndDrop('#source', '#target'),
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#source').dragTo(page.locator('#target'));`);
+  });
+
   test('should click button with nested div', async ({ openRecorder }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29067' });
 

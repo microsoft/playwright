@@ -150,6 +150,21 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.GotoAsync(${quote(action.url)});`;
       case 'select':
         return `await ${subject}.${this._asLocator(action.selector)}.SelectOptionAsync(${formatObject(action.options)});`;
+      case 'dragAndDrop': {
+        const options: any = {};
+        if (action.sourcePosition)
+          options.sourcePosition = action.sourcePosition;
+        if (action.targetPosition)
+          options.targetPosition = action.targetPosition;
+
+        const sourceLocator = `${subject}.${this._asLocator(action.selector)}`;
+        const targetLocator = `${subject}.${this._asLocator(action.targetSelector)}`;
+        if (Object.keys(options).length) {
+          const optionsString = formatObject(options, '    ');
+          return `await ${sourceLocator}.DragToAsync(${targetLocator}, ${optionsString});`;
+        }
+        return `await ${sourceLocator}.DragToAsync(${targetLocator});`;
+      }
       case 'assertText':
         return `await Expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'ToContainTextAsync' : 'ToHaveTextAsync'}(${quote(action.text)});`;
       case 'assertChecked':

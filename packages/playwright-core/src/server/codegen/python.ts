@@ -119,6 +119,16 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         return `${subject}.goto(${quote(action.url)})`;
       case 'select':
         return `${subject}.${this._asLocator(action.selector)}.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+      case 'dragAndDrop': {
+        const options: any = {};
+        if (action.sourcePosition)
+          options.sourcePosition = action.sourcePosition;
+        if (action.targetPosition)
+          options.targetPosition = action.targetPosition;
+
+        const optionsString = formatOptions(options, false);
+        return `${subject}.locator(${quote(action.selector)}).drag_to(${subject}.locator(${quote(action.targetSelector)})${optionsString ? ', ' + optionsString : ''})`;
+      }
       case 'assertText':
         return `expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'to_contain_text' : 'to_have_text'}(${quote(action.text)})`;
       case 'assertChecked':

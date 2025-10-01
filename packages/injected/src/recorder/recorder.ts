@@ -195,6 +195,29 @@ class RecordActionTool implements RecorderTool {
   private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
   private _observer: MutationObserver | null = null;
   private _dialog: Dialog;
+  private _justCompletedDrag = false;
+  private _dragDropListeners: (() => void)[] | null = null;
+  
+  // Drag detection state
+  private _dragState: {
+    phase: 'none' | 'potential' | 'confirmed';
+    startElement: HTMLElement | null;
+    startSelector: string | null;
+    startPosition: { x: number, y: number } | null;
+    startTime: number;
+    dragType: 'mouse' | 'html5' | null;
+    modifiers: number;
+    targetSelector: string | null;
+  } = {
+    phase: 'none',
+    startElement: null,
+    startSelector: null,
+    startPosition: null,
+    startTime: 0,
+    dragType: null,
+    modifiers: 0,
+    targetSelector: null,
+  };
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -232,6 +255,7 @@ class RecordActionTool implements RecorderTool {
     this._activeModel = null;
     this._expectProgrammaticKeyUp = false;
     this._dialog.close();
+    this._cleanupDragDropListeners();
   }
 
   onClick(event: MouseEvent) {
@@ -241,6 +265,29 @@ class RecordActionTool implements RecorderTool {
         // auxclick event arrives after contextmenu and should be consumed.
         consumeEvent(event);
       }
+      return;
+    }
+
+    // CRITICAL: Always delay click processing to give drag detection a chance
+    // This prevents click events from interfering with drag operations
+    if (this._pendingClickAction)
+      this._cancelPendingClickAction();
+
+    // Check if this might be a drag element - if so, delay longer
+    const target = this._recorder.deepEventTarget(event);
+    const isDraggable = target && (
+      (target as HTMLElement).draggable ||
+      (target as HTMLElement).getAttribute?.('draggable') === 'true' ||
+      this._dragState.phase !== 'none'
+    );
+    
+    const delayMs = isDraggable ? 500 : 100; // Much longer delay for potential drags
+
+    // CRITICAL: Check if this click is part of a drag operation
+    // If we recently confirmed a drag, suppress this click entirely
+    if (this._dragState.phase === 'confirmed' || this._justCompletedDrag) {
+      this._justCompletedDrag = false;
+      consumeEvent(event);
       return;
     }
 
@@ -273,7 +320,7 @@ class RecordActionTool implements RecorderTool {
 
     this._cancelPendingClickAction();
 
-    // Stall click in case we are observing double-click.
+    // Stall click in case we are observing double-click or drag operation.
     if (event.detail === 1) {
       this._pendingClickAction = {
         action: {
@@ -285,7 +332,7 @@ class RecordActionTool implements RecorderTool {
           modifiers: modifiersForEvent(event),
           clickCount: event.detail
         },
-        timeout: this._recorder.injectedScript.utils.builtins.setTimeout(() => this._commitPendingClickAction(), 200)
+        timeout: this._recorder.injectedScript.utils.builtins.setTimeout(() => this._commitPendingClickAction(), delayMs)
       };
     }
   }
@@ -349,7 +396,8 @@ class RecordActionTool implements RecorderTool {
       return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    this._consumeWhenAboutToPerform(event);
+    if (!this._isPointerEventPotentialHtmlDrag(event))
+      this._consumeWhenAboutToPerform(event);
   }
 
   onPointerUp(event: PointerEvent) {
@@ -367,6 +415,25 @@ class RecordActionTool implements RecorderTool {
       return;
     this._consumeWhenAboutToPerform(event);
     this._activeModel = this._hoveredModel;
+    
+    // Initialize potential drag state on left mouse button
+    if (event.button === 0) {
+      const eventTarget = this._recorder.deepEventTarget(event);
+      const startElement = eventTarget?.nodeType === Node.TEXT_NODE ? eventTarget.parentElement : eventTarget as HTMLElement | null;
+      const startSelector = this._hoveredModel?.selector || this._selectorForEventTarget(event);
+      if (!startSelector)
+        return;
+      this._dragState = {
+        phase: 'potential',
+        startElement,
+        startSelector,
+        startPosition: { x: event.clientX, y: event.clientY },
+        startTime: this._recorder.injectedScript.utils.builtins.Date.now(),
+        dragType: null,
+        modifiers: modifiersForEvent(event),
+        targetSelector: null,
+      };
+    }
   }
 
   onMouseUp(event: MouseEvent) {
@@ -374,17 +441,177 @@ class RecordActionTool implements RecorderTool {
       return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    this._consumeWhenAboutToPerform(event);
+    
+    // Complete drag operation if confirmed
+    if (this._dragState.phase === 'confirmed' && this._dragState.startSelector) {
+      const targetSelector = this._dragState.targetSelector || this._selectorForEventTarget(event);
+      if (targetSelector && targetSelector !== this._dragState.startSelector) {
+        this._performAction({
+          name: 'dragAndDrop',
+          selector: this._dragState.startSelector,
+          targetSelector,
+          sourcePosition: this._dragState.startPosition || undefined,
+          targetPosition: { x: event.clientX, y: event.clientY },
+          dragType: this._dragState.dragType || 'mouse',
+          modifiers: this._dragState.modifiers,
+          signals: [],
+        });
+      }
+      // Mark that we just completed a drag to suppress subsequent click events
+      this._justCompletedDrag = true;
+      
+      // Reset drag state after a short delay to ensure click suppression works
+      this._recorder.injectedScript.utils.builtins.setTimeout(() => {
+        this._resetDragState();
+        this._justCompletedDrag = false;
+      }, 50);
+    } else {
+      // Only consume for normal flow if not a drag - and only if we were tracking a potential drag
+      if (this._dragState.phase === 'potential') {
+        // This was a click, not a drag - consume normally
+        this._consumeWhenAboutToPerform(event);
+      }
+      // Reset drag state immediately for non-drags
+      this._resetDragState();
+    }
+  }
+
+  onDragStart(event: DragEvent) {
+    if (this._dialog.isShowing())
+      return;
+    if (this._shouldIgnoreMouseEvent(event))
+      return;
+    
+    // CRITICAL: Cancel any pending click actions since this is definitely a drag
+    this._cancelPendingClickAction();
+    
+    // HTML5 drag started - record the source element
+    const eventTarget = this._recorder.deepEventTarget(event);
+    const startElement = eventTarget?.nodeType === Node.TEXT_NODE ? eventTarget.parentElement : eventTarget as HTMLElement | null;
+    const startSelector = this._hoveredModel?.selector || this._selectorForEventTarget(event);
+    if (!startSelector)
+      return;
+
+    this._dragState = {
+      phase: 'confirmed',
+      startElement,
+      startSelector,
+      startPosition: { x: event.clientX, y: event.clientY },
+      startTime: this._recorder.injectedScript.utils.builtins.Date.now(),
+      dragType: 'html5',
+      modifiers: modifiersForEvent(event),
+      targetSelector: null,
+    };
+    
+    // Add listeners for dragover and drop events to detect the target
+    this._installDragDropListeners();
+  }
+
+  private _installDragDropListeners() {
+    // Clean up any existing listeners
+    this._cleanupDragDropListeners();
+    
+    // Add temporary listeners for drag and drop events
+    this._dragDropListeners = [
+      addEventListener(this._recorder.injectedScript.document, 'dragover', (event: Event) => {
+        const dragEvent = event as DragEvent;
+        dragEvent.preventDefault(); // Allow drop
+        const target = this._recorder.deepEventTarget(dragEvent);
+        if (this._hoveredElement !== target) {
+          this._hoveredElement = target;
+          this._updateModelForHoveredElement();
+        }
+        const selector = this._selectorForEventTarget(dragEvent);
+        if (selector && selector !== this._dragState.startSelector)
+          this._dragState.targetSelector = selector;
+      }, true),
+      addEventListener(this._recorder.injectedScript.document, 'drop', (event: Event) => {
+        const dragEvent = event as DragEvent;
+        dragEvent.preventDefault();
+        this._onDrop(dragEvent);
+      }, true),
+      addEventListener(this._recorder.injectedScript.document, 'dragend', (event: Event) => {
+        this._cleanupDragDropListeners();
+        this._resetDragState();
+      }, true)
+    ];
+  }
+
+  private _onDrop(event: DragEvent) {
+    if (this._dragState.phase === 'confirmed' && this._dragState.startSelector) {
+      const eventSelector = this._selectorForEventTarget(event);
+      if (eventSelector && eventSelector !== this._dragState.startSelector)
+        this._dragState.targetSelector = eventSelector;
+      const targetSelector = this._dragState.targetSelector;
+      if (targetSelector && targetSelector !== this._dragState.startSelector) {
+        this._performAction({
+          name: 'dragAndDrop',
+          selector: this._dragState.startSelector,
+          targetSelector,
+          sourcePosition: this._dragState.startPosition || undefined,
+          targetPosition: { x: event.clientX, y: event.clientY },
+          dragType: 'html5',
+          modifiers: this._dragState.modifiers,
+          signals: [],
+        });
+      }
+    }
+    this._cleanupDragDropListeners();
+    this._resetDragState();
+  }
+
+  private _cleanupDragDropListeners() {
+    if (this._dragDropListeners) {
+      removeEventListeners(this._dragDropListeners);
+      this._dragDropListeners = null;
+    }
   }
 
   onMouseMove(event: MouseEvent) {
     if (this._dialog.isShowing())
       return;
     const target = this._recorder.deepEventTarget(event);
-    if (this._hoveredElement === target)
+    if (this._hoveredElement === target && this._dragState.phase === 'none')
       return;
     this._hoveredElement = target;
     this._updateModelForHoveredElement();
+    
+    // Check for drag movement
+    if (this._dragState.phase === 'potential' && this._dragState.startPosition) {
+      const distance = Math.sqrt(
+          Math.pow(event.clientX - this._dragState.startPosition.x, 2) +
+          Math.pow(event.clientY - this._dragState.startPosition.y, 2)
+      );
+      
+      // More sensitive threshold: 5 pixels to detect drags easier
+      if (distance > 5) {
+        this._dragState.phase = 'confirmed';
+        this._dragState.dragType = 'mouse'; // Default to mouse drag
+        
+        // CRITICAL: Cancel any pending click actions immediately when drag is confirmed
+        this._cancelPendingClickAction();
+        
+        // Visual feedback that drag is being recorded - make it more obvious
+        this._showDragFeedback('Recording drag operation...');
+      }
+    } else if (this._dragState.phase === 'confirmed') {
+      const selector = this._selectorForEventTarget(event);
+      if (selector && selector !== this._dragState.startSelector)
+        this._dragState.targetSelector = selector;
+    }
+  }
+
+  private _showDragFeedback(message: string) {
+    // Display drag feedback through console for now, could be enhanced with overlay UI
+    // Debug: message logged to console in development
+    
+    // Add visual indication via document body class
+    if (this._recorder.document.body) {
+      this._recorder.document.body.classList.add('pw-recording-drag');
+      this._recorder.injectedScript.utils.builtins.setTimeout(() => {
+        this._recorder.document.body.classList.remove('pw-recording-drag');
+      }, 1000);
+    }
   }
 
   onMouseLeave(event: MouseEvent) {
@@ -652,8 +879,28 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _consumeWhenAboutToPerform(event: Event) {
-    if (!this._performingActions.size)
+    if (!this._performingActions.size) {
+      // Don't consume events that are part of a drag operation
+      if (event instanceof MouseEvent) {
+        // Never consume mousedown - let it start drag detection
+        if (event.type === 'mousedown' && event.button === 0)
+          return;
+        
+        // Don't consume mousemove or mouseup if we're in a drag operation
+        if ((event.type === 'mousemove' || event.type === 'mouseup') &&
+            (this._dragState.phase === 'potential' || this._dragState.phase === 'confirmed'))
+          return;
+      }
+      if (event instanceof PointerEvent) {
+        if (event.type === 'pointerdown' && this._isPointerEventPotentialHtmlDrag(event))
+          return;
+        if ((event.type === 'pointermove' || event.type === 'pointerup') &&
+            (this._dragState.phase === 'potential' || this._dragState.phase === 'confirmed'))
+          return;
+      }
+      
       consumeEvent(event);
+    }
   }
 
   private _recordAction(action: actions.Action) {
@@ -682,6 +929,51 @@ class RecordActionTool implements RecorderTool {
         active: this._activeModel ? (this._activeModel as any).selector : null,
       }));
     });
+  }
+
+  private _resetDragState() {
+    this._dragState = {
+      phase: 'none',
+      startElement: null,
+      startSelector: null,
+      startPosition: null,
+      startTime: 0,
+      dragType: null,
+      modifiers: 0,
+      targetSelector: null,
+    };
+  }
+
+  private _selectorForEventTarget(event: MouseEvent | DragEvent): string | null {
+    const target = this._recorder.deepEventTarget(event);
+    if (!target)
+      return null;
+    const element = target.nodeType === Node.TEXT_NODE ? target.parentElement : target as Element | null;
+    if (!element || element.nodeType !== Node.ELEMENT_NODE)
+      return null;
+    const generated = this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName, multiple: false });
+    return generated.selector || null;
+  }
+
+  private _isPointerEventPotentialHtmlDrag(event: PointerEvent): boolean {
+    if (event.button !== 0)
+      return false;
+    if (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen')
+      return false;
+    return this._eventTargetsHtmlDrag(event);
+  }
+
+  private _eventTargetsHtmlDrag(event: MouseEvent | PointerEvent): boolean {
+    const target = this._recorder.deepEventTarget(event);
+    if (!target)
+      return false;
+    let element: HTMLElement | null = target.nodeType === Node.TEXT_NODE ? target.parentElement : target as HTMLElement | null;
+    while (element) {
+      if (element.draggable || element.getAttribute('draggable') === 'true')
+        return true;
+      element = element.parentElement;
+    }
+    return false;
   }
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
@@ -1334,6 +1626,14 @@ class Overlay {
       return false;
     }
     if (this._dragState) {
+      // CRITICAL: Only process overlay drag if the drag started within the overlay
+      // This prevents interference with page content drag detection
+      const target = event.target as Element;
+      if (!this.contains(target)) {
+        // If mouse is outside overlay, don't interfere with page drags
+        return false;
+      }
+      
       this._offsetX = this._dragState.offsetX + event.clientX - this._dragState.dragStart.x;
       const halfGapSize = (this._recorder.injectedScript.window.innerWidth - this._measure.width) / 2 - 10;
       this._offsetX = Math.max(-halfGapSize, Math.min(halfGapSize, this._offsetX));
@@ -1347,8 +1647,15 @@ class Overlay {
 
   onMouseUp(event: MouseEvent) {
     if (this._dragState) {
-      consumeEvent(event);
-      return true;
+      const target = event.target as Element;
+      // Only consume events if they're within the overlay area
+      if (this.contains(target)) {
+        consumeEvent(event);
+        return true;
+      }
+      // Reset drag state but don't consume the event
+      this._dragState = undefined;
+      return false;
     }
     return false;
   }
@@ -1356,8 +1663,13 @@ class Overlay {
   onClick(event: MouseEvent) {
     if (this._dragState) {
       this._dragState = undefined;
-      consumeEvent(event);
-      return true;
+      const target = event.target as Element;
+      // Only consume events if they're within the overlay area
+      if (this.contains(target)) {
+        consumeEvent(event);
+        return true;
+      }
+      return false;
     }
     return false;
   }
@@ -1412,6 +1724,28 @@ export class Recorder {
     this._stylesheet.replaceSync(`
       body[data-pw-cursor=pointer] *, body[data-pw-cursor=pointer] *::after { cursor: pointer !important; }
       body[data-pw-cursor=text] *, body[data-pw-cursor=text] *::after { cursor: text !important; }
+      body.pw-recording-drag { 
+        position: relative;
+      }
+      body.pw-recording-drag::after {
+        content: 'Recording drag operation...';
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #dc6f6f;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 12px;
+        z-index: 999999;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        animation: pw-fade-in 0.2s ease-out;
+      }
+      @keyframes pw-fade-in {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     `);
     this.installListeners();
     injectedScript.utils.cacheNormalizedWhitespaces();

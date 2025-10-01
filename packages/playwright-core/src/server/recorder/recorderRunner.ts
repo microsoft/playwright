@@ -87,6 +87,18 @@ async function performActionImpl(progress: Progress, mainFrame: Frame, actionInC
     return;
   }
 
+  if (action.name === 'dragAndDrop') {
+    const targetSelector = buildFullSelector(actionInContext.frame.framePath, action.targetSelector);
+    const options: any = { strict: true };
+    if (action.sourcePosition)
+      options.sourcePosition = action.sourcePosition;
+    if (action.targetPosition)
+      options.targetPosition = action.targetPosition;
+    
+    await mainFrame.dragAndDrop(progress, selector, targetSelector, options);
+    return;
+  }
+
   if (action.name === 'select') {
     const values = action.options.map(value => ({ value }));
     await mainFrame.selectOption(progress, selector, [], values, { strict: true });

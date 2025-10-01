@@ -28,6 +28,7 @@ export type ActionName =
   'select' |
   'uncheck' |
   'setInputFiles' |
+  'dragAndDrop' |
   'assertText' |
   'assertValue' |
   'assertChecked' |
@@ -102,6 +103,15 @@ export type SetInputFilesAction = ActionWithSelector & {
   files: string[],
 };
 
+export type DragAndDropAction = ActionWithSelector & {
+  name: 'dragAndDrop',
+  targetSelector: string,
+  sourcePosition?: Point,
+  targetPosition?: Point,
+  dragType?: 'mouse' | 'html5',
+  modifiers?: number,
+};
+
 export type AssertTextAction = ActionWithSelector & {
   name: 'assertText',
   text: string,
@@ -127,9 +137,9 @@ export type AssertSnapshotAction = ActionWithSelector & {
   ariaSnapshot: string,
 };
 
-export type Action = ClickAction | HoverAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
+export type Action = ClickAction | HoverAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | DragAndDropAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
 export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction | AssertVisibleAction | AssertSnapshotAction;
-export type PerformOnRecordAction = ClickAction | HoverAction | CheckAction | UncheckAction | PressAction | SelectAction;
+export type PerformOnRecordAction = ClickAction | HoverAction | CheckAction | UncheckAction | PressAction | SelectAction | DragAndDropAction;
 
 // Signals.
 

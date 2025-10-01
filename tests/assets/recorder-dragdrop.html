@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playwright Drag and Drop Demo</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      background: radial-gradient(circle at top, #f5f5f5, #dcdcdc);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.75rem;
+    }
+
+    p.instructions {
+      margin: 0;
+      font-size: 1rem;
+      text-align: center;
+      max-width: 420px;
+      line-height: 1.4;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(2, 200px);
+      gap: 40px;
+      align-items: center;
+    }
+
+    .card,
+    .dropzone {
+      width: 200px;
+      height: 200px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease, border 150ms ease;
+    }
+
+    .card {
+      background: #2f80ed;
+      color: white;
+      cursor: grab;
+      box-shadow: 0 12px 24px rgba(15, 76, 129, 0.3);
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    .card.dragging {
+      opacity: 0.8;
+      transform: scale(1.05) rotate(1deg);
+      box-shadow: 0 18px 36px rgba(15, 76, 129, 0.35);
+    }
+
+    .dropzone {
+      border: 3px dashed rgba(47, 128, 237, 0.4);
+      color: rgba(0, 0, 0, 0.6);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .dropzone.over {
+      border-color: #27ae60;
+      background: rgba(39, 174, 96, 0.1);
+      transform: scale(1.03);
+    }
+
+    .dropzone.dropped {
+      border-style: solid;
+      background: rgba(39, 174, 96, 0.2);
+      color: #145a32;
+    }
+
+    #status {
+      font-size: 1rem;
+      min-height: 1.2em;
+      color: rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Drag & Drop Playground</h1>
+    <p class="instructions">Drag the blue "Task" card into the dropzone to trigger HTML5 drag events. Perfect for manual or Playwright recorder testing.</p>
+  </header>
+
+  <main class="board">
+    <div id="source" class="card" draggable="true" aria-grabbed="false">Task</div>
+    <div id="target" class="dropzone" role="button" aria-label="Drop target">Drop here</div>
+  </main>
+
+  <footer>
+    <div id="status">Waiting for drag & drop…</div>
+  </footer>
+
+  <script>
+    const source = document.getElementById('source');
+    const target = document.getElementById('target');
+    const status = document.getElementById('status');
+
+    source.addEventListener('dragstart', event => {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', 'task-card');
+      source.classList.add('dragging');
+      source.setAttribute('aria-grabbed', 'true');
+      status.textContent = 'Dragging… bring the card to the dropzone.';
+    });
+
+    source.addEventListener('dragend', () => {
+      source.classList.remove('dragging');
+      source.setAttribute('aria-grabbed', 'false');
+      status.textContent = 'Drag ended without drop. Try again!';
+      setTimeout(() => {
+        if (!target.classList.contains('dropped'))
+          status.textContent = 'Waiting for drag & drop…';
+      }, 1200);
+    });
+
+    target.addEventListener('dragover', event => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      target.classList.add('over');
+    });
+
+    target.addEventListener('dragleave', () => {
+      target.classList.remove('over');
+    });
+
+    target.addEventListener('drop', event => {
+      event.preventDefault();
+      target.classList.remove('over');
+      target.classList.add('dropped');
+      target.textContent = 'Dropped!';
+      status.textContent = `Drop received at ${new Date().toLocaleTimeString()}`;
+    });
+
+    document.getElementById('reset')?.addEventListener('click', () => {
+      target.classList.remove('dropped');
+      target.textContent = 'Drop here';
+      status.textContent = 'Waiting for drag & drop…';
+    });
+  </script>
+</body>
+</html>

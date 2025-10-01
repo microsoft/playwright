@@ -128,6 +128,22 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         return `${subject}.navigate(${quote(action.url)});`;
       case 'select':
         return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.selectOption(${formatSelectOption(action.options.length === 1 ? action.options[0] : action.options)});`;
+      case 'dragAndDrop': {
+        const sourceLocator = `${subject}.locator(${quote(action.selector)})`;
+        const targetLocator = `${subject}.locator(${quote(action.targetSelector)})`;
+        const lines = [];
+        if (action.sourcePosition)
+          lines.push(`  .setSourcePosition(${action.sourcePosition.x}, ${action.sourcePosition.y})`);
+        if (action.targetPosition)
+          lines.push(`  .setTargetPosition(${action.targetPosition.x}, ${action.targetPosition.y})`);
+
+        if (lines.length) {
+          lines.unshift(`new Locator.DragToOptions()`);
+          const optionsText = lines.join('\n');
+          return `${sourceLocator}.dragTo(${targetLocator}, ${optionsText});`;
+        }
+        return `${sourceLocator}.dragTo(${targetLocator});`;
+      }
       case 'assertText':
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${action.substring ? 'containsText' : 'hasText'}(${quote(action.text)});`;
       case 'assertChecked':

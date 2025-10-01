@@ -110,6 +110,17 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.goto(${quote(action.url)});`;
       case 'select':
         return `await ${subject}.${this._asLocator(action.selector)}.selectOption(${formatObject(action.options.length === 1 ? action.options[0] : action.options)});`;
+      case 'dragAndDrop': {
+        // Use modern locator.dragTo() syntax instead of page.dragAndDrop()
+        const options: any = {};
+        if (action.sourcePosition)
+          options.sourcePosition = action.sourcePosition;
+        if (action.targetPosition)
+          options.targetPosition = action.targetPosition;
+        
+        const optionsString = formatOptions(options, false);
+        return `await ${subject}.locator(${quote(action.selector)}).dragTo(${subject}.locator(${quote(action.targetSelector)})${optionsString ? ', ' + optionsString : ''});`;
+      }
       case 'assertText':
         return `${this._isTest ? '' : '// '}await expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'toContainText' : 'toHaveText'}(${quote(action.text)});`;
       case 'assertChecked':
