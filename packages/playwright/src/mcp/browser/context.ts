@@ -174,11 +174,20 @@ export class Context {
           await fs.promises.mkdir(path.dirname(name), { recursive: true });
           const p = await video.path();
           // video.saveAs() does not work for persistent contexts.
-          try {
-            if (fs.existsSync(p))
+          if (fs.existsSync(p)) {
+            try {
               await fs.promises.rename(p, name);
-          } catch (e) {
-            logUnhandledError(e);
+            } catch (e) {
+              if (e.code !== 'EXDEV')
+                logUnhandledError(e);
+              // Retry operation (possibly cross-fs) with copy and unlink
+              try {
+                await fs.promises.copyFile(p, name);
+                await fs.promises.unlink(p);
+              } catch (e) {
+                logUnhandledError(e);
+              }
+            }
           }
         }
       });
