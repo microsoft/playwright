@@ -186,16 +186,16 @@ test('generator_setup_page is required', async ({ startClient }) => {
 await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``,
     },
-  })).toHaveResponse({
-    result: expect.stringContaining(`Please setup page using "generator_setup_page" first.`),
+  })).toEqual({
+    content: [{ type: 'text', text: `Error: Please setup page using "generator_setup_page" first.` }],
     isError: true,
   });
 
   expect(await client.callTool({
     name: 'generator_read_log',
     arguments: {},
-  })).toHaveResponse({
-    result: expect.stringContaining(`Please setup page using "generator_setup_page" first.`),
+  })).toEqual({
+    content: [{ type: 'text', text: `Error: Please setup page using "generator_setup_page" first.` }],
     isError: true,
   });
 
@@ -205,8 +205,16 @@ await page.getByRole('button', { name: 'Submit' }).click();
       fileName: 'a.test.ts',
       code: '// Test content',
     },
-  })).toHaveResponse({
-    result: expect.stringContaining(`Please setup page using "generator_setup_page" first.`),
+  })).toEqual({
+    content: [{ type: 'text', text: `Error: Please setup page using "generator_setup_page" first.` }],
+    isError: true,
+  });
+
+  expect(await client.callTool({
+    name: 'generator_read_log',
+    arguments: {},
+  })).toEqual({
+    content: [{ type: 'text', text: `Error: Please setup page using "generator_setup_page" first.` }],
     isError: true,
   });
 });

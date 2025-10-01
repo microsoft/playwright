@@ -41,6 +41,14 @@ test('call top level tool', async () => {
     name: 'cli_pause_in_gdb_twice',
     description: 'Pause in gdb twice',
     inputSchema: expect.any(Object),
+  }, {
+    name: 'gdb_bt',
+    description: 'Print backtrace',
+    inputSchema: expect.any(Object),
+  }, {
+    name: 'gdb_echo',
+    description: 'Echo a message',
+    inputSchema: expect.any(Object),
   }]);
 
   const echoResult = await mdbClient.client.callTool({
@@ -64,17 +72,6 @@ test('pause on error', async () => {
     arguments: {},
   });
   expect(interruptResult.content).toEqual([{ type: 'text', text: 'Paused on exception' }]);
-
-  // List new inner tools.
-  const { tools } = await mdbClient.client.listTools();
-  expect(tools).toEqual([
-    expect.objectContaining({
-      name: 'gdb_bt',
-    }),
-    expect.objectContaining({
-      name: 'gdb_echo',
-    }),
-  ]);
 
   // Call the new inner tool.
   const btResult = await mdbClient.client.callTool({
@@ -173,6 +170,14 @@ class CLIBackend {
       name: 'cli_pause_in_gdb_twice',
       description: 'Pause in gdb twice',
       inputSchema: zodToJsonSchema(z.object({})) as any,
+    }, {
+      name: 'gdb_bt',
+      description: 'Print backtrace',
+      inputSchema: zodToJsonSchema(z.object({})) as any,
+    }, {
+      name: 'gdb_echo',
+      description: 'Echo a message',
+      inputSchema: zodToJsonSchema(z.object({ message: z.string() })) as any,
     }];
   }
 
