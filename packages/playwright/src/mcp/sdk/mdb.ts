@@ -15,13 +15,12 @@
  */
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise } from 'playwright-core/lib/utils';
 
 import { defineToolSchema } from './tool';
 import * as mcpBundle from './bundle';
 import * as mcpServer from './server';
 import * as mcpHttp from './http';
-import { wrapInProcess } from './server';
 
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -30,79 +29,56 @@ const mdbDebug = debug('pw:mcp:mdb');
 const errorsDebug = debug('pw:mcp:errors');
 const z = mcpBundle.z;
 
-type StackEntry = {
-  client: Client;
-  toolNames: string[];
-  resultPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
-};
-
 export class MDBBackend implements mcpServer.ServerBackend {
-  private _stack: StackEntry[] = [];
+  private _onPauseClient: { client: Client, tools: mcpServer.Tool[] } | undefined;
   private _interruptPromise: ManualPromise<mcpServer.CallToolResult> | undefined;
-  private _topLevelBackend: mcpServer.ServerBackend;
+  private _mainBackend: mcpServer.ServerBackend;
   private _allowedOnPause: string[];
   private _clientInfo: mcpServer.ClientInfo | undefined;
   private _progress: mcpServer.CallToolResult['content'] = [];
+  private _progressCallback: mcpServer.ProgressCallback;
 
-  constructor(topLevelBackend: mcpServer.ServerBackend, allowedOnPause: string[]) {
-    this._topLevelBackend = topLevelBackend;
+  constructor(mainBackend: mcpServer.ServerBackend, allowedOnPause: string[]) {
+    this._mainBackend = mainBackend;
     this._allowedOnPause = allowedOnPause;
+    this._progressCallback = (params: mcpServer.ProgressParams) => {
+      if (params.message)
+        this._progress.push({ type: 'text', text: params.message });
+    };
   }
 
   async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
-    if (!this._clientInfo)
+    if (!this._clientInfo) {
       this._clientInfo = clientInfo;
+      await this._mainBackend.initialize?.(server, clientInfo);
+    }
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {
-    const client = await this._client();
-    const response = await client.listTools();
-    return response.tools;
+    return await this._mainBackend.listTools();
   }
 
   async callTool(name: string, args: mcpServer.CallToolRequest['params']['arguments']): Promise<mcpServer.CallToolResult> {
-    // Needs to go first to push the top-level tool first if missing.
-    await this._client();
-
     if (name === pushToolsSchema.name)
       return await this._pushTools(pushToolsSchema.inputSchema.parse(args || {}));
 
+    if (this._onPauseClient && this._onPauseClient.tools.find(tool => tool.name === name)) {
+      const result = await this._onPauseClient.client.callTool({
+        name,
+        arguments: args,
+      });
+      return result as mcpServer.CallToolResult;
+    }
+
+    if (this._onPauseClient && !this._allowedOnPause.includes(name)) {
+      await this._onPauseClient.client.close().catch(errorsDebug);
+      this._onPauseClient = undefined;
+    }
+
+    const resultPromise = new ManualPromise<mcpServer.CallToolResult>();
     const interruptPromise = new ManualPromise<mcpServer.CallToolResult>();
     this._interruptPromise = interruptPromise;
-
-    // Reset the stack if the command is in the reset commands.
-    if (!this._allowedOnPause.includes(name)) {
-      for (let i = 0; i < this._stack.length - 1; i++) {
-        if (this._stack[i].toolNames.includes(name))
-          break;
-        await this._stack[i].client.close().catch(errorsDebug);
-        this._stack.shift();
-      }
-    }
-
-    // Otherwise find the client for the tool.
-    let entry: StackEntry | undefined;
-    for (let i = 0; i < this._stack.length; i++) {
-      if (this._stack[i].toolNames.includes(name)) {
-        entry = this._stack[i];
-        break;
-      }
-      mdbDebug('popping client from stack for ', name);
-    }
-    if (!entry)
-      throw new Error(`Tool ${name} not found in the tool stack`);
-
-    const client = entry.client;
-    const resultPromise = new ManualPromise<mcpServer.CallToolResult>();
-    entry.resultPromise = resultPromise;
-
-    client.callTool({
-      name,
-      arguments: args,
-      _meta: {
-        progressToken: name + '@' + createGuid().slice(0, 8),
-      },
-    }).then(result => {
+    this._mainBackend.callTool(name, args, this._progressCallback).then(result => {
       resultPromise.resolve(result as mcpServer.CallToolResult);
     }).catch(e => {
       resultPromise.resolve({ content: [{ type: 'text', text: String(e) }], isError: true });
@@ -118,23 +94,13 @@ export class MDBBackend implements mcpServer.ServerBackend {
     return result;
   }
 
-  private async _client(): Promise<Client> {
-    if (!this._stack.length) {
-      const transport = await wrapInProcess(this._topLevelBackend);
-      await this._pushClient(transport);
-    }
-    return this._stack[0].client;
-  }
-
   private async _pushTools(params: { mcpUrl: string, introMessage?: string }): Promise<mcpServer.CallToolResult> {
-    mdbDebug('pushing tools to the stack', params.mcpUrl);
     const transport = new mcpBundle.StreamableHTTPClientTransport(new URL(params.mcpUrl));
     await this._pushClient(transport, params.introMessage);
     return { content: [{ type: 'text', text: 'Tools pushed' }] };
   }
 
-  private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
-    mdbDebug('pushing client to the stack');
+  private async _createClient(transport: Transport, introMessage?: string): Promise<{ client: Client, tools: mcpServer.Tool[] }> {
     const client = new mcpBundle.Client({ name: 'Interrupting client', version: '0.0.0' }, { capabilities: { roots: {} } });
     client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
@@ -146,11 +112,15 @@ export class MDBBackend implements mcpServer.ServerBackend {
       }
     });
     await client.connect(transport);
-    mdbDebug('connected to the new client');
     const { tools } = await client.listTools();
-    this._stack.unshift({ client, toolNames: tools.map(tool => tool.name), resultPromise: undefined });
-    mdbDebug('new tools added to the stack:', tools.map(tool => tool.name));
-    mdbDebug('interrupting current call:', !!this._interruptPromise);
+    return { client, tools };
+  }
+
+  private async _pushClient(transport: Transport, introMessage?: string): Promise<mcpServer.CallToolResult> {
+    if (this._onPauseClient)
+      await this._onPauseClient.client.close().catch(errorsDebug);
+    this._onPauseClient = await this._createClient(transport);
+
     this._interruptPromise?.resolve({
       content: [{
         type: 'text',

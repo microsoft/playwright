@@ -189,8 +189,10 @@ test('planner_setup_page (wrong test location)', async ({ startClient }) => {
     arguments: {
       seedFile: 'a.test.ts',
     },
-  })).toHaveTextResponse(`### Result
-Error: seed test not found.`);
+  })).toEqual({
+    content: [{ type: 'text', text: `Error: seed test not found.` }],
+    isError: true,
+  });
 });
 
 test('planner_setup_page (no test location)', async ({ startClient }) => {
