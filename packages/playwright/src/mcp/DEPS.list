@@ -2,7 +2,6 @@
 ./sdk/
 ./browser/
 ./extension/
-./vscode/
 
 [index.ts]
 ./sdk/
