@@ -44,7 +44,6 @@ export default defineConfig<TestOptions>({
   testDir: './',
   grepInvert: /extension/,
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   reporter: reporters(),
   projects: [

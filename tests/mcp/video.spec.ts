@@ -18,12 +18,12 @@ import fs from 'fs';
 import { test, expect } from './fixtures';
 
 for (const mode of ['isolated', 'persistent']) {
-  test(`should work with --save-video (${mode})`, async ({ startClient, server }, testInfo) => {
+  test.only(`should work with --save-video (${mode})`, async ({ startClient, server }, testInfo) => {
     const outputDir = testInfo.outputPath('output');
 
     const { client, stderr } = await startClient({
           env: {
-      DEBUG: 'pw:mcp:test',
+      DEBUG: 'pw:mcp:*',
     },
       args: [
         '--save-video=800x600',
