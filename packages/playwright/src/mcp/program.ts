@@ -22,7 +22,6 @@ import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
 import { BrowserServerBackend } from './browser/browserServerBackend';
 import { ExtensionContextFactory } from './extension/extensionContextFactory';
-import { runVSCodeTools } from './vscode/host';
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import type { MCPProvider } from './sdk/proxyBackend';
@@ -65,7 +64,6 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--connect-tool', 'Allow to switch between different browser connection methods.').hideHelp())
-      .addOption(new ProgramOption('--vscode', 'VS Code tools.').hideHelp())
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .action(async options => {
         setupExitWatchdog();
@@ -88,11 +86,6 @@ export function decorateCommand(command: Command, version: string) {
             create: () => new BrowserServerBackend(config, extensionContextFactory)
           };
           await mcpServer.start(serverBackendFactory, config.server);
-          return;
-        }
-
-        if (options.vscode) {
-          await runVSCodeTools(config);
           return;
         }
 

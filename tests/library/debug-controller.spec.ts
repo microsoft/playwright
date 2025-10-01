@@ -34,7 +34,7 @@ const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ headless }, use) => {
     if (headless)
       process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
-    const server = new PlaywrightServer({ mode: 'default', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false, debugController: true });
+    const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
     await server.close();
@@ -111,31 +111,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toHaveLength(2);
 });
 
-test('should allow setting recorder mode only for specific browser', async ({ backend, connectedBrowserFactory }) => {
-  const events = [];
-  backend.on('inspectRequested', event => events.push(event));
-
-  const browser1 = await connectedBrowserFactory();
-  const browser2 = await connectedBrowserFactory();
-  expect((browser1 as any)._guid).not.toBe((browser2 as any)._guid);
-  const page1 = await browser1.newPage();
-  await page1.setContent('<button>Submit</button>');
-  const page2 = await browser2.newPage();
-  await page2.setContent('<button>Submit</button>');
-
-  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser1 as any)._guid });
-  await page1.getByRole('button').click();
-  expect(events).toHaveLength(1);
-
-  await page2.getByRole('button').click();
-  expect(events).toHaveLength(1);
-
-  await backend.setRecorderMode({ mode: 'inspecting', browserId: (browser2 as any)._guid });
-  await page2.getByRole('button').click();
-  expect(events).toHaveLength(2);
-});
-
-test('should report pages', async ({ backend, connectedBrowser, browserName, channel }) => {
+test('should report pages', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
   await backend.setReportStateChanged({ enabled: true });
@@ -144,7 +120,6 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
   const page1 = await context.newPage();
   const page2 = await context.newPage();
   await page1.close();
-  await page2.goto('data:text/html,Foo');
   await page2.close();
 
   await backend.setReportStateChanged({ enabled: false });
@@ -154,63 +129,12 @@ test('should report pages', async ({ backend, connectedBrowser, browserName, cha
   expect(events).toEqual([
     {
       pageCount: 1,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'about:blank' }
-          ]
-        }]
-      }]
     }, {
       pageCount: 2,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'about:blank' },
-            { url: 'about:blank' }
-          ]
-        }]
-      }]
     }, {
       pageCount: 1,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'about:blank' }
-          ]
-        }]
-      }]
-    }, {
-      pageCount: 1,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: [
-            { url: 'data:text/html,Foo' }
-          ]
-        }]
-      }]
     }, {
       pageCount: 0,
-      browsers: [{
-        id: (connectedBrowser as any)._guid,
-        name: browserName,
-        channel,
-        contexts: [{
-          pages: []
-        }]
-      }]
     }
   ]);
 });
@@ -387,54 +311,4 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
 test('should report error in aria template', async ({ backend }) => {
   const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
   expect(error.message).toContain('Unterminated string:');
-});
-
-test('should work with browser._launchServer', async ({ browserType }) => {
-  const browser = await browserType.launch();
-  const server = await (browser as any)._launchServer({ _debugController: true });
-
-  const backend = new Backend();
-  const connectionString = new URL(server.wsEndpoint());
-  connectionString.searchParams.set('debug-controller', '');
-  await backend.connect(connectionString.toString());
-  await backend.initialize();
-  await backend.channel.setReportStateChanged({ enabled: true });
-  const pageCounts: number[] = [];
-  backend.channel.on('stateChanged', event => pageCounts.push(event.pageCount));
-
-  const page = await browser.newPage();
-  await page.close();
-  // this test shares an instance of Playwright with other tests, so we can't assert on the precise number of pages
-  expect(pageCounts.length).toBeGreaterThanOrEqual(2);
-
-  await server.close();
-  await browser.close();
-});
-
-test('should not work with browser._launchServer(_debugController: false)', async ({ browserType }) => {
-  const browser = await browserType.launch();
-  const server = await (browser as any)._launchServer({ _debugController: false });
-
-  const backend = new Backend();
-  const connectionString = new URL(server.wsEndpoint());
-  connectionString.searchParams.set('debug-controller', '');
-  await expect(async () => {
-    await backend.connect(connectionString.toString());
-    await backend.initialize();
-  }).rejects.toThrow();
-
-  await server.close();
-  await browser.close();
-});
-
-test('should support closing browsers', async ({ backend, connectedBrowser }) => {
-  const events: channels.DebugControllerStateChangedEvent[] = [];
-  backend.on('stateChanged', event => events.push(event));
-  await backend.setReportStateChanged({ enabled: true });
-  await connectedBrowser.newPage();
-
-  await backend.closeBrowser({ id: (connectedBrowser as any)._guid, reason: 'some reason' });
-  await expect.poll(() => connectedBrowser.isConnected()).toBe(false);
-
-  await expect.poll(() => events[events.length - 1]?.browsers).toEqual([]);
 });

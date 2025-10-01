@@ -24,8 +24,6 @@ import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorPa
 import { generateCode } from './codegen/language';
 import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
-import { Frame } from './frames';
-import { Page } from './page';
 
 import type { Language } from '../utils';
 import type { BrowserContext } from './browserContext';
@@ -44,8 +42,7 @@ export class DebugController extends SdkObject {
     SetModeRequested: 'setModeRequested',
   };
 
-  private _reportState = false;
-  private _disposeListeners = new Set<() => void>();
+  private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
   _generateAutoExpect = false;
@@ -64,40 +61,25 @@ export class DebugController extends SdkObject {
   }
 
   setReportStateChanged(enabled: boolean) {
-    if (this._reportState === enabled)
-      return;
-    this._reportState = enabled;
-    if (enabled) {
-      const listener: InstrumentationListener = {
-        onPageOpen: page => {
-          this._emitSnapshot(false);
-          const handleNavigation = () => this._emitSnapshot(false);
-          page.mainFrame().on(Frame.Events.InternalNavigation, handleNavigation);
-          const dispose = () => page.mainFrame().off(Frame.Events.InternalNavigation, handleNavigation);
-          this._disposeListeners.add(dispose);
-          page.on(Page.Events.Close, () => this._disposeListeners.delete(dispose));
-        },
+    if (enabled && !this._trackHierarchyListener) {
+      this._trackHierarchyListener = {
+        onPageOpen: () => this._emitSnapshot(false),
         onPageClose: () => this._emitSnapshot(false),
-        onBrowserClose: () => {
-          this._emitSnapshot(false);
-        },
       };
-      this._playwright.instrumentation.addListener(listener, null);
-      this._disposeListeners.add(() => this._playwright.instrumentation.removeListener(listener));
+      this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
       this._emitSnapshot(true);
-    } else {
-      for (const dispose of this._disposeListeners)
-        dispose();
-      this._disposeListeners.clear();
+    } else if (!enabled && this._trackHierarchyListener) {
+      this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
+      this._trackHierarchyListener = undefined;
     }
   }
 
-  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean, browserId?: string }) {
+  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean }) {
     await progress.race(this._closeBrowsersWithoutPages());
     this._generateAutoExpect = !!params.generateAutoExpect;
 
     if (params.mode === 'none') {
-      for (const recorder of await progress.race(this._allRecorders(params.browserId))) {
+      for (const recorder of await progress.race(this._allRecorders())) {
         recorder.hideHighlightedSelector();
         recorder.setMode('none');
       }
@@ -115,14 +97,11 @@ export class DebugController extends SdkObject {
     }
     // Update test id attribute.
     if (params.testIdAttributeName) {
-      for (const page of this._playwright.allPages()) {
-        if (params.browserId && page.browserContext._browser.guid !== params.browserId)
-          continue;
+      for (const page of this._playwright.allPages())
         page.browserContext.selectors().setTestIdAttributeName(params.testIdAttributeName);
-      }
     }
     // Toggle the mode.
-    for (const recorder of await progress.race(this._allRecorders(params.browserId))) {
+    for (const recorder of await progress.race(this._allRecorders())) {
       recorder.hideHighlightedSelector();
       recorder.setMode(params.mode);
     }
@@ -154,13 +133,6 @@ export class DebugController extends SdkObject {
       recorder.resume();
   }
 
-  async closeBrowser(progress: Progress, id: string, reason?: string) {
-    const browser = this._playwright.allBrowsers().find(b => b.guid === id);
-    if (!browser)
-      return;
-    await progress.race(browser.close({ reason }));
-  }
-
   kill() {
     gracefullyProcessExitDoNotHang(0);
   }
@@ -169,28 +141,13 @@ export class DebugController extends SdkObject {
     const pageCount = this._playwright.allPages().length;
     if (initial && !pageCount)
       return;
-    this.emit(DebugController.Events.StateChanged, {
-      pageCount,
-      browsers: this._playwright.allBrowsers().map(browser => ({
-        id: browser.guid,
-        name: browser.options.name,
-        channel: browser.options.channel,
-        contexts: browser.contexts().map(context => ({
-          pages: context.pages().map(page => ({
-            url: page.mainFrame().url(),
-          }))
-        }))
-      }))
-    });
+    this.emit(DebugController.Events.StateChanged, { pageCount });
   }
 
-  private async _allRecorders(browserId?: string): Promise<Recorder[]> {
+  private async _allRecorders(): Promise<Recorder[]> {
     const contexts = new Set<BrowserContext>();
-    for (const page of this._playwright.allPages()) {
-      if (browserId && page.browserContext._browser.guid !== browserId)
-        continue;
+    for (const page of this._playwright.allPages())
       contexts.add(page.browserContext);
-    }
     const recorders = await Promise.all([...contexts].map(c => Recorder.forContext(c, { omitCallTracking: true })));
     const nonNullRecorders = recorders.filter(Boolean) as Recorder[];
     for (const recorder of recorders)
