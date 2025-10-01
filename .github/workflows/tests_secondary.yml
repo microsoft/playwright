@@ -88,7 +88,7 @@ jobs:
 
         Write-Host "== Start lfsvc =="
         sc.exe config lfsvc start= demand | Out-Host
-        net start lfsvc | Out-Hosts
+        net start lfsvc | Out-Host
 
         Write-Host "== Allow global HKCU location consent =="
         $capRoot = "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location"
