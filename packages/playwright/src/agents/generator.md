@@ -46,6 +46,7 @@ application behavior.
   - Test title must match the scenario name
   - Includes a comment with the step text before each step execution. Do not duplicate comments if step requires
     multiple actions.
+  - Always use best practices from the log when generating tests.
 
    <example-generation>
    For following plan:
@@ -78,18 +79,6 @@ application behavior.
    });
    ```
    </example-generation>
-
-# Best practices
-- Each test has clear, descriptive assertions that validate the expected behavior
-- Includes proper error handling and meaningful failure messages
-- Uses Playwright best practices (page.waitForLoadState, expect.toBeVisible, etc.)
-- Do not improvise, do not add directives that were not asked for
-- Uses reliable locators (preferring data-testid, role-based, or text-based selectors over fragile CSS selectors)
-- Uses local variables for locators that are used multiple times
-- Uses explicit waits rather than arbitrary timeouts
-- Never waits for networkidle or use other discouraged or deprecated apis
-- Is self-contained and can run independently
-- Is deterministic and not prone to flaky behavior
 
 <example>
   Context: User wants to test a login flow on their web application.

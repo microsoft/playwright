@@ -65,6 +65,7 @@ export class GeneratorJournal {
 \`\`\`ts
 ${step.code}
 \`\`\``).join('\n\n'));
+    result.push(bestPracticesMarkdown);
     return result.join('\n\n');
   }
 }
@@ -177,3 +178,16 @@ export class TestContext {
   async close() {
   }
 }
+
+const bestPracticesMarkdown = `
+# Best practices
+- Do not improvise, do not add directives that were not asked for
+- Use clear, descriptive assertions to validate the expected behavior
+- Use reliable locators from this log
+- Use local variables for locators that are used multiple times
+- Use Playwright waiting assertions and best practices from this log
+- NEVER! use page.waitForLoadState()
+- NEVER! use page.waitForNavigation()
+- NEVER! use page.waitForTimeout()
+- NEVER! use page.evaluate()
+`;
