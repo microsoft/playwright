@@ -93,19 +93,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const request = event.request;
   const client = await self.clients.get(event.clientId);
 
-  const urlInScope = request.url.startsWith(self.registration.scope) ? new URL(unwrapPopoutUrl(request.url)) : undefined;
-  const relativePath = urlInScope?.pathname.substring(scopePath.length - 1);
-
-  if (relativePath !== '/contexts' && !clientIdToTraceUrls.has(event.clientId)) {
-    // Service worker was restarted upon subresource fetch.
-    // It was stopped because ping did not keep it alive since the tab itself was throttled.
-    const params = await loadClientIdParams(event.clientId);
-    if (params) {
-      for (const traceUrl of params.traceUrls)
-        await loadTrace(traceUrl, null, client, params.limit, () => {});
-    }
-  }
-
   // When trace viewer is deployed over https, we will force upgrade
   // insecure http subresources to https. Otherwise, these will fail
   // to load inside our https snapshots.
@@ -113,7 +100,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   // the https urls.
   const isDeployedAsHttps = self.registration.scope.startsWith('https://');
 
-  if (urlInScope && relativePath) {
+  if (request.url.startsWith(self.registration.scope)) {
+    const url = new URL(unwrapPopoutUrl(request.url));
+    const relativePath = url.pathname.substring(scopePath.length - 1);
     if (relativePath === '/ping') {
       await gc();
       return new Response(null, { status: 200 });
@@ -123,12 +112,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 200 });
     }
 
-    const traceUrl = urlInScope.searchParams.get('trace');
+    const traceUrl = url.searchParams.get('trace');
 
     if (relativePath === '/contexts') {
       try {
-        const limit = urlInScope.searchParams.has('limit') ? +urlInScope.searchParams.get('limit')! : undefined;
-        const traceModel = await loadTrace(traceUrl!, urlInScope.searchParams.get('traceFileName'), client, limit, (done: number, total: number) => {
+        const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
+        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), client, limit, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntries), {
@@ -143,12 +132,22 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       }
     }
 
+    if (!clientIdToTraceUrls.has(event.clientId)) {
+      // Service worker was restarted upon subresource fetch.
+      // It was stopped because ping did not keep it alive since the tab itself was throttled.
+      const params = await loadClientIdParams(event.clientId);
+      if (params) {
+        for (const traceUrl of params.traceUrls)
+          await loadTrace(traceUrl, null, client, params.limit, () => {});
+      }
+    }
+
     if (relativePath.startsWith('/snapshotInfo/')) {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
       const pageOrFrameId = relativePath.substring('/snapshotInfo/'.length);
-      return snapshotServer.serveSnapshotInfo(pageOrFrameId, urlInScope.searchParams);
+      return snapshotServer.serveSnapshotInfo(pageOrFrameId, url.searchParams);
     }
 
     if (relativePath.startsWith('/snapshot/')) {
@@ -156,7 +155,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
       const pageOrFrameId = relativePath.substring('/snapshot/'.length);
-      const response = snapshotServer.serveSnapshot(pageOrFrameId, urlInScope.searchParams, urlInScope.href);
+      const response = snapshotServer.serveSnapshot(pageOrFrameId, url.searchParams, url.href);
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;
@@ -167,7 +166,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
       const pageOrFrameId = relativePath.substring('/closest-screenshot/'.length);
-      return snapshotServer.serveClosestScreenshot(pageOrFrameId, urlInScope.searchParams);
+      return snapshotServer.serveClosestScreenshot(pageOrFrameId, url.searchParams);
     }
 
     if (relativePath.startsWith('/sha1/')) {
@@ -176,13 +175,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       for (const trace of loadedTraces.values()) {
         const blob = await trace.traceModel.resourceForSha1(sha1);
         if (blob)
-          return new Response(blob, { status: 200, headers: downloadHeaders(urlInScope.searchParams) });
+          return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
       }
       return new Response(null, { status: 404 });
     }
 
     if (relativePath.startsWith('/file/')) {
-      const path = urlInScope.searchParams.get('path')!;
+      const path = url.searchParams.get('path')!;
       const traceViewerServer = clientIdToTraceUrls.get(event.clientId ?? '')?.traceViewerServer;
       if (!traceViewerServer)
         throw new Error('client is not initialized');
