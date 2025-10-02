@@ -192,7 +192,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 404 });
     }
 
-    // There may be no trailing slash, and we only care about the `path` query param
+    // There will be no trailing slash, and we only care about the `path` query param
     if (relativePath === '/file') {
       const path = urlInScope.searchParams.get('path')!;
       const traceViewConnection = getOrCreateServerConnection(client, undefined);
