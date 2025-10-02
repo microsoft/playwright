@@ -196,7 +196,7 @@ test('browser_take_screenshot (filename is empty string)', async ({ startClient,
     content: [
       {
         text: expect.stringMatching(
-          new RegExp(`page-\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}\\-\\d{3}Z\\.png`)
+            new RegExp(`page-\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}\\-\\d{3}Z\\.png`)
         ),
         type: 'text',
       },

@@ -24,9 +24,7 @@ import type * as playwright from 'playwright-core';
 const screenshotSchema = z.object({
   type: z.enum(['png', 'jpeg']).default('png').describe('Image format for the screenshot. Default is png.'),
   filename: z.preprocess((v) => {
-    if (v === '') {
-      return null;
-    }
+    if (v === '') return null;
     return v;
   }, z.string().nullable()).optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
   element: z.string().optional().describe('Human-readable element description used to obtain permission to screenshot the element. If not provided, the screenshot will be taken of viewport. If element is provided, ref must be provided too.'),
