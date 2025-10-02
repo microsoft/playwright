@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "idb-keyval": "^6.2.2",
     "yaml": "^2.6.0"
   }
 }
