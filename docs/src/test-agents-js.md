@@ -5,108 +5,114 @@ title: "Agents"
 
 # Playwright Agents
 
-## Test Coverage in 1-2-3
+Playwright comes with three Playwright Agents out of the box: **🎭 planner**, **🎭 generator** and **🎭 healer**.
 
-Playwright’s agentic workflow makes it possible to generate test coverage in three straightforward steps.
-These steps can be performed independently, manually, or as chained calls in an agentic loop.
+These agents can be used independently, sequentially, or as the chained calls in the agentic loop.
+Using them sequentially will produce test coverage for your product.
 
-1. **Plan**: A planning agent explores the app and produces a test plan in `specs/*.md`.
+* **🎭 planner** explores the app and produces a Markdown test plan
 
-2. **Generate**: A generating agent transforms the plan into `tests/*.spec.ts` files. It executes actions against your site to verify selectors and flows, then emits testing code and assertions.
+* **🎭 generator** transforms the Markdown plan into the Playwright Test files
 
-3. **Heal**: A healing agent executes the test suite and automatically repairs failing tests by applying diffs in place.
+* **🎭 healer** executes the test suite and automatically repairs failing tests
 
 ### Getting Started
 
-In order to use Playwright Agents, you must add their definitions to your project using
+Start with adding Playwright Agent definitions to your project using
 the `init-agents` command. These definitions should be regenerated whenever Playwright
-is updated.
+is updated to pick up new tools and instructions.
 
-You need to run this command for each agentic loop you will be using:
-
-```bash
-# Generate agent files for each agentic loop
-# Visual Studio Code
+```bash tab=bash-vscode
 npx playwright init-agents --loop=vscode
-# Claude Code
+```
+
+```bash tab=bash-claude
 npx playwright init-agents --loop=claude
-# opencode
+```
+
+```bash tab=bash-opencode
 npx playwright init-agents --loop=opencode
 ```
 
-Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests. Playwright splits this into three steps with one agent per step:
+Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests. 
 
-## 1. Plan
 
-The planning agent explores your app environment and produces a test plan for one or many scenarios and user flows.
+## 🎭 Planner
+
+Planner agent explores your app and produces a test plan for one or many scenarios and user flows.
 
 **Input**
 
-* A clear request to the planning agent (e.g., “Generate a plan for guest checkout.”)
-* A live app entry point (URL) or a seed Playwright test that sets up the environment necessary to talk to your app
-* A Product Requirement Document (PRD) (optional)
+* A clear request to the planner (e.g., “Generate a plan for guest checkout.”)
+* A `seed test` that sets up the environment necessary to interact with your app
+* *(optional)* A Product Requirement Document (PRD) for context
 
-**Example Prompt**
+**Prompt**
+  
+<img src={require("../images/test-agents/planner-prompt.png").src} alt="planner prompt" width="472"/>
 
-```markdown
-<agent:planner> Generate a test plan for "Guest Checkout" scenario.
-                Use `seed.spec.ts` as a seed test for the plan.
+> - Notice how the `seed.spec.ts` is included in the context of the planner.
+> - Planner will run this test to execute all the initialization necessary for your test including the global setup, project dependencies and all the necessary fixtures and hooks.
+> - Planner will also use this seed test as an example of all the generated tests. Alternatively, you can mention the file name in the prompt.
+
+```js title="Example: seed.spec.ts"
+import { test, expect } from './fixtures';
+
+test('seed', async ({ page }) => {
+  // this test uses custom fixtures from ./fixtures
+});
 ```
 
 **Output**
 
-* A Markdown test plan saved to `specs/[scenario name].md`. The plan is human-readable but precise enough for test generation.
+* A Markdown test plan saved as `specs/basic-operations.md`.
+* The plan is human-readable but precise enough for test generation.
 
 <details>
-<summary>Example: specs/guest-checkout.md</summary>
+<summary>Example: <b>specs/basic-operations.md</b></summary>
 
 ```markdown
-# Feature: Guest Checkout
+# TodoMVC Application - Basic Operations Test Plan
 
-## Purpose
-Allow a user to purchase without creating an account.
+## Application Overview
 
-## Preconditions
-- Test seed `tests/seed.spec.ts`.
-- Payment sandbox credentials available via env vars.
+The TodoMVC application is a React-based todo list manager that demonstrates standard todo application functionality. The application provides comprehensive task management capabilities with a clean, intuitive interface. Key features include:
 
-## Scenarios
+- **Task Management**: Add, edit, complete, and delete individual todos
+- **Bulk Operations**: Mark all todos as complete/incomplete and clear all completed todos  
+- **Filtering System**: View todos by All, Active, or Completed status with URL routing support
+- **Real-time Counter**: Display of active (incomplete) todo count
+- **Interactive UI**: Hover states, edit-in-place functionality, and responsive design
+- **State Persistence**: Maintains state during session navigation
 
-### SC-1: Add single item to cart and purchase
-**Steps**
-1. Open home page.
-2. Search for "Wireless Mouse".
-3. Open product page and add to cart.
-4. Proceed to checkout as guest.
-5. Fill shipping and payment details.
-6. Confirm order.
+## Test Scenarios
 
-**Expected**
-- Cart count increments after item is added.
-- Checkout page shows item, price, tax, and total.
-- Order confirmation number appears; status is "Processing".
+### 1. Adding New Todos
 
-### SC-2: Tax and shipping recalculation on address change
-**Steps**
-1. Start checkout with a CA address.
-2. Change state to NY.
+**Seed:** `tests/seed.spec.ts`
 
-**Expected**
-- Tax and shipping values recalculate.
+#### 1.1 Add Valid Todo
 
-## Data
-- Product SKU: `WM-123`
-- Payment: sandbox card `4111 1111 1111 1111`, valid expiry, CVV `123`.
+**Steps:**
+1. Click in the "What needs to be done?" input field
+2. Type "Buy groceries"
+3. Press Enter key
 
-## Methodology
-*Optional notes about testing methodology*
+**Expected Results:**
+- Todo appears in the list with unchecked checkbox
+- Counter shows "1 item left"
+- Input field is cleared and ready for next entry
+- Todo list controls become visible (Mark all as complete checkbox)
+
+#### 1.2 Add Multiple Todos
+...
 ```
 </details>
 
-## 2. Generate
+## 🎭 Generator
 
-The generating agent uses the Markdown plan to produce executable Playwright tests.
-It verifies selectors and assertions live against the application. Playwright supports
+Generator agent uses the Markdown plan to produce executable Playwright Tests.
+It verifies selectors and assertions live as it performs the scenarios. Playwright supports
 generation hints and provides a catalog of assertions for efficient structural and
 behavioral validation.
 
@@ -114,11 +120,12 @@ behavioral validation.
 
 * Markdown plan from `specs/`
 
-**Example Prompt**
+**Prompt**
 
-```markdown
-<agent:generator> Generate tests for the guest checkout plan under `specs/`.
-```
+<img src={require("../images/test-agents/generator-prompt.png").src} alt="generator prompt" width="472"/>
+
+> - Notice how the `basic-operations.md` is included in the context of the generator.
+> - This is how generator knows where to get the test plan from. Alternatively, you can mention the file name in the prompt.
 
 **Output**
 
@@ -126,57 +133,50 @@ behavioral validation.
 * Generated tests may include initial errors that can be healed automatically by the healer agent
 
 <details>
-<summary>Example: tests/guest-checkout.spec.ts</summary>
+<summary>Example: <b>tests/add-valid-todo.spec.ts</b></summary>
 
 ```ts
-import { test, expect } from '@playwright/test';
+// spec: specs/basic-operations.md
+// seed: tests/seed.spec.ts
 
-test.describe('Guest Checkout', () => {
-  test('SC-1: add item and purchase', async ({ page }) => {
-    await page.goto('/');
-    await page.getByRole('searchbox', { name: /search/i }).fill('Wireless Mouse');
-    await page.getByRole('button', { name: /search/i }).click();
+import { test, expect } from '../fixtures';
 
-    await page.getByRole('link', { name: /wireless mouse/i }).click();
-    await page.getByRole('button', { name: /add to cart/i }).click();
+test.describe('Adding New Todos', () => {
+  test('Add Valid Todo', async ({ page }) => {
+    // 1. Click in the "What needs to be done?" input field
+    const todoInput = page.getByRole('textbox', { name: 'What needs to be done?' });
+    await todoInput.click();
 
-    // Assertion: cart badge increments
-    await expect(page.getByTestId('cart-badge')).toHaveText('1');
+    // 2. Type "Buy groceries"
+    await todoInput.fill('Buy groceries');
 
-    await page.getByRole('link', { name: /checkout/i }).click();
-    await page.getByRole('button', { name: /continue as guest/i }).click();
+    // 3. Press Enter key
+    await todoInput.press('Enter');
 
-    // Fill checkout form
-    await page.getByLabel('Email').fill(process.env.CHECKOUT_EMAIL!);
-    await page.getByLabel('Full name').fill('Alex Guest');
-    await page.getByLabel('Address').fill('1 Market St');
-    await page.getByLabel('City').fill('San Francisco');
-    await page.getByLabel('State').selectOption('CA');
-    await page.getByLabel('ZIP').fill('94105');
+    // Expected Results:
+    // - Todo appears in the list with unchecked checkbox
+    await expect(page.getByText('Buy groceries')).toBeVisible();
+    const todoCheckbox = page.getByRole('checkbox', { name: 'Toggle Todo' });
+    await expect(todoCheckbox).toBeVisible();
+    await expect(todoCheckbox).not.toBeChecked();
 
-    // Payment (sandbox)
-    const frame = page.frameLocator('[data-testid="card-iframe"]');
-    await frame.getByLabel('Card number').fill('4111111111111111');
-    await frame.getByLabel('MM / YY').fill('12/30');
-    await frame.getByLabel('CVC').fill('123');
+    // - Counter shows "1 item left"
+    await expect(page.getByText('1 item left')).toBeVisible();
 
-    await page.getByRole('button', { name: /pay/i }).click();
+    // - Input field is cleared and ready for next entry
+    await expect(todoInput).toHaveValue('');
+    await expect(todoInput).toBeFocused();
 
-    // Assertions: confirmation invariants
-    await expect(page).toHaveURL(/\/orders\/\w+\/confirmation/);
-    await expect(page.getByRole('heading', { name: /thank you/i })).toBeVisible();
-    await expect(page.getByTestId('order-status')).toHaveText(/processing/i);
-
-    // Optional visual check
-    await expect(page.locator('[data-testid="order-summary"]')).toHaveScreenshot();
+    // - Todo list controls become visible (Mark all as complete checkbox)
+    await expect(page.getByRole('checkbox', { name: '❯Mark all as complete' })).toBeVisible();
   });
 });
 ```
 </details>
 
-## 3. Heal
+## 🎭 Healer
 
-When a test fails, the healing agent:
+When the test fails, the healer agent:
 
 * Replays the failing steps
 * Inspects the current UI to locate equivalent elements or flows
@@ -187,15 +187,13 @@ When a test fails, the healing agent:
 
 * Failing test name
 
-**Example Prompt**
+**Prompt**
 
-```markdown
-<agent:healer> Fix all failing tests for the guest checkout scenario.
-```
+<img src={require("../images/test-agents/healer-prompt.png").src} alt="healer prompt" width="469"/>
 
 **Output**
 
-* A passing test, or a skipped test if the healer was unable to ensure correct functionality
+* A passing test, or a skipped test if the healer believes the that functionality is broken.
 
 ## Artifacts and Conventions
 
@@ -203,26 +201,24 @@ The static agent definitions and generated files follow a simple, auditable stru
 
 ```bash
 repo/
-  .{claude|copilot|vscode|...}/ # agent definitions, tools, guardrails
-  specs/                        # human-readable test plans
-    checkout-guest.md
-    account-settings.md
-  tests/                        # generated Playwright tests
-    seed.spec.ts
-    checkout-guest.spec.ts
-    account-settings.spec.ts
+  .github/                    # agent definitions
+  specs/                      # human-readable test plans
+    basic-operations.md
+  tests/                      # generated Playwright tests
+    seed.spec.ts              # seed test for environment
+    tests/create/add-valid-todo.spec.ts
   playwright.config.ts
 ```
 
 ### Agent Definitions
 
-Agent definitions are collections of instructions and MCP tools. They are provided by
+Under the hood, agent definitions are collections of instructions and MCP tools. They are provided by
 Playwright and should be regenerated whenever Playwright is updated.
 
 Example for Claude Code subagents:
 
 ```bash
-npx playwright init-agents --loop=claude
+npx playwright init-agents --loop=vscode
 ```
 
 ### Specs in `specs/`
