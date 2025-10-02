@@ -156,6 +156,26 @@ test('reset on pause tools', async () => {
   await mdbClient.close();
 });
 
+test('mdb has unguessable url', async () => {
+  let firstPathname: string | undefined;
+  let secondPathname: string | undefined;
+  {
+    const { mdbUrl } = await startMDBAndCLI();
+    firstPathname = new URL(mdbUrl).pathname;
+    const mdbClient = await createMDBClient(mdbUrl);
+    await mdbClient.close();
+  }
+  {
+    const { mdbUrl } = await startMDBAndCLI();
+    secondPathname = new URL(mdbUrl).pathname;
+    const mdbClient = await createMDBClient(mdbUrl);
+    await mdbClient.close();
+  }
+  expect(firstPathname.length).toBe(37);
+  expect(secondPathname.length).toBe(37);
+  expect(firstPathname).not.toBe(secondPathname);
+});
+
 async function startMDBAndCLI(): Promise<{ mdbUrl: string, log: string[] }> {
   const mdbUrlBox = { mdbUrl: undefined as string | undefined };
   const log: string[] = [];

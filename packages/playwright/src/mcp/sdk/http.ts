@@ -59,11 +59,12 @@ export function httpAddressToString(address: string | net.AddressInfo | null): s
   return `http://${resolvedHost}:${resolvedPort}`;
 }
 
-export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
+export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, unguessableUrl: boolean, allowedHosts?: string[]) {
   const url = httpAddressToString(httpServer.address());
   const host = new URL(url).host;
   allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
   const allowAnyHost = allowedHosts.includes('*');
+  const pathPrefix = unguessableUrl ? `/${crypto.randomUUID()}` : '';
 
   const sseSessions = new Map();
   const streamableSessions = new Map();
@@ -83,7 +84,13 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
       }
     }
 
-    const url = new URL(`http://localhost${req.url}`);
+    if (!req.url?.startsWith(pathPrefix)) {
+      res.statusCode = 404;
+      return res.end('Not found');
+    }
+
+    const path = req.url?.slice(pathPrefix.length);
+    const url = new URL(`http://localhost${path}`);
     if (url.pathname === '/killkillkill' && req.method === 'GET') {
       res.statusCode = 200;
       res.end('Killing process');
@@ -96,6 +103,8 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
     else
       await handleStreamable(serverBackendFactory, req, res, streamableSessions);
   });
+
+  return `${url}${pathPrefix}`;
 }
 
 async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, url: URL, sessions: Map<string, SSEServerTransport>) {
