@@ -1,5 +1,3 @@
-/* eslint-disable notice/notice */
-
 import { test, expect } from './fixtures';
 
 test('seed', async ({ page }) => {
