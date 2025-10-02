@@ -77,9 +77,16 @@
   box-shadow: 0 12px 28px 0 rgba(0,0,0,.2),0 2px 4px 0 rgba(0,0,0,.1);
 }
 
+.snapshot-browser-body {
+  height: calc(100% - var(--browser-frame-header-height));
+
+  /* CSS checkerboard */
+  background: conic-gradient(#eee 25%, #ddd 0 50%, #eee 0 75%, #ddd 0) 0 0 / 40px 40px;
+}
+
 .snapshot-switcher {
   width: 100%;
-  height: calc(100% - var(--browser-frame-header-height));
+  height: 100%;
   position: relative;
 }
 

@@ -195,23 +195,35 @@ const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
   const windowHeaderHeight = 40;
   const snapshotContainerSize = {
     width: snapshotInfo.viewport.width,
-    height: snapshotInfo.viewport.height + windowHeaderHeight,
+    height: snapshotInfo.viewport.height,
   };
 
-  const scale = Math.min(measure.width / snapshotContainerSize.width, measure.height / snapshotContainerSize.height, 1);
+  const renderedBrowserFrameSize = {
+    width: Math.max(snapshotContainerSize.width, 480),
+    height: Math.max(snapshotContainerSize.height + windowHeaderHeight, 320),
+  };
+
+  const scale = Math.min(measure.width / renderedBrowserFrameSize.width, measure.height / renderedBrowserFrameSize.height, 1);
   const translate = {
-    x: (measure.width - snapshotContainerSize.width) / 2,
-    y: (measure.height - snapshotContainerSize.height) / 2,
+    x: (measure.width - renderedBrowserFrameSize.width) / 2,
+    y: (measure.height - renderedBrowserFrameSize.height) / 2,
   };
 
   return <div ref={ref} className='snapshot-wrapper'>
     <div className='snapshot-container' style={{
-      width: snapshotContainerSize.width + 'px',
-      height: snapshotContainerSize.height + 'px',
+      width: renderedBrowserFrameSize.width + 'px',
+      height: renderedBrowserFrameSize.height + 'px',
       transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
     }}>
       <BrowserFrame url={snapshotInfo.url} />
-      {children}
+      <div className='snapshot-browser-body'>
+        <div style={{
+          width: snapshotContainerSize.width + 'px',
+          height: snapshotContainerSize.height + 'px',
+        }}>
+          {children}
+        </div>
+      </div>
     </div>
   </div>;
 };
