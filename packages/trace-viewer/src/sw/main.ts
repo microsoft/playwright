@@ -26,6 +26,12 @@ import { TraceVersionError } from './traceModernizer';
 // @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
 
+interface TraceViewerConnection {
+  limit: number | undefined;
+  traceUrls: Set<string>;
+  traceViewerServer: TraceViewerServer;
+}
+
 self.addEventListener('install', function(event: any) {
   self.skipWaiting();
 });
@@ -36,31 +42,36 @@ self.addEventListener('activate', function(event: any) {
 
 const scopePath = new URL(self.registration.scope).pathname;
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
-const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
+const clientIdToTraceUrls = new Map<string, TraceViewerConnection>();
 
 function simulateServiceWorkerRestart() {
   loadedTraces.clear();
   clientIdToTraceUrls.clear();
 }
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
-  await gc();
+function getOrCreateServerConnection(client: any, defaultLimit: number | undefined): TraceViewerConnection {
   const clientId = client?.id ?? '';
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
     const clientURL = new URL(client?.url ?? self.registration.scope);
     const traceViewerServerBaseUrl = new URL(clientURL.searchParams.get('server') ?? '../', clientURL);
-    data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
+    data = { limit: defaultLimit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
     clientIdToTraceUrls.set(clientId, data);
   }
-  data.traceUrls.add(traceUrl);
+  return data;
+}
+
+async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
+  await gc();
+  const traceViewConnection = getOrCreateServerConnection(client, limit);
+  traceViewConnection.traceUrls.add(traceUrl);
   await saveClientIdParams();
 
   const traceModel = new TraceModel();
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl, data.traceViewerServer) : new ZipTraceModelBackend(traceUrl, data.traceViewerServer, fetchProgress);
+    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl, traceViewConnection.traceViewerServer) : new ZipTraceModelBackend(traceUrl, traceViewConnection.traceViewerServer, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
@@ -181,12 +192,11 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 404 });
     }
 
-    if (relativePath.startsWith('/file/')) {
+    // There may be no trailing slash, and we only care about the `path` query param
+    if (relativePath === '/file') {
       const path = urlInScope.searchParams.get('path')!;
-      const traceViewerServer = clientIdToTraceUrls.get(event.clientId ?? '')?.traceViewerServer;
-      if (!traceViewerServer)
-        throw new Error('client is not initialized');
-      const response = await traceViewerServer.readFile(path);
+      const traceViewConnection = getOrCreateServerConnection(client, undefined);
+      const response = await traceViewConnection.traceViewerServer.readFile(path);
       if (!response)
         return new Response(null, { status: 404 });
       return response;
