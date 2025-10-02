@@ -6,6 +6,39 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.56
+
+### New APIs
+
+- New methods [`method: Page.consoleMessages`] and [`method: Page.pageErrors`] for retrieving the most recent console messages from the page
+- New method [`method: Page.requests`] for retrieving the most recent network requests from the page
+- Added `--test-list` and `--test-list-invert` to allow manual specification of specific tests from a file
+
+### UI Mode and HTML Reporter
+
+- Added option to `'html'` reporter to disable the "Copy prompt" button
+- Added option to `'html'` reporter to hide file groupings
+- Added option to UI Mode to hide file groupings
+- Added option to UI Mode mirroring the `--update-snapshots` options
+- Added option to UI Mode to run only a single worker at a time
+
+### Breaking Changes
+
+- Modified glob pattern matching to more closely match our documentation
+- Event [`event: BrowserContext.backgroundPage`] has been deprecated and will not be emitted. Method [`method: BrowserContext.backgroundPages`] will return an empty list
+- New Chromium screenshot implementation is now shipping by default
+
+### Miscellaneous
+
+- Aria snapshots render and compare `input` `placeholder`
+- Added environment variable `PLAYWRIGHT_TEST` to Playwright worker processes to allow discriminating on testing status
+
+### Browser Versions
+
+- Chromium 141.0.7390.37
+- Mozilla Firefox 142.0.1
+- WebKit 26.0
+
 ## Version 1.55
 
 ### New APIs
