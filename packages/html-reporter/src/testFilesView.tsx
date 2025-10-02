@@ -62,7 +62,7 @@ export const TestFilesView: React.FC<{
           }}>
         </TestFileView>;
       })
-      : <div className='chip-header no-test-files'>No tests found</div>}
+      : <div className='chip-header test-file-no-files'>No tests found</div>}
   </>;
 };
 
