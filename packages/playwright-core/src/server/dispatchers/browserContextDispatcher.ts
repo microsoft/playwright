@@ -327,7 +327,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
-    const recorder = Recorder.existingForContext(this._context);
+    const recorder = await Recorder.existingForContext(this._context);
     if (recorder)
       recorder.setMode('none');
   }
