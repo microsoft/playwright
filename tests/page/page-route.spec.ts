@@ -351,7 +351,7 @@ it('should fail navigation when aborting main resource', async ({ page, server, 
   expect(error).toBeTruthy();
   if (browserName === 'webkit')
     expect(error.message).toContain(isMac && macVersion < 11 ? 'Request intercepted' : 'Blocked by Web Inspector');
-  else if (channel.startsWith('moz-firefox'))
+  else if (channel?.startsWith('moz-firefox'))
     expect(error.message).toContain('NS_ERROR_ABORT');
   else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');
@@ -638,7 +638,7 @@ it('should support cors with GET', async ({ page, server, browserName, channel }
       expect(error.message).toContain('Failed');
     if (browserName === 'webkit')
       expect(error.message).toContain('TypeError');
-    if (browserName === 'firefox' || channel.startsWith('moz-firefox'))
+    if (browserName === 'firefox' || channel?.startsWith('moz-firefox'))
       expect(error.message).toContain('NetworkError');
   }
 });

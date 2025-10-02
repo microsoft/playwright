@@ -201,7 +201,7 @@ it('should use object previews for errors', async ({ page, browserName, channel 
     expect(text).toContain('.evaluate');
   if (browserName as any === '_bidiChromium')
     expect(text).toEqual('error');
-  if (browserName === 'webkit' || channel.startsWith('moz-firefox'))
+  if (browserName === 'webkit' || channel?.startsWith('moz-firefox'))
     expect(text).toEqual('Error: Exception');
   if (browserName === 'firefox')
     expect(text).toEqual('Error');
