@@ -1079,7 +1079,9 @@ await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
     ]);
 
     expect(sources.get('JavaScript')!.text).toContain(`
-  await page.locator('#source').dragTo(page.locator('#target'));`);
+  await page.locator('internal:text="Task"i').dragTo(page.locator('internal:text="Drop here"s')`);
+    expect(sources.get('JavaScript')!.text).toContain('sourcePosition');
+    expect(sources.get('JavaScript')!.text).toContain('targetPosition');
   });
 
   test('should click button with nested div', async ({ openRecorder }) => {
