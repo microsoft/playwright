@@ -18,6 +18,7 @@ import type { FilteredStats, HTMLReport, TestFileSummary } from './types';
 import * as React from 'react';
 import { TestFileView } from './testFileView';
 import './testFileView.css';
+import './chip.css';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { CodeSnippet } from './testErrorView';
@@ -42,24 +43,26 @@ export const TestFilesView: React.FC<{
     return result;
   }, [files]);
   return <>
-    {filteredFiles.map(({ file, defaultExpanded }) => {
-      return <TestFileView
-        key={`file-${file.fileId}`}
-        file={file}
-        projectNames={projectNames}
-        isFileExpanded={fileId => {
-          const value = expandedFiles.get(fileId);
-          if (value === undefined)
-            return defaultExpanded;
-          return !!value;
-        }}
-        setFileExpanded={(fileId, expanded) => {
-          const newExpanded = new Map(expandedFiles);
-          newExpanded.set(fileId, expanded);
-          setExpandedFiles(newExpanded);
-        }}>
-      </TestFileView>;
-    })}
+    {filteredFiles.length > 0 ?
+      filteredFiles.map(({ file, defaultExpanded }) => {
+        return <TestFileView
+          key={`file-${file.fileId}`}
+          file={file}
+          projectNames={projectNames}
+          isFileExpanded={fileId => {
+            const value = expandedFiles.get(fileId);
+            if (value === undefined)
+              return defaultExpanded;
+            return !!value;
+          }}
+          setFileExpanded={(fileId, expanded) => {
+            const newExpanded = new Map(expandedFiles);
+            newExpanded.set(fileId, expanded);
+            setExpandedFiles(newExpanded);
+          }}>
+        </TestFileView>;
+      })
+      : <div className='chip-header test-file-no-files'>No tests found</div>}
   </>;
 };
 
