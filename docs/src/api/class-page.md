@@ -2687,7 +2687,15 @@ Returns up to (currently) 200 last console messages from this page. See [`event:
 
 ## async method: Page.pageErrors
 * since: v1.56
+* langs: js, python
 - returns: <[Array]<[Error]>>
+
+Returns up to (currently) 200 last page errors from this page. See [`event: Page.pageError`] for more details.
+
+## async method: Page.pageErrors
+* since: v1.56
+* langs: csharp, java
+- returns: <[Array]<[string]>>
 
 Returns up to (currently) 200 last page errors from this page. See [`event: Page.pageError`] for more details.
 
