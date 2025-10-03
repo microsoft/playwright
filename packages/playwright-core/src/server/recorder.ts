@@ -100,8 +100,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return recorderPromise;
   }
 
-  static existingForContext(context: BrowserContext): Recorder | undefined {
-    return (context as any)[recorderSymbol] as Recorder;
+  static async existingForContext(context: BrowserContext): Promise<Recorder | undefined> {
+    const recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder> | undefined;
+    return await recorderPromise;
   }
 
   private static async _create(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams = {}): Promise<Recorder> {
