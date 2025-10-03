@@ -164,7 +164,7 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   const backend = new TraceBackend(file);
   const traceModel = new TraceModel();
   await traceModel.load(backend, () => {});
-  const model = new MultiTraceModel(traceModel.contextEntries);
+  const model = new MultiTraceModel(file, traceModel.contextEntries);
   const actions = model.filteredActions([]);
   const { rootItem } = buildActionTree(actions);
   const actionTree: string[] = [];

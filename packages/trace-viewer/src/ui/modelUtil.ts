@@ -85,12 +85,14 @@ export class MultiTraceModel {
   readonly sources: Map<string, SourceModel>;
   resources: ResourceSnapshot[];
   readonly actionCounters: Map<string, number>;
+  readonly traceUrl: string;
 
 
-  constructor(contexts: ContextEntry[]) {
+  constructor(traceUrl: string, contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
     const libraryContext = contexts.find(context => context.origin === 'library');
 
+    this.traceUrl = traceUrl;
     this.browserName = libraryContext?.browserName || '';
     this.sdkLanguage = libraryContext?.sdkLanguage;
     this.channel = libraryContext?.channel;
@@ -110,7 +112,7 @@ export class MultiTraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
-    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl: action.context.traceUrl })) ?? []);
+    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
     this.events.sort((a1, a2) => a1.time - a2.time);
@@ -179,30 +181,9 @@ function indexModel(context: ContextEntry) {
 }
 
 function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
-  const traceFileToContexts = new Map<string, ContextEntry[]>();
-  for (const context of contexts) {
-    const traceFile = context.traceUrl;
-    let list = traceFileToContexts.get(traceFile);
-    if (!list) {
-      list = [];
-      traceFileToContexts.set(traceFile, list);
-    }
-    list.push(context);
-  }
-
   const result: ActionTraceEventInContext[] = [];
-  let traceFileId = 0;
-  for (const [, contexts] of traceFileToContexts) {
-    // Action ids are unique only within a trace file. If there are
-    // traces from more than one file we make the ids unique across the
-    // files. The code does not update snapshot ids as they are always
-    // retrieved from a particular trace file.
-    if (traceFileToContexts.size > 1)
-      makeCallIdsUniqueAcrossTraceFiles(contexts, ++traceFileId);
-    // Align action times across runner and library contexts within each trace file.
-    const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
-    result.push(...actions);
-  }
+  const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
+  result.push(...actions);
 
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
@@ -227,17 +208,6 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     (result[i] as any)[nextByStartTimeSymbol] = result[i + 1];
 
   return result;
-}
-
-function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId: number) {
-  for (const context of contexts) {
-    for (const action of context.actions) {
-      if (action.callId)
-        action.callId = `${traceFileId}:${action.callId}`;
-      if (action.parentId)
-        action.parentId = `${traceFileId}:${action.parentId}`;
-    }
-  }
 }
 
 let lastTmpStepId = 0;
