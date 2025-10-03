@@ -301,6 +301,49 @@ jobs:
         run: dotnet test
 ```
 
+#### Via Containers (dynamic)
+* langs: js
+
+Setting the version of the container dynamically can be performed by retrieving the version of Playwright in a previous job. For example, if you install an exact version of Playwright, then it can be retrieved from `package.json`:
+
+```yml js title=".github/workflows/playwright.yml"
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  resolve-playwright-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps['resolve-playwright-version'].outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: resolve-playwright-version
+        id: resolve-playwright-version
+        run: |
+          version="$(yq -r '.devDependencies["@playwright/test"] // ""' package.json)"
+          test -n "$version" || { echo "No @playwright/test version found in package.json"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+  playwright:
+    name: 'Playwright Tests'
+    runs-on: ubuntu-latest
+    needs: resolve-playwright-version
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs['resolve-playwright-version'].outputs.version }}-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Run your tests
+        run: npx playwright test
+```
+
 #### On deployment
 
 This will start the tests after a [GitHub Deployment](https://developer.github.com/v3/repos/deployments/) went into the `success` state.
