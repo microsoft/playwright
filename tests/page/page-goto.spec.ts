@@ -295,10 +295,12 @@ it('should work when page calls history API in beforeunload', async ({ page, ser
 it('should fail when navigating to bad url', async ({ page, browserName, channel }) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
-  if (browserName === 'chromium' || browserName === 'webkit')
-    expect(error.message).toContain('Cannot navigate to invalid URL');
+  if (channel?.startsWith('bidi-chrom'))
+    expect(error.message).toContain('Invalid URL');
   else if (channel?.startsWith('moz-firefox'))
     expect(error.message).toContain('NS_ERROR_MALFORMED_URI');
+  else if (browserName === 'chromium' || browserName === 'webkit')
+    expect(error.message).toContain('Cannot navigate to invalid URL');
   else
     expect(error.message).toContain('Invalid url');
 });

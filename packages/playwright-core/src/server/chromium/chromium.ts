@@ -44,7 +44,9 @@ import type { SdkObject } from '../instrumentation';
 import type { Progress } from '../progress';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
+import type { BrowserContext } from '../browserContext';
 import type * as types from '../types';
+import type * as channels from '@protocol/channels';
 import type http from 'http';
 import type stream from 'stream';
 
@@ -52,12 +54,26 @@ const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
+  private _bidiChromium: BrowserType;
 
-  constructor(parent: SdkObject) {
+  constructor(parent: SdkObject, bidiChromium: BrowserType) {
     super(parent, 'chromium');
+    this._bidiChromium = bidiChromium;
 
     if (debugMode() === 'inspector')
       this._devtools = this._createDevTools();
+  }
+
+  override launch(progress: Progress, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+    if (options.channel?.startsWith('bidi-'))
+      return this._bidiChromium.launch(progress, options, protocolLogger);
+    return super.launch(progress, options, protocolLogger);
+  }
+
+  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+    if (options.channel?.startsWith('bidi-'))
+      return this._bidiChromium.launchPersistentContext(progress, userDataDir, options);
+    return super.launchPersistentContext(progress, userDataDir, options);
   }
 
   override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }) {

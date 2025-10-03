@@ -403,9 +403,6 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac15-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
-  // TODO(bidi): implement downloads.
-  '_bidiChromium': {
-  } as DownloadPaths,
 };
 
 export const registryDirectory = (() => {
@@ -500,7 +497,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
   });
 }
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit' | '_bidiChromium';
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type InternalTool = 'ffmpeg' | 'winldd' | 'firefox-beta' | 'chromium-tip-of-tree' | 'chromium-headless-shell' | 'chromium-tip-of-tree-headless-shell' | 'android';
 type BidiChannel = 'moz-firefox' | 'moz-firefox-beta' | 'moz-firefox-nightly' | 'bidi-chrome-canary' | 'bidi-chrome-stable' | 'bidi-chromium';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
@@ -737,9 +734,9 @@ export class Registry {
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
     }));
     this._executables.push({
-      type: 'browser',
-      name: '_bidiChromium',
-      browserName: '_bidiChromium',
+      type: 'channel',
+      name: 'bidi-chromium',
+      browserName: 'chromium',
       directory: chromium.dir,
       executablePath: () => chromiumExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
@@ -1005,7 +1002,7 @@ export class Registry {
     return {
       type: 'channel',
       name,
-      browserName: '_bidiChromium',
+      browserName: 'chromium',
       directory: undefined,
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,

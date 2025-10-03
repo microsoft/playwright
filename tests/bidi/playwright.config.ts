@@ -71,17 +71,17 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-type BrowserName = '_bidiChromium' | 'firefox';
+type BrowserName = 'chromium' | 'firefox';
 
 const getExecutablePath = (browserName: BrowserName) => {
-  if (browserName === '_bidiChromium')
+  if (browserName === 'chromium')
     return process.env.BIDI_CRPATH;
   if (browserName === 'firefox')
     return process.env.BIDI_FFPATH;
 };
 
 const browserToChannels = {
-  '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
+  'chromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
   'firefox': ['moz-firefox', 'moz-firefox-beta', 'moz-firefox-nightly'],
 };
 

@@ -67,14 +67,14 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   allowsThirdParty: [async ({ browserName, channel }, run) => {
-    if (browserName === 'firefox' || channel?.startsWith('moz-firefox'))
+    if (browserName === 'firefox')
       await run(true);
     else
       await run(false);
   }, { scope: 'worker' }],
 
   defaultSameSiteCookieValue: [async ({ browserName, platform, channel }, run) => {
-    if (browserName === 'chromium' || browserName as any === '_bidiChromium' || channel?.startsWith('moz-firefox'))
+    if (browserName === 'chromium' || channel?.startsWith('moz-firefox'))
       await run('Lax');
     else if (browserName === 'webkit' && (platform === 'linux' || channel === 'webkit-wsl'))
       await run('Lax');
