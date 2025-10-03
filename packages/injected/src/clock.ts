@@ -69,6 +69,7 @@ export class ClockController {
   private _log: { type: LogEntryType, time: number, param?: number }[] = [];
   private _realTime: { startTicks: EmbedderTicks, lastSyncTicks: EmbedderTicks } | undefined;
   private _currentRealTimeTimer: { callAt: Ticks, dispose: () => void } | undefined;
+  private _realTimerRunToPromise = Promise.resolve();
 
   constructor(embedder: Embedder) {
     this._timers = new Map();
@@ -169,10 +170,16 @@ export class ClockController {
 
   async pauseAt(time: number): Promise<number> {
     this._replayLogOnce();
-    this._innerPause();
+    await this._innerPauseLetFinish();
     const toConsume = time - this._now.time;
     await this._innerFastForwardTo(shiftTicks(this._now.ticks, toConsume));
     return toConsume;
+  }
+
+  private async _innerPauseLetFinish() {
+    this._innerPause();
+    await this._realTimerRunToPromise;
+    this._realTimerRunToPromise = Promise.resolve();
   }
 
   private _innerPause() {
@@ -216,14 +223,21 @@ export class ClockController {
         this._currentRealTimeTimer = undefined;
         this._syncRealTime();
         // eslint-disable-next-line no-console
-        void this._runTo(this._now.ticks).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
+        this._realTimerRunToPromise = this._realTimerRunToPromise.then(() => this._runTo(this._now.ticks).catch(e => console.error(e)));
+        void this._realTimerRunToPromise.then(() => this._updateRealTimeTimer());
       }, callAt - this._now.ticks),
     };
   }
 
   async fastForward(ticks: number) {
     this._replayLogOnce();
-    await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+    if (this._realTime) {
+      await this._innerPauseLetFinish();
+      await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+      this._innerResume();
+    } else {
+      await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+    }
   }
 
   private async _innerFastForwardTo(to: Ticks) {
