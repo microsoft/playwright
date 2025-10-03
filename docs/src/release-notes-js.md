@@ -18,7 +18,19 @@ Introducing Playwright Agents, three custom agent definitions designed to guide 
 
 * **🎭 healer** executes the test suite and automatically repairs failing tests
 
-[Learn more about how to use the agents](https://playwright.dev/docs/next/test-agents)
+Run `npx playwright init-agents` with your client of choice to generate the latest agent definitions:
+
+```bash
+# Generate agent files for each agentic loop
+# Visual Studio Code
+npx playwright init-agents --loop=vscode
+# Claude Code
+npx playwright init-agents --loop=claude
+# opencode
+npx playwright init-agents --loop=opencode
+```
+
+[Learn more about Playwright Agents](./test-agents.md)
 
 ### New APIs
 
@@ -29,13 +41,12 @@ Introducing Playwright Agents, three custom agent definitions designed to guide 
 ### UI Mode and HTML Reporter
 
 - Added option to `'html'` reporter to disable the "Copy prompt" button
-- Added option to `'html'`  and UI Mode to merge files, collapsing tests and describes into a single list
+- Added option to `'html'` reporter and UI Mode to merge files, collapsing test and describe blocks into a single unified list
 - Added option to UI Mode mirroring the `--update-snapshots` options
 - Added option to UI Mode to run only a single worker at a time
 
 ### Breaking Changes
 
-- Modified glob pattern matching to more closely match our documentation
 - Event [`event: BrowserContext.backgroundPage`] has been deprecated and will not be emitted. Method [`method: BrowserContext.backgroundPages`] will return an empty list
 
 ### Miscellaneous
