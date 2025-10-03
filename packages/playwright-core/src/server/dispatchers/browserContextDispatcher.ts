@@ -25,7 +25,7 @@ import { Dispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { CRBrowserContext } from '../chromium/crBrowser';
+import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { serializeError } from '../errors';
 import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
@@ -136,7 +136,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     };
     context.dialogManager.addDialogHandler(this._dialogHandler);
 
-    if (context._browser.options.name === 'chromium') {
+    if (context._browser.options.name === 'chromium' && this._object._browser instanceof CRBrowser) {
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) });
       this.addObjectListener(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) }));

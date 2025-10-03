@@ -18,7 +18,7 @@
 import { contextTest as it } from '../config/browserTest';
 
 it('should load svg favicon with prefer-color-scheme', async ({ page, server, browserName, headless, asset, channel }) => {
-  it.skip(headless && browserName !== 'firefox' && !channel?.startsWith('moz-firefox'), 'headless browsers, except firefox, do not request favicons');
+  it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit', 'headed webkit does not have a favicon feature');
 
   // Browsers aggressively cache favicons, so force bust with the

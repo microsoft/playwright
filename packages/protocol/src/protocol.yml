@@ -794,7 +794,6 @@ Playwright:
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
-    _bidiChromium: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?

@@ -29,7 +29,6 @@ import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
   readonly _electron: Electron;
-  readonly _bidiChromium: BrowserType;
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -57,8 +56,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this._android._playwright = this;
     this._electron = Electron.from(initializer.electron);
     this._electron._playwright = this;
-    this._bidiChromium = BrowserType.from(initializer._bidiChromium);
-    this._bidiChromium._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors(this._connection._platform);
     this.errors = { TimeoutError };
@@ -69,7 +66,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   }
 
   private _browserTypes(): BrowserType[] {
-    return [this.chromium, this.firefox, this.webkit, this._bidiChromium];
+    return [this.chromium, this.firefox, this.webkit];
   }
 
   _preLaunchedBrowser(): Browser {
