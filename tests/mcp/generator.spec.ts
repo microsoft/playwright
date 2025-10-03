@@ -101,7 +101,7 @@ test('generator_setup_page', async ({ startClient }) => {
   expect(await client.callTool({
     name: 'generator_read_log',
     arguments: {},
-  })).toHaveTextResponse(`# Plan
+  })).toHaveTextResponse(expect.stringContaining(`# Plan
 
 Test plan
 
@@ -125,7 +125,11 @@ Test plan
 ### Click submit button
 \`\`\`ts
 await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\``);
+\`\`\`
+
+
+# Best practices
+`));
 });
 
 test('click after generator_log_action', async ({ startClient }) => {
@@ -164,7 +168,7 @@ test('click after generator_log_action', async ({ startClient }) => {
   expect(await client.callTool({
     name: 'generator_read_log',
     arguments: {},
-  })).toHaveTextResponse(`# Plan
+  })).toHaveTextResponse(expect.stringContaining(`# Plan
 
 Test plan
 
@@ -188,7 +192,11 @@ Test plan
 ### Click submit button
 \`\`\`ts
 await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\``);
+\`\`\`
+
+
+# Best practices
+`));
 });
 
 test('generator_setup_page is required', async ({ startClient }) => {
