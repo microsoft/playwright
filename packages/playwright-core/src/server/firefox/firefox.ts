@@ -43,7 +43,7 @@ export class Firefox extends BrowserType {
   }
 
   override launch(progress: Progress, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
-    if (options.channel && options.channel.startsWith('moz-'))
+    if (options.channel?.startsWith('moz-'))
       return this._bidiFirefox.launch(progress, options, protocolLogger);
     return super.launch(progress, options, protocolLogger);
   }
