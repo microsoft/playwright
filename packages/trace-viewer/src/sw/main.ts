@@ -36,19 +36,19 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
+type ClientData = {
+  traceUrl: string;
+  traceViewerServer: TraceViewerServer
+};
+const clientIdToTraceUrls = new Map<string, ClientData>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
-  await gc();
+async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   const clientId = client?.id ?? '';
-  let data = clientIdToTraceUrls.get(clientId);
-  if (!data) {
-    const clientURL = new URL(client?.url ?? self.registration.scope);
-    const traceViewerServerBaseUrl = new URL(clientURL.searchParams.get('server') ?? '../', clientURL);
-    data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
-    clientIdToTraceUrls.set(clientId, data);
-  }
-  data.traceUrls.add(traceUrl);
+  const clientURL = new URL(client?.url ?? self.registration.scope);
+  const traceViewerServerBaseUrl = new URL(clientURL.searchParams.get('server') ?? '../', clientURL);
+  const data: ClientData = { traceUrl, traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
+  clientIdToTraceUrls.set(clientId, data);
+  await gc();
 
   const traceModel = new TraceModel();
   try {
@@ -106,8 +106,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath === '/contexts') {
       try {
-        const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
-        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), client, limit, (done: number, total: number) => {
+        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), client, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntries), {
@@ -209,12 +208,7 @@ async function gc() {
       clientIdToTraceUrls.delete(clientId);
       continue;
     }
-    if (data.limit !== undefined) {
-      const ordered = [...data.traceUrls];
-      // Leave the newest requested traces.
-      data.traceUrls = new Set(ordered.slice(ordered.length - data.limit));
-    }
-    data.traceUrls.forEach(url => usedTraces.add(url));
+    usedTraces.add(data.traceUrl);
   }
 
   for (const traceUrl of loadedTraces.keys()) {

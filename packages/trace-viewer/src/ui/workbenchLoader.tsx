@@ -15,7 +15,6 @@
 */
 
 import * as React from 'react';
-import type { ContextEntry } from '../types/entries';
 import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
@@ -27,8 +26,8 @@ import { DefaultSettingsView } from './defaultSettingsView';
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
   const [isServer, setIsServer] = React.useState<boolean>(false);
-  const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
-  const [uploadedTraceNames, setUploadedTraceNames] = React.useState<string[]>([]);
+  const [traceURL, setTraceURL] = React.useState<string>();
+  const [uploadedTraceName, setUploadedTraceName] = React.useState<string>();
   const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
@@ -37,25 +36,19 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [showProgressDialog, setShowProgressDialog] = React.useState<boolean>(false);
 
   const processTraceFiles = React.useCallback((files: FileList) => {
-    const blobUrls = [];
-    const fileNames = [];
     const url = new URL(window.location.href);
-    for (let i = 0; i < files.length; i++) {
-      const file = files.item(i);
-      if (!file)
-        continue;
-      const blobTraceURL = URL.createObjectURL(file);
-      blobUrls.push(blobTraceURL);
-      fileNames.push(file.name);
-      url.searchParams.append('trace', blobTraceURL);
-      url.searchParams.append('traceFileName', file.name);
-    }
+    if (!files.length)
+      return;
+    const file = files.item(0)!;
+    const blobTraceURL = URL.createObjectURL(file);
+    url.searchParams.append('trace', blobTraceURL);
+    url.searchParams.append('traceFileName', file.name);
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
     // so set it here.
     window.history.pushState({}, '', href);
-    setTraceURLs(blobUrls);
-    setUploadedTraceNames(fileNames);
+    setTraceURL(blobTraceURL);
+    setUploadedTraceName(file.name);
     setDragOver(false);
     setProcessingErrorMessage(null);
   }, []);
@@ -106,15 +99,13 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
   React.useEffect(() => {
     const params = new URL(window.location.href).searchParams;
-    const newTraceURLs = params.getAll('trace');
+    const url = params.get('trace');
     setIsServer(params.has('isServer'));
 
     // Don't accept file:// URLs - this means we re opened locally.
-    for (const url of newTraceURLs) {
-      if (url.startsWith('file:')) {
-        setFileForLocalModeError(url || null);
-        return;
-      }
+    if (url?.startsWith('file:')) {
+      setFileForLocalModeError(url || null);
+      return;
     }
 
     if (params.has('isServer')) {
@@ -123,52 +114,52 @@ export const WorkbenchLoader: React.FunctionComponent<{
       wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
       const testServerConnection = new TestServerConnection(new WebSocketTestServerTransport(wsURL));
       testServerConnection.onLoadTraceRequested(async params => {
-        setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
+        setTraceURL(params.traceUrl);
         setDragOver(false);
         setProcessingErrorMessage(null);
       });
       testServerConnection.initialize({}).catch(() => {});
-    } else if (!newTraceURLs.some(url => url.startsWith('blob:'))) {
+    } else if (url && !url.startsWith('blob:')) {
       // Don't re-use blob file URLs on page load (results in Fetch error)
-      setTraceURLs(newTraceURLs);
+      setTraceURL(url);
     }
   }, []);
 
   React.useEffect(() => {
     (async () => {
-      if (traceURLs.length) {
-        const swListener = (event: any) => {
-          if (event.data.method === 'progress')
-            setProgress(event.data.params);
-        };
+      if (!traceURL) {
+        setModel(emptyModel);
+        return;
+      }
+
+      const swListener = (event: any) => {
+        if (event.data.method === 'progress')
+          setProgress(event.data.params);
+      };
+      try {
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
-        const contextEntries: ContextEntry[] = [];
-        for (let i = 0; i < traceURLs.length; i++) {
-          const url = traceURLs[i];
-          const params = new URLSearchParams();
-          params.set('trace', url);
-          if (uploadedTraceNames.length)
-            params.set('traceFileName', uploadedTraceNames[i]);
-          params.set('limit', String(traceURLs.length));
-          const response = await fetch(`contexts?${params.toString()}`);
-          if (!response.ok) {
-            if (!isServer)
-              setTraceURLs([]);
-            setProcessingErrorMessage((await response.json()).error);
-            return;
-          }
-          contextEntries.push(...(await response.json()));
+
+        const params = new URLSearchParams();
+        params.set('trace', traceURL);
+        if (uploadedTraceName)
+          params.set('traceFileName', uploadedTraceName);
+        const response = await fetch(`contexts?${params.toString()}`);
+        if (!response.ok) {
+          if (!isServer)
+            setTraceURL(undefined);
+          setProcessingErrorMessage((await response.json()).error);
+          return;
         }
-        navigator.serviceWorker.removeEventListener('message', swListener);
-        const model = new MultiTraceModel(contextEntries);
+        const contextEntries = await response.json();
+        const model = new MultiTraceModel(traceURL, contextEntries);
         setProgress({ done: 0, total: 0 });
         setModel(model);
-      } else {
-        setModel(emptyModel);
+      } finally {
+        navigator.serviceWorker.removeEventListener('message', swListener);
       }
     })();
-  }, [isServer, traceURLs, uploadedTraceNames]);
+  }, [isServer, traceURL, uploadedTraceName]);
 
   const showLoading = progress.done !== progress.total && progress.total !== 0 && !processingErrorMessage;
 
@@ -184,7 +175,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     }
   }, [showLoading]);
 
-  const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage));
+  const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURL || processingErrorMessage));
 
   return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header' {...(showFileUploadDropArea ? { inert: true } : {})}>
@@ -222,14 +213,13 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <button onClick={() => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.multiple = true;
         input.click();
         input.addEventListener('change', e => handleFileInputChange(e));
       }} type='button'>Select file(s)</button>
       <div style={{ maxWidth: 400 }}>Playwright Trace Viewer is a Progressive Web App, it does not send your trace anywhere,
         it opens it locally.</div>
     </div>}
-    {isServer && !traceURLs.length && <div className='drop-target'>
+    {isServer && !traceURL && <div className='drop-target'>
       <div className='title'>Select test to see the trace</div>
     </div>}
     {dragOver && <div className='drop-target'
@@ -240,4 +230,4 @@ export const WorkbenchLoader: React.FunctionComponent<{
   </div>;
 };
 
-export const emptyModel = new MultiTraceModel([]);
+export const emptyModel = new MultiTraceModel('', []);
