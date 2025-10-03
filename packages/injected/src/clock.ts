@@ -59,6 +59,26 @@ type Time = {
 
 type LogEntryType = 'fastForward' |'install' | 'pauseAt' | 'resume' | 'runFor' | 'setFixedTime' | 'setSystemTime';
 
+class Semaphore {
+  private _queue: (() => void)[] | undefined;
+
+  acquire() {
+    if (!this._queue) {
+      this._queue = [];
+      return Promise.resolve();
+    }
+    return new Promise<void>(f => this._queue!.push(f));
+  }
+
+  release() {
+    const next = this._queue?.shift();
+    if (next)
+      next();
+    else
+      this._queue = undefined;
+  }
+}
+
 export class ClockController {
   readonly _now: Time;
   private _duringTick = false;
@@ -69,11 +89,36 @@ export class ClockController {
   private _log: { type: LogEntryType, time: number, param?: number }[] = [];
   private _realTime: { startTicks: EmbedderTicks, lastSyncTicks: EmbedderTicks } | undefined;
   private _currentRealTimeTimer: { callAt: Ticks, dispose: () => void } | undefined;
+  private _runToSemaphore: Semaphore;
+  private _strictMode = false;
 
   constructor(embedder: Embedder) {
     this._timers = new Map();
     this._now = { time: asWallTime(0), isFixedTime: false, ticks: 0 as Ticks, origin: asWallTime(-1) };
     this._embedder = embedder;
+    this._runToSemaphore = new Semaphore();
+  }
+
+  debugDump(title?: string) {
+    const lines = [
+      `=== ${title || 'Clock dump'} ===`,
+      `Now: ${this._now.ticks} ticks${this._now.isFixedTime ? ' [fixed]' : ''} date=${this._now.time}`,
+      `Timers:`,
+      ...Array.from(this._timers.values()).map(timer => {
+        return `  ${timer.type} created at ${timer.createdAt}, call at ${timer.callAt}, delay ${timer.delay}`;
+      }),
+    ];
+    if (this._realTime)
+      lines.push(`Real time: started at ${this._realTime.startTicks}, last sync at ${this._realTime.lastSyncTicks}`);
+    if (this._currentRealTimeTimer)
+      lines.push(`Next real time sync at: ${this._currentRealTimeTimer.callAt}`);
+    lines.push('');
+    // eslint-disable-next-line no-console
+    console.log(lines.join('\n'));
+  }
+
+  setStrictModeForTests() {
+    this._strictMode = true;
   }
 
   uninstall() {
@@ -83,7 +128,8 @@ export class ClockController {
 
   now(): number {
     this._replayLogOnce();
-    this._syncRealTime();
+    // Sync real time to support calling Date.now() in a loop.
+    this._advanceNow(this._syncRealTime() ?? this._now.ticks);
     return this._now.time;
   }
 
@@ -104,18 +150,19 @@ export class ClockController {
 
   performanceNow(): DOMHighResTimeStamp {
     this._replayLogOnce();
-    this._syncRealTime();
+    // Sync real time to support calling performance.now() in a loop.
+    this._advanceNow(this._syncRealTime() ?? this._now.ticks);
     return this._now.ticks;
   }
 
-  private _syncRealTime() {
+  private _syncRealTime(): Ticks | undefined {
     if (!this._realTime)
       return;
     const now = this._embedder.performanceNow();
     const sinceLastSync = now - this._realTime.lastSyncTicks;
     if (sinceLastSync > 0) {
-      this._advanceNow(shiftTicks(this._now.ticks, sinceLastSync));
       this._realTime.lastSyncTicks = now;
+      return shiftTicks(this._now.ticks, sinceLastSync);
     }
   }
 
@@ -132,6 +179,11 @@ export class ClockController {
   }
 
   private _advanceNow(to: Ticks) {
+    if (this._now.ticks > to) {
+      if (this._strictMode)
+        throw new Error(`Advancing to the past in strict mode ${this._now.ticks} -> ${to}`);
+      return;
+    }
     if (!this._now.isFixedTime)
       this._now.time = asWallTime(this._now.time + to - this._now.ticks);
     this._now.ticks = to;
@@ -145,33 +197,45 @@ export class ClockController {
     this._replayLogOnce();
     if (ticks < 0)
       throw new TypeError('Negative ticks are not supported');
-    await this._runTo(shiftTicks(this._now.ticks, ticks));
+    await this._runTo(() => shiftTicks(this._now.ticks, ticks));
   }
 
-  private async _runTo(to: Ticks) {
-    to = Math.ceil(to) as Ticks;
+  private async _runTo(calculateTo: () => Ticks) {
+    // Since running timers is an async operation, avoid re-entrancy.
+    await this._runToSemaphore.acquire();
 
-    if (this._now.ticks > to)
-      return;
+    try {
+      const to = Math.ceil(calculateTo()) as Ticks;
 
-    let firstException: Error | undefined;
-    while (true) {
-      const result = await this._callFirstTimer(to);
-      if (!result.timerFound)
-        break;
-      firstException = firstException || result.error;
+      let firstException: Error | undefined;
+      while (true) {
+        const result = await this._callFirstTimer(to);
+        if (!result.timerFound)
+          break;
+        firstException = firstException || result.error;
+      }
+
+      // While running the timers, it is possible to advance past `to`
+      // by syncing with real time from within now() or performance.now().
+      if (this._now.ticks < to)
+        this._advanceNow(to);
+      this._updateRealTimeTimer();
+
+      if (firstException)
+        throw firstException;
+    } finally {
+      this._runToSemaphore.release();
     }
-
-    this._advanceNow(to);
-    if (firstException)
-      throw firstException;
   }
 
   async pauseAt(time: number): Promise<number> {
     this._replayLogOnce();
     this._innerPause();
-    const toConsume = time - this._now.time;
-    await this._innerFastForwardTo(shiftTicks(this._now.ticks, toConsume));
+    let toConsume = 0;
+    await this._innerFastForwardTo(() => {
+      toConsume = time - this._now.time;
+      return shiftTicks(this._now.ticks, toConsume);
+    });
     return toConsume;
   }
 
@@ -214,26 +278,30 @@ export class ClockController {
       callAt,
       dispose: this._embedder.setTimeout(() => {
         this._currentRealTimeTimer = undefined;
-        this._syncRealTime();
-        // eslint-disable-next-line no-console
-        void this._runTo(this._now.ticks).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
+        void this._runTo(() => this._syncRealTime() ?? this._now.ticks);
       }, callAt - this._now.ticks),
     };
   }
 
   async fastForward(ticks: number) {
     this._replayLogOnce();
-    await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+    await this._innerFastForwardTo(() => {
+      this._advanceNow(this._syncRealTime() ?? this._now.ticks);
+      return shiftTicks(this._now.ticks, ticks | 0);
+    });
   }
 
-  private async _innerFastForwardTo(to: Ticks) {
-    if (to < this._now.ticks)
-      throw new Error('Cannot fast-forward to the past');
-    for (const timer of this._timers.values()) {
-      if (to > timer.callAt)
-        timer.callAt = to;
-    }
-    await this._runTo(to);
+  private async _innerFastForwardTo(calculateTo: () => Ticks) {
+    await this._runTo(() => {
+      const to = calculateTo();
+      if (to < this._now.ticks)
+        throw new Error('Cannot fast-forward to the past');
+      for (const timer of this._timers.values()) {
+        if (to > timer.callAt)
+          timer.callAt = to;
+      }
+      return to;
+    });
   }
 
   addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: any[] }): number {
@@ -288,7 +356,11 @@ export class ClockController {
     if (!timer)
       return null;
 
-    this._advanceNow(timer.callAt);
+    if (timer.callAt > this._now.ticks) {
+      // When the system is busy, a timer can be called late, which means we should not
+      // rewind back from |now| to |timer.callAt|.
+      this._advanceNow(timer.callAt);
+    }
 
     if (timer.type === TimerType.Interval)
       timer.callAt = shiftTicks(timer.callAt, timer.delay);
@@ -339,6 +411,9 @@ export class ClockController {
   }
 
   getTimeToNextFrame() {
+    // When `window.requestAnimationFrame` is the first call in the page,
+    // this place is the first API call, so replay the log.
+    this._replayLogOnce();
     return 16 - this._now.ticks % 16;
   }
 
