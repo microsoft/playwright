@@ -344,17 +344,17 @@ it('should send referer', async ({ page, server }) => {
   expect(request.headers['referer']).toBe('http://google.com/');
 });
 
-it('should fail navigation when aborting main resource', async ({ page, server, browserName, isMac, macVersion }) => {
+it('should fail navigation when aborting main resource', async ({ page, server, browserName, isMac, macVersion, channel }) => {
   await page.route('**/*', route => route.abort());
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
   if (browserName === 'webkit')
     expect(error.message).toContain(isMac && macVersion < 11 ? 'Request intercepted' : 'Blocked by Web Inspector');
+  else if (channel?.startsWith('moz-firefox'))
+    expect(error.message).toContain('NS_ERROR_ABORT');
   else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');
-  else if (browserName === '_bidiFirefox')
-    expect(error.message).toContain('NS_ERROR_ABORT');
   else
     expect(error.message).toContain('net::ERR_FAILED');
 });
@@ -609,7 +609,7 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
   }
 });
 
-it('should support cors with GET', async ({ page, server, browserName }) => {
+it('should support cors with GET', async ({ page, server, browserName, channel }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars*', async (route, request) => {
     const headers = { 'access-control-allow-origin': request.url().endsWith('allow') ? '*' : 'none' };
@@ -638,7 +638,7 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
       expect(error.message).toContain('Failed');
     if (browserName === 'webkit')
       expect(error.message).toContain('TypeError');
-    if (browserName === 'firefox' || browserName === '_bidiFirefox')
+    if (browserName === 'firefox' || channel?.startsWith('moz-firefox'))
       expect(error.message).toContain('NetworkError');
   }
 });

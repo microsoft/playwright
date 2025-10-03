@@ -53,7 +53,7 @@ export async function verifyViewport(page: Page, width: number, height: number) 
   expect(await page.evaluate('window.innerHeight')).toBe(height);
 }
 
-export function expectedSSLError(browserName: string, platform: string, channel: string): RegExp {
+export function expectedSSLError(browserName: string, platform: string, channel: string | undefined): RegExp {
   if (browserName === 'chromium')
     return /net::(ERR_CERT_AUTHORITY_INVALID|ERR_CERT_INVALID)/;
   if (browserName === 'webkit') {
@@ -64,7 +64,7 @@ export function expectedSSLError(browserName: string, platform: string, channel:
     else
       return /Unacceptable TLS certificate|Operation was cancelled/;
   }
-  if (browserName === '_bidiFirefox')
+  if (channel?.startsWith('moz-firefox'))
     return /MOZILLA_PKIX_ERROR_SELF_SIGNED_CERT/;
   return /SSL_ERROR_UNKNOWN/;
 }

@@ -30,7 +30,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
   readonly _electron: Electron;
   readonly _bidiChromium: BrowserType;
-  readonly _bidiFirefox: BrowserType;
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -60,8 +59,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this._electron._playwright = this;
     this._bidiChromium = BrowserType.from(initializer._bidiChromium);
     this._bidiChromium._playwright = this;
-    this._bidiFirefox = BrowserType.from(initializer._bidiFirefox);
-    this._bidiFirefox._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors(this._connection._platform);
     this.errors = { TimeoutError };
@@ -72,7 +69,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   }
 
   private _browserTypes(): BrowserType[] {
-    return [this.chromium, this.firefox, this.webkit, this._bidiChromium, this._bidiFirefox];
+    return [this.chromium, this.firefox, this.webkit, this._bidiChromium];
   }
 
   _preLaunchedBrowser(): Browser {

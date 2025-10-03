@@ -404,8 +404,6 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'win64': 'builds/android/%s/android.zip',
   },
   // TODO(bidi): implement downloads.
-  '_bidiFirefox': {
-  } as DownloadPaths,
   '_bidiChromium': {
   } as DownloadPaths,
 };
@@ -502,7 +500,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
   });
 }
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit' | '_bidiFirefox' | '_bidiChromium';
+export type BrowserName = 'chromium' | 'firefox' | 'webkit' | '_bidiChromium';
 type InternalTool = 'ffmpeg' | 'winldd' | 'firefox-beta' | 'chromium-tip-of-tree' | 'chromium-headless-shell' | 'chromium-tip-of-tree-headless-shell' | 'android';
 type BidiChannel = 'moz-firefox' | 'moz-firefox-beta' | 'moz-firefox-nightly' | 'bidi-chrome-canary' | 'bidi-chrome-stable' | 'bidi-chromium';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
@@ -958,13 +956,13 @@ export class Registry {
           return executablePath;
       }
       if (shouldThrow)
-        throw new Error(`Cannot find Firefox installation for channel '${name}' at the standard system paths.`);
+        throw new Error(`Cannot find Firefox installation for channel '${name}' at the standard system paths. ${`Tried paths:\n  ${prefixes.map(p => path.join(p, suffix)).join('\n  ')}`}`);
       return undefined;
     };
     return {
       type: 'channel',
       name,
-      browserName: '_bidiFirefox',
+      browserName: 'firefox',
       directory: undefined,
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,

@@ -140,7 +140,7 @@ test('should not throw UnhandledPromiseRejection when page closes', async ({ pag
   ]).catch(e => {});
 });
 
-test('interrupt request.response() and request.allHeaders() on page.close', async ({ page, server, browserName }) => {
+test('interrupt request.response() and request.allHeaders() on page.close', async ({ page, server, browserName, channel }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27227' });
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
@@ -153,7 +153,7 @@ test('interrupt request.response() and request.allHeaders() on page.close', asyn
   await page.close();
   expect((await respPromise).message).toContain(kTargetClosedErrorMessage);
   // All headers are the same as "provisional" headers in Firefox.
-  if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
+  if (browserName === 'firefox' || channel?.startsWith('moz-firefox'))
     expect((await headersPromise)['user-agent']).toBeTruthy();
   else
     expect((await headersPromise).message).toContain(kTargetClosedErrorMessage);

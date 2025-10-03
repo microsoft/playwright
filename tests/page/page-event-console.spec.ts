@@ -191,7 +191,7 @@ it('should use object previews for arrays and objects', async ({ page, browserNa
     expect(text).toEqual('Array JSHandle@object JSHandle@object');
 });
 
-it('should use object previews for errors', async ({ page, browserName }) => {
+it('should use object previews for errors', async ({ page, browserName, channel }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();
@@ -201,7 +201,7 @@ it('should use object previews for errors', async ({ page, browserName }) => {
     expect(text).toContain('.evaluate');
   if (browserName as any === '_bidiChromium')
     expect(text).toEqual('error');
-  if (browserName === 'webkit' || browserName as any === '_bidiFirefox')
+  if (browserName === 'webkit' || channel?.startsWith('moz-firefox'))
     expect(text).toEqual('Error: Exception');
   if (browserName === 'firefox')
     expect(text).toEqual('Error');

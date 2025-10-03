@@ -92,7 +92,7 @@ export abstract class BrowserType extends SdkObject {
     }
   }
 
-  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
+  private async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     try {
       return await this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
     } catch (error) {
@@ -106,7 +106,7 @@ export abstract class BrowserType extends SdkObject {
     }
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
+  private async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const browserLogsCollector = new RecentLogsCollector();
     const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
@@ -317,7 +317,7 @@ export abstract class BrowserType extends SdkObject {
     }
   }
 
-  _rewriteStartupLog(error: Error): Error {
+  private _rewriteStartupLog(error: Error): Error {
     if (!isProtocolError(error))
       return error;
     return this.doRewriteStartupLog(error);

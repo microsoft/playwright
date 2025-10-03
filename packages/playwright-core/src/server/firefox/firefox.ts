@@ -24,16 +24,34 @@ import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
-import type { BrowserOptions } from '../browser';
+import type { Browser, BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { RecentLogsCollector } from '../utils/debugLogger';
+import type { BrowserContext } from '../browserContext';
+import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
 
 export class Firefox extends BrowserType {
-  constructor(parent: SdkObject) {
+  private _bidiFirefox: BrowserType;
+
+  constructor(parent: SdkObject, bidiFirefox: BrowserType) {
     super(parent, 'firefox');
+    this._bidiFirefox = bidiFirefox;
+  }
+
+  override launch(progress: Progress, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+    if (options.channel?.startsWith('moz-'))
+      return this._bidiFirefox.launch(progress, options, protocolLogger);
+    return super.launch(progress, options, protocolLogger);
+  }
+
+  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+    if (options.channel?.startsWith('moz-'))
+      return this._bidiFirefox.launchPersistentContext(progress, userDataDir, options);
+    return super.launchPersistentContext(progress, userDataDir, options);
   }
 
   override connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
