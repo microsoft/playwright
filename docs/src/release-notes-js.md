@@ -8,17 +8,28 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.56
 
+### Playwright Agents
+
+Introducing Playwright Agents, three custom agent definitions designed to guide LLMs through the core process of building a Playwright test:
+
+* **🎭 planner** explores the app and produces a Markdown test plan
+
+* **🎭 generator** transforms the Markdown plan into the Playwright Test files
+
+* **🎭 healer** executes the test suite and automatically repairs failing tests
+
+[Learn more about how to use the agents](https://playwright.dev/docs/next/test-agents)
+
 ### New APIs
 
 - New methods [`method: Page.consoleMessages`] and [`method: Page.pageErrors`] for retrieving the most recent console messages from the page
 - New method [`method: Page.requests`] for retrieving the most recent network requests from the page
-- Added `--test-list` and `--test-list-invert` to allow manual specification of specific tests from a file
+- Added [`--test-list` and `--test-list-invert`](./test-cli.md#test-list) to allow manual specification of specific tests from a file
 
 ### UI Mode and HTML Reporter
 
 - Added option to `'html'` reporter to disable the "Copy prompt" button
-- Added option to `'html'` reporter to hide file groupings
-- Added option to UI Mode to hide file groupings
+- Added option to `'html'`  and UI Mode to merge files, collapsing tests and describes into a single list
 - Added option to UI Mode mirroring the `--update-snapshots` options
 - Added option to UI Mode to run only a single worker at a time
 
@@ -26,7 +37,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 - Modified glob pattern matching to more closely match our documentation
 - Event [`event: BrowserContext.backgroundPage`] has been deprecated and will not be emitted. Method [`method: BrowserContext.backgroundPages`] will return an empty list
-- New Chromium screenshot implementation is now shipping by default
 
 ### Miscellaneous
 
