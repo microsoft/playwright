@@ -2981,12 +2981,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           'The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.'
       );
 
-      const expectedPath =
-        process.platform === 'win32'
-          ? reportPath.replace(/\\/g, '\\\\')
-          : reportPath;
-
-      const expectedCmd = `npx playwright show-report "${expectedPath}"`;
+      const expectedCmd = `npx playwright show-report "${reportPath}"`;
       await expect(page.locator('#fallback-error')).toContainText(expectedCmd);
     });
 
