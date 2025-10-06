@@ -62,8 +62,6 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
         method: options.method
       };
     } else {
-      (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
-
       options.agent = new HttpsProxyAgent(url.format(parsedProxyURL));
       options.rejectUnauthorized = false;
     }
