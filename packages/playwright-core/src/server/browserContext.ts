@@ -93,7 +93,7 @@ export abstract class BrowserContext extends SdkObject {
   _closeReason: string | undefined;
   readonly clock: Clock;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
-  private _playwrightBindingExposed = false;
+  private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
@@ -304,19 +304,19 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async exposePlaywrightBindingIfNeeded() {
-    if (this._playwrightBindingExposed)
-      return;
-    this._playwrightBindingExposed = true;
-    await this.doExposePlaywrightBinding();
+    this._playwrightBindingExposed ??= (async () => {
+      await this.doExposePlaywrightBinding();
 
-    this.bindingsInitScript = PageBinding.createInitScript();
-    this.initScripts.push(this.bindingsInitScript);
-    await this.doAddInitScript(this.bindingsInitScript);
-    await this.safeNonStallingEvaluateInAllFrames(this.bindingsInitScript.source, 'main');
+      this.bindingsInitScript = PageBinding.createInitScript();
+      this.initScripts.push(this.bindingsInitScript);
+      await this.doAddInitScript(this.bindingsInitScript);
+      await this.safeNonStallingEvaluateInAllFrames(this.bindingsInitScript.source, 'main');
+    })();
+    return await this._playwrightBindingExposed;
   }
 
-  needsPlaywrightBinding() {
-    return this._playwrightBindingExposed;
+  needsPlaywrightBinding(): boolean {
+    return this._playwrightBindingExposed !== undefined;
   }
 
   async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, forClient?: unknown): Promise<PageBinding> {
