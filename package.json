@@ -1,7 +1,7 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.56.0-next",
+  "version": "1.56.0",
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
