@@ -8802,18 +8802,18 @@ export interface BrowserContext {
     value: string;
 
     /**
-     * Either url or domain / path are required. Optional.
+     * Either `url` or both `domain` and `path` are required. Optional.
      */
     url?: string;
 
     /**
-     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either url
-     * or domain / path are required. Optional.
+     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either
+     * `url` or both `domain` and `path` are required. Optional.
      */
     domain?: string;
 
     /**
-     * Either url or domain / path are required Optional.
+     * Either `url` or both `domain` and `path` are required. Optional.
      */
     path?: string;
 
