@@ -156,6 +156,12 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (proxy.username)
     proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
 
+  if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
+    // Force CONNECT method for WebSockets.
+    return new HttpsProxyAgent(url.format(proxyOpts));
+  }
+
+  // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
   return new HttpsProxyAgent(url.format(proxyOpts));
 }
 
