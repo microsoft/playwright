@@ -40,6 +40,7 @@ type ContextOptions = {
   browserContextFactory: BrowserContextFactory;
   sessionLog: SessionLog | undefined;
   clientInfo: ClientInfo;
+  closePageOverride?: (page: playwright.Page) => Promise<void>;
 };
 
 export class Context {
@@ -113,7 +114,10 @@ export class Context {
     if (!tab)
       throw new Error(`Tab ${index} not found`);
     const url = tab.page.url();
-    await tab.page.close();
+    if (this.options.closePageOverride)
+      await this.options.closePageOverride(tab.page);
+    else
+      await tab.page.close();
     return url;
   }
 
@@ -164,10 +168,12 @@ export class Context {
     const promise = this._browserContextPromise;
     this._browserContextPromise = undefined;
 
-    await promise.then(async ({ browserContext, close }) => {
+    await promise.then(async ({ browserContext, close, closeCurrentTabBeforeClose }) => {
       if (this.config.saveTrace)
         await browserContext.tracing.stop();
       const videos = this.config.saveVideo ? browserContext.pages().map(page => page.video()).filter(video => !!video) : [];
+      if (closeCurrentTabBeforeClose)
+        await this._currentTab?.page.close();
       await close(async () => {
         for (const video of videos) {
           const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code', reason: 'Saving video' });

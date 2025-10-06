@@ -20,7 +20,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { startHttpServer } from '../sdk/http';
 import { CDPRelayServer } from './cdpRelay';
 
-import type { BrowserContextFactory } from '../browser/browserContextFactory';
+import type { BrowserContextFactory, BrowserContextFactoryResult } from '../browser/browserContextFactory';
 import type { ClientInfo } from '../sdk/server';
 
 const debugLogger = debug('pw:mcp:relay');
@@ -36,20 +36,22 @@ export class ExtensionContextFactory implements BrowserContextFactory {
     this._executablePath = executablePath;
   }
 
-  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
-    const browser = await this._obtainBrowser(clientInfo, abortSignal, toolName);
+  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<BrowserContextFactoryResult> {
+    const createNewTab = toolName === 'browser_navigate';
+    const browser = await this._obtainBrowser(clientInfo, abortSignal, createNewTab);
     return {
       browserContext: browser.contexts()[0],
       close: async () => {
         debugLogger('close() called for browser context');
         await browser.close();
-      }
+      },
+      closeCurrentTabBeforeClose: createNewTab,
     };
   }
 
-  private async _obtainBrowser(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<playwright.Browser> {
+  private async _obtainBrowser(clientInfo: ClientInfo, abortSignal: AbortSignal, createNewTab: boolean): Promise<playwright.Browser> {
     const relay = await this._startRelay(abortSignal);
-    await relay.ensureExtensionConnectionForMCPContext(clientInfo, abortSignal, toolName);
+    await relay.ensureExtensionConnectionForMCPContext(clientInfo, abortSignal, createNewTab);
     return await playwright.chromium.connectOverCDP(relay.cdpEndpoint());
   }
 
@@ -64,4 +66,10 @@ export class ExtensionContextFactory implements BrowserContextFactory {
     debugLogger(`CDP relay server started, extension endpoint: ${cdpRelayServer.extensionEndpoint()}.`);
     return cdpRelayServer;
   }
+}
+
+export function closePageUsingEvaluate(page: playwright.Page): Promise<void> {
+  return page.evaluate(() => {
+    window.close();
+  });
 }

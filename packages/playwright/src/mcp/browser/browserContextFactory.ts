@@ -45,6 +45,7 @@ export function contextFactory(config: FullConfig): BrowserContextFactory {
 export type BrowserContextFactoryResult = {
   browserContext: playwright.BrowserContext;
   close: (afterClose: () => Promise<void>) => Promise<void>;
+  closeCurrentTabBeforeClose?: boolean;
 };
 
 export interface BrowserContextFactory {

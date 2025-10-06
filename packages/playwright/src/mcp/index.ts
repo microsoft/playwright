@@ -21,7 +21,7 @@ import * as mcpServer from './sdk/server';
 
 import type { Config } from './config';
 import type { BrowserContext } from 'playwright';
-import type { BrowserContextFactory } from './browser/browserContextFactory';
+import type { BrowserContextFactory, BrowserContextFactoryResult } from './browser/browserContextFactory';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 const packageJSON = require('../../package.json');
@@ -42,7 +42,7 @@ class SimpleBrowserContextFactory implements BrowserContextFactory {
     this._contextGetter = contextGetter;
   }
 
-  async createContext(): Promise<{ browserContext: BrowserContext, close: () => Promise<void> }> {
+  async createContext(): Promise<BrowserContextFactoryResult> {
     const browserContext = await this._contextGetter();
     return {
       browserContext,

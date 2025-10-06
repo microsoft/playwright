@@ -21,7 +21,7 @@ import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
 import { BrowserServerBackend } from './browser/browserServerBackend';
-import { ExtensionContextFactory } from './extension/extensionContextFactory';
+import { closePageUsingEvaluate, ExtensionContextFactory } from './extension/extensionContextFactory';
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import type { MCPProvider } from './sdk/proxyBackend';
@@ -83,7 +83,7 @@ export function decorateCommand(command: Command, version: string) {
             name: 'Playwright w/ extension',
             nameInConfig: 'playwright-extension',
             version,
-            create: () => new BrowserServerBackend(config, extensionContextFactory)
+            create: () => new BrowserServerBackend(config, extensionContextFactory, closePageUsingEvaluate)
           };
           await mcpServer.start(serverBackendFactory, config.server);
           return;
@@ -99,7 +99,7 @@ export function decorateCommand(command: Command, version: string) {
             {
               name: 'extension',
               description: 'Connect to a browser using the Playwright MCP extension',
-              connect: () => mcpServer.wrapInProcess(new BrowserServerBackend(config, extensionContextFactory)),
+              connect: () => mcpServer.wrapInProcess(new BrowserServerBackend(config, extensionContextFactory, closePageUsingEvaluate)),
             },
           ];
           const factory: mcpServer.ServerBackendFactory = {
