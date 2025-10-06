@@ -50,7 +50,7 @@ jobs:
         node utils/build/update_canary_version.js --beta --commit-timestamp
         utils/publish_all_packages.sh --beta
     - name: "publish release to NPM"
-      if: contains(github.ref, 'release') && github.event_name == 'release'
+      if: github.event_name == 'release' && github.event.action == 'published'
       run: utils/publish_all_packages.sh --release
 
     - name: Azure Login
