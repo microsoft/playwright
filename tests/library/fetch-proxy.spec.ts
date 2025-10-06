@@ -140,7 +140,9 @@ it('should use socks proxy', async ({ playwright, server, socksPort }) => {
   expect(await response.text()).toContain('Served by the SOCKS proxy');
 });
 
-it('should send correct ALPN protocol to HTTPS proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37676' } }, async ({ playwright, server }) => {
+it('should send correct ALPN protocol to HTTPS proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37676' } }, async ({ playwright, server, nodeVersion }) => {
+  it.skip(nodeVersion.major < 22, 'ALPNCallback is supported starting from Node 22');
+
   let offeredProtocols: string[];
   const proxy = https.createServer({
     ...(await TestServer.certOptions()),
