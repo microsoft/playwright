@@ -130,7 +130,7 @@ class SocksProxyConnection {
   async connect() {
     const proxyAgent = this.socksProxy.getProxyAgent(this.host, this.port);
     if (proxyAgent)
-      this._serverEncrypted = await proxyAgent.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+      this._serverEncrypted = await ('callback' in proxyAgent ? proxyAgent.callback : proxyAgent.connect)(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
       this._serverEncrypted = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
 
