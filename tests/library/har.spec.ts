@@ -16,12 +16,12 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import * as path from 'path';
 import fs from 'fs';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
+import { TestServer } from '../config/testserver';
 const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
@@ -676,10 +676,7 @@ it('should return security details directly from response', async ({ contextFact
 });
 
 it('should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
-  const server = createHttp2Server({
-    key: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'key.pem')),
-    cert: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'cert.pem')),
-  });
+  const server = createHttp2Server(await TestServer.certOptions());
   server.on('stream', stream => {
     stream.respond({
       'content-type': 'text/html; charset=utf-8',
