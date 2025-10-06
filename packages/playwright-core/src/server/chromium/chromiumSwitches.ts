@@ -40,6 +40,8 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'Translate',
   // See https://issues.chromium.org/u/1/issues/435410220
   'AutoDeElevate',
+  // See https://github.com/microsoft/playwright/issues/37714
+  'RenderDocument',
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
