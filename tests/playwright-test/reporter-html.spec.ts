@@ -17,7 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import process from 'process';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
@@ -2944,13 +2943,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-path')).toHaveText('Root describe');
     });
 
-    test('should print a user-friendly warning when opening a trace via file:// protocol', async ({
-      runInlineTest,
-      page,
-    }) => {
-      await runInlineTest(
-          {
-            'playwright.config.ts': `
+
+    test('should print a user-friendly warning when opening a trace via file:// protocol', async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'playwright.config.ts': `
           module.exports = {
             projects: [{
               name: 'chromium',
@@ -2961,28 +2957,17 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             }]
           };
         `,
-            'a.test.js': `
+        'a.test.js': `
           import { test } from '@playwright/test';
           test('passes', ({ page }) => {});
         `,
-          },
-          { reporter: 'dot,html' },
-          { PLAYWRIGHT_HTML_OPEN: 'never' }
-      );
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       const reportPath = path.join(test.info().outputPath(), 'playwright-report');
-
-      await page.goto(
-          url.pathToFileURL(path.join(reportPath, 'index.html')).toString()
-      );
+      await page.goto(url.pathToFileURL(path.join(reportPath, 'index.html')).toString());
       await page.getByRole('link', { name: 'View trace' }).click();
-
-      await expect(page.locator('#fallback-error')).toContainText(
-          'The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.'
-      );
-
-      const expectedCmd = `npx playwright show-report "${reportPath}"`;
-      await expect(page.locator('#fallback-error')).toContainText(expectedCmd);
+      await expect(page.locator('#fallback-error')).toContainText('The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.');
+      await expect(page.locator('#fallback-error')).toContainText(`npx playwright show-report "${reportPath}"`);
     });
 
 
