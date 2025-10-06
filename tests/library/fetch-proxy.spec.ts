@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import https from 'node:https';
 import { contextTest as it, expect } from '../config/browserTest';
+import { TestServer } from '../config/testserver';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -136,4 +138,36 @@ it('should use socks proxy', async ({ playwright, server, socksPort }) => {
   } });
   const response = await request.get(server.EMPTY_PAGE);
   expect(await response.text()).toContain('Served by the SOCKS proxy');
+});
+
+it('should send correct ALPN protocol to HTTPS proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37676' } }, async ({ playwright, server, nodeVersion }) => {
+  it.skip(nodeVersion.major < 22, 'ALPNCallback is supported starting from Node 22');
+
+  let offeredProtocols: string[];
+  const proxy = https.createServer({
+    ...(await TestServer.certOptions()),
+    ALPNCallback: protocols => {
+      offeredProtocols = protocols.protocols;
+      return protocols[0];
+    },
+  });
+
+  const port = await new Promise<number>(resolve => {
+    proxy.listen(0, () => {
+      const { port } = proxy.address() as any;
+      resolve(port);
+    });
+  });
+
+  const request = await playwright.request.newContext({
+    proxy: { server: `https://localhost:${port}` },
+    ignoreHTTPSErrors: true,
+  });
+
+  await expect(request.get(server.EMPTY_PAGE)).rejects.toThrowError();
+
+  expect(offeredProtocols).toContain('http/1.1');
+
+  proxy.close();
+  await request.dispose();
 });

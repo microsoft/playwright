@@ -62,9 +62,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
         method: options.method
       };
     } else {
-      (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
-
-      options.agent = new HttpsProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent(url.format(parsedProxyURL));
       options.rejectUnauthorized = false;
     }
   }
@@ -160,11 +158,11 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
-    return new HttpsProxyAgent(proxyOpts);
+    return new HttpsProxyAgent(url.format(proxyOpts));
   }
 
-  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyOpts);
+  // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(url.format(proxyOpts));
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
