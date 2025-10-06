@@ -108,7 +108,7 @@ for (const [key, channels] of Object.entries(browserToChannels)) {
         use: {
           browserName,
           headless: !headed,
-          channel: channel === 'bidi-chromium' ? undefined : channel,
+          channel,
           video: 'off',
           launchOptions: {
             executablePath,
