@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.56
 
+<LiteYouTube
+  id="_AifxZGxwuk"
+  title="Playwright 1.56 - Introducing Playwright Agents"
+/>
+
 ### Playwright Agents
 
 Introducing Playwright Agents, three custom agent definitions designed to guide LLMs through the core process of building a Playwright test:
