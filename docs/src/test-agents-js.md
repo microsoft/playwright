@@ -3,7 +3,11 @@ id: test-agents
 title: "Agents"
 ---
 
+import LiteYouTube from '@site/src/components/LiteYouTube';
+
 # Playwright Agents
+
+## Introduction
 
 Playwright comes with three Playwright Agents out of the box: **🎭 planner**, **🎭 generator** and **🎭 healer**.
 
@@ -15,6 +19,11 @@ Using them sequentially will produce test coverage for your product.
 * **🎭 generator** transforms the Markdown plan into the Playwright Test files
 
 * **🎭 healer** executes the test suite and automatically repairs failing tests
+
+<LiteYouTube
+  id="_AifxZGxwuk"
+  title="Playwright 1.56 - Introducing Playwright Agents"
+/>
 
 ### Getting Started
 
