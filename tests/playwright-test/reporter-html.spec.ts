@@ -2966,8 +2966,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const reportPath = path.join(test.info().outputPath(), 'playwright-report');
       await page.goto(url.pathToFileURL(path.join(reportPath, 'index.html')).toString());
       await page.getByRole('link', { name: 'View trace' }).click();
-      await expect(page.locator('#fallback-error')).toContainText('The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.');
-      await expect(page.locator('#fallback-error')).toContainText(`npx playwright show-report "${reportPath}"`);
+      await expect(page.locator('#fallback-error')).toContainText(
+          'The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.'
+      );
+      const expectedReportPath = reportPath.replace(/\\/g, '\\\\');
+      await expect(page.locator('#fallback-error')).toContainText(
+          `npx playwright show-report "${expectedReportPath}"`
+      );
     });
 
 
