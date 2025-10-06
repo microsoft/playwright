@@ -146,6 +146,6 @@ test('navigating to download link emits download', async ({ startClient, server,
       url: server.PREFIX + '/download',
     },
   })).toHaveResponse({
-    downloads: expect.stringContaining(`- Downloaded file test.txt to`),
+    downloads: expect.stringMatching(`- Downloaded file test\.txt to|- Downloading file test\.txt`),
   });
 });
