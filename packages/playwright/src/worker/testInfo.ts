@@ -466,11 +466,13 @@ export class TestInfoImpl implements TestInfo {
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    if (stepId) {
-      const step = this._stepMap.get(stepId)!;
+
+    let step = stepId ? this._stepMap.get(stepId) : undefined;
+    if (!!step?.group)
+      step = undefined;
+
+    if (step) {
       step.attachmentIndices.push(index);
-      if (!!step.group)
-        stepId = undefined;
     } else {
       const stepId = `attach@${createGuid()}`;
       this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
@@ -483,7 +485,7 @@ export class TestInfoImpl implements TestInfo {
       contentType: attachment.contentType,
       path: attachment.path,
       body: attachment.body?.toString('base64'),
-      stepId,
+      stepId: step?.stepId,
     });
   }
 
