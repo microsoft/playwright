@@ -58,7 +58,7 @@ export class TestServerBackend implements mcp.ServerBackend {
       return;
     }
 
-    throw new Error('No config option or MCP root path provided');
+    this._context.initialize(rootPath, resolveConfigLocation(undefined));
   }
 
   async listTools(): Promise<mcp.Tool[]> {
