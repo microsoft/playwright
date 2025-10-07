@@ -29,7 +29,7 @@ import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { internalScreen } from '../reporters/base';
 import { InternalReporter } from '../reporters/internalReporter';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
-import { serializeError } from '../util';
+import { initPlaywrightTest, serializeError } from '../util';
 import { createErrorCollectingReporter, createReporters } from './reporters';
 import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks, runTasksDeferCleanup } from './tasks';
 import { LastRunReporter } from './lastRun';
@@ -97,7 +97,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _watchTestDirs = false;
   private _populateDependenciesOnList = false;
 
-  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, initiator: string) {
+    initPlaywrightTest(initiator);
     super();
     this.configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;

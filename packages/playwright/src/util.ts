@@ -19,7 +19,7 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
 import { debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
 import type { Location } from './../types/testReporter';
@@ -30,6 +30,35 @@ import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
+
+export function initPlaywrightTest(initiator: string) {
+  setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
+
+  initiator = `  ${initiator}\n  v${require('../package.json').version} at ${PLAYWRIGHT_TEST_PATH}`;
+
+  if ((process as any)['__pw_initiator_path__'] === PLAYWRIGHT_TEST_PATH) {
+    // Same version of Playwright, update the initiator.
+    (process as any)['__pw_initiator__'] = initiator;
+    return;
+  }
+
+  if ((process as any)['__pw_initiator__']) {
+    // Different version of Playwright, throw.
+    const error = new Error([
+      'Mixing two versions of Playwright:',
+      '',
+      (process as any)['__pw_initiator__'],
+      '',
+      initiator,
+    ].join('\n'));
+    error.stack = 'Error: ' + error.message;
+    throw error;
+  }
+
+  // First-time import, set up the initiator.
+  (process as any)['__pw_initiator_path__'] = PLAYWRIGHT_TEST_PATH;
+  (process as any)['__pw_initiator__'] = initiator;
+}
 
 export function filterStackTrace(e: Error): { message: string, stack: string, cause?: ReturnType<typeof filterStackTrace> } {
   const name = e.name ? e.name + ': ' : '';

@@ -18,11 +18,12 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall, getActionGroup } from 'playwright-core/lib/utils';
+import { createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall, getActionGroup } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { runBrowserBackendAtEnd } from './mcp/test/browserBackend';
+import { initPlaywrightTest } from './util';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -39,19 +40,7 @@ import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracin
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
-
-if ((process as any)['__pw_initiator__']) {
-  const originalStackTraceLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 200;
-  try {
-    throw new Error('Requiring @playwright/test second time, \nFirst:\n' + (process as any)['__pw_initiator__'] + '\n\nSecond: ');
-  } finally {
-    Error.stackTraceLimit = originalStackTraceLimit;
-  }
-} else {
-  (process as any)['__pw_initiator__'] = new Error().stack;
-}
+initPlaywrightTest('Importing @playwright/test');
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
