@@ -107,6 +107,8 @@ export class WKRouteImpl implements network.RouteDelegate {
   private readonly _session: WKSession;
   private readonly _requestId: string;
 
+  readonly removeHostHeaderFromOverrides = true;
+
   constructor(session: WKSession, requestId: string) {
     this._session = session;
     this._requestId = requestId;

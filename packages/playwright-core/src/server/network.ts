@@ -358,10 +358,10 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     if (overrides.headers) {
-      overrides.headers = overrides.headers?.filter(header => {
-        const headerName = header.name.toLowerCase();
-        return headerName !== 'cookie' && headerName !== 'host';
-      });
+      const headersToRemove = ['cookie'];
+      if (this._delegate.removeHostHeaderFromOverrides)
+        headersToRemove.push('host');
+      overrides.headers = overrides.headers.filter(header => !headersToRemove.includes(header.name));
     }
     overrides = this._request._applyOverrides(overrides);
 
@@ -668,6 +668,7 @@ export class WebSocket extends SdkObject {
 }
 
 export interface RouteDelegate {
+  readonly removeHostHeaderFromOverrides?: boolean;
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
   continue(overrides: types.NormalizedContinueOverrides): Promise<void>;
