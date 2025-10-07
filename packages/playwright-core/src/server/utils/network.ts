@@ -52,17 +52,17 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = normalizeProxyURL(proxyURL);
     if (params.url.startsWith('http:')) {
+      const parsedProxyURL = url.parse(proxyURL);
       options = {
         path: parsedUrl.href,
         host: parsedProxyURL.hostname,
-        port: parsedProxyURL.port || undefined,
+        port: parsedProxyURL.port,
         headers: options.headers,
         method: options.method
       };
     } else {
-      options.agent = new HttpsProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent(normalizeProxyURL(proxyURL));
       options.rejectUnauthorized = false;
     }
   }
