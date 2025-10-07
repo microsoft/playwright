@@ -311,6 +311,16 @@ function throwIfRunningInsideJest() {
 
 function validateTestDetails(details: TestDetails, location: Location) {
   const originalAnnotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
+
+  for (const annotation of originalAnnotations) {
+    if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
+      throw new Error(`Annotation must be an object, got ${typeof annotation} instead.`);
+    if (!('type' in annotation) || typeof annotation.type !== 'string')
+      throw new Error(`Annotation must have a "type" property of type string.`);
+    if ('description' in annotation && typeof annotation.description !== 'string')
+      throw new Error(`Annotation "description" must be a string, got ${typeof annotation.description} instead.`);
+  }
+
   const annotations = originalAnnotations.map(annotation => ({ ...annotation, location }));
   const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
   for (const tag of tags) {

@@ -942,6 +942,66 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-annotation')).toHaveText('issue: 0');
     });
 
+    test('should validate annotation structure at test declaration', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+
+          // Invalid: annotation is a string instead of object
+          test('test with string annotation', { annotation: 'bug' }, async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.output).toContain('Annotation must be an object');
+    });
+
+    test('should validate annotation has type property', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+
+          // Invalid: annotation missing type property
+          test('test with missing type', { annotation: { description: 'TEST-58xxx' } }, async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.output).toContain('Annotation must have a "type" property of type string');
+    });
+
+    test('should validate annotation type is a string', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+
+          // Invalid: annotation type is not a string
+          test('test with non-string type', { annotation: { type: 123, description: 'desc' } }, async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.output).toContain('Annotation must have a "type" property of type string');
+    });
+
+    test('should validate annotation description is a string if provided', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+
+          // Invalid: annotation description is not a string
+          test('test with non-string description', { annotation: { type: 'issue', description: 123 } }, async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.output).toContain('Annotation "description" must be a string');
+    });
+
     test('should render dynamic annotations at test result level', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `

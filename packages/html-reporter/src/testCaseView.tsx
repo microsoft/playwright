@@ -45,7 +45,7 @@ export const TestCaseView: React.FC<{
   const searchParams = React.useContext(SearchParamsContext);
 
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
-  const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
+  const visibleTestAnnotations = test.annotations.filter(a => a.type && !a.type.startsWith('_')) ?? [];
 
   return <>
     <HeaderView
@@ -79,7 +79,7 @@ export const TestCaseView: React.FC<{
           {(test.results.length > 1) && <span className='test-case-run-duration'>{msToString(result.duration)}</span>}
         </div>,
         render: () => {
-          const visibleAnnotations = result.annotations.filter(annotation => !annotation.type.startsWith('_'));
+          const visibleAnnotations = result.annotations.filter(annotation => annotation.type && !annotation.type.startsWith('_'));
           return <>
             {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
               {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
