@@ -281,7 +281,7 @@ export async function initVSCodeRepo() {
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
   // eslint-disable-next-line no-console
-  console.log(colors.yellow(`${colors.bold('Note:')} support for Playwright Agents requires VSCode Insiders or version 1.105+`));
+  console.log(colors.yellow(`${colors.bold('Note:')} Playwright Agents require VSCode version 1.105+ or VSCode Insiders`));
 }
 
 export async function initOpencodeRepo() {
