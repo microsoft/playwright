@@ -10,12 +10,12 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 <LiteYouTube
   id="_AifxZGxwuk"
-  title="Playwright 1.56 - Introducing Playwright Agents"
+  title="Playwright 1.56 - Introducing Playwright Test Agents"
 />
 
-### Playwright Agents
+### Playwright Test Agents
 
-Introducing Playwright Agents, three custom agent definitions designed to guide LLMs through the core process of building a Playwright test:
+Introducing Playwright Test Agents, three custom agent definitions designed to guide LLMs through the core process of building a Playwright test:
 
 * **🎭 planner** explores the app and produces a Markdown test plan
 
@@ -35,7 +35,7 @@ npx playwright init-agents --loop=claude
 npx playwright init-agents --loop=opencode
 ```
 
-[Learn more about Playwright Agents](./test-agents.md)
+[Learn more about Playwright Test Agents](./test-agents.md)
 
 ### New APIs
 

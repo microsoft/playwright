@@ -5,11 +5,11 @@ title: "Agents"
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
-# Playwright Agents
+# Playwright Test Agents
 
 ## Introduction
 
-Playwright comes with three Playwright Agents out of the box: **🎭 planner**, **🎭 generator** and **🎭 healer**.
+Playwright comes with three Playwright Test Agents out of the box: **🎭 planner**, **🎭 generator** and **🎭 healer**.
 
 These agents can be used independently, sequentially, or as the chained calls in the agentic loop.
 Using them sequentially will produce test coverage for your product.
@@ -22,12 +22,12 @@ Using them sequentially will produce test coverage for your product.
 
 <LiteYouTube
   id="_AifxZGxwuk"
-  title="Playwright 1.56 - Introducing Playwright Agents"
+  title="Playwright 1.56 - Introducing Playwright Test Agents"
 />
 
 ### Getting Started
 
-Start with adding Playwright Agent definitions to your project using
+Start with adding Playwright Test Agent definitions to your project using
 the `init-agents` command. These definitions should be regenerated whenever Playwright
 is updated to pick up new tools and instructions.
 
