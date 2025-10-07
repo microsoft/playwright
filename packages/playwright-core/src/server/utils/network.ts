@@ -152,10 +152,15 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
 
   const proxyURL = normalizeProxyURL(proxy.server);
   if (proxyURL.protocol?.startsWith('socks')) {
-    return new SocksProxyAgent({
-      host: proxyURL.hostname,
-      port: proxyURL.port || undefined,
-    });
+    // SocksProxyAgent distinguishes between socks5 and socks5h.
+    // socks5h is what we want, it means that hostnames are resolved by the proxy.
+    // browsers behave the same way, even if socks5 is specified.
+    if (proxyURL.protocol === 'socks5:')
+      proxyURL.protocol = 'socks5h:';
+    else if (proxyURL.protocol === 'socks4:')
+      proxyURL.protocol = 'socks4a:';
+
+    return new SocksProxyAgent(proxyURL);
   }
   if (proxy.username) {
     proxyURL.username = proxy.username;

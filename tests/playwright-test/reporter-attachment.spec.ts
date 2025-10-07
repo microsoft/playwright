@@ -323,7 +323,7 @@ test('render text attachment with multiple lines', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(1);
 });
 
-test('attaching inside boxed fixture should not log error', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37147' } }, async ({ runInlineTest }) => {
+test('attaching inside boxed fixture should not log error', { annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37147' }, { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37747' }] }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test as base } from '@playwright/test';
@@ -332,6 +332,11 @@ test('attaching inside boxed fixture should not log error', { annotation: { type
         myFixture: [async ({}, use, testInfo) => {
           await testInfo.attach('my attachment', {
             body: 'foo',
+            contentType: 'text/plain',
+          });
+          testInfo.attachments.push({
+            name: 'my attachment 2',
+            body: Buffer.from('bar'),
             contentType: 'text/plain',
           });
           await use();
@@ -343,9 +348,6 @@ test('attaching inside boxed fixture should not log error', { annotation: { type
       });
     `,
   }, { reporter: 'line' }, {});
-  const text = result.output;
-  expect(text).toContain('    attachment #1: my attachment (text/plain) ──────────────────────────────────────────────────────');
-  expect(text).toContain('    foo');
-  expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
+  expect(result.output).not.toContain('step id not found');
   expect(result.exitCode).toBe(1);
 });
