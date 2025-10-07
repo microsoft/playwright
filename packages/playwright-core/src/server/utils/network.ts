@@ -136,8 +136,8 @@ function shouldBypassProxy(url: URL, bypass?: string): boolean {
 }
 
 function normalizeProxyURL(proxy: string): URL {
-  // Browsers allow to specify proxy without a protocol, defaulting to http.
   proxy = proxy.trim();
+  // Browsers allow to specify proxy without a protocol, defaulting to http.
   if (!/^\w+:\/\//.test(proxy))
     proxy = 'http://' + proxy;
   return new URL(proxy);
