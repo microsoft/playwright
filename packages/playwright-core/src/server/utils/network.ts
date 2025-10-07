@@ -52,17 +52,17 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = url.parse(proxyURL);
+    const parsedProxyURL = normalizeProxyURL(proxyURL);
     if (params.url.startsWith('http:')) {
       options = {
         path: parsedUrl.href,
         host: parsedProxyURL.hostname,
-        port: parsedProxyURL.port,
+        port: parsedProxyURL.port || undefined,
         headers: options.headers,
         method: options.method
       };
     } else {
-      options.agent = new HttpsProxyAgent(url.format(parsedProxyURL));
+      options.agent = new HttpsProxyAgent(parsedProxyURL);
       options.rejectUnauthorized = false;
     }
   }
@@ -135,34 +135,39 @@ function shouldBypassProxy(url: URL, bypass?: string): boolean {
   return domains.some(d => domain.endsWith(d));
 }
 
+function normalizeProxyURL(proxy: string): URL {
+  // Browsers allow to specify proxy without a protocol, defaulting to http.
+  proxy = proxy.trim();
+  if (!/^\w+:\/\//.test(proxy))
+    proxy = 'http://' + proxy;
+  return new URL(proxy);
+}
+
 export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!proxy)
     return;
   if (forUrl && proxy.bypass && shouldBypassProxy(forUrl, proxy.bypass))
     return;
 
-  // Browsers allow to specify proxy without a protocol, defaulting to http.
-  let proxyServer = proxy.server.trim();
-  if (!/^\w+:\/\//.test(proxyServer))
-    proxyServer = 'http://' + proxyServer;
-
-  const proxyOpts = url.parse(proxyServer);
-  if (proxyOpts.protocol?.startsWith('socks')) {
+  const proxyURL = normalizeProxyURL(proxy.server);
+  if (proxyURL.protocol?.startsWith('socks')) {
     return new SocksProxyAgent({
-      host: proxyOpts.hostname,
-      port: proxyOpts.port || undefined,
+      host: proxyURL.hostname,
+      port: proxyURL.port || undefined,
     });
   }
-  if (proxy.username)
-    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  if (proxy.username) {
+    proxyURL.username = proxy.username;
+    proxyURL.password = proxy.password || '';
+  }
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
-    return new HttpsProxyAgent(url.format(proxyOpts));
+    return new HttpsProxyAgent(proxyURL);
   }
 
   // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(url.format(proxyOpts));
+  return new HttpsProxyAgent(proxyURL);
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
