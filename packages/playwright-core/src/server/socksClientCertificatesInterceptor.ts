@@ -129,14 +129,10 @@ class SocksProxyConnection {
 
   async connect() {
     const proxyAgent = this.socksProxy.getProxyAgent(this.host, this.port);
-    if (proxyAgent) {
-      if ('callback' in proxyAgent)
-        this._serverEncrypted = await proxyAgent.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
-      else
-        this._serverEncrypted = await proxyAgent.connect(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
-    } else {
+    if (proxyAgent)
+      this._serverEncrypted = await proxyAgent.connect(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+    else
       this._serverEncrypted = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
-    }
 
     this._serverEncrypted.once('close', this._serverCloseEventListener);
     this._serverEncrypted.once('error', error => this._browserEncrypted.destroy(error));
