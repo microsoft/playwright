@@ -172,7 +172,7 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
     return new HttpsProxyAgent(proxyURL);
   }
 
-  // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
   return new HttpsProxyAgent(proxyURL);
 }
 
