@@ -17,9 +17,9 @@
 import { test as it, expect } from './pageTest';
 
 
-it('should fire once', async ({ page, server, browserName }) => {
+it('should fire once', async ({ page, server, browserName, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15086' });
-  it.fixme(browserName === 'firefox', 'Firefox sometimes double fires.');
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Firefox sometimes double fires.');
 
   let count = 0;
   page.on('load', () => count++);
@@ -28,9 +28,9 @@ it('should fire once', async ({ page, server, browserName }) => {
   expect(count).toBe(1);
 });
 
-it('should fire once with iframe navigation', async ({ page, server, browserName }) => {
+it('should fire once with iframe navigation', async ({ page, server, browserName, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15086' });
-  it.fixme(browserName === 'firefox', 'Firefox sometimes double fires.');
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Firefox sometimes double fires.');
 
   let requestCount = 0;
   server.setRoute('/tracker', (_, res) => {

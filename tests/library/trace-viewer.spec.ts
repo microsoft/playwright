@@ -1698,8 +1698,8 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
   await expect(canvas).toHaveAttribute('title', 'Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.');
 });
 
-test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
-  test.fixme(browserName === 'firefox', 'Elements in iframe are not marked');
+test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName, channel }) => {
+  test.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Elements in iframe are not marked');
 
   server.setRoute('/level-0.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });

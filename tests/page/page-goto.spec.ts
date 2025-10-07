@@ -794,8 +794,8 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
-it('should not resolve goto upon window.stop()', async ({ browserName, page, server }) => {
-  it.fixme(browserName === 'firefox', 'load/domcontentloaded events are flaky');
+it('should not resolve goto upon window.stop()', async ({ browserName, page, server, channel }) => {
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'load/domcontentloaded events are flaky');
   it.skip(process.env.PW_CLOCK === 'frozen');
 
   let response;
