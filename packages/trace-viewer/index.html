@@ -36,13 +36,13 @@
         // Best-effort to show the report path in the dialog.
         if (isTraceViewerInsidePlaywrightReport) {
           const reportPath = (() => {
-            const base = window.location.pathname.replace(/\/trace\/index\.html$/, '');
+            const base = decodeURIComponent(window.location.pathname).replace(/\/trace\/index\.html$/, '');
             if (navigator.platform === 'Win32')
               return base.replace(/^\//, '').replace(/\//g, '\\\\');
             return base;
           })();
           const reportLink = document.createElement('div');
-          const command = `npx playwright show-report ${reportPath}`;
+          const command = `npx playwright show-report "${reportPath}"`;
           reportLink.innerHTML = `You can open the report via <code>${command}</code> from your Playwright project. <button type="button">Copy Command</button>`;
           fallbackErrorDialog.insertBefore(reportLink, fallbackErrorDialog.children[1]);
           reportLink.querySelector('button').addEventListener('click', () => navigator.clipboard.writeText(command));

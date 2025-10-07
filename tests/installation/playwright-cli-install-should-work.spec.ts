@@ -16,7 +16,9 @@
 import { test, expect } from './npmTest';
 import { chromium } from '@playwright/test';
 import path from 'path';
+import https from 'https';
 import { TestProxy } from '../config/proxy';
+import { TestServer } from '../config/testserver';
 
 test.use({ isolateBrowsers: true });
 
@@ -88,6 +90,30 @@ test('install command should ignore HTTP_PROXY', { annotation: { type: 'issue', 
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
     await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   });
+});
+
+test('install command should work with HTTPS proxy for HTTP downloads', async ({ exec }) => {
+  await exec('npm i playwright');
+  const httpsProxyServer = https.createServer(await TestServer.certOptions());
+
+  let requestCount = 0;
+  httpsProxyServer.on('request', (_req, res) => {
+    requestCount++;
+    res.statusCode = 502;
+    res.end();
+  });
+
+  await new Promise<void>(resolve => httpsProxyServer.listen(0, resolve));
+  await exec('npx playwright install chromium', {
+    env: {
+      PLAYWRIGHT_DOWNLOAD_HOST: 'http://example.com',
+      ALL_PROXY: `https://localhost:${(httpsProxyServer.address() as any).port}`,
+      NODE_TLS_REJECT_UNAUTHORIZED: '0',
+    },
+    expectToExitWithError: true,
+  });
+  expect(requestCount).toBeGreaterThan(0);
+  httpsProxyServer.close();
 });
 
 test('should be able to remove browsers', async ({ exec, checkInstalledSoftwareOnDisk }) => {
