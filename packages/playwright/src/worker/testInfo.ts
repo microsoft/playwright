@@ -459,18 +459,18 @@ export class TestInfoImpl implements TestInfo {
     });
     this._attach(
         await normalizeAndSaveAttachment(this.outputPath(), name, options),
-        step.group ? undefined : step.stepId
+        step.stepId
     );
     step.complete({});
   }
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    let internal = false;
     if (stepId) {
       const step = this._stepMap.get(stepId)!;
       step.attachmentIndices.push(index);
-      internal = step.group !== undefined;
+      if (!!step.group)
+        stepId = undefined;
     } else {
       const stepId = `attach@${createGuid()}`;
       this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
@@ -483,7 +483,7 @@ export class TestInfoImpl implements TestInfo {
       contentType: attachment.contentType,
       path: attachment.path,
       body: attachment.body?.toString('base64'),
-      stepId: internal ? undefined : stepId,
+      stepId,
     });
   }
 
