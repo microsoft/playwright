@@ -48,6 +48,8 @@ type CDPServer = {
 export type StartClient = (options?: {
   clientName?: string,
   args?: string[],
+  omitArgs?: string[],
+  cwd?: string,
   config?: Config,
   roots?: { name: string, uri: string }[],
   rootsResponseDelay?: number,
@@ -84,14 +86,14 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     const clients: Client[] = [];
 
     await use(async options => {
-      const args: string[] = mcpArgs ?? [];
+      let args: string[] = mcpArgs ?? [];
 
       if (mcpHeadless)
         args.push('--headless');
 
       if (mcpServerType === 'test-mcp') {
         if (!options?.args?.some(arg => arg.startsWith('--config')))
-          args.push('--config', test.info().outputPath());
+          args.push(`--config=${test.info().outputPath()}`);
       } else {
         if (process.env.CI && process.platform === 'linux')
           args.push('--no-sandbox');
@@ -106,6 +108,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
 
       if (options?.args)
         args.push(...options.args);
+      if (options?.omitArgs)
+        args = args.filter(arg => !options.omitArgs?.includes(arg));
 
       const client = new Client({ name: options?.clientName ?? 'test', version: '1.0.0' }, options?.roots ? { capabilities: { roots: {} } } : undefined);
       if (options?.roots) {
@@ -118,7 +122,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         });
       }
       const env = { ...process.env, ...options?.env };
-      const { transport, stderr } = await createTransport(mcpServerType, args, env);
+      const { transport, stderr } = await createTransport(mcpServerType, { args, env, cwd: options?.cwd || test.info().outputPath() });
       let stderrBuffer = '';
       stderr?.on('data', data => {
         if (process.env.PWDEBUGIMPL)
@@ -182,18 +186,18 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpServerType: ['mcp', { option: true }],
 });
 
-async function createTransport(mcpServerType: TestOptions['mcpServerType'], args: string[], env: NodeJS.ProcessEnv): Promise<{
+async function createTransport(mcpServerType: TestOptions['mcpServerType'], options: { args: string[], env: NodeJS.ProcessEnv, cwd: string }): Promise<{
   transport: Transport,
   stderr: Stream | null,
 }> {
   const profilesDir = test.info().outputPath('ms-playwright');
   const transport = new StdioClientTransport({
     command: 'node',
-    args: [...(mcpServerType === 'test-mcp' ? testMcpServerPath : mcpServerPath), ...args],
-    cwd: test.info().outputPath(),
+    args: [...(mcpServerType === 'test-mcp' ? testMcpServerPath : mcpServerPath), ...options.args],
+    cwd: options.cwd,
     stderr: 'pipe',
     env: {
-      ...env,
+      ...options.env,
       DEBUG_COLORS: '0',
       DEBUG_HIDE_DATE: '1',
       PWMCP_PROFILES_DIR_FOR_TEST: profilesDir,
