@@ -349,3 +349,36 @@ test('attaching inside boxed fixture should not log error', { annotation: { type
   expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
   expect(result.exitCode).toBe(1);
 });
+
+test('trace attaching should not log error', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37747' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'setup.test.ts': `
+      import { test as setup } from "@playwright/test";
+
+      setup("setup", async ({ page }) => {
+        await page.context().close();
+      });
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('my test', ({ page }) => {
+        expect(1).toBe(0);
+      });
+    `,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        use: {
+          screenshot: 'on',
+          trace: 'on',
+        },
+        projects: [
+          { name: 'setup', testMatch: /setup\\.test\\.ts/ },
+          { name: 'frontend', testMatch: /a\\.test\\.ts/, dependencies: ['setup'] },
+        ],
+      });
+    `,
+  }, { reporter: 'line' }, {});
+  expect(result.output).not.toContain('step id not found');
+});
