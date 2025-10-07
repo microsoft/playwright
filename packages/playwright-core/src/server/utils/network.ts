@@ -58,6 +58,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
         path: parsedUrl.href,
         host: parsedProxyURL.hostname,
         port: parsedProxyURL.port,
+        protocol: parsedProxyURL.protocol || 'http:',
         headers: options.headers,
         method: options.method
       };
