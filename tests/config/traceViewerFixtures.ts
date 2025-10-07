@@ -30,7 +30,7 @@ type BaseWorkerFixtures = {
 };
 
 export type TraceViewerFixtures = {
-  showTraceViewer: (trace: string[], options?: {host?: string, port?: number}) => Promise<TraceViewerPage>;
+  showTraceViewer: (trace: string | undefined, options?: {host?: string, port?: number}) => Promise<TraceViewerPage>;
   runAndTrace: (body: () => Promise<void>, optsOverrides?: Parameters<BrowserContext['tracing']['start']>[0]) => Promise<TraceViewerPage>;
 };
 
@@ -153,8 +153,8 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
   showTraceViewer: async ({ playwright, browserName, headless }, use, testInfo) => {
     const browsers: Browser[] = [];
     const contextImpls: any[] = [];
-    await use(async (traces: string[], { host, port } = {}) => {
-      const pageImpl = await runTraceViewerApp(traces, browserName, { headless, host, port });
+    await use(async (trace: string | undefined, { host, port } = {}) => {
+      const pageImpl = await runTraceViewerApp(trace, browserName, { headless, host, port });
       const contextImpl = pageImpl.browserContext;
       const browser = await playwright.chromium.connectOverCDP(contextImpl._browser.options.wsEndpoint);
       browsers.push(browser);
@@ -173,7 +173,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
       await context.tracing.start({ snapshots: true, screenshots: true, sources: true, ...optsOverrides });
       await body();
       await context.tracing.stop({ path: traceFile });
-      return showTraceViewer([traceFile]);
+      return showTraceViewer(traceFile);
     });
   },
 };
