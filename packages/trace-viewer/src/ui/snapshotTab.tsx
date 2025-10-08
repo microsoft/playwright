@@ -46,7 +46,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   isInspecting: boolean,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
-  setHighlightedElement: (element: HighlightedElement) => void,
+  setHighlightedElement: React.Dispatch<React.SetStateAction<HighlightedElement>>,
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
@@ -102,7 +102,7 @@ export const SnapshotView: React.FunctionComponent<{
   isInspecting: boolean,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
-  setHighlightedElement: (element: HighlightedElement) => void,
+  setHighlightedElement: React.Dispatch<React.SetStateAction<HighlightedElement>>,
 }> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
@@ -244,7 +244,7 @@ export const InspectModeController: React.FunctionComponent<{
   sdkLanguage: Language,
   testIdAttributeName: string,
   highlightedElement: HighlightedElement,
-  setHighlightedElement: (element: HighlightedElement) => void,
+  setHighlightedElement: React.Dispatch<React.SetStateAction<HighlightedElement>>,
   iteration: number,
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedElement, setHighlightedElement, iteration }) => {
   React.useEffect(() => {
@@ -279,6 +279,18 @@ export const InspectModeController: React.FunctionComponent<{
             ariaSnapshot: elementInfo.ariaSnapshot,
             lastEdited: 'none',
           });
+        },
+        setActiveElementSelector(selector) {
+          setHighlightedElement(highlightedElement => ({
+            ...highlightedElement,
+            locator: asLocator(sdkLanguage, frameSelector + selector),
+          }));
+        },
+        setActiveElementAriaSnapshot(ariaSnapshot) {
+          setHighlightedElement(highlightedElement => ({
+            ...highlightedElement,
+            ariaSnapshot,
+          }));
         },
         highlightUpdated() {
           for (const r of recorders) {

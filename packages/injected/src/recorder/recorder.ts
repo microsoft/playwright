@@ -36,6 +36,8 @@ export interface RecorderDelegate {
   performAction?(action: actions.PerformOnRecordAction): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
   elementPicked?(elementInfo: ElementInfo): Promise<void>;
+  setActiveElementSelector?(selector: string): void;
+  setActiveElementAriaSnapshot?(ariaSnapshot: string): void;
   setMode?(mode: Mode): Promise<void>;
   setOverlayState?(state: OverlayState): Promise<void>;
   highlightUpdated?(): void;
@@ -1494,6 +1496,10 @@ export class Recorder {
     if (state.actionSelector !== this._lastHighlightedSelector) {
       const entries = state.actionSelector ? entriesForSelectorHighlight(this.injectedScript, state.language, state.actionSelector, this.document) : null;
       highlight = entries?.length ? entries : 'clear';
+      if (entries?.length) {
+        const ariaSnapshot = this.injectedScript.ariaSnapshot(entries[0].element, { mode: 'expect' });
+        this._delegate.setActiveElementAriaSnapshot?.(ariaSnapshot);
+      }
       this._lastHighlightedSelector = entries?.length ? state.actionSelector : undefined;
     }
 
@@ -1503,6 +1509,8 @@ export class Recorder {
       if (elements.length) {
         const color = elements.length > 1 ? HighlightColors.multiple : HighlightColors.single;
         highlight = elements.map(element => ({ element, color }));
+        const selector = this.injectedScript.generateSelector(highlight[0].element, { testIdAttributeName: this.state.testIdAttributeName }).selector;
+        this._delegate.setActiveElementSelector?.(selector);
         this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
       } else {
         if (!this._lastHighlightedSelector)
