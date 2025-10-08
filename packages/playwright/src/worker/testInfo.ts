@@ -24,6 +24,7 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { normalizeAnnotation } from '../common/testType';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -216,20 +217,8 @@ export class TestInfoImpl implements TestInfo {
 
     this._annotationsPush = this.annotations.push.bind(this.annotations);
     this.annotations.push = (...annotations: TestAnnotation[]) => {
-      for (const annotation of annotations) {
-        if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
-          throw new Error(`Annotation must be an object, got ${typeof annotation} instead.`);
-        if (!('type' in annotation) || typeof annotation.type !== 'string')
-          throw new Error(`Annotation must have a "type" property of type string.`);
-        // Allow description to be omitted, undefined, or any primitive type (string, number, boolean)
-        // but not objects or arrays which would be invalid
-        if ('description' in annotation && annotation.description !== undefined && annotation.description !== null) {
-          const descType = typeof annotation.description;
-          if (descType === 'object' || descType === 'function')
-            throw new Error(`Annotation "description" must be a primitive value, got ${descType} instead.`);
-        }
-      }
-      return this._annotationsPush(...annotations);
+      const normalized = annotations.map(a => normalizeAnnotation(a));
+      return this._annotationsPush(...normalized);
     };
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);

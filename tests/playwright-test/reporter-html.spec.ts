@@ -942,113 +942,143 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-annotation')).toHaveText('issue: 0');
     });
 
-    test('should validate annotation structure at test declaration', async ({ runInlineTest }) => {
+    test('should normalize invalid annotation at test declaration', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
-          // Invalid: annotation is a string instead of object
+          // Invalid: annotation is a string instead of object - will be normalized
           test('test with string annotation', { annotation: 'bug' }, async ({}) => {
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation must be an object');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with string annotation').click();
+      // String annotation is normalized to { type: 'invalid-annotation', description: 'bug' }
+      await expect(page.locator('.test-case-annotation')).toHaveText('invalid-annotation: bug');
     });
 
-    test('should validate annotation has type property', async ({ runInlineTest }) => {
+    test('should normalize annotation with missing type property', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
-          // Invalid: annotation missing type property
+          // Invalid: annotation missing type property - will be normalized to type: 'unknown'
           test('test with missing type', { annotation: { description: 'TEST-58xxx' } }, async ({}) => {
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation must have a "type" property of type string');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with missing type').click();
+      // Missing type is normalized to 'unknown'
+      await expect(page.locator('.test-case-annotation')).toHaveText('unknown: TEST-58xxx');
     });
 
-    test('should validate annotation type is a string', async ({ runInlineTest }) => {
+    test('should normalize annotation with non-string type', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
-          // Invalid: annotation type is not a string
+          // Invalid: annotation type is not a string - will be stringified
           test('test with non-string type', { annotation: { type: 123, description: 'desc' } }, async ({}) => {
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation must have a "type" property of type string');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with non-string type').click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('123: desc');
     });
 
-    test('should validate runtime annotation pushed via test.info() is an object', async ({ runInlineTest }) => {
+    test('should normalize runtime annotation that is not an object', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
           test('test with invalid runtime annotation', async ({}) => {
-            // Invalid: pushing a string instead of object
+            // Invalid: pushing a string instead of object - will be normalized
             test.info().annotations.push('bug');
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation must be an object');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with invalid runtime annotation').click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('invalid-annotation: bug');
     });
 
-    test('should validate runtime annotation has type property', async ({ runInlineTest }) => {
+    test('should normalize runtime annotation with missing type property', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
           test('test with runtime annotation missing type', async ({}) => {
-            // Invalid: missing type property
+            // Invalid: missing type property - will be normalized to 'unknown'
             test.info().annotations.push({ description: 'TEST-123' });
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation must have a "type" property of type string');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with runtime annotation missing type').click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('unknown: TEST-123');
     });
 
-    test('should validate runtime annotation type is a string', async ({ runInlineTest }) => {
+    test('should normalize runtime annotation with non-string type', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
           test('test with runtime annotation non-string type', async ({}) => {
-            // Invalid: type is not a string
+            // Invalid: type is not a string - will be stringified
             test.info().annotations.push({ type: 123, description: 'desc' });
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation must have a "type" property of type string');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with runtime annotation non-string type').click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('123: desc');
     });
 
-    test('should reject object/array description in runtime annotations', async ({ runInlineTest }) => {
+    test('should normalize object/array description in runtime annotations', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
 
           test('test with object description', async ({}) => {
-            // Invalid: description is an object
+            // Invalid: description is an object - will be stringified
             test.info().annotations.push({ type: 'issue', description: { bug: '123' } });
             expect(1).toBe(1);
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('Annotation "description" must be a primitive value');
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByText('test with object description').click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('issue: [object Object]');
     });
 
     test('should allow valid runtime annotations', async ({ runInlineTest, page, showReport }) => {

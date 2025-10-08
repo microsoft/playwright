@@ -23,7 +23,7 @@ import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
 
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
+import type { Fixtures, TestAnnotation, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 const testTypeSymbol = Symbol('testType');
@@ -309,24 +309,42 @@ function throwIfRunningInsideJest() {
   }
 }
 
+export function normalizeAnnotation(annotation: any): TestAnnotation {
+  if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation)) {
+    return {
+      type: 'invalid-annotation',
+      description: String(annotation)
+    };
+  }
+
+  const type = ('type' in annotation && annotation.type !== null && annotation.type !== undefined)
+    ? String(annotation.type)
+    : 'unknown';
+
+  let description = annotation.description;
+  if (description !== undefined && description !== null) {
+    const descType = typeof description;
+    if (descType === 'object' || descType === 'function')
+      description = String(description);
+  }
+
+  const result: TestAnnotation = { type };
+  if (description !== undefined)
+    result.description = description;
+  if (annotation.location)
+    result.location = annotation.location;
+
+  return result;
+}
+
 function validateTestDetails(details: TestDetails, location: Location) {
   const originalAnnotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
 
-  for (const annotation of originalAnnotations) {
-    if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
-      throw new Error(`Annotation must be an object, got ${typeof annotation} instead.`);
-    if (!('type' in annotation) || typeof annotation.type !== 'string')
-      throw new Error(`Annotation must have a "type" property of type string.`);
-    // Allow description to be omitted, undefined, or any primitive type (string, number, boolean)
-    // but not objects or arrays which would be invalid
-    if ('description' in annotation && annotation.description !== undefined && annotation.description !== null) {
-      const descType = typeof annotation.description;
-      if (descType === 'object' || descType === 'function')
-        throw new Error(`Annotation "description" must be a primitive value, got ${descType} instead.`);
-    }
-  }
+  const annotations = originalAnnotations.map(annotation => {
+    const normalized = normalizeAnnotation(annotation);
+    return { ...normalized, location };
+  });
 
-  const annotations = originalAnnotations.map(annotation => ({ ...annotation, location }));
   const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
   for (const tag of tags) {
     if (tag[0] !== '@')
