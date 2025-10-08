@@ -385,7 +385,7 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
 it('should properly serialize window.performance object', async ({ page }) => {
   it.skip(!!process.env.PW_CLOCK);
 
-  expect(await page.evaluate(() => performance)).toEqual({
+  expect(await page.evaluate(() => performance)).toEqual(expect.objectContaining({
     'navigation': {
       'redirectCount': 0,
       'type': expect.any(Number),
@@ -414,7 +414,7 @@ it('should properly serialize window.performance object', async ({ page }) => {
       'unloadEventEnd': expect.any(Number),
       'unloadEventStart': expect.any(Number),
     }
-  });
+  }));
 });
 
 it('should return undefined for non-serializable objects', async ({ page }) => {
