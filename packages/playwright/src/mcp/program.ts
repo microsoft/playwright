@@ -58,6 +58,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
       .option('--shared-browser-context', 'reuse the same browser context between all connected HTTP clients.')
       .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
+      .option('--test-id-attribute <attribute>', 'specify the attribute to use for test ids, defaults to "data-testid"')
       .option('--timeout-action <timeout>', 'specify action timeout in milliseconds, defaults to 5000ms', numberParser)
       .option('--timeout-navigation <timeout>', 'specify navigation timeout in milliseconds, defaults to 60000ms', numberParser)
       .option('--user-agent <ua string>', 'specify user agent string')

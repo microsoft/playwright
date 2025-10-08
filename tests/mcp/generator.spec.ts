@@ -276,3 +276,44 @@ test('generator_write_test', async ({ startClient }, testInfo) => {
   const code = fs.readFileSync(testInfo.outputPath('a.test.ts'), 'utf8');
   expect(code).toBe(`// Test content`);
 });
+
+test('should respect custom test id', async ({ startClient }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        use: {
+          testIdAttribute: 'data-tid'
+        }
+      });
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(async ({ page }) => {
+        await page.setContent('<button data-tid="submit">Submit</button>');
+      });
+      test('template', async ({ page }) => {
+      });
+    `,
+  });
+
+  const { client } = await startClient();
+  await client.callTool({
+    name: 'generator_setup_page',
+    arguments: {
+      plan: 'Test plan',
+      seedFile: 'a.test.ts',
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+      intent: 'Click submit button',
+    },
+  })).toHaveResponse({
+    code: `await page.getByTestId('submit').click();`,
+  });
+});

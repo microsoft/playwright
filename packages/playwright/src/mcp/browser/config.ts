@@ -59,6 +59,7 @@ export type CLIOptions = {
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
   storageState?: string;
+  testIdAttribute?: string;
   timeoutAction?: number;
   timeoutNavigation?: number;
   userAgent?: string;
@@ -236,6 +237,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
+    testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
       action: cliOptions.timeoutAction,
       navigation: cliOptions.timeoutNavigation,
@@ -277,6 +279,7 @@ function configFromEnv(): Config {
   options.saveVideo = resolutionParser('--save-video', process.env.PLAYWRIGHT_MCP_SAVE_VIDEO);
   options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
+  options.testIdAttribute = envToString(process.env.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
   options.timeoutAction = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
   options.timeoutNavigation = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);

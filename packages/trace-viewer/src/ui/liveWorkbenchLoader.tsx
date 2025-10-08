@@ -36,7 +36,7 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
         const model = await loadSingleTraceFile(traceJson);
         setModel(model);
       } catch {
-        const model = new MultiTraceModel([]);
+        const model = new MultiTraceModel('', []);
         setModel(model);
       } finally {
         setCounter(counter + 1);
@@ -54,8 +54,7 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
 async function loadSingleTraceFile(traceJson: string): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
   params.set('trace', traceJson);
-  params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
-  return new MultiTraceModel(contextEntries);
+  return new MultiTraceModel(traceJson, contextEntries);
 }
