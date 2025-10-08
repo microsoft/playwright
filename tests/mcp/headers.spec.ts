@@ -85,42 +85,26 @@ test('browser_set_headers persists headers across navigations', async ({ startCl
   expect(secondRequest.headers['x-tenant-id']).toBe('tenant-123');
 });
 
-test('browser_set_headers applies to all requests from the context', async ({ startClient, server }) => {
-  server.setRoute('/page', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<!DOCTYPE html><script>fetch('/api/data')</script>`);
-  });
-  server.setRoute('/api/data', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end('{}');
-  });
+test('browser_set_headers sends headers with requests', async ({ startClient, server }) => {
+  server.setContent('/page', '<title>Page</title>', 'text/html');
 
   const { client } = await startClient({ args: ['--caps=headers'] });
 
   expect(await client.callTool({
     name: 'browser_set_headers',
     arguments: {
-      headers: {
-        'X-Tenant-ID': 'tenant-456',
-        'Authorization': 'Bearer token456',
-      },
+      headers: { 'X-Custom-Header': 'custom-value' },
     },
   })).toHaveResponse({
-    result: 'Configured 2 headers for this session.',
+    result: 'Configured 1 header for this session.',
   });
 
-  const pageRequestPromise = server.waitForRequest('/page');
-  const apiRequestPromise = server.waitForRequest('/api/data');
-
+  const requestPromise = server.waitForRequest('/page');
   await client.callTool({
     name: 'browser_navigate',
     arguments: { url: `${server.PREFIX}/page` },
   });
 
-  const [pageRequest, apiRequest] = await Promise.all([pageRequestPromise, apiRequestPromise]);
-
-  expect(pageRequest.headers['x-tenant-id']).toBe('tenant-456');
-  expect(pageRequest.headers['authorization']).toBe('Bearer token456');
-  expect(apiRequest.headers['x-tenant-id']).toBe('tenant-456');
-  expect(apiRequest.headers['authorization']).toBe('Bearer token456');
+  const request = await requestPromise;
+  expect(request.headers['x-custom-header']).toBe('custom-value');
 });

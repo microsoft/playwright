@@ -31,21 +31,14 @@ const setHeaders = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const entries = Object.entries(params.headers);
-    if (!entries.length) {
-      response.addError('Please provide at least one header to set.');
+    try {
+      await context.setExtraHTTPHeaders(params.headers);
+    } catch (error) {
+      response.addError((error as Error).message);
       return;
     }
 
-    const invalidHeader = entries.find(([name]) => !name.trim());
-    if (invalidHeader) {
-      response.addError('Header names must be non-empty strings.');
-      return;
-    }
-
-    await context.setExtraHTTPHeaders(params.headers);
-
-    const count = entries.length;
+    const count = Object.keys(params.headers).length;
     response.addResult(`Configured ${count} ${count === 1 ? 'header' : 'headers'} for this session.`);
     response.addCode(`await context.setExtraHTTPHeaders(${JSON.stringify(params.headers, null, 2)});`);
   },

@@ -212,6 +212,14 @@ export class Context {
   }
 
   async setExtraHTTPHeaders(headers: Record<string, string>) {
+    if (!Object.keys(headers).length)
+      throw new Error('Please provide at least one header to set.');
+
+    for (const name of Object.keys(headers)) {
+      if (!name.trim())
+        throw new Error('Header names must be non-empty strings.');
+    }
+
     this._extraHTTPHeaders = { ...headers };
     const { browserContext } = await this._ensureBrowserContext();
     await browserContext.setExtraHTTPHeaders(this._extraHTTPHeaders);
