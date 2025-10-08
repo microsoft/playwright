@@ -118,6 +118,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
+  readonly _annotationsPush: (...items: TestAnnotation[]) => number;
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: WorkerInitParams;
 
@@ -212,6 +213,24 @@ export class TestInfoImpl implements TestInfo {
       const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
+
+    this._annotationsPush = this.annotations.push.bind(this.annotations);
+    this.annotations.push = (...annotations: TestAnnotation[]) => {
+      for (const annotation of annotations) {
+        if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
+          throw new Error(`Annotation must be an object, got ${typeof annotation} instead.`);
+        if (!('type' in annotation) || typeof annotation.type !== 'string')
+          throw new Error(`Annotation must have a "type" property of type string.`);
+        // Allow description to be omitted, undefined, or any primitive type (string, number, boolean)
+        // but not objects or arrays which would be invalid
+        if ('description' in annotation && annotation.description !== undefined && annotation.description !== null) {
+          const descType = typeof annotation.description;
+          if (descType === 'object' || descType === 'function')
+            throw new Error(`Annotation "description" must be a primitive value, got ${descType} instead.`);
+        }
+      }
+      return this._annotationsPush(...annotations);
+    };
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {

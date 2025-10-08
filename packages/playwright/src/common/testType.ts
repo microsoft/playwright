@@ -317,8 +317,13 @@ function validateTestDetails(details: TestDetails, location: Location) {
       throw new Error(`Annotation must be an object, got ${typeof annotation} instead.`);
     if (!('type' in annotation) || typeof annotation.type !== 'string')
       throw new Error(`Annotation must have a "type" property of type string.`);
-    if ('description' in annotation && typeof annotation.description !== 'string')
-      throw new Error(`Annotation "description" must be a string, got ${typeof annotation.description} instead.`);
+    // Allow description to be omitted, undefined, or any primitive type (string, number, boolean)
+    // but not objects or arrays which would be invalid
+    if ('description' in annotation && annotation.description !== undefined && annotation.description !== null) {
+      const descType = typeof annotation.description;
+      if (descType === 'object' || descType === 'function')
+        throw new Error(`Annotation "description" must be a primitive value, got ${descType} instead.`);
+    }
   }
 
   const annotations = originalAnnotations.map(annotation => ({ ...annotation, location }));
