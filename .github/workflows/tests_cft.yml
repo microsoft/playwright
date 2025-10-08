@@ -1,0 +1,85 @@
+name: tests CfT
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Playwright SHA / ref to test. Use 'refs/pull/PULL_REQUEST_ID/head' to test a PR. Defaults to the current branch.
+        required: false
+        default: ''
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  test_cft:
+    permissions:
+      contents: read    # This is required for actions/checkout to succeed
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-14-large, macos-14-xlarge, macos-15-large, macos-15-xlarge, windows-2022, windows-2025]
+    name: CfT ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v5
+      if: github.event_name != 'workflow_dispatch'
+    - uses: actions/checkout@v5
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: ${{ github.event.inputs.ref }}
+    - uses: actions/setup-node@v5
+      with:
+        node-version: 20
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium ffmpeg
+      if: contains(matrix.os, 'ubuntu')
+    - run: npx playwright install chromium ffmpeg
+      if: !contains(matrix.os, 'ubuntu')
+    - name: Install CfT beta
+      run: echo "CRPATH=$(npx -y @puppeteer/browsers install chrome@beta --with-deps | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
+    - name: Run tests linux
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+      if: contains(matrix.os, 'ubuntu')
+      env:
+        PWTEST_CHANNEL: chromium
+    - name: Run tests non-linux
+      run: npm run ctest
+      if: !contains(matrix.os, 'ubuntu')
+      env:
+        PWTEST_CHANNEL: chromium
+
+  test_cft_headless_shell:
+    permissions:
+      contents: read    # This is required for actions/checkout to succeed
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-14-large, macos-14-xlarge, macos-15-large, macos-15-xlarge, windows-2022, windows-2025]
+    name: CfT headless shell ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v5
+      if: github.event_name != 'workflow_dispatch'
+    - uses: actions/checkout@v5
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: ${{ github.event.inputs.ref }}
+    - uses: actions/setup-node@v5
+      with:
+        node-version: 20
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium ffmpeg
+      if: contains(matrix.os, 'ubuntu')
+    - run: npx playwright install chromium ffmpeg
+      if: !contains(matrix.os, 'ubuntu')
+    - name: Install CfT headless shell beta
+      run: echo "CRPATH=$(npx -y @puppeteer/browsers install chrome-headless-shell@beta --with-deps | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
+    - name: Run tests linux
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+      if: contains(matrix.os, 'ubuntu')
+    - name: Run tests non-linux
+      run: npm run ctest
+      if: !contains(matrix.os, 'ubuntu')
