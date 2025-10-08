@@ -126,6 +126,26 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('should handle large number of console logs', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            for (let i = 0; i < 100000; i++) {
+              console.log('log line ' + i);
+            }
+          });
+        `,
+      }, { reporter: 'junit' });
+      expect(result.exitCode).toBe(0);
+      // Should not fail with "RangeError: Maximum call stack size exceeded"
+      expect(result.output).toContain('</testsuites>');
+      const xml = parseXML(result.output);
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['system-out'].length).toBe(1);
+      expect(testcase['system-out'][0]).toContain('log line 99999');
+    });
+
     test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
