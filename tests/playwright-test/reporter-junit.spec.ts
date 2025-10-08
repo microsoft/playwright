@@ -126,23 +126,21 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
-    test('should handle large number of console logs', async ({ runInlineTest }) => {
+    test('should handle large number of console logs', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37719' } }, async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
           test('one', async ({}) => {
-            for (let i = 0; i < 100000; i++) {
+            for (let i = 0; i < 500000; i++) {
               console.log('log line ' + i);
             }
           });
         `,
       }, { reporter: 'junit' });
       expect(result.exitCode).toBe(0);
-      // Should not fail with "RangeError: Maximum call stack size exceeded"
       expect(result.output).toContain('</testsuites>');
-      const xml = parseXML(result.output);
-      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
-      expect(testcase['system-out'].length).toBe(1);
+      const testcase = parseXML(result.output)['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['system-out']).toHaveLength(1);
       expect(testcase['system-out'][0]).toContain('log line 99999');
     });
 
