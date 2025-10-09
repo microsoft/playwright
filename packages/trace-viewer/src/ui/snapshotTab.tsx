@@ -36,6 +36,7 @@ export type HighlightedElement = {
   locator?: string,
   ariaSnapshot?: string
   lastEdited: 'locator' | 'ariaSnapshot' | 'none';
+  hasMatches?: boolean;
 };
 
 export const SnapshotTabsView: React.FunctionComponent<{
@@ -262,6 +263,7 @@ export const InspectModeController: React.FunctionComponent<{
 
     const parsedSnapshot = highlightedAriaSnapshot ? parseAriaSnapshot(yaml, highlightedAriaSnapshot) : undefined;
     const fullSelector = highlightedLocator ? locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName) : undefined;
+    let didHighlight = false;
     for (const { recorder, frameSelector } of recorders) {
       const actionSelector = fullSelector?.startsWith(frameSelector) ? fullSelector.substring(frameSelector.length).trim() : undefined;
       const ariaTemplate = parsedSnapshot?.errors.length === 0 ? parsedSnapshot.fragment : undefined;
@@ -278,18 +280,21 @@ export const InspectModeController: React.FunctionComponent<{
             locator: asLocator(sdkLanguage, frameSelector + elementInfo.selector),
             ariaSnapshot: elementInfo.ariaSnapshot,
             lastEdited: 'none',
+            hasMatches: true,
           });
         },
         setActiveElementSelector(selector) {
           setHighlightedElement(highlightedElement => ({
             ...highlightedElement,
             locator: asLocator(sdkLanguage, frameSelector + selector),
+            hasMatches: true,
           }));
         },
         setActiveElementAriaSnapshot(ariaSnapshot) {
           setHighlightedElement(highlightedElement => ({
             ...highlightedElement,
             ariaSnapshot,
+            hasMatches: true,
           }));
         },
         highlightUpdated() {
@@ -299,6 +304,17 @@ export const InspectModeController: React.FunctionComponent<{
           }
         }
       });
+
+      if (recorder.highlight.isRendered())
+        didHighlight = true;
+    }
+    if (!didHighlight && highlightedElement.lastEdited !== 'none') {
+      // Clear match status if both entries are empty
+      const hasMatches = !highlightedElement.ariaSnapshot && !highlightedElement.locator ? undefined : false;
+      setHighlightedElement(highlightedElement => (highlightedElement.hasMatches !== hasMatches ? {
+        ...highlightedElement,
+        hasMatches,
+      } : highlightedElement));
     }
   }, [iframe, isInspecting, highlightedElement, setHighlightedElement, sdkLanguage, testIdAttributeName, iteration]);
   return <></>;

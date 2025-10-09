@@ -38,6 +38,7 @@ export interface RecorderDelegate {
   elementPicked?(elementInfo: ElementInfo): Promise<void>;
   setActiveElementSelector?(selector: string): void;
   setActiveElementAriaSnapshot?(ariaSnapshot: string): void;
+  setActiveElementNoMatches?(): void;
   setMode?(mode: Mode): Promise<void>;
   setOverlayState?(state: OverlayState): Promise<void>;
   highlightUpdated?(): void;
@@ -1519,10 +1520,12 @@ export class Recorder {
       }
     }
 
-    if (highlight === 'clear')
+    if (highlight === 'clear') {
       this.highlight.clearHighlight();
-    else if (highlight !== 'noop')
+      this._delegate.setActiveElementNoMatches?.();
+    } else if (highlight !== 'noop') {
       this.highlight.updateHighlight(highlight);
+    }
   }
 
   clearHighlight() {

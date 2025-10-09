@@ -123,6 +123,10 @@ export class Highlight {
     this._actionPointElement.hidden = true;
   }
 
+  isRendered() {
+    return !!this._renderedEntries.length;
+  }
+
   clearHighlight() {
     for (const entry of this._renderedEntries) {
       entry.highlightElement?.remove();
