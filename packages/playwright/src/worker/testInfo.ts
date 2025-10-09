@@ -228,17 +228,11 @@ export class TestInfoImpl implements TestInfo {
     });
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
-    const attachmentsPush = (...attachments: TestInfo['attachments']) => {
+    this.attachments.push = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
         this._attach(a, this._parentStep()?.stepId);
       return this.attachments.length;
     };
-    Object.defineProperty(this.attachments, 'push', {
-      value: attachmentsPush,
-      writable: true,
-      enumerable: false,
-      configurable: true
-    });
 
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
 
