@@ -310,25 +310,20 @@ function throwIfRunningInsideJest() {
 }
 
 export function normalizeAnnotation(annotation: any): TestAnnotation {
-  if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation)) {
-    return {
-      type: 'invalid-annotation',
-      description: String(annotation)
-    };
-  }
+  if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
+    throw new Error(`Annotation must be an object, received: ${typeof annotation}`);
 
-  const type = ('type' in annotation && annotation.type !== null && annotation.type !== undefined)
-    ? String(annotation.type)
-    : 'unknown';
+  if (!('type' in annotation) || annotation.type === null || annotation.type === undefined)
+    throw new Error('Annotation must have a "type" property');
+
+  if (typeof annotation.type !== 'string')
+    throw new Error(`Annotation type must be a string, received: ${typeof annotation.type}`);
 
   let description = annotation.description;
-  if (description !== undefined && description !== null) {
-    const descType = typeof description;
-    if (descType === 'object' || descType === 'function')
-      description = String(description);
-  }
+  if (description !== undefined && description !== null && typeof description !== 'string')
+    description = JSON.stringify(description);
 
-  const result: TestAnnotation = { type };
+  const result: TestAnnotation = { type: annotation.type };
   if (description !== undefined)
     result.description = description;
   if (annotation.location)
