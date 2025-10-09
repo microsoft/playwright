@@ -17,7 +17,6 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import * as javascript from '../codegen';
-import { generateLocator } from './utils';
 
 const verifyElement = defineTabTool({
   capability: 'testing',
@@ -83,7 +82,7 @@ const verifyList = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const locator = await tab.refLocator({ ref: params.ref, element: params.element });
+    const { locator } = await tab.refLocator({ ref: params.ref, element: params.element });
     const itemTexts: string[] = [];
     for (const item of params.items) {
       const itemLocator = locator.getByText(item);
@@ -118,8 +117,8 @@ const verifyValue = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const locator = await tab.refLocator({ ref: params.ref, element: params.element });
-    const locatorSource = `page.${await generateLocator(locator)}`;
+    const { locator, resolved } = await tab.refLocator({ ref: params.ref, element: params.element });
+    const locatorSource = `page.${resolved}`;
     if (params.type === 'textbox' || params.type === 'slider' || params.type === 'combobox') {
       const value = await locator.inputValue();
       if (value !== params.value) {

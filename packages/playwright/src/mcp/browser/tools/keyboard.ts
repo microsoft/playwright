@@ -17,7 +17,6 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import { elementSchema } from './snapshot';
-import { generateLocator } from './utils';
 
 const pressKey = defineTabTool({
   capability: 'core',
@@ -60,22 +59,22 @@ const type = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const locator = await tab.refLocator(params);
+    const { locator, resolved } = await tab.refLocator(params);
     const secret = tab.context.lookupSecret(params.text);
 
     await tab.waitForCompletion(async () => {
       if (params.slowly) {
         response.setIncludeSnapshot();
-        response.addCode(`await page.${await generateLocator(locator)}.pressSequentially(${secret.code});`);
+        response.addCode(`await page.${resolved}.pressSequentially(${secret.code});`);
         await locator.pressSequentially(secret.value);
       } else {
-        response.addCode(`await page.${await generateLocator(locator)}.fill(${secret.code});`);
+        response.addCode(`await page.${resolved}.fill(${secret.code});`);
         await locator.fill(secret.value);
       }
 
       if (params.submit) {
         response.setIncludeSnapshot();
-        response.addCode(`await page.${await generateLocator(locator)}.press('Enter');`);
+        response.addCode(`await page.${resolved}.press('Enter');`);
         await locator.press('Enter');
       }
     });

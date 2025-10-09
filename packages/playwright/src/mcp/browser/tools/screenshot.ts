@@ -17,7 +17,7 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import * as javascript from '../codegen';
-import { generateLocator, dateAsFileName } from './utils';
+import { dateAsFileName } from './utils';
 
 import type * as playwright from 'playwright-core';
 
@@ -60,14 +60,14 @@ const screenshot = defineTabTool({
     response.addCode(`// Screenshot ${screenshotTarget} and save it as ${fileName}`);
 
     // Only get snapshot when element screenshot is needed
-    const locator = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
+    const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
 
-    if (locator)
-      response.addCode(`await page.${await generateLocator(locator)}.screenshot(${javascript.formatObject(options)});`);
+    if (ref)
+      response.addCode(`await page.${ref.resolved}.screenshot(${javascript.formatObject(options)});`);
     else
       response.addCode(`await page.screenshot(${javascript.formatObject(options)});`);
 
-    const buffer = locator ? await locator.screenshot(options) : await tab.page.screenshot(options);
+    const buffer = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
     response.addResult(`Took the ${screenshotTarget} screenshot and saved it as ${fileName}`);
 
     // https://github.com/microsoft/playwright-mcp/issues/817
