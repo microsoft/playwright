@@ -9,6 +9,7 @@ node_modules/
 /.vscode
 .mono
 .idea
+.history
 yarn.lock
 /packages/playwright-core/src/generated
 /packages/playwright-ct-core/src/generated
