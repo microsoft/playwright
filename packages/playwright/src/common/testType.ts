@@ -309,7 +309,7 @@ function throwIfRunningInsideJest() {
   }
 }
 
-export function normalizeAnnotation(annotation: any): TestAnnotation {
+export function validateAnnotation(annotation: any): TestAnnotation {
   if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
     throw new Error(`Annotation must be an object, received: ${typeof annotation}`);
 
@@ -322,6 +322,17 @@ export function normalizeAnnotation(annotation: any): TestAnnotation {
   let description = annotation.description;
   if (description !== undefined && description !== null && typeof description !== 'string')
     description = JSON.stringify(description);
+
+  if (annotation.location !== undefined) {
+    if (typeof annotation.location !== 'object' || annotation.location === null || Array.isArray(annotation.location))
+      throw new Error(`Annotation location must be an object, received: ${typeof annotation.location}`);
+    if (typeof annotation.location.file !== 'string')
+      throw new Error(`Annotation location.file must be a string, received: ${typeof annotation.location.file}`);
+    if (typeof annotation.location.line !== 'number')
+      throw new Error(`Annotation location.line must be a number, received: ${typeof annotation.location.line}`);
+    if (typeof annotation.location.column !== 'number')
+      throw new Error(`Annotation location.column must be a number, received: ${typeof annotation.location.column}`);
+  }
 
   const result: TestAnnotation = { type: annotation.type };
   if (description !== undefined)
@@ -336,7 +347,7 @@ function validateTestDetails(details: TestDetails, location: Location) {
   const originalAnnotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
 
   const annotations = originalAnnotations.map(annotation => {
-    const normalized = normalizeAnnotation(annotation);
+    const normalized = validateAnnotation(annotation);
     return { ...normalized, location };
   });
 

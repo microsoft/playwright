@@ -24,7 +24,7 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
-import { normalizeAnnotation } from '../common/testType';
+import { validateAnnotation } from '../common/testType';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -217,7 +217,7 @@ export class TestInfoImpl implements TestInfo {
 
     this._annotationsPush = this.annotations.push.bind(this.annotations);
     const normalizedPush = (...annotations: TestAnnotation[]) => {
-      const normalized = annotations.map(a => normalizeAnnotation(a));
+      const normalized = annotations.map(a => validateAnnotation(a));
       return this._annotationsPush(...normalized);
     };
     Object.defineProperty(this.annotations, 'push', {
