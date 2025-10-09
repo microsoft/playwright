@@ -471,12 +471,12 @@ export default defineConfig({
 ```
 
 ## property: TestConfig.reportSlowTests
-* since: v1.10
+* since: v1.57
 - type: ?<[null]|[Object]>
-  - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
-  - `threshold` <[float]> Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
+  - `max` <[int]> The maximum number of slow tests to report. Defaults to `5`.
+  - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 5 minutes.
 
-Whether to report slow test files. Pass `null` to disable this feature.
+Whether to report slow tests. Pass `null` to disable this feature.
 
 **Usage**
 
@@ -490,7 +490,11 @@ export default defineConfig({
 
 **Details**
 
-Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
+Tests that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all tests that exceed the threshold.
+
+:::note
+In versions prior to 1.57, this config was about reporting slow test *files*, as opposed to slow tests.
+:::
 
 ## property: TestConfig.respectGitIgnore
 * since: v1.45

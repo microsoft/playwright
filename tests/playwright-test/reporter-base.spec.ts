@@ -191,42 +191,50 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     });
 
     test('should print slow tests', async ({ runInlineTest }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37724' });
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = {
+            workers: 4,
+            fullyParallel: true,
             projects: [
               { name: 'foo' },
               { name: 'bar' },
-              { name: 'baz' },
-              { name: 'qux' },
             ],
-            reportSlowTests: { max: 0, threshold: 2400 },
+            reportSlowTests: { max: 0, threshold: 100 },
           };
         `,
-        'dir/a.test.js': `
+        'dir/slow.test.js': `
           import { test, expect } from '@playwright/test';
-          test('slow test', async ({}) => {
-            await new Promise(f => setTimeout(f, 2500));
+          test('slow test 1', async ({}) => {
+            await new Promise(f => setTimeout(f, 500));
+          });
+          test('slow test 2', async ({}) => {
+            await new Promise(f => setTimeout(f, 500));
           });
         `,
-        'dir/b.test.js': `
+        'dir/fast.test.js': `
           import { test, expect } from '@playwright/test';
           test('fast test', async ({}) => {
             await new Promise(f => setTimeout(f, 1));
           });
         `,
+        'dir/known_slow.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('marked as slow', async ({}) => {
+            test.slow();
+            await new Promise(f => setTimeout(f, 500));
+          });
+        `,
       });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(8);
-      expect(result.output).toContain(`Slow test file: [foo] › dir${path.sep}a.test.js (`);
-      expect(result.output).toContain(`Slow test file: [bar] › dir${path.sep}a.test.js (`);
-      expect(result.output).toContain(`Slow test file: [baz] › dir${path.sep}a.test.js (`);
-      expect(result.output).toContain(`Slow test file: [qux] › dir${path.sep}a.test.js (`);
-      expect(result.output).toContain(`Consider running tests from slow files in parallel`);
-      expect(result.output).not.toContain(`Slow test file: [foo] › dir${path.sep}b.test.js (`);
-      expect(result.output).not.toContain(`Slow test file: [bar] › dir${path.sep}b.test.js (`);
-      expect(result.output).not.toContain(`Slow test file: [baz] › dir${path.sep}b.test.js (`);
-      expect(result.output).not.toContain(`Slow test file: [qux] › dir${path.sep}b.test.js (`);
+      expect(result.output).toContain(`Slow test: [foo] › dir${path.sep}slow.test.js:`);
+      expect(result.output).toContain(`Slow test: [bar] › dir${path.sep}slow.test.js:`);
+      expect(result.output).not.toContain(`Slow test: [foo] › dir${path.sep}fast.test.js:`);
+      expect(result.output).not.toContain(`Slow test: [bar] › dir${path.sep}fast.test.js:`);
+      expect(result.output).not.toContain(`Slow test: [foo] › dir${path.sep}known_slow.test.js:`);
+      expect(result.output).not.toContain(`Slow test: [bar] › dir${path.sep}known_slow.test.js:`);
     });
 
     test('should print if maxFailures is reached', async ({ runInlineTest }) => {
