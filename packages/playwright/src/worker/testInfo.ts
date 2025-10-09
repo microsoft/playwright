@@ -216,17 +216,29 @@ export class TestInfoImpl implements TestInfo {
     })();
 
     this._annotationsPush = this.annotations.push.bind(this.annotations);
-    this.annotations.push = (...annotations: TestAnnotation[]) => {
+    const normalizedPush = (...annotations: TestAnnotation[]) => {
       const normalized = annotations.map(a => normalizeAnnotation(a));
       return this._annotationsPush(...normalized);
     };
+    Object.defineProperty(this.annotations, 'push', {
+      value: normalizedPush,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
-    this.attachments.push = (...attachments: TestInfo['attachments']) => {
+    const attachmentsPush = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
         this._attach(a, this._parentStep()?.stepId);
       return this.attachments.length;
     };
+    Object.defineProperty(this.attachments, 'push', {
+      value: attachmentsPush,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
 
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
 
