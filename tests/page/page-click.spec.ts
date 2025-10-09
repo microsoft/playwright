@@ -1274,3 +1274,16 @@ it('should click into shadow root with slotted div', { annotation: { type: 'issu
 
   await page.getByRole('button', { name: 'Foo' }).click();
 });
+
+it('should click shadow root button', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37768' } }, async ({ page }) => {
+  await page.setContent(`
+    <my-button>
+      <template shadowrootmode="open">
+        <button><slot></slot></button>
+      </template>
+      <div>Foo</div>
+    </my-button>
+  `);
+
+  await page.locator('my-button').click();
+});
