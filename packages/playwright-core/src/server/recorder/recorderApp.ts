@@ -107,7 +107,7 @@ export class RecorderApp {
         delete (inspectedContext as any)[recorderAppSymbol];
       });
 
-      await this._page.mainFrame().goto(progress, process.env.PW_HMR ? 'http://localhost:44225' : 'https://playwright/index.html');
+      await this._page.mainFrame().goto(progress, 'https://playwright/index.html');
     });
 
     const url = this._recorder.url();

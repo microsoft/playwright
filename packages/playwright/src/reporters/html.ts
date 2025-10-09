@@ -315,31 +315,6 @@ class HtmlBuilder {
       singleTestId = testFile.tests[0].testId;
     }
 
-    if (process.env.PW_HMR === '1') {
-      const redirectFile = path.join(this._reportFolder, 'index.html');
-
-      await this._writeReportData(redirectFile);
-
-      async function redirect() {
-        const hmrURL = new URL('http://localhost:44224'); // dev server, port is harcoded in build.js
-        const popup = window.open(hmrURL);
-        const listener = (evt: MessageEvent) => {
-          if (evt.source === popup && evt.data === 'ready') {
-            const element = document.getElementById('playwrightReportBase64');
-            popup!.postMessage(element?.textContent ?? '', hmrURL.origin);
-            window.removeEventListener('message', listener);
-            // This is generally not allowed
-            window.close();
-          }
-        };
-        window.addEventListener('message', listener);
-      }
-
-      fs.appendFileSync(redirectFile, `<script>(${redirect.toString()})()</script>`);
-
-      return { ok, singleTestId };
-    }
-
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
     await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
