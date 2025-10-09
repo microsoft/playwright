@@ -69,10 +69,6 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
     const relativePath = url.pathname.slice('/trace'.length);
-    if (process.env.PW_HMR) {
-      // When running in Vite HMR mode, port is hardcoded in build.js
-      response.appendHeader('Access-Control-Allow-Origin', 'http://localhost:44223');
-    }
     if (relativePath.endsWith('/stall.js'))
       return true;
     if (relativePath.startsWith('/file')) {
@@ -131,13 +127,7 @@ export async function installRootRedirect(server: HttpServer, traceUrl: string |
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
-  let baseUrl = '.';
-  if (process.env.PW_HMR) {
-    baseUrl = 'http://localhost:44223'; // port is hardcoded in build.js
-    params.set('server', server.urlPrefix('precise'));
-  }
-
-  const urlPath  = `${baseUrl}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
+  const urlPath  = `./trace/${options.webApp || 'index.html'}?${params.toString()}`;
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
