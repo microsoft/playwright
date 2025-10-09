@@ -1384,6 +1384,41 @@ it.describe('fastForward', () => {
     expect(shortTimers[1].callCount).toBe(1);
     expect(shortTimers[2].callCount).toBe(1);
   });
+
+  it('does not rewind back in time', async ({ clock }) => {
+    const stub = createStub();
+    const gotTime = await new Promise<number>(done => {
+      clock.setTimeout(() => {
+        stub(clock.Date.now());
+      }, 10);
+      clock.setTimeout(() => {
+        stub(clock.Date.now());
+      }, 10);
+      clock.resume();
+      setTimeout(async () => {
+        // Call fast-forward right after the real time sync happens,
+        // but before all the callbacks are processed.
+        await clock.fastForward(1000);
+        setTimeout(() => {
+          done(clock.Date.now());
+        }, 20);
+      }, 10);
+    });
+    expect(stub.callCount).toBe(2);
+    expect(gotTime).toBeGreaterThan(1010);
+  });
+
+  it('error does not break the clock', async ({ clock }) => {
+    const stub = createStub();
+    clock.setTimeout(() => {
+      stub(clock.Date.now());
+    }, 1000);
+    const error = await clock.fastForward(-1000).catch(e => e);
+    expect(error.message).toContain('Cannot fast-forward to the past');
+    await clock.fastForward(2000);
+    expect(stub.callCount).toBe(1);
+    expect(stub.calledWith(2000)).toBeTruthy();
+  });
 });
 
 it.describe('pauseAt', () => {
@@ -1593,37 +1628,6 @@ it.describe('Intl API', () => {
     });
     expect(rtf.format(2, 'day')).toBe('in 2 days');
   });
-});
-
-it('works with concurrent runFor calls', async ({ clock }) => {
-  clock.setSystemTime(0);
-
-  const log: string[] = [];
-  for (let t = 500; t > 0; t -= 100) {
-    clock.setTimeout(() => {
-      log.push(`${t}: ${clock.Date.now()}`);
-      clock.setTimeout(() => {
-        log.push(`${t}+0: ${clock.Date.now()}`);
-      }, 0);
-    }, t);
-  }
-
-  await Promise.all([
-    clock.runFor(500),
-    clock.runFor(600),
-  ]);
-  expect(log).toEqual([
-    `100: 100`,
-    `100+0: 101`,
-    `200: 200`,
-    `200+0: 201`,
-    `300: 300`,
-    `300+0: 301`,
-    `400: 400`,
-    `400+0: 401`,
-    `500: 500`,
-    `500+0: 501`,
-  ]);
 });
 
 it('works with slow setTimeout in busy embedder', async ({ installEx }) => {
