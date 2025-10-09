@@ -434,12 +434,6 @@ export function extendSnapshot(traceUrl: string, snapshot: Snapshot, shouldPopul
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
   popoutParams.set('trace', traceUrl);
-  if (snapshot.point) {
-    popoutParams.set('pointX', String(snapshot.point.x));
-    popoutParams.set('pointY', String(snapshot.point.y));
-    if (snapshot.hasInputTarget)
-      params.set('hasInputTarget', '1');
-  }
   const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
   return { snapshotInfoUrl, snapshotUrl, popoutUrl };
 }

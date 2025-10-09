@@ -222,8 +222,6 @@ export function startHtmlReportServer(folder: string): HttpServer {
         return false;
       }
     }
-    if (relativePath.endsWith('/stall.js'))
-      return true;
     if (relativePath === '/')
       relativePath = '/index.html';
     const absolutePath = path.join(folder, ...relativePath.split('/'));
