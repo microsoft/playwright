@@ -53,8 +53,8 @@ it('should throw if port option is passed for persistent context', async ({ brow
   expect(error!.message).toContain('Cannot specify a port without launching as a server.');
 });
 
-it('should throw if page argument is passed', async ({ browserType, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should throw if page argument is passed', async ({ browserType, browserName, channel }) => {
+  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
   let waitError: Error | undefined;
   await browserType.launch({ args: ['http://example.com'] }).catch(e => waitError = e);

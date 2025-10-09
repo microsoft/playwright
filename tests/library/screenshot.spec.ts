@@ -202,8 +202,8 @@ browserTest.describe('page screenshot', () => {
 browserTest.describe('element screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
 
-  browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName }) => {
-    browserTest.skip(browserName === 'firefox');
+  browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName, channel }) => {
+    browserTest.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
@@ -215,8 +215,8 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName, isMac }) => {
-    browserTest.skip(browserName === 'firefox');
+  browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName, channel }) => {
+    browserTest.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();

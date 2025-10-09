@@ -52,8 +52,8 @@ test('console event should work in popup', async ({ page }) => {
   expect(message.page()).toBe(popup);
 });
 
-test('console event should work in popup 2', async ({ page, browserName }) => {
-  test.fixme(browserName === 'firefox', 'console message from javascript: url is not reported at all');
+test('console event should work in popup 2', async ({ page, browserName, channel }) => {
+  test.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'console message from javascript: url is not reported at all');
 
   const [, message, popup] = await Promise.all([
     page.evaluate(async () => {
@@ -69,8 +69,8 @@ test('console event should work in popup 2', async ({ page, browserName }) => {
   expect(message.page()).toBe(popup);
 });
 
-test('console event should work in immediately closed popup', async ({ page, browserName }) => {
-  test.fixme(browserName === 'firefox', 'console message is not reported at all');
+test('console event should work in immediately closed popup', async ({ page, browserName, channel }) => {
+  test.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'console message is not reported at all');
 
   const [, message, popup] = await Promise.all([
     page.evaluate(async () => {
