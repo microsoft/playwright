@@ -59,7 +59,7 @@ export type ErrorDescription = {
   message: string;
 };
 
-export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
+export type Attachment = trace.AfterActionTraceEventAttachment;
 
 export class MultiTraceModel {
   readonly startTime: number;
@@ -126,6 +126,12 @@ export class MultiTraceModel {
       if (action.group)
         this.actionCounters.set(action.group, 1 + (this.actionCounters.get(action.group) || 0));
     }
+  }
+
+  createRelativeUrl(path: string) {
+    const url = new URL('http://localhost/' + path);
+    url.searchParams.set('trace', this.traceUrl);
+    return url.toString().substring('http://localhost/'.length);
   }
 
   failedAction() {
