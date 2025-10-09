@@ -275,8 +275,6 @@ export class WorkerMain extends ProcessRunner {
 
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);
-      if (!annotation.type || typeof annotation.type !== 'string')
-        return;
       switch (annotation.type) {
         case 'fixme':
         case 'skip':

@@ -161,8 +161,6 @@ class JUnitReporter implements ReporterV2 {
     };
 
     for (const annotation of test.annotations) {
-      if (!annotation.type || typeof annotation.type !== 'string')
-        continue;
       const property: XMLEntry = {
         name: 'property',
         attributes: {
