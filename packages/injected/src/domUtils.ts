@@ -41,8 +41,6 @@ export function enclosingElement(node: Node) {
 }
 
 export function parentElementOrShadowHost(element: Element): Element | undefined {
-  if (element.assignedSlot)
-    return element.assignedSlot;
   if (element.parentElement)
     return element.parentElement;
   if (!element.parentNode)

@@ -989,7 +989,7 @@ export class InjectedScript {
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
-      hitElement = parentElementOrShadowHost(hitElement);
+      hitElement = hitElement.assignedSlot ?? parentElementOrShadowHost(hitElement);
     }
     if (hitElement === targetElement)
       return 'done';
