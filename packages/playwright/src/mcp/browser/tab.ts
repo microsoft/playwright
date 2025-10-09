@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import * as playwright from 'playwright-core';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { asLocator, ManualPromise } from 'playwright-core/lib/utils';
 
 import { callOnPageNoTrace, waitForCompletion } from './tools/utils';
 import { logUnhandledError } from '../log';
@@ -25,10 +25,8 @@ import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
 
 import type { Context } from './context';
-
-type PageEx = playwright.Page & {
-  _snapshotForAI: () => Promise<string>;
-};
+import type { Page } from '../../../../playwright-core/src/client/page';
+import type { Locator } from '../../../../playwright-core/src/client/locator';
 
 export const TabEvents = {
   modalState: 'modalState'
@@ -49,7 +47,7 @@ export type TabSnapshot = {
 
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
-  readonly page: playwright.Page;
+  readonly page: Page;
   private _lastTitle = 'about:blank';
   private _consoleMessages: ConsoleMessage[] = [];
   private _recentConsoleMessages: ConsoleMessage[] = [];
@@ -62,7 +60,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
     this.context = context;
-    this.page = page;
+    this.page = page as Page;
     this._onPageClose = onPageClose;
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
@@ -222,7 +220,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async captureSnapshot(): Promise<TabSnapshot> {
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const snapshot = await (this.page as PageEx)._snapshotForAI();
+      const snapshot = await this.page._snapshotForAI();
       tabSnapshot = {
         url: this.page.url(),
         title: await this.page.title(),
@@ -272,17 +270,20 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
   }
 
-  async refLocator(params: { element: string, ref: string }): Promise<playwright.Locator> {
+  async refLocator(params: { element: string, ref: string }): Promise<{ locator: Locator, resolved: string }> {
     return (await this.refLocators([params]))[0];
   }
 
-  async refLocators(params: { element: string, ref: string }[]): Promise<playwright.Locator[]> {
-    const snapshot = await (this.page as PageEx)._snapshotForAI();
-    return params.map(param => {
-      if (!snapshot.includes(`[ref=${param.ref}]`))
+  async refLocators(params: { element: string, ref: string }[]): Promise<{ locator: Locator, resolved: string }[]> {
+    return Promise.all(params.map(async param => {
+      try {
+        const locator = this.page.locator(`aria-ref=${param.ref}`).describe(param.element) as Locator;
+        const { resolvedSelector } = await locator._resolveSelector();
+        return { locator, resolved: asLocator('javascript', resolvedSelector) };
+      } catch (e) {
         throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
-      return this.page.locator(`aria-ref=${param.ref}`).describe(param.element);
-    });
+      }
+    }));
   }
 
   async waitForTimeout(time: number) {

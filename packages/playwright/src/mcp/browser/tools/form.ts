@@ -16,7 +16,6 @@
 
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
-import { generateLocator } from './utils';
 import * as codegen from '../codegen';
 
 const fillForm = defineTabTool({
@@ -39,8 +38,8 @@ const fillForm = defineTabTool({
 
   handle: async (tab, params, response) => {
     for (const field of params.fields) {
-      const locator = await tab.refLocator({ element: field.name, ref: field.ref });
-      const locatorSource = `await page.${await generateLocator(locator)}`;
+      const { locator, resolved } = await tab.refLocator({ element: field.name, ref: field.ref });
+      const locatorSource = `await page.${resolved}`;
       if (field.type === 'textbox' || field.type === 'slider') {
         const secret = tab.context.lookupSecret(field.value);
         await locator.fill(secret.value);
