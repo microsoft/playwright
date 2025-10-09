@@ -1,6 +1,6 @@
 {
   "name": "playwright",
-  "version": "1.56.0",
+  "version": "1.56.1",
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
@@ -64,7 +64,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "1.56.0"
+    "playwright-core": "1.56.1"
   },
   "optionalDependencies": {
     "fsevents": "2.3.2"
