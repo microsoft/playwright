@@ -16,6 +16,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <body>
+    <iframe src="about:blank" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;border:none;"></iframe>
     <script>
       (async () => {
         if (!navigator.serviceWorker)
@@ -26,10 +27,9 @@
         const traceUrl = new URL(location.href).searchParams.get('trace');
         const params = new URLSearchParams();
         params.set('trace', traceUrl);
-        await fetch('contexts?' + params.toString()).then(r => r.json());
-        await location.reload();
+        await fetch('contexts?' + params.toString());
+        document.querySelector('iframe').src = new URLSearchParams(location.search).get('r');
       })();
     </script>
-    <!-- <script src="stall.js"></script> -->
   </body>
 </html>

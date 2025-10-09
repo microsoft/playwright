@@ -255,7 +255,7 @@ declare global {
 }
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     const searchParams = new URLSearchParams(location.search);
     const shouldPopulateCanvasFromScreenshot = searchParams.has('shouldPopulateCanvasFromScreenshot');
     const isUnderTest = searchParams.has('isUnderTest');
@@ -344,7 +344,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Retain query parameters to inherit name=, time=, pointX=, pointY= and other values from parent.
-          const url = new URL(unwrapPopoutUrl(window.location.href));
+          const url = new URL(window.location.href);
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
           if (index !== -1)
@@ -558,7 +558,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 
@@ -631,12 +631,4 @@ function escapeURLsInStyleSheet(text: string): string {
     return match;
   };
   return text.replace(urlToEscapeRegex1, replacer).replace(urlToEscapeRegex2, replacer);
-}
-
-// <base>/snapshot.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
-export function unwrapPopoutUrl(url: string) {
-  const u = new URL(url);
-  if (u.pathname.endsWith('/snapshot.html'))
-    return u.searchParams.get('r')!;
-  return url;
 }

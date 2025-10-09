@@ -69,8 +69,6 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
     const relativePath = url.pathname.slice('/trace'.length);
-    if (relativePath.endsWith('/stall.js'))
-      return true;
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;

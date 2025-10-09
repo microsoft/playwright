@@ -15,7 +15,6 @@
  */
 
 import { splitProgress } from './progress';
-import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 import { FetchTraceModelBackend, traceFileURL, ZipTraceModelBackend } from './traceModelBackends';
@@ -86,7 +85,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const isDeployedAsHttps = self.registration.scope.startsWith('https://');
 
   if (request.url.startsWith(self.registration.scope)) {
-    const url = new URL(unwrapPopoutUrl(request.url));
+    const url = new URL(request.url);
     const relativePath = url.pathname.substring(scopePath.length - 1);
     if (relativePath === '/ping') {
       await gc();
@@ -163,7 +162,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     return fetch(event.request);
   }
 
-  const snapshotUrl = unwrapPopoutUrl(client!.url);
+  const snapshotUrl = client!.url;
   const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
   const { snapshotServer } = loadedTraces.get(traceUrl) || {};
   if (!snapshotServer)
