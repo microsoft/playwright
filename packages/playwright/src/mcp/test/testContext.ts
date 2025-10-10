@@ -93,7 +93,7 @@ export class TestContext {
   async createTestRunner(): Promise<TestRunner> {
     if (this._testRunner)
       await this._testRunner.stopTests();
-    const testRunner = new TestRunner(this.configLocation!, {});
+    const testRunner = new TestRunner(this.configLocation!, {}, 'Playwright Agent');
     await testRunner.initialize({});
     this._testRunner = testRunner;
     testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => {

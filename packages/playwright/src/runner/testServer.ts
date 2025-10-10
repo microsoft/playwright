@@ -94,7 +94,7 @@ export class TestServerDispatcher implements TestServerInterface {
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
-    this._testRunner = new TestRunner(configLocation, configCLIOverrides);
+    this._testRunner = new TestRunner(configLocation, configCLIOverrides, 'VSCode extension');
     this.transport = {
       onconnect: () => {},
       dispatch: (method, params) => (this as any)[method](params),

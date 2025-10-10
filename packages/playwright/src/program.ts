@@ -39,6 +39,7 @@ import { ensureSeedTest, seedProject } from './mcp/test/seed';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
 import { initClaudeCodeRepo, initOpencodeRepo, initVSCodeRepo } from './agents/generateAgents';
+import { initPlaywrightTest } from './util';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -86,7 +87,7 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const runner = new TestRunner(resolveConfigLocation(opts.config), {});
+    const runner = new TestRunner(resolveConfigLocation(opts.config), {}, 'Playwright CLI');
     const { status } = await runner.clearCache(createErrorCollectingReporter(terminalScreen));
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
@@ -98,7 +99,7 @@ function addDevServerCommand(program: Command) {
   command.description('start dev server');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async options => {
-    const runner = new TestRunner(resolveConfigLocation(options.config), {});
+    const runner = new TestRunner(resolveConfigLocation(options.config), {}, 'Playwright CLI');
     await runner.startDevServer(createErrorCollectingReporter(terminalScreen), 'in-process');
   });
 }
@@ -163,6 +164,7 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
     setupExitWatchdog();
+    initPlaywrightTest('Playwright Agent');
     const backendFactory: ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
@@ -206,6 +208,7 @@ function addInitAgentsCommand(program: Command) {
 }
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
+  initPlaywrightTest('Playwright CLI');
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
@@ -268,6 +271,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 }
 
 async function runTestServer(opts: { [key: string]: any }) {
+  initPlaywrightTest('Playwright CLI');
   const host = opts.host || 'localhost';
   const port = opts.port ? +opts.port : 0;
   const status = await testServer.runTestServer(opts.config, { }, { host, port });
@@ -276,6 +280,7 @@ async function runTestServer(opts: { [key: string]: any }) {
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
+  initPlaywrightTest('Playwright CLI');
   const configFile = opts.config;
   const config = configFile ? await loadConfigFromFile(configFile) : await loadEmptyConfigForMergeReports();
 
