@@ -698,5 +698,5 @@ function textContributesInfo(node: AriaNode, text: string): boolean {
 }
 
 function hasPointerCursor(ariaNode: AriaNode): boolean {
-  return ariaNode.box.style?.cursor === 'pointer';
+  return ariaNode.box.cursor === 'pointer';
 }
