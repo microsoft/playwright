@@ -67,7 +67,14 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
     this._playwright.selectors._contextsForSelectors.add(app._context);
     app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
     await app._context._initializeHarFromOptions(options.recordHar);
+
+    // keep in sync with Browser#_setupBrowserContext
+    app._context._logger = this._logger;
     app._context.tracing._tracesDir = options.tracesDir;
+    app._context.setDefaultTimeout(this._playwright._defaultContextTimeout);
+    app._context.setDefaultNavigationTimeout(this._playwright._defaultContextNavigationTimeout);
+    app._context._timeoutSettings.setDefaultTimeout(options.timeout ?? this._playwright._defaultContextTimeout);
+
     return app;
   }
 }
