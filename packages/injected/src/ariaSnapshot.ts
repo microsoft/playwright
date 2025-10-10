@@ -495,23 +495,28 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
   return results;
 }
 
+function buildByRefMap(root: AriaNode | undefined, map: Map<string, AriaNode> = new Map()): Map<string, AriaNode> {
+  if (root?.ref)
+    map.set(root.ref, root);
+  for (const child of root?.children || []) {
+    if (typeof child !== 'string')
+      buildByRefMap(child, map);
+  }
+  return map;
+}
+
+function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
+  const aKeys = Object.keys(a.props);
+  const bKeys = Object.keys(b.props);
+  return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
+}
+
 export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previous?: AriaSnapshot): string {
   const options = toInternalOptions(publicOptions);
   const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
   const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
-
-  const previousByRef = new Map<string, AriaNode>();
-  const visitPrevious = (ariaNode: AriaNode) => {
-    if (ariaNode.ref)
-      previousByRef.set(ariaNode.ref, ariaNode);
-    for (const child of ariaNode.children) {
-      if (typeof child !== 'string')
-        visitPrevious(child);
-    }
-  };
-  if (previous)
-    visitPrevious(previous.root);
+  const previousByRef = buildByRefMap(previous?.root);
 
   const visitText = (text: string, indent: string) => {
     const escaped = yamlEscapeValueIfNeeded(renderString(text));
@@ -556,40 +561,36 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     return key;
   };
 
-  const arePropsEqual = (a: AriaNode, b: AriaNode): boolean => {
-    const aKeys = Object.keys(a.props);
-    const bKeys = Object.keys(b.props);
-    return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
+  const getSingleInlinedTextChild = (ariaNode: AriaNode | undefined): string | undefined => {
+    return ariaNode?.children.length === 1 && typeof ariaNode.children[0] === 'string' && !Object.keys(ariaNode.props).length ? ariaNode.children[0] : undefined;
   };
 
   const visit = (ariaNode: AriaNode, indent: string, renderCursorPointer: boolean, previousNode: AriaNode | undefined): { unchanged: boolean } => {
     if (ariaNode.ref)
       previousNode = previousByRef.get(ariaNode.ref);
-    const linesBefore = lines.length;
 
+    const linesBefore = lines.length;
     const key = createKey(ariaNode, renderCursorPointer);
+    const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
+    const inCursorPointer = renderCursorPointer && !!ariaNode.ref && hasPointerCursor(ariaNode);
+    const singleInlinedTextChild = getSingleInlinedTextChild(ariaNode);
+
+    // Whether ariaNode's subtree is the same as previousNode's, and can be replaced with just a ref.
     let unchanged = !!previousNode && key === createKey(previousNode, renderCursorPointer) && arePropsEqual(ariaNode, previousNode);
 
-    const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
-    const hasProps = !!Object.keys(ariaNode.props).length;
-    const inCursorPointer = renderCursorPointer && !!ariaNode.ref && hasPointerCursor(ariaNode);
-
-    if (!ariaNode.children.length && !hasProps) {
+    if (!ariaNode.children.length && !Object.keys(ariaNode.props).length) {
       // Leaf node without children.
       lines.push(escapedKey);
-    } else if (ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' && !hasProps) {
-      // Leaf node with only some text inside.
-      const shouldInclude = includeText(ariaNode, ariaNode.children[0]);
-      const text = shouldInclude ? renderString(ariaNode.children[0]) : null;
-      if (text)
-        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(text));
+    } else if (singleInlinedTextChild !== undefined) {
+      // Leaf node with just some text inside.
+      // Unchanged when the previous node also had the same single text child.
+      unchanged = unchanged && getSingleInlinedTextChild(previousNode) === singleInlinedTextChild;
+
+      const shouldInclude = includeText(ariaNode, singleInlinedTextChild);
+      if (shouldInclude)
+        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleInlinedTextChild)));
       else
         lines.push(escapedKey);
-
-      // Node is unchanged only when previous node also had the same single text child.
-      unchanged = unchanged && !!previousNode &&
-          previousNode.children.length === 1 && typeof previousNode.children[0] === 'string' &&
-          !Object.keys(previousNode.props).length && ariaNode.children[0] === previousNode.children[0];
     } else {
       // Node with (optional) props and some children.
       lines.push(escapedKey + ':');
@@ -603,10 +604,9 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
       for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
         const child = ariaNode.children[childIndex];
         if (typeof child === 'string') {
-          const shouldInclude = includeText(ariaNode, child);
-          if (shouldInclude)
+          unchanged = unchanged && previousNode?.children[childIndex] === child;
+          if (includeText(ariaNode, child))
             visitText(child, childIndent);
-          unchanged = unchanged && previousNode?.children[childIndex] === child && shouldInclude === includeText(previousNode, child);
         } else {
           const previousChild = previousNode?.children[childIndex];
           const childResult = visit(child, childIndent, renderCursorPointer && !inCursorPointer, typeof previousChild !== 'string' ? previousChild : undefined);
@@ -624,17 +624,13 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     return { unchanged };
   };
 
-  const ariaNode = ariaSnapshot.root;
-  if (ariaNode.role === 'fragment') {
-    // Render fragment.
-    for (const child of ariaNode.children || []) {
-      if (typeof child === 'string')
-        visitText(child, '');
-      else
-        visit(child, '', !!options.renderCursorPointer, undefined);
-    }
-  } else {
-    visit(ariaNode, '', !!options.renderCursorPointer, undefined);
+  // Do not render the root fragment, just its children.
+  const nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
+  for (const nodeToRender of nodesToRender) {
+    if (typeof nodeToRender === 'string')
+      visitText(nodeToRender, '');
+    else
+      visit(nodeToRender, '', !!options.renderCursorPointer, undefined);
   }
   return lines.join('\n');
 }
@@ -698,5 +694,5 @@ function textContributesInfo(node: AriaNode, text: string): boolean {
 }
 
 function hasPointerCursor(ariaNode: AriaNode): boolean {
-  return ariaNode.box.style?.cursor === 'pointer';
+  return ariaNode.box.cursor === 'pointer';
 }

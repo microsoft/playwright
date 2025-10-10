@@ -62,7 +62,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this.context = context;
     this.page = page as Page;
     this._onPageClose = onPageClose;
-    page.on('console', console.error);
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
     page.on('request', request => this._requests.add(request));
