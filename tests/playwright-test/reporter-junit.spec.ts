@@ -126,6 +126,24 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('should handle large number of console logs', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37719' } }, async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            for (let i = 0; i < 500000; i++) {
+              console.log('log line ' + i);
+            }
+          });
+        `,
+      }, { reporter: 'junit' });
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('</testsuites>');
+      const testcase = parseXML(result.output)['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['system-out']).toHaveLength(1);
+      expect(testcase['system-out'][0]).toContain('log line 99999');
+    });
+
     test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `

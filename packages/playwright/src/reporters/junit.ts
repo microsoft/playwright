@@ -193,8 +193,10 @@ class JUnitReporter implements ReporterV2 {
     const systemOut: string[] = [];
     const systemErr: string[] = [];
     for (const result of test.results) {
-      systemOut.push(...result.stdout.map(item => item.toString()));
-      systemErr.push(...result.stderr.map(item => item.toString()));
+      for (const item of result.stdout)
+        systemOut.push(item.toString());
+      for (const item of result.stderr)
+        systemErr.push(item.toString());
       for (const attachment of result.attachments) {
         if (!attachment.path)
           continue;
