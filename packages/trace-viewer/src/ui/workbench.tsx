@@ -47,9 +47,9 @@ import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
 import { DialogToolbarButton } from '@web/components/dialogToolbarButton';
 import { SettingsView } from './settingsView';
+import { TraceModelContext } from './traceModelContext';
 
 export const Workbench: React.FunctionComponent<{
-  model?: modelUtil.MultiTraceModel,
   showSourcesFirst?: boolean,
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
@@ -61,7 +61,8 @@ export const Workbench: React.FunctionComponent<{
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
   testRunMetadata?: MetadataWithCommitInfo,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, testRunMetadata }) => {
+}> = ({ showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, testRunMetadata }) => {
+  const model = React.useContext(TraceModelContext);
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<modelUtil.ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -199,7 +200,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'errors',
     title: 'Errors',
     errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} model={model} testRunMetadata={testRunMetadata} sdkLanguage={sdkLanguage} revealInSource={error => {
+    render: () => <ErrorsTab errorsModel={errorsModel} testRunMetadata={testRunMetadata} sdkLanguage={sdkLanguage} revealInSource={error => {
       if (error.action)
         setSelectedAction(error.action);
       else
@@ -249,7 +250,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'attachments',
     title: 'Attachments',
     count: model?.visibleAttachments.length,
-    render: () => <AttachmentsTab model={model} revealedAttachment={revealedAttachment} />
+    render: () => <AttachmentsTab revealedAttachment={revealedAttachment} />
   };
 
   const tabs: TabbedPaneTabModel[] = [

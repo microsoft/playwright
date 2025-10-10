@@ -19,9 +19,10 @@ import type { Boundaries, Size } from './geometry';
 import * as React from 'react';
 import { useMeasure, upperBound } from '@web/uiUtils';
 import type { PageEntry } from '../types/entries';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext } from './modelUtil';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
+import { TraceModelContext } from './traceModelContext';
 
 export type FilmStripPreviewPoint = {
   x: number;
@@ -35,10 +36,10 @@ const frameMargin = 2.5;
 const rowHeight = tileSize.height + frameMargin * 2;
 
 export const FilmStrip: React.FunctionComponent<{
-  model?: MultiTraceModel,
   boundaries: Boundaries,
   previewPoint?: FilmStripPreviewPoint,
-}> = ({ model, boundaries, previewPoint }) => {
+}> = ({ boundaries, previewPoint }) => {
+  const model = React.useContext(TraceModelContext);
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const lanesRef = React.useRef<HTMLDivElement>(null);
 
@@ -70,14 +71,14 @@ export const FilmStrip: React.FunctionComponent<{
         key={index}
       /> : null)
     }</div>
-    {previewPoint?.x !== undefined &&
+    {model && previewPoint?.x !== undefined &&
       <div className='film-strip-hover' style={{
         top: measure.bottom + 5,
         left: Math.min(previewPoint!.x, measure.width - (previewSize ? previewSize.width : 0) - 10),
       }}>
         {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint)}</div>}
         {previewImage && previewSize && <div style={{ width: previewSize.width, height: previewSize.height }}>
-          <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
+          <img src={model.createRelativeUrl(`sha1/${previewImage.sha1}`)} width={previewSize.width} height={previewSize.height} />
         </div>}
       </div>
     }
@@ -89,6 +90,7 @@ const FilmStripLane: React.FunctionComponent<{
   page: PageEntry,
   width: number,
 }> = ({ boundaries, page, width }) => {
+  const model = React.useContext(TraceModelContext);
   const viewportSize = { width: 0, height: 0 };
   const screencastFrames = page.screencastFrames;
   for (const frame of screencastFrames) {
@@ -113,7 +115,7 @@ const FilmStripLane: React.FunctionComponent<{
     frames.push(<div className='film-strip-frame' key={i} style={{
       width: frameSize.width,
       height: frameSize.height,
-      backgroundImage: `url(sha1/${screencastFrames[index].sha1})`,
+      backgroundImage: `url(${model?.createRelativeUrl('sha1/' + screencastFrames[index].sha1)})`,
       backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
       margin: frameMargin,
       marginRight: frameMargin,
@@ -123,7 +125,7 @@ const FilmStripLane: React.FunctionComponent<{
   frames.push(<div className='film-strip-frame' key={frames.length} style={{
     width: frameSize.width,
     height: frameSize.height,
-    backgroundImage: `url(sha1/${screencastFrames[screencastFrames.length - 1].sha1})`,
+    backgroundImage: `url(${model?.createRelativeUrl('sha1/' + screencastFrames[screencastFrames.length - 1].sha1)})`,
     backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
     margin: frameMargin,
     marginRight: frameMargin,

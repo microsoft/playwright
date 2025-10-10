@@ -250,7 +250,7 @@ export const Timeline: React.FunctionComponent<{
         })
       }</div>
       <div style={{ height: 8 }}></div>
-      <FilmStrip model={model} boundaries={boundaries} previewPoint={previewPoint} />
+      <FilmStrip boundaries={boundaries} previewPoint={previewPoint} />
       <div className='timeline-bars'>{
         bars
             .filter(bar => !bar.action || bar.action.class !== 'Test')

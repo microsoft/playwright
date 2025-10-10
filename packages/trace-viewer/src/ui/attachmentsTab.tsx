@@ -17,14 +17,16 @@
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import type { Attachment, MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
-import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
+import { TraceModelContext } from './traceModelContext';
+
+import type { Attachment, MultiTraceModel } from './modelUtil';
+import type { AfterActionTraceEventAttachment } from '@trace/trace';
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
@@ -32,6 +34,7 @@ type ExpandableAttachmentProps = {
 };
 
 const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, reveal }) => {
+  const model = React.useContext(TraceModelContext);
   const [expanded, setExpanded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
@@ -51,14 +54,14 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {
       setPlaceholder('Loading ...');
-      fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
+      fetch(attachmentURL(model, attachment)).then(response => response.text()).then(text => {
         setAttachmentText(text);
         setPlaceholder(null);
       }).catch(e => {
         setPlaceholder('Failed to load: ' + e.message);
       });
     }
-  }, [expanded, attachmentText, placeholder, attachment]);
+  }, [model, expanded, attachmentText, placeholder, attachment]);
 
   const snippetHeight = React.useMemo(() => {
     const lineCount = attachmentText ? attachmentText.split('\n').length : 0;
@@ -67,7 +70,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 
   const title = <span style={{ marginLeft: 5 }} ref={ref} aria-label={attachment.name}>
     <span>{linkifyText(attachment.name)}</span>
-    {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
+    {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(model, attachment)}>download</a>}
   </span>;
 
   if (!isTextAttachment || !hasContent)
@@ -91,9 +94,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 };
 
 export const AttachmentsTab: React.FunctionComponent<{
-  model: MultiTraceModel | undefined,
   revealedAttachment?: [AfterActionTraceEventAttachment, number],
-}> = ({ model, revealedAttachment }) => {
+}> = ({ revealedAttachment }) => {
+  const model = React.useContext(TraceModelContext);
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set(model?.visibleAttachments ?? []);
     const screenshots = new Set<Attachment>();
@@ -127,15 +130,15 @@ export const AttachmentsTab: React.FunctionComponent<{
         {expected && actual && <div className='attachments-section'>Image diff</div>}
         {expected && actual && <ImageDiffView noTargetBlank={true} diff={{
           name: 'Image diff',
-          expected: { attachment: { ...expected, path: downloadURL(expected) }, title: 'Expected' },
-          actual: { attachment: { ...actual, path: downloadURL(actual) } },
-          diff: diff ? { attachment: { ...diff, path: downloadURL(diff) } } : undefined,
+          expected: { attachment: { ...expected, path: downloadURL(model, expected) }, title: 'Expected' },
+          actual: { attachment: { ...actual, path: downloadURL(model, actual) } },
+          diff: diff ? { attachment: { ...diff, path: downloadURL(model, diff) } } : undefined,
         }} />}
       </>;
     })}
     {screenshots.size ? <div className='attachments-section'>Screenshots</div> : undefined}
     {[...screenshots.values()].map((a, i) => {
-      const url = attachmentURL(a);
+      const url = attachmentURL(model, a);
       return <div className='attachment-item' key={`screenshot-${i}`}>
         <div><img draggable='false' src={url} /></div>
         <div><a target='_blank' href={url} rel='noreferrer'>{a.name}</a></div>
@@ -157,21 +160,17 @@ function isEqualAttachment(a: Attachment, b: AfterActionTraceEventAttachment): b
   return a.name === b.name && a.path === b.path && a.sha1 === b.sha1;
 }
 
-export function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
-  const params = new URLSearchParams(queryParams);
-  if (attachment.sha1) {
-    params.set('trace', attachment.traceUrl);
-    return 'sha1/' + attachment.sha1 + '?' + params.toString();
-  }
-  params.set('path', attachment.path!);
-  return 'file?' + params.toString();
+export function attachmentURL(model: MultiTraceModel | undefined, attachment: Attachment) {
+  if (model && attachment.sha1)
+    return model.createRelativeUrl(`sha1/${attachment.sha1}`) ;
+  return `file?path=${encodeURIComponent(attachment.path!)}`;
 }
 
-function downloadURL(attachment: Attachment) {
-  const params = { dn: attachment.name } as Record<string, string>;
+function downloadURL(model: MultiTraceModel | undefined, attachment: Attachment) {
+  let suffix = attachment.contentType ? `&dn=${encodeURIComponent(attachment.name)}` : '';
   if (attachment.contentType)
-    params.dct = attachment.contentType;
-  return attachmentURL(attachment, params);
+    suffix += `&dct=${encodeURIComponent(attachment.contentType)}`;
+  return attachmentURL(model, attachment) + suffix;
 }
 
 function attachmentKey(attachment: Attachment, index: number) {
