@@ -62,6 +62,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this.context = context;
     this.page = page as Page;
     this._onPageClose = onPageClose;
+    page.on('console', console.error);
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
     page.on('request', request => this._requests.add(request));
@@ -217,10 +218,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return this._requests;
   }
 
-  async captureSnapshot(): Promise<TabSnapshot> {
+  async captureSnapshot(mode: 'full' | 'incremental'): Promise<TabSnapshot> {
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const snapshot = await this.page._snapshotForAI();
+      const snapshot = await this.page._snapshotForAI({ mode, track: 'response' });
       tabSnapshot = {
         url: this.page.url(),
         title: await this.page.title(),

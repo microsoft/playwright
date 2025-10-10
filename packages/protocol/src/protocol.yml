@@ -1977,6 +1977,13 @@ Page:
     snapshotForAI:
       internal: true
       parameters:
+        track: string?
+        mode:
+          # defaults to "full"
+          type: enum?
+          literals:
+          - full
+          - incremental
         timeout: float
       returns:
         snapshot: string

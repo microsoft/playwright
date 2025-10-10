@@ -495,21 +495,31 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
   return results;
 }
 
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions): string {
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previous?: AriaSnapshot): string {
   const options = toInternalOptions(publicOptions);
   const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
   const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
-  const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string, renderCursorPointer: boolean) => {
-    if (typeof ariaNode === 'string') {
-      if (parentAriaNode && !includeText(parentAriaNode, ariaNode))
-        return;
-      const text = yamlEscapeValueIfNeeded(renderString(ariaNode));
-      if (text)
-        lines.push(indent + '- text: ' + text);
-      return;
-    }
 
+  const previousByRef = new Map<string, AriaNode>();
+  const visitPrevious = (ariaNode: AriaNode) => {
+    if (ariaNode.ref)
+      previousByRef.set(ariaNode.ref, ariaNode);
+    for (const child of ariaNode.children) {
+      if (typeof child !== 'string')
+        visitPrevious(child);
+    }
+  };
+  if (previous)
+    visitPrevious(previous.root);
+
+  const visitText = (text: string, indent: string) => {
+    const escaped = yamlEscapeValueIfNeeded(renderString(text));
+    if (escaped)
+      lines.push(indent + '- text: ' + escaped);
+  };
+
+  const createKey = (ariaNode: AriaNode, renderCursorPointer: boolean): string => {
     let key = ariaNode.role;
     // Yaml has a limit of 1024 characters per key, and we leave some space for role and attributes.
     if (ariaNode.name && ariaNode.name.length <= 900) {
@@ -538,41 +548,93 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     if (ariaNode.selected === true)
       key += ` [selected]`;
 
-    let inCursorPointer = false;
     if (ariaNode.ref) {
       key += ` [ref=${ariaNode.ref}]`;
-      if (renderCursorPointer && hasPointerCursor(ariaNode)) {
-        inCursorPointer = true;
+      if (renderCursorPointer && hasPointerCursor(ariaNode))
         key += ' [cursor=pointer]';
-      }
     }
+    return key;
+  };
+
+  const arePropsEqual = (a: AriaNode, b: AriaNode): boolean => {
+    const aKeys = Object.keys(a.props);
+    const bKeys = Object.keys(b.props);
+    return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
+  };
+
+  const visit = (ariaNode: AriaNode, indent: string, renderCursorPointer: boolean, previousNode: AriaNode | undefined): { unchanged: boolean } => {
+    if (ariaNode.ref)
+      previousNode = previousByRef.get(ariaNode.ref);
+    const linesBefore = lines.length;
+
+    const key = createKey(ariaNode, renderCursorPointer);
+    let unchanged = !!previousNode && key === createKey(previousNode, renderCursorPointer) && arePropsEqual(ariaNode, previousNode);
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
     const hasProps = !!Object.keys(ariaNode.props).length;
+    const inCursorPointer = renderCursorPointer && !!ariaNode.ref && hasPointerCursor(ariaNode);
+
     if (!ariaNode.children.length && !hasProps) {
+      // Leaf node without children.
       lines.push(escapedKey);
     } else if (ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' && !hasProps) {
-      const text = includeText(ariaNode, ariaNode.children[0]) ? renderString(ariaNode.children[0] as string) : null;
+      // Leaf node with only some text inside.
+      const shouldInclude = includeText(ariaNode, ariaNode.children[0]);
+      const text = shouldInclude ? renderString(ariaNode.children[0]) : null;
       if (text)
         lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(text));
       else
         lines.push(escapedKey);
+
+      // Node is unchanged only when previous node also had the same single text child.
+      unchanged = unchanged && !!previousNode &&
+          previousNode.children.length === 1 && typeof previousNode.children[0] === 'string' &&
+          !Object.keys(previousNode.props).length && ariaNode.children[0] === previousNode.children[0];
     } else {
+      // Node with (optional) props and some children.
       lines.push(escapedKey + ':');
       for (const [name, value] of Object.entries(ariaNode.props))
         lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
-      for (const child of ariaNode.children || [])
-        visit(child, ariaNode, indent + '  ', renderCursorPointer && !inCursorPointer);
+
+      // All children must be the same.
+      unchanged = unchanged && previousNode?.children.length === ariaNode.children.length;
+
+      const childIndent = indent + '  ';
+      for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
+        const child = ariaNode.children[childIndex];
+        if (typeof child === 'string') {
+          const shouldInclude = includeText(ariaNode, child);
+          if (shouldInclude)
+            visitText(child, childIndent);
+          unchanged = unchanged && previousNode?.children[childIndex] === child && shouldInclude === includeText(previousNode, child);
+        } else {
+          const previousChild = previousNode?.children[childIndex];
+          const childResult = visit(child, childIndent, renderCursorPointer && !inCursorPointer, typeof previousChild !== 'string' ? previousChild : undefined);
+          unchanged = unchanged && childResult.unchanged;
+        }
+      }
     }
+
+    if (unchanged && ariaNode.ref) {
+      // Replace the whole subtree with a single reference.
+      lines.splice(linesBefore);
+      lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
+    }
+
+    return { unchanged };
   };
 
   const ariaNode = ariaSnapshot.root;
   if (ariaNode.role === 'fragment') {
     // Render fragment.
-    for (const child of ariaNode.children || [])
-      visit(child, ariaNode, '', !!options.renderCursorPointer);
+    for (const child of ariaNode.children || []) {
+      if (typeof child === 'string')
+        visitText(child, '');
+      else
+        visit(child, '', !!options.renderCursorPointer, undefined);
+    }
   } else {
-    visit(ariaNode, null, '', !!options.renderCursorPointer);
+    visit(ariaNode, '', !!options.renderCursorPointer, undefined);
   }
   return lines.join('\n');
 }

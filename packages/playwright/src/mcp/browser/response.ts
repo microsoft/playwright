@@ -28,7 +28,7 @@ export class Response {
   private _code: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
   private _context: Context;
-  private _includeSnapshot = false;
+  private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeTabs = false;
   private _tabSnapshot: TabSnapshot | undefined;
 
@@ -75,8 +75,8 @@ export class Response {
     return this._images;
   }
 
-  setIncludeSnapshot() {
-    this._includeSnapshot = true;
+  setIncludeSnapshot(full?: 'full') {
+    this._includeSnapshot = full ?? 'incremental';
   }
 
   setIncludeTabs() {
@@ -86,8 +86,8 @@ export class Response {
   async finish() {
     // All the async snapshotting post-action is happening here.
     // Everything below should race against modal states.
-    if (this._includeSnapshot && this._context.currentTab())
-      this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot();
+    if (this._includeSnapshot !== 'none' && this._context.currentTab())
+      this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshot);
     for (const tab of this._context.tabs())
       await tab.updateTitle();
   }
@@ -126,7 +126,7 @@ ${this._code.join('\n')}
     }
 
     // List browser tabs.
-    if (this._includeSnapshot || this._includeTabs)
+    if (this._includeSnapshot !== 'none' || this._includeTabs)
       response.push(...renderTabsMarkdown(this._context.tabs(), this._includeTabs));
 
     // Add snapshot if provided.
