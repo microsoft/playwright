@@ -182,6 +182,7 @@ export const Workbench: React.FunctionComponent<{
     title: 'Locator',
     render: () => <InspectorTab
       sdkLanguage={sdkLanguage}
+      isInspecting={isInspecting}
       setIsInspecting={setIsInspecting}
       highlightedElement={highlightedElement}
       setHighlightedElement={setHighlightedElement} />,

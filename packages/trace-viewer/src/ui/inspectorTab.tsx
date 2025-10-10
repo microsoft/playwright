@@ -27,10 +27,11 @@ import type { Language } from '@isomorphic/locatorGenerators';
 
 export const InspectorTab: React.FunctionComponent<{
   sdkLanguage: Language,
+  isInspecting: boolean,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
-}> = ({ sdkLanguage, setIsInspecting, highlightedElement, setHighlightedElement }) => {
+}> = ({ sdkLanguage, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
   const onAriaEditorChange = React.useCallback((ariaSnapshot: string) => {
     const { errors } = parseAriaSnapshot(yaml, ariaSnapshot, { prettyErrors: false });
@@ -50,7 +51,9 @@ export const InspectorTab: React.FunctionComponent<{
 
   return <div style={{ flex: 'auto', backgroundColor: 'var(--vscode-sideBar-background)', padding: '0 10px 10px 10px', overflow: 'auto' }}>
     <div className='hbox' style={{ lineHeight: '28px', color: 'var(--vscode-editorCodeLens-foreground)' }}>
-      <div style={{ flex: 'auto'  }}>Locator</div>
+      <div>Locator</div>
+      <ToolbarButton style={{ margin: '0 4px' }} title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
+      <div style={{ flex: 'auto'  }}></div>
       <ToolbarButton icon='files' title='Copy locator' onClick={() => {
         copy(highlightedElement.locator || '');
       }}></ToolbarButton>
