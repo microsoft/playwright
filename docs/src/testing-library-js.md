@@ -119,7 +119,7 @@ You can create a locator inside another locator with [`method: Locator.locator`]
 
 ```js
 // Testing Library
-const messages = document.getElementById('messages');
+const messages = screen.getByTestId('messages');
 const helloMessage = within(messages).getByText('hello');
 
 // Playwright
