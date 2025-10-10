@@ -46,6 +46,9 @@ export class WKBrowser extends Browser {
     const browser = new WKBrowser(parent, transport, options);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
+    console.error('Waiting for browser to start...');
+    await new Promise(f => setTimeout(f, 1000));
+    console.error('Browser started!');
     const promises: Promise<any>[] = [
       browser._browserSession.send('Playwright.enable'),
     ];

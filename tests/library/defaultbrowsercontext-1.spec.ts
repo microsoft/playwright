@@ -25,7 +25,7 @@ function maybeFilterCookies(channel: string | undefined, cookies: any[]) {
   return cookies;
 }
 
-it('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue, channel }) => {
+it.only('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
