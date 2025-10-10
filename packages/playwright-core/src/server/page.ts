@@ -859,9 +859,9 @@ export class Page extends SdkObject {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress): Promise<string> {
+  async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
     this.lastSnapshotFrameIds = [];
-    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
+    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds, options);
     return snapshot.join('\n');
   }
 }
@@ -1037,18 +1037,18 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[], options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string[]> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
       const context = await progress.race(frame._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
-      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, refPrefix) => {
+      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, options) => {
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.ariaSnapshot(node, { mode: 'ai', refPrefix });
-      }, frameOrdinal ? 'f' + frameOrdinal : ''));
+        return injected.ariaSnapshot(node, { mode: 'ai', ...options });
+      }, { refPrefix: frameOrdinal ? 'f' + frameOrdinal : '', incremental: options.mode === 'incremental', track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1080,7 +1080,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
     const frameOrdinal = frameIds.length + 1;
     frameIds.push(child.frame._id);
     try {
-      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds);
+      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds, options);
       result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
     } catch {
       result.push(line);

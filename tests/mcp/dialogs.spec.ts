@@ -17,7 +17,7 @@
 import { test, expect } from './fixtures';
 
 test('alert dialog', async ({ client, server }) => {
-  server.setContent('/', `<button onclick="alert('Alert')">Button</button>`, 'text/html');
+  server.setContent('/', `<title>Title</title><button onclick="alert('Alert')">Button</button>`, 'text/html');
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
@@ -54,7 +54,7 @@ test('alert dialog', async ({ client, server }) => {
     },
   })).toHaveResponse({
     modalState: undefined,
-    pageState: expect.stringContaining(`- button "Button"`),
+    pageState: expect.stringContaining(`Page Title: Title`),
   });
 });
 
@@ -218,7 +218,7 @@ test('prompt dialog', async ({ client, server }) => {
 });
 
 test('alert dialog w/ race', async ({ client, server }) => {
-  server.setContent('/', `<button onclick="setTimeout(() => alert('Alert'), 100)">Button</button>`, 'text/html');
+  server.setContent('/', `<title>Title</title><button onclick="setTimeout(() => alert('Alert'), 100)">Button</button>`, 'text/html');
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
@@ -247,9 +247,7 @@ test('alert dialog w/ race', async ({ client, server }) => {
   expect(result).toHaveResponse({
     modalState: undefined,
     pageState: expect.stringContaining(`- Page URL: ${server.PREFIX}/
-- Page Title: 
-- Page Snapshot:
-\`\`\`yaml
-- button "Button"`),
+- Page Title: Title
+- Page Snapshot:`),
   });
 });

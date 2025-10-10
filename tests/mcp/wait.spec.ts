@@ -31,9 +31,11 @@ test('browser_wait_for(text)', async ({ client, server }) => {
     </body>
   `, 'text/html');
 
-  await client.callTool({
+  expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- generic [ref=e3]: Text to disappear`),
   });
 
   await client.callTool({
@@ -44,10 +46,14 @@ test('browser_wait_for(text)', async ({ client, server }) => {
     },
   });
 
-  expect(await client.callTool({
+  await client.callTool({
     name: 'browser_wait_for',
     arguments: { text: 'Text to appear' },
     code: `await page.getByText("Text to appear").first().waitFor({ state: 'visible' });`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
   })).toHaveResponse({
     pageState: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
   });
@@ -68,9 +74,11 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
     </body>
   `, 'text/html');
 
-  await client.callTool({
+  expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- generic [ref=e3]: Text to disappear`),
   });
 
   await client.callTool({
@@ -81,10 +89,14 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
     },
   });
 
-  expect(await client.callTool({
+  await client.callTool({
     name: 'browser_wait_for',
     arguments: { textGone: 'Text to disappear' },
     code: `await page.getByText("Text to disappear").first().waitFor({ state: 'hidden' });`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
   })).toHaveResponse({
     pageState: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
   });

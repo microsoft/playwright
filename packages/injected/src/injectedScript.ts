@@ -92,7 +92,8 @@ export class InjectedScript {
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
-  private _lastAriaSnapshot: AriaSnapshot | undefined;
+  private _lastAriaSnapshotForTrack = new Map<string, AriaSnapshot>();
+  private _lastAriaSnapshotForQuery: AriaSnapshot | undefined;
 
   // Recorder must use any external dependencies through InjectedScript.
   // Otherwise it will end up with a copy of all modules it uses, and any
@@ -299,11 +300,18 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options: AriaTreeOptions): string {
+  ariaSnapshot(node: Node, options: AriaTreeOptions & { track?: string, incremental?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    this._lastAriaSnapshot = generateAriaTree(node as Element, options);
-    return renderAriaTree(this._lastAriaSnapshot, options);
+    const ariaSnapshot = generateAriaTree(node as Element, options);
+    let previous: AriaSnapshot | undefined;
+    if (options.incremental)
+      previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : this._lastAriaSnapshotForQuery;
+    const result = renderAriaTree(ariaSnapshot, options, previous);
+    if (options.track)
+      this._lastAriaSnapshotForTrack.set(options.track, ariaSnapshot);
+    this._lastAriaSnapshotForQuery = ariaSnapshot;
+    return result;
   }
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
@@ -692,7 +700,7 @@ export class InjectedScript {
 
   _createAriaRefEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      const result = this._lastAriaSnapshot?.elements?.get(selector);
+      const result = this._lastAriaSnapshotForQuery?.elements?.get(selector);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };
