@@ -225,6 +225,8 @@ class FFRouteImpl implements network.RouteDelegate {
   private _request: InterceptableRequest;
   private _session: FFSession;
 
+  readonly removeHostHeaderFromOverrides = true;
+
   constructor(session: FFSession, request: InterceptableRequest) {
     this._session = session;
     this._request = request;

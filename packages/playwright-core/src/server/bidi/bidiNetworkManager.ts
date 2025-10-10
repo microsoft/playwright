@@ -68,8 +68,16 @@ export class BidiNetworkManager {
       // We do not support intercepting redirects.
       if (redirectedFrom) {
         let params = {};
-        if (redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders)
-          params = toBidiRequestHeaders(redirectedFrom._originalRequestRoute._alreadyContinuedHeaders ?? []);
+        if (redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders) {
+          const { headers } = toBidiRequestHeaders(redirectedFrom._originalRequestRoute._alreadyContinuedHeaders ?? []);
+          const hostHeader = headers.find(header => header.name.toLowerCase() === 'host');
+          if (hostHeader) {
+            const requestHostHeader = param.request.headers.find(header => header.name.toLowerCase() === 'host');
+            if (requestHostHeader)
+              hostHeader.value = requestHostHeader.value;
+          }
+          params = { headers };
+        }
 
         this._session.sendMayFail('network.continueRequest', {
           request: param.request.request,
