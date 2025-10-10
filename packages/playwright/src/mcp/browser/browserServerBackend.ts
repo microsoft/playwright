@@ -26,6 +26,7 @@ import type { Tool } from './tools/tool';
 import type { BrowserContextFactory } from './browserContextFactory';
 import type * as mcpServer from '../sdk/server';
 import type { ServerBackend } from '../sdk/server';
+import type * as playwright from 'playwright';
 
 export class BrowserServerBackend implements ServerBackend {
   private _tools: Tool[];
@@ -33,11 +34,13 @@ export class BrowserServerBackend implements ServerBackend {
   private _sessionLog: SessionLog | undefined;
   private _config: FullConfig;
   private _browserContextFactory: BrowserContextFactory;
+  private _closePageOverride?: (page: playwright.Page) => Promise<void>;
 
-  constructor(config: FullConfig, factory: BrowserContextFactory) {
+  constructor(config: FullConfig, factory: BrowserContextFactory, closePageOverride?: (page: playwright.Page) => Promise<void>) {
     this._config = config;
     this._browserContextFactory = factory;
     this._tools = filteredTools(config);
+    this._closePageOverride = closePageOverride;
   }
 
   async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
@@ -47,6 +50,7 @@ export class BrowserServerBackend implements ServerBackend {
       browserContextFactory: this._browserContextFactory,
       sessionLog: this._sessionLog,
       clientInfo,
+      closePageOverride: this._closePageOverride,
     });
   }
 

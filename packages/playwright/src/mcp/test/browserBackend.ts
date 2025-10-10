@@ -24,7 +24,6 @@ import { Tab } from '../browser/tab';
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
 import type { BrowserContextFactory } from '../browser/browserContextFactory';
-import type { ClientInfo } from '../sdk/server';
 
 export async function runBrowserBackendAtEnd(context: playwright.BrowserContext, errorMessage?: string) {
   const testInfo = currentTestInfo();
@@ -80,7 +79,7 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
 
 function identityFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
   return {
-    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
+    createContext: async () => {
       return {
         browserContext,
         close: async () => {}
