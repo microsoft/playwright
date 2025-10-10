@@ -16,10 +16,16 @@
 
 import { test, expect } from './fixtures';
 
-test('browser_click', async ({ client, server, mcpBrowser }) => {
+test('browser_click', async ({ client, server }) => {
   server.setContent('/', `
     <title>Title</title>
     <button>Submit</button>
+    <script>
+      const button = document.querySelector('button');
+      button.addEventListener('click', () => {
+        button.focus(); // without manual focus, webkit focuses body
+      });
+    </script>
   `, 'text/html');
 
   await client.callTool({
@@ -35,7 +41,7 @@ test('browser_click', async ({ client, server, mcpBrowser }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- button "Submit" ${mcpBrowser !== 'webkit' || process.platform === 'linux' ? '[active] ' : ''}[ref=e2]`),
+    pageState: expect.stringContaining(`- button "Submit" [active] [ref=e2]`),
   });
 });
 
