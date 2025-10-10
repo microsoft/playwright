@@ -23,7 +23,7 @@ import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
 
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
+import type { Fixtures, TestAnnotation, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 const testTypeSymbol = Symbol('testType');
@@ -309,9 +309,48 @@ function throwIfRunningInsideJest() {
   }
 }
 
+export function validateAnnotation(annotation: any): TestAnnotation {
+  if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
+    throw new Error(`Annotation must be an object, received: ${typeof annotation}`);
+
+  if (!('type' in annotation) || annotation.type === null || annotation.type === undefined)
+    throw new Error('Annotation must have a "type" property');
+
+  if (typeof annotation.type !== 'string')
+    throw new Error(`Annotation type must be a string, received: ${typeof annotation.type}`);
+
+  let description = annotation.description;
+  if (description !== undefined && description !== null && typeof description !== 'string')
+    description = JSON.stringify(description);
+
+  if (annotation.location !== undefined) {
+    if (typeof annotation.location !== 'object' || annotation.location === null || Array.isArray(annotation.location))
+      throw new Error(`Annotation location must be an object, received: ${typeof annotation.location}`);
+    if (typeof annotation.location.file !== 'string')
+      throw new Error(`Annotation location.file must be a string, received: ${typeof annotation.location.file}`);
+    if (typeof annotation.location.line !== 'number')
+      throw new Error(`Annotation location.line must be a number, received: ${typeof annotation.location.line}`);
+    if (typeof annotation.location.column !== 'number')
+      throw new Error(`Annotation location.column must be a number, received: ${typeof annotation.location.column}`);
+  }
+
+  const result: TestAnnotation = { type: annotation.type };
+  if (description !== undefined)
+    result.description = description;
+  if (annotation.location)
+    result.location = annotation.location;
+
+  return result;
+}
+
 function validateTestDetails(details: TestDetails, location: Location) {
   const originalAnnotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
-  const annotations = originalAnnotations.map(annotation => ({ ...annotation, location }));
+
+  const annotations = originalAnnotations.map(annotation => {
+    const normalized = validateAnnotation(annotation);
+    return { ...normalized, location };
+  });
+
   const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
   for (const tag of tags) {
     if (tag[0] !== '@')

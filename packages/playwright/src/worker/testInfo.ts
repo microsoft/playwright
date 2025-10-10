@@ -24,6 +24,7 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { validateAnnotation } from '../common/testType';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -118,6 +119,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
+  readonly _annotationsPush: (...items: TestAnnotation[]) => number;
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: WorkerInitParams;
 
@@ -212,6 +214,18 @@ export class TestInfoImpl implements TestInfo {
       const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
+
+    this._annotationsPush = this.annotations.push.bind(this.annotations);
+    const normalizedPush = (...annotations: TestAnnotation[]) => {
+      const normalized = annotations.map(a => validateAnnotation(a));
+      return this._annotationsPush(...normalized);
+    };
+    Object.defineProperty(this.annotations, 'push', {
+      value: normalizedPush,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
