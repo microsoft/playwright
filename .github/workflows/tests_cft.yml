@@ -7,6 +7,9 @@ on:
         description: Playwright SHA / ref to test. Use 'refs/pull/PULL_REQUEST_ID/head' to test a PR. Defaults to the current branch.
         required: false
         default: ''
+  pull_request:
+    branches:
+      - main
 
 env:
   FORCE_COLOR: 1
@@ -34,19 +37,19 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps chromium ffmpeg
-      if: contains(matrix.os, 'ubuntu')
+      if: ${{ contains(matrix.os, 'ubuntu') }}
     - run: npx playwright install chromium ffmpeg
-      if: !contains(matrix.os, 'ubuntu')
+      if: ${{ !contains(matrix.os, 'ubuntu') }}
     - name: Install CfT beta
       run: echo "CRPATH=$(npx -y @puppeteer/browsers install chrome@beta --with-deps | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
     - name: Run tests linux
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
-      if: contains(matrix.os, 'ubuntu')
+      if: ${{ contains(matrix.os, 'ubuntu') }}
       env:
         PWTEST_CHANNEL: chromium
     - name: Run tests non-linux
       run: npm run ctest
-      if: !contains(matrix.os, 'ubuntu')
+      if: ${{ !contains(matrix.os, 'ubuntu') }}
       env:
         PWTEST_CHANNEL: chromium
 
@@ -72,14 +75,14 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps chromium ffmpeg
-      if: contains(matrix.os, 'ubuntu')
+      if: ${{ contains(matrix.os, 'ubuntu') }}
     - run: npx playwright install chromium ffmpeg
-      if: !contains(matrix.os, 'ubuntu')
+      if: ${{ !contains(matrix.os, 'ubuntu') }}
     - name: Install CfT headless shell beta
       run: echo "CRPATH=$(npx -y @puppeteer/browsers install chrome-headless-shell@beta --with-deps | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
     - name: Run tests linux
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
-      if: contains(matrix.os, 'ubuntu')
+      if: ${{ contains(matrix.os, 'ubuntu') }}
     - name: Run tests non-linux
       run: npm run ctest
-      if: !contains(matrix.os, 'ubuntu')
+      if: ${{ !contains(matrix.os, 'ubuntu') }}
