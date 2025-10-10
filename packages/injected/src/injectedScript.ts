@@ -989,7 +989,9 @@ export class InjectedScript {
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
-      hitElement = parentElementOrShadowHost(hitElement);
+      // Prefer the composed tree over the light-dom tree, as browser performs hit testing on the composed tree.
+      // Note that we will still eventually climb to the light-dom parent, as any element distributed to a slot is a direct child of the shadow host that contains the slot.
+      hitElement = hitElement.assignedSlot ?? parentElementOrShadowHost(hitElement);
     }
     if (hitElement === targetElement)
       return 'done';
