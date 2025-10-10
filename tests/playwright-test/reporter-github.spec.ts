@@ -74,7 +74,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `
       }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: '' });
       const text = result.output;
-      expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took');
+      expect(text).toContain('::warning title=Slow Test,file=a.test.js:3:15 › slow test::a.test.js:3:15 › slow test took ');
       expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
       expect(result.exitCode).toBe(0);
     });

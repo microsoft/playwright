@@ -1528,7 +1528,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   repeatEach?: number;
 
   /**
-   * Whether to report slow test files. Pass `null` to disable this feature.
+   * Whether to report slow tests. Pass `null` to disable this feature.
    *
    * **Usage**
    *
@@ -1543,17 +1543,20 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * **Details**
    *
-   * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no
-   * more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
+   * Tests that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
+   * than `max` number of them. Passing zero as `max` reports all tests that exceed the threshold.
+   *
+   * **NOTE** In versions prior to 1.57, this config was about reporting slow test *files*, as opposed to slow tests.
+   *
    */
   reportSlowTests?: null|{
     /**
-     * The maximum number of slow test files to report. Defaults to `5`.
+     * The maximum number of slow tests to report. Defaults to `5`.
      */
     max: number;
 
     /**
-     * Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
+     * Test duration in milliseconds that is considered slow. Defaults to 5 minutes.
      */
     threshold: number;
   };
@@ -2005,12 +2008,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   reportSlowTests: null|{
     /**
-     * The maximum number of slow test files to report.
+     * The maximum number of slow tests to report.
      */
     max: number;
 
     /**
-     * Test file duration in milliseconds that is considered slow.
+     * Test duration in milliseconds that is considered slow.
      */
     threshold: number;
   };

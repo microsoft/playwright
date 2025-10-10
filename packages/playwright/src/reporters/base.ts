@@ -154,7 +154,7 @@ export class TerminalReporter implements ReporterV2 {
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
-  private fileDurations = new Map<string, { duration: number, workers: Set<number> }>();
+  private testDurations = new Map<string, number>();
   private _options: TerminalReporterOptions;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
@@ -195,13 +195,11 @@ export class TerminalReporter implements ReporterV2 {
   onTestEnd(test: TestCase, result: TestResult) {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
-    const projectName = test.titlePath()[1];
-    const relativePath = relativeTestPath(this.screen, this.config, test);
-    const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
-    const entry = this.fileDurations.get(fileAndProject) || { duration: 0, workers: new Set() };
-    entry.duration += result.duration;
-    entry.workers.add(result.workerIndex);
-    this.fileDurations.set(fileAndProject, entry);
+    const hasSlowAnnotation = test.annotations.some(a => a.type === 'slow');
+    if (!hasSlowAnnotation) {
+      const testTitle = formatTestTitle(this.screen, this.config, test);
+      this.testDurations.set(testTitle, result.duration);
+    }
   }
 
   onError(error: TestError) {
@@ -231,12 +229,11 @@ export class TerminalReporter implements ReporterV2 {
   protected getSlowTests(): [string, number][] {
     if (!this.config.reportSlowTests)
       return [];
-    // Only pick durations that were served by single worker.
-    const fileDurations = [...this.fileDurations.entries()].filter(([key, value]) => value.workers.size === 1).map(([key, value]) => [key, value.duration]) as [string, number][];
-    fileDurations.sort((a, b) => b[1] - a[1]);
-    const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
-    const threshold =  this.config.reportSlowTests.threshold;
-    return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
+    const testDurations = [...this.testDurations.entries()];
+    testDurations.sort((a, b) => b[1] - a[1]);
+    const count = Math.min(testDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
+    const threshold = this.config.reportSlowTests.threshold;
+    return testDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
   protected generateSummaryMessage({ didNotRun, skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
@@ -328,11 +325,9 @@ export class TerminalReporter implements ReporterV2 {
 
   private _printSlowTests() {
     const slowTests = this.getSlowTests();
-    slowTests.forEach(([file, duration]) => {
-      this.writeLine(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${milliseconds(duration)})`));
+    slowTests.forEach(([test, duration]) => {
+      this.writeLine(this.screen.colors.yellow('  Slow test: ') + test + this.screen.colors.yellow(` (${milliseconds(duration)})`));
     });
-    if (slowTests.length)
-      this.writeLine(this.screen.colors.yellow('  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel'));
   }
 
   private _printSummary(summary: string) {
