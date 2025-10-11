@@ -31,7 +31,7 @@ export const BrowserFrame: React.FunctionComponent<{
       className='browser-frame-address-bar'
       title={url || 'about:blank'}
     >
-      {url || 'about:blank'}
+      <span className='browser-frame-address'>{url || 'about:blank'}</span>
       {url && (
         <CopyToClipboard value={url} />
       )}
