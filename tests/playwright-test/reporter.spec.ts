@@ -674,6 +674,32 @@ test('should report annotations from test declaration', async ({ runInlineTest }
   ]);
 });
 
+test('attachments.push should not be enumerable to allow toEqual comparisons', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('test.info().attachments.push should not be enumerable', async ({}) => {
+
+        const attachments = test.info().attachments;
+
+        const descriptor = Object.getOwnPropertyDescriptor(attachments, 'push');
+        expect(descriptor).toBeTruthy();
+        expect(descriptor.enumerable).toBe(false);
+
+        expect(Object.keys(attachments)).not.toContain('push');
+
+        await test.info().attach('file1', { body: 'content1', contentType: 'text/plain' });
+        await test.info().attach('file2', { body: 'content2', contentType: 'text/plain' });
+
+        const keys = Object.keys(attachments);
+        expect(keys.every(k => !isNaN(Number(k)))).toBe(true);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('tests skipped in serial mode receive onTestBegin/onTestEnd', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28321' });
 
