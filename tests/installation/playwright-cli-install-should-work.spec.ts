@@ -17,6 +17,7 @@ import { test, expect } from './npmTest';
 import { chromium } from '@playwright/test';
 import path from 'path';
 import https from 'https';
+import tls from 'tls';
 import { TestProxy } from '../config/proxy';
 import { TestServer } from '../config/testserver';
 
@@ -77,6 +78,56 @@ test('install command should work with HTTPS_PROXY', { annotation: { type: 'issu
     await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   });
   await proxy.stop();
+});
+
+test('install command should work with MITM proxy that drops content-length header', async ({ exec, checkInstalledSoftwareOnDisk }) => {
+  await exec('npm i playwright');
+
+  const certOptions = await TestServer.certOptions();
+  const proxy = https.createServer(certOptions);
+  proxy.on('connect', async (req, clientSocket, _head) => {
+    const [hostname, port] = req.url!.split(':');
+    const upstream = tls.connect({
+      host: hostname,
+      port: +port,
+      rejectUnauthorized: false,
+    });
+    upstream.on('secureConnect', () => {
+      clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      const tlsSocket = new tls.TLSSocket(clientSocket, {
+        isServer: true,
+        ...certOptions,
+      });
+      tlsSocket.pipe(upstream);
+      tlsSocket.on('error', () => upstream.end());
+
+      let foundHeader = false;
+      upstream.on('data', data => {
+        let chunk = data.toString() as string;
+        if (!foundHeader && chunk.match(/content-length:/i)) {
+          foundHeader = true;
+          chunk = chunk.replace(/content-length:[^\r\n]*\r\n/gi, '');
+        }
+        tlsSocket.write(chunk);
+      });
+      upstream.on('error', () => tlsSocket.end());
+    });
+  });
+
+  await new Promise<void>(resolve => proxy.listen(0, resolve));
+
+  await test.step('playwright install chromium', async () => {
+    const result = await exec('npx playwright install chromium', {
+      env: {
+        HTTPS_PROXY: `https://localhost:${(proxy.address() as any).port}`,
+        NODE_TLS_REJECT_UNAUTHORIZED: '0',
+      }
+    });
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  });
+
+  proxy.close();
 });
 
 test('install command should ignore HTTP_PROXY', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36412' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
