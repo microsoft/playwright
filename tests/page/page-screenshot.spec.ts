@@ -324,8 +324,8 @@ it.describe('page screenshot', () => {
     }
   });
 
-  it('should work for webgl', async ({ page, server, browserName, platform }) => {
-    it.fixme(browserName === 'firefox');
+  it('should work for webgl', async ({ page, server, browserName, platform, channel }) => {
+    it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
     it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
     it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
 

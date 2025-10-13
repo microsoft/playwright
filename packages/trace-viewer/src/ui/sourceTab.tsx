@@ -26,8 +26,10 @@ import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
+import { TraceModelContext } from './traceModelContext';
 
 function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sources: Map<string, SourceModel>, rootDir?: string, fallbackLocation?: SourceLocation) {
+  const model = React.useContext(TraceModelContext);
   return useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
     const actionLocation = stack?.[selectedFrame];
     const location = actionLocation?.file ? actionLocation : fallbackLocation;
@@ -53,8 +55,8 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
     } else if (source.content === undefined || (location === fallbackLocation)) {
       const sha1 = await calculateSha1(file);
       try {
-        let response = await fetch(`sha1/src@${sha1}.txt`);
-        if (response.status === 404)
+        let response = model ? await fetch(model.createRelativeUrl(`sha1/src@${sha1}.txt`)) : undefined;
+        if (!response || response.status === 404)
           response = await fetch(`file?path=${encodeURIComponent(file)}`);
         if (response.status >= 400)
           source.content = `<Unable to read "${file}">`;
@@ -64,7 +66,7 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
         source.content = `<Unable to read "${file}">`;
       }
     }
-    return { source, highlight, targetLine, fileName, location };
+    return { model, source, highlight, targetLine, fileName, location };
   }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 }
 

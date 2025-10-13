@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, nextActionByStartTime, previousActionByEndTime } from './modelUtil';
+import { type MultiTraceModel, nextActionByStartTime, previousActionByEndTime } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -49,7 +49,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
   setHighlightedElement: React.Dispatch<React.SetStateAction<HighlightedElement>>,
-}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
+}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
@@ -59,8 +59,8 @@ export const SnapshotTabsView: React.FunctionComponent<{
   }, [action]);
   const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
-    return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
-  }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot]);
+    return model && snapshot ? extendSnapshot(model.traceUrl, snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
+  }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot, model]);
 
   const snapshotUrls = React.useMemo((): SnapshotUrls | undefined => snapshotInfoUrl !== undefined ? { snapshotInfoUrl, snapshotUrl, popoutUrl } : undefined, [snapshotInfoUrl, snapshotUrl, popoutUrl]);
 
@@ -441,11 +441,10 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 }
 
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
-const serverParam = new URLSearchParams(window.location.search).get('server');
 
-export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
+export function extendSnapshot(traceUrl: string, snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
   const params = new URLSearchParams();
-  params.set('trace', context(snapshot.action).traceUrl);
+  params.set('trace', traceUrl);
   params.set('name', snapshot.snapshotName);
   if (isUnderTest)
     params.set('isUnderTest', 'true');
@@ -463,15 +462,7 @@ export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScree
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
-  if (serverParam)
-    popoutParams.set('server', serverParam);
-  popoutParams.set('trace', context(snapshot.action).traceUrl);
-  if (snapshot.point) {
-    popoutParams.set('pointX', String(snapshot.point.x));
-    popoutParams.set('pointY', String(snapshot.point.y));
-    if (snapshot.hasInputTarget)
-      params.set('hasInputTarget', '1');
-  }
+  popoutParams.set('trace', traceUrl);
   const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
   return { snapshotInfoUrl, snapshotUrl, popoutUrl };
 }

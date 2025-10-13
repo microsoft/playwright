@@ -375,13 +375,13 @@ program
     });
 
 program
-    .command('show-trace [trace...]')
+    .command('show-trace [trace]')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
     .option('-h, --host <host>', 'Host to serve trace on; specifying this option opens trace in a browser tab')
     .option('-p, --port <port>', 'Port to serve trace on, 0 for any free port; specifying this option opens trace in a browser tab')
     .option('--stdin', 'Accept trace URLs over stdin to update the viewer')
     .description('show trace viewer')
-    .action(function(traces, options) {
+    .action(function(trace, options) {
       if (options.browser === 'cr')
         options.browser = 'chromium';
       if (options.browser === 'ff')
@@ -396,12 +396,13 @@ program
       };
 
       if (options.port !== undefined || options.host !== undefined)
-        runTraceInBrowser(traces, openOptions).catch(logErrorAndExit);
+        runTraceInBrowser(trace, openOptions).catch(logErrorAndExit);
       else
-        runTraceViewerApp(traces, options.browser, openOptions, true).catch(logErrorAndExit);
+        runTraceViewerApp(trace, options.browser, openOptions, true).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:
 
+  $ show-trace
   $ show-trace https://example.com/trace.zip`);
 
 type Options = {

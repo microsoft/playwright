@@ -498,10 +498,10 @@ it('should not allow to access frame on popup main request', async ({ page, serv
   await clicked;
 });
 
-it('page.reload return 304 status code', async ({ page, server, browserName }) => {
+it('page.reload return 304 status code', async ({ page, server, browserName, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28779' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29441' });
-  it.fixme(browserName === 'firefox', 'Does not send second request');
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Does not send second request');
   let requestNumber = 0;
   server.setRoute('/test.html', (req, res) => {
     ++requestNumber;

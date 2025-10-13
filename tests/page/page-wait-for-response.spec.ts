@@ -117,9 +117,9 @@ it('should work with no timeout', async ({ page, server }) => {
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
 
-it('should work with re-rendered cached IMG elements', async ({ page, server, browserName }) => {
+it('should work with re-rendered cached IMG elements', async ({ page, server, browserName, channel }) => {
   it.fixme(browserName === 'webkit');
-  it.fixme(browserName === 'firefox');
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<img src="pptr.png">`);
   await page.$eval('img', img => img.remove());

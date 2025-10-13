@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { selectors } from 'playwright-core';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
@@ -233,6 +234,9 @@ export class Context {
     if (this._closeBrowserContextPromise)
       throw new Error('Another browser context is being closed.');
     // TODO: move to the browser context factory to make it based on isolation mode.
+
+    if (this.config.testIdAttribute)
+      selectors.setTestIdAttribute(this.config.testIdAttribute);
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
     await this._setupRequestInterception(browserContext);

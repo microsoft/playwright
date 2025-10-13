@@ -24,6 +24,7 @@ import type { ContextEntry } from '../types/entries';
 import type { SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
+import { TraceModelContext } from './traceModelContext';
 
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
@@ -75,7 +76,7 @@ export const TraceView: React.FC<{
         const model = await loadSingleTraceFile(traceLocation);
         setModel({ model, isLive: true });
       } catch {
-        const model = new MultiTraceModel([]);
+        const model = new MultiTraceModel('', []);
         model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
         setModel({ model, isLive: false });
       } finally {
@@ -88,18 +89,19 @@ export const TraceView: React.FC<{
     };
   }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
-  return <Workbench
-    key='workbench'
-    model={model?.model}
-    showSourcesFirst={true}
-    rootDir={rootDir}
-    fallbackLocation={item.testFile}
-    isLive={model?.isLive}
-    status={item.treeItem?.status}
-    annotations={item.testCase?.annotations ?? []}
-    onOpenExternally={onOpenExternally}
-    revealSource={revealSource}
-  />;
+  return <TraceModelContext.Provider value={model?.model}>
+    <Workbench
+      key='workbench'
+      showSourcesFirst={true}
+      rootDir={rootDir}
+      fallbackLocation={item.testFile}
+      isLive={model?.isLive}
+      status={item.treeItem?.status}
+      annotations={item.testCase?.annotations ?? []}
+      onOpenExternally={onOpenExternally}
+      revealSource={revealSource}
+    />;
+  </TraceModelContext.Provider>;
 };
 
 const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefined => {
@@ -113,8 +115,7 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
 async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
   params.set('trace', url);
-  params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
-  return new MultiTraceModel(contextEntries);
+  return new MultiTraceModel(url, contextEntries);
 }

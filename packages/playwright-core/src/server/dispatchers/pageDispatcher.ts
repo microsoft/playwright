@@ -352,7 +352,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async snapshotForAI(params: channels.PageSnapshotForAIParams, progress: Progress): Promise<channels.PageSnapshotForAIResult> {
-    return { snapshot: await this._page.snapshotForAI(progress) };
+    return { snapshot: await this._page.snapshotForAI(progress, params) };
   }
 
   async bringToFront(params: channels.PageBringToFrontParams, progress: Progress): Promise<void> {

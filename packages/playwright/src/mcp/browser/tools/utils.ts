@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { asLocator } from 'playwright-core/lib/utils';
-
 import type * as playwright from 'playwright-core';
 import type { Tab } from '../tab';
 
@@ -71,15 +69,6 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
     return result;
   } finally {
     dispose();
-  }
-}
-
-export async function generateLocator(locator: playwright.Locator): Promise<string> {
-  try {
-    const { resolvedSelector } = await (locator as any)._resolveSelector();
-    return asLocator('javascript', resolvedSelector);
-  } catch (e) {
-    throw new Error('Ref not found, likely because element was removed. Use browser_snapshot to see what elements are currently on the page.');
   }
 }
 

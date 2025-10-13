@@ -22,7 +22,6 @@ import type * as trace from '@trace/trace';
 
 export type ContextEntry = {
   origin: 'testRunner'|'library';
-  traceUrl: string;
   startTime: number;
   endTime: number;
   browserName: string;

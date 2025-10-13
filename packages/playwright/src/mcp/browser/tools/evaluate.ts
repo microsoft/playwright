@@ -17,9 +17,8 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import * as javascript from '../codegen';
-import { generateLocator } from './utils';
 
-import type * as playwright from 'playwright-core';
+import type { Tab } from '../tab';
 
 const evaluateSchema = z.object({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
@@ -40,16 +39,16 @@ const evaluate = defineTabTool({
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    let locator: playwright.Locator | undefined;
+    let locator: Awaited<ReturnType<Tab['refLocator']>> | undefined;
     if (params.ref && params.element) {
       locator = await tab.refLocator({ ref: params.ref, element: params.element });
-      response.addCode(`await page.${await generateLocator(locator)}.evaluate(${javascript.quote(params.function)});`);
+      response.addCode(`await page.${locator.resolved}.evaluate(${javascript.quote(params.function)});`);
     } else {
       response.addCode(`await page.evaluate(${javascript.quote(params.function)});`);
     }
 
     await tab.waitForCompletion(async () => {
-      const receiver = locator ?? tab.page as any;
+      const receiver = locator?.locator ?? tab.page;
       const result = await receiver._evaluateFunction(params.function);
       response.addResult(JSON.stringify(result, null, 2) || 'undefined');
     });
