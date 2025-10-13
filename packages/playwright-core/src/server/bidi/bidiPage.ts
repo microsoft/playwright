@@ -423,6 +423,8 @@ export class BidiPage implements PageDelegate {
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+    if (color)
+      throw new Error('Not implemented');
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
