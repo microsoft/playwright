@@ -100,7 +100,7 @@ export const TraceView: React.FC<{
       annotations={item.testCase?.annotations ?? []}
       onOpenExternally={onOpenExternally}
       revealSource={revealSource}
-    />;
+    />
   </TraceModelContext.Provider>;
 };
 
