@@ -1465,6 +1465,8 @@ scheme.PageRequestsResult = tObject({
   requests: tArray(tChannel(['Request'])),
 });
 scheme.PageSnapshotForAIParams = tObject({
+  track: tOptional(tString),
+  mode: tOptional(tEnum(['full', 'incremental'])),
   timeout: tFloat,
 });
 scheme.PageSnapshotForAIResult = tObject({

@@ -217,10 +217,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return this._requests;
   }
 
-  async captureSnapshot(): Promise<TabSnapshot> {
+  async captureSnapshot(mode: 'full' | 'incremental'): Promise<TabSnapshot> {
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const snapshot = await this.page._snapshotForAI();
+      const snapshot = await this.page._snapshotForAI({ mode, track: 'response' });
       tabSnapshot = {
         url: this.page.url(),
         title: await this.page.title(),
