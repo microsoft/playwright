@@ -76,11 +76,21 @@ export class ClockController {
   private _log: { type: LogEntryType, time: number, param?: number }[] = [];
   private _realTime: { startTicks: EmbedderTicks, lastSyncTicks: EmbedderTicks } | undefined;
   private _currentRealTimeTimer: RealTimeTimer | undefined;
+  private _strictMode = false;
+  private _lastStrictModeViolation?: string;
 
   constructor(embedder: Embedder) {
     this._timers = new Map();
     this._now = { time: asWallTime(0), isFixedTime: false, ticks: 0 as Ticks, origin: asWallTime(-1) };
     this._embedder = embedder;
+  }
+
+  setStrictModeForTests() {
+    this._strictMode = true;
+  }
+
+  lastStrictModeViolationForTests() {
+    return this._lastStrictModeViolation;
   }
 
   uninstall() {
@@ -90,6 +100,7 @@ export class ClockController {
 
   now(): number {
     this._replayLogOnce();
+    // Sync real time to support calling Date.now() in a loop.
     this._syncRealTime();
     return this._now.time;
   }
@@ -111,6 +122,7 @@ export class ClockController {
 
   performanceNow(): DOMHighResTimeStamp {
     this._replayLogOnce();
+    // Sync real time to support calling performance.now() in a loop.
     this._syncRealTime();
     return this._now.ticks;
   }
@@ -139,6 +151,13 @@ export class ClockController {
   }
 
   private _advanceNow(to: Ticks) {
+    if (this._now.ticks > to) {
+      if (this._strictMode) {
+        this._lastStrictModeViolation = `Advancing to the past in strict mode ${this._now.ticks} -> ${to}`;
+        throw new Error(this._lastStrictModeViolation);
+      }
+      return;
+    }
     if (!this._now.isFixedTime)
       this._now.time = asWallTime(this._now.time + to - this._now.ticks);
     this._now.ticks = to;
@@ -171,7 +190,11 @@ export class ClockController {
       firstException = firstException || result.error;
     }
 
-    this._advanceNow(to);
+    // While running the timers, it is possible to advance past `to`
+    // by syncing with real time from within now() or performance.now().
+    if (this._now.ticks < to)
+      this._advanceNow(to);
+
     if (firstException)
       throw firstException;
   }
@@ -324,7 +347,11 @@ export class ClockController {
     if (!timer)
       return null;
 
-    this._advanceNow(timer.callAt);
+    if (timer.callAt > this._now.ticks) {
+      // When the system is busy, a timer can be called late, which means we should not
+      // rewind back from |now| to |timer.callAt|.
+      this._advanceNow(timer.callAt);
+    }
 
     if (timer.type === TimerType.Interval)
       timer.callAt = shiftTicks(timer.callAt, timer.delay);
@@ -375,6 +402,9 @@ export class ClockController {
   }
 
   getTimeToNextFrame() {
+    // When `window.requestAnimationFrame` is the first call in the page,
+    // this place is the first API call, so replay the log.
+    this._replayLogOnce();
     return 16 - this._now.ticks % 16;
   }
 
