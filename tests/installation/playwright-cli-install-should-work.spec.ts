@@ -83,6 +83,8 @@ test('install command should work with HTTPS_PROXY', { annotation: { type: 'issu
 test('install command should work with MITM proxy that drops content-length header', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
 
+  const headersEnd = '\r\n\r\n';
+
   const certOptions = await TestServer.certOptions();
   const proxy = https.createServer(certOptions);
   proxy.on('connect', async (req, clientSocket, _head) => {
@@ -101,15 +103,28 @@ test('install command should work with MITM proxy that drops content-length head
       tlsSocket.pipe(upstream);
       tlsSocket.on('error', () => upstream.end());
 
-      let foundHeader = false;
-      upstream.on('data', data => {
-        let chunk = data.toString() as string;
-        if (!foundHeader && chunk.match(/content-length:/i)) {
-          foundHeader = true;
-          chunk = chunk.replace(/content-length:[^\r\n]*\r\n/gi, '');
+      let headersParsed = false;
+      let buffer = Buffer.alloc(0);
+      upstream.on('data', (data: Buffer) => {
+        if (headersParsed) {
+          tlsSocket.write(data);
+          return;
         }
-        tlsSocket.write(chunk);
+
+        buffer = Buffer.concat([buffer, data]);
+        const headersEndIndex = buffer.indexOf(headersEnd);
+        if (headersEndIndex === -1)
+          return;
+
+        let headers = buffer.subarray(0, headersEndIndex + headersEnd.length).toString('utf8');
+        headers = headers.replace(/content-length:[^\r\n]*\r\n/gi, '');
+        tlsSocket.write(headers);
+        tlsSocket.write(buffer.subarray(headersEndIndex + headersEnd.length));
+
+        headersParsed = true;
+        buffer = Buffer.alloc(0);
       });
+      upstream.on('end', () => tlsSocket.end());
       upstream.on('error', () => tlsSocket.end());
     });
   });
