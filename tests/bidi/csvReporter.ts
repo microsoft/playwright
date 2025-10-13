@@ -55,7 +55,7 @@ class CsvReporter implements Reporter {
           row.push(test.expectedStatus);
           row.push(test.outcome());
           if (fixme) {
-            row.push('fixme' + (fixme.description ? `: ${fixme.description}` : ''));
+            row.push('fixme' + (fixme.description ? `: ${fixme.description.replace(/\s+/g, ' ')}` : ''));
           } else {
             const result = test.results.find(r => r.error);
             if (result) {
