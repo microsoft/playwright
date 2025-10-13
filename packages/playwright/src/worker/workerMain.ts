@@ -219,7 +219,7 @@ export class WorkerMain extends ProcessRunner {
     let fatalUnknownTestIds: string[] | undefined;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await loadTestFile(runPayload.file, this._config.config.rootDir);
+      const fileSuite = await loadTestFile(runPayload.file, this._config);
       const suite = bindFileSuiteToProject(this._project, fileSuite);
       if (this._params.repeatEachIndex)
         applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);

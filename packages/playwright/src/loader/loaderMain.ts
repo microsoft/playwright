@@ -44,7 +44,7 @@ export class LoaderMain extends ProcessRunner {
   async loadTestFile(params: { file: string }) {
     const testErrors: TestError[] = [];
     const config = await this._config();
-    const fileSuite = await loadTestFile(params.file, config.config.rootDir, testErrors);
+    const fileSuite = await loadTestFile(params.file, config, testErrors);
     this._poolBuilder.buildPools(fileSuite);
     return { fileSuite: fileSuite._deepSerialize(), testErrors };
   }

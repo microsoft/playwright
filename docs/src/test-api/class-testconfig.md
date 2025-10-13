@@ -535,6 +535,25 @@ export default defineConfig({
 ```
 
 
+## property: TestConfig.tag
+* since: v1.57
+- type: ?<[string]|[Array]<[string]>>
+
+Tag or tags prepended to each test in the report. Useful for tagging your test run with CI configuration.
+
+Note that each tag must start with `@` symbol. Learn more about [tagging](../test-annotations.md#tag-tests).
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  tag: process.env.CI_BOT_NAME,
+});
+```
+
+
 ## property: TestConfig.testDir
 * since: v1.10
 - type: ?<[string]>

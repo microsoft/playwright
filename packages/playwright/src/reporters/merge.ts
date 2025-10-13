@@ -385,7 +385,9 @@ class IdsPatcher {
     globalTestIdSet: Set<string>,
   ) {
     this._stringPool = stringPool;
-    this._botName = botName;
+    // Legacy bot name came from env, without '@' prefix, and we auto-tag tests with it.
+    // New bot name comes from "config.tags" and is already prepended in each test.
+    this._botName = botName?.startsWith('@') ? undefined : botName;
     this._salt = salt;
     this._testIdsMap = new Map();
     this._globalTestIdSet = globalTestIdSet;

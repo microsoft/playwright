@@ -1759,6 +1759,25 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   snapshotPathTemplate?: string;
 
   /**
+   * Tag or tags prepended to each test in the report. Useful for tagging your test run with CI configuration.
+   *
+   * Note that each tag must start with `@` symbol. Learn more about [tagging](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   tag: process.env.CI_BOT_NAME,
+   * });
+   * ```
+   *
+   */
+  tag?: string|Array<string>;
+
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * **Usage**
@@ -2034,6 +2053,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     current: number;
   };
+
+  /**
+   * Resolved global tags. See [testConfig.tag](https://playwright.dev/docs/api/class-testconfig#test-config-tag).
+   */
+  tags: Array<string>;
 
   /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).

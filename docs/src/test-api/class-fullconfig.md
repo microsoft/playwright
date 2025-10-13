@@ -112,6 +112,12 @@ Base directory for all relative paths used in the reporters.
 
 See [`property: TestConfig.shard`].
 
+## property: FullConfig.tags
+* since: v1.57
+- type: <[Array]<[string]>>
+
+Resolved global tags. See [`property: TestConfig.tag`].
+
 ## property: FullConfig.updateSnapshots
 * since: v1.10
 - type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
