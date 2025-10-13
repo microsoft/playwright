@@ -34,7 +34,7 @@
   height: 28px;
 
   .browser-frame-address {
-    flex: 1;
+    flex: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
