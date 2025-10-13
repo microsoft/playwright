@@ -1409,6 +1409,62 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
   }
 });
 
+test('should update aria snapshot when typing locator and locator when typing snapshot', async ({ page, runAndTrace, server, platform }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`
+      <div>
+        <ul>
+          <li>
+            <button>Option 1</button>
+          </li>
+          <li>
+            <button>Option 2</button>
+          </li>
+        </ul>
+        <button>Submit</button>
+        <button>Cancel</button>
+      </div>`);
+  });
+
+  await traceViewer.page.getByText('Locator', { exact: true }).click();
+
+  const locatorText = traceViewer.page.locator('.CodeMirror-code').first();
+  const ariaText = traceViewer.page.locator('.CodeMirror-code').last();
+  await locatorText.click();
+
+  await traceViewer.page.keyboard.type(`getByRole('button', { name: 'Option 1' })`);
+  await expect(ariaText).toHaveText(`- button "Option 1"`);
+
+  for (let i = 0; i < `1' })`.length; i++)
+    await traceViewer.page.keyboard.press('Backspace');
+
+  await traceViewer.page.keyboard.type(`2' })`);
+  await expect(ariaText).toHaveText(`- button "Option 2"`);
+
+  await ariaText.click();
+  if (platform === 'darwin')
+    await traceViewer.page.keyboard.press('Meta+a');
+  else
+    await traceViewer.page.keyboard.press('Control+a');
+  await traceViewer.page.keyboard.press('Backspace');
+
+  await traceViewer.page.keyboard.type(`- button "Submit"`);
+  await expect(locatorText).toHaveText(`getByRole('button', { name: 'Submit' })`);
+
+  if (platform === 'darwin')
+    await traceViewer.page.keyboard.press('Meta+a');
+  else
+    await traceViewer.page.keyboard.press('Control+a');
+  await traceViewer.page.keyboard.press('Backspace');
+
+  await traceViewer.page.keyboard.type(`
+- listitem:
+  - button "Option 2"
+  `.trim());
+  await expect(locatorText).toHaveText(`getByRole('listitem').filter({ hasText: 'Option 2' })`);
+});
+
 test('should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
   const traceFile = test.info().outputPath('trace.zip');
   const page = await browser.newPage({ javaScriptEnabled: false });
