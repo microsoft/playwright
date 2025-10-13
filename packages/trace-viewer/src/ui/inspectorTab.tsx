@@ -51,7 +51,7 @@ export const InspectorTab: React.FunctionComponent<{
   return <div style={{ flex: 'auto', backgroundColor: 'var(--vscode-sideBar-background)', padding: '0 10px 10px 10px', overflow: 'auto' }}>
     <div className='hbox' style={{ lineHeight: '28px', color: 'var(--vscode-editorCodeLens-foreground)' }}>
       <div>Locator</div>
-      {highlightedElement.hasMatches === false && <div style={{ color: 'var(--vscode-errorForeground)', marginLeft: '8px' }}>No matches</div>}
+      {highlightedElement.matchState === 'none' && <div style={{ color: 'var(--vscode-errorForeground)', marginLeft: '8px' }}>No matches</div>}
       <span style={{ flex: 'auto'  }}></span>
       <ToolbarButton icon='files' title='Copy locator' onClick={() => {
         copy(highlightedElement.locator || '');

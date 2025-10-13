@@ -36,7 +36,8 @@ export type HighlightedElement = {
   locator?: string,
   ariaSnapshot?: string
   lastEdited: 'locator' | 'ariaSnapshot' | 'none';
-  hasMatches?: boolean;
+  // Do not display any message if 'matched' or 'unset'
+  matchState: 'matched' | 'none' | 'unset';
 };
 
 export const SnapshotTabsView: React.FunctionComponent<{
@@ -280,21 +281,21 @@ export const InspectModeController: React.FunctionComponent<{
             locator: asLocator(sdkLanguage, frameSelector + elementInfo.selector),
             ariaSnapshot: elementInfo.ariaSnapshot,
             lastEdited: 'none',
-            hasMatches: true,
+            matchState: 'matched',
           });
         },
         setActiveElementSelector(selector) {
           setHighlightedElement(highlightedElement => ({
             ...highlightedElement,
             locator: asLocator(sdkLanguage, frameSelector + selector),
-            hasMatches: true,
+            matchState: 'matched',
           }));
         },
         setActiveElementAriaSnapshot(ariaSnapshot) {
           setHighlightedElement(highlightedElement => ({
             ...highlightedElement,
             ariaSnapshot,
-            hasMatches: true,
+            matchState: 'matched',
           }));
         },
         highlightUpdated() {
@@ -310,10 +311,10 @@ export const InspectModeController: React.FunctionComponent<{
     }
     if (!didHighlight && highlightedElement.lastEdited !== 'none') {
       // Clear match status if both entries are empty
-      const hasMatches = !highlightedElement.ariaSnapshot && !highlightedElement.locator ? undefined : false;
-      setHighlightedElement(highlightedElement => (highlightedElement.hasMatches !== hasMatches ? {
+      const matchState = !highlightedElement.ariaSnapshot && !highlightedElement.locator ? 'unset' : 'none';
+      setHighlightedElement(highlightedElement => (highlightedElement.matchState !== matchState ? {
         ...highlightedElement,
-        hasMatches,
+        matchState,
       } : highlightedElement));
     }
   }, [iframe, isInspecting, highlightedElement, setHighlightedElement, sdkLanguage, testIdAttributeName, iteration]);

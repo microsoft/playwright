@@ -248,6 +248,8 @@ export class Highlight {
     for (let i = 0; i < this._renderedEntries.length; ++i) {
       if (entries[i].element !== this._renderedEntries[i].targetElement)
         return false;
+      if (entries[i].tooltipText !== this._renderedEntries[i].tooltipText)
+        return false;
       if (entries[i].color !== this._renderedEntries[i].color)
         return false;
       const oldBox = this._renderedEntries[i].box;

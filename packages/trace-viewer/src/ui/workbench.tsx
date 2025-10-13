@@ -71,7 +71,7 @@ export const Workbench: React.FunctionComponent<{
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspectingState] = React.useState(false);
-  const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
+  const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none', matchState: 'unset' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
@@ -150,8 +150,8 @@ export const Workbench: React.FunctionComponent<{
     setIsInspectingState(value);
   }, [setIsInspectingState, selectPropertiesTab, isInspecting]);
 
-  const elementPicked = React.useCallback((element: HighlightedElement) => {
-    setHighlightedElement(element);
+  const elementPicked = React.useCallback<React.Dispatch<React.SetStateAction<HighlightedElement>>>(action => {
+    setHighlightedElement(action);
     selectPropertiesTab('inspector');
   }, [selectPropertiesTab]);
 
