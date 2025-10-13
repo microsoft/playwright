@@ -155,7 +155,6 @@ export function renderTitleForCall(action: ActionTraceEvent): { elements: React.
   let currentIndex = 0;
   const regex = /\{([^}]+)\}/g;
   let match;
-  let keyIndex = 0;
 
   while ((match = regex.exec(titleFormat)) !== null) {
     const [fullMatch, quotedText] = match;
@@ -172,7 +171,7 @@ export function renderTitleForCall(action: ActionTraceEvent): { elements: React.
       elements.push(param);
       title.push(param);
     } else {
-      elements.push(<span key={keyIndex++} className='action-title-param'>{param}</span>);
+      elements.push(<span key={elements.length} className='action-title-param'>{param}</span>);
       title.push(param);
     }
     currentIndex = match.index + fullMatch.length;
