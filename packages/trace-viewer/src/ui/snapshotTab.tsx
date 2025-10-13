@@ -309,7 +309,7 @@ export const InspectModeController: React.FunctionComponent<{
       if (recorder.highlight.isRendered())
         didHighlight = true;
     }
-    if (!didHighlight && highlightedElement.lastEdited !== 'none') {
+    if (recorders.length > 0 && !didHighlight && highlightedElement.lastEdited !== 'none') {
       // Clear match status if both entries are empty
       const matchState = !highlightedElement.ariaSnapshot && !highlightedElement.locator ? 'unset' : 'none';
       setHighlightedElement(highlightedElement => (highlightedElement.matchState !== matchState ? {

@@ -1375,10 +1375,12 @@ test('should update aria snapshot when typing locator and locator when typing sn
 
   const locatorText = traceViewer.page.locator('.CodeMirror-code').first();
   const ariaText = traceViewer.page.locator('.CodeMirror-code').last();
+  const noMatches = traceViewer.page.getByText('No matches', { exact: true });
   await locatorText.click();
 
   await traceViewer.page.keyboard.type(`getByRole('button', { name: 'Option 1' })`);
   await expect(ariaText).toHaveText(`- button "Option 1"`);
+  await expect(noMatches).not.toBeVisible();
 
   for (let i = 0; i < `1' })`.length; i++)
     await traceViewer.page.keyboard.press('Backspace');
@@ -1407,6 +1409,19 @@ test('should update aria snapshot when typing locator and locator when typing sn
   - button "Option 2"
   `.trim());
   await expect(locatorText).toHaveText(`getByRole('listitem').filter({ hasText: 'Option 2' })`);
+
+  if (platform === 'darwin')
+    await traceViewer.page.keyboard.press('Meta+a');
+  else
+    await traceViewer.page.keyboard.press('Control+a');
+  await traceViewer.page.keyboard.press('Backspace');
+
+  await expect(noMatches).toBeVisible();
+  await traceViewer.page.keyboard.type(`- listitem: Option 1`);
+
+  await traceViewer.page.keyboard.press('Backspace');
+  await traceViewer.page.keyboard.type(`a`);
+  await expect(noMatches).toBeVisible();
 });
 
 test('should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
