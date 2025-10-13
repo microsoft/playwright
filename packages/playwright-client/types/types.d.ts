@@ -19106,6 +19106,10 @@ export interface Download {
 
   /**
    * Returns a readable stream for a successful download, or throws for a failed/canceled download.
+   *
+   * **NOTE** If you don't need a readable stream, it's usually simpler to read the file from disk after the download
+   * completed. See [download.path()](https://playwright.dev/docs/api/class-download#download-path).
+   *
    */
   createReadStream(): Promise<Readable>;
 
