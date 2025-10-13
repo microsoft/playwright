@@ -45,7 +45,7 @@ function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
 
 function downloadFile(options: DownloadParams): Promise<void> {
   let downloadedBytes = 0;
-  let totalBytes = 0;
+  let totalBytes: number | undefined;
 
   const promise = new ManualPromise<void>();
   httpRequest({
@@ -70,11 +70,11 @@ function downloadFile(options: DownloadParams): Promise<void> {
           .on('error', handleError);
       return;
     }
-    totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+    totalBytes = response.headers['content-length'] ? parseInt(response.headers['content-length'], 10) : undefined;
     log(`-- total bytes: ${totalBytes}`);
     const file = fs.createWriteStream(options.zipPath);
     file.on('finish', () => {
-      if (downloadedBytes !== totalBytes) {
+      if (totalBytes !== undefined && downloadedBytes !== totalBytes) {
         log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
         promise.reject(new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${options.url}`));
       } else {
@@ -100,7 +100,8 @@ function downloadFile(options: DownloadParams): Promise<void> {
 
   function onData(chunk: string) {
     downloadedBytes += chunk.length;
-    progress(downloadedBytes, totalBytes);
+    if (totalBytes !== undefined)
+      progress(downloadedBytes, totalBytes);
   }
 }
 
