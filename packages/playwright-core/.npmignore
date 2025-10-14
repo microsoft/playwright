@@ -11,6 +11,7 @@
 !lib/**/*.svg
 !lib/**/*.ttf
 !lib/utilsBundleImpl/xdg-open
+!lib/**/manifest.webmanifest
 # Exclude injected files. A preprocessed version of these is included via lib/generated.
 # See packages/injected/src/README.md.
 lib/**/injected/
