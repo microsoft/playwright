@@ -127,6 +127,12 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**?a=b')).toBeTruthy();
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**=b')).toBeTruthy();
 
+  // Custom schema.
+  expect(urlMatches(undefined, 'my.custom.protocol://foo', 'my.custom.protocol://**')).toBeTruthy();
+  expect(urlMatches(undefined, 'my.p://foo', 'my.{p,y}://**')).toBeFalsy();
+  expect(urlMatches(undefined, 'my.p://foo/', 'my.{p,y}://**')).toBeTruthy();
+  expect(urlMatches(undefined, 'file:///foo/', 'f*e://**')).toBeTruthy();
+
   // This is not supported, we treat ? as a query separator.
   expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeFalsy();
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.?ev')).toBeFalsy();
