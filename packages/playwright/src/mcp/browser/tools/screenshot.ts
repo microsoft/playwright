@@ -89,7 +89,7 @@ export function scaleImageToFitMessage(buffer: Buffer, imageType: 'png' | 'jpeg'
   // https://docs.claude.com/en/docs/build-with-claude/vision#evaluate-image-size
   // Not more than 1.15 megapixel, linear size not more than 1568.
 
-  const image = imageType === 'png' ? PNG.sync.read(buffer) : jpegjs.decode(buffer, { maxMemoryUsageInMB: 5 * 1024 });
+  const image = imageType === 'png' ? PNG.sync.read(buffer) : jpegjs.decode(buffer, { maxMemoryUsageInMB: 512 });
   const pixels = image.width * image.height;
 
   const shrink = Math.min(1568 / image.width, 1568 / image.height, Math.sqrt(1.15 * 1024 * 1024 / pixels));
