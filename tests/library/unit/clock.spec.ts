@@ -730,6 +730,29 @@ it.describe('runFor', () => {
 
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
+
+  it('does not rewind back in time', async ({ clock }) => {
+    const stub = createStub();
+    const gotTime = await new Promise<number>(done => {
+      clock.setTimeout(() => {
+        stub(clock.Date.now());
+      }, 10);
+      clock.setTimeout(() => {
+        stub(clock.Date.now());
+      }, 10);
+      clock.resume();
+      setTimeout(async () => {
+        // Call fast-forward right after the real time sync happens,
+        // but before all the callbacks are processed.
+        await clock.runFor(1000);
+        setTimeout(() => {
+          done(clock.Date.now());
+        }, 20);
+      }, 10);
+    });
+    expect(stub.callCount).toBe(2);
+    expect(gotTime).toBeGreaterThan(1010);
+  });
 });
 
 it.describe('clearTimeout', () => {
@@ -1418,6 +1441,18 @@ it.describe('fastForward', () => {
     await clock.fastForward(2000);
     expect(stub.callCount).toBe(1);
     expect(stub.calledWith(2000)).toBeTruthy();
+  });
+
+  it('error does not pause forever', async ({ clock }) => {
+    const stub = createStub();
+    clock.setTimeout(() => {
+      stub(clock.Date.now());
+    }, 1000);
+    clock.resume();
+    const error = await clock.fastForward(-1000).catch(e => e);
+    expect(error.message).toContain('Cannot fast-forward to the past');
+    await new Promise(f => setTimeout(f, 1500));
+    expect(stub.callCount).toBe(1);
   });
 });
 

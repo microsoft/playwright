@@ -90,6 +90,7 @@ export class ClockController {
 
   now(): number {
     this._replayLogOnce();
+    // Sync real time to support calling Date.now() in a loop.
     this._syncRealTime();
     return this._now.time;
   }
@@ -111,6 +112,7 @@ export class ClockController {
 
   performanceNow(): DOMHighResTimeStamp {
     this._replayLogOnce();
+    // Sync real time to support calling performance.now() in a loop.
     this._syncRealTime();
     return this._now.ticks;
   }
@@ -139,6 +141,12 @@ export class ClockController {
   }
 
   private _advanceNow(to: Ticks) {
+    if (this._now.ticks > to) {
+      // While running timers, `now` can advance by syncing with real time
+      // from within now() or performance.now().
+      // This makes it possible for `now` to be ahead of where we want to advance it.
+      return;
+    }
     if (!this._now.isFixedTime)
       this._now.time = asWallTime(this._now.time + to - this._now.ticks);
     this._now.ticks = to;
@@ -172,6 +180,7 @@ export class ClockController {
     }
 
     this._advanceNow(to);
+
     if (firstException)
       throw firstException;
   }
@@ -375,6 +384,9 @@ export class ClockController {
   }
 
   getTimeToNextFrame() {
+    // When `window.requestAnimationFrame` is the first call in the page,
+    // this place is the first API call, so replay the log.
+    this._replayLogOnce();
     return 16 - this._now.ticks % 16;
   }
 
