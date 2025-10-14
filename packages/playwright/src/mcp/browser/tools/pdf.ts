@@ -20,7 +20,7 @@ import * as javascript from '../codegen';
 import { dateAsFileName } from './utils';
 
 const pdfSchema = z.object({
-  filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified.'),
+  filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified. Prefer relative file names to stay within the output directory.'),
 });
 
 const pdf = defineTabTool({
