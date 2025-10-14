@@ -166,11 +166,13 @@ export function hasJSComponents(components: ImportInfo[]): boolean {
 
 const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
+const runtimeImportRequire = /import\(['"`]react['"`]\)|require\(['"`]react['"`]\)/i;
 
 export function transformIndexFile(id: string, content: string, templateDir: string, registerSource: string, importInfos: Map<string, ImportInfo>): TransformResult  | null {
   // Vite React plugin will do this for .jsx files, but not .js files.
   // `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` check is to avoid modifying React itself (such as react.development.js)
-  if (id.endsWith('.js') && content.includes('React.createElement') && !content.includes('__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED') && !content.match(importReactRE) && !content.match(compiledReactRE)) {
+  if (id.endsWith('.js') && content.includes('React.createElement') && !content.includes('__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED') && !content.match(importReactRE)
+    && !content.match(compiledReactRE) && !content.match(runtimeImportRequire)) {
     const code = `import React from 'react';\n${content}`;
     return { code, map: { mappings: '' } };
   }
