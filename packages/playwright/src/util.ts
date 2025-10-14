@@ -27,6 +27,7 @@ import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
 import type { RawStack } from 'playwright-core/lib/utils';
 import type { TestCase } from './common/test';
+import type { TestAnnotation } from '../types/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -417,4 +418,38 @@ export async function removeDirAndLogToConsole(dir: string) {
 export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
 export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
+}
+
+export function validateAnnotation(annotation: any): TestAnnotation {
+  if (typeof annotation !== 'object' || annotation === null || Array.isArray(annotation))
+    throw new Error(`Annotation must be an object, received: ${typeof annotation}`);
+
+  if (!('type' in annotation) || annotation.type === null || annotation.type === undefined)
+    throw new Error('Annotation must have a "type" property');
+
+  if (typeof annotation.type !== 'string')
+    throw new Error(`Annotation type must be a string, received: ${typeof annotation.type}`);
+
+  let description = annotation.description;
+  if (description !== undefined && description !== null && typeof description !== 'string')
+    description = JSON.stringify(description);
+
+  if (annotation.location !== undefined) {
+    if (typeof annotation.location !== 'object' || annotation.location === null || Array.isArray(annotation.location))
+      throw new Error(`Annotation location must be an object, received: ${typeof annotation.location}`);
+    if (typeof annotation.location.file !== 'string')
+      throw new Error(`Annotation location.file must be a string, received: ${typeof annotation.location.file}`);
+    if (typeof annotation.location.line !== 'number')
+      throw new Error(`Annotation location.line must be a number, received: ${typeof annotation.location.line}`);
+    if (typeof annotation.location.column !== 'number')
+      throw new Error(`Annotation location.column must be a number, received: ${typeof annotation.location.column}`);
+  }
+
+  const result: TestAnnotation = { type: annotation.type };
+  if (description !== undefined)
+    result.description = description;
+  if (annotation.location)
+    result.location = annotation.location;
+
+  return result;
 }

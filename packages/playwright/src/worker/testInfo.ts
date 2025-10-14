@@ -20,11 +20,10 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength, validateAnnotation } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
-import { validateAnnotation } from '../common/testType';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -119,7 +118,6 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
-  readonly _annotationsPush: (...items: TestAnnotation[]) => number;
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: WorkerInitParams;
 
@@ -215,10 +213,10 @@ export class TestInfoImpl implements TestInfo {
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
 
-    this._annotationsPush = this.annotations.push.bind(this.annotations);
+    const annotationsPush = this.annotations.push.bind(this.annotations);
     const normalizedPush = (...annotations: TestAnnotation[]) => {
       const normalized = annotations.map(a => validateAnnotation(a));
-      return this._annotationsPush(...normalized);
+      return annotationsPush(...normalized);
     };
     Object.defineProperty(this.annotations, 'push', {
       value: normalizedPush,
