@@ -38,26 +38,32 @@ export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList
 // Tracks the element's bounding box.
 export function useMeasure<T extends Element>() {
   const ref = React.useRef<T | null>(null);
-  return [useMeasureForRef(ref), ref] as const;
+  const [measure] = useMeasureForRef(ref);
+  return [measure, ref] as const;
 }
 
-export function useMeasureForRef<T extends Element>(ref?: React.RefObject<T | null>) {
+export function useMeasureForRef<T extends Element>(ref?: React.RefObject<T | null>): [DOMRect, () => void] {
   const [measure, setMeasure] = React.useState(new DOMRect(0, 0, 10, 10));
+  const recalculateMeasure = React.useCallback(() => {
+    const target = ref?.current;
+    if (target)
+      setMeasure(target.getBoundingClientRect());
+  }, [ref]);
+
   React.useLayoutEffect(() => {
     const target = ref?.current;
     if (!target)
       return;
-    const update = () => setMeasure(target.getBoundingClientRect());
-    update();
-    const resizeObserver = new ResizeObserver(update);
+    recalculateMeasure();
+    const resizeObserver = new ResizeObserver(recalculateMeasure);
     resizeObserver.observe(target);
-    window.addEventListener('resize', update);
+    window.addEventListener('resize', recalculateMeasure);
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', update);
+      window.removeEventListener('resize', recalculateMeasure);
     };
-  }, [ref]);
-  return measure;
+  }, [recalculateMeasure, ref]);
+  return [measure, recalculateMeasure];
 }
 
 export function msToString(ms: number): string {
