@@ -43,6 +43,7 @@ export * from './server/utils/expectUtils';
 export * from './server/utils/fileUtils';
 export * from './server/utils/hostPlatform';
 export * from './server/utils/httpServer';
+export * from './server/utils/imageUtils';
 export * from './server/utils/network';
 export * from './server/utils/nodePlatform';
 export * from './server/utils/processLauncher';
