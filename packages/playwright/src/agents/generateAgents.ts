@@ -129,7 +129,7 @@ function saveAsClaudeCode(agent: Agent): string {
   lines.push(`color: ${agent.header.color}`);
   lines.push(`---`);
   lines.push('');
-  lines.push(agent.instructions);
+  lines.push(renderInstructions(agent, { toolName: asClaudeTool }));
   return lines.join('\n');
 }
 
@@ -244,7 +244,7 @@ function saveAsVSCodeChatmode(agent: Agent): string {
   lines.push(`tools: [${tools}]`);
   lines.push(`---`);
   lines.push('');
-  lines.push(agent.instructions);
+  lines.push(renderInstructions(agent, { toolName: v => asVscodeTool(v) as string }));
   for (const example of agent.examples)
     lines.push(`<example>${example}</example>`);
 
@@ -289,10 +289,23 @@ export async function initOpencodeRepo() {
 
   await fs.promises.mkdir('.opencode/prompts', { recursive: true });
   for (const agent of agents) {
-    const prompt = [agent.instructions];
+    const prompt = [];
+    prompt.push(renderInstructions(agent, {
+      toolName: tool => {
+        const [first, second] = tool.split('/');
+        return `${first}*${second}`;
+      }
+    }));
     prompt.push('');
     prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
     await writeFile(`.opencode/prompts/playwright-test-${agent.header.name}.md`, prompt.join('\n'));
   }
   await writeFile('opencode.json', saveAsOpencodeJson(agents));
+}
+
+function renderInstructions(agent: Agent, { toolName }: { toolName: (v: string) => string }): string {
+  let instructions = agent.instructions;
+  for (const tool of agent.header.tools)
+    instructions = instructions.replace(`%${tool}%`, toolName(tool));
+  return instructions;
 }
