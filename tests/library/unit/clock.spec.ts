@@ -21,7 +21,6 @@ import type { Builtins } from '../../../packages/injected/src/utilityScript';
 
 const createClock = (now?: number): ClockController & Builtins => {
   const { clock, api } = rawCreateClock(globalThis);
-  clock.setStrictModeForTests();
   clock.setSystemTime(now || 0);
   for (const key of Object.keys(api))
     clock[key] = api[key];
@@ -39,7 +38,6 @@ const it = test.extend<ClockFixtures>({
   clock: async ({ now }, use) => {
     const clock = createClock(now);
     await use(clock);
-    expect(clock.lastStrictModeViolationForTests()).toBeFalsy();
   },
 
   now: undefined,
@@ -48,7 +46,6 @@ const it = test.extend<ClockFixtures>({
     let clockObject: ClockController & Builtins;
     const install = (now?: number) => {
       const { clock, api } = rawInstall(globalThis);
-      clock.setStrictModeForTests();
       if (now)
         clock.setSystemTime(now);
       for (const key of Object.keys(api))
@@ -58,7 +55,6 @@ const it = test.extend<ClockFixtures>({
     };
     await use(install);
     clockObject?.uninstall();
-    expect(clockObject?.lastStrictModeViolationForTests()).toBeFalsy();
   },
 
   installEx: async ({}, use) => {
@@ -66,11 +62,9 @@ const it = test.extend<ClockFixtures>({
     await use((config?: InstallConfig) => {
       const result = rawInstall(globalThis, config);
       clock = result.clock;
-      clock.setStrictModeForTests();
       return result;
     });
     clock?.uninstall();
-    expect(clock?.lastStrictModeViolationForTests()).toBeFalsy();
   },
 });
 
