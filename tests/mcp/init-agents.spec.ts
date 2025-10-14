@@ -88,7 +88,7 @@ test('init claude agents', async ({  }) => {
   expect(fs.existsSync(path.join(baseDir, '.claude', 'agents', 'playwright-test-generator.md'))).toBe(true);
 
   const healer = fs.readFileSync(path.join(baseDir, '.claude', 'agents', 'playwright-test-healer.md'), 'utf-8');
-  expect(healer).toContain('Run all tests using mcp__playwright-test__test_run tool');
+  expect(healer).toContain('Run all tests using test_run tool');
 });
 
 test('init vscode agents', async ({  }) => {
@@ -106,8 +106,8 @@ test('init vscode agents', async ({  }) => {
   expect(fs.existsSync(path.join(baseDir, '.github', 'chatmodes', ' 🎭 planner.chatmode.md'))).toBe(true);
 
   const healer = fs.readFileSync(path.join(baseDir, '.github', 'chatmodes', '🎭 healer.chatmode.md'), 'utf-8');
-  expect(healer).toContain('Run all tests using playwright-test/test_run tool');
-  expect(healer).toContain('For each failing test run playwright-test/test_debug');
+  expect(healer).toContain('Run all tests using test_run tool');
+  expect(healer).toContain('For each failing test run test_debug');
 
   expect(fs.existsSync(path.join(baseDir, '.vscode', 'mcp.json'))).toBe(true);
 });
@@ -127,7 +127,7 @@ test('init opencode agents', async ({  }) => {
   expect(fs.existsSync(path.join(baseDir, '.opencode', 'prompts', 'playwright-test-generator.md'))).toBe(true);
 
   const healer = fs.readFileSync(path.join(baseDir, '.opencode', 'prompts', 'playwright-test-healer.md'), 'utf-8');
-  expect(healer).toContain('Run all tests using playwright-test*test_run tool');
+  expect(healer).toContain('Run all tests using test_run tool');
 
   expect(fs.existsSync(path.join(baseDir, 'opencode.json'))).toBe(true);
 });
