@@ -43,7 +43,6 @@ export const WorkbenchLoader: React.FunctionComponent<{
     const file = files.item(0)!;
     const blobTraceURL = URL.createObjectURL(file);
     url.searchParams.append('trace', blobTraceURL);
-    url.searchParams.append('traceFileName', file.name);
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
     // so set it here.
@@ -143,8 +142,6 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
         const params = new URLSearchParams();
         params.set('trace', traceURL);
-        if (uploadedTraceName)
-          params.set('traceFileName', uploadedTraceName);
         const response = await fetch(`contexts?${params.toString()}`);
         if (!response.ok) {
           if (!isServer)
