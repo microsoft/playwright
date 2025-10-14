@@ -48,6 +48,20 @@ it('should not reset timeouts', async ({ page, recorderPageGetter, closeRecorder
   expect(error.message).toContain('page.goto: Timeout 1000ms exceeded.');
 });
 
+it('should collapse log entries to a single line', async ({ page, recorderPageGetter }) => {
+  const scriptPromise = (async () => {
+    // @ts-ignore
+    await page.pause({ __testHookKeepTestTimeout: true });
+    await page.keyboard.type(`Hello
+world`);
+  })();
+
+  const recorderPage = await recorderPageGetter();
+  await recorderPage.click('[title="Resume (F8)"]');
+  await expect(recorderPage.locator('.call-log-call').nth(1)).toContainText('Type "Hello\\nworld"');
+  await scriptPromise;
+});
+
 it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
 
