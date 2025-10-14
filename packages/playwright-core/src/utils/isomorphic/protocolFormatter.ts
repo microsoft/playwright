@@ -17,32 +17,36 @@
 import { methodMetainfo } from './protocolMetainfo';
 
 export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
-  if (!params)
-    return undefined;
+  function format() {
+    if (!params)
+      return undefined;
 
-  for (const name of alternatives.split('|')) {
-    if (name === 'url') {
-      try {
-        const urlObject = new URL(params[name]);
-        if (urlObject.protocol === 'data:')
-          return urlObject.protocol;
-        if (urlObject.protocol === 'about:')
-          return params[name];
-        return urlObject.pathname + urlObject.search;
-      } catch (error) {
-        if (params[name] !== undefined)
-          return params[name];
+    for (const name of alternatives.split('|')) {
+      if (name === 'url') {
+        try {
+          const urlObject = new URL(params[name]);
+          if (urlObject.protocol === 'data:')
+            return urlObject.protocol;
+          if (urlObject.protocol === 'about:')
+            return params[name];
+          return urlObject.pathname + urlObject.search;
+        } catch (error) {
+          if (params[name] !== undefined)
+            return params[name];
+        }
       }
-    }
-    if (name === 'timeNumber' && params[name] !== undefined) {
-      // eslint-disable-next-line no-restricted-globals
-      return new Date(params[name]).toString();
-    }
+      if (name === 'timeNumber' && params[name] !== undefined) {
+        // eslint-disable-next-line no-restricted-globals
+        return new Date(params[name]).toString();
+      }
 
-    const value = deepParam(params, name);
-    if (value !== undefined)
-      return value;
+      const value = deepParam(params, name);
+      if (value !== undefined)
+        return value;
+    }
   }
+
+  return format()?.replaceAll('\n', '\\n');
 }
 
 function deepParam(params: Record<string, any>, name: string): string | undefined {

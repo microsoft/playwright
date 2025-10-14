@@ -41,7 +41,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
       const expandOverride = expandOverrides.get(callLog.id);
       const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';
       const locator = callLog.params.selector ? asLocator(language, callLog.params.selector) : null;
-      let titlePrefix = callLog.title.replaceAll('\n', '\\n');
+      let titlePrefix = callLog.title;
       let titleSuffix = '';
       if (callLog.title.startsWith('expect.to') || callLog.title.startsWith('expect.not.to')) {
         titlePrefix = 'expect(';
