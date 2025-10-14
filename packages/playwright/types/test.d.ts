@@ -1759,7 +1759,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   snapshotPathTemplate?: string;
 
   /**
-   * Tag or tags prepended to each test in the report. Useful for tagging your test run with CI configuration.
+   * Tag or tags prepended to each test in the report. Useful for tagging your test run to differentiate between
+   * [CI environments](https://playwright.dev/docs/test-sharding#merging-reports-from-multiple-environments).
    *
    * Note that each tag must start with `@` symbol. Learn more about [tagging](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -1770,7 +1771,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   tag: process.env.CI_BOT_NAME,
+   *   tag: process.env.CI_ENVIRONMENT_NAME,  // for example "@APIv2"
    * });
    * ```
    *

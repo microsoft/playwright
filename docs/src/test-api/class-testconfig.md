@@ -539,7 +539,7 @@ export default defineConfig({
 * since: v1.57
 - type: ?<[string]|[Array]<[string]>>
 
-Tag or tags prepended to each test in the report. Useful for tagging your test run with CI configuration.
+Tag or tags prepended to each test in the report. Useful for tagging your test run to differentiate between [CI environments](../test-sharding.md#merging-reports-from-multiple-environments).
 
 Note that each tag must start with `@` symbol. Learn more about [tagging](../test-annotations.md#tag-tests).
 
@@ -549,7 +549,7 @@ Note that each tag must start with `@` symbol. Learn more about [tagging](../tes
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  tag: process.env.CI_BOT_NAME,
+  tag: process.env.CI_ENVIRONMENT_NAME,  // for example "@APIv2"
 });
 ```
 

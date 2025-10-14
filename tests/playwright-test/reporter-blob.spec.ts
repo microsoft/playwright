@@ -1358,7 +1358,7 @@ test('keep projects with same name different global tag separate', async ({ runI
   const files = (reportName: string) => ({
     'playwright.config.ts': `
       module.exports = {
-        reporter: [['blob', { fileName: '${reportName}.zip' }]],
+        reporter: [['blob']],
         tag: process.env.GLOBAL_TAG,
         projects: [
           { name: 'foo' },
@@ -1375,6 +1375,9 @@ test('keep projects with same name different global tag separate', async ({ runI
   await runInlineTest(files('second'), undefined, { GLOBAL_TAG: '@second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-1b98925.zip', 'report-562ed66.zip']);
+
   const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
   await showReport();

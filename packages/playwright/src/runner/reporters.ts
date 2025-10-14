@@ -126,6 +126,8 @@ function computeCommandHash(config: FullConfigInternal) {
     command.cliGrepInvert = config.cliGrepInvert;
   if (config.cliOnlyChanged)
     command.cliOnlyChanged = config.cliOnlyChanged;
+  if (config.config.tags.length)
+    command.tags = config.config.tags.join(' ');
   if (Object.keys(command).length)
     parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
   return parts.join('-');
