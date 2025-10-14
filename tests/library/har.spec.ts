@@ -859,7 +859,7 @@ it('should include redirects from API request', async ({ contextFactory, server 
   expect(json.timings).toBeDefined();
 });
 
-it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
+it('should not hang on resources served from cache', async ({ contextFactory, server, browserName, channel }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
@@ -874,7 +874,7 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   const log = await getLog();
   const entries = log.entries.filter(e => e.request.url.endsWith('one-style.css'));
   // In firefox no request events are fired for cached resources.
-  if (browserName === 'firefox')
+  if (browserName === 'firefox' && !channel?.startsWith('moz-firefox'))
     expect(entries.length).toBe(1);
   else
     expect(entries.length).toBe(2);

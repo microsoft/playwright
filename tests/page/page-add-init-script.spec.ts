@@ -84,7 +84,7 @@ it('should work after a cross origin navigation', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
 
-it('init script should run only once in iframe', async ({ page, server, browserName }) => {
+it('init script should run only once in iframe', async ({ page, server, browserName, channel }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26992' });
   const messages = [];
   page.on('console', event => {
@@ -95,6 +95,6 @@ it('init script should run only once in iframe', async ({ page, server, browserN
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(messages).toEqual([
     'init script: /frames/one-frame.html',
-    'init script: ' + (browserName === 'firefox' ? 'no url yet' : '/frames/frame.html'),
+    'init script: ' + (browserName === 'firefox' && !channel?.startsWith('moz-firefox') ? 'no url yet' : '/frames/frame.html'),
   ]);
 });
