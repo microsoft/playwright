@@ -22,29 +22,37 @@
 }
 
 .network-request-details-url {
+  flex: none;
   white-space: normal;
   word-wrap: break-word;
   margin-left: 10px;
 }
 
 .network-request-details-headers {
+  flex: none;
   white-space: pre;
   overflow: hidden;
   margin-left: 10px;
 }
 
 .network-request-details-header {
+  flex: none;
   margin: 3px 0;
   font-weight: bold;
 }
 
 .network-request-details-general {
+  flex: none;
   white-space: pre;
   margin-left: 10px;
 }
 
 .network-request-details-tab .cm-wrapper {
   overflow: hidden;
+}
+
+.network-response-body {
+  flex: auto;
 }
 
 .network-font-preview {
