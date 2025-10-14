@@ -110,7 +110,7 @@ const RequestTab: React.FunctionComponent<{
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
@@ -138,7 +138,7 @@ const RequestTab: React.FunctionComponent<{
 const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     <div className='network-request-details-header'>Response Headers</div>
     <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
   </div>;
@@ -177,10 +177,10 @@ const BodyTab: React.FunctionComponent<{
     readResources();
   }, [resource, model]);
 
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.font && <FontPreview font={responseBody.font} />}
-    {responseBody && responseBody.dataUrl && <img draggable='false' src={responseBody.dataUrl} />}
+    {responseBody && responseBody.dataUrl && <div><img draggable='false' src={responseBody.dataUrl} /></div>}
     {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };
