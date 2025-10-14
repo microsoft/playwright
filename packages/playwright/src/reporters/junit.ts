@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
-
 import { CommonReporterOptions, formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
 import { stripAnsiEscapes } from '../util';
 
@@ -68,17 +67,17 @@ class JUnitReporter implements ReporterV2 {
       for (const fileSuite of projectSuite.suites)
         children.push(await this._buildTestSuite(projectSuite.title, fileSuite));
     }
+
     const tokens: string[] = [];
 
-    const self = this;
     const root: XMLEntry = {
       name: 'testsuites',
       attributes: {
-        id: process.env[`PLAYWRIGHT_JUNIT_SUITE_ID`] || '',
-        name: process.env[`PLAYWRIGHT_JUNIT_SUITE_NAME`] || '',
-        tests: self.totalTests,
-        failures: self.totalFailures,
-        skipped: self.totalSkipped,
+        id: process.env.PLAYWRIGHT_JUNIT_SUITE_ID || '0',
+        name: process.env.PLAYWRIGHT_JUNIT_SUITE_NAME || 'Playwright Tests',
+        tests: this.totalTests,
+        failures: this.totalFailures,
+        skipped: this.totalSkipped,
         errors: 0,
         time: result.duration / 1000
       },
@@ -87,6 +86,7 @@ class JUnitReporter implements ReporterV2 {
 
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
+
     if (this.resolvedOutputFile) {
       await fs.promises.mkdir(path.dirname(this.resolvedOutputFile), { recursive: true });
       await fs.promises.writeFile(this.resolvedOutputFile, reportString);
@@ -104,7 +104,7 @@ class JUnitReporter implements ReporterV2 {
     const children: XMLEntry[] = [];
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
 
-    for (const test of suite.allTests()){
+    for (const test of suite.allTests()) {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
@@ -119,17 +119,22 @@ class JUnitReporter implements ReporterV2 {
     this.totalSkipped += skipped;
     this.totalFailures += failures;
 
+    const suiteName = projectName ? `${projectName}: ${suite.title}` : suite.title;
+    const packageName = suite.location?.file || suite.title;
+
     const entry: XMLEntry = {
       name: 'testsuite',
       attributes: {
-        name: suite.title,
+        id: `${projectName}-${suite.title}`,
+        name: suiteName,
+        package: packageName,
         timestamp: this.timestamp.toISOString(),
         hostname: projectName,
         tests,
         failures,
         skipped,
-        time: duration / 1000,
         errors: 0,
+        time: duration / 1000,
       },
       children
     };
@@ -143,18 +148,14 @@ class JUnitReporter implements ReporterV2 {
       attributes: {
         // Skip root, project, file
         name: namePrefix + test.titlePath().slice(3).join(' › '),
-        // filename
         classname: suiteName,
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
-
       },
       children: [] as XMLEntry[]
     };
     entries.push(entry);
 
-    // Xray Test Management supports testcase level properties, where additional metadata may be provided
-    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
-    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
+    // Support for Xray and other JUnit extensions
     const properties: XMLEntry = {
       name: 'properties',
       children: [] as XMLEntry[]
@@ -215,8 +216,8 @@ class JUnitReporter implements ReporterV2 {
         }
       }
     }
-    // Note: it is important to only produce a single system-out/system-err entry
-    // so that parsers in the wild understand it.
+
+    // Important: produce single system-out/system-err entries
     if (systemOut.length)
       entry.children.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
