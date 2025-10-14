@@ -29,9 +29,6 @@ export const AnnotationsTab: React.FunctionComponent<{
 
   return <div className='annotations-tab'>
     {annotations.map((annotation, i) => {
-      // Defensive check for trace files which may have invalid data
-      if (!annotation.type || typeof annotation.type !== 'string')
-        return null;
       return <div className='annotation-item' key={`annotation-${i}`}>
         <span style={{ fontWeight: 'bold' }}>{annotation.type}</span>
         {annotation.description && <span>: {linkifyText(annotation.description)}</span>}
