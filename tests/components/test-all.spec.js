@@ -39,6 +39,10 @@ async function run(command, args, folder) {
     cwd: folder,
     stdio: 'pipe',
     env: process.env,
+    shell: true,
+    // On non-windows platforms, `detached: true` makes child process a leader of a new
+    // process group, making it possible to kill child process tree with `.kill(-pid)` command.
+    // @see https://nodejs.org/api/child_process.html#child_process_options_detached
     detached: !isWindows,
   });
   activeChild = child;
