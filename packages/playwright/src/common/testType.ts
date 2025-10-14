@@ -24,7 +24,7 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import { validateAnnotation } from '../util';
 
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestAnnotation, TestDetails, TestStepInfo, TestType } from '../../types/test';
+import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 const testTypeSymbol = Symbol('testType');
