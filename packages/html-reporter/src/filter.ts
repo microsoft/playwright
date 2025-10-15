@@ -165,7 +165,7 @@ export class Filter {
         if (comparison !== 0)
           return sortToken.not ? -comparison : comparison;
       }
-      return 0;
+      return this._compareTests(a, b, 'file');
     });
   }
 
@@ -176,11 +176,9 @@ export class Filter {
       return a.title.localeCompare(b.title);
     if (field === 'line')
       return a.location.line - b.location.line;
-    const searchValuesA = cacheSearchValues(a);
-    const searchValuesB = cacheSearchValues(b);
-    if (field === 'status' || field === 'file' || field === 'project')
-      return searchValuesA[field].localeCompare(searchValuesB[field]);
-    return searchValuesA.text.localeCompare(searchValuesB.text);
+    if (field !== 'status' && field !== 'file' && field !== 'project' && field !== 'text')
+      return 0;
+    return cacheSearchValues(a)[field].localeCompare(cacheSearchValues(b)[field]);
   }
 }
 
