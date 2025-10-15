@@ -215,7 +215,7 @@ it('description should return description for chained locators', async ({ page }
 });
 
 it('description should return description for locator with multiple describe calls', async ({ page }) => {
-  const locator1 = page.locator('foo').describe('First description')
+  const locator1 = page.locator('foo').describe('First description');
   expect(locator1.description()).toBe('First description');
   const locator2 = locator1.locator('button').describe('Second description');
   expect(locator2.description()).toBe('Second description');
