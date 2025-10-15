@@ -104,7 +104,7 @@ class JUnitReporter implements ReporterV2 {
     const children: XMLEntry[] = [];
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
 
-    for (const test of suite.allTests()){
+    for (const test of suite.allTests()) {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
@@ -146,7 +146,6 @@ class JUnitReporter implements ReporterV2 {
         // filename
         classname: suiteName,
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
-
       },
       children: [] as XMLEntry[]
     };
@@ -179,12 +178,28 @@ class JUnitReporter implements ReporterV2 {
       return;
     }
 
+    // Handle failed test cases
     if (!test.ok()) {
+      const lastResult = test.results.at(-1);
+      const err = lastResult?.error;
+      const hasExpectFailure = lastResult?.steps?.some(s => s.category === 'expect' && s.error);
+
+      const elementName = hasExpectFailure ? 'failure' : 'error';
+      const typeAttr = hasExpectFailure ? 'expect.failure' : ((err as any)?.name || 'Error');
+      let messageAttr = '';
+
+      if (hasExpectFailure) {
+        const expectStep = lastResult?.steps?.find(s => s.category === 'expect' && s.error);
+        messageAttr = expectStep?.error?.message || 'Expectation failed';
+      } else if (err) {
+        messageAttr = err.message || 'Error thrown';
+      }
+
       entry.children.push({
-        name: 'failure',
+        name: elementName,
         attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
-          type: 'FAILURE',
+          message: messageAttr,
+          type: typeAttr,
         },
         text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
       });

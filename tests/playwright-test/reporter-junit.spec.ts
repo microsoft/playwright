@@ -16,7 +16,7 @@
 
 import xml2js from 'xml2js';
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { expect, test } from './playwright-test-fixtures';
 import fs from 'fs';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
@@ -550,7 +550,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'junit,line' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_DIR': 'foo/bar', 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': 'baz/my-report.xml' });
+        }, { 'reporter': 'junit,line' }, {
+          'PLAYWRIGHT_JUNIT_OUTPUT_DIR': 'foo/bar',
+          'PLAYWRIGHT_JUNIT_OUTPUT_NAME': 'baz/my-report.xml'
+        });
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(1);
         expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
@@ -579,7 +582,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     });
 
     test('testsuites time is test run wall time', async ({ runInlineTest }) => {
-      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30518' });
+      test.info().annotations.push({
+        type: 'issue',
+        description: 'https://github.com/microsoft/playwright/issues/30518'
+      });
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -592,6 +598,54 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const time = +xml['testsuites']['$']['time'];
       expect(time).toBe(result.report.stats.duration / 1000);
       expect(time).toBeGreaterThan(1);
+    });
+
+    test('should distinguish error and failure elements with proper type and message', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+      import { test, expect } from '@playwright/test';
+
+      test('throws error', async () => {
+        throw new Error('Boom!');
+      });
+
+      test('expect failure', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+      }, { reporter: 'junit' });
+
+      // Parse the reporter XML output
+      const xml = parseXML(result.output);
+      const testcases = xml['testsuites']['testsuite'].flatMap(suite => suite['testcase']);
+      expect(testcases.length).toBe(2);
+
+      // --- Error test case ---
+      const thrownError = testcases.find(t => t['$']['name'].includes('throws error'));
+      expect(thrownError, 'Missing "throws error" testcase').toBeTruthy();
+
+      // Validate <error> node presence
+      expect(thrownError['error'], 'Expected <error> node for thrown error').toBeTruthy();
+      const errorNode = thrownError['error'][0]['$'];
+
+      // Validate type and message attributes
+      expect(errorNode['type']).toBe('Error'); // comes from err.name
+      expect(errorNode['message']).toContain('Boom!'); // comes from err.message
+
+      // --- Expect failure test case ---
+      const expectFailure = testcases.find(t => t['$']['name'].includes('expect failure'));
+      expect(expectFailure, 'Missing "expect failure" testcase').toBeTruthy();
+
+      // Validate <failure> node presence
+      expect(expectFailure['failure'], 'Expected <failure> node for expect failure').toBeTruthy();
+      const failureNode = expectFailure['failure'][0]['$'];
+
+      // Validate type and message attributes
+      expect(failureNode['type']).toContain('expect'); // e.g. expect.toBe, expect.toEqual, etc.
+      expect(failureNode['message']).toContain('Expected'); // generic expect message
+
+      // Ensure exit code is failing since one test failed
+      expect(result.exitCode).toBe(1);
     });
   });
 }
