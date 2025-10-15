@@ -155,11 +155,11 @@ export class Filter {
     return true;
   }
 
-  sortTests(tests: TestCaseSummary[]): TestCaseSummary[] {
+  sortTests(tests: TestCaseSummary[]): void {
     if (!this.sort.length)
-      return tests;
+      return;
 
-    return tests.slice().sort((a, b) => {
+    tests.sort((a, b) => {
       for (const sortToken of this.sort) {
         let comparison = 0;
         if (sortToken.name === 'duration')

@@ -207,7 +207,8 @@ function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
 function createFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
   const result: TestModelSummary = { files: [], tests: [] };
   for (const file of report?.json().files || []) {
-    const tests = filter.sortTests(file.tests.filter(t => filter.matches(t)));
+    const tests = file.tests.filter(t => filter.matches(t));
+    filter.sortTests(tests);
     if (tests.length)
       result.files.push({ ...file, tests });
     result.tests.push(...tests);
@@ -242,7 +243,7 @@ function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter
   groups.sort((a, b) => a.fileName.localeCompare(b.fileName));
 
   for (const group of groups)
-    group.tests = filter.sortTests(group.tests);
+    filter.sortTests(group.tests);
 
   const result: TestModelSummary = { files: groups, tests: [] };
   for (const group of groups)
