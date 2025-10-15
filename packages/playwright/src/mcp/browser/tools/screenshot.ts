@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
+import { mkdirIfNeeded, scaleImageToSize } from 'playwright-core/lib/utils';
+import { jpegjs, PNG } from 'playwright-core/lib/utilsBundle';
+
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 import * as javascript from '../codegen';
@@ -51,7 +56,6 @@ const screenshot = defineTabTool({
       type: fileType,
       quality: fileType === 'png' ? undefined : 90,
       scale: 'css',
-      path: fileName,
       ...(params.fullPage !== undefined && { fullPage: params.fullPage })
     };
     const isElementScreenshot = params.element && params.ref;
@@ -68,18 +72,35 @@ const screenshot = defineTabTool({
       response.addCode(`await page.screenshot(${javascript.formatObject(options)});`);
 
     const buffer = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
+
+    await mkdirIfNeeded(fileName);
+    await fs.promises.writeFile(fileName, buffer);
+
     response.addResult(`Took the ${screenshotTarget} screenshot and saved it as ${fileName}`);
 
-    // https://github.com/microsoft/playwright-mcp/issues/817
-    // Never return large images to LLM, saving them to the file system is enough.
-    if (!params.fullPage) {
-      response.addImage({
-        contentType: fileType === 'png' ? 'image/png' : 'image/jpeg',
-        data: buffer
-      });
-    }
+    response.addImage({
+      contentType: fileType === 'png' ? 'image/png' : 'image/jpeg',
+      data: scaleImageToFitMessage(buffer, fileType)
+    });
   }
 });
+
+export function scaleImageToFitMessage(buffer: Buffer, imageType: 'png' | 'jpeg'): Buffer {
+  // https://docs.claude.com/en/docs/build-with-claude/vision#evaluate-image-size
+  // Not more than 1.15 megapixel, linear size not more than 1568.
+
+  const image = imageType === 'png' ? PNG.sync.read(buffer) : jpegjs.decode(buffer, { maxMemoryUsageInMB: 512 });
+  const pixels = image.width * image.height;
+
+  const shrink = Math.min(1568 / image.width, 1568 / image.height, Math.sqrt(1.15 * 1024 * 1024 / pixels));
+  if (shrink > 1)
+    return buffer;
+
+  const width = image.width * shrink | 0;
+  const height = image.height * shrink | 0;
+  const scaledImage = scaleImageToSize(image, { width, height });
+  return imageType === 'png' ? PNG.sync.write(scaledImage as any) : jpegjs.encode(scaledImage, 80).data;
+}
 
 export default [
   screenshot,
