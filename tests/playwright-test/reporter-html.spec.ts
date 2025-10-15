@@ -3247,7 +3247,7 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
   `);
 });
 
-test('should support sorting by duration', async ({ runInlineTest, showReport, page }) => {
+test('should support sorting', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -3318,6 +3318,30 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
       - link "known slow"
       - link "slow test"
       - link "very slow test"
+  `);
+
+  await searchInput.fill('o:title');
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+    - button [expanded]
+    - region:
+      - link "fast test"
+      - link "known slow"
+      - link "medium test"
+      - link "slow test"
+      - link "very fast test"
+      - link "very slow test"
+  `);
+
+  await searchInput.fill('o:file');
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+    - button [expanded]
+    - region:
+      - link "fast test"
+      - link "slow test"
+      - link "medium test"
+      - link "very fast test"
+      - link "very slow test"
+      - link "known slow"
   `);
 
   await searchInput.clear();
