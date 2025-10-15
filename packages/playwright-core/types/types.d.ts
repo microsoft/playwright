@@ -12937,6 +12937,23 @@ export interface Locator {
   describe(description: string): Locator;
 
   /**
+   * Returns locator description previously set with
+   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const button = page.getByRole('button').describe('Subscribe button');
+   * console.log(button.description()); // "Subscribe button"
+   *
+   * const input = page.getByRole('textbox');
+   * console.log(input.description()); // null
+   * ```
+   *
+   */
+  description(): null|string;
+
+  /**
    * Programmatically dispatch an event on the matching element.
    *
    * **Usage**
