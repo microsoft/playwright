@@ -214,9 +214,8 @@ function createFilesModel(report: LoadedReport | undefined, filter: Filter): Tes
     result.tests.push(...tests);
   }
 
-  filter.sortTests(result.tests);
-
   if (filter.sort.length) {
+    filter.sortTests(result.tests);
     result.files = [{
       fileId: '',
       fileName: '',
@@ -258,9 +257,8 @@ function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter
   for (const group of groups)
     result.tests.push(...group.tests);
 
-  filter.sortTests(result.tests);
-
   if (filter.sort.length) {
+    filter.sortTests(result.tests);
     result.files = [{
       fileId: '',
       fileName: '',
