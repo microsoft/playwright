@@ -46,8 +46,8 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setRecalculateDimensionsCount] = React.useState(0);
-  const dialogMeasure = useMeasureForRef(dialogRef);
-  const anchorMeasure = useMeasureForRef(anchor);
+  const [dialogMeasure] = useMeasureForRef(dialogRef);
+  const [anchorMeasure, recalculateAnchorMeasure] = useMeasureForRef(anchor);
   const position = dialogPosition(dialogMeasure, anchorMeasure, verticalOffset);
 
   React.useEffect(() => {
@@ -76,6 +76,8 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 
     return () => {};
   }, [open, requestClose]);
+
+  React.useLayoutEffect(() => recalculateAnchorMeasure(), [open, recalculateAnchorMeasure]);
 
   React.useEffect(() => {
     const onResize = () => setRecalculateDimensionsCount(count => count + 1);
