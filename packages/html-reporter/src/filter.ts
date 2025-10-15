@@ -163,7 +163,7 @@ export class Filter {
       for (const sortToken of this.sort) {
         let comparison = 0;
         if (sortToken.name === 'duration')
-          comparison = a.duration - b.duration;
+          comparison = b.duration - a.duration;
         if (comparison !== 0)
           return sortToken.not ? -comparison : comparison;
       }

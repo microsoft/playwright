@@ -3269,6 +3269,10 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
       test('very slow test', async ({}) => {
         await new Promise(resolve => setTimeout(resolve, 150));
       });
+      test('known slow', async ({}) => {
+        test.slow();
+        await new Promise(resolve => setTimeout(resolve, 75));
+      });
     `,
   }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
@@ -3286,28 +3290,34 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
     - region:
       - link "very fast test"
       - link "very slow test"
+      - link "known slow"
   `);
 
   await searchInput.fill('o:duration');
   await expect(page.getByRole('main')).toMatchAriaSnapshot(`
     - button [expanded]
     - region:
-      - link "very fast test"
-      - link "fast test"
-      - link "medium test"
-      - link "slow test"
       - link "very slow test"
+      - link "slow test"
+      - link "known slow"
+      - link "medium test"
+      - link "fast test"
+      - link "very fast test"
   `);
+
+  await searchInput.fill('o:duration !@slow');
+  await expect(page.getByRole('link', { name: 'known slow' })).not.toBeVisible();
 
   await searchInput.fill('!o:duration');
   await expect(page.getByRole('main')).toMatchAriaSnapshot(`
     - button [expanded]
     - region:
-      - link "very slow test"
-      - link "slow test"
-      - link "medium test"
-      - link "fast test"
       - link "very fast test"
+      - link "fast test"
+      - link "medium test"
+      - link "known slow"
+      - link "slow test"
+      - link "very slow test"
   `);
 
   await searchInput.clear();
@@ -3321,6 +3331,7 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
     - region:
       - link "very fast test"
       - link "very slow test"
+      - link "known slow"
   `);
 });
 
