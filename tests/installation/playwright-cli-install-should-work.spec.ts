@@ -99,15 +99,14 @@ test('install command should work with mirror that uses chunked encoding', async
     }
   });
   await new Promise<void>(resolve => server.listen(0, resolve));
-  await test.step('playwright install chromium', async () => {
-    const result = await exec('npx playwright install chromium', {
-      env: {
-        PLAYWRIGHT_DOWNLOAD_HOST: `http://localhost:${(server.address() as any).port}`,
-      }
-    });
-    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
-    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  const result = await exec('npx playwright install chromium', {
+    env: {
+      PLAYWRIGHT_DOWNLOAD_HOST: `http://localhost:${(server.address() as any).port}`,
+    }
   });
+  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  server.close();
 });
 
 test('install command should ignore HTTP_PROXY', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36412' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
