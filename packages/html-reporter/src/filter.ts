@@ -27,6 +27,7 @@ export class Filter {
   text: FilterToken[] = [];
   labels: FilterToken[] = [];
   annotations: FilterToken[] = [];
+  sort: FilterToken[] = [];
 
   empty(): boolean {
     return (
@@ -42,11 +43,16 @@ export class Filter {
     const text: FilterToken[] = [];
     const labels = new Set<FilterToken>();
     const annotations = new Set<FilterToken>();
+    const sort: FilterToken[] = [];
     for (let token of tokens) {
       const not = token.startsWith('!');
       if (not)
         token = token.slice(1);
 
+      if (token.startsWith('o:')) {
+        sort.push({ name: token.slice(2), not });
+        continue;
+      }
       if (token.startsWith('p:')) {
         project.add({ name: token.slice(2), not });
         continue;
@@ -72,6 +78,7 @@ export class Filter {
     filter.status = [...status];
     filter.labels = [...labels];
     filter.annotations = [...annotations];
+    filter.sort = sort;
     return filter;
   }
 
@@ -168,6 +175,22 @@ export class Filter {
         return false;
     }
     return true;
+  }
+
+  sortTests(tests: TestCaseSummary[]): TestCaseSummary[] {
+    if (!this.sort.length)
+      return tests;
+
+    return tests.slice().sort((a, b) => {
+      for (const sortToken of this.sort) {
+        let comparison = 0;
+        if (sortToken.name === 'duration')
+          comparison = a.duration - b.duration;
+        if (comparison !== 0)
+          return sortToken.not ? -comparison : comparison;
+      }
+      return 0;
+    });
   }
 }
 

@@ -3247,6 +3247,39 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
   `);
 });
 
+test('should support sorting by duration', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('fast test', async ({}) => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+      });
+      test('slow test', async ({}) => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+      test('medium test', async ({}) => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      });
+    `,
+  }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+  await showReport();
+
+  const searchInput = page.locator('.subnav-search-input');
+  const testTitles = page.locator('.test-file-test .test-file-title');
+
+  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test']);
+
+  await searchInput.fill('o:duration');
+  await expect(testTitles).toHaveText(['fast test', 'medium test', 'slow test']);
+
+  await searchInput.fill('!o:duration');
+  await expect(testTitles).toHaveText(['slow test', 'medium test', 'fast test']);
+
+  await searchInput.clear();
+  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test']);
+});
+
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise(resolve => {
     const chunks: Buffer[] = [];
