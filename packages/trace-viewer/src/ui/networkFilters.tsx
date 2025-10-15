@@ -40,13 +40,15 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
         onChange={e => onFilterStateChange({ ...filterState, searchValue: e.target.value })}
       />
 
-      <div className='network-filters-resource-types'>
+      <div className='network-filters-resource-types' role='tablist'>
         {resourceTypes.map(resourceType => (
           <div
             key={resourceType}
             title={resourceType}
             onClick={() => onFilterStateChange({ ...filterState, resourceType })}
             className={`network-filters-resource-type ${filterState.resourceType === resourceType ? 'selected' : ''}`}
+            role='tab'
+            aria-selected={filterState.resourceType === resourceType}
           >
             {resourceType}
           </div>
