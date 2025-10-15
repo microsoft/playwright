@@ -3276,7 +3276,7 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
 
   const searchInput = page.locator('.subnav-search-input');
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
     - button "a.test.js" [expanded]
     - region:
       - link "fast test"
@@ -3289,7 +3289,7 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
   `);
 
   await searchInput.fill('o:duration');
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
     - button [expanded]
     - region:
       - link "very fast test"
@@ -3300,7 +3300,7 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
   `);
 
   await searchInput.fill('!o:duration');
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
     - button [expanded]
     - region:
       - link "very slow test"
@@ -3311,7 +3311,7 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
   `);
 
   await searchInput.clear();
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
     - button "a.test.js" [expanded]
     - region:
       - link "fast test"
