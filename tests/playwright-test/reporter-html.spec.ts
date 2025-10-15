@@ -3252,26 +3252,26 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('fast test', async ({}) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 200));
       });
       test('slow test', async ({}) => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500));
       });
       test('medium test', async ({}) => {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 300));
       });
     `,
     'b.test.js': `
       import { test, expect } from '@playwright/test';
       test('very fast test', async ({}) => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 100));
       });
       test('very slow test', async ({}) => {
-        await new Promise(resolve => setTimeout(resolve, 150));
+        await new Promise(resolve => setTimeout(resolve, 600));
       });
       test('known slow', async ({}) => {
         test.slow();
-        await new Promise(resolve => setTimeout(resolve, 75));
+        await new Promise(resolve => setTimeout(resolve, 400));
       });
     `,
   }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
