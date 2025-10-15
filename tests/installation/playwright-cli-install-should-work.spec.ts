@@ -16,10 +16,12 @@
 import { test, expect } from './npmTest';
 import { chromium } from '@playwright/test';
 import path from 'path';
+import http from 'http';
 import https from 'https';
 import tls from 'tls';
 import { TestProxy } from '../config/proxy';
 import { TestServer } from '../config/testserver';
+import { Readable, Writable } from 'stream';
 
 test.use({ isolateBrowsers: true });
 
@@ -80,69 +82,33 @@ test('install command should work with HTTPS_PROXY', { annotation: { type: 'issu
   await proxy.stop();
 });
 
-test('install command should work with MITM proxy that drops content-length header', async ({ exec, checkInstalledSoftwareOnDisk }) => {
+test('install command should work with mirror that uses chunked encoding', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
-
-  const headersEnd = '\r\n\r\n';
-
-  const certOptions = await TestServer.certOptions();
-  const proxy = https.createServer(certOptions);
-  proxy.on('connect', async (req, clientSocket, _head) => {
-    const [hostname, port] = req.url!.split(':');
-    const upstream = tls.connect({
-      host: hostname,
-      port: +port,
-      rejectUnauthorized: false,
-    });
-    upstream.on('secureConnect', () => {
-      clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-      const tlsSocket = new tls.TLSSocket(clientSocket, {
-        isServer: true,
-        ...certOptions,
-      });
-      tlsSocket.pipe(upstream);
-      tlsSocket.on('error', () => upstream.end());
-
-      let headersParsed = false;
-      let buffer = Buffer.alloc(0);
-      upstream.on('data', (data: Buffer) => {
-        if (headersParsed) {
-          tlsSocket.write(data);
-          return;
-        }
-
-        buffer = Buffer.concat([buffer, data]);
-        const headersEndIndex = buffer.indexOf(headersEnd);
-        if (headersEndIndex === -1)
-          return;
-
-        let headers = buffer.subarray(0, headersEndIndex + headersEnd.length).toString('utf8');
-        headers = headers.replace(/content-length:[^\r\n]*\r\n/gi, '');
-        tlsSocket.write(headers);
-        tlsSocket.write(buffer.subarray(headersEndIndex + headersEnd.length));
-
-        headersParsed = true;
-        buffer = Buffer.alloc(0);
-      });
-      upstream.on('end', () => tlsSocket.end());
-      upstream.on('error', () => tlsSocket.end());
-    });
+  const server = http.createServer(async (req, res) => {
+    try {
+      const upstream = await fetch('https://cdn.playwright.dev/dbazure/download/playwright' + req.url);
+      const headers = new Headers(upstream.headers);
+      headers.delete('content-length');
+      res.writeHead(upstream.status, Object.fromEntries(headers));
+      await upstream.body.pipeTo(Writable.toWeb(res));
+      return;
+    } catch (e) {
+      console.error(e);
+      res.statusCode = 500;
+      res.end(String(e));
+      return;
+    }
   });
-
-  await new Promise<void>(resolve => proxy.listen(0, resolve));
-
+  await new Promise<void>(resolve => server.listen(0, resolve));
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium', {
       env: {
-        HTTPS_PROXY: `https://localhost:${(proxy.address() as any).port}`,
-        NODE_TLS_REJECT_UNAUTHORIZED: '0',
+        PLAYWRIGHT_DOWNLOAD_HOST: `http://localhost:${(server.address() as any).port}`,
       }
     });
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
     await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   });
-
-  proxy.close();
 });
 
 test('install command should ignore HTTP_PROXY', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36412' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
