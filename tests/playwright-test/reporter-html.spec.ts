@@ -3275,18 +3275,193 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
   await showReport();
 
   const searchInput = page.locator('.subnav-search-input');
-  const testTitles = page.locator('.test-file-test .test-file-title');
 
-  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test', 'very fast test', 'very slow test']);
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - main:
+      - navigation:
+        - link "All5":
+          - /url: "#?"
+        - link "Passed5":
+          - /url: "#?q=s:passed"
+        - link "Failed0":
+          - /url: "#?q=s:failed"
+        - link "Flaky0":
+          - /url: "#?q=s:flaky"
+        - link "Skipped0":
+          - /url: "#?q=s:skipped"
+        - button "Settings"
+      - textbox
+      - text: "/\\\\d+\\\\/\\\\d+\\\\/\\\\d+, 1:\\\\d+:\\\\d+ PM Total time: \\\\d+[hmsp]+/"
+      - button "a.test.js" [expanded]
+      - region:
+        - link "fast test":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:3":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - link "slow test":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:6":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - link "medium test":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:9":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+      - button "b.test.js" [expanded]
+      - region:
+        - link "very fast test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:3":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - link "very slow test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:6":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+  `);
 
   await searchInput.fill('o:duration');
-  await expect(testTitles).toHaveText(['very fast test', 'fast test', 'medium test', 'slow test', 'very slow test']);
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - main:
+      - navigation:
+        - link "All5":
+          - /url: "#?"
+        - link "Passed5":
+          - /url: "#?q=s:passed"
+        - link "Failed0":
+          - /url: "#?q=s:failed"
+        - link "Flaky0":
+          - /url: "#?q=s:flaky"
+        - link "Skipped0":
+          - /url: "#?q=s:skipped"
+        - button "Settings"
+      - textbox: o:duration
+      - text: "/\\\\d+\\\\/\\\\d+\\\\/\\\\d+, 1:\\\\d+:\\\\d+ PM Total time: \\\\d+[hmsp]+/"
+      - button [expanded]
+      - region:
+        - link "very fast test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:3":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - link "fast test":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:3":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - link "medium test":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:9":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+        - link "slow test":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:6":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - link "very slow test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:6":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+  `);
 
   await searchInput.fill('!o:duration');
-  await expect(testTitles).toHaveText(['very slow test', 'slow test', 'medium test', 'fast test', 'very fast test']);
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - main:
+      - navigation:
+        - link "All5":
+          - /url: "#?"
+        - link "Passed5":
+          - /url: "#?q=s:passed"
+        - link "Failed0":
+          - /url: "#?q=s:failed"
+        - link "Flaky0":
+          - /url: "#?q=s:flaky"
+        - link "Skipped0":
+          - /url: "#?q=s:skipped"
+        - button "Settings"
+      - textbox: "!o:duration"
+      - text: "/\\\\d+\\\\/\\\\d+\\\\/\\\\d+, 1:\\\\d+:\\\\d+ PM Total time: \\\\d+[hmsp]+/"
+      - button [expanded]
+      - region:
+        - link "very slow test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:6":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+        - link "slow test":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:6":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - link "medium test":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:9":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+        - link "fast test":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:3":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - link "very fast test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:3":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+  `);
 
   await searchInput.clear();
-  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test', 'very fast test', 'very slow test']);
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - main:
+      - navigation:
+        - link "All5":
+          - /url: "#?"
+        - link "Passed5":
+          - /url: "#?q=s:passed"
+        - link "Failed0":
+          - /url: "#?q=s:failed"
+        - link "Flaky0":
+          - /url: "#?q=s:flaky"
+        - link "Skipped0":
+          - /url: "#?q=s:skipped"
+        - button "Settings"
+      - textbox
+      - text: "/\\\\d+\\\\/\\\\d+\\\\/\\\\d+, 1:\\\\d+:\\\\d+ PM Total time: \\\\d+[hmsp]+/"
+      - button "a.test.js" [expanded]
+      - region:
+        - link "fast test":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:3":
+          - /url: "#?testId=17c2af56efedce05daab-64b07a38d632a2a9987c"
+        - link "slow test":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:6":
+          - /url: "#?testId=17c2af56efedce05daab-3bd304b2dc4dd6f5e519"
+        - link "medium test":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+        - text: /\\d+[hmsp]+/
+        - link "a.test.js:9":
+          - /url: "#?testId=17c2af56efedce05daab-bd277126f3467d5bae5d"
+      - button "b.test.js" [expanded]
+      - region:
+        - link "very fast test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:3":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-3b2a25f05f406137f27f"
+        - link "very slow test":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+        - text: /\\d+[hmsp]+/
+        - link "b.test.js:6":
+          - /url: "#?testId=970b9ee1a59d47a8ca1c-5471a3464ee1e078930b"
+  `);
 });
 
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
