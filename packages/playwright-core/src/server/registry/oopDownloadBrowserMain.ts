@@ -46,6 +46,7 @@ function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
 function downloadFile(options: DownloadParams): Promise<void> {
   let downloadedBytes = 0;
   let totalBytes = 0;
+  let chunked = false;
 
   const promise = new ManualPromise<void>();
   httpRequest({
@@ -70,11 +71,15 @@ function downloadFile(options: DownloadParams): Promise<void> {
           .on('error', handleError);
       return;
     }
+
+    chunked = response.headers['transfer-encoding'] === 'chunked';
+    log(`-- is chunked: ${chunked}`);
+
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
     const file = fs.createWriteStream(options.zipPath);
     file.on('finish', () => {
-      if (downloadedBytes !== totalBytes) {
+      if (!chunked && downloadedBytes !== totalBytes) {
         log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
         promise.reject(new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${options.url}`));
       } else {
@@ -100,7 +105,8 @@ function downloadFile(options: DownloadParams): Promise<void> {
 
   function onData(chunk: string) {
     downloadedBytes += chunk.length;
-    progress(downloadedBytes, totalBytes);
+    if (!chunked)
+      progress(downloadedBytes, totalBytes);
   }
 }
 
