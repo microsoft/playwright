@@ -3261,6 +3261,15 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
         await new Promise(resolve => setTimeout(resolve, 50));
       });
     `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('very fast test', async ({}) => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+      });
+      test('very slow test', async ({}) => {
+        await new Promise(resolve => setTimeout(resolve, 150));
+      });
+    `,
   }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
   await showReport();
@@ -3268,16 +3277,16 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
   const searchInput = page.locator('.subnav-search-input');
   const testTitles = page.locator('.test-file-test .test-file-title');
 
-  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test']);
+  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test', 'very fast test', 'very slow test']);
 
   await searchInput.fill('o:duration');
-  await expect(testTitles).toHaveText(['fast test', 'medium test', 'slow test']);
+  await expect(testTitles).toHaveText(['very fast test', 'fast test', 'medium test', 'slow test', 'very slow test']);
 
   await searchInput.fill('!o:duration');
-  await expect(testTitles).toHaveText(['slow test', 'medium test', 'fast test']);
+  await expect(testTitles).toHaveText(['very slow test', 'slow test', 'medium test', 'fast test', 'very fast test']);
 
   await searchInput.clear();
-  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test']);
+  await expect(testTitles).toHaveText(['fast test', 'slow test', 'medium test', 'very fast test', 'very slow test']);
 });
 
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
