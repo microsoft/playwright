@@ -18,10 +18,9 @@ import { chromium } from '@playwright/test';
 import path from 'path';
 import http from 'http';
 import https from 'https';
-import tls from 'tls';
+import { Writable } from 'stream';
 import { TestProxy } from '../config/proxy';
 import { TestServer } from '../config/testserver';
-import { Readable, Writable } from 'stream';
 
 test.use({ isolateBrowsers: true });
 
