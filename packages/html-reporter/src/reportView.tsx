@@ -68,7 +68,11 @@ export const ReportView: React.FC<{
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
   const filteredStats = React.useMemo(() => filter.empty() ? undefined : computeStats(report?.json().files || [], filter), [report, filter]);
   const testModel = React.useMemo(() => {
-    return mergeFiles ? createMergedFilesModel(report, filter) : createFilesModel(report, filter);
+    if (filter.sort.length)
+      return createSortedNoFilesModel(report, filter);
+    if (mergeFiles)
+      return createMergedFilesModel(report, filter);
+    return createFilesModel(report, filter);
   }, [report, filter, mergeFiles]);
 
   const { prev, next } = React.useMemo(() => {
@@ -206,24 +210,12 @@ function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
 
 function createFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
   const result: TestModelSummary = { files: [], tests: [] };
-
   for (const file of report?.json().files || []) {
     const tests = file.tests.filter(t => filter.matches(t));
     if (tests.length)
       result.files.push({ ...file, tests });
     result.tests.push(...tests);
   }
-
-  if (filter.sort.length) {
-    filter.sortTests(result.tests);
-    result.files = [{
-      fileId: '',
-      fileName: '',
-      tests: result.tests,
-      stats: { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0, ok: true }
-    }];
-  }
-
   return result;
 }
 
@@ -256,16 +248,21 @@ function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter
   const result: TestModelSummary = { files: groups, tests: [] };
   for (const group of groups)
     result.tests.push(...group.tests);
+  return result;
+}
 
-  if (filter.sort.length) {
-    filter.sortTests(result.tests);
-    result.files = [{
+function createSortedNoFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
+  let tests = (report?.json().files ?? []).flatMap(file => file.tests);
+  tests = tests.filter(t => filter.matches(t));
+  filter.sortTests(tests);
+
+  return {
+    files: [{
       fileId: '',
       fileName: '',
-      tests: result.tests,
+      tests,
       stats: { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0, ok: true }
-    }];
-  }
-
-  return result;
+    }],
+    tests
+  };
 }
