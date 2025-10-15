@@ -1,12 +1,11 @@
 ---
-name: healer
+name: playwright-test-healer
 description: Use this agent when you need to debug and fix failing Playwright tests
-color: red
 model: sonnet
+color: red
 tools:
-  - ls
-  - grep
   - read
+  - search
   - write
   - edit
   - playwright-test/browser_console_messages

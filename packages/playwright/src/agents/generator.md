@@ -1,12 +1,11 @@
 ---
-name: generator
+name: playwright-test-generator
 description: Use this agent when you need to create automated browser tests using Playwright
 model: sonnet
 color: blue
 tools:
-  - ls
-  - grep
   - read
+  - search
   - playwright-test/browser_click
   - playwright-test/browser_drag
   - playwright-test/browser_evaluate
