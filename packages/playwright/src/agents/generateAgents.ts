@@ -16,7 +16,12 @@
 
 import fs from 'fs';
 import path from 'path';
+
 import { colors, yaml } from 'playwright-core/lib/utilsBundle';
+import { mkdirIfNeeded } from 'playwright-core/lib/utils';
+
+import { FullConfigInternal } from '../common/config';
+import { defaultSeedFile, findSeedFile, seedFileContent, seedProject } from '../mcp/test/seed';
 
 interface AgentHeader {
   name: string;
@@ -32,6 +37,8 @@ interface Agent {
   instructions: string;
   examples: string[];
 }
+
+/* eslint-disable no-console */
 
 class AgentParser {
   static async parseFile(filePath: string): Promise<Agent> {
@@ -186,18 +193,55 @@ async function loadAgents(): Promise<Agent[]> {
   return Promise.all(files.filter(file => file.endsWith('.md')).map(file => AgentParser.parseFile(path.join(__dirname, file))));
 }
 
-async function writeFile(filePath: string, content: string) {
-  // eslint-disable-next-line no-console
-  console.log(`Writing file: ${filePath}`);
+async function writeFile(filePath: string, content: string, icon: string, description: string) {
+  console.log(`- ${icon} ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
+  await mkdirIfNeeded(filePath);
   await fs.promises.writeFile(filePath, content, 'utf-8');
 }
 
-export async function initClaudeCodeRepo() {
+async function initRepo(config: FullConfigInternal, projectName: string) {
+  const project = seedProject(config, projectName);
+  console.log(`🎭 Using project "${project.project.name}" as a primary project`);
+
+  if (!fs.existsSync('specs')) {
+    await fs.promises.mkdir('specs');
+    await writeFile(path.join('specs', 'README.md'), `# Specs
+
+This is a directory for test plans.
+`, '📝', 'directory for test plans');
+  }
+
+  if (!fs.existsSync('prompts')) {
+    await fs.promises.mkdir('prompts');
+    await writeFile(path.join('prompts', 'README.md'), `# Prompts
+
+This is a directory for useful prompts.
+`, '📝', 'useful prompts');
+  }
+
+  let seedFile = await findSeedFile(project);
+  if (!seedFile) {
+    seedFile = defaultSeedFile(project);
+    await writeFile(seedFile, seedFileContent, '🌱', 'default environment seed file');
+  }
+
+  const coveragePromptFile = path.join('prompts', 'test-coverage.md');
+  if (!fs.existsSync(coveragePromptFile))
+    await writeFile(coveragePromptFile, coveragePrompt(seedFile), '📝', 'test coverage prompt');
+}
+
+function initRepoDone() {
+  console.log('✅ Done.');
+}
+
+export async function initClaudeCodeRepo(config: FullConfigInternal, projectName: string) {
+  await initRepo(config, projectName);
+
   const agents = await loadAgents();
 
   await fs.promises.mkdir('.claude/agents', { recursive: true });
   for (const agent of agents)
-    await writeFile(`.claude/agents/playwright-test-${agent.header.name}.md`, saveAsClaudeCode(agent));
+    await writeFile(`.claude/agents/playwright-test-${agent.header.name}.md`, saveAsClaudeCode(agent), '🤖', 'agent definition');
 
   await writeFile('.mcp.json', JSON.stringify({
     mcpServers: {
@@ -206,7 +250,9 @@ export async function initClaudeCodeRepo() {
         args: commonMcpServers.playwrightTest.args,
       }
     }
-  }, null, 2));
+  }, null, 2), '🔧', 'mcp configuration');
+
+  initRepoDone();
 }
 
 const vscodeToolMap = new Map<string, string[]>([
@@ -251,12 +297,13 @@ function saveAsVSCodeChatmode(agent: Agent): string {
   return lines.join('\n');
 }
 
-export async function initVSCodeRepo() {
+export async function initVSCodeRepo(config: FullConfigInternal, projectName: string) {
+  await initRepo(config, projectName);
   const agents = await loadAgents();
 
   await fs.promises.mkdir('.github/chatmodes', { recursive: true });
   for (const agent of agents)
-    await writeFile(`.github/chatmodes/${agent.header.name === 'planner' ? ' ' : ''}🎭 ${agent.header.name}.chatmode.md`, saveAsVSCodeChatmode(agent));
+    await writeFile(`.github/chatmodes/${agent.header.name === 'planner' ? ' ' : ''}🎭 ${agent.header.name}.chatmode.md`, saveAsVSCodeChatmode(agent), '🤖', 'chatmode definition');
 
   await fs.promises.mkdir('.vscode', { recursive: true });
 
@@ -279,12 +326,14 @@ export async function initVSCodeRepo() {
     args: commonMcpServers.playwrightTest.args,
     cwd: '${workspaceFolder}',
   };
-  await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
-  // eslint-disable-next-line no-console
-  console.log(colors.yellow(`${colors.bold('Note:')} Playwright Test Agents require VSCode version 1.105+ or VSCode Insiders`));
+  await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
+
+  initRepoDone();
 }
 
-export async function initOpencodeRepo() {
+export async function initOpencodeRepo(config: FullConfigInternal, projectName: string) {
+  await initRepo(config, projectName);
+
   const agents = await loadAgents();
 
   await fs.promises.mkdir('.opencode/prompts', { recursive: true });
@@ -292,7 +341,40 @@ export async function initOpencodeRepo() {
     const prompt = [agent.instructions];
     prompt.push('');
     prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
-    await writeFile(`.opencode/prompts/playwright-test-${agent.header.name}.md`, prompt.join('\n'));
+    await writeFile(`.opencode/prompts/playwright-test-${agent.header.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
   }
-  await writeFile('opencode.json', saveAsOpencodeJson(agents));
+  await writeFile('opencode.json', saveAsOpencodeJson(agents), '🔧', 'opencode configuration');
+
+  initRepoDone();
 }
+
+const coveragePrompt = (seedFile: string) => `
+# Produce test coverage
+
+Parameters:
+- Task: the task to perform
+- Seed file (optional): the seed file to use, defaults to ${path.relative(process.cwd(), seedFile)}
+- Test plan file (optional): the test plan file to write, under specs/ folder.
+
+1. Call #planner subagent with prompt:
+
+<plan>
+  <task><!-- the task --></task>
+  <seed-file><!-- seed file param --></seed-file>
+  <plan-file><!-- test plan file --></plan-file>
+</plan>
+
+2. For each test case from the test plan file (1.1, 1.2, ...), Call #generator subagent with prompt:
+
+<generate>
+  <test-file><!-- Name of the file to save the test into, should be unique for test --></test-file>
+  <test-suite><!-- Name of the top level test spec w/o ordinal--></test-suite>
+  <test-name><!--Name of the test case without the ordinal --></test-name>
+  <seed-file><!-- Seed file from test plan --></seed-file>
+  <body><!-- Test case content including steps and expectations --></body>
+</generate>
+
+3. Call #healer subagent with prompt:
+
+<heal>Run all tests and fix the failing ones one after another.</heal>
+`;
