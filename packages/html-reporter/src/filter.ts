@@ -37,48 +37,26 @@ export class Filter {
   }
 
   static parse(expression: string): Filter {
-    const tokens = Filter.tokenize(expression);
-    const project = new Set<FilterToken>();
-    const status = new Set<FilterToken>();
-    const text: FilterToken[] = [];
-    const labels = new Set<FilterToken>();
-    const annotations = new Set<FilterToken>();
-    const sort: FilterToken[] = [];
-    for (let token of tokens) {
+    const filter = new Filter();
+    for (let token of Filter.tokenize(expression)) {
       const not = token.startsWith('!');
       if (not)
         token = token.slice(1);
 
-      if (token.startsWith('o:')) {
-        sort.push({ name: token.slice(2), not });
-        continue;
-      }
-      if (token.startsWith('p:')) {
-        project.add({ name: token.slice(2), not });
-        continue;
-      }
-      if (token.startsWith('s:')) {
-        status.add({ name: token.slice(2), not });
-        continue;
-      }
-      if (token.startsWith('@')) {
-        labels.add({ name: token, not });
-        continue;
-      }
-      if (token.startsWith('annot:')) {
-        annotations.add({ name: token.slice('annot:'.length), not });
-        continue;
-      }
-      text.push({ name: token.toLowerCase(), not });
+      if (token.startsWith('o:'))
+        filter.sort.push({ name: token.slice(2), not });
+      else if (token.startsWith('p:'))
+        filter.project.push({ name: token.slice(2), not });
+      else if (token.startsWith('s:'))
+        filter.status.push({ name: token.slice(2), not });
+      else if (token.startsWith('@'))
+        filter.labels.push({ name: token, not });
+      else if (token.startsWith('annot:'))
+        filter.annotations.push({ name: token.slice('annot:'.length), not });
+      else
+        filter.text.push({ name: token.toLowerCase(), not });
     }
 
-    const filter = new Filter();
-    filter.text = text;
-    filter.project = [...project];
-    filter.status = [...status];
-    filter.labels = [...labels];
-    filter.annotations = [...annotations];
-    filter.sort = sort;
     return filter;
   }
 
