@@ -40,17 +40,33 @@ export interface LocatorFactory {
 export function asLocatorDescription(lang: Language, selector: string): string | undefined {
   try {
     const parsed = parseSelector(selector);
-    const lastPart = parsed.parts[parsed.parts.length - 1];
-    if (lastPart?.name === 'internal:describe') {
-      const description = JSON.parse(lastPart.body as string);
-      if (typeof description === 'string')
-        return description;
-    }
+    const customDescription = parseCustomDescription(parsed);
+    if (customDescription)
+      return customDescription;
     return innerAsLocators(new generators[lang](), parsed, false, 1)[0];
   } catch (e) {
     // Tolerate invalid input.
     return selector;
   }
+}
+
+export function locatorCustomDescription(selector: string): string | undefined {
+  try {
+    const parsed = parseSelector(selector);
+    return parseCustomDescription(parsed);
+  } catch (e) {
+    return undefined;
+  }
+}
+
+function parseCustomDescription(parsed: ParsedSelector): string | undefined {
+  const lastPart = parsed.parts[parsed.parts.length - 1];
+  if (lastPart?.name === 'internal:describe') {
+    const description = JSON.parse(lastPart.body as string);
+    if (typeof description === 'string')
+      return description;
+  }
+  return undefined;
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {

@@ -620,6 +620,54 @@ await button.ClickAsync();
 
 Locator description.
 
+## method: Locator.description
+* since: v1.57
+- returns: <[null]|[string]>
+
+Returns locator description previously set with [`method: Locator.describe`].
+
+**Usage**
+
+```js
+const button = page.getByRole('button').describe('Subscribe button');
+console.log(button.description()); // "Subscribe button"
+
+const input = page.getByRole('textbox');
+console.log(input.description()); // null
+```
+
+```python async
+button = page.get_by_role("button").describe("Subscribe button")
+print(button.description())  # "Subscribe button"
+
+input = page.get_by_role("textbox")
+print(input.description())  # None
+```
+
+```python sync
+button = page.get_by_role("button").describe("Subscribe button")
+print(button.description())  # "Subscribe button"
+
+input = page.get_by_role("textbox")
+print(input.description())  # None
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).describe("Subscribe button");
+System.out.println(button.description()); // "Subscribe button"
+
+Locator input = page.getByRole(AriaRole.TEXTBOX);
+System.out.println(input.description()); // null
+```
+
+```csharp
+var button = Page.GetByRole(AriaRole.Button).Describe("Subscribe button");
+Console.WriteLine(button.Description()); // "Subscribe button"
+
+var input = Page.GetByRole(AriaRole.Textbox);
+Console.WriteLine(input.Description()); // null
+```
+
 ## async method: Locator.dispatchEvent
 * since: v1.14
 
