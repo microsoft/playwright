@@ -163,8 +163,12 @@ async function handleStreamable(serverBackendFactory: ServerBackendFactory, req:
     transport.onclose = () => {
       if (!transport.sessionId)
         return;
-      sessions.delete(transport.sessionId);
-      testDebug(`delete http session: ${transport.sessionId}`);
+      const sessionId = transport.sessionId;
+      // Delay cleanup to allow multi-step operations to complete
+      setTimeout(() => {
+        sessions.delete(sessionId);
+        testDebug(`delete http session: ${sessionId}`);
+      }, 5000);
     };
 
     await transport.handleRequest(req, res);
