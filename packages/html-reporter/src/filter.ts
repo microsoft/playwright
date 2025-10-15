@@ -161,14 +161,24 @@ export class Filter {
 
     tests.sort((a, b) => {
       for (const sortToken of this.sort) {
-        let comparison = 0;
-        if (sortToken.name === 'duration')
-          comparison = b.duration - a.duration;
+        const comparison = this._compareTests(a, b, sortToken.name);
         if (comparison !== 0)
           return sortToken.not ? -comparison : comparison;
       }
       return 0;
     });
+  }
+
+  private _compareTests(a: TestCaseSummary, b: TestCaseSummary, field: string): number {
+    if (field === 'duration')
+      return b.duration - a.duration;
+    if (field === 'title')
+      return a.title.localeCompare(b.title);
+    if (field === 'line')
+      return a.location.line - b.location.line;
+    if (field === 'status' || field === 'file' || field === 'project')
+      return cacheSearchValues(a)[field].localeCompare(cacheSearchValues(b)[field]);
+    return 0;
   }
 }
 
