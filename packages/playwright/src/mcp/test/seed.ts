@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { mkdirIfNeeded } from 'playwright-core/lib/utils';
-
 import { collectFilesForProject, findTopLevelProjects } from '../../runner/projectUtils';
 
 import type { FullConfigInternal, FullProjectInternal } from '../../common/config';
@@ -32,28 +31,31 @@ export function seedProject(config: FullConfigInternal, projectName?: string) {
   return project;
 }
 
-export async function ensureSeedTest(project: FullProjectInternal, logNew: boolean) {
+export async function findSeedFile(project: FullProjectInternal) {
   const files = await collectFilesForProject(project);
-  const seed = files.find(file => path.basename(file).includes('seed'));
-  if (seed)
-    return seed;
+  return files.find(file => path.basename(file).includes('seed'));
+}
 
+export function defaultSeedFile(project: FullProjectInternal) {
   const testDir = project.project.testDir;
-  const seedFile  = path.resolve(testDir, 'seed.spec.ts');
+  return path.resolve(testDir, 'seed.spec.ts');
+}
 
-  if (logNew) {
-    // eslint-disable-next-line no-console
-    console.log(`Writing file: ${path.relative(process.cwd(), seedFile)}`);
-  }
+export async function ensureSeedFile(project: FullProjectInternal) {
+  const seedFile = await findSeedFile(project);
+  if (seedFile)
+    return seedFile;
+  const seedFilePath = defaultSeedFile(project);
+  await mkdirIfNeeded(seedFilePath);
+  await fs.promises.writeFile(seedFilePath, seedFileContent);
+  return seedFilePath;
+}
 
-  await mkdirIfNeeded(seedFile);
-  await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
+export const seedFileContent = `import { test, expect } from '@playwright/test';
 
 test.describe('Test group', () => {
   test('seed', async ({ page }) => {
     // generate code here.
   });
 });
-`);
-  return seedFile;
-}
+`;

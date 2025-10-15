@@ -24,7 +24,7 @@ import ListReporter from '../../reporters/list';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
-import { ensureSeedTest, seedProject } from './seed';
+import { ensureSeedFile, seedProject } from './seed';
 
 import type { ProgressCallback } from '../sdk/server';
 import type { ConfigLocation } from '../../common/config';
@@ -110,7 +110,7 @@ export class TestContext {
     const project = seedProject(config, projectName);
 
     if (!seedFile) {
-      seedFile = await ensureSeedTest(project, false);
+      seedFile = await ensureSeedFile(project);
     } else {
       const candidateFiles: string[] = [];
       const testDir = project.project.testDir;

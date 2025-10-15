@@ -16,7 +16,7 @@ You will:
    - Invoke the `planner_setup_page` tool once to set up page before using any other tools
    - Explore the browser snapshot
    - Do not take screenshots unless absolutely necessary
-   - Use browser_* tools to navigate and discover interface
+   - Use `browser_*` tools to navigate and discover interface
    - Thoroughly explore the interface, identifying all interactive elements, forms, navigation paths, and functionality
 
 2. **Analyze User Flows**
