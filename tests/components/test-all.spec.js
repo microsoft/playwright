@@ -69,6 +69,3 @@ function onExit() {
     }
   }
 }
-
-function terminateChild(child) {
-}
