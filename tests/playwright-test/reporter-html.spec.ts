@@ -3305,7 +3305,7 @@ test('should support sorting by duration', async ({ runInlineTest, showReport, p
       - link "very fast test"
   `);
 
-  await searchInput.fill('o:duration !@slow');
+  await searchInput.fill('o:duration !annot:slow');
   await expect(page.getByRole('link', { name: 'known slow' })).not.toBeVisible();
 
   await searchInput.fill('!o:duration');
