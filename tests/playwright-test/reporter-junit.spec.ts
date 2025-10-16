@@ -60,10 +60,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'junit' });
       const xml = parseXML(result.output);
+      const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
-      const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
-      expect(failure['$']['message']).toContain('a.test.js');
+      expect(testcase['$']['file']).toBe('a.test.js');
+      expect(Number(testcase['$']['line'])).toBeGreaterThan(0);
       expect(failure['$']['message']).toContain('one');
       expect(failure['$']['type']).toBe('FAILURE');
       expect(failure['_']).toContain('expect(1).toBe(0)');
