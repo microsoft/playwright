@@ -67,7 +67,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(testcase['$']['file']).toBe('a.test.js');
       expect(Number(testcase['$']['line'])).toBeGreaterThan(0);
       expect(failure['$']['message']).toContain('one');
-      expect(failure['$']['type']).toBe('FAILURE');
+      expect(failure['$']['type']).toBe('AssertionError');
       expect(failure['_']).toContain('expect(1).toBe(0)');
       expect(result.exitCode).toBe(1);
     });
@@ -643,7 +643,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const failureNode = expectFailure['failure'][0]['$'];
 
       // Validate type and message attributes
-      expect(failureNode['type']).toContain('expect'); // e.g. expect.toBe, expect.toEqual, etc.
+      expect(failureNode['type']).toBe('AssertionError');
       expect(failureNode['message']).toContain('Expected'); // generic expect message
 
       // Ensure exit code is failing since one test failed

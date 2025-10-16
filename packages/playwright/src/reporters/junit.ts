@@ -137,112 +137,130 @@ class JUnitReporter implements ReporterV2 {
     return entry;
   }
 
-  private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]) {
+  private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[],
+  ) {
     const children: XMLEntry[] = [];
+    const totalDurationSec = Number(
+        (test.results.reduce((sum, r) => sum + (r.duration || 0), 0) / 1000).toFixed(3),
+    );
     const entry: XMLEntry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
         name: namePrefix + test.titlePath().slice(3).join(' › '),
         classname: suiteName,
-        time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000,
+        time: totalDurationSec,
         file: path.basename(test.location.file),
         line: String(test.location.line),
       },
-      children
+      children,
     };
     entries.push(entry);
 
-    // Xray Test Management supports testcase level properties, where additional metadata may be provided
-    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
-    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
-    const properties: XMLEntry = {
-      name: 'properties',
-      children: [] as XMLEntry[]
-    };
-
-    for (const annotation of test.annotations) {
-      const property: XMLEntry = {
-        name: 'property',
-        attributes: {
-          name: annotation.type,
-          value: (annotation?.description ? annotation.description : '')
-        }
+    if (test.annotations.length) {
+      // Xray Test Management supports testcase level properties, where additional metadata may be provided
+      // some annotations are encoded as value attributes, other as cdata content; this implementation supports
+      // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
+      const props: XMLEntry = {
+        name: 'properties',
+        children: test.annotations.map(a => ({
+          name: 'property',
+          attributes: { name: a.type, value: a.description || '' },
+        })),
       };
-      properties.children?.push(property);
+      children.push(props);
     }
 
-    if (properties.children?.length)
-      entry.children!.push(properties);
-
     if (test.outcome() === 'skipped') {
-      entry.children!.push({ name: 'skipped' });
+      children.push({ name: 'skipped' });
       return;
+    }
+
+    function hasMatcherResult(
+      e: unknown,
+    ): e is { matcherResult: { matcherName?: string; message?: string } } {
+      return !!e && typeof e === 'object' && 'matcherResult' in e;
     }
 
     // Handle failed test cases
     if (!test.ok()) {
-      const lastResult = test.results.at(-1);
-      const err = lastResult?.error;
-      const hasExpectFailure = lastResult?.steps?.some(s => s.category === 'expect' && s.error);
+      const last = test.results.at(-1);
+      const err = last?.error;
+      const expectStep = last?.steps?.find(s => s.category === 'expect' && s.error);
+      const hasExpectFailure = !!expectStep;
 
       const elementName = hasExpectFailure ? 'failure' : 'error';
-      const typeAttr = hasExpectFailure ? 'FAILURE' : ((err as any)?.name || 'Error');
+
+      // Determine type and message per JUnit semantics
+      let typeAttr = 'Error';
       let messageAttr = '';
+      const locationInfo = `${path.basename(test.location.file)}:${test.location.line} ${test.title}`;
 
       if (hasExpectFailure) {
-        const expectStep = lastResult?.steps?.find(s => s.category === 'expect' && s.error);
-        const baseMessage = expectStep?.error?.message || 'Expectation failed';
-        const testInfo = `${path.basename(test.location?.file || '')}:${test.location?.line ?? ''} ${test.title}`;
-        messageAttr = `${testInfo} ${baseMessage}`;
+        const expectError = expectStep!.error;
+        let matcherName: string | undefined;
+        let matcherMessage: string | undefined;
+
+        if (hasMatcherResult(expectError)) {
+          matcherName = expectError.matcherResult.matcherName;
+          matcherMessage = expectError.matcherResult.message;
+        }
+
+        typeAttr = matcherName ? `expect.${matcherName}` : 'AssertionError';
+        const baseMsg =
+          matcherMessage || expectError?.message || 'Expectation failed';
+        messageAttr = `${locationInfo} ${baseMsg}`;
       } else if (err) {
-        const baseMessage = err.message || 'Error thrown';
-        const testInfo = `${path.basename(test.location?.file || '')}:${test.location?.line ?? ''} ${test.title}`;
-        messageAttr = `${testInfo} ${baseMessage}`;
+        typeAttr = (err as any).name || 'Error';
+        const baseMsg = err.message || 'Error thrown';
+        messageAttr = `${locationInfo} ${baseMsg}`;
       }
 
-
-      entry.children!.push({
+      children.push({
         name: elementName,
-        attributes: {
-          message: messageAttr,
-          type: typeAttr,
-        },
-        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        attributes: { message: messageAttr, type: typeAttr },
+        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test)),
       });
     }
 
     const systemOut: string[] = [];
     const systemErr: string[] = [];
-    for (const result of test.results) {
-      systemOut.push(...result.stdout.map(item => item.toString()));
-      systemErr.push(...result.stderr.map(item => item.toString()));
-      for (const attachment of result.attachments) {
-        if (!attachment.path)
-          continue;
 
-        let attachmentPath = path.relative(this.configDir, attachment.path);
+    for (const result of test.results) {
+      if (result.stdout.length)
+        systemOut.push(...result.stdout.map(s => s.toString()));
+      if (result.stderr.length)
+        systemErr.push(...result.stderr.map(s => s.toString()));
+
+      for (const att of result.attachments) {
+        if (!att.path)
+          continue;
+        let relPath = path.relative(this.configDir, att.path);
         try {
-          if (this.resolvedOutputFile)
-            attachmentPath = path.relative(path.dirname(this.resolvedOutputFile), attachment.path);
+          if (this.resolvedOutputFile) {
+            relPath = path.relative(
+                path.dirname(this.resolvedOutputFile),
+                att.path,
+            );
+          }
         } catch {
-          systemOut.push(`\nWarning: Unable to make attachment path ${attachment.path} relative to report output file ${this.resolvedOutputFile}`);
+          systemOut.push(`\nWarning: Unable to make attachment path ${att.path} relative to report output file ${this.resolvedOutputFile}`);
         }
 
         try {
-          await fs.promises.access(attachment.path);
-          systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+          await fs.promises.access(att.path);
+          systemOut.push(`\n[[ATTACHMENT|${relPath}]]\n`);
         } catch {
-          systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+          systemErr.push(`\nWarning: attachment ${relPath} is missing`);
         }
       }
     }
+
     // Note: it is important to only produce a single system-out/system-err entry
-    // so that parsers in the wild understand it.
-    if (systemOut.length)
-      entry.children!.push({ name: 'system-out', text: systemOut.join('') });
+    // so that parsers in the wild understand it.    if (systemOut.length)
+    children.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
-      entry.children!.push({ name: 'system-err', text: systemErr.join('') });
+      children.push({ name: 'system-err', text: systemErr.join('') });
   }
 }
 
