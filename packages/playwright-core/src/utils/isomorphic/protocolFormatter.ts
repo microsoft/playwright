@@ -17,36 +17,36 @@
 import { methodMetainfo } from './protocolMetainfo';
 
 export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
-  function format() {
-    if (!params)
-      return undefined;
+  return _formatProtocolParam(params, alternatives)?.replaceAll('\n', '\\n');
+}
 
-    for (const name of alternatives.split('|')) {
-      if (name === 'url') {
-        try {
-          const urlObject = new URL(params[name]);
-          if (urlObject.protocol === 'data:')
-            return urlObject.protocol;
-          if (urlObject.protocol === 'about:')
-            return params[name];
-          return urlObject.pathname + urlObject.search;
-        } catch (error) {
-          if (params[name] !== undefined)
-            return params[name];
-        }
-      }
-      if (name === 'timeNumber' && params[name] !== undefined) {
-        // eslint-disable-next-line no-restricted-globals
-        return new Date(params[name]).toString();
-      }
+function _formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
+  if (!params)
+    return undefined;
 
-      const value = deepParam(params, name);
-      if (value !== undefined)
-        return value;
+  for (const name of alternatives.split('|')) {
+    if (name === 'url') {
+      try {
+        const urlObject = new URL(params[name]);
+        if (urlObject.protocol === 'data:')
+          return urlObject.protocol;
+        if (urlObject.protocol === 'about:')
+          return params[name];
+        return urlObject.pathname + urlObject.search;
+      } catch (error) {
+        if (params[name] !== undefined)
+          return params[name];
+      }
     }
-  }
+    if (name === 'timeNumber' && params[name] !== undefined) {
+      // eslint-disable-next-line no-restricted-globals
+      return new Date(params[name]).toString();
+    }
 
-  return format()?.replaceAll('\n', '\\n');
+    const value = deepParam(params, name);
+    if (value !== undefined)
+      return value;
+  }
 }
 
 function deepParam(params: Record<string, any>, name: string): string | undefined {
