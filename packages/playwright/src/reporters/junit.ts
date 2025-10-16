@@ -138,16 +138,18 @@ class JUnitReporter implements ReporterV2 {
   }
 
   private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]) {
-    const entry = {
+    const children: XMLEntry[] = [];
+    const entry: XMLEntry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
         name: namePrefix + test.titlePath().slice(3).join(' › '),
-        // filename
         classname: suiteName,
-        time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
+        time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000,
+        file: path.basename(test.location.file),
+        line: String(test.location.line),
       },
-      children: [] as XMLEntry[]
+      children
     };
     entries.push(entry);
 
@@ -171,10 +173,10 @@ class JUnitReporter implements ReporterV2 {
     }
 
     if (properties.children?.length)
-      entry.children.push(properties);
+      entry.children!.push(properties);
 
     if (test.outcome() === 'skipped') {
-      entry.children.push({ name: 'skipped' });
+      entry.children!.push({ name: 'skipped' });
       return;
     }
 
@@ -195,7 +197,7 @@ class JUnitReporter implements ReporterV2 {
         messageAttr = err.message || 'Error thrown';
       }
 
-      entry.children.push({
+      entry.children!.push({
         name: elementName,
         attributes: {
           message: messageAttr,
@@ -233,9 +235,9 @@ class JUnitReporter implements ReporterV2 {
     // Note: it is important to only produce a single system-out/system-err entry
     // so that parsers in the wild understand it.
     if (systemOut.length)
-      entry.children.push({ name: 'system-out', text: systemOut.join('') });
+      entry.children!.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
-      entry.children.push({ name: 'system-err', text: systemErr.join('') });
+      entry.children!.push({ name: 'system-err', text: systemErr.join('') });
   }
 }
 
