@@ -126,9 +126,10 @@ export function TreeView<T extends TreeItem>({
     setTreeState({ ...treeState });
   }, [treeItems, treeState, setTreeState]);
 
-  return <div className={clsx(`tree-view vbox`, name + '-tree-view')} role={'tree'} data-testid={dataTestId || (name + '-tree')}>
+  return <div className={clsx(`tree-view vbox`, name + '-tree-view')} data-testid={dataTestId || (name + '-tree')}>
     <div
       className={clsx('tree-view-content')}
+      role={treeItems.size > 0 ? 'tree' : undefined}
       tabIndex={0}
       onKeyDown={event => {
         if (selectedItem && event.key === 'Enter') {
