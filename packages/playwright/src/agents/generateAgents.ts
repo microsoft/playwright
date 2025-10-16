@@ -294,7 +294,6 @@ export class VSCodeGenerator {
       type: 'stdio',
       command: 'npx',
       args: ['playwright', 'run-test-mcp-server'],
-      cwd: '${workspaceFolder}',
     };
     await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
 
