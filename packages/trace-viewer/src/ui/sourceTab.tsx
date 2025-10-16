@@ -14,19 +14,65 @@
  * limitations under the License.
  */
 
-import { SplitView } from '@web/components/splitView';
+import {SplitView} from '@web/components/splitView';
 import * as React from 'react';
-import { useAsyncMemo } from '@web/uiUtils';
+import {useAsyncMemo} from '@web/uiUtils';
 import './sourceTab.css';
-import { StackTraceView } from './stackTrace';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
-import type { SourceLocation, SourceModel } from './modelUtil';
-import type { StackFrame } from '@protocol/channels';
-import { CopyToClipboard } from './copyToClipboard';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { Toolbar } from '@web/components/toolbar';
-import { TraceModelContext } from './traceModelContext';
+import {StackTraceView} from './stackTrace';
+import type {SourceHighlight} from '@web/components/codeMirrorWrapper';
+import {CodeMirrorWrapper} from '@web/components/codeMirrorWrapper';
+import type {SourceLocation, SourceModel} from './modelUtil';
+import type {StackFrame} from '@protocol/channels';
+import {CopyToClipboard} from './copyToClipboard';
+import {ToolbarButton} from '@web/components/toolbarButton';
+import {Toolbar} from '@web/components/toolbar';
+import {TraceModelContext} from './traceModelContext';
+
+type IdeId = 'vscode' | 'cursor' | 'webstorm' | 'visualstudio' | 'notepadpp';
+
+const BASE_IDE_OPTIONS = [
+  { id: 'vscode', label: 'VS Code', platforms: ['win32', 'mac', 'linux'] },
+  { id: 'cursor', label: 'Cursor', platforms: ['win32', 'mac', 'linux'] },
+  { id: 'webstorm', label: 'WebStorm', platforms: ['win32', 'mac', 'linux'] },
+  { id: 'visualstudio', label: 'Visual Studio', platforms: ['win32'] },
+  { id: 'notepadpp', label: 'Notepad++', platforms: ['win32'] },
+];
+
+function detectPlatform(): 'win32' | 'mac' | 'linux' {
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes('win'))
+    return 'win32';
+  if (ua.includes('mac'))
+    return 'mac';
+  return 'linux';
+}
+
+async function getAvailableIDEs(): Promise<typeof BASE_IDE_OPTIONS> {
+  const platform = detectPlatform();
+  const candidates = BASE_IDE_OPTIONS.filter(opt => opt.platforms.includes(platform));
+  const verified: typeof BASE_IDE_OPTIONS = [];
+  for (const opt of candidates) {
+    try {
+      const res = await fetch(`trace/open-in-ide?ide=${opt.id}&check=1`);
+      if (res.ok)
+        verified.push(opt);
+    } catch {
+      // ignore missing backend support
+    }
+  }
+  return verified.length ? verified : candidates;
+}
+
+const LS_IDE_KEY = 'pw.ui.ide.selection';
+
+function loadIde(): IdeId {
+  const saved = window.localStorage.getItem(LS_IDE_KEY) as IdeId | null;
+  return saved && BASE_IDE_OPTIONS.some(o => o.id === saved) ? saved : 'vscode';
+}
+
+function saveIde(id: IdeId) {
+  window.localStorage.setItem(LS_IDE_KEY, id);
+}
 
 function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sources: Map<string, SourceModel>, rootDir?: string, fallbackLocation?: SourceLocation) {
   const model = React.useContext(TraceModelContext);
@@ -38,7 +84,6 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
 
     const file = location.file;
     let source = sources.get(file);
-    // Fallback location can fall outside the sources model.
     if (!source) {
       source = { errors: fallbackLocation?.source?.errors || [], content: fallbackLocation?.source?.content };
       sources.set(file, source);
@@ -49,7 +94,6 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
     const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.line, message: e.message }));
     highlight.push({ line: targetLine, type: 'running' });
 
-    // After the source update, but before the test run, don't trust the cache.
     if (fallbackLocation?.source?.content !== undefined) {
       source.content = fallbackLocation.source.content;
     } else if (source.content === undefined || (location === fallbackLocation)) {
@@ -80,6 +124,10 @@ export const SourceTab: React.FunctionComponent<{
 }> = ({ stack, sources, rootDir, fallbackLocation, stackFrameLocation, onOpenExternally }) => {
   const [lastStack, setLastStack] = React.useState<StackFrame[] | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
+  const [selectedIde, setSelectedIde] = React.useState<IdeId>(() => loadIde());
+  const [availableIDEs, setAvailableIDEs] = React.useState<typeof BASE_IDE_OPTIONS>([]);
+
+  React.useEffect(() => { getAvailableIDEs().then(setAvailableIDEs); }, []);
 
   React.useEffect(() => {
     if (lastStack !== stack) {
@@ -90,16 +138,17 @@ export const SourceTab: React.FunctionComponent<{
 
   const { source, highlight, targetLine, fileName, location } = useSources(stack, selectedFrame, sources, rootDir, fallbackLocation);
 
-  const openExternally = React.useCallback(() => {
+  const openExternally = React.useCallback(async () => {
     if (!location)
       return;
-    if (onOpenExternally) {
-      onOpenExternally(location);
-    } else {
-      // This should open an external protocol handler instead of actually navigating away.
-      window.location.href = `vscode://file//${location.file}:${location.line}`;
+    const { file, line } = location;
+    if (selectedIde === 'vscode' || selectedIde === 'cursor') {
+      const proto = selectedIde === 'cursor' ? 'cursor' : 'vscode';
+      window.location.href = `${proto}://file//${file}:${line ?? 0}`;
+      return;
     }
-  }, [onOpenExternally, location]);
+    await fetch(`trace/open-in-ide?ide=${selectedIde}&file=${encodeURIComponent(file)}&line=${line ?? 0}`);
+  }, [location, selectedIde]);
 
   const showStackFrames = (stack?.length ?? 0) > 1;
   const shortFileName = getFileName(fileName);
@@ -109,16 +158,24 @@ export const SourceTab: React.FunctionComponent<{
     orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'}
     sidebarHidden={!showStackFrames}
     main={<div className='vbox' data-testid='source-code'>
-      { fileName && <Toolbar>
+      {fileName && <Toolbar>
+        <select
+          className='ide-dropdown'
+          value={selectedIde}
+          onChange={e => { const id = e.target.value as IdeId; setSelectedIde(id); saveIde(id); }}
+          title='Choose IDE to open file'
+          data-testid='ide-selector'>
+          {availableIDEs.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+        </select>
         <div className='source-tab-file-name' title={fileName}>
           <div>{shortFileName}</div>
         </div>
         <CopyToClipboard description='Copy filename' value={shortFileName}/>
-        {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
-      </Toolbar> }
+        {location && <ToolbarButton icon='link-external' title={`Open in ${availableIDEs.find(i => i.id === selectedIde)?.label ?? ''}`} onClick={openExternally}></ToolbarButton>}
+      </Toolbar>}
       <CodeMirrorWrapper text={source.content || ''} highlighter='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} dataTestId='source-code-mirror'/>
     </div>}
-    sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />}
+    sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}/>}
   />;
 };
 

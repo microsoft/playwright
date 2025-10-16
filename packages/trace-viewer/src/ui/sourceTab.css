@@ -35,3 +35,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.ide-dropdown {
+  margin-right: 8px;
+  background: var(--vscode-dropdown-background, #2a2a2a);
+  color: var(--vscode-foreground, #fff);
+  border: 1px solid var(--vscode-dropdown-border, #555);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  max-width: 200px;
+}
