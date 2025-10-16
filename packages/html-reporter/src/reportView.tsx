@@ -256,13 +256,21 @@ function createSortedNoFilesModel(report: LoadedReport | undefined, filter: Filt
   tests = tests.filter(t => filter.matches(t));
   filter.sortTests(tests);
 
-  return {
-    files: [{
-      fileId: '',
-      fileName: '',
-      tests,
+  const files: TestFileSummary[] = [];
+  const chunkSize = 100;
+
+  for (let i = 0; i < tests.length; i += chunkSize) {
+    const chunk = tests.slice(i, i + chunkSize);
+    files.push({
+      fileId: '' + i,
+      fileName: `${i} - ${i + chunkSize - 1}`,
+      tests: chunk,
       stats: { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0, ok: true }
-    }],
+    });
+  }
+
+  return {
+    files,
     tests
   };
 }
