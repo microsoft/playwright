@@ -116,6 +116,9 @@ it('should restore state from userDataDir', async ({ browserType, server, create
   const page = await browserContext.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => localStorage.hey = 'hello');
+  // Browsers do not persist local storage immediately, they do it asynchronously in another process.
+  // Navigate away to give it a chance to save (best-effort).
+  await page.goto(server.EMPTY_PAGE);
   await browserContext.close();
 
   const browserContext2 = await browserType.launchPersistentContext(userDataDir);
@@ -145,8 +148,8 @@ it('should have default URL when launching browser', async ({ launchPersistent }
   expect(urls).toEqual(['about:blank']);
 });
 
-it('should throw if page argument is passed', async ({ browserType, server, createUserDataDir, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should throw if page argument is passed', async ({ browserType, server, createUserDataDir, browserName, channel }) => {
+  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
   const options = { args: [server.EMPTY_PAGE] };
   const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);

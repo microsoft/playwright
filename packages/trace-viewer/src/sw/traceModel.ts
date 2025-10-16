@@ -61,7 +61,6 @@ export class TraceModel {
     let done = 0;
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
-      contextEntry.traceUrl = backend.traceURL();
       contextEntry.hasSource = hasSource;
       const modernizer = new TraceModernizer(contextEntry, this._snapshotStorage);
 
@@ -138,7 +137,6 @@ function stripEncodingFromContentType(contentType: string) {
 function createEmptyContext(): ContextEntry {
   return {
     origin: 'testRunner',
-    traceUrl: '',
     startTime: Number.MAX_SAFE_INTEGER,
     wallTime: Number.MAX_SAFE_INTEGER,
     endTime: 0,

@@ -31,7 +31,6 @@ export type HtmlReporterOptions = {
   title?: string;
   noSnippets?: boolean;
   noCopyPrompt?: boolean;
-  noFiles?: boolean;
 };
 
 export type ReporterDescription = Readonly<

@@ -27,6 +27,7 @@ import { copyPrompt, stripAnsiEscapes } from '@web/shared/prompts';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { calculateSha1 } from './sourceTab';
 import type { StackFrame } from '@protocol/channels';
+import { TraceModelContext } from './traceModelContext';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -85,17 +86,17 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
-  model?: modelUtil.MultiTraceModel,
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
   testRunMetadata: MetadataWithCommitInfo | undefined,
-}> = ({ errorsModel, model, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
+}> = ({ errorsModel, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
+  const model = React.useContext(TraceModelContext);
   const errorContext = useAsyncMemo(async () => {
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
       return;
-    return await fetch(attachmentURL(attachment)).then(r => r.text());
+    return await fetch(attachmentURL(model, attachment)).then(r => r.text());
   }, [model], undefined);
 
   const buildCodeFrame = React.useCallback(async (error: modelUtil.ErrorDescription) => {
@@ -103,8 +104,8 @@ export const ErrorsTab: React.FunctionComponent<{
     if (!location)
       return;
 
-    let response = await fetch(`sha1/src@${await calculateSha1(location.file)}.txt`);
-    if (response.status === 404)
+    let response = model ? await fetch(model.createRelativeUrl(`sha1/src@${await calculateSha1(location.file)}.txt`)) : undefined;
+    if (!response || response.status === 404)
       response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
     if (response.status >= 400)
       return;
@@ -118,7 +119,7 @@ export const ErrorsTab: React.FunctionComponent<{
       linesAbove: 100,
       linesBelow: 100,
     });
-  }, []);
+  }, [model]);
 
   const prompt = useAsyncMemo(
       () => copyPrompt(

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse } from './fixtures';
 
 test('browser_console_messages', async ({ client, server }) => {
   server.setContent('/', `
@@ -97,4 +97,38 @@ test('recent console messages', async ({ client, server }) => {
   expect(response).toHaveResponse({
     consoleMessages: expect.stringContaining(`- [LOG] Hello, world! @`),
   });
+});
+
+test('browser_console_messages errors only', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.HELLO_WORLD,
+    },
+  });
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `async () => {
+        console.log("console.log");
+        console.warn("console.warn");
+        console.error("console.error");
+        setTimeout(() => { throw new Error("unhandled"); }, 0);
+        await fetch('/missing');
+      }`,
+    },
+  });
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_console_messages',
+    arguments: {
+      onlyErrors: true,
+    },
+  }));
+  expect.soft(response.result).toContain('console.error');
+  expect.soft(response.result).toContain('Error: unhandled');
+  expect.soft(response.result).toContain('404');
+  expect.soft(response.result).not.toContain('console.log');
+  expect.soft(response.result).not.toContain('console.warn');
 });

@@ -17,6 +17,7 @@
 import fs from 'fs';
 
 import { test, expect } from './fixtures';
+import { jpegjs, PNG } from 'packages/playwright-core/lib/utilsBundle';
 
 test('browser_take_screenshot (viewport)', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
@@ -175,6 +176,49 @@ test('browser_take_screenshot (default type should be png)', async ({ startClien
   expect(files[0]).toMatch(/^page-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.png$/);
 });
 
+test('browser_take_screenshot (filename is empty string)', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: { outputDir },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {
+      filename: '',
+    },
+  })).toEqual({
+    content: [
+      {
+        text: expect.stringMatching(
+            new RegExp(`page-\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}\\-\\d{3}Z\\.png`)
+        ),
+        type: 'text',
+      },
+      {
+        data: expect.any(String),
+        mimeType: 'image/png',
+        type: 'image',
+      },
+    ],
+  });
+
+  const files = [...fs.readdirSync(outputDir)].filter(f => f.endsWith('.png'));
+
+  expect(fs.existsSync(outputDir)).toBeTruthy();
+  expect(files).toHaveLength(1);
+  expect(files[0]).toMatch(
+      new RegExp(`^page-\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}-\\d{3}Z\\.png$`)
+  );
+});
+
+
 test('browser_take_screenshot (filename: "output.png")', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
   const { client } = await startClient({
@@ -264,9 +308,51 @@ test('browser_take_screenshot (fullPage: true)', async ({ startClient, server },
       {
         text: expect.stringContaining('fullPage: true'),
         type: 'text',
-      }
+      },
+      {
+        data: expect.any(String),
+        mimeType: 'image/png',
+        type: 'image',
+      },
     ],
   });
+});
+
+test('browser_take_screenshot size cap', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser ?? ''), 'Non-chrome has unusual full page size');
+
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+
+  const expectations = [
+    { title: '2000x500', pageWidth: 2000, pageHeight: 500, expectedWidth: 1568, expectedHeight: 500 * 1568 / 2000 | 0 },
+    { title: '2000x2000', pageWidth: 2000, pageHeight: 2000, expectedWidth: 1098, expectedHeight: 1098 },
+    { title: '1280x800', pageWidth: 1280, pageHeight: 800, expectedWidth: 1280, expectedHeight: 800 },
+  ];
+
+  for (const expectation of expectations) {
+    await test.step(expectation.title, async () => {
+      server.setContent('/', `<body style="width: ${expectation.pageWidth}px; height: ${expectation.pageHeight}px; background: red; margin: 0;"></body>`, 'text/html');
+      await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+      const pngResult = await client.callTool({
+        name: 'browser_take_screenshot',
+        arguments: { fullPage: true },
+      });
+      const png = PNG.sync.read(Buffer.from(pngResult.content?.[1]?.data, 'base64'));
+      expect(png.width).toBe(expectation.expectedWidth);
+      expect(png.height).toBe(expectation.expectedHeight);
+
+      const jpegResult = await client.callTool({
+        name: 'browser_take_screenshot',
+        arguments: { fullPage: true, type: 'jpeg' },
+      });
+      const jpeg = jpegjs.decode(Buffer.from(jpegResult.content?.[1]?.data, 'base64'));
+      expect(jpeg.width).toBe(expectation.expectedWidth);
+      expect(jpeg.height).toBe(expectation.expectedHeight);
+    });
+  }
 });
 
 test('browser_take_screenshot (fullPage with element should error)', async ({ startClient, server }, testInfo) => {

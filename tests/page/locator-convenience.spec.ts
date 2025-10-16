@@ -193,3 +193,32 @@ it('should return page', async ({ page, server }) => {
   const inFrame = page.frames()[1].locator('div');
   expect(inFrame.page()).toBe(page);
 });
+
+it('description should return null for locator without description', async ({ page }) => {
+  const locator = page.locator('button');
+  expect(locator.description()).toBe(null);
+});
+
+it('description should return description for locator with simple description', async ({ page }) => {
+  const locator = page.locator('button').describe('Submit button');
+  expect(locator.description()).toBe('Submit button');
+});
+
+it('description should return description with special characters', async ({ page }) => {
+  const locator = page.locator('div').describe('Button with "quotes" and \'apostrophes\'');
+  expect(locator.description()).toBe('Button with "quotes" and \'apostrophes\'');
+});
+
+it('description should return description for chained locators', async ({ page }) => {
+  const locator = page.locator('form').locator('input').describe('Form input field');
+  expect(locator.description()).toBe('Form input field');
+});
+
+it('description should return description for locator with multiple describe calls', async ({ page }) => {
+  const locator1 = page.locator('foo').describe('First description');
+  expect(locator1.description()).toBe('First description');
+  const locator2 = locator1.locator('button').describe('Second description');
+  expect(locator2.description()).toBe('Second description');
+  const locator3 = locator2.locator('button');
+  expect(locator3.description()).toBe(null);
+});

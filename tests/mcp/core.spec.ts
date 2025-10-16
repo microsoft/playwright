@@ -90,8 +90,6 @@ test('browser_select_option (multiple)', async ({ client, server }) => {
   })).toHaveResponse({
     code: `await page.getByRole('listbox').selectOption(['bar', 'baz']);`,
     pageState: expect.stringContaining(`
-- listbox [ref=e2]:
-  - option "Foo" [ref=e3]
   - option "Bar" [selected] [ref=e4]
   - option "Baz" [selected] [ref=e5]`),
   });

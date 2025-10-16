@@ -59,28 +59,38 @@ export function httpAddressToString(address: string | net.AddressInfo | null): s
   return `http://${resolvedHost}:${resolvedPort}`;
 }
 
-export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
+export async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, unguessableUrl: boolean, allowedHosts?: string[]) {
   const url = httpAddressToString(httpServer.address());
   const host = new URL(url).host;
   allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
+  const allowAnyHost = allowedHosts.includes('*');
+  const pathPrefix = unguessableUrl ? `/${crypto.randomUUID()}` : '';
 
   const sseSessions = new Map();
   const streamableSessions = new Map();
   httpServer.on('request', async (req, res) => {
-    const host = req.headers.host?.toLowerCase();
-    if (!host) {
-      res.statusCode = 400;
-      return res.end('Missing host');
+    if (!allowAnyHost) {
+      const host = req.headers.host?.toLowerCase();
+      if (!host) {
+        res.statusCode = 400;
+        return res.end('Missing host');
+      }
+
+      // Prevent DNS evil.com -> localhost rebind.
+      if (!allowedHosts.includes(host)) {
+        // Access from the browser is forbidden.
+        res.statusCode = 403;
+        return res.end('Access is only allowed at ' + allowedHosts.join(', '));
+      }
     }
 
-    // Prevent DNS evil.com -> localhost rebind.
-    if (!allowedHosts.includes(host)) {
-      // Access from the browser is forbidden.
-      res.statusCode = 403;
-      return res.end('Access is only allowed at ' + allowedHosts.join(', '));
+    if (!req.url?.startsWith(pathPrefix)) {
+      res.statusCode = 404;
+      return res.end('Not found');
     }
 
-    const url = new URL(`http://localhost${req.url}`);
+    const path = req.url?.slice(pathPrefix.length);
+    const url = new URL(`http://localhost${path}`);
     if (url.pathname === '/killkillkill' && req.method === 'GET') {
       res.statusCode = 200;
       res.end('Killing process');
@@ -93,6 +103,8 @@ export async function installHttpTransport(httpServer: http.Server, serverBacken
     else
       await handleStreamable(serverBackendFactory, req, res, streamableSessions);
   });
+
+  return `${url}${pathPrefix}`;
 }
 
 async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, url: URL, sessions: Map<string, SSEServerTransport>) {

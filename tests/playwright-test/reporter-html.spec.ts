@@ -2943,6 +2943,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-path')).toHaveText('Root describe');
     });
 
+
     test('should print a user-friendly warning when opening a trace via file:// protocol', async ({ runInlineTest, showReport, page }) => {
       await runInlineTest({
         'playwright.config.ts': `
@@ -2965,9 +2966,15 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const reportPath = path.join(test.info().outputPath(), 'playwright-report');
       await page.goto(url.pathToFileURL(path.join(reportPath, 'index.html')).toString());
       await page.getByRole('link', { name: 'View trace' }).click();
-      await expect(page.locator('#fallback-error')).toContainText('The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.');
-      await expect(page.locator('#fallback-error')).toContainText(`npx playwright show-report ${reportPath.replace(/\\/g, '\\\\')}`);
+      await expect(page.locator('#fallback-error')).toContainText(
+          'The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.'
+      );
+      const expectedReportPath = reportPath.replace(/\\/g, '\\\\');
+      await expect(page.locator('#fallback-error')).toContainText(
+          `npx playwright show-report "${expectedReportPath}"`
+      );
     });
+
 
     test('should not collate identical file names in different project directories', async ({ runInlineTest, page }) => {
       await runInlineTest({
@@ -3204,16 +3211,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
   });
 }
 
-test('should support noFiles option', async ({ runInlineTest, showReport, page }) => {
+test('should support merge files option', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/test';
-      export default defineConfig({
-        name: 'project-name',
-        reporter: [['html', { noFiles: true }]]
-      });
-      module.exports = { name: 'project-name', reporter: [['html', { noFiles: true }]] };
-    `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test.describe('describe', () => {
@@ -3227,21 +3226,24 @@ test('should support noFiles option', async ({ runInlineTest, showReport, page }
         test('test 3', async ({}) => {});
       });
     `,
-  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+  }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
   await showReport();
 
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('checkbox', { name: 'Merge files' }).click();
+
   await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button "<anonymous>" [expanded]
+    - region:
+      - link "test 2"
+      - link "a.test.js:6"
     - button "describe" [expanded]
     - region:
       - link "test 1"
       - link "a.test.js:4"
       - link "test 3"
       - link "b.test.js:4"
-    - button "<anonymous>" [expanded]
-    - region:
-      - link "test 2"
-      - link "a.test.js:6"
   `);
 });
 

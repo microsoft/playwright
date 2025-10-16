@@ -16,12 +16,12 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import * as path from 'path';
 import fs from 'fs';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
+import { TestServer } from '../config/testserver';
 const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
@@ -676,10 +676,7 @@ it('should return security details directly from response', async ({ contextFact
 });
 
 it('should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
-  const server = createHttp2Server({
-    key: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'key.pem')),
-    cert: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'cert.pem')),
-  });
+  const server = createHttp2Server(await TestServer.certOptions());
   server.on('stream', stream => {
     stream.respond({
       'content-type': 'text/html; charset=utf-8',
@@ -698,8 +695,8 @@ it('should contain http2 for http2 requests', async ({ contextFactory }, testInf
   server.close();
 });
 
-it('should filter favicon and favicon redirects', async ({ server, browserName, headless, asset, contextFactory }, testInfo) => {
-  it.skip(headless && browserName !== 'firefox' && browserName as any !== '_bidiFirefox', 'headless browsers, except firefox, do not request favicons');
+it('should filter favicon and favicon redirects', async ({ server, browserName, headless, asset, contextFactory, channel }, testInfo) => {
+  it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit', 'headed webkit does not have a favicon feature');
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
@@ -862,7 +859,7 @@ it('should include redirects from API request', async ({ contextFactory, server 
   expect(json.timings).toBeDefined();
 });
 
-it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
+it('should not hang on resources served from cache', async ({ contextFactory, server, browserName, channel }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
@@ -877,7 +874,7 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   const log = await getLog();
   const entries = log.entries.filter(e => e.request.url.endsWith('one-style.css'));
   // In firefox no request events are fired for cached resources.
-  if (browserName === 'firefox')
+  if (browserName === 'firefox' && !channel?.startsWith('moz-firefox'))
     expect(entries.length).toBe(1);
   else
     expect(entries.length).toBe(2);

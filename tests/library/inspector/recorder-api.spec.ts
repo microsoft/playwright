@@ -139,3 +139,15 @@ test('should type', async ({ context }) => {
 
   expect(normalizeCode(fillActions[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
 });
+
+test('should disable recorder', async ({ context }) => {
+  const log = await startRecording(context);
+  const page = await context.newPage();
+  await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('button', { name: 'Submit' }).click();
+  expect(log.action('click')).toHaveLength(2);
+  await (context as any)._disableRecorder();
+  await page.getByRole('button', { name: 'Submit' }).click();
+  expect(log.action('click')).toHaveLength(2);
+});

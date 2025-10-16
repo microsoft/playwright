@@ -112,7 +112,10 @@ export type Box = {
   visible: boolean;
   inline: boolean;
   rect?: DOMRect;
-  style?: CSSStyleDeclaration;
+  // Note: we do not store the CSSStyleDeclaration object, because it is a live object
+  // and changes values over time. This does not work for caching or comparing to the
+  // old values. Instead, store all the properties separately.
+  cursor?: CSSStyleDeclaration['cursor'];
 };
 
 export function computeBox(element: Element): Box {
@@ -120,20 +123,21 @@ export function computeBox(element: Element): Box {
   const style = getElementComputedStyle(element);
   if (!style)
     return { visible: true, inline: false };
+  const cursor = style.cursor;
   if (style.display === 'contents') {
     // display:contents is not rendered itself, but its child nodes are.
     for (let child = element.firstChild; child; child = child.nextSibling) {
       if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && isElementVisible(child as Element))
-        return { visible: true, inline: false, style };
+        return { visible: true, inline: false, cursor };
       if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
-        return { visible: true, inline: true, style };
+        return { visible: true, inline: true, cursor };
     }
-    return { visible: false, inline: false, style };
+    return { visible: false, inline: false, cursor };
   }
   if (!isElementStyleVisibilityVisible(element, style))
-    return { style, visible: false, inline: false };
+    return { cursor, visible: false, inline: false };
   const rect = element.getBoundingClientRect();
-  return { rect, style, visible: rect.width > 0 && rect.height > 0, inline: style.display === 'inline' };
+  return { rect, cursor, visible: rect.width > 0 && rect.height > 0, inline: style.display === 'inline' };
 }
 
 export function isElementVisible(element: Element): boolean {

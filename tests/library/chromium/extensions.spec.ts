@@ -70,8 +70,6 @@ it.describe('MV3', () => {
   });
 
   it('should support request/response events in the service worker', async ({ launchPersistentContext, asset, server }) => {
-    it.fixme(true, 'Waiting for https://issues.chromium.org/u/1/issues/407795731 getting fixed.');
-    process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
     server.setRoute('/empty.html', (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
       res.end(`<span>hello world!</span>`);
@@ -102,7 +100,6 @@ it.describe('MV3', () => {
     expect(await response.allHeaders()).toEqual(expect.objectContaining({ 'x-response-foobar': 'BarFoo' }));
 
     await context.close();
-    delete process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS;
   });
 
   it('should report console messages from content script', {

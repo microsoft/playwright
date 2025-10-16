@@ -1444,10 +1444,12 @@ export class Frame extends SdkObject {
       progress.log(log);
     // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
     if (matches === options.isNot) {
-      if (missingReceived)
+      if (missingReceived) {
         lastIntermediateResult.errorMessage = 'Error: element(s) not found';
-      else
+      } else {
+        lastIntermediateResult.errorMessage = undefined;
         lastIntermediateResult.received = received;
+      }
       lastIntermediateResult.isSet = true;
       if (!missingReceived && !Array.isArray(received))
         progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);

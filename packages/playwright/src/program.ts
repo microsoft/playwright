@@ -168,25 +168,37 @@ function addTestMCPServerCommand(program: Command) {
       version: packageJSON.version,
       create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
     };
-    const mdbUrl = await runMainBackend(backendFactory, { port: options.port === undefined ? undefined : +options.port });
+    const mdbUrl = await runMainBackend(
+        backendFactory,
+        {
+          port: options.port === undefined ? undefined : +options.port
+        },
+    );
     if (mdbUrl)
       console.error('MCP Listening on: ', mdbUrl);
   });
 }
 
 function addInitAgentsCommand(program: Command) {
-  const command = program.command('init-agents', { hidden: true });
-  command.description('Initialize repository agents for the Claude Code');
+  const command = program.command('init-agents');
+  command.description('Initialize repository agents');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['code', 'claude', 'opencode']);
+  option.choices(['vscode', 'claude', 'opencode']);
   command.addOption(option);
+  command.option('-c, --config <file>', `Configuration file to find a project to use for seed test`);
+  command.option('--project <project>', 'Project to use for seed test');
   command.action(async opts => {
-    if (opts.loop === 'opencode')
-      await initOpencodeRepo();
-    else if (opts.loop === 'code')
-      await initVSCodeRepo();
-    else if (opts.loop === 'claude')
-      await initClaudeCodeRepo();
+    const config = await loadConfigFromFile(opts.config);
+    if (opts.loop === 'opencode') {
+      await initOpencodeRepo(config, opts.project);
+    } else if (opts.loop === 'vscode') {
+      await initVSCodeRepo(config, opts.project);
+    } else if (opts.loop === 'claude') {
+      await initClaudeCodeRepo(config, opts.project);
+    } else {
+      command.help();
+      return;
+    }
   });
 }
 

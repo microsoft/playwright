@@ -8802,18 +8802,18 @@ export interface BrowserContext {
     value: string;
 
     /**
-     * Either url or domain / path are required. Optional.
+     * Either `url` or both `domain` and `path` are required. Optional.
      */
     url?: string;
 
     /**
-     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either url
-     * or domain / path are required. Optional.
+     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either
+     * `url` or both `domain` and `path` are required. Optional.
      */
     domain?: string;
 
     /**
-     * Either url or domain / path are required Optional.
+     * Either `url` or both `domain` and `path` are required. Optional.
      */
     path?: string;
 
@@ -10325,36 +10325,15 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
-
-  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10364,31 +10343,13 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   off(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
-
-  /**
-   * **NOTE** Console events from Web Workers are dispatched on the page object. Note that console events are only
-   * supported on Chromium-based browsers and within Service Workers.
-   *
-   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
-   */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   url(): string;
 }
@@ -12974,6 +12935,23 @@ export interface Locator {
    * @param description Locator description.
    */
   describe(description: string): Locator;
+
+  /**
+   * Returns locator description previously set with
+   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const button = page.getByRole('button').describe('Subscribe button');
+   * console.log(button.description()); // "Subscribe button"
+   *
+   * const input = page.getByRole('textbox');
+   * console.log(input.description()); // null
+   * ```
+   *
+   */
+  description(): null|string;
 
   /**
    * Programmatically dispatch an event on the matching element.
@@ -16329,8 +16307,6 @@ export type AndroidKey =
 
 export const _electron: Electron;
 export const _android: Android;
-export const _bidiChromium: BrowserType;
-export const _bidiFirefox: BrowserType;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
@@ -19147,6 +19123,10 @@ export interface Download {
 
   /**
    * Returns a readable stream for a successful download, or throws for a failed/canceled download.
+   *
+   * **NOTE** If you don't need a readable stream, it's usually simpler to read the file from disk after the download
+   * completed. See [download.path()](https://playwright.dev/docs/api/class-download#download-path).
+   *
    */
   createReadStream(): Promise<Readable>;
 

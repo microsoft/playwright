@@ -45,13 +45,13 @@
   padding: 2px 8px;
 }
 
-@media(prefers-color-scheme: light) {
+:root.light-mode {
   .test-result-counter {
     background: var(--color-scale-gray-5);
   }
 }
 
-@media(prefers-color-scheme: dark) {
+:root.dark-mode {
   .test-result-counter {
     background: var(--color-scale-gray-3);
   }

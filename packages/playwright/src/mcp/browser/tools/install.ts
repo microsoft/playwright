@@ -27,7 +27,7 @@ const install = defineTool({
     title: 'Install the browser specified in the config',
     description: 'Install the browser specified in the config. Call this if you get an error about the browser not being installed.',
     inputSchema: z.object({}),
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (context, params, response) => {

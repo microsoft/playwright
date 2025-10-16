@@ -17,7 +17,6 @@
 import { z } from '../../sdk/bundle';
 import { defineTabTool, defineTool } from './tool';
 import * as javascript from '../codegen';
-import { generateLocator } from './utils';
 
 const snapshot = defineTool({
   capability: 'core',
@@ -31,7 +30,7 @@ const snapshot = defineTool({
 
   handle: async (context, params, response) => {
     await context.ensureTab();
-    response.setIncludeSnapshot();
+    response.setIncludeSnapshot('full');
   },
 });
 
@@ -53,13 +52,13 @@ const click = defineTabTool({
     title: 'Click',
     description: 'Perform click on a web page',
     inputSchema: clickSchema,
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const locator = await tab.refLocator(params);
+    const { locator, resolved } = await tab.refLocator(params);
     const options = {
       button: params.button,
       modifiers: params.modifiers,
@@ -68,9 +67,9 @@ const click = defineTabTool({
     const optionsAttr = formatted !== '{}' ? formatted : '';
 
     if (params.doubleClick)
-      response.addCode(`await page.${await generateLocator(locator)}.dblclick(${optionsAttr});`);
+      response.addCode(`await page.${resolved}.dblclick(${optionsAttr});`);
     else
-      response.addCode(`await page.${await generateLocator(locator)}.click(${optionsAttr});`);
+      response.addCode(`await page.${resolved}.click(${optionsAttr});`);
 
     await tab.waitForCompletion(async () => {
       if (params.doubleClick)
@@ -93,22 +92,22 @@ const drag = defineTabTool({
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
       endRef: z.string().describe('Exact target element reference from the page snapshot'),
     }),
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const [startLocator, endLocator] = await tab.refLocators([
+    const [start, end] = await tab.refLocators([
       { ref: params.startRef, element: params.startElement },
       { ref: params.endRef, element: params.endElement },
     ]);
 
     await tab.waitForCompletion(async () => {
-      await startLocator.dragTo(endLocator);
+      await start.locator.dragTo(end.locator);
     });
 
-    response.addCode(`await page.${await generateLocator(startLocator)}.dragTo(page.${await generateLocator(endLocator)});`);
+    response.addCode(`await page.${start.resolved}.dragTo(page.${end.resolved});`);
   },
 });
 
@@ -119,14 +118,14 @@ const hover = defineTabTool({
     title: 'Hover mouse',
     description: 'Hover over element on page',
     inputSchema: elementSchema,
-    type: 'readOnly',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const locator = await tab.refLocator(params);
-    response.addCode(`await page.${await generateLocator(locator)}.hover();`);
+    const { locator, resolved } = await tab.refLocator(params);
+    response.addCode(`await page.${resolved}.hover();`);
 
     await tab.waitForCompletion(async () => {
       await locator.hover();
@@ -145,14 +144,14 @@ const selectOption = defineTabTool({
     title: 'Select option',
     description: 'Select an option in a dropdown',
     inputSchema: selectOptionSchema,
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const locator = await tab.refLocator(params);
-    response.addCode(`await page.${await generateLocator(locator)}.selectOption(${javascript.formatObject(params.values)});`);
+    const { locator, resolved } = await tab.refLocator(params);
+    response.addCode(`await page.${resolved}.selectOption(${javascript.formatObject(params.values)});`);
 
     await tab.waitForCompletion(async () => {
       await locator.selectOption(params.values);
@@ -171,8 +170,8 @@ const pickLocator = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const locator = await tab.refLocator(params);
-    response.addResult(await generateLocator(locator));
+    const { resolved } = await tab.refLocator(params);
+    response.addResult(resolved);
   },
 });
 

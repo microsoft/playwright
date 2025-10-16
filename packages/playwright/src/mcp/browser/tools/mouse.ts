@@ -31,7 +31,7 @@ const mouseMove = defineTabTool({
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
     }),
-    type: 'readOnly',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
@@ -54,7 +54,7 @@ const mouseClick = defineTabTool({
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
     }),
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
@@ -85,7 +85,7 @@ const mouseDrag = defineTabTool({
       endX: z.number().describe('End X coordinate'),
       endY: z.number().describe('End Y coordinate'),
     }),
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {

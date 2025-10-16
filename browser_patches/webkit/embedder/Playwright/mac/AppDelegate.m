@@ -327,15 +327,19 @@ const NSActivityOptions ActivityOptions =
 - (WKWebView *)createHeadlessPage:(WKWebViewConfiguration *)configuration withURL:(NSString*)urlString
 {
     NSRect rect = NSMakeRect(0, 0, 1280, 720);
-    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
-    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
+
+    // https://github.com/microsoft/playwright/issues/36711
+    // https://codereview.chromium.org/1380083005
+    NSScreen *firstScreen = [[NSScreen screens] firstObject];
+
+    NSRect windowRect = firstScreen ? NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000) : rect;
     NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
 
     WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
-    webView._windowOcclusionDetectionEnabled = NO;
     if (!webView)
         return nil;
 
+    webView._windowOcclusionDetectionEnabled = NO;
     webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [window.contentView addSubview:webView];
     [window setIsVisible:YES];

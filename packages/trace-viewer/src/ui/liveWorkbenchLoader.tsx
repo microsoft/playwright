@@ -20,6 +20,7 @@ import './workbenchLoader.css';
 import { Workbench } from './workbench';
 
 import type { ContextEntry } from '../types/entries';
+import { TraceModelContext } from './traceModelContext';
 
 export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>(undefined);
@@ -36,7 +37,7 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
         const model = await loadSingleTraceFile(traceJson);
         setModel(model);
       } catch {
-        const model = new MultiTraceModel([]);
+        const model = new MultiTraceModel('', []);
         setModel(model);
       } finally {
         setCounter(counter + 1);
@@ -48,14 +49,15 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
     };
   }, [traceJson, counter]);
 
-  return <Workbench model={model} isLive={true} />;
+  return <TraceModelContext.Provider value={model}>
+    <Workbench isLive={true} />
+  </TraceModelContext.Provider>;
 };
 
 async function loadSingleTraceFile(traceJson: string): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
   params.set('trace', traceJson);
-  params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
-  return new MultiTraceModel(contextEntries);
+  return new MultiTraceModel(traceJson, contextEntries);
 }

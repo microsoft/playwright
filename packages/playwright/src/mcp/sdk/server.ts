@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import * as mcpBundle from './bundle';
-import { httpAddressToString, installHttpTransport, startHttpServer } from './http';
+import { installHttpTransport, startHttpServer } from './http';
 import { InProcessTransport } from './inProcessTransport';
 
 import type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
@@ -37,10 +37,14 @@ export type ClientInfo = {
   timestamp: number;
 };
 
+export type ProgressParams = { message?: string, progress?: number, total?: number };
+export type ProgressCallback = (params: ProgressParams) => void;
+
 export interface ServerBackend {
   initialize?(server: Server, clientInfo: ClientInfo): Promise<void>;
   listTools(): Promise<Tool[]>;
-  callTool(name: string, args: CallToolRequest['params']['arguments']): Promise<CallToolResult>;
+  afterCallTool?(name: string, args: CallToolRequest['params']['arguments'], result: CallToolResult): Promise<void>;
+  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
   serverClosed?(server: Server): void;
 }
 
@@ -75,13 +79,29 @@ export function createServer(name: string, version: string, backend: ServerBacke
   });
 
   let initializePromise: Promise<void> | undefined;
-  server.setRequestHandler(mcpBundle.CallToolRequestSchema, async request => {
+  server.setRequestHandler(mcpBundle.CallToolRequestSchema, async (request, extra) => {
     serverDebug('callTool', request);
+
+    const progressToken = request.params._meta?.progressToken;
+    let progressCounter = 0;
+
+    const progress = progressToken ? (params: ProgressParams) => {
+      extra.sendNotification({
+        method: 'notifications/progress',
+        params: {
+          progressToken,
+          progress: params.progress ?? ++progressCounter,
+          total: params.total,
+          message: params.message,
+        },
+      }).catch(serverDebug);
+    } : () => {};
+
     try {
       if (!initializePromise)
         initializePromise = initializeServer(server, backend, runHeartbeat);
       await initializePromise;
-      return await backend.callTool(request.params.name, request.params.arguments || {});
+      return mergeTextParts(await backend.callTool(request.params.name, request.params.arguments || {}, progress));
     } catch (error) {
       return {
         content: [{ type: 'text', text: '### Result\n' + String(error) }],
@@ -146,8 +166,7 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
   }
 
   const httpServer = await startHttpServer(options);
-  const url = httpAddressToString(httpServer.address());
-  await installHttpTransport(httpServer, serverBackendFactory, options.allowedHosts);
+  const url = await installHttpTransport(httpServer, serverBackendFactory, false, options.allowedHosts);
 
   const mcpConfig: any = { mcpServers: { } };
   mcpConfig.mcpServers[serverBackendFactory.nameInConfig] = {
@@ -169,4 +188,26 @@ export function firstRootPath(clientInfo: ClientInfo): string | undefined {
   const firstRootUri = clientInfo.roots[0]?.uri;
   const url = firstRootUri ? new URL(firstRootUri) : undefined;
   return url ? fileURLToPath(url) : undefined;
+}
+
+function mergeTextParts(result: CallToolResult): CallToolResult {
+  const content: CallToolResult['content'] = [];
+  const testParts: string[] = [];
+  for (const part of result.content) {
+    if (part.type === 'text') {
+      testParts.push(part.text);
+      continue;
+    }
+    if (testParts.length > 0) {
+      content.push({ type: 'text', text: testParts.join('\n') });
+      testParts.length = 0;
+    }
+    content.push(part);
+  }
+  if (testParts.length > 0)
+    content.push({ type: 'text', text: testParts.join('\n') });
+  return {
+    ...result,
+    content,
+  };
 }

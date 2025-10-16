@@ -214,11 +214,17 @@ export class TestInfoImpl implements TestInfo {
     })();
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
-    this.attachments.push = (...attachments: TestInfo['attachments']) => {
+    const attachmentsPush = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
         this._attach(a, this._parentStep()?.stepId);
       return this.attachments.length;
     };
+    Object.defineProperty(this.attachments, 'push', {
+      value: attachmentsPush,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
 
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
 
@@ -459,15 +465,20 @@ export class TestInfoImpl implements TestInfo {
     });
     this._attach(
         await normalizeAndSaveAttachment(this.outputPath(), name, options),
-        step.group ? undefined : step.stepId
+        step.stepId
     );
     step.complete({});
   }
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    if (stepId) {
-      this._stepMap.get(stepId)!.attachmentIndices.push(index);
+
+    let step = stepId ? this._stepMap.get(stepId) : undefined;
+    if (!!step?.group)
+      step = undefined;
+
+    if (step) {
+      step.attachmentIndices.push(index);
     } else {
       const stepId = `attach@${createGuid()}`;
       this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
@@ -480,7 +491,7 @@ export class TestInfoImpl implements TestInfo {
       contentType: attachment.contentType,
       path: attachment.path,
       body: attachment.body?.toString('base64'),
-      stepId,
+      stepId: step?.stepId,
     });
   }
 

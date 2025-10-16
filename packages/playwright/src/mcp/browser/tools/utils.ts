@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { asLocator } from 'playwright-core/lib/utils';
-
 import type * as playwright from 'playwright-core';
 import type { Tab } from '../tab';
 
@@ -25,11 +23,15 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   let waitCallback: () => void = () => {};
   const waitBarrier = new Promise<void>(f => { waitCallback = f; });
 
-  const requestListener = (request: playwright.Request) => requests.add(request);
-  const requestFinishedListener = (request: playwright.Request) => {
+  const responseListener = (request: playwright.Request) => {
     requests.delete(request);
     if (!requests.size)
       waitCallback();
+  };
+
+  const requestListener = (request: playwright.Request) => {
+    requests.add(request);
+    void request.response().then(() => responseListener(request)).catch(() => {});
   };
 
   const frameNavigateListener = (frame: playwright.Frame) => {
@@ -47,13 +49,13 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   };
 
   tab.page.on('request', requestListener);
-  tab.page.on('requestfinished', requestFinishedListener);
+  tab.page.on('requestfailed', responseListener);
   tab.page.on('framenavigated', frameNavigateListener);
   const timeout = setTimeout(onTimeout, 10000);
 
   const dispose = () => {
     tab.page.off('request', requestListener);
-    tab.page.off('requestfinished', requestFinishedListener);
+    tab.page.off('requestfailed', responseListener);
     tab.page.off('framenavigated', frameNavigateListener);
     clearTimeout(timeout);
   };
@@ -67,15 +69,6 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
     return result;
   } finally {
     dispose();
-  }
-}
-
-export async function generateLocator(locator: playwright.Locator): Promise<string> {
-  try {
-    const { resolvedSelector } = await (locator as any)._resolveSelector();
-    return asLocator('javascript', resolvedSelector);
-  } catch (e) {
-    throw new Error('Ref not found, likely because element was removed. Use browser_snapshot to see what elements are currently on the page.');
   }
 }
 

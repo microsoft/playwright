@@ -91,6 +91,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   _timing: ResourceTiming;
   private _fallbackOverrides: SerializedFallbackOverrides = {};
+  _hasResponse = false;
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -117,6 +118,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       responseStart: -1,
       responseEnd: -1,
     };
+    this._hasResponse = this._initializer.hasResponse;
+    this._channel.on('response', () => this._hasResponse = true);
   }
 
   url(): string {

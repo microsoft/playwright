@@ -18,6 +18,7 @@ import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
 
 import type * as playwright from 'playwright-core';
+import type { Request } from '../../../../../playwright-core/src/client/network';
 
 const requests = defineTabTool({
   capability: 'core',
@@ -31,16 +32,21 @@ const requests = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const requests = tab.requests();
-    [...requests.entries()].forEach(([req, res]) => response.addResult(renderRequest(req, res)));
+    const requests = await tab.requests();
+    for (const request of requests)
+      response.addResult(await renderRequest(request));
   },
 });
 
-function renderRequest(request: playwright.Request, response: playwright.Response | null) {
+async function renderRequest(request: playwright.Request) {
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
-  if (response)
-    result.push(`=> [${response.status()}] ${response.statusText()}`);
+  const hasResponse = (request as Request)._hasResponse;
+  if (hasResponse) {
+    const response = await request.response();
+    if (response)
+      result.push(`=> [${response.status()}] ${response.statusText()}`);
+  }
   return result.join(' ');
 }
 

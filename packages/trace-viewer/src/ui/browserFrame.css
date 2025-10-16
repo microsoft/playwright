@@ -63,7 +63,7 @@
   height: var(--browser-frame-header-height);
 }
 
-body.dark-mode .browser-frame-header {
+:root.dark-mode .browser-frame-header {
   background: #444950;
 }
 

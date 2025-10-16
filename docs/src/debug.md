@@ -241,8 +241,6 @@ When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is avai
 - **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
 - Check **network activity** and other developer tools features
 
-This will also set the default timeouts of Playwright to 0 (= no timeout).
-
 <img width="1399" alt="Browser Developer Tools with Playwright object" src="https://user-images.githubusercontent.com/13063165/219128002-898f604d-9697-4b7f-95b5-a6a8260b7282.png" />
 
 To debug your tests using the browser developer tools, start by setting a breakpoint in your test to pause the execution using the [`method: Page.pause`] method.

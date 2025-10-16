@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { selectors } from 'playwright-core';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
@@ -168,18 +169,27 @@ export class Context {
     await promise.then(async ({ browserContext, close }) => {
       if (this.config.saveTrace)
         await browserContext.tracing.stop();
-      const videos = browserContext.pages().map(page => page.video()).filter(video => !!video);
+      const videos = this.config.saveVideo ? browserContext.pages().map(page => page.video()).filter(video => !!video) : [];
       await close(async () => {
         for (const video of videos) {
           const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code', reason: 'Saving video' });
           await fs.promises.mkdir(path.dirname(name), { recursive: true });
           const p = await video.path();
           // video.saveAs() does not work for persistent contexts.
-          try {
-            if (fs.existsSync(p))
+          if (fs.existsSync(p)) {
+            try {
               await fs.promises.rename(p, name);
-          } catch (e) {
-            logUnhandledError(e);
+            } catch (e) {
+              if (e.code !== 'EXDEV')
+                logUnhandledError(e);
+              // Retry operation (possibly cross-fs) with copy and unlink
+              try {
+                await fs.promises.copyFile(p, name);
+                await fs.promises.unlink(p);
+              } catch (e) {
+                logUnhandledError(e);
+              }
+            }
           }
         }
       });
@@ -239,6 +249,9 @@ export class Context {
     if (this._closeBrowserContextPromise)
       throw new Error('Another browser context is being closed.');
     // TODO: move to the browser context factory to make it based on isolation mode.
+
+    if (this.config.testIdAttribute)
+      selectors.setTestIdAttribute(this.config.testIdAttribute);
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
     await this._setupRequestInterception(browserContext);

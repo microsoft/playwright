@@ -353,8 +353,7 @@ export class Page extends SdkObject {
 
   addNetworkRequest(request: network.Request) {
     this._networkRequests.push(request);
-    for (const collected of ensureArrayLimit(this._networkRequests, 100))
-      this.emitOnContext(BrowserContext.Events.RequestCollected, collected);
+    ensureArrayLimit(this._networkRequests, 100);
   }
 
   networkRequests() {
@@ -756,7 +755,9 @@ export class Page extends SdkObject {
       this.closeReason = options.reason;
     const runBeforeUnload = !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
-      this._closedState = 'closing';
+      // If runBeforeUnload is true, we don't know if we will close, so don't modify the state
+      if (!runBeforeUnload)
+        this._closedState = 'closing';
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
       await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
@@ -858,9 +859,9 @@ export class Page extends SdkObject {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress): Promise<string> {
+  async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
     this.lastSnapshotFrameIds = [];
-    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
+    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds, options);
     return snapshot.join('\n');
   }
 }
@@ -868,7 +869,6 @@ export class Page extends SdkObject {
 export class Worker extends SdkObject {
   static Events = {
     Close: 'close',
-    Console: 'console',
   };
 
   readonly url: string;
@@ -1037,18 +1037,18 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<string[]> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[], options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string[]> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
       const context = await progress.race(frame._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
-      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, refPrefix) => {
+      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, options) => {
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.ariaSnapshot(node, { mode: 'ai', refPrefix });
-      }, frameOrdinal ? 'f' + frameOrdinal : ''));
+        return injected.ariaSnapshot(node, { mode: 'ai', ...options });
+      }, { refPrefix: frameOrdinal ? 'f' + frameOrdinal : '', incremental: options.mode === 'incremental', track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1080,7 +1080,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
     const frameOrdinal = frameIds.length + 1;
     frameIds.push(child.frame._id);
     try {
-      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds);
+      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds, options);
       result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
     } catch {
       result.push(line);

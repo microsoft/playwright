@@ -296,6 +296,22 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   background-color: var(--color-btn-hover-bg);
 }
 
+input[type="checkbox"] {
+  outline: var(--color-focus-border);
+  height: 24px;
+}
+
+dialog {
+  background-color: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);  
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.subnav-item .octicon.octicon-settings {
+  margin-right: 0;
+}
+
 @media only screen and (max-width: 600px) {
   .subnav-item, .form-control {
     border-radius: 0 !important;

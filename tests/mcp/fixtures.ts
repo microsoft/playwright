@@ -24,12 +24,15 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
+import { parseResponse } from '../../packages/playwright/lib/mcp/browser/response';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Stream } from 'stream';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
+
+export { parseResponse };
 
 export type TestOptions = {
   mcpArgs: string[] | undefined;
@@ -45,6 +48,8 @@ type CDPServer = {
 export type StartClient = (options?: {
   clientName?: string,
   args?: string[],
+  omitArgs?: string[],
+  cwd?: string,
   config?: Config,
   roots?: { name: string, uri: string }[],
   rootsResponseDelay?: number,
@@ -81,13 +86,14 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     const clients: Client[] = [];
 
     await use(async options => {
-      const args: string[] = mcpArgs ?? [];
+      let args: string[] = mcpArgs ?? [];
 
       if (mcpHeadless)
         args.push('--headless');
 
       if (mcpServerType === 'test-mcp') {
-        args.push('--config', test.info().outputPath());
+        if (!options?.args?.some(arg => arg.startsWith('--config')))
+          args.push(`--config=${test.info().outputPath()}`);
       } else {
         if (process.env.CI && process.platform === 'linux')
           args.push('--no-sandbox');
@@ -102,6 +108,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
 
       if (options?.args)
         args.push(...options.args);
+      if (options?.omitArgs)
+        args = args.filter(arg => !options.omitArgs?.includes(arg));
 
       const client = new Client({ name: options?.clientName ?? 'test', version: '1.0.0' }, options?.roots ? { capabilities: { roots: {} } } : undefined);
       if (options?.roots) {
@@ -114,7 +122,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         });
       }
       const env = { ...process.env, ...options?.env };
-      const { transport, stderr } = await createTransport(mcpServerType, args, env);
+      const { transport, stderr } = await createTransport(mcpServerType, { args, env, cwd: options?.cwd || test.info().outputPath() });
       let stderrBuffer = '';
       stderr?.on('data', data => {
         if (process.env.PWDEBUGIMPL)
@@ -140,7 +148,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'CDP is not supported for non-Chromium browsers');
 
     let browserContext: BrowserContext | undefined;
-    const port = 3200 + test.info().parallelIndex;
+    const port = 9100 + testInfo.workerIndex;
     await use({
       endpoint: `http://localhost:${port}`,
       start: async () => {
@@ -178,19 +186,18 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpServerType: ['mcp', { option: true }],
 });
 
-async function createTransport(mcpServerType: TestOptions['mcpServerType'], args: string[], env: NodeJS.ProcessEnv): Promise<{
+async function createTransport(mcpServerType: TestOptions['mcpServerType'], options: { args: string[], env: NodeJS.ProcessEnv, cwd: string }): Promise<{
   transport: Transport,
   stderr: Stream | null,
 }> {
   const profilesDir = test.info().outputPath('ms-playwright');
   const transport = new StdioClientTransport({
     command: 'node',
-    args: [...(mcpServerType === 'test-mcp' ? testMcpServerPath : mcpServerPath), ...args],
-    cwd: test.info().outputPath(),
+    args: [...(mcpServerType === 'test-mcp' ? testMcpServerPath : mcpServerPath), ...options.args],
+    cwd: options.cwd,
     stderr: 'pipe',
     env: {
-      ...env,
-      DEBUG: process.env.DEBUG ? `${process.env.DEBUG},pw:mcp:test` : 'pw:mcp:test',
+      ...options.env,
       DEBUG_COLORS: '0',
       DEBUG_HIDE_DATE: '1',
       PWMCP_PROFILES_DIR_FOR_TEST: profilesDir,
@@ -252,51 +259,6 @@ export const expect = baseExpect.extend({
 
 export function formatOutput(output: string): string[] {
   return output.split('\n').map(line => line.replace(/^pw:mcp:test /, '').replace(/user data dir.*/, 'user data dir').trim()).filter(Boolean);
-}
-
-function parseResponse(response: any) {
-  const text = response.content[0].text;
-  const sections = parseSections(text);
-
-  const result = sections.get('Result');
-  const code = sections.get('Ran Playwright code');
-  const tabs = sections.get('Open tabs');
-  const pageState = sections.get('Page state');
-  const consoleMessages = sections.get('New console messages');
-  const modalState = sections.get('Modal state');
-  const downloads = sections.get('Downloads');
-  const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
-  const isError = response.isError;
-  const attachments = response.content.slice(1);
-
-  return {
-    result,
-    code: codeNoFrame,
-    tabs,
-    pageState,
-    consoleMessages,
-    modalState,
-    downloads,
-    isError,
-    attachments,
-  };
-}
-
-function parseSections(text: string): Map<string, string> {
-  const sections = new Map<string, string>();
-  const sectionHeaders = text.split(/^### /m).slice(1); // Remove empty first element
-
-  for (const section of sectionHeaders) {
-    const firstNewlineIndex = section.indexOf('\n');
-    if (firstNewlineIndex === -1)
-      continue;
-
-    const sectionName = section.substring(0, firstNewlineIndex);
-    const sectionContent = section.substring(firstNewlineIndex + 1).trim();
-    sections.set(sectionName, sectionContent);
-  }
-
-  return sections;
 }
 
 export const mcpServerPath = [path.join(__dirname, '../../packages/playwright/cli.js'), 'run-mcp-server'];

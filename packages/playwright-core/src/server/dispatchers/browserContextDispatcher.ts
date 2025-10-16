@@ -25,7 +25,7 @@ import { Dispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { CRBrowserContext } from '../chromium/crBrowser';
+import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { serializeError } from '../errors';
 import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
@@ -136,7 +136,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     };
     context.dialogManager.addDialogHandler(this._dialogHandler);
 
-    if (context._browser.options.name === 'chromium') {
+    if (context._browser.options.name === 'chromium' && this._object._browser instanceof CRBrowser) {
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) });
       this.addObjectListener(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) }));
@@ -151,7 +151,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request') && !request.isNavigationRequest())
         return;
       const requestDispatcher = RequestDispatcher.from(this, request);
-      requestDispatcher.reportedThroughEvent = true;
       this._dispatchEvent('request', {
         request: requestDispatcher,
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
@@ -187,11 +186,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         responseEndTiming: request._responseEndTiming,
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
-    });
-    this.addObjectListener(BrowserContext.Events.RequestCollected, (request: Request) => {
-      const requestDispatcher = this.connection.existingDispatcher<RequestDispatcher>(request);
-      if (requestDispatcher && !requestDispatcher.reportedThroughEvent)
-        requestDispatcher._dispose('gc');
     });
     this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }) => {
       this._dispatchEvent('recorderEvent', { event, data, code, page: PageDispatcher.from(this, page) });
@@ -333,7 +327,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
-    const recorder = Recorder.existingForContext(this._context);
+    const recorder = await Recorder.existingForContext(this._context);
     if (recorder)
       recorder.setMode('none');
   }

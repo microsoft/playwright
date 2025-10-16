@@ -59,6 +59,13 @@ type Time = {
 
 type LogEntryType = 'fastForward' |'install' | 'pauseAt' | 'resume' | 'runFor' | 'setFixedTime' | 'setSystemTime';
 
+type RealTimeTimer = {
+  callAt: Ticks;
+  cancel: () => void;
+  promise: Promise<void> | undefined;
+  dispose: () => Promise<void>;
+};
+
 export class ClockController {
   readonly _now: Time;
   private _duringTick = false;
@@ -68,7 +75,7 @@ export class ClockController {
   readonly disposables: (() => void)[] = [];
   private _log: { type: LogEntryType, time: number, param?: number }[] = [];
   private _realTime: { startTicks: EmbedderTicks, lastSyncTicks: EmbedderTicks } | undefined;
-  private _currentRealTimeTimer: { callAt: Ticks, dispose: () => void } | undefined;
+  private _currentRealTimeTimer: RealTimeTimer | undefined;
 
   constructor(embedder: Embedder) {
     this._timers = new Map();
@@ -83,6 +90,7 @@ export class ClockController {
 
   now(): number {
     this._replayLogOnce();
+    // Sync real time to support calling Date.now() in a loop.
     this._syncRealTime();
     return this._now.time;
   }
@@ -104,6 +112,7 @@ export class ClockController {
 
   performanceNow(): DOMHighResTimeStamp {
     this._replayLogOnce();
+    // Sync real time to support calling performance.now() in a loop.
     this._syncRealTime();
     return this._now.ticks;
   }
@@ -132,6 +141,12 @@ export class ClockController {
   }
 
   private _advanceNow(to: Ticks) {
+    if (this._now.ticks > to) {
+      // While running timers, `now` can advance by syncing with real time
+      // from within now() or performance.now().
+      // This makes it possible for `now` to be ahead of where we want to advance it.
+      return;
+    }
     if (!this._now.isFixedTime)
       this._now.time = asWallTime(this._now.time + to - this._now.ticks);
     this._now.ticks = to;
@@ -145,7 +160,9 @@ export class ClockController {
     this._replayLogOnce();
     if (ticks < 0)
       throw new TypeError('Negative ticks are not supported');
-    await this._runTo(shiftTicks(this._now.ticks, ticks));
+    await this._runWithDisabledRealTimeSync(async () => {
+      await this._runTo(shiftTicks(this._now.ticks, ticks));
+    });
   }
 
   private async _runTo(to: Ticks) {
@@ -163,21 +180,23 @@ export class ClockController {
     }
 
     this._advanceNow(to);
+
     if (firstException)
       throw firstException;
   }
 
   async pauseAt(time: number): Promise<number> {
     this._replayLogOnce();
-    this._innerPause();
+    await this._innerPause();
     const toConsume = time - this._now.time;
     await this._innerFastForwardTo(shiftTicks(this._now.ticks, toConsume));
     return toConsume;
   }
 
-  private _innerPause() {
+  private async _innerPause() {
     this._realTime = undefined;
-    this._updateRealTimeTimer();
+    await this._currentRealTimeTimer?.dispose();
+    this._currentRealTimeTimer = undefined;
   }
 
   resume() {
@@ -192,38 +211,64 @@ export class ClockController {
   }
 
   private _updateRealTimeTimer() {
-    if (!this._realTime) {
-      this._currentRealTimeTimer?.dispose();
-      this._currentRealTimeTimer = undefined;
+    if (this._currentRealTimeTimer?.promise) {
+      // In progress, safe to return as it will call itself once promise is resolved.
       return;
     }
 
     const firstTimer = this._firstTimer();
 
     // Either run the next timer or move time in 100ms chunks.
-    const callAt = Math.min(firstTimer ? firstTimer.callAt : this._now.ticks + maxTimeout, this._now.ticks + 100) as Ticks;
-    if (this._currentRealTimeTimer && this._currentRealTimeTimer.callAt < callAt)
-      return;
+    const nextTick = Math.min(firstTimer ? firstTimer.callAt : this._now.ticks + maxTimeout, this._now.ticks + 100) as Ticks;
+    const callAt = this._currentRealTimeTimer ? Math.min(this._currentRealTimeTimer.callAt, nextTick) as Ticks : nextTick;
 
     if (this._currentRealTimeTimer) {
-      this._currentRealTimeTimer.dispose();
+      // Cancel and reschedule.
+      this._currentRealTimeTimer.cancel();
       this._currentRealTimeTimer = undefined;
     }
 
-    this._currentRealTimeTimer = {
+    const realTimeTimer: RealTimeTimer = {
       callAt,
-      dispose: this._embedder.setTimeout(() => {
-        this._currentRealTimeTimer = undefined;
+      promise: undefined,
+      cancel: this._embedder.setTimeout(() => {
         this._syncRealTime();
         // eslint-disable-next-line no-console
-        void this._runTo(this._now.ticks).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
+        realTimeTimer.promise = this._runTo(this._now.ticks).catch(e => console.error(e));
+        void realTimeTimer.promise.then(() => {
+          this._currentRealTimeTimer = undefined;
+          if (this._realTime)
+            this._updateRealTimeTimer();
+        });
       }, callAt - this._now.ticks),
+      dispose: async () => {
+        realTimeTimer.cancel();
+        await realTimeTimer.promise;
+      }
     };
+
+    this._currentRealTimeTimer = realTimeTimer;
+  }
+
+  private async _runWithDisabledRealTimeSync(fn: () => Promise<void>) {
+    if (!this._realTime) {
+      await fn();
+      return;
+    }
+
+    await this._innerPause();
+    try {
+      await fn();
+    } finally {
+      this._innerResume();
+    }
   }
 
   async fastForward(ticks: number) {
     this._replayLogOnce();
-    await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+    await this._runWithDisabledRealTimeSync(async () => {
+      await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+    });
   }
 
   private async _innerFastForwardTo(to: Ticks) {
@@ -339,6 +384,9 @@ export class ClockController {
   }
 
   getTimeToNextFrame() {
+    // When `window.requestAnimationFrame` is the first call in the page,
+    // this place is the first API call, so replay the log.
+    this._replayLogOnce();
     return 16 - this._now.ticks % 16;
   }
 
@@ -396,10 +444,8 @@ export class ClockController {
         this._advanceNow(shiftTicks(this._now.ticks, param!));
       } else if (type === 'pauseAt') {
         isPaused = true;
-        this._innerPause();
         this._innerSetTime(asWallTime(param!));
       } else if (type === 'resume') {
-        this._innerResume();
         isPaused = false;
       } else if (type === 'setFixedTime') {
         this._innerSetFixedTime(asWallTime(param!));
@@ -408,8 +454,13 @@ export class ClockController {
       }
     }
 
-    if (!isPaused && lastLogTime > 0)
-      this._advanceNow(shiftTicks(this._now.ticks, this._embedder.dateNow() - lastLogTime));
+    if (!isPaused) {
+      if (lastLogTime > 0)
+        this._advanceNow(shiftTicks(this._now.ticks, this._embedder.dateNow() - lastLogTime));
+      this._innerResume();
+    } else {
+      this._realTime = undefined;
+    }
 
     this._log.length = 0;
   }

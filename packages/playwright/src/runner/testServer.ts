@@ -262,7 +262,7 @@ export class TestServerDispatcher implements TestServerInterface {
 export async function runUIMode(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status']> {
   const configLocation = resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, configCLIOverrides, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
-    await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
+    await installRootRedirect(server, undefined, { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser(server.urlPrefix('human-readable'));
     } else {

@@ -34,7 +34,7 @@ import type { RecentLogsCollector } from '../utils/debugLogger';
 
 export class BidiFirefox extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, '_bidiFirefox');
+    super(parent, 'firefox');
   }
 
   override executablePath(): string {

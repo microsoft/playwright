@@ -52,19 +52,18 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = url.parse(proxyURL);
     if (params.url.startsWith('http:')) {
+      const parsedProxyURL = url.parse(proxyURL);
       options = {
         path: parsedUrl.href,
         host: parsedProxyURL.hostname,
         port: parsedProxyURL.port,
+        protocol: parsedProxyURL.protocol || 'http:',
         headers: options.headers,
         method: options.method
       };
     } else {
-      (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
-
-      options.agent = new HttpsProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent(normalizeProxyURL(proxyURL));
       options.rejectUnauthorized = false;
     }
   }
@@ -137,34 +136,44 @@ function shouldBypassProxy(url: URL, bypass?: string): boolean {
   return domains.some(d => domain.endsWith(d));
 }
 
+function normalizeProxyURL(proxy: string): URL {
+  proxy = proxy.trim();
+  // Browsers allow to specify proxy without a protocol, defaulting to http.
+  if (!/^\w+:\/\//.test(proxy))
+    proxy = 'http://' + proxy;
+  return new URL(proxy);
+}
+
 export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!proxy)
     return;
   if (forUrl && proxy.bypass && shouldBypassProxy(forUrl, proxy.bypass))
     return;
 
-  // Browsers allow to specify proxy without a protocol, defaulting to http.
-  let proxyServer = proxy.server.trim();
-  if (!/^\w+:\/\//.test(proxyServer))
-    proxyServer = 'http://' + proxyServer;
+  const proxyURL = normalizeProxyURL(proxy.server);
+  if (proxyURL.protocol?.startsWith('socks')) {
+    // SocksProxyAgent distinguishes between socks5 and socks5h.
+    // socks5h is what we want, it means that hostnames are resolved by the proxy.
+    // browsers behave the same way, even if socks5 is specified.
+    if (proxyURL.protocol === 'socks5:')
+      proxyURL.protocol = 'socks5h:';
+    else if (proxyURL.protocol === 'socks4:')
+      proxyURL.protocol = 'socks4a:';
 
-  const proxyOpts = url.parse(proxyServer);
-  if (proxyOpts.protocol?.startsWith('socks')) {
-    return new SocksProxyAgent({
-      host: proxyOpts.hostname,
-      port: proxyOpts.port || undefined,
-    });
+    return new SocksProxyAgent(proxyURL);
   }
-  if (proxy.username)
-    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  if (proxy.username) {
+    proxyURL.username = proxy.username;
+    proxyURL.password = proxy.password || '';
+  }
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
-    return new HttpsProxyAgent(proxyOpts);
+    return new HttpsProxyAgent(proxyURL);
   }
 
-  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyOpts);
+  // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(proxyURL);
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;

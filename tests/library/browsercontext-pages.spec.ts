@@ -79,8 +79,8 @@ it('should click the button with deviceScaleFactor set', async ({ browser, serve
   await context.close();
 });
 
-it('should click the button with offset with page scale', async ({ browser, server, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should click the button with offset with page scale', async ({ browser, server, browserName, channel }) => {
+  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();
@@ -102,8 +102,8 @@ it('should click the button with offset with page scale', async ({ browser, serv
   await context.close();
 });
 
-it('should return bounding box with page scale', async ({ browser, server, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should return bounding box with page scale', async ({ browser, server, browserName, channel }) => {
+  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();

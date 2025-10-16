@@ -468,3 +468,16 @@ it('css on the handle should be relative', async ({ page }) => {
   expect(await div.$eval(`.find-me`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> .find-me`, e => e.id)).toBe('target2');
 });
+
+it('should use light DOM structure for child combinator with slotted content', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37768' } }, async ({ page }) => {
+  await page.setContent(`
+    <my-button>
+      <template shadowrootmode="open">
+        <button><slot></slot></button>
+      </template>
+      <div class="content">Foo</div>
+    </my-button>
+  `);
+  expect(await page.$eval(`my-button > div`, e => e.className)).toBe('content');
+  expect(await page.$eval(`my-button > .content`, e => e.textContent)).toBe('Foo');
+});

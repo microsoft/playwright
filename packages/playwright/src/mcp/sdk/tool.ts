@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from  '../sdk/bundle';
+import { z as zod, zodToJsonSchema } from  '../sdk/bundle';
 
 import type { z } from 'zod';
 import type * as mcpServer from './server';
@@ -24,18 +24,24 @@ export type ToolSchema<Input extends z.Schema> = {
   title: string;
   description: string;
   inputSchema: Input;
-  type: 'readOnly' | 'destructive';
+  type: 'input' | 'assertion' | 'action' | 'readOnly';
 };
 
-export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
+const typesWithIntent = ['action', 'assertion', 'input'];
+
+export function toMcpTool(tool: ToolSchema<any>, options?: { addIntent?: boolean }): mcpServer.Tool {
+  const inputSchema = options?.addIntent && typesWithIntent.includes(tool.type) ? tool.inputSchema.extend({
+    intent: zod.string().describe('The intent of the call, for example the test step description plan idea')
+  }) : tool.inputSchema;
+  const readOnly = tool.type === 'readOnly' || tool.type === 'assertion';
   return {
     name: tool.name,
     description: tool.description,
-    inputSchema: zodToJsonSchema(tool.inputSchema, { strictUnions: true }) as mcpServer.Tool['inputSchema'],
+    inputSchema: zodToJsonSchema(inputSchema, { strictUnions: true }) as mcpServer.Tool['inputSchema'],
     annotations: {
       title: tool.title,
-      readOnlyHint: tool.type === 'readOnly',
-      destructiveHint: tool.type === 'destructive',
+      readOnlyHint: readOnly,
+      destructiveHint: !readOnly,
       openWorldHint: true,
     },
   };

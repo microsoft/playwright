@@ -52,16 +52,16 @@ export type TraceViewerAppOptions = {
   persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
 };
 
-function validateTraceUrls(traceUrls: string[]) {
-  for (const traceUrl of traceUrls) {
-    let traceFile = traceUrl;
-    // If .json is requested, we'll synthesize it.
-    if (traceUrl.endsWith('.json'))
-      traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length);
+function validateTraceUrl(traceUrl: string | undefined) {
+  if (!traceUrl)
+    return;
+  let traceFile = traceUrl;
+  // If .json is requested, we'll synthesize it.
+  if (traceUrl.endsWith('.json'))
+    traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length);
 
-    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace'))
-      throw new Error(`Trace file ${traceUrl} does not exist!`);
-  }
+  if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace'))
+    throw new Error(`Trace file ${traceUrl} does not exist!`);
 }
 
 export async function startTraceViewerServer(options?: TraceViewerServerOptions): Promise<HttpServer> {
@@ -69,12 +69,6 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
     const relativePath = url.pathname.slice('/trace'.length);
-    if (process.env.PW_HMR) {
-      // When running in Vite HMR mode, port is hardcoded in build.js
-      response.appendHeader('Access-Control-Allow-Origin', 'http://localhost:44223');
-    }
-    if (relativePath.endsWith('/stall.js'))
-      return true;
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
@@ -108,11 +102,11 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   return server;
 }
 
-export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
+export async function installRootRedirect(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions) {
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
-  for (const traceUrl of traceUrls)
+  if (traceUrl)
     params.append('trace', traceUrl);
   if (server.wsGuid())
     params.append('ws', server.wsGuid()!);
@@ -131,13 +125,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
-  let baseUrl = '.';
-  if (process.env.PW_HMR) {
-    baseUrl = 'http://localhost:44223'; // port is hardcoded in build.js
-    params.set('server', server.urlPrefix('precise'));
-  }
-
-  const urlPath  = `${baseUrl}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
+  const urlPath  = `./trace/${options.webApp || 'index.html'}?${params.toString()}`;
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
@@ -146,20 +134,20 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   });
 }
 
-export async function runTraceViewerApp(traceUrls: string[], browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
-  validateTraceUrls(traceUrls);
+export async function runTraceViewerApp(traceUrl: string | undefined, browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
+  validateTraceUrl(traceUrl);
   const server = await startTraceViewerServer(options);
-  await installRootRedirect(server, traceUrls, options);
+  await installRootRedirect(server, traceUrl, options);
   const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
   if (exitOnClose)
     page.on('close', () => gracefullyProcessExitDoNotHang(0));
   return page;
 }
 
-export async function runTraceInBrowser(traceUrls: string[], options: TraceViewerServerOptions) {
-  validateTraceUrls(traceUrls);
+export async function runTraceInBrowser(traceUrl: string | undefined, options: TraceViewerServerOptions) {
+  validateTraceUrl(traceUrl);
   const server = await startTraceViewerServer(options);
-  await installRootRedirect(server, traceUrls, options);
+  await installRootRedirect(server, traceUrl, options);
   await openTraceInBrowser(server.urlPrefix('human-readable'));
 }
 

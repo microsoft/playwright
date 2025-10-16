@@ -30,7 +30,7 @@ import { useDarkModeSetting } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
-import { Dialog } from '@web/components/dialog';
+import { Dialog } from '@web/shared/dialog';
 
 export interface RecorderProps {
   sources: Source[],
@@ -133,9 +133,11 @@ export const Recorder: React.FC<RecorderProps> = ({
       window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
   }, [mode]);
 
+  const isRecording = mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility';
+
   return <div className='recorder'>
     <Toolbar>
-      <ToolbarButton icon='circle-large-filled' title='Record' toggled={mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility'} onClick={() => {
+      <ToolbarButton icon={isRecording ? 'stop-circle' : 'circle-large-filled'} title={isRecording ? 'Stop Recording' : 'Start Recording'} toggled={isRecording} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby' } });
       }}>Record</ToolbarButton>
       <ToolbarSeparator />
@@ -196,7 +198,6 @@ export const Recorder: React.FC<RecorderProps> = ({
       <Dialog
         style={{ padding: '4px 8px' }}
         open={settingsOpen}
-        width={200}
         verticalOffset={8}
         requestClose={() => setSettingsOpen(false)}
         anchor={settingsButtonRef}

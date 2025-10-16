@@ -33,7 +33,7 @@ import type * as types from '../types';
 
 export class BidiChromium extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, '_bidiChromium');
+    super(parent, 'chromium');
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<BidiBrowser> {

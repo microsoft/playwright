@@ -64,12 +64,16 @@ export class TestServer {
     return server;
   }
 
-  static async createHTTPS(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
-    const server = new TestServer(dirPath, port, loopback, {
+  static async certOptions() {
+    return {
       key: await fs.promises.readFile(path.join(__dirname, 'key.pem')),
       cert: await fs.promises.readFile(path.join(__dirname, 'cert.pem')),
       passphrase: 'aaaa',
-    });
+    };
+  }
+
+  static async createHTTPS(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
+    const server = new TestServer(dirPath, port, loopback, await this.certOptions());
     await server.waitUntilReady();
     return server;
   }

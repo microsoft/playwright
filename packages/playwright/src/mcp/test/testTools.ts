@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-
-import { noColors } from 'playwright-core/lib/utils';
-
 import { z } from '../sdk/bundle';
-import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import ListModeReporter from '../../reporters/listModeReporter';
-import { findTopLevelProjects } from '../../runner/projectUtils';
-
 import { defineTestTool } from './testTool';
-import { StringWriteStream } from './streams';
 
 export const listTests = defineTestTool({
   schema: {
@@ -37,15 +28,13 @@ export const listTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async context => {
-    const { screen, stream } = createScreen();
+  handle: async (context, _, progress) => {
+    const { screen } = context.createScreen(progress);
     const reporter = new ListModeReporter({ screen, includeTestId: true });
     const testRunner = await context.createTestRunner();
     await testRunner.listTests(reporter, {});
 
-    return {
-      content: [{ type: 'text', text: stream.content() }],
-    };
+    return { content: [] };
   },
 });
 
@@ -61,10 +50,10 @@ export const runTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const { screen, stream } = createScreen();
+  handle: async (context, params, progress) => {
+    const { screen } = context.createScreen(progress);
     const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen, includeTestId: true });
+    const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
     const testRunner = await context.createTestRunner();
     await testRunner.runTests(reporter, {
       locations: params.locations,
@@ -72,12 +61,7 @@ export const runTests = defineTestTool({
       disableConfigReporters: true,
     });
 
-    const text = stream.content();
-    return {
-      content: [
-        { type: 'text', text },
-      ]
-    };
+    return { content: [] };
   },
 });
 
@@ -95,12 +79,12 @@ export const debugTest = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const { screen, stream } = createScreen();
+  handle: async (context, params, progress) => {
+    const { screen } = context.createScreen(progress);
     const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen });
+    const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
     const testRunner = await context.createTestRunner();
-    const result = await testRunner.runTests(reporter, {
+    await testRunner.runTests(reporter, {
       headed: !context.options?.headless,
       testIds: [params.test.id],
       // For automatic recovery
@@ -110,76 +94,6 @@ export const debugTest = defineTestTool({
       disableConfigReporters: true,
     });
 
-    const text = stream.content();
-    return {
-      content: [
-        { type: 'text', text },
-      ],
-      isError: result.status !== 'passed',
-    };
+    return { content: [] };
   },
 });
-
-export const setupPage = defineTestTool({
-  schema: {
-    name: 'test_setup_page',
-    title: 'Setup page',
-    description: 'Setup the page for test',
-    inputSchema: z.object({
-      project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
-      testLocation: z.string().optional().describe('Location of the seed test to use for setup. For example: "test/seed/default.spec.ts:20".'),
-    }),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params) => {
-    const { screen, stream } = createScreen();
-    const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen });
-    const testRunner = await context.createTestRunner();
-
-    let testLocation = params.testLocation;
-    if (!testLocation) {
-      testLocation = 'default.seed.spec.ts';
-      const config = await testRunner.loadConfig();
-      const project = params.project ? config.projects.find(p => p.project.name === params.project) : findTopLevelProjects(config)[0];
-      const testDir = project?.project.testDir || configDir;
-      const seedFile = path.join(testDir, testLocation);
-      if (!fs.existsSync(seedFile)) {
-        await fs.promises.mkdir(path.dirname(seedFile), { recursive: true });
-        await fs.promises.writeFile(seedFile, `import { test, expect } from '@playwright/test';
-
-test('seed', async ({ page }) => {});
-`);
-      }
-    }
-
-    const result = await testRunner.runTests(reporter, {
-      headed: !context.options?.headless,
-      locations: [testLocation],
-      projects: params.project ? [params.project] : undefined,
-      timeout: 0,
-      workers: 1,
-      pauseAtEnd: true,
-      disableConfigReporters: true,
-    });
-
-    const text = stream.content();
-    return {
-      content: [{ type: 'text', text }],
-      isError: result.status !== 'passed',
-    };
-  },
-});
-
-function createScreen() {
-  const stream = new StringWriteStream();
-  const screen = {
-    ...terminalScreen,
-    isTTY: false,
-    colors: noColors,
-    stdout: stream as unknown as NodeJS.WriteStream,
-    stderr: stream as unknown as NodeJS.WriteStream,
-  };
-  return { screen, stream };
-}

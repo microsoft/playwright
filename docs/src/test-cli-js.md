@@ -254,12 +254,15 @@ Analyze and view test traces for debugging. [Read more about Trace Viewer](./tra
 #### Syntax
 
 ```bash
-npx playwright show-trace [options] <trace>
+npx playwright show-trace [options] [trace]
 ```
 
 #### Examples
 
 ```bash
+# Open trace viewer without a specific trace (can load traces via UI)
+npx playwright show-trace
+
 # View a trace file
 npx playwright show-trace trace.zip
 

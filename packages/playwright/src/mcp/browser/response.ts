@@ -18,7 +18,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { renderModalStates } from './tab';
 
 import type { Tab, TabSnapshot } from './tab';
-import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context } from './context';
 
 export const requestDebug = debug('pw:mcp:request');
@@ -28,7 +28,7 @@ export class Response {
   private _code: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
   private _context: Context;
-  private _includeSnapshot = false;
+  private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeTabs = false;
   private _tabSnapshot: TabSnapshot | undefined;
 
@@ -75,8 +75,8 @@ export class Response {
     return this._images;
   }
 
-  setIncludeSnapshot() {
-    this._includeSnapshot = true;
+  setIncludeSnapshot(full?: 'full') {
+    this._includeSnapshot = full ?? 'incremental';
   }
 
   setIncludeTabs() {
@@ -86,8 +86,8 @@ export class Response {
   async finish() {
     // All the async snapshotting post-action is happening here.
     // Everything below should race against modal states.
-    if (this._includeSnapshot && this._context.currentTab())
-      this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot();
+    if (this._includeSnapshot !== 'none' && this._context.currentTab())
+      this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshot);
     for (const tab of this._context.tabs())
       await tab.updateTitle();
   }
@@ -126,7 +126,7 @@ ${this._code.join('\n')}
     }
 
     // List browser tabs.
-    if (this._includeSnapshot || this._includeTabs)
+    if (this._includeSnapshot !== 'none' || this._includeTabs)
       response.push(...renderTabsMarkdown(this._context.tabs(), this._includeTabs));
 
     // Add snapshot if provided.
@@ -224,4 +224,51 @@ function trim(text: string, maxLength: number) {
   if (text.length <= maxLength)
     return text;
   return text.slice(0, maxLength) + '...';
+}
+
+function parseSections(text: string): Map<string, string> {
+  const sections = new Map<string, string>();
+  const sectionHeaders = text.split(/^### /m).slice(1); // Remove empty first element
+
+  for (const section of sectionHeaders) {
+    const firstNewlineIndex = section.indexOf('\n');
+    if (firstNewlineIndex === -1)
+      continue;
+
+    const sectionName = section.substring(0, firstNewlineIndex);
+    const sectionContent = section.substring(firstNewlineIndex + 1).trim();
+    sections.set(sectionName, sectionContent);
+  }
+
+  return sections;
+}
+
+export function parseResponse(response: CallToolResult) {
+  if (response.content?.[0].type !== 'text')
+    return undefined;
+  const text = response.content[0].text;
+
+  const sections = parseSections(text);
+  const result = sections.get('Result');
+  const code = sections.get('Ran Playwright code');
+  const tabs = sections.get('Open tabs');
+  const pageState = sections.get('Page state');
+  const consoleMessages = sections.get('New console messages');
+  const modalState = sections.get('Modal state');
+  const downloads = sections.get('Downloads');
+  const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
+  const isError = response.isError;
+  const attachments = response.content.slice(1);
+
+  return {
+    result,
+    code: codeNoFrame,
+    tabs,
+    pageState,
+    consoleMessages,
+    modalState,
+    downloads,
+    isError,
+    attachments,
+  };
 }

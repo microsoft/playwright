@@ -106,13 +106,8 @@ export class WSServer {
       const url = new URL('http://localhost' + (request.url || ''));
       const id = String(++lastConnectionId);
       debugLogger.log('server', `[${id}] serving connection: ${request.url}`);
-      try {
-        const connection = this._delegate.onConnection(request, url, ws, id);
-        (ws as any)[kConnectionSymbol] = connection;
-      } catch (error) {
-        debugLogger.log('server', `[${id}] connection error: ${error}`);
-        ws.close(1011, String(error));
-      }
+      const connection = this._delegate.onConnection(request, url, ws, id);
+      (ws as any)[kConnectionSymbol] = connection;
     });
 
     return wsEndpoint;

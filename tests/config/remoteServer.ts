@@ -69,7 +69,6 @@ export type RemoteServerOptions = {
   url?: string;
   startStopAndRunHttp?: boolean;
   sharedBrowser?: boolean;
-  existingBrowser?: { content: string };
 };
 
 export class RemoteServer implements PlaywrightServer {

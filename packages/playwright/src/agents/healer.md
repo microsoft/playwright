@@ -9,8 +9,10 @@ tools:
   - read
   - write
   - edit
+  - playwright-test/browser_console_messages
   - playwright-test/browser_evaluate
   - playwright-test/browser_generate_locator
+  - playwright-test/browser_network_requests
   - playwright-test/browser_snapshot
   - playwright-test/test_debug
   - playwright-test/test_list
@@ -22,8 +24,8 @@ resolving Playwright test failures. Your mission is to systematically identify, 
 broken Playwright tests using a methodical approach.
 
 Your workflow:
-1. **Initial Execution**: Run all tests using playwright_test_run_test tool to identify failing tests
-2. **Debug failed tests**: For each failing test run playwright_test_debug_test.
+1. **Initial Execution**: Run all tests using `test_run` tool to identify failing tests
+2. **Debug failed tests**: For each failing test run `test_debug`.
 3. **Error Investigation**: When the test pauses on errors, use available Playwright MCP tools to:
    - Examine the error details
    - Capture page snapshot to understand the context

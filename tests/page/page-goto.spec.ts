@@ -292,13 +292,15 @@ it('should work when page calls history API in beforeunload', async ({ page, ser
   expect(response.status()).toBe(200);
 });
 
-it('should fail when navigating to bad url', async ({ mode, page, browserName }) => {
+it('should fail when navigating to bad url', async ({ page, browserName, channel }) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
-  if (browserName === 'chromium' || browserName === 'webkit')
-    expect(error.message).toContain('Cannot navigate to invalid URL');
-  else if (browserName === '_bidiFirefox')
+  if (channel?.startsWith('bidi-chrom'))
+    expect(error.message).toContain('Invalid URL');
+  else if (channel?.startsWith('moz-firefox'))
     expect(error.message).toContain('NS_ERROR_MALFORMED_URI');
+  else if (browserName === 'chromium' || browserName === 'webkit')
+    expect(error.message).toContain('Cannot navigate to invalid URL');
   else
     expect(error.message).toContain('Invalid url');
 });
@@ -451,7 +453,7 @@ it('should disable timeout when its set to 0', async ({ page, server }) => {
   expect(loaded).toBe(true);
 });
 
-it('should fail when replaced by another navigation', async ({ page, server, browserName }) => {
+it('should fail when replaced by another navigation', async ({ page, server, browserName, channel }) => {
   let anotherPromise;
   server.setRoute('/empty.html', (req, res) => {
     anotherPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -464,8 +466,11 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   } else if (browserName === 'webkit') {
     expect(error.message).toContain(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`);
   } else if (browserName === 'firefox') {
-    // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
-    expect(error.message.includes(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
+    if (channel?.startsWith('moz-firefox'))
+      expect(error.message).toContain('page.goto: Protocol error (browsingContext.navigate): unknown error');
+    else
+      // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
+      expect(error.message.includes(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
   }
 });
 
@@ -792,8 +797,8 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
-it('should not resolve goto upon window.stop()', async ({ browserName, page, server }) => {
-  it.fixme(browserName === 'firefox', 'load/domcontentloaded events are flaky');
+it('should not resolve goto upon window.stop()', async ({ browserName, page, server, channel }) => {
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'load/domcontentloaded events are flaky');
   it.skip(process.env.PW_CLOCK === 'frozen');
 
   let response;

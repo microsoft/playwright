@@ -87,7 +87,6 @@ export const Events = {
 
   Worker: {
     Close: 'close',
-    Console: 'console',
   },
 
   ElectronApplication: {

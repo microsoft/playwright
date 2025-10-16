@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 
 it.describe('mobile viewport', () => {
-  it.skip(({ browserName }) => browserName === 'firefox');
+  it.skip(({ browserName, channel }) => browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
   it('should support mobile emulation', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];

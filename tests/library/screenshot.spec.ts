@@ -110,7 +110,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should throw if screenshot size is too large with device scale factor', async ({ browser, browserName, isMac }) => {
+  browserTest('should throw if screenshot size is too large with device scale factor', async ({ browser, browserName, isMac, channel }) => {
     browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16727' });
     const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
@@ -122,7 +122,7 @@ browserTest.describe('page screenshot', () => {
     {
       await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16384px; background: red;'></div>`);
       const exception = await page.screenshot({ fullPage: true }).catch(e => e);
-      if (browserName === 'firefox' || (browserName === 'webkit' && !isMac))
+      if ((browserName === 'firefox' && !channel?.startsWith('moz-firefox')) || (browserName === 'webkit' && !isMac))
         expect(exception.message).toContain('Cannot take screenshot larger than 32767');
 
       const image = await page.screenshot({ fullPage: true, scale: 'css' });
@@ -202,8 +202,8 @@ browserTest.describe('page screenshot', () => {
 browserTest.describe('element screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
 
-  browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName }) => {
-    browserTest.skip(browserName === 'firefox');
+  browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName, channel }) => {
+    browserTest.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
@@ -215,8 +215,8 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName, isMac }) => {
-    browserTest.skip(browserName === 'firefox');
+  browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName, channel }) => {
+    browserTest.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();

@@ -292,3 +292,14 @@ it('should fail with busted Array.prototype.toJSON', async ({ page }) => {
 
   expect.soft(await page.evaluate(() => ([] as any).toJSON())).toBe('"[]"');
 });
+
+it('exposeBinding should work in parallel', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37712' } }, async ({ page }) => {
+  await Promise.all([
+    page.exposeBinding('foo', () => 42),
+    page.exposeBinding('bar', () => 42),
+  ]);
+  await page.evaluate(() => {
+    (window as any).foo();
+    (window as any).bar();
+  });
+});

@@ -16,8 +16,6 @@
 
 import React from 'react';
 
-import type { EffectCallback } from 'react';
-
 // Recalculates the value when dependencies change.
 export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList, initialValue: T, resetValue?: T) {
   const [value, setValue] = React.useState<T>(initialValue);
@@ -37,28 +35,35 @@ export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList
   return value;
 }
 
-// Tracks the element size and returns it's contentRect (always has x=0, y=0).
+// Tracks the element's bounding box.
 export function useMeasure<T extends Element>() {
   const ref = React.useRef<T | null>(null);
+  const [measure] = useMeasureForRef(ref);
+  return [measure, ref] as const;
+}
+
+export function useMeasureForRef<T extends Element>(ref?: React.RefObject<T | null>): [DOMRect, () => void] {
   const [measure, setMeasure] = React.useState(new DOMRect(0, 0, 10, 10));
+  const recalculateMeasure = React.useCallback(() => {
+    const target = ref?.current;
+    if (target)
+      setMeasure(target.getBoundingClientRect());
+  }, [ref]);
+
   React.useLayoutEffect(() => {
-    const target = ref.current;
+    const target = ref?.current;
     if (!target)
       return;
-
-    const bounds = target.getBoundingClientRect();
-
-    setMeasure(new DOMRect(0, 0, bounds.width, bounds.height));
-
-    const resizeObserver = new ResizeObserver((entries: any) => {
-      const entry = entries[entries.length - 1];
-      if (entry && entry.contentRect)
-        setMeasure(entry.contentRect);
-    });
+    recalculateMeasure();
+    const resizeObserver = new ResizeObserver(recalculateMeasure);
     resizeObserver.observe(target);
-    return () => resizeObserver.disconnect();
-  }, [ref]);
-  return [measure, ref] as const;
+    window.addEventListener('resize', recalculateMeasure);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', recalculateMeasure);
+    };
+  }, [recalculateMeasure, ref]);
+  return [measure, recalculateMeasure];
 }
 
 export function msToString(ms: number): string {
@@ -233,7 +238,7 @@ export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\
  * If `trigger` is called while a flash is ongoing, the ongoing flash will be cancelled and after 50ms a new flash is started.
  * @returns [flash, trigger]
  */
-export function useFlash(): [boolean, EffectCallback] {
+export function useFlash(): [boolean, React.EffectCallback] {
   const [flash, setFlash] = React.useState(false);
   const trigger = React.useCallback<React.EffectCallback>(() => {
     const timeouts: any[] = [];

@@ -82,8 +82,8 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v5
+    - uses: actions/setup-node@v5
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -117,11 +117,11 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.11'
+        python-version: '3.13'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -149,11 +149,11 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v3
+    - uses: actions/checkout@v5
+    - uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '25'
     - name: Build & Install
       run: mvn -B install -D skipTests --no-transfer-progress
     - name: Ensure browsers are installed
@@ -174,9 +174,9 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
     - name: Build & Install
@@ -211,8 +211,8 @@ jobs:
       image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: lts/*
       - name: Install dependencies
@@ -236,11 +236,11 @@ jobs:
       image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -265,11 +265,11 @@ jobs:
       image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '25'
       - name: Build & Install
         run: mvn -B install -D skipTests --no-transfer-progress
       - name: Run tests
@@ -291,9 +291,9 @@ jobs:
       image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
       - run: dotnet build
@@ -316,8 +316,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v5
+    - uses: actions/setup-node@v5
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -340,10 +340,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v4
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.11'
+        python-version: '3.13'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -367,11 +367,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v3
+    - uses: actions/checkout@v5
+    - uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '25'
     - name: Build & Install
       run: mvn -B install -D skipTests --no-transfer-progress
     - name: Install Playwright
@@ -393,9 +393,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
     - run: dotnet build
@@ -427,12 +427,12 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         # Force a non-shallow checkout, so that we can reference $GITHUB_BASE_REF.
         # See https://github.com/actions/checkout for more details.
         fetch-depth: 0
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -475,9 +475,9 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: NodeTool@0
+- task: UseNode@1
   inputs:
-    versionSpec: '18'
+    version: '22'
   displayName: 'Install Node.js'
 - script: npm ci
   displayName: 'npm ci'
@@ -499,7 +499,7 @@ pool:
 steps:
 - task: UsePythonVersion@0
   inputs:
-    versionSpec: '3.11'
+    versionSpec: '3.13'
   displayName: 'Use Python'
 - script: |
     python -m pip install --upgrade pip
@@ -519,9 +519,9 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: JavaToolInstaller@0
+- task: JavaToolInstaller@1
   inputs:
-    versionSpec: '17'
+    versionSpec: '25'
     jdkArchitectureOption: 'x64'
     jdkSourceOption: AzureStorage
 - script: mvn -B install -D skipTests --no-transfer-progress
@@ -567,9 +567,9 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: NodeTool@0
+- task: UseNode@1
   inputs:
-    versionSpec: '18'
+    version: '22'
   displayName: 'Install Node.js'
 
 - script: npm ci
@@ -648,9 +648,9 @@ strategy:
       project: webkit
       shard: 3/3
 steps:
-- task: NodeTool@0
+- task: UseNode@1
   inputs:
-    versionSpec: '18'
+    version: '22'
   displayName: 'Install Node.js'
 
 - script: npm ci
@@ -675,9 +675,9 @@ pool:
 container: mcr.microsoft.com/playwright:v%%VERSION%%-noble
 
 steps:
-- task: NodeTool@0
+- task: UseNode@1
   inputs:
-    versionSpec: '18'
+    version: '22'
   displayName: 'Install Node.js'
 
 - script: npm ci
@@ -699,7 +699,7 @@ container: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
 steps:
 - task: UsePythonVersion@0
   inputs:
-    versionSpec: '3.11'
+    versionSpec: '3.13'
   displayName: 'Use Python'
 
 - script: |
@@ -719,9 +719,9 @@ pool:
 container: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
 
 steps:
-- task: JavaToolInstaller@0
+- task: JavaToolInstaller@1
   inputs:
-    versionSpec: '17'
+    versionSpec: '25'
     jdkArchitectureOption: 'x64'
     jdkSourceOption: AzureStorage
 

@@ -26,6 +26,7 @@ import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { msToString, useAsyncMemo } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
+import { TraceModelContext } from './traceModelContext';
 
 type RequestBody = { text: string, mimeType?: string } | null;
 
@@ -37,13 +38,14 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   onClose: () => void;
 }> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
+  const model = React.useContext(TraceModelContext);
 
   const requestBody = useAsyncMemo<RequestBody>(async () => {
-    if (resource.request.postData) {
+    if (model && resource.request.postData) {
       const requestContentTypeHeader = resource.request.headers.find(q => q.name.toLowerCase() === 'content-type');
       const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
       if (resource.request.postData._sha1) {
-        const response = await fetch(`sha1/${resource.request.postData._sha1}`);
+        const response = await fetch(model.createRelativeUrl(`sha1/${resource.request.postData._sha1}`));
         return { text: formatBody(await response.text(), requestContentType), mimeType: requestContentType };
       } else {
         return { text: formatBody(resource.request.postData.text, requestContentType), mimeType: requestContentType };
@@ -108,7 +110,7 @@ const RequestTab: React.FunctionComponent<{
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
@@ -136,7 +138,7 @@ const RequestTab: React.FunctionComponent<{
 const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     <div className='network-request-details-header'>Response Headers</div>
     <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
   </div>;
@@ -145,14 +147,15 @@ const ResponseTab: React.FunctionComponent<{
 const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
+  const model = React.useContext(TraceModelContext);
   const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
-      if (resource.response.content._sha1) {
+      if (model && resource.response.content._sha1) {
         const useBase64 = resource.response.content.mimeType.includes('image');
         const isFont = resource.response.content.mimeType.includes('font');
-        const response = await fetch(`sha1/${resource.response.content._sha1}`);
+        const response = await fetch(model.createRelativeUrl(`sha1/${resource.response.content._sha1}`));
         if (useBase64) {
           const blob = await response.blob();
           const reader = new FileReader();
@@ -172,12 +175,12 @@ const BodyTab: React.FunctionComponent<{
     };
 
     readResources();
-  }, [resource]);
+  }, [resource, model]);
 
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.font && <FontPreview font={responseBody.font} />}
-    {responseBody && responseBody.dataUrl && <img draggable='false' src={responseBody.dataUrl} />}
+    {responseBody && responseBody.dataUrl && <div><img draggable='false' src={responseBody.dataUrl} /></div>}
     {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };

@@ -42,8 +42,6 @@ export class Playwright extends SdkObject {
   readonly electron: Electron;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
-  readonly _bidiChromium: BrowserType;
-  readonly _bidiFirefox: BrowserType;
   readonly options: PlaywrightOptions;
   readonly debugController: DebugController;
   private _allPages = new Set<Page>();
@@ -59,10 +57,8 @@ export class Playwright extends SdkObject {
       onPageOpen: page => this._allPages.add(page),
       onPageClose: page => this._allPages.delete(page),
     }, null);
-    this.chromium = new Chromium(this);
-    this._bidiChromium = new BidiChromium(this);
-    this._bidiFirefox = new BidiFirefox(this);
-    this.firefox = new Firefox(this);
+    this.chromium = new Chromium(this, new BidiChromium(this));
+    this.firefox = new Firefox(this, new BidiFirefox(this));
     this.webkit = new WebKit(this);
     this.electron = new Electron(this);
     this.android = new Android(this, new AdbBackend());

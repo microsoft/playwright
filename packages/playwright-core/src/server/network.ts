@@ -117,6 +117,10 @@ export class Request extends SdkObject {
   private _bodySize: number | undefined;
   _responseBodyOverride: { body: string; isBase64: boolean; } | undefined;
 
+  static Events = {
+    Response: 'response',
+  };
+
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
     super(frame || context, 'request');
@@ -202,6 +206,7 @@ export class Request extends SdkObject {
   _setResponse(response: Response) {
     this._response = response;
     this._waitForResponsePromise.resolve(response);
+    this.emit(Request.Events.Response, response);
   }
 
   _finalRequest(): Request {

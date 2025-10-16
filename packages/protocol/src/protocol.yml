@@ -794,8 +794,6 @@ Playwright:
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
-    _bidiChromium: BrowserType
-    _bidiFirefox: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?
@@ -896,7 +894,6 @@ DebugController:
     setRecorderMode:
       internal: true
       parameters:
-        browserId: string?
         mode:
           type: enum
           literals:
@@ -918,12 +915,6 @@ DebugController:
     resume:
       internal: true
 
-    closeBrowser:
-      internal: true
-      parameters:
-        id: string
-        reason: string?
-
     kill:
       internal: true
 
@@ -941,25 +932,6 @@ DebugController:
     stateChanged:
       parameters:
         pageCount: int
-        browsers:
-          type: array
-          items:
-            type: object
-            properties:
-              id: string
-              name: string
-              channel: string?
-              contexts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    pages:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          url: string
 
     sourceChanged:
       parameters:
@@ -2005,6 +1977,13 @@ Page:
     snapshotForAI:
       internal: true
       parameters:
+        track: string?
+        mode:
+          # defaults to "full"
+          type: enum?
+          literals:
+          - full
+          - incremental
         timeout: float
       returns:
         snapshot: string
@@ -2879,22 +2858,9 @@ Worker:
       returns:
         handle: JSHandle
 
-    updateSubscription:
-      internal: true
-      parameters:
-        event:
-          type: enum
-          literals:
-          - console
-        enabled: boolean
-
   events:
 
     close:
-
-    console:
-      parameters:
-        $mixin: ConsoleMessage
 
 
 JSHandle:
@@ -3460,6 +3426,7 @@ Request:
       items: NameValue
     isNavigationRequest: boolean
     redirectedFrom: Request?
+    hasResponse: boolean
 
   commands:
 
@@ -3475,6 +3442,8 @@ Request:
           type: array
           items: NameValue
 
+  events:
+    response:
 
 Route:
   type: interface

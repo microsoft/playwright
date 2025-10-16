@@ -16,7 +16,6 @@
 
 import { z } from '../../sdk/bundle';
 import { defineTabTool } from './tool';
-import { generateLocator } from './utils';
 import * as codegen from '../codegen';
 
 const fillForm = defineTabTool({
@@ -34,13 +33,13 @@ const fillForm = defineTabTool({
         value: z.string().describe('Value to fill in the field. If the field is a checkbox, the value should be `true` or `false`. If the field is a combobox, the value should be the text of the option.'),
       })).describe('Fields to fill in'),
     }),
-    type: 'destructive',
+    type: 'input',
   },
 
   handle: async (tab, params, response) => {
     for (const field of params.fields) {
-      const locator = await tab.refLocator({ element: field.name, ref: field.ref });
-      const locatorSource = `await page.${await generateLocator(locator)}`;
+      const { locator, resolved } = await tab.refLocator({ element: field.name, ref: field.ref });
+      const locatorSource = `await page.${resolved}`;
       if (field.type === 'textbox' || field.type === 'slider') {
         const secret = tab.context.lookupSecret(field.value);
         await locator.fill(secret.value);

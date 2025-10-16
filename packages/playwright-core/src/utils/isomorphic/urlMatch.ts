@@ -132,8 +132,13 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
         return token;
       // Handle special case of http*://, note that the new schema has to be
       // a web schema so that slashes are properly inserted after domain.
-      if (index === 0 && token.endsWith(':'))
-        return mapToken(token, 'http:');
+      if (index === 0 && token.endsWith(':')) {
+        // Replace any pattern with http:
+        if (token.indexOf('*') !== -1 || token.indexOf('{') !== -1)
+          return mapToken(token, 'http:');
+        // Preserve explicit schema as is as it may affect trailing slashes after domain.
+        return token;
+      }
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);

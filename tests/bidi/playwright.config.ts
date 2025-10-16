@@ -71,18 +71,18 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-type BrowserName = '_bidiChromium' | '_bidiFirefox';
+type BrowserName = 'chromium' | 'firefox';
 
 const getExecutablePath = (browserName: BrowserName) => {
-  if (browserName === '_bidiChromium')
+  if (browserName === 'chromium')
     return process.env.BIDI_CRPATH;
-  if (browserName === '_bidiFirefox')
+  if (browserName === 'firefox')
     return process.env.BIDI_FFPATH;
 };
 
 const browserToChannels = {
-  '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
-  '_bidiFirefox': ['moz-firefox', 'moz-firefox-beta', 'moz-firefox-nightly'],
+  'chromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
+  'firefox': ['moz-firefox', 'moz-firefox-beta', 'moz-firefox-nightly'],
 };
 
 for (const [key, channels] of Object.entries(browserToChannels)) {
@@ -108,7 +108,7 @@ for (const [key, channels] of Object.entries(browserToChannels)) {
         use: {
           browserName,
           headless: !headed,
-          channel: channel === 'bidi-chromium' ? undefined : channel,
+          channel,
           video: 'off',
           launchOptions: {
             executablePath,

@@ -9,6 +9,7 @@ juggler.jar:
 
   content/Helper.js (Helper.js)
   content/NetworkObserver.js (NetworkObserver.js)
+  content/ChannelEventSink.sys.mjs (ChannelEventSink.sys.mjs)
   content/TargetRegistry.js (TargetRegistry.js)
   content/SimpleChannel.js (SimpleChannel.js)
   content/JugglerFrameParent.jsm (JugglerFrameParent.jsm)
