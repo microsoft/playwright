@@ -277,7 +277,6 @@ export async function initVSCodeRepo() {
     type: 'stdio',
     command: commonMcpServers.playwrightTest.command,
     args: commonMcpServers.playwrightTest.args,
-    cwd: '${workspaceFolder}',
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
   // eslint-disable-next-line no-console
