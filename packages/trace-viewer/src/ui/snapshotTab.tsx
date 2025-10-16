@@ -65,7 +65,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   return <div className='snapshot-tab vbox'>
     <Toolbar>
       <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
-      <div className='snapshot-tabs' role='tablist'>
+      <div className='hbox' style={{ height: '100%' }} role='tablist'>
         {(['action', 'before', 'after'] as const).map(tab => {
           return <TabbedPaneTab
             key={tab}
