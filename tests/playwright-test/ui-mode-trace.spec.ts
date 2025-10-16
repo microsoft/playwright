@@ -657,3 +657,39 @@ test('basic fail', async ({ page }) => {
   await page.getByTestId('test-tree').getByText('basic fail').dblclick();
   await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Failed');
 });
+
+test('should be able to create and dispose APIRequestContext inside Promise.all', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, request } from '@playwright/test';
+      test('create api request contexts', async ({ }) => {
+        await Promise.all(Array.from({ length: 100 }).map(async () => {
+          let delay = Math.floor(Math.random() * 501);
+          await new Promise(res => setTimeout(res, delay));
+
+          const apiContext = await request.newContext();
+          delay = Math.floor(Math.random() * 501);
+          await new Promise(res => setTimeout(res, delay));
+          await apiContext.dispose();
+        }));
+      });
+    `,
+  });
+
+  await page.getByText('create api request contexts').dblclick();
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await page.getByText('Errors', { exact: true }).click();
+  await expect(page.locator('.tab-errors')).toHaveText('No errors');
+
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    ...Array.from({ length: 100 }).map(() => /Create request context[\d.]+m?s/),
+    /After Hooks[\d.]+m?s/,
+  ]);
+});
