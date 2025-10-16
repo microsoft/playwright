@@ -16,7 +16,7 @@
 
 .workbench-run-status {
   height: 30px;
-  padding: 4px;
+  padding: 4px 4px 4px 5px;
   flex: none;
   display: flex;
   flex-direction: row;
