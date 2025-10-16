@@ -187,15 +187,20 @@ class JUnitReporter implements ReporterV2 {
       const hasExpectFailure = lastResult?.steps?.some(s => s.category === 'expect' && s.error);
 
       const elementName = hasExpectFailure ? 'failure' : 'error';
-      const typeAttr = hasExpectFailure ? 'expect.failure' : ((err as any)?.name || 'Error');
+      const typeAttr = hasExpectFailure ? 'FAILURE' : ((err as any)?.name || 'Error');
       let messageAttr = '';
 
       if (hasExpectFailure) {
         const expectStep = lastResult?.steps?.find(s => s.category === 'expect' && s.error);
-        messageAttr = expectStep?.error?.message || 'Expectation failed';
+        const baseMessage = expectStep?.error?.message || 'Expectation failed';
+        const testInfo = `${path.basename(test.location?.file || '')}:${test.location?.line ?? ''} ${test.title}`;
+        messageAttr = `${testInfo} ${baseMessage}`;
       } else if (err) {
-        messageAttr = err.message || 'Error thrown';
+        const baseMessage = err.message || 'Error thrown';
+        const testInfo = `${path.basename(test.location?.file || '')}:${test.location?.line ?? ''} ${test.title}`;
+        messageAttr = `${testInfo} ${baseMessage}`;
       }
+
 
       entry.children!.push({
         name: elementName,
