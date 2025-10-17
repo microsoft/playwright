@@ -213,9 +213,10 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <button onClick={() => {
         const input = document.createElement('input');
         input.type = 'file';
+        input.accept = 'application/zip';
         input.click();
         input.addEventListener('change', e => handleFileInputChange(e));
-      }} type='button'>Select file(s)</button>
+      }} type='button'>Select file</button>
       <div style={{ maxWidth: 400 }}>Playwright Trace Viewer is a Progressive Web App, it does not send your trace anywhere,
         it opens it locally.</div>
     </div>}
