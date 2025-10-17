@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { colors, yaml } from 'playwright-core/lib/utilsBundle';
+import { yaml } from 'playwright-core/lib/utilsBundle';
 
 interface AgentHeader {
   name: string;
@@ -279,8 +279,6 @@ export async function initVSCodeRepo() {
     args: commonMcpServers.playwrightTest.args,
   };
   await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2));
-  // eslint-disable-next-line no-console
-  console.log(colors.yellow(`${colors.bold('Note:')} Playwright Test Agents require VSCode version 1.105+ or VSCode Insiders`));
 }
 
 export async function initOpencodeRepo() {
