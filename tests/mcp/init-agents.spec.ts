@@ -73,6 +73,11 @@ test('create seed file with --config', async ({  }) => {
   expect(fs.existsSync(path.join(baseDir, 'custom', 'bar', 'e2e', 'seed.spec.ts'))).toBe(true);
 });
 
+async function ensureFiles(baseDir: string, files: string[]) {
+  for (const file of files)
+    expect(fs.existsSync(path.join(baseDir, file))).toBe(true);
+}
+
 test('init claude agents', async ({  }) => {
   const baseDir = await writeFiles({
     'playwright.config.ts': `
@@ -84,9 +89,15 @@ test('init claude agents', async ({  }) => {
     cwd: baseDir,
     args: ['--loop', 'claude'],
   });
-  expect(fs.existsSync(path.join(baseDir, '.claude', 'agents', 'playwright-test-planner.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.claude', 'agents', 'playwright-test-generator.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.claude', 'agents', 'playwright-test-healer.md'))).toBe(true);
+  await ensureFiles(baseDir, [
+    '.claude/agents/playwright-test-planner.agent.md',
+    '.claude/agents/playwright-test-generator.agent.md',
+    '.claude/agents/playwright-test-healer.agent.md',
+    '.claude/prompts/test-coverage.prompt.md',
+    '.claude/prompts/test-plan.prompt.md',
+    '.claude/prompts/test-generate.prompt.md',
+    '.claude/prompts/test-heal.prompt.md',
+  ]);
 });
 
 test('init vscode agents', async ({  }) => {
@@ -100,10 +111,16 @@ test('init vscode agents', async ({  }) => {
     cwd: baseDir,
     args: ['--loop', 'vscode'],
   });
-  expect(fs.existsSync(path.join(baseDir, '.github', 'chatmodes', '🎭 generator.chatmode.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.github', 'chatmodes', ' 🎭 planner.chatmode.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.github', 'chatmodes', '🎭 healer.chatmode.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.vscode', 'mcp.json'))).toBe(true);
+
+  await ensureFiles(baseDir, [
+    '.github/chatmodes/🎭 generator.chatmode.md',
+    '.github/chatmodes/🎭 planner.chatmode.md',
+    '.github/chatmodes/🎭 healer.chatmode.md',
+    '.github/prompts/test-plan.prompt.md',
+    '.github/prompts/test-generate.prompt.md',
+    '.github/prompts/test-heal.prompt.md',
+    '.vscode/mcp.json',
+  ]);
 });
 
 test('init opencode agents', async ({  }) => {
@@ -117,8 +134,14 @@ test('init opencode agents', async ({  }) => {
     cwd: baseDir,
     args: ['--loop', 'opencode'],
   });
-  expect(fs.existsSync(path.join(baseDir, '.opencode', 'prompts', 'playwright-test-planner.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.opencode', 'prompts', 'playwright-test-generator.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, '.opencode', 'prompts', 'playwright-test-healer.md'))).toBe(true);
-  expect(fs.existsSync(path.join(baseDir, 'opencode.json'))).toBe(true);
+
+  await ensureFiles(baseDir, [
+    '.opencode/prompts/playwright-test-planner.agent.md',
+    '.opencode/prompts/playwright-test-generator.agent.md',
+    '.opencode/prompts/playwright-test-healer.agent.md',
+    '.opencode/prompts/test-plan.prompt.md',
+    '.opencode/prompts/test-generate.prompt.md',
+    '.opencode/prompts/test-heal.prompt.md',
+    'opencode.json',
+  ]);
 });

@@ -43,7 +43,7 @@ interface Agent {
 class AgentParser {
   static async loadAgents(): Promise<Agent[]> {
     const files = await fs.promises.readdir(__dirname);
-    return Promise.all(files.filter(file => file.endsWith('.md')).map(file => AgentParser.parseFile(path.join(__dirname, file))));
+    return Promise.all(files.filter(file => file.endsWith('.agent.md')).map(file => AgentParser.parseFile(path.join(__dirname, file))));
   }
 
   static async parseFile(filePath: string): Promise<Agent> {
@@ -109,13 +109,15 @@ class AgentParser {
 
 export class ClaudeGenerator {
   static async init(config: FullConfigInternal, projectName: string) {
-    await initRepo(config, projectName);
+    await initRepo(config, projectName, {
+      promptsFolder: '.claude/prompts',
+    });
 
     const agents = await AgentParser.loadAgents();
 
     await fs.promises.mkdir('.claude/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.claude/agents/${agent.header.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
+      await writeFile(`.claude/agents/${agent.header.name}.agent.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
 
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
@@ -160,16 +162,18 @@ export class ClaudeGenerator {
 
 export class OpencodeGenerator {
   static async init(config: FullConfigInternal, projectName: string) {
-    await initRepo(config, projectName);
+    await initRepo(config, projectName, {
+      agentDefault: 'Build',
+      promptsFolder: '.opencode/prompts'
+    });
 
     const agents = await AgentParser.loadAgents();
 
-    await fs.promises.mkdir('.opencode/prompts', { recursive: true });
     for (const agent of agents) {
       const prompt = [agent.instructions];
       prompt.push('');
       prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
-      await writeFile(`.opencode/prompts/${agent.header.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
+      await writeFile(`.opencode/prompts/${agent.header.name}.agent.md`, prompt.join('\n'), '🤖', 'agent definition');
     }
     await writeFile('opencode.json', OpencodeGenerator.configuration(agents), '🔧', 'opencode configuration');
 
@@ -206,7 +210,7 @@ export class OpencodeGenerator {
       result['agent'][agent.header.name] = {
         description: agent.header.description,
         mode: 'subagent',
-        prompt: `{file:.opencode/prompts/${agent.header.name}.md}`,
+        prompt: `{file:.opencode/prompts/${agent.header.name}.agent.md}`,
         tools,
       };
       for (const tool of agent.header.tools)
@@ -230,7 +234,9 @@ export class AgentGenerator {
       return;
     }
 
-    await initRepo(config, projectName);
+    await initRepo(config, projectName, {
+      promptsFolder: path.join(agentsFolder, 'prompts')
+    });
 
     const agents = await AgentParser.loadAgents();
 
@@ -262,14 +268,22 @@ export class AgentGenerator {
 
 export class VSCodeGenerator {
   static async init(config: FullConfigInternal, projectName: string) {
-    await initRepo(config, projectName);
+    await initRepo(config, projectName, {
+      agentDefault: 'agent',
+      agentHealer: '🎭 healer',
+      agentGenerator: '🎭 generator',
+      agentPlanner: '🎭 planner',
+      promptsFolder: '.github/prompts'
+    });
     const agents = await AgentParser.loadAgents();
 
     const nameMap = new Map<string, string>([
-      ['playwright-test-planner', ' 🎭 planner'],
+      ['playwright-test-planner', '🎭 planner'],
       ['playwright-test-generator', '🎭 generator'],
       ['playwright-test-healer', '🎭 healer'],
     ]);
+
+    await deleteFile(`.github/chatmodes/ 🎭 planner.chatmode.md`, 'old planner chatmode');
 
     await fs.promises.mkdir('.github/chatmodes', { recursive: true });
     for (const agent of agents)
@@ -349,7 +363,27 @@ async function writeFile(filePath: string, content: string, icon: string, descri
   await fs.promises.writeFile(filePath, content, 'utf-8');
 }
 
-async function initRepo(config: FullConfigInternal, projectName: string) {
+async function deleteFile(filePath: string, description: string) {
+  try {
+    if (!fs.existsSync(filePath))
+      return;
+  } catch {
+    return;
+  }
+
+  console.log(`- ✂️  ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
+  await fs.promises.unlink(filePath);
+}
+
+type RepoParams = {
+  promptsFolder: string;
+  agentDefault?: string;
+  agentHealer?: string;
+  agentGenerator?: string;
+  agentPlanner?: string;
+};
+
+async function initRepo(config: FullConfigInternal, projectName: string, options: RepoParams) {
   const project = seedProject(config, projectName);
   console.log(`🎭 Using project "${project.project.name}" as a primary project`);
 
@@ -361,56 +395,37 @@ This is a directory for test plans.
 `, '📝', 'directory for test plans');
   }
 
-  if (!fs.existsSync('prompts')) {
-    await fs.promises.mkdir('prompts');
-    await writeFile(path.join('prompts', 'README.md'), `# Prompts
-
-This is a directory for useful prompts.
-`, '📝', 'useful prompts');
-  }
-
   let seedFile = await findSeedFile(project);
   if (!seedFile) {
     seedFile = defaultSeedFile(project);
     await writeFile(seedFile, seedFileContent, '🌱', 'default environment seed file');
   }
 
-  const coveragePromptFile = path.join('prompts', 'test-coverage.md');
-  if (!fs.existsSync(coveragePromptFile))
-    await writeFile(coveragePromptFile, coveragePrompt(seedFile), '📝', 'test coverage prompt');
+  await fs.promises.mkdir(options.promptsFolder, { recursive: true });
+
+  for (const promptFile of await fs.promises.readdir(__dirname)) {
+    if (!promptFile.endsWith('.prompt.md'))
+      continue;
+    const content = await loadPrompt(promptFile, { ...options, seedFile: path.relative(process.cwd(), seedFile) });
+    await writeFile(path.join(options.promptsFolder, promptFile), content, '📝', 'prompt template');
+  }
 }
 
 function initRepoDone() {
   console.log('✅ Done.');
 }
 
-const coveragePrompt = (seedFile: string) => `
-# Produce test coverage
+async function loadPrompt(file: string, params: Record<string, string>) {
+  const templateParams = {
+    agentDefault: params.agentDefault ?? 'default',
+    agentHealer: params.agentHealer ?? 'playwright-test-healer',
+    agentGenerator: params.agentGenerator ?? 'playwright-test-generator',
+    agentPlanner: params.agentPlanner ?? 'playwright-test-planner',
+    seedFile: params.seedFile,
+  };
 
-Parameters:
-- Task: the task to perform
-- Seed file (optional): the seed file to use, defaults to ${path.relative(process.cwd(), seedFile)}
-- Test plan file (optional): the test plan file to write, under specs/ folder.
-
-1. Call #playwright-test-planner subagent with prompt:
-
-<plan>
-  <task><!-- the task --></task>
-  <seed-file><!-- seed file param --></seed-file>
-  <plan-file><!-- test plan file --></plan-file>
-</plan>
-
-2. For each test case from the test plan file (1.1, 1.2, ...), Call #playwright-test-generator subagent with prompt:
-
-<generate>
-  <test-file><!-- Name of the file to save the test into, should be unique for test --></test-file>
-  <test-suite><!-- Name of the top level test spec w/o ordinal--></test-suite>
-  <test-name><!--Name of the test case without the ordinal --></test-name>
-  <seed-file><!-- Seed file from test plan --></seed-file>
-  <body><!-- Test case content including steps and expectations --></body>
-</generate>
-
-3. Call #playwright-test-healer subagent with prompt:
-
-<heal>Run all tests and fix the failing ones one after another.</heal>
-`;
+  const content = await fs.promises.readFile(path.join(__dirname, file), 'utf-8');
+  return Object.entries(templateParams).reduce((acc, [key, value]) => {
+    return acc.replace(new RegExp(`\\\${${key}}`, 'g'), value);
+  }, content);
+}
