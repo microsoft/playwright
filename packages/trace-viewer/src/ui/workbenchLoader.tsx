@@ -23,12 +23,12 @@ import { DialogToolbarButton } from '@web/components/dialogToolbarButton';
 import { Dialog } from '@web/shared/dialog';
 import { DefaultSettingsView } from './defaultSettingsView';
 import { TraceModelContext } from './traceModelContext';
+import { getMimeTypeForPath } from '@isomorphic/mimeType';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
   const [isServer, setIsServer] = React.useState<boolean>(false);
   const [traceURL, setTraceURL] = React.useState<string>();
-  const [uploadedTraceName, setUploadedTraceName] = React.useState<string>();
   const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
@@ -36,37 +36,35 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
   const [showProgressDialog, setShowProgressDialog] = React.useState<boolean>(false);
 
-  const processTraceFiles = React.useCallback((files: FileList) => {
-    const url = new URL(window.location.href);
-    if (!files.length)
+  const processTraceFiles = React.useCallback((files?: FileList | null) => {
+    if (!files?.length)
       return;
-    const file = files.item(0)!;
+
+    // Do best effort to select the first valid trace valid, if not, rely on error reporting of sw
+    // Zip files may have different mime types on different operating systems, so rely on filename instead
+    const file = Array.from(files).find(file => getMimeTypeForPath(file.name) === 'application/zip') ?? files[0];
     const blobTraceURL = URL.createObjectURL(file);
+
+    const url = new URL(window.location.href);
     url.searchParams.append('trace', blobTraceURL);
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
     // so set it here.
     window.history.pushState({}, '', href);
     setTraceURL(blobTraceURL);
-    setUploadedTraceName(file.name);
     setDragOver(false);
     setProcessingErrorMessage(null);
   }, []);
 
   React.useEffect(() => {
     const listener = async (e: ClipboardEvent) => {
-      if (!e.clipboardData?.files.length)
-        return;
-      for (const file of e.clipboardData.files) {
-        if (file.type !== 'application/zip')
-          return;
-      }
       e.preventDefault();
-      processTraceFiles(e.clipboardData.files);
+      processTraceFiles(e.clipboardData?.files);
     };
     document.addEventListener('paste', listener);
     return () => document.removeEventListener('paste', listener);
   });
+
   React.useEffect(() => {
     const listener = (e: MessageEvent) => {
       const { method, params } = e.data;
@@ -90,11 +88,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
     processTraceFiles(event.dataTransfer.files);
   }, [processTraceFiles]);
 
-  const handleFileInputChange = React.useCallback((event: any) => {
+  const handleFileInputChange = React.useCallback((event: Event) => {
     event.preventDefault();
-    if (!event.target.files)
-      return;
-    processTraceFiles(event.target.files);
+    processTraceFiles((event.target as HTMLInputElement).files);
   }, [processTraceFiles]);
 
   React.useEffect(() => {
@@ -157,7 +153,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         navigator.serviceWorker.removeEventListener('message', swListener);
       }
     })();
-  }, [isServer, traceURL, uploadedTraceName]);
+  }, [isServer, traceURL]);
 
   const showLoading = progress.done !== progress.total && progress.total !== 0 && !processingErrorMessage;
 
