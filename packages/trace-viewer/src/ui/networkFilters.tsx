@@ -42,7 +42,6 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
 
       <div className='network-filters-resource-types'>
         <div
-          key='All'
           title='All'
           onClick={() => onFilterStateChange({ ...filterState, resourceTypes: new Set() })}
           className={`network-filters-resource-type ${filterState.resourceTypes.size === 0 ? 'selected' : ''}`}
