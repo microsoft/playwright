@@ -27,7 +27,7 @@ const setHeaders = defineTool({
     inputSchema: z.object({
       headers: z.record(z.string(), z.string()).describe('Header names mapped to the values that should be sent with every request.'),
     }),
-    type: 'destructive',
+    type: 'action',
   },
 
   handle: async (context, params, response) => {
