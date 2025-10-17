@@ -303,7 +303,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate');
   await expect(traceViewer.callLines).toHaveText([
-    '',
+    /Evaluate/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
@@ -329,7 +329,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
-    '',
+    /Evaluate/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
