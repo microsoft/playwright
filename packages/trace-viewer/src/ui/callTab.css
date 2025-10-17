@@ -69,6 +69,12 @@
   margin-bottom: -2px;
 }
 
+.call-line .toolbar-button.check {
+  margin-left: 5px;
+  margin-top: -2px;
+  margin-bottom: -2px;
+}
+
 .call-value {
   margin-left: 2px;
   text-overflow: ellipsis;

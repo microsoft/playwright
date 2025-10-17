@@ -18,6 +18,7 @@ import * as React from 'react';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import './copyToClipboard.css';
 
+// TODO: This should be deduplicated with packages/html-reporter/src/copyToClipboard.tsx
 export const CopyToClipboard: React.FunctionComponent<{
   value: string | (() => Promise<string>),
   description?: string,
