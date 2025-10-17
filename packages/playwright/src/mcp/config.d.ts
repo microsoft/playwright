@@ -16,7 +16,7 @@
 
 import type * as playwright from 'playwright-core';
 
-export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing';
+export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing' | 'headers';
 
 export type Config = {
   /**
@@ -99,6 +99,7 @@ export type Config = {
    *   - 'core': Core browser automation features.
    *   - 'pdf': PDF generation and manipulation.
    *   - 'vision': Coordinate-based interactions.
+   *   - 'headers': Manage persistent custom HTTP headers.
    */
   capabilities?: ToolCapability[];
 
@@ -171,4 +172,3 @@ export type Config = {
    */
   imageResponses?: 'allow' | 'omit';
 };
-
