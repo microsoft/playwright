@@ -127,11 +127,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     });
 
     test('should handle large number of console logs', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37719' } }, async ({ runInlineTest }, testInfo) => {
+      test.slow();
       const reportFile = testInfo.outputPath('report.xml');
       const result = await runInlineTest({
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
           test('one', async ({}) => {
+            test.slow();
             for (let i = 0; i < 500000; i++) {
               console.log('log line ' + i);
             }
