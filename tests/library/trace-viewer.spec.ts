@@ -406,6 +406,39 @@ test('should filter network requests by resource type', async ({ page, runAndTra
   await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
 });
 
+test('should filter network requests by multiple resource types', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+    await page.evaluate(() => (window as any).donePromise);
+  });
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.showNetworkTab();
+
+  const { networkRequests } = traceViewer;
+
+  await traceViewer.page.getByText('JS', { exact: true }).click();
+  await expect(networkRequests).toHaveCount(1);
+  await expect(networkRequests.getByText('script.js')).toBeVisible();
+
+  await traceViewer.page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkRequests.getByText('script.js')).toBeVisible();
+  await expect(networkRequests.getByText('style.css')).toBeVisible();
+  await expect(networkRequests).toHaveCount(2);
+
+  await traceViewer.page.getByText('Image', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkRequests.getByText('image.png')).toBeVisible();
+  await expect(networkRequests).toHaveCount(3);
+
+  await traceViewer.page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkRequests).toHaveCount(2);
+  await expect(networkRequests.getByText('script.js')).toBeVisible();
+  await expect(networkRequests.getByText('image.png')).toBeVisible();
+
+  await traceViewer.page.getByText('All', { exact: true }).click();
+  await expect(networkRequests).toHaveCount(9);
+});
+
 test('should show font preview', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
