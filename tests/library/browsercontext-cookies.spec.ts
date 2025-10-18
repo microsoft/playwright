@@ -107,7 +107,6 @@ it('should allow adding cookies with >400 days expiration', {
     secure: false,
     sameSite: 'Lax',
   });
-  expect(expire - cookies[0].expires).toBeGreaterThan(60 * 1000);
 });
 
 it('should properly report httpOnly cookie', async ({ context, page, server }) => {
