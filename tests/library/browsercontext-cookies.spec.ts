@@ -72,6 +72,42 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
   expect(cookies[0].expires).toBeGreaterThan((Date.now() + FOUR_HUNDRED_DAYS - FIVE_MINUTES) / 1000);
 });
 
+it('should allow adding cookies with >400 days expiration', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37903' }
+}, async ({ context, server, browserName, channel }) => {
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Firefox fails to add cookies with >400 days expiration');
+
+  // Browsers start to cap cookies with 400 days max expires value.
+  // See https://github.com/httpwg/http-extensions/pull/1732
+  // Chromium patch: https://chromium.googlesource.com/chromium/src/+/aaa5d2b55478eac2ee642653dcd77a50ac3faff6
+  const expire = Date.now() / 1000 + 401 * 24 * 3600;
+  await context.addCookies([
+    {
+      name: 'username',
+      value: 'John Doe',
+      domain: server.HOSTNAME,
+      path: '/',
+      expires: expire,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+    }
+  ]);
+
+  const cookies = await context.cookies();
+  expect(cookies.length).toBe(1);
+  expect(cookies[0]).toEqual({
+    name: 'username',
+    value: 'John Doe',
+    domain: server.HOSTNAME,
+    path: '/',
+    expires: expect.anything(),
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  });
+});
+
 it('should properly report httpOnly cookie', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/');
