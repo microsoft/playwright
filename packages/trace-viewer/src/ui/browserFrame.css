@@ -32,13 +32,13 @@
   display: flex;
   align-items: center;
   height: 28px;
+}
 
-  .browser-frame-address {
-    flex: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.browser-frame-address {
+  flex: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .browser-frame-menu-bar {
