@@ -111,6 +111,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.overflowscrolling = false;
     expected.mediasource = true;
     expected.scrolltooptions = false;
+    expected.hairline = false;
 
     delete expected.webglextensions;
     delete actual.webglextensions;
