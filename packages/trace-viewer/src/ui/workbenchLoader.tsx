@@ -213,7 +213,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <button onClick={() => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = 'application/zip';
+        input.accept = '.zip';
         input.click();
         input.addEventListener('change', e => handleFileInputChange(e));
       }} type='button'>Select file</button>
