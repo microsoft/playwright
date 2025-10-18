@@ -127,6 +127,11 @@ export interface FullResult {
  * `false`. This way, Playwright will use one of the standard terminal reporters in addition to your custom reporter
  * to enhance user experience.
  *
+ * **Reporter errors**
+ *
+ * Playwright will swallow any errors thrown in your custom reporter methods. If you need to detect or fail on
+ * reporter errors, you must wrap and handle them yourself.
+ *
  * **Merged report API notes**
  *
  * When merging multiple [`blob`](https://playwright.dev/docs/test-reporters#blob-reporter) reports via
