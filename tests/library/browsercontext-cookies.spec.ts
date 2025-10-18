@@ -74,14 +74,13 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
 
 it('should allow adding cookies with >400 days expiration', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37903' }
-}, async ({ context, page, server, browserName }) => {
+}, async ({ context, server, browserName }) => {
   it.fixme(browserName === 'firefox', 'Firefox fails to add cookies with >400 days expiration');
 
   // Browsers start to cap cookies with 400 days max expires value.
   // See https://github.com/httpwg/http-extensions/pull/1732
   // Chromium patch: https://chromium.googlesource.com/chromium/src/+/aaa5d2b55478eac2ee642653dcd77a50ac3faff6
   const expire = Date.now() / 1000 + 401 * 24 * 3600;
-  console.log('expire', expire);
   await context.addCookies([
     {
       name: 'username',
