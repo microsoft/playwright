@@ -74,8 +74,8 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
 
 it('should allow adding cookies with >400 days expiration', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37903' }
-}, async ({ context, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'Firefox fails to add cookies with >400 days expiration');
+}, async ({ context, server, browserName, channel }) => {
+  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Firefox fails to add cookies with >400 days expiration');
 
   // Browsers start to cap cookies with 400 days max expires value.
   // See https://github.com/httpwg/http-extensions/pull/1732
