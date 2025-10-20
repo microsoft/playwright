@@ -506,20 +506,17 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   await expect.soft(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript.*continued/]);
 });
 
-test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
+test('should show snapshot URL and copy button', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate('2+2');
   });
   await traceViewer.snapshotFrame('Evaluate');
-  const browserFrameAddressBarLocator = traceViewer.page.locator('.browser-frame-address-bar');
-  await expect(browserFrameAddressBarLocator).toHaveText(server.EMPTY_PAGE);
-  const copySelectorLocator = browserFrameAddressBarLocator.getByRole('button', { name: 'Copy' });
-  await expect(copySelectorLocator).toBeHidden();
-  await browserFrameAddressBarLocator.hover();
-  await expect(copySelectorLocator).toBeVisible();
+  const addressBar = traceViewer.page.locator('.browser-frame-address-bar');
+  await expect(addressBar).toHaveText(server.EMPTY_PAGE);
+
   await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-  await copySelectorLocator.click();
+  await addressBar.getByRole('button', { name: 'Copy' }).click();
   expect(await traceViewer.page.evaluate(() => navigator.clipboard.readText())).toBe(server.EMPTY_PAGE);
 });
 

@@ -29,20 +29,16 @@
   font: 400 16px Arial,sans-serif;
   margin: 0 16px 0 8px;
   padding: 5px 15px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   display: flex;
   align-items: center;
   height: 28px;
 }
 
-.browser-frame-address-bar > button {
-  visibility: hidden;
-}
-
-.browser-frame-address-bar:hover > button {
-  visibility: visible;
+.browser-frame-address {
+  flex: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .browser-frame-menu-bar {
