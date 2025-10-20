@@ -16,15 +16,15 @@
 
 import './networkFilters.css';
 
-const resourceTypes = ['All', 'Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image'] as const;
+const resourceTypes = ['Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image'] as const;
 export type ResourceType = typeof resourceTypes[number];
 
 export type FilterState = {
   searchValue: string;
-  resourceType: ResourceType;
+  resourceTypes: Set<ResourceType>;
 };
 
-export const defaultFilterState: FilterState = { searchValue: '', resourceType: 'All' };
+export const defaultFilterState: FilterState = { searchValue: '', resourceTypes: new Set() };
 
 export const NetworkFilters = ({ filterState, onFilterStateChange }: {
   filterState: FilterState,
@@ -41,12 +41,28 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
       />
 
       <div className='network-filters-resource-types'>
+        <div
+          title='All'
+          onClick={() => onFilterStateChange({ ...filterState, resourceTypes: new Set() })}
+          className={`network-filters-resource-type ${filterState.resourceTypes.size === 0 ? 'selected' : ''}`}
+        >
+          All
+        </div>
+
         {resourceTypes.map(resourceType => (
           <div
             key={resourceType}
             title={resourceType}
-            onClick={() => onFilterStateChange({ ...filterState, resourceType })}
-            className={`network-filters-resource-type ${filterState.resourceType === resourceType ? 'selected' : ''}`}
+            onClick={event => {
+              let newType;
+              if (event.ctrlKey || event.metaKey)
+                newType = filterState.resourceTypes.symmetricDifference(new Set([resourceType]));
+              else
+                newType = new Set([resourceType]);
+
+              onFilterStateChange({ ...filterState, resourceTypes: newType });
+            }}
+            className={`network-filters-resource-type ${filterState.resourceTypes.has(resourceType) ? 'selected' : ''}`}
           >
             {resourceType}
           </div>

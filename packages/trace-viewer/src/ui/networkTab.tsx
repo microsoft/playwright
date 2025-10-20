@@ -370,7 +370,6 @@ function comparator(sortBy: ColumnName) {
 }
 
 const resourceTypePredicates: Record<ResourceType, (contentType: string) => boolean> = {
-  'All': () => true,
   'Fetch': contentType => contentType === 'application/json',
   'HTML': contentType => contentType === 'text/html',
   'CSS': contentType => contentType === 'text/css',
@@ -379,10 +378,9 @@ const resourceTypePredicates: Record<ResourceType, (contentType: string) => bool
   'Image': contentType => contentType.includes('image'),
 };
 
-function filterEntry({ searchValue, resourceType }: FilterState) {
+function filterEntry({ searchValue, resourceTypes }: FilterState) {
   return (entry: RenderedEntry) => {
-    const typePredicate = resourceTypePredicates[resourceType];
-
-    return typePredicate(entry.contentType) && entry.name.url.toLowerCase().includes(searchValue.toLowerCase());
+    const isRightType = resourceTypes.size === 0 || Array.from(resourceTypes).some(type => resourceTypePredicates[type](entry.contentType));
+    return isRightType && entry.name.url.toLowerCase().includes(searchValue.toLowerCase());
   };
 }
