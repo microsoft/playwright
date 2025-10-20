@@ -118,7 +118,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
       // Ignore top-level errors, they are already inside TestInfo.errors.
-      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => {});
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
       await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});
@@ -271,7 +271,8 @@ export class WorkerMain extends ProcessRunner {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
-        attachment => this.dispatchEvent('attach', attachment));
+        attachment => this.dispatchEvent('attach', attachment),
+        testPausedPayload => this.dispatchEvent('testPaused', testPausedPayload));
 
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);
@@ -396,10 +397,7 @@ export class WorkerMain extends ProcessRunner {
 
       try {
         // Run "immediately upon test function finish" callback.
-        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => {
-          for (const fn of testInfo._onDidFinishTestFunctions)
-            await fn();
-        });
+        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, () => testInfo._didFinishTestFunction());
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }

@@ -65,7 +65,7 @@ export class TestRun {
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
   topLevelProjects: FullProjectInternal[] = [];
 
-  constructor(config: FullConfigInternal, reporter: InternalReporter, options?: { pauseOnError?: boolean, pauseAtEnd?: boolean }) {
+  constructor(config: FullConfigInternal, reporter: InternalReporter, options?: { pauseOnError?: 'mcp' | 'notify' | 'off', pauseAtEnd?: 'mcp' | 'notify' | 'off' }) {
     this.config = config;
     this.reporter = reporter;
     this.failureTracker = new FailureTracker(config, options);

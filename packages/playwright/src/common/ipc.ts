@@ -66,8 +66,8 @@ export type WorkerInitParams = {
   projectId: string;
   config: SerializedConfig;
   artifactsDir: string;
-  pauseOnError: boolean;
-  pauseAtEnd: boolean;
+  pauseOnError: 'mcp' | 'notify' | 'off';
+  pauseAtEnd: 'mcp' | 'notify' | 'off';
 };
 
 export type TestBeginPayload = {
@@ -85,6 +85,10 @@ export type AttachmentPayload = {
 };
 
 export type TestInfoErrorImpl = TestInfoError;
+
+export type TestPausedPayload = {
+  errors: TestInfoErrorImpl[];
+};
 
 export type TestEndPayload = {
   testId: string;
