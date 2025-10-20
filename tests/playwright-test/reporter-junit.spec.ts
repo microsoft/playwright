@@ -126,8 +126,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
-    test('should handle large number of console logs', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37719' } }, async ({ runInlineTest }) => {
+    test('should handle large number of console logs', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37719' } }, async ({ runInlineTest }, testInfo) => {
       test.slow();
+      // need to go via disk, otherwise our test harness would print 500k lines of stdout to the Github Actions UI that can't handle it.
+      const reportFile = testInfo.outputPath('report.xml');
       const result = await runInlineTest({
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
@@ -138,10 +140,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             }
           });
         `,
-      }, { reporter: 'junit' });
+      }, { reporter: 'junit' }, { PLAYWRIGHT_JUNIT_OUTPUT_FILE: reportFile });
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain('</testsuites>');
-      const testcase = parseXML(result.output)['testsuites']['testsuite'][0]['testcase'][0];
+      const report = await fs.promises.readFile(reportFile, 'utf8');
+      const testcase = parseXML(report)['testsuites']['testsuite'][0]['testcase'][0];
       expect(testcase['system-out']).toHaveLength(1);
       expect(testcase['system-out'][0]).toContain('log line 99999');
     });
