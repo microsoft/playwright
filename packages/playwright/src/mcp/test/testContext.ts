@@ -145,7 +145,7 @@ export class TestContext {
         projects: [projectName],
         timeout: 0,
         workers: 1,
-        pauseAtEnd: true,
+        pauseAtEnd: 'mcp',
         disableConfigReporters: true,
         failOnLoadErrors: true,
       });

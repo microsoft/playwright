@@ -31,7 +31,7 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
   if (!testInfo)
     return;
 
-  const shouldPause = errorMessage ? testInfo?._pauseOnError() : testInfo?._pauseAtEnd();
+  const shouldPause = errorMessage ? testInfo?._pauseOnError() === 'mcp' : testInfo?._pauseAtEnd() === 'mcp';
   if (!shouldPause)
     return;
 

@@ -237,7 +237,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = (testInfo as TestInfoImpl)._pauseOnError() ? 5000 : actionTimeout || 0;
+    playwright._defaultContextTimeout = (testInfo as TestInfoImpl)._pauseOnError() === 'mcp' ? 5000 : actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;

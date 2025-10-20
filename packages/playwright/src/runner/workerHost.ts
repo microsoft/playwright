@@ -34,8 +34,8 @@ type WorkerHostOptions = {
   config: SerializedConfig;
   extraEnv: Record<string, string | undefined>;
   outputDir: string;
-  pauseOnError: boolean;
-  pauseAtEnd: boolean;
+  pauseOnError: 'mcp' | 'notify' | 'off';
+  pauseAtEnd: 'mcp' | 'notify' | 'off';
 };
 
 export class WorkerHost extends ProcessHost {
