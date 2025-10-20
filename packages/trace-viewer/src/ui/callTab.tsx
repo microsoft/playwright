@@ -24,6 +24,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { ActionTraceEventInContext } from './modelUtil';
+import { renderTitleForCall } from './actionList';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
@@ -40,9 +41,11 @@ export const CallTab: React.FunctionComponent<{
   const startTimeMillis = action.startTime - startTimeOffset;
   const startTime = msToString(startTimeMillis);
 
+  const { title } = renderTitleForCall(action);
+
   return (
     <div className='call-tab'>
-      <div className='call-line'>{action.title}</div>
+      <div className='call-line'>{title}</div>
       <div className='call-section'>Time</div>
       {renderProperty({ name: 'start', type: 'literal', text: startTime })}
       {renderProperty({ name: 'duration', type: 'literal', text: renderDuration(action) })}
