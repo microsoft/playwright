@@ -6180,7 +6180,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    *     const name = this.constructor.name + '.' + (context.name as string);
    *     return test.step(name, async () => {
    *       return await target.call(this, ...args);
-   *     });
+   *     }, { box: true });
    *   };
    * }
    *
@@ -6339,7 +6339,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *     const name = this.constructor.name + '.' + (context.name as string);
      *     return test.step(name, async () => {
      *       return await target.call(this, ...args);
-     *     });
+     *     }, { box: true });
      *   };
      * }
      *
