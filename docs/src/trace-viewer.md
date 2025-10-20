@@ -39,7 +39,7 @@ pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 
 ### Using [trace.playwright.dev](https://trace.playwright.dev)
 
-[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop or via the `Select file(s)` button.
+[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload a trace file using drag and drop or via the `Select file` button.
 
 Trace Viewer loads the trace entirely in your browser and does not transmit any data externally.
 
