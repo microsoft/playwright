@@ -213,8 +213,7 @@ function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: Sear
 // Extract quoted groups of search params, or tokens separated by whitespace
 const SEARCH_PARAM_GROUP_REGEX = /("[^"]*"|"[^"]*$|\S+)/g;
 
-export function filterWithQuery(searchParams: URLSearchParams, token: string, append: boolean): string {
-  const existingQuery = searchParams.get('q') ?? '';
+export function filterWithQuery(existingQuery: string, token: string, append: boolean): string {
   const tokens = [...existingQuery.matchAll(SEARCH_PARAM_GROUP_REGEX)].map(m => {
     const rawValue = m[0];
     return rawValue.startsWith('"') && rawValue.endsWith('"') && rawValue.length > 1 ? rawValue.slice(1, rawValue.length - 1) : rawValue;

@@ -60,7 +60,8 @@ const LabelsClickView: React.FC<{
 
   const onClickHandle = React.useCallback((e: React.MouseEvent, label: string) => {
     e.preventDefault();
-    navigate(filterWithQuery(searchParams, label, e.metaKey || e.ctrlKey));
+    const q = searchParams.get('q')?.toString() || '';
+    navigate(filterWithQuery(q, label, e.metaKey || e.ctrlKey));
   }, [searchParams]);
 
   return <>

@@ -24,7 +24,6 @@ import { clsx, useFlash } from '@web/uiUtils';
 import { trace } from './icons';
 import { Expandable } from './expandable';
 import { Label } from './labels';
-import { filterWithQuery } from './filter';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -62,9 +61,10 @@ export const LinkBadge: React.FunctionComponent<LinkProps & { dim?: boolean }> =
 export const ProjectLink: React.FunctionComponent<{
   projectNames: string[],
   projectName: string,
-}> = ({  projectNames, projectName }) => {
-  const searchParams = React.useContext(SearchParamsContext);
-  return <Link click={filterWithQuery(searchParams, `p:${projectName}`, false)} ctrlClick={filterWithQuery(searchParams, `p:${projectName}`, true)}>
+}> = ({ projectNames, projectName }) => {
+  const encoded = encodeURIComponent(projectName);
+  const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
+  return <Link href={`#?q=p:${value}`}>
     <Label label={projectName} colorIndex={projectNames.indexOf(projectName) % 6} />
   </Link>;
 };

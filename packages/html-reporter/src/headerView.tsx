@@ -102,10 +102,11 @@ const NavLink: React.FC<{
   count: number,
 }> = ({ token, count }) => {
   const searchParams = React.useContext(SearchParamsContext);
+  const q = searchParams.get('q')?.toString() || '';
   const queryToken = `s:${token}`;
 
-  const clickUrl = filterWithQuery(searchParams, queryToken, false);
-  const ctrlClickUrl = filterWithQuery(searchParams, queryToken, true);
+  const clickUrl = filterWithQuery(q, queryToken, false);
+  const ctrlClickUrl = filterWithQuery(q, queryToken, true);
 
   const label = token.charAt(0).toUpperCase() + token.slice(1);
 
