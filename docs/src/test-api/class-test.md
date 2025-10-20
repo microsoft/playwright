@@ -1652,7 +1652,7 @@ function step(target: Function, context: ClassMethodDecoratorContext) {
     const name = this.constructor.name + '.' + (context.name as string);
     return test.step(name, async () => {
       return await target.call(this, ...args);
-    });
+    }, { box: true });
   };
 }
 
