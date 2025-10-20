@@ -89,6 +89,7 @@ a.call-value:hover {
 
 .call-value.datetime,
 .call-value.string,
+.call-value.literal,
 .call-value.locator {
   color: var(--vscode-charts-orange);
 }
