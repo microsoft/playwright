@@ -480,6 +480,28 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
   ]);
 });
 
+test('should collapse log entries to a single line', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('multiline test', async ({ page }) => {
+        await page.keyboard.type(\`line1
+line2\`);
+      });
+    `,
+  });
+
+  await page.getByText('multiline test').dblclick();
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  await expect(listItem, 'action list').toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /Type "line1\\nline2"[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+  ]);
+});
+
+
 test('should hide boxed fixtures and contents, reveal upon show all actions setting', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
