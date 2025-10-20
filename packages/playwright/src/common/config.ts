@@ -89,6 +89,12 @@ export class FullConfigInternal {
     // so that plugins such as gitCommitInfoPlugin can populate metadata once.
     userConfig.metadata = userConfig.metadata || {};
 
+    const globalTags = Array.isArray(userConfig.tag) ? userConfig.tag : (userConfig.tag ? [userConfig.tag] : []);
+    for (const tag of globalTags) {
+      if (tag[0] !== '@')
+        throw new Error(`Tag must start with "@" symbol, got "${tag}" instead.`);
+    }
+
     this.config = {
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
@@ -107,6 +113,7 @@ export class FullConfigInternal {
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
+      tags: globalTags,
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
       updateSourceMethod: takeFirst(configCLIOverrides.updateSourceMethod, userConfig.updateSourceMethod, 'patch'),
       version: require('../../package.json').version,

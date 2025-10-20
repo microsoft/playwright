@@ -172,6 +172,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       workers: config.workers,
       globalSetup: config.globalSetup,
       globalTeardown: config.globalTeardown,
+      tags: config.tags,
     };
   }
 
