@@ -60,7 +60,7 @@ class ZipReport implements LoadedReport {
   private _json!: HTMLReport;
 
   async load() {
-    const zipURI = document.getElementById('playwrightReportBase64')?.textContent;
+    const zipURI = document.getElementById('playwrightReportBase64')!.textContent;
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(zipURI), { useWebWorkers: false });
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
