@@ -572,31 +572,6 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
   }));
 }
 
-// web packages dev server
-if (watchMode) {
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['vite', '--port', '44223', '--base', '/trace/', '--clearScreen=false'],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-    concurrent: true,
-  }));
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['vite', '--port', '44224', '--clearScreen=false'],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'html-reporter'),
-    concurrent: true,
-  }));
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['vite', '--port', '44225', '--clearScreen=false'],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'recorder'),
-    concurrent: true,
-  }));
-}
-
 // Generate injected.
 onChanges.push({
   inputs: [
