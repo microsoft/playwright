@@ -82,17 +82,22 @@ jobs:
         private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
         repositories: trace.playwright.dev
     - name: Deploy Canary
+      if: contains(github.ref, 'main') && github.event.schedule
       run: bash utils/build/deploy-trace-viewer.sh --canary
-      if: contains(github.ref, 'main')
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
     - name: Deploy Beta
-      run: bash utils/build/deploy-trace-viewer.sh --beta
       if: contains(github.ref, 'release') && github.event_name == 'push'
+      run: bash utils/build/deploy-trace-viewer.sh --beta
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
     - name: Deploy Stable
+      if: github.event_name == 'release' && github.event.action == 'published'
       run: bash utils/build/deploy-trace-viewer.sh --stable
-      if: contains(github.ref, 'release') && github.event_name == 'release'
+      env:
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
+    - name: Deploy Stable (manually)
+      if: contains(github.ref, 'release') && github.event_name == 'workflow_dispatch'
+      run: bash utils/build/deploy-trace-viewer.sh --stable
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
