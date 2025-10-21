@@ -23,7 +23,8 @@ import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { AriaNode, AriaSnapshot } from '@injected/ariaSnapshot';
+import type { AriaNode } from '@isomorphic/ariaSnapshot';
+import type { AriaSnapshot } from '@injected/ariaSnapshot';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',
@@ -1981,6 +1982,8 @@ function findNewElement(from: AriaSnapshot | undefined, to: AriaSnapshot): Eleme
         result.push(byName);
     }
   }
+  if (!result.length)
+    return;
   result.sort((a, b) => b.sizeAndPosition - a.sizeAndPosition);
-  return result[0]?.node.element;
+  return to.elementByNode.get(result[0].node);
 }

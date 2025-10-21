@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
+import { parseAriaSnapshot, renderAriaTree } from '@isomorphic/ariaSnapshot';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree } from './ariaSnapshot';
+import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate } from './ariaSnapshot';
 import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
@@ -307,7 +307,7 @@ export class InjectedScript {
     let previous: AriaSnapshot | undefined;
     if (options.incremental)
       previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : this._lastAriaSnapshotForQuery;
-    const result = renderAriaTree(ariaSnapshot, options, previous);
+    const result = renderAriaTree(ariaSnapshot.root, options.mode, previous?.root);
     if (options.track)
       this._lastAriaSnapshotForTrack.set(options.track, ariaSnapshot);
     this._lastAriaSnapshotForQuery = ariaSnapshot;
@@ -316,8 +316,8 @@ export class InjectedScript {
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
     const tree = generateAriaTree(this.document.body, { mode: 'ai' });
-    const ariaSnapshot = renderAriaTree(tree, { mode: 'ai' });
-    return { ariaSnapshot, refs: tree.refs };
+    const ariaSnapshot = renderAriaTree(tree.root, 'ai');
+    return { ariaSnapshot, refs: tree.refByElement };
   }
 
   getAllElementsMatchingExpectAriaTemplate(document: Document, template: AriaTemplateNode): Element[] {
@@ -700,7 +700,7 @@ export class InjectedScript {
 
   _createAriaRefEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      const result = this._lastAriaSnapshotForQuery?.elements?.get(selector);
+      const result = this._lastAriaSnapshotForQuery?.elementByRef?.get(selector);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };

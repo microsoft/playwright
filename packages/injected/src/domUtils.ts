@@ -111,11 +111,10 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
 export type Box = {
   visible: boolean;
   inline: boolean;
-  rect?: DOMRect;
   // Note: we do not store the CSSStyleDeclaration object, because it is a live object
   // and changes values over time. This does not work for caching or comparing to the
   // old values. Instead, store all the properties separately.
-  cursor?: CSSStyleDeclaration['cursor'];
+  cursor?: string;
 };
 
 export function computeBox(element: Element): Box {
@@ -137,7 +136,7 @@ export function computeBox(element: Element): Box {
   if (!isElementStyleVisibilityVisible(element, style))
     return { cursor, visible: false, inline: false };
   const rect = element.getBoundingClientRect();
-  return { rect, cursor, visible: rect.width > 0 && rect.height > 0, inline: style.display === 'inline' };
+  return { cursor, visible: rect.width > 0 && rect.height > 0, inline: style.display === 'inline' };
 }
 
 export function isElementVisible(element: Element): boolean {
