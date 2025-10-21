@@ -614,24 +614,29 @@ class TypesGenerator {
     content = content.replace(/\r\n/g, '\n');
     if (removeTrailingWhiteSpace)
       content = content.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-    const existing = fs.readFileSync(filePath, 'utf8');
+    const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
     if (existing === content)
       return;
     console.error(`Writing //${path.relative(PROJECT_DIR, filePath)}`);
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  const coreTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
+  const coreDir = path.join(PROJECT_DIR, 'packages', 'playwright-core');
+  const coreTypesDir = path.join(coreDir, 'types');
   const clientTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-client', 'types');
   if (!fs.existsSync(coreTypesDir))
     fs.mkdirSync(coreTypesDir)
   const playwrightTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright', 'types');
   if (!fs.existsSync(playwrightTypesDir))
     fs.mkdirSync(playwrightTypesDir)
-  writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'), false);
+  const protocolTypes = fs.readFileSync(path.join(coreDir, 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8')
+  const structTypes = fs.readFileSync(path.join(coreTypesDir, 'structs.d.ts'), 'utf8')
+  writeFile(path.join(coreTypesDir, 'protocol.d.ts'), protocolTypes, false);
   const coreTypes = await generateCoreTypes();
   writeFile(path.join(coreTypesDir, 'types.d.ts'), coreTypes, true);
   writeFile(path.join(clientTypesDir, 'types.d.ts'), coreTypes, true);
+  writeFile(path.join(clientTypesDir, 'structs.d.ts'), structTypes, true);
+  writeFile(path.join(clientTypesDir, 'protocol.d.ts'), protocolTypes, true);
   writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(), true);
   writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(), true);
   process.exit(0);
