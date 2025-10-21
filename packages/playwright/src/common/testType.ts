@@ -21,6 +21,7 @@ import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuit
 import { Suite, TestCase } from './test';
 import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { testDetailsSchema } from './validation';
 
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
@@ -310,13 +311,12 @@ function throwIfRunningInsideJest() {
 }
 
 function validateTestDetails(details: TestDetails, location: Location) {
-  const originalAnnotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
-  const annotations = originalAnnotations.map(annotation => ({ ...annotation, location }));
-  const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
-  for (const tag of tags) {
-    if (tag[0] !== '@')
-      throw new Error(`Tag must start with "@" symbol, got "${tag}" instead.`);
-  }
+  const validated = testDetailsSchema.parse(details);
+
+  const originalAnnotations = Array.isArray(validated.annotation) ? validated.annotation : (validated.annotation ? [validated.annotation] : []);
+  const annotations = originalAnnotations.map(a => ({ ...a, location }));
+
+  const tags = Array.isArray(validated.tag) ? validated.tag : (validated.tag ? [validated.tag] : []);
   return { annotations, tags };
 }
 

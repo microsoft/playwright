@@ -19,11 +19,13 @@ import path from 'path';
 
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes } from 'playwright-core/lib/utils';
 
+import { z } from 'zod';
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { annotationSchema } from '../common/validation';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -221,6 +223,27 @@ export class TestInfoImpl implements TestInfo {
     };
     Object.defineProperty(this.attachments, 'push', {
       value: attachmentsPush,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
+
+    const annotationsPush = this.annotations.push.bind(this.annotations);
+    const validatedAnnotationsPush = (...annotations: TestAnnotation[]) => {
+      const validated = annotations.map((a, idx) => {
+        try {
+          return annotationSchema.parse(a);
+        } catch (e) {
+          if (e instanceof z.ZodError)
+            throw new Error(`Invalid annotation at index ${idx}: ${(e as z.ZodError).issues.map(i => i.message).join(', ')}`);
+          throw e;
+        }
+      });
+      return annotationsPush(...validated);
+    };
+
+    Object.defineProperty(this.annotations, 'push', {
+      value: validatedAnnotationsPush,
       writable: true,
       enumerable: false,
       configurable: true

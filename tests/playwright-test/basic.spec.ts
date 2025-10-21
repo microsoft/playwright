@@ -662,3 +662,58 @@ test('should report serialization error', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.output).toContain('Expected: {\"a\": [Function a]}');
 });
+
+test('annotation validation missing type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', { annotation: { description: 'x' } }, async () => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Invalid annotation');
+});
+
+test('annotation validation non string type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', { annotation: { type: 123 } }, async () => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Invalid annotation');
+});
+
+test('annotation validation empty type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', { annotation: { type: '' } }, async () => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Invalid annotation');
+});
+
+test('annotation runtime validation missing type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', async () => { test.info().annotations.push({ description: 'x' }); });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Invalid annotation');
+});
+
+test('annotation runtime validation valid', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', async () => { test.info().annotations.push({ type: 'bug' }); });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
