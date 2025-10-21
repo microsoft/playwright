@@ -39,8 +39,8 @@ export default defineConfig({
   },
   publicDir: false,
   build: {
-    // outputs into the public dir, where the build of vite.config.ts will pick it up
-    outDir: path.resolve(__dirname, 'public'),
+    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/traceViewer'),
+    // Output dir is shared with vite.config.ts, clearing it here is racy.
     emptyOutDir: false,
     rollupOptions: {
       input: {
