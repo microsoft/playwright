@@ -184,7 +184,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     for (const projectSuite of rootSuite.suites) {
       // Split beforeAll-grouped tests into "config.shard.total" groups when needed.
       // Later on, we'll re-split them between workers by using "config.workers" instead.
-      testGroups.push(...createTestGroups(projectSuite, config.config.shard.total));
+      const testGroups = createTestGroups(projectSuite, config.config.shard.total);
+      for (const group of testGroups) {
+        testGroups.push(group);
+      }
     }
 
     // Shard test groups.
