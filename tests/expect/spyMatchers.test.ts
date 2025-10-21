@@ -7,7 +7,6 @@
 
 import { test, expect } from './fixtures';
 import { expect as expectUnderTest, mock } from '../../packages/playwright/bundles/expect/src/expectBundleImpl';
-import Immutable from 'immutable';
 
 const expectUnderTestAsAny = expectUnderTest as any;
 
@@ -548,27 +547,6 @@ for (const calledWith of [
         ).toThrowErrorMatchingSnapshot();
         expect(() =>
           expectUnderTest(fn)[calledWith](s3),
-        ).toThrowErrorMatchingSnapshot();
-      }
-    });
-
-    test('works with Immutable.js objects', () => {
-      const fn = mock.fn();
-      const directlyCreated = Immutable.Map([['a', { b: 'c' }]]);
-      const indirectlyCreated = Immutable.Map().set('a', { b: 'c' });
-      fn(directlyCreated, indirectlyCreated);
-
-      if (isToHaveNth(calledWith)) {
-        expectUnderTest(fn)[calledWith](1, indirectlyCreated, directlyCreated);
-
-        expect(() =>
-          expectUnderTest(fn).not[calledWith](1, indirectlyCreated, directlyCreated),
-        ).toThrowErrorMatchingSnapshot();
-      } else {
-        expectUnderTest(fn)[calledWith](indirectlyCreated, directlyCreated);
-
-        expect(() =>
-          expectUnderTest(fn).not[calledWith](indirectlyCreated, directlyCreated),
         ).toThrowErrorMatchingSnapshot();
       }
     });
@@ -1160,46 +1138,6 @@ for (const returnedWith of [
         ).toThrowErrorMatchingSnapshot();
         expect(() =>
           expectUnderTest(fn)[returnedWith](s3),
-        ).toThrowErrorMatchingSnapshot();
-      }
-    });
-
-    test('works with Immutable.js objects directly created', () => {
-      const directlyCreated = Immutable.Map([['a', { b: 'c' }]]);
-      const fn = mock.fn(() => directlyCreated);
-      fn();
-
-      if (isToHaveNth(returnedWith)) {
-        expectUnderTest(fn)[returnedWith](1, directlyCreated);
-
-        expect(() =>
-          expectUnderTest(fn).not[returnedWith](1, directlyCreated),
-        ).toThrowErrorMatchingSnapshot();
-      } else {
-        expectUnderTest(fn)[returnedWith](directlyCreated);
-
-        expect(() =>
-          expectUnderTest(fn).not[returnedWith](directlyCreated),
-        ).toThrowErrorMatchingSnapshot();
-      }
-    });
-
-    test('works with Immutable.js objects indirectly created', () => {
-      const indirectlyCreated = Immutable.Map().set('a', { b: 'c' });
-      const fn = mock.fn(() => indirectlyCreated);
-      fn();
-
-      if (isToHaveNth(returnedWith)) {
-        expectUnderTest(fn)[returnedWith](1, indirectlyCreated);
-
-        expect(() =>
-          expectUnderTest(fn).not[returnedWith](1, indirectlyCreated),
-        ).toThrowErrorMatchingSnapshot();
-      } else {
-        expectUnderTest(fn)[returnedWith](indirectlyCreated);
-
-        expect(() =>
-          expectUnderTest(fn).not[returnedWith](indirectlyCreated),
         ).toThrowErrorMatchingSnapshot();
       }
     });

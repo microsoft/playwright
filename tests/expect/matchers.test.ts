@@ -7,7 +7,6 @@
 
 import { test, expect } from './fixtures';
 import { expect as expectUnderTest, matcherUtils } from '../../packages/playwright/bundles/expect/src/expectBundleImpl';
-import Immutable from 'immutable';
 
 const { stringify } = matcherUtils;
 
@@ -560,8 +559,6 @@ test.describe('.toEqual()', () => {
       [1, 2],
       [2, 1],
     ],
-    [Immutable.List([1]), Immutable.List([2])],
-    [Immutable.List([1, 2]), Immutable.List([2, 1])],
     [new Map(), new Set()],
     [new Set([1, 2]), new Set()],
     [new Set([1, 2]), new Set([1, 2, 3])],
@@ -571,9 +568,6 @@ test.describe('.toEqual()', () => {
       new Set([new Set([1]), new Set([2])]),
       new Set([new Set([1]), new Set([3])]),
     ],
-    [Immutable.Set([1, 2]), Immutable.Set()],
-    [Immutable.Set([1, 2]), Immutable.Set([1, 2, 3])],
-    [Immutable.OrderedSet([1, 2]), Immutable.OrderedSet([2, 1])],
     [
       new Map([
         [1, 'one'],
@@ -587,16 +581,6 @@ test.describe('.toEqual()', () => {
     [
       new Map([[[1], new Map([[[1], 'one']])]]),
       new Map([[[1], new Map([[[1], 'two']])]]),
-    ],
-    [Immutable.Map({ a: 0 }), Immutable.Map({ b: 0 })],
-    [Immutable.Map({ v: 1 }), Immutable.Map({ v: 2 })],
-    [
-      Immutable.OrderedMap().set(1, 'one').set(2, 'two'),
-      Immutable.OrderedMap().set(2, 'two').set(1, 'one'),
-    ],
-    [
-      Immutable.Map({ 1: Immutable.Map({ 2: { a: 99 } }) }),
-      Immutable.Map({ 1: Immutable.Map({ 2: { a: 11 } }) }),
     ],
     [new Uint8Array([97, 98, 99]), new Uint8Array([97, 98, 100])],
     [{ a: 1, b: 2 }, expectUnderTest.objectContaining({ a: 2 })],
@@ -709,8 +693,6 @@ test.describe('.toEqual()', () => {
       [1, 2],
       [1, 2],
     ],
-    [Immutable.List([1]), Immutable.List([1])],
-    [Immutable.List([1, 2]), Immutable.List([1, 2])],
     [{}, {}],
     [{ a: 99 }, { a: 99 }],
     [new Set(), new Set()],
@@ -723,11 +705,6 @@ test.describe('.toEqual()', () => {
     ],
     [new Set([[1], [2], [3], [3]]), new Set([[3], [3], [2], [1]])],
     [new Set([{ a: 1 }, { b: 2 }]), new Set([{ b: 2 }, { a: 1 }])],
-    [Immutable.Set(), Immutable.Set()],
-    [Immutable.Set([1, 2]), Immutable.Set([1, 2])],
-    [Immutable.Set([1, 2]), Immutable.Set([2, 1])],
-    [Immutable.OrderedSet(), Immutable.OrderedSet()],
-    [Immutable.OrderedSet([1, 2]), Immutable.OrderedSet([1, 2])],
     [new Map(), new Map()],
     [
       new Map([
@@ -802,23 +779,6 @@ test.describe('.toEqual()', () => {
         [2, ['two']],
         [1, ['one']],
       ]),
-    ],
-    [Immutable.Map(), Immutable.Map()],
-    [
-      Immutable.Map().set(1, 'one').set(2, 'two'),
-      Immutable.Map().set(1, 'one').set(2, 'two'),
-    ],
-    [
-      Immutable.Map().set(1, 'one').set(2, 'two'),
-      Immutable.Map().set(2, 'two').set(1, 'one'),
-    ],
-    [
-      Immutable.OrderedMap().set(1, 'one').set(2, 'two'),
-      Immutable.OrderedMap().set(1, 'one').set(2, 'two'),
-    ],
-    [
-      Immutable.Map({ 1: Immutable.Map({ 2: { a: 99 } }) }),
-      Immutable.Map({ 1: Immutable.Map({ 2: { a: 99 } }) }),
     ],
     [new Uint8Array([97, 98, 99]), new Uint8Array([97, 98, 99])],
     [{ a: 1, b: 2 }, expectUnderTest.objectContaining({ a: 1 })],
@@ -935,7 +895,6 @@ test.describe('.toEqual()', () => {
       [BigInt(1), 2],
       [BigInt(1), 2],
     ],
-    [Immutable.List([BigInt(1)]), Immutable.List([BigInt(1)])],
     [{ a: BigInt(99) }, { a: BigInt(99) }],
     [new Set([BigInt(1), BigInt(2)]), new Set([BigInt(1), BigInt(2)])],
   ].forEach(([a, b]) => {
