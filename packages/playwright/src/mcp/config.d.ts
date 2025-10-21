@@ -88,6 +88,11 @@ export type Config = {
     host?: string;
 
     /**
+     * Custom SSE endpoint path. Defaults to "/sse".
+     */
+    ssePath?: string;
+
+    /**
      * The hosts this server is allowed to serve from. Defaults to the host server is bound to.
      * This is not for CORS, but rather for the DNS rebinding protection.
      */

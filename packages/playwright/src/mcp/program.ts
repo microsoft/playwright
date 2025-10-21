@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ProgramOption } from 'playwright-core/lib/utilsBundle';
+import { ProgramOption, debug } from 'playwright-core/lib/utilsBundle';
 import * as mcpServer from './sdk/server';
 import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
@@ -25,6 +25,7 @@ import { ExtensionContextFactory } from './extension/extensionContextFactory';
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import type { MCPProvider } from './sdk/proxyBackend';
+import type { CLIOptions } from './browser/config';
 
 export function decorateCommand(command: Command, version: string) {
   command
@@ -50,6 +51,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
       .option('--output-dir <path>', 'path to the directory for output files.')
       .option('--port <port>', 'port to listen on for SSE transport.')
+      .option('--sse-path <path>', 'custom SSE endpoint path. Defaults to "/sse".')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
@@ -64,15 +66,26 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
+      .option('--verbose', 'enable verbose logging for HTTP requests and server operations')
       .addOption(new ProgramOption('--connect-tool', 'Allow to switch between different browser connection methods.').hideHelp())
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
-      .action(async options => {
+      .action(async (options: CLIOptions) => {
         setupExitWatchdog();
+
+        // Enable debug logging if --verbose flag is set
+        if (options.verbose) {
+          const currentDebug = process.env.DEBUG || '';
+          const newDebug = currentDebug ? `${currentDebug},pw:mcp:http` : 'pw:mcp:http';
+          process.env.DEBUG = newDebug;
+          debug.enable(newDebug);
+          // eslint-disable-next-line no-console
+          console.error('[Verbose mode enabled] HTTP logging: pw:mcp:http');
+        }
 
         if (options.vision) {
           // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
-          options.caps = 'vision';
+          options.caps = ['vision'];
         }
 
         const config = await resolveCLIConfig(options);

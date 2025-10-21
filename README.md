@@ -160,6 +160,293 @@ test('Intercept network requests', async ({ page }) => {
 });
 ```
 
+## Custom Modifications for MCP Server
+
+This fork includes custom enhancements for the Playwright MCP (Model Context Protocol) server:
+
+### Features Added
+
+#### 1. Custom SSE Path Support
+- **New CLI flag**: `--sse-path <path>` allows customizing the SSE endpoint path (default: `/sse`)
+- **Files modified**:
+  - `packages/playwright/src/mcp/program.ts` - Added CLI option
+  - `packages/playwright/src/mcp/config.d.ts` - Added config type
+  - `packages/playwright/src/mcp/sdk/http.ts` - Dynamic SSE path handling
+  - `packages/playwright/src/mcp/sdk/server.ts` - Pass config through chain
+  - `packages/playwright/src/mcp/browser/config.ts` - Wire CLI to config
+
+#### 2. Native Health Endpoint
+- **Endpoint**: `GET /health` returns `{"status":"healthy"}`
+- **Location**: Built into the HTTP server (`sdk/http.ts:96-102`)
+- **No proxy needed**: Health checks are handled directly by the MCP server
+
+#### 3. Verbose Logging Flag
+- **New CLI flag**: `--verbose` automatically enables HTTP request logging
+- **No DEBUG env needed**: Simply add `--verbose` to command line
+- **Files modified**: `packages/playwright/src/mcp/program.ts` - Auto-enable debug logs
+
+### Development Mode
+
+#### Quick Start
+
+```bash
+# 1. Install dependencies
+npm ci
+
+# 2. Build the project
+npm run build
+
+# 3. Install browsers
+cd packages/playwright
+npx playwright install chromium
+
+# 4. Run MCP server with custom SSE path and verbose logging
+node cli.js run-mcp-server --headless --port 8018 --sse-path /custom-path --verbose
+
+# 5. Test health endpoint (in another terminal)
+curl http://localhost:8018/health
+# Response: {"status":"healthy"}
+
+# 6. Test SSE endpoint
+curl http://localhost:8018/custom-path
+```
+
+#### Development Workflow
+
+```bash
+# Watch mode (auto-rebuild on changes)
+npm run watch
+
+# In another terminal, run the server with verbose logging
+cd packages/playwright
+node cli.js run-mcp-server --headless --port 8018 --verbose
+
+# Run MCP tests
+npm run test-mcp
+
+# Type checking
+npm run tsc
+
+# Linting
+npm run lint
+```
+
+#### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run build` | Build all packages |
+| `npm run watch` | Watch mode with auto-rebuild |
+| `npm run test-mcp` | Run MCP-specific tests |
+| `npm run tsc` | TypeScript compilation check |
+| `npm run lint` | Full linting (eslint + tsc + doc) |
+
+### Production Build with Docker
+
+For production deployment, use the Docker build located in the parent directory (`../../`):
+
+```bash
+# Navigate to custom-servers/playwright directory
+cd ../../
+
+# Build Docker image with the build script
+./build_playwright_linux.sh
+
+# Or build manually (requires playwright/ directory)
+docker build -f Dockerfile -t playwright-mcp:latest .
+
+# Run with default SSE path
+docker run -d --name playwright-mcp -p 8018:8018 \
+  playwright-mcp:latest --headless --browser chromium
+
+# Run with custom SSE path
+docker run -d --name playwright-mcp -p 8018:8018 \
+  playwright-mcp:latest \
+    --headless \
+    --browser chromium \
+    --sse-path /my-playwright \
+    --port 18018
+
+# Test health endpoint
+curl http://localhost:8018/health
+
+# View logs
+docker logs -f playwright-mcp
+
+# Stop and remove
+docker stop playwright-mcp && docker rm playwright-mcp
+```
+
+#### Docker Build Features
+
+- **Multi-stage build**: Optimized for size (~1.5GB vs ~2GB source)
+- **Chromium only**: Smaller footprint (excludes Firefox/WebKit)
+- **Production dependencies**: No dev dependencies included
+- **Health proxy**: Optional proxy for path rewriting (see `health_proxy.js`)
+- **Auto-restart**: Use `--restart unless-stopped` for production
+
+### MCP Server Configuration
+
+#### CLI Options
+
+```bash
+node cli.js run-mcp-server [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--port <port>` | Port to listen on for SSE transport | stdio |
+| `--sse-path <path>` | Custom SSE endpoint path | `/sse` |
+| `--host <host>` | Host to bind server to | `localhost` |
+| `--verbose` | Enable verbose logging for HTTP requests | false |
+| `--headless` | Run browser in headless mode | false |
+| `--browser <browser>` | Browser to use (`chromium`, `firefox`, `webkit`) | `chromium` |
+| `--isolated` | Keep browser profile in memory | false |
+| `--no-sandbox` | Disable sandbox (required in Docker) | false |
+
+#### Example Usage
+
+```bash
+# Basic SSE server
+node cli.js run-mcp-server --headless --port 8018
+
+# With verbose logging
+node cli.js run-mcp-server --headless --port 8018 --verbose
+
+# Custom SSE path with verbose logging
+node cli.js run-mcp-server --headless --port 8018 --sse-path /playwright-sse --verbose
+
+# Production settings with logging
+node cli.js run-mcp-server \
+  --headless \
+  --browser chromium \
+  --port 8018 \
+  --sse-path /mcp \
+  --isolated \
+  --no-sandbox \
+  --verbose
+```
+
+### Logging and Debugging
+
+The MCP server includes comprehensive HTTP request logging for monitoring in development and production.
+
+#### Enable Verbose Logging
+
+**Simple Method (Recommended):**
+```bash
+# Use --verbose flag to automatically enable HTTP logging
+node cli.js run-mcp-server --headless --port 8018 --verbose
+
+# With custom SSE path
+node cli.js run-mcp-server --headless --port 8018 --sse-path /custom --verbose
+```
+
+**Advanced Method (Environment Variable):**
+```bash
+# Enable all MCP logs
+DEBUG=pw:mcp:* node cli.js run-mcp-server --headless --port 8018
+
+# Enable HTTP logs only
+DEBUG=pw:mcp:http node cli.js run-mcp-server --headless --port 8018
+
+# Combine with --verbose for additional categories
+DEBUG=pw:mcp:test,pw:mcp:server node cli.js run-mcp-server --headless --port 8018 --verbose
+```
+
+**Docker:**
+```bash
+# Use --verbose flag
+docker run -d --name playwright-mcp -p 8018:8018 \
+  playwright-mcp:latest --headless --verbose
+
+# Or use DEBUG environment variable
+docker run -d --name playwright-mcp -p 8018:8018 \
+  -e DEBUG=pw:mcp:http \
+  playwright-mcp:latest --headless
+```
+
+#### Log Categories
+
+| Category | Description | Example Output |
+|----------|-------------|----------------|
+| `pw:mcp:http` | HTTP requests, responses, sessions | `[GET] /health - Client: ::1` |
+| `pw:mcp:test` | Test and session lifecycle | `create SSE session: abc-123` |
+| `pw:mcp:server` | Server operations | `listTools`, `callTool` |
+
+#### Example Log Output
+
+```bash
+# Server startup
+pw:mcp:http Starting HTTP server - Host: localhost, Port: 8018
+pw:mcp:http HTTP server started successfully - Listening on: http://localhost:8018
+pw:mcp:http Installing HTTP transport - URL: http://localhost:8018, SSE Path: /sse
+pw:mcp:http Allowed hosts: localhost:8018
+
+# Health check request
+pw:mcp:http [GET] /health - Client: ::1
+pw:mcp:http [HEALTH] Health check requested - Client: ::1
+pw:mcp:http [200] /health - 2ms - Client: ::1
+
+# SSE session lifecycle
+pw:mcp:http [GET] /sse - Client: ::1
+pw:mcp:http [SSE] SSE endpoint accessed: /sse - Client: ::1
+pw:mcp:http [SSE-GET] New SSE session created: abc-123 - Client: ::1 - Total sessions: 1
+pw:mcp:http [SSE-GET] Session closed: abc-123 - Client: ::1 - Remaining sessions: 0
+
+# Custom SSE path
+pw:mcp:http [GET] /my-custom-path - Client: ::1
+pw:mcp:http [SSE] SSE endpoint accessed: /my-custom-path - Client: ::1
+```
+
+#### Logged Information
+
+All HTTP requests log:
+- **HTTP Method** and **Path**
+- **Client IP address**
+- **Request duration** (in milliseconds)
+- **Session IDs** for SSE/MCP sessions
+- **Active session count**
+- **Error details** (missing params, not found, etc.)
+
+#### Production Monitoring
+
+```bash
+# Save logs to file using --verbose
+node cli.js run-mcp-server --headless --port 8018 --verbose 2>&1 | tee mcp-server.log
+
+# Or use DEBUG environment variable
+DEBUG=pw:mcp:http node cli.js run-mcp-server --headless --port 8018 2>&1 | tee mcp-server.log
+
+# Filter specific endpoint logs
+docker logs playwright-mcp 2>&1 | grep -E "\[HEALTH\]|\[SSE\]"
+
+# Monitor real-time logs (with --verbose in Docker CMD)
+docker logs -f playwright-mcp
+```
+
+### Troubleshooting
+
+**Build fails with "Cannot find module './lib/program'"**
+- Run `npm run build` before using the CLI
+
+**Browser installation fails**
+- Ensure you're in `packages/playwright/` directory
+- Run `npx playwright install chromium`
+
+**TypeScript errors after modifications**
+- Run `npm run tsc` to check for type errors
+- Check `config.d.ts` for type definitions
+
+**Docker build fails with "playwright directory not found"**
+- Run `./build_playwright_linux.sh` which handles cloning
+- Or manually clone: `git clone https://github.com/microsoft/playwright.git && cd playwright && git checkout 54c7115`
+
+**Logs not appearing**
+- Ensure `DEBUG=pw:mcp:http` environment variable is set
+- Check that you're redirecting stderr: `2>&1` or `2>&1 | tee log.txt`
+- In Docker, use `docker logs` command to view output
+
 ## Resources
 
 * [Documentation](https://playwright.dev)

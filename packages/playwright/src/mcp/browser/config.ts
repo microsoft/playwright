@@ -35,12 +35,14 @@ export type CLIOptions = {
   blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
-  caps?: string[];
+  caps?: string | string[];
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
   config?: string;
+  connectTool?: boolean;
   device?: string;
   executablePath?: string;
+  extension?: boolean;
   grantPermissions?: string[];
   headless?: boolean;
   host?: string;
@@ -58,13 +60,16 @@ export type CLIOptions = {
   saveVideo?: ViewportSize;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
+  ssePath?: string;
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;
   timeoutNavigation?: number;
   userAgent?: string;
   userDataDir?: string;
+  verbose?: boolean;
   viewportSize?: ViewportSize;
+  vision?: boolean;
 };
 
 export const defaultConfig: FullConfig = {
@@ -224,6 +229,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       port: cliOptions.port,
       host: cliOptions.host,
       allowedHosts: cliOptions.allowedHosts,
+      ssePath: cliOptions.ssePath,
     },
     capabilities: cliOptions.caps as ToolCapability[],
     network: {

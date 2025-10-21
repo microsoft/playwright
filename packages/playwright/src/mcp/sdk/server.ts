@@ -159,14 +159,15 @@ function addServerListener(server: Server, event: 'close' | 'initialized', liste
   };
 }
 
-export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[] }) {
+export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[], ssePath?: string }) {
   if (options.port === undefined) {
     await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false);
     return;
   }
 
   const httpServer = await startHttpServer(options);
-  const url = await installHttpTransport(httpServer, serverBackendFactory, false, options.allowedHosts);
+  const url = await installHttpTransport(httpServer, serverBackendFactory, false, options.allowedHosts, options.ssePath);
+  const effectiveSsePath = options.ssePath || '/sse';
 
   const mcpConfig: any = { mcpServers: { } };
   mcpConfig.mcpServers[serverBackendFactory.nameInConfig] = {
@@ -176,7 +177,7 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
     `Listening on ${url}`,
     'Put this in your client config:',
     JSON.stringify(mcpConfig, undefined, 2),
-    'For legacy SSE transport support, you can use the /sse endpoint instead.',
+    `For legacy SSE transport support, you can use the ${effectiveSsePath} endpoint instead.`,
   ].join('\n');
     // eslint-disable-next-line no-console
   console.error(message);
