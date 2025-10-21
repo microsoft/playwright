@@ -20,17 +20,13 @@ import { renderAriaTree } from '@isomorphic/ariaSnapshot';
 import { computeBox, getElementComputedStyle, isElementVisible } from './domUtils';
 import * as roleUtils from './roleUtils';
 
-import type { SerializableAriaNode, AriaRegex, AriaTextValue, AriaTemplateNode, AriaTreeMode } from '@isomorphic/ariaSnapshot';
-
-export type AriaNode = Omit<SerializableAriaNode, 'children'> & {
-  children: (AriaNode | string)[];
-  element: Element;
-};
+import type { AriaNode, AriaRegex, AriaTextValue, AriaTemplateNode, AriaTreeMode } from '@isomorphic/ariaSnapshot';
 
 export type AriaSnapshot = {
   root: AriaNode;
-  elements: Map<string, Element>;
-  refs: Map<Element, string>;
+  elementByRef: Map<string, Element>;
+  elementByNode: Map<AriaNode, Element>;
+  refByElement: Map<Element, string>;
 };
 
 type AriaRef = {
@@ -82,10 +78,12 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
   const visited = new Set<Node>();
 
   const snapshot: AriaSnapshot = {
-    root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: computeBox(rootElement), receivesPointerEvents: true },
-    elements: new Map<string, Element>(),
-    refs: new Map<Element, string>(),
+    root: { role: 'fragment', name: '', children: [], props: {}, box: computeBox(rootElement), receivesPointerEvents: true },
+    elementByRef: new Map<string, Element>(),
+    elementByNode: new Map<AriaNode, Element>(),
+    refByElement: new Map<Element, string>(),
   };
+  snapshot.elementByNode.set(snapshot.root, rootElement);
 
   const visit = (ariaNode: AriaNode, node: Node, parentElementVisible: boolean) => {
     if (visited.has(node))
@@ -131,9 +129,10 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
 
     const childAriaNode = visible ? toAriaNode(element, options) : null;
     if (childAriaNode) {
+      snapshot.elementByNode.set(childAriaNode, element);
       if (childAriaNode.ref) {
-        snapshot.elements.set(childAriaNode.ref, element);
-        snapshot.refs.set(element, childAriaNode.ref);
+        snapshot.elementByRef.set(childAriaNode.ref, element);
+        snapshot.refByElement.set(element, childAriaNode.ref);
       }
       ariaNode.children.push(childAriaNode);
     }
@@ -197,17 +196,17 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
   return snapshot;
 }
 
-function computeAriaRef(ariaNode: AriaNode, options: InternalOptions) {
+function computeAriaRef(ariaNode: AriaNode, element: Element, options: InternalOptions) {
   if (options.refs === 'none')
     return;
   if (options.refs === 'interactable' && (!ariaNode.box.visible || !ariaNode.receivesPointerEvents))
     return;
 
   let ariaRef: AriaRef | undefined;
-  ariaRef = (ariaNode.element as any)._ariaRef;
+  ariaRef = (element as any)._ariaRef;
   if (!ariaRef || ariaRef.role !== ariaNode.role || ariaRef.name !== ariaNode.name) {
     ariaRef = { role: ariaNode.role, name: ariaNode.name, ref: (options.refPrefix ?? '') + 'e' + (++lastRef) };
-    (ariaNode.element as any)._ariaRef = ariaRef;
+    (element as any)._ariaRef = ariaRef;
   }
   ariaNode.ref = ariaRef.ref;
 }
@@ -220,12 +219,11 @@ function toAriaNode(element: Element, options: InternalOptions): AriaNode | null
       name: '',
       children: [],
       props: {},
-      element,
       box: computeBox(element),
       receivesPointerEvents: true,
       active
     };
-    computeAriaRef(ariaNode, options);
+    computeAriaRef(ariaNode, element, options);
     return ariaNode;
   }
 
@@ -246,12 +244,11 @@ function toAriaNode(element: Element, options: InternalOptions): AriaNode | null
     name,
     children: [],
     props: {},
-    element,
     box,
     receivesPointerEvents,
     active
   };
-  computeAriaRef(result, options);
+  computeAriaRef(result, element, options);
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
     result.checked = roleUtils.getAriaChecked(element);
@@ -395,9 +392,9 @@ export function matchesExpectAriaTemplate(rootElement: Element, template: AriaTe
 }
 
 export function getAllElementsMatchingExpectAriaTemplate(rootElement: Element, template: AriaTemplateNode): Element[] {
-  const root = generateAriaTree(rootElement, { mode: 'expect' }).root;
-  const matches = matchesNodeDeep(root, template, true, false);
-  return matches.map(n => n.element);
+  const tree = generateAriaTree(rootElement, { mode: 'expect' });
+  const matches = matchesNodeDeep(tree.root, template, true, false);
+  return matches.map(n => tree.elementByNode.get(n)!);
 }
 
 function matchesNode(node: AriaNode | string, template: AriaTemplateNode, isDeepEqual: boolean): boolean {
@@ -483,13 +480,4 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
   };
   visit(root, null);
   return results;
-}
-
-export function toSerializableNode(node: AriaNode): SerializableAriaNode {
-  const result: SerializableAriaNode = {
-    ...node,
-    children: node.children.map(child => typeof child === 'string' ? child : toSerializableNode(child)),
-  };
-  delete (result as any).element;
-  return result;
 }

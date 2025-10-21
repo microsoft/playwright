@@ -612,21 +612,32 @@ it('should not create incremental snapshots without tracks', async ({ page }) =>
   `);
 });
 
-it('should create incremental snapshot in an iframe', async ({ page }) => {
-  await page.setContent(`<iframe srcdoc="
-    <li><button>a button</button><span style='display:none'>some text</span></li>
-  "></iframe>`);
+it('should create incremental snapshot with iframes', async ({ page }) => {
+  await page.setContent(`
+    <iframe srcdoc="
+      <li>
+        <span style='display:none'>outer text</span>
+        <button>a button</button>
+        <iframe src='data:text/html,<li>inner text</li>' style='display:none'></iframe>
+      </li>
+    "></iframe>
+  `);
   expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
     - iframe [ref=e2]:
       - listitem [ref=f1e2]:
         - button "a button" [ref=f1e3]
   `);
 
-  await page.frames()[1].evaluate(() => document.querySelector('span').style.display = 'inline');
+  await page.frames()[1].evaluate(() => {
+    document.querySelector('span').style.display = 'block';
+    document.querySelector('iframe').style.display = 'block';
+  });
   expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
     - iframe [ref=e2]:
       - listitem [ref=f1e2]:
+        - generic [ref=f1e4]: outer text
         - ref=f1e3 [unchanged]
-        - text: some text
+        - iframe [ref=f1e5]:
+          - listitem [ref=f2e2]: inner text
   `);
 });

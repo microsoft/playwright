@@ -39,11 +39,11 @@ type AriaProps = {
   selected?: boolean;
 };
 
-export type SerializableAriaNode = AriaProps & {
+export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
   name: string;
   ref?: string;
-  children: (SerializableAriaNode | string)[];
+  children: (AriaNode | string)[];
   box: { visible: boolean, inline: boolean, cursor?: string };
   receivesPointerEvents: boolean;
   props: Record<string, string>;
@@ -508,7 +508,7 @@ export class ParserError extends Error {
   }
 }
 
-function buildByRefMap(root: SerializableAriaNode | undefined, map: Map<string, SerializableAriaNode> = new Map()): Map<string, SerializableAriaNode> {
+function buildByRefMap(root: AriaNode | undefined, map: Map<string, AriaNode> = new Map()): Map<string, AriaNode> {
   if (root?.ref)
     map.set(root.ref, root);
   for (const child of root?.children || []) {
@@ -518,7 +518,7 @@ function buildByRefMap(root: SerializableAriaNode | undefined, map: Map<string, 
   return map;
 }
 
-function arePropsEqual(a: SerializableAriaNode, b: SerializableAriaNode): boolean {
+function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
   const aKeys = Object.keys(a.props);
   const bKeys = Object.keys(b.props);
   return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
@@ -538,7 +538,7 @@ function toRenderOptions(mode: AriaTreeMode): RenderOptions {
   return {};
 }
 
-export function renderAriaTree(root: SerializableAriaNode, mode: AriaTreeMode, previousRoot?: SerializableAriaNode): string {
+export function renderAriaTree(root: AriaNode, mode: AriaTreeMode, previousRoot?: AriaNode): string {
   const options = toRenderOptions(mode);
   const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
@@ -551,7 +551,7 @@ export function renderAriaTree(root: SerializableAriaNode, mode: AriaTreeMode, p
       lines.push(indent + '- text: ' + escaped);
   };
 
-  const createKey = (ariaNode: SerializableAriaNode, renderCursorPointer: boolean): string => {
+  const createKey = (ariaNode: AriaNode, renderCursorPointer: boolean): string => {
     let key = ariaNode.role;
     // Yaml has a limit of 1024 characters per key, and we leave some space for role and attributes.
     if (ariaNode.name && ariaNode.name.length <= 900) {
@@ -588,11 +588,11 @@ export function renderAriaTree(root: SerializableAriaNode, mode: AriaTreeMode, p
     return key;
   };
 
-  const getSingleInlinedTextChild = (ariaNode: SerializableAriaNode | undefined): string | undefined => {
+  const getSingleInlinedTextChild = (ariaNode: AriaNode | undefined): string | undefined => {
     return ariaNode?.children.length === 1 && typeof ariaNode.children[0] === 'string' && !Object.keys(ariaNode.props).length ? ariaNode.children[0] : undefined;
   };
 
-  const visit = (ariaNode: SerializableAriaNode, indent: string, renderCursorPointer: boolean, previousNode: SerializableAriaNode | undefined): { unchanged: boolean } => {
+  const visit = (ariaNode: AriaNode, indent: string, renderCursorPointer: boolean, previousNode: AriaNode | undefined): { unchanged: boolean } => {
     if (ariaNode.ref)
       previousNode = previousByRef.get(ariaNode.ref);
 
@@ -702,7 +702,7 @@ function convertToBestGuessRegex(text: string): string {
   return String(new RegExp(pattern));
 }
 
-function textContributesInfo(node: SerializableAriaNode, text: string): boolean {
+function textContributesInfo(node: AriaNode, text: string): boolean {
   if (!text.length)
     return false;
 
@@ -720,6 +720,6 @@ function textContributesInfo(node: SerializableAriaNode, text: string): boolean 
   return filtered.trim().length / text.length > 0.1;
 }
 
-function hasPointerCursor(ariaNode: SerializableAriaNode): boolean {
+function hasPointerCursor(ariaNode: AriaNode): boolean {
   return ariaNode.box.cursor === 'pointer';
 }

@@ -19,7 +19,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, toSerializableNode } from './ariaSnapshot';
+import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate } from './ariaSnapshot';
 import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
@@ -304,7 +304,7 @@ export class InjectedScript {
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     const ariaSnapshot = generateAriaTree(node as Element, { mode: 'ai', refPrefix });
     this._lastAriaSnapshotForQuery = ariaSnapshot;
-    return toSerializableNode(ariaSnapshot.root);
+    return ariaSnapshot.root;
   }
 
   ariaSnapshot(node: Node, options: AriaTreeOptions): string {
@@ -317,7 +317,7 @@ export class InjectedScript {
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
     const tree = generateAriaTree(this.document.body, { mode: 'ai' });
     const ariaSnapshot = renderAriaTree(tree.root, 'ai');
-    return { ariaSnapshot, refs: tree.refs };
+    return { ariaSnapshot, refs: tree.refByElement };
   }
 
   getAllElementsMatchingExpectAriaTemplate(document: Document, template: AriaTemplateNode): Element[] {
@@ -700,7 +700,7 @@ export class InjectedScript {
 
   _createAriaRefEngine() {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
-      const result = this._lastAriaSnapshotForQuery?.elements?.get(selector);
+      const result = this._lastAriaSnapshotForQuery?.elementByRef?.get(selector);
       return result && result.isConnected ? [result] : [];
     };
     return { queryAll };

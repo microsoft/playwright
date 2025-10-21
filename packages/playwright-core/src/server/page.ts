@@ -45,7 +45,7 @@ import type * as types from './types';
 import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
 import type { BindingPayload } from '@injected/bindingsController';
-import type { SerializableAriaNode } from '../utils';
+import type { AriaNode } from '../utils/isomorphic/ariaSnapshot';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -168,7 +168,7 @@ export class Page extends SdkObject {
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
   private _networkRequests: network.Request[] = [];
-  private _lastAriaSnapshotForTrack = new Map<string, SerializableAriaNode>();
+  private _lastAriaSnapshotForTrack = new Map<string, AriaNode>();
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -865,7 +865,7 @@ export class Page extends SdkObject {
   async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
     this.lastSnapshotFrameIds = [];
     const root = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
-    let previous: SerializableAriaNode | undefined;
+    let previous: AriaNode | undefined;
     if (options.mode === 'incremental')
       previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : undefined;
     const result = renderAriaTree(root, 'ai', previous);
@@ -1046,7 +1046,7 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<SerializableAriaNode> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<AriaNode> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const root = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
@@ -1068,7 +1068,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
     }
   });
 
-  const visit = async (node: SerializableAriaNode) => {
+  const visit = async (node: AriaNode) => {
     if (node.role === 'iframe' && node.ref) {
       const frameSelector = `aria-ref=${node.ref} >> internal:control=enter-frame`;
       const frameBodySelector = `${frameSelector} >> body`;
