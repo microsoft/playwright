@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
+import { parseAriaSnapshot, renderAriaTree } from '@isomorphic/ariaSnapshot';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree } from './ariaSnapshot';
+import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, toSerializableNode } from './ariaSnapshot';
 import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
@@ -92,7 +92,6 @@ export class InjectedScript {
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
-  private _lastAriaSnapshotForTrack = new Map<string, AriaSnapshot>();
   private _lastAriaSnapshotForQuery: AriaSnapshot | undefined;
 
   // Recorder must use any external dependencies through InjectedScript.
@@ -300,23 +299,24 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options: AriaTreeOptions & { track?: string, incremental?: boolean }): string {
+  ariaSnapshotForAI(node: Node, refPrefix: string) {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    const ariaSnapshot = generateAriaTree(node as Element, options);
-    let previous: AriaSnapshot | undefined;
-    if (options.incremental)
-      previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : this._lastAriaSnapshotForQuery;
-    const result = renderAriaTree(ariaSnapshot, options, previous);
-    if (options.track)
-      this._lastAriaSnapshotForTrack.set(options.track, ariaSnapshot);
+    const ariaSnapshot = generateAriaTree(node as Element, { mode: 'ai', refPrefix });
     this._lastAriaSnapshotForQuery = ariaSnapshot;
-    return result;
+    return toSerializableNode(ariaSnapshot.root);
+  }
+
+  ariaSnapshot(node: Node, options: AriaTreeOptions): string {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
+    this._lastAriaSnapshotForQuery = generateAriaTree(node as Element, options);
+    return renderAriaTree(this._lastAriaSnapshotForQuery.root, options.mode);
   }
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
     const tree = generateAriaTree(this.document.body, { mode: 'ai' });
-    const ariaSnapshot = renderAriaTree(tree, { mode: 'ai' });
+    const ariaSnapshot = renderAriaTree(tree.root, 'ai');
     return { ariaSnapshot, refs: tree.refs };
   }
 

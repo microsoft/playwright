@@ -26,7 +26,7 @@ import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
+import { LongStandingScope, assert, renderAriaTree, renderTitleForCall, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
 import { debugLogger } from './utils/debugLogger';
@@ -45,6 +45,7 @@ import type * as types from './types';
 import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
 import type { BindingPayload } from '@injected/bindingsController';
+import type { SerializableAriaNode } from '../utils';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -167,6 +168,7 @@ export class Page extends SdkObject {
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
   private _networkRequests: network.Request[] = [];
+  private _lastAriaSnapshotForTrack = new Map<string, SerializableAriaNode>();
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -817,6 +819,7 @@ export class Page extends SdkObject {
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);
+    this._lastAriaSnapshotForTrack.clear();
   }
 
   allInitScripts() {
@@ -861,8 +864,14 @@ export class Page extends SdkObject {
 
   async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
     this.lastSnapshotFrameIds = [];
-    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds, options);
-    return snapshot.join('\n');
+    const root = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds);
+    let previous: SerializableAriaNode | undefined;
+    if (options.mode === 'incremental')
+      previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : undefined;
+    const result = renderAriaTree(root, 'ai', previous);
+    if (options.track)
+      this._lastAriaSnapshotForTrack.set(options.track, root);
+    return result;
   }
 }
 
@@ -1037,18 +1046,18 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[], options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string[]> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[]): Promise<SerializableAriaNode> {
   // Only await the topmost navigations, inner frames will be empty when racing.
-  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+  const root = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
       const context = await progress.race(frame._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
-      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, options) => {
+      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, refPrefix) => {
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.ariaSnapshot(node, { mode: 'ai', ...options });
-      }, { refPrefix: frameOrdinal ? 'f' + frameOrdinal : '', incremental: options.mode === 'incremental', track: options.track }));
+        return injected.ariaSnapshotForAI(node, refPrefix);
+      }, frameOrdinal ? 'f' + frameOrdinal : ''));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1059,34 +1068,30 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
     }
   });
 
-  const lines = snapshot.split('\n');
-  const result = [];
-  for (const line of lines) {
-    const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
-    if (!match) {
-      result.push(line);
-      continue;
+  const visit = async (node: SerializableAriaNode) => {
+    if (node.role === 'iframe' && node.ref) {
+      const frameSelector = `aria-ref=${node.ref} >> internal:control=enter-frame`;
+      const frameBodySelector = `${frameSelector} >> body`;
+      const child = await progress.race(frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
+      if (!child)
+        return;
+      const frameOrdinal = frameIds.length + 1;
+      frameIds.push(child.frame._id);
+      try {
+        const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds);
+        node.children = childSnapshot.role === 'fragment' ? childSnapshot.children : [childSnapshot];
+      } catch {
+      }
+      return;
     }
 
-    const leadingSpace = match[1];
-    const ref = match[2];
-    const frameSelector = `aria-ref=${ref} >> internal:control=enter-frame`;
-    const frameBodySelector = `${frameSelector} >> body`;
-    const child = await progress.race(frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
-    if (!child) {
-      result.push(line);
-      continue;
+    for (const child of node.children) {
+      if (typeof child !== 'string')
+        await visit(child);
     }
-    const frameOrdinal = frameIds.length + 1;
-    frameIds.push(child.frame._id);
-    try {
-      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds, options);
-      result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
-    } catch {
-      result.push(line);
-    }
-  }
-  return result;
+  };
+  await visit(root);
+  return root;
 }
 
 function ensureArrayLimit<T>(array: T[], limit: number): T[] {
