@@ -142,7 +142,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
     await attachmentsPane.getByLabel('Third').click();
     const url = server.PREFIX + '/three.html';
     const promise = page.waitForEvent('popup');
-    await attachmentsPane.getByText('[markdown link]').click();
+    await attachmentsPane.getByText('markdown link').dblclick();
     const popup = await promise;
     await expect(popup).toHaveURL(url);
   }
