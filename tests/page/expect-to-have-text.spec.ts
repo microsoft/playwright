@@ -169,6 +169,7 @@ test.describe('toHaveText with text', () => {
   });
 
   test('do not show "element(s) not found" when the real failure is a string mismatch', async ({ page }) => {
+    test.skip(process.env.PW_CLOCK === 'frozen', 'The element is attached after 1 second.');
     await page.setContent(`
       <div>Initial</div>
       <script>
@@ -181,7 +182,7 @@ test.describe('toHaveText with text', () => {
     `);
 
     const cell = page.locator('#field');
-    const error = await expect(cell).toHaveText('Something', { timeout: 2000 }).catch(e => e);
+    const error = await expect(cell).toHaveText('Something', { timeout: 3000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain('Expected: "Something"');
     expect(stripAnsi(error.message)).toContain('Received: "Final value"');
   });
