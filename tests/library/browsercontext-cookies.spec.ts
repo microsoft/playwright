@@ -102,7 +102,7 @@ it('should allow adding cookies with >400 days expiration', {
     expires: expect.anything(),
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
   });
 });
 
