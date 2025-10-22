@@ -172,7 +172,6 @@ export class Page extends SdkObject {
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
   closeReason: string | undefined;
-  lastSnapshotFrameIds: string[] = [];
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -860,8 +859,7 @@ export class Page extends SdkObject {
   }
 
   async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
-    this.lastSnapshotFrameIds = [];
-    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), 0, this.lastSnapshotFrameIds, options);
+    const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
     return snapshot.join('\n');
   }
 }
@@ -1037,7 +1035,7 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frameOrdinal: number, frameIds: string[], options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string[]> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string[]> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
@@ -1048,7 +1046,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
         if (!node)
           return true;
         return injected.ariaSnapshot(node, { mode: 'ai', ...options });
-      }, { refPrefix: frameOrdinal ? 'f' + frameOrdinal : '', incremental: options.mode === 'incremental', track: options.track }));
+      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', incremental: options.mode === 'incremental', track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1077,10 +1075,8 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, frame
       result.push(line);
       continue;
     }
-    const frameOrdinal = frameIds.length + 1;
-    frameIds.push(child.frame._id);
     try {
-      const childSnapshot = await snapshotFrameForAI(progress, child.frame, frameOrdinal, frameIds, options);
+      const childSnapshot = await snapshotFrameForAI(progress, child.frame, options);
       result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
     } catch {
       result.push(line);

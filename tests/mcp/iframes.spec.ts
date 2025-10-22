@@ -30,7 +30,7 @@ test('stitched aria frames', async ({ client }) => {
       - button "World" [ref=f1e2]
       - main [ref=f1e3]:
         - iframe [ref=f1e4]:
-          - paragraph [ref=f2e2]: Nested
+          - paragraph [ref=f3e2]: Nested
 \`\`\``),
   });
 

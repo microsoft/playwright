@@ -75,11 +75,11 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
       - iframe [ref=e2]:
         - generic [active] [ref=f1e1]:
           - iframe [ref=f1e2]:
-            - generic [ref=f2e2]: Hi, I'm frame
-          - iframe [ref=f1e3]:
             - generic [ref=f3e2]: Hi, I'm frame
+          - iframe [ref=f1e3]:
+            - generic [ref=f4e2]: Hi, I'm frame
       - iframe [ref=e3]:
-        - generic [ref=f4e2]: Hi, I'm frame
+        - generic [ref=f2e2]: Hi, I'm frame
   `);
 
   const href = await page.locator('aria-ref=e1').evaluate(e => e.ownerDocument.defaultView.location.href);
@@ -88,7 +88,7 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   const href2 = await page.locator('aria-ref=f1e2').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href2).toBe(server.PREFIX + '/frames/two-frames.html');
 
-  const href3 = await page.locator('aria-ref=f3e2').evaluate(e => e.ownerDocument.defaultView.location.href);
+  const href3 = await page.locator('aria-ref=f4e2').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
 
   {
@@ -97,13 +97,13 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
     expect(sourceCode).toBe(`locator('body')`);
   }
   {
-    const { resolvedSelector } = await (page.locator('aria-ref=f3e2') as any)._resolveSelector();
+    const { resolvedSelector } = await (page.locator('aria-ref=f4e2') as any)._resolveSelector();
     const sourceCode = asLocator('javascript', resolvedSelector);
     expect(sourceCode).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
     // Should tolerate .describe().
-    const { resolvedSelector } = await (page.locator('aria-ref=f2e2').describe('foo bar') as any)._resolveSelector();
+    const { resolvedSelector } = await (page.locator('aria-ref=f3e2').describe('foo bar') as any)._resolveSelector();
     const sourceCode = asLocator('javascript', resolvedSelector);
     expect(sourceCode).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
@@ -111,6 +111,51 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
     const error = await (page.locator('aria-ref=e1000') as any)._resolveSelector().catch(e => e);
     expect(error.message).toContain(`No element matching aria-ref=e1000`);
   }
+});
+
+it('should persist iframe references', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li><iframe srcdoc="<button>button1</button>"></iframe></li>
+      <li><iframe srcdoc="<button>button2</button>"></iframe></li>
+    </ul>
+  `);
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]:
+        - iframe [ref=e4]:
+          - button "button1" [ref=f1e2]
+      - listitem [ref=e5]:
+        - iframe [ref=e6]:
+          - button "button2" [ref=f2e2]
+  `);
+
+  await page.evaluate(() => document.querySelector('iframe').remove());
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]
+      - listitem [ref=e5]:
+        - iframe [ref=e6]:
+          - button "button2" [ref=f2e2]
+  `);
+  await expect(page.locator('aria-ref=f2e2')).toHaveText('button2');
+
+  await page.evaluate(() => {
+    const frame = document.createElement('iframe');
+    frame.setAttribute('srcdoc', '<button>button1</button>');
+    document.querySelector('li').appendChild(frame);
+  });
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]:
+        - iframe [ref=e7]:
+          - button "button1" [ref=f3e2]
+      - listitem [ref=e5]:
+        - iframe [ref=e6]:
+          - button "button2" [ref=f2e2]
+  `);
+  await expect(page.locator('aria-ref=f3e2')).toHaveText('button1');
+  await expect(page.locator('aria-ref=f2e2')).toHaveText('button2');
 });
 
 it('should not generate refs for elements with pointer-events:none', async ({ page }) => {
