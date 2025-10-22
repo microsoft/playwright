@@ -505,6 +505,12 @@ function buildByRefMap(root: AriaNode | undefined, map: Map<string, AriaNode> = 
   return map;
 }
 
+function hasIframeNodes(root: AriaNode): boolean {
+  if (root.role === 'iframe')
+    return true;
+  return (root.children || []).some(child => typeof child !== 'string' && hasIframeNodes(child));
+}
+
 function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
   const aKeys = Object.keys(a.props);
   const bKeys = Object.keys(b.props);
@@ -512,6 +518,9 @@ function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
 }
 
 export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previous?: AriaSnapshot): string {
+  if (hasIframeNodes(ariaSnapshot.root))
+    previous = undefined;
+
   const options = toInternalOptions(publicOptions);
   const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;

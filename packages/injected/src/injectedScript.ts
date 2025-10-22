@@ -306,7 +306,7 @@ export class InjectedScript {
     const ariaSnapshot = generateAriaTree(node as Element, options);
     let previous: AriaSnapshot | undefined;
     if (options.incremental)
-      previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : this._lastAriaSnapshotForQuery;
+      previous = options.track ? this._lastAriaSnapshotForTrack.get(options.track) : undefined;
     const result = renderAriaTree(ariaSnapshot, options, previous);
     if (options.track)
       this._lastAriaSnapshotForTrack.set(options.track, ariaSnapshot);
