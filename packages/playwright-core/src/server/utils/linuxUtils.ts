@@ -35,6 +35,7 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string } 
       osRelease = {
         id: fields.get('id') ?? '',
         version: fields.get('version_id') ?? '',
+        ubuntu_hint: fields.get('ubuntu_codename') ?? '',
       };
     } catch (e) {
       didFailToReadOSRelease = true;

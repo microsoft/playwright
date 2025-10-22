@@ -72,6 +72,21 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
     const archSuffix = '-' + os.arch();
     const distroInfo = getLinuxDistributionInfoSync();
 
+    if (distroInfo?.id != 'ubuntu') {
+      // The "mainstream" Ubuntu-spinoff distributions (Linux Mint, Pop!_OS, Zorin, KDE Neon, TUXEDO, etc.) almost always set UBUNTU_CODENAME in /etc/os-release
+      if (distroInfo?.ubuntu_hint === 'noble') {
+        return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+      }
+      if (distroInfo?.ubuntu_hint === 'jammy') {
+        return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+      }
+      if (distroInfo?.ubuntu_hint === 'focal') {
+        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+      }
+      if (distroInfo?.ubuntu_hint === 'bionic') {
+        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+      }
+    }
     // Pop!_OS is ubuntu-based and has the same versions.
     // KDE Neon is ubuntu-based and has the same versions.
     // TUXEDO OS is ubuntu-based and has the same versions.
