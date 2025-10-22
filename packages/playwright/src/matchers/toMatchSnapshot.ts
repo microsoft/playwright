@@ -31,14 +31,14 @@ import type { FullProjectInternal } from '../common/config';
 import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-import type { Comparator, ImageComparatorOptions } from 'playwright-core/lib/utils';
+import type { Comparator, CustomComparatorBuilder, ImageComparatorOptions } from 'playwright-core/lib/utils';
 
 type NameOrSegments = string | string[];
 
 type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
 
 type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<FullProjectInternal['expect']>['toHaveScreenshot']> & {
-  _comparator?: string;
+  _comparator?: string | CustomComparatorBuilder;
 };
 
 type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
@@ -79,7 +79,7 @@ class SnapshotHelper {
   readonly kind: 'Screenshot'|'Snapshot';
   readonly updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
   readonly comparator: Comparator;
-  readonly options: Omit<ToHaveScreenshotOptions, '_comparator'> & { comparator?: string };
+  readonly options: Omit<ToHaveScreenshotOptions, '_comparator'> & { comparator?: string | CustomComparatorBuilder};
   readonly matcherName: string;
   readonly locator: Locator | undefined;
 

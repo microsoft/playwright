@@ -25,9 +25,10 @@ import { padImageToSize } from './imageUtils';
 
 import type { ImageData } from './imageUtils';
 
-export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
+export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string | CustomComparatorBuilder };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
+export type CustomComparatorBuilder = (mimeType: string) => Comparator;
 
 export function getComparator(mimeType: string): Comparator {
   if (mimeType === 'image/png')
@@ -55,6 +56,9 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
   validateBuffer(expectedBuffer, mimeType);
+
+  if (typeof options.comparator === 'function')
+    return options.comparator(mimeType)(actualBuffer, expectedBuffer, options);
 
   let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
   let expected: ImageData = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
