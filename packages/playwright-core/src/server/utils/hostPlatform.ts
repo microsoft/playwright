@@ -87,31 +87,18 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       }
     }
-    // Pop!_OS is ubuntu-based and has the same versions.
-    // KDE Neon is ubuntu-based and has the same versions.
-    // TUXEDO OS is ubuntu-based and has the same versions.
-    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon' || distroInfo?.id === 'tuxedo') {
-      const isUbuntu = distroInfo?.id === 'ubuntu';
+    if (distroInfo?.id === 'ubuntu') {
       const version = distroInfo?.version;
       const major = parseInt(distroInfo.version, 10);
       if (major < 20)
-        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
       if (major < 22)
-        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '20.04' };
+        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true && version === '20.04' };
       if (major < 24)
-        return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '22.04' };
+        return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true && version === '22.04' };
       if (major < 26)
-        return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '24.04' };
+        return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true && version === '24.04' };
       return { hostPlatform: ('ubuntu' + distroInfo.version + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-    }
-    // Linux Mint is ubuntu-based but does not have the same versions
-    if (distroInfo?.id === 'linuxmint') {
-      const mintMajor = parseInt(distroInfo.version, 10);
-      if (mintMajor <= 20)
-        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-      if (mintMajor === 21)
-        return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-      return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
     if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
       const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
